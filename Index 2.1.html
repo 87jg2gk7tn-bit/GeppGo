@@ -207,6 +207,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .amt-row select{width:120px;flex-shrink:0}
 .ticket{background:var(--surface);border-radius:var(--r-lg);padding:1.15rem;margin-bottom:.85rem;box-shadow:var(--sh-xs);border:1px solid var(--line-soft);text-align:center}
 .ticket-n{font-weight:800;font-size:1rem;margin-bottom:.5rem}
+.tk-mini{background:var(--paper);border-radius:var(--r-md);padding:.7rem;margin-bottom:.5rem;text-align:center;position:relative}
 .qr-box{display:inline-block;padding:.7rem;background:#fff;border-radius:var(--r-md);margin:.4rem 0;border:1px solid var(--line-soft)}
 .ticket-c{font-size:.76rem;color:var(--ink-faint);word-break:break-all;margin:.5rem 0}
 .scan-area{position:relative;background:#1B231E;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:1;margin-bottom:.95rem}
@@ -604,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r22</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r23</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -742,11 +743,14 @@ body.dark .tt-cont{background:var(--beige)!important}
     <div class="fg"><label>Di cosa si tratta?</label><select id="adBookCat"><option>Attrazioni</option><option>Cibo</option><option>Trasporti</option><option>Voli</option><option>Hotel</option><option>Shopping</option></select></div>
     <div class="fg"><label>Link prenotazione</label><input id="adBookUrl" placeholder="https://..."></div>
   </div>
-  <div class="fg"><label>Biglietto</label><select id="adTicket" onchange="renderAdTkPrev()"><option value="">Nessuno</option></select>
-  <div style="display:flex;gap:.5rem;margin-top:.55rem"><input id="adTkCode" placeholder="...oppure nuovo: incolla il codice" style="flex:1" autocapitalize="off" autocorrect="off"><button class="chip" style="white-space:nowrap" onclick="scanInto('adTk')">Scansiona</button><button class="chip" onclick="document.getElementById('adTkImgInp').click()">Da immagine</button></div>
-  <div id="adTkPrev" style="margin:-.3rem 0 .9rem"></div>
-  <input type="file" id="adTkImgInp" accept="image/*" multiple style="display:none" onchange="adTicketFromImages(this)">
-  <div id="adQR" style="text-align:center;margin-top:.7rem"></div></div>
+  <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adTkChk" onchange="document.getElementById('adTkFields').style.display=this.checked?'block':'none'"><span>Serve un biglietto?</span></label></div>
+  <div id="adTkFields" style="display:none">
+    <div id="adTkListWrap"></div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.6rem"><input id="adTkCode" placeholder="Codice a mano (es. PNR)" style="flex:1" autocapitalize="off" autocorrect="off"><button class="chip" style="white-space:nowrap" onclick="addActTicketManual()">Aggiungi</button></div>
+    <div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="scanInto('actTk')">📷 Scansiona</button><button class="btn btn-soft" style="flex:1" onclick="document.getElementById('adTkImgInp').click()">🖼️ Da immagine</button></div>
+    <input type="file" id="adTkImgInp" accept="image/*" multiple style="display:none" onchange="actTicketFromImages(this)">
+    <p style="font-size:.72rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Ogni biglietto aggiunto qui si collega subito a questa attività: puoi aggiungerne quanti ne servono (es. uno a persona).</p>
+  </div>
   <div class="fg"><label>Note</label><textarea id="adNotes"></textarea></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
     <button class="btn btn-grad" style="flex:2" onclick="saveActDetail()">Salva</button>
@@ -813,6 +817,7 @@ body.dark .tt-cont{background:var(--beige)!important}
 <div class="modal" id="mTkLink"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Collega ad attività</div><button class="x x-close" onclick="closeSheet('mTkLink')">✕</button></div>
+  <div id="mTkLinkHint" style="font-size:.8rem;color:var(--ink-faint);margin:-.3rem 0 .8rem"></div>
   <div class="fg"><label>Quale attività usa questo biglietto?</label><select id="tlAct"></select></div>
   <button class="btn btn-grad btn-block" onclick="saveTkLink()">Collega</button>
 </div></div>
@@ -1690,13 +1695,16 @@ function addTicketManual(keep){
   const tk={id:uid(),name:n,code:c,type};
   t.tickets.push(tk);
   const dv=document.getElementById('tkDay').value;
+  let linkedByDay=false;
   if(dv!==''){
     const d=t.days[parseInt(dv)];
     if(d){
       const whoAll=t.participants.map(pp=>pp.id);
       let tm=document.getElementById('tkTime').value||'';
       {const cft=tm?findConflict(t,d,{time:tm,timeEnd:'',who:whoAll},null):null;if(cft)toast('⚠️ Si sovrappone a "'+cft.act.name+'" — messo lo stesso');}
-      d.activities.push({id:uid(),name:(type==='flight'?'Volo · ':'')+n,time:tm,timeEnd:'',type:(type==='flight'?'flight':'any'),notes:'',who:whoAll,completed:false,booking:{needed:false,done:false},ticketId:tk.id});
+      const newAct={id:uid(),name:(type==='flight'?'Volo · ':'')+n,time:tm,timeEnd:'',type:(type==='flight'?'flight':'any'),notes:'',who:whoAll,completed:false,booking:{needed:false,done:false}};
+      d.activities.push(newAct);
+      tk.actId=newAct.id;linkedByDay=true;
     }
   }
   const tc=num(document.getElementById('tkCost').value)||0;let tp=document.getElementById('tkPaid').value;
@@ -1708,7 +1716,9 @@ function addTicketManual(keep){
     toast('Salvato — pronto per il prossimo');
     return;
   }
-  closeSheet('mTicket');toast(dv!==''?'Biglietto salvato e in time-table':'Biglietto salvato');
+  closeSheet('mTicket');
+  if(linkedByDay){toast('Biglietto salvato e in time-table');}
+  else{toast('Biglietto salvato');setTimeout(()=>openTkLink(tk.id),300);}
 }
 function zx2bcid(name){
   return ({QR_CODE:'qrcode',AZTEC:'azteccode',PDF_417:'pdf417',DATA_MATRIX:'datamatrix',CODE_128:'code128',CODE_39:'code39',EAN_13:'ean13',EAN_8:'ean8',UPC_A:'upca',ITF:'interleaved2of5'})[name]||'qrcode';
@@ -1739,6 +1749,28 @@ function rotateDataUrl(url){
     im.onerror=rej;im.src=url;
   });
 }
+async function extractAllQR(cv){
+  const out=[];
+  if(typeof jsQR==='undefined')return out;
+  const ctx=cv.getContext('2d');
+  for(let i=0;i<8;i++){
+    let idata;
+    try{idata=ctx.getImageData(0,0,cv.width,cv.height);}catch(e){break;}
+    let code=null;
+    try{code=jsQR(idata.data,cv.width,cv.height);}catch(e){}
+    if(!code||!code.data)break;
+    out.push(code.data);
+    const loc=code.location;if(!loc)break;
+    const xs=[loc.topLeftCorner.x,loc.topRightCorner.x,loc.bottomLeftCorner.x,loc.bottomRightCorner.x];
+    const ys=[loc.topLeftCorner.y,loc.topRightCorner.y,loc.bottomLeftCorner.y,loc.bottomRightCorner.y];
+    const pad=8;
+    const x0=Math.max(0,Math.floor(Math.min(...xs)-pad)),y0=Math.max(0,Math.floor(Math.min(...ys)-pad));
+    const x1=Math.min(cv.width,Math.ceil(Math.max(...xs)+pad)),y1=Math.min(cv.height,Math.ceil(Math.max(...ys)+pad));
+    if(x1<=x0||y1<=y0)break;
+    ctx.fillStyle='#7a7a7a';ctx.fillRect(x0,y0,x1-x0,y1-y0);
+  }
+  return out;
+}
 async function importTicketImages(t,files,firstName){
   let okC=0,ko=0;const ids=[];
   for(let fi=0;fi<files.length;fi++){
@@ -1760,24 +1792,27 @@ async function importTicketImages(t,files,firstName){
         };
         rd.onerror=reject;rd.readAsDataURL(f);
       });
-      let hit=null;
+      let hits=[];
       try{
         const im2=new Image();im2.src=url;
         await new Promise(res=>{im2.onload=res;});
         const cv2=document.createElement('canvas');cv2.width=im2.width;cv2.height=im2.height;
-        const cx2=cv2.getContext('2d');cx2.drawImage(im2,0,0);
-        const idata=cx2.getImageData(0,0,cv2.width,cv2.height);
-        const q=(typeof jsQR!=='undefined')?jsQR(idata.data,cv2.width,cv2.height):null;
-        if(q&&q.data)hit={code:q.data,fmt:'qrcode'};
+        cv2.getContext('2d').drawImage(im2,0,0);
+        hits=(await extractAllQR(cv2)).map(c=>({code:c,fmt:'qrcode'}));
       }catch(e4){}
-      if(!hit)hit=await zxDecode(url);
-      if(!hit){try{hit=await zxDecode(await rotateDataUrl(url));}catch(e5){}}
-      if(hit){
+      if(!hits.length){
+        let single=await zxDecode(url);
+        if(!single){try{single=await zxDecode(await rotateDataUrl(url));}catch(e5){}}
+        if(single)hits=[single];
+      }
+      if(hits.length){
         const base=(f.name||'Biglietto').replace(/\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').slice(0,40)||'Biglietto';
-        const nm=(fi===0&&firstName)?firstName:base;
-        const tid=uid()+Math.floor(Math.random()*99);
-        t.tickets.push({id:tid,name:nm,code:hit.code,fmt:hit.fmt,type:'attraction'});
-        ids.push(tid);okC++;
+        hits.forEach((hit,hi)=>{
+          const nm=(fi===0&&hi===0&&firstName)?firstName:(base+(hits.length>1?' '+(hi+1):''));
+          const tid=uid();
+          t.tickets.push({id:tid,name:nm,code:hit.code,fmt:hit.fmt,type:'attraction'});
+          ids.push(tid);okC++;
+        });
       }else ko++;
     }catch(e){ko++;}
   }
@@ -1791,93 +1826,130 @@ async function ticketsFromImages(inp){
   const r=await importTicketImages(t,files,null);
   save();renderAll();
   const parts=[];
-  if(r.okC)parts.push('✅ '+r.okC+(r.okC===1?' codice letto':' codici letti')+' (anche carte d\'imbarco)');
+  if(r.okC)parts.push('✅ '+r.okC+(r.okC===1?' codice letto':' codici letti')+' (anche carte d\'imbarco, anche più QR nella stessa immagine)');
   if(r.ko)parts.push(r.ko+' non leggibili: ritaglia stretto sul codice e riprova');
   toast(parts.join(' · ')||'Nessun codice trovato');
+  if(r.ids.length)setTimeout(()=>openTkLink(r.ids.slice()),350);
 }
-async function adTicketFromImages(inp){
+function curActId(){return adRef?(adRef.id!=null?adRef.id:adRef.pendingId):null;}
+async function actTicketFromImages(inp){
   const t=T();if(!t){inp.value='';return;}
   const files=[...(inp.files||[])];inp.value='';
   if(!files.length)return;
   toast('Leggo '+files.length+(files.length===1?' immagine...':' immagini...'));
-  const nm=document.getElementById('adName').value.trim()||null;
+  const nm=document.getElementById('adName').value.trim()||'Biglietto';
   const r=await importTicketImages(t,files,nm);
-  save();
-  if(r.ids.length){
-    refreshAdTicketSel(r.ids[0]);
-    toast('🎫 Biglietto collegato a questa attività'+(r.ids.length>1?' · gli altri '+(r.ids.length-1)+' sono in Biglietti':''));
+  const actId=curActId();
+  if(r.ids.length&&actId!=null){
+    r.ids.forEach(id=>{const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=actId;});
+    save();
+    document.getElementById('adTkChk').checked=true;document.getElementById('adTkFields').style.display='block';
+    renderAdTkList();
+    toast('🎫 '+r.ids.length+(r.ids.length===1?' biglietto collegato':' biglietti collegati')+' a questa attività');
   }else{
-    toast('Nessuna immagine leggibile: prova un ritaglio più stretto');
+    toast('Nessun codice leggibile: ritaglia stretto sul codice e riprova');
   }
 }
-function refreshAdTicketSel(selId){
-  const t=T(),el=document.getElementById('adTicket');if(!t||!el)return;
-  el.innerHTML='<option value="">Nessuno</option>'+t.tickets.map(tk=>`<option value="${tk.id}" ${tk.id===selId?'selected':''}>${tk.type==='flight'?'✈️ ':''}${esc(tk.name)}${tk.img?' 🖼':''}</option>`).join('');
-  renderAdTkPrev();
+function addActTicketManual(){
+  const t=T();if(!t)return;
+  const code=document.getElementById('adTkCode').value.trim();
+  if(!code){toast('Scrivi o incolla il codice');return;}
+  const nm=document.getElementById('adName').value.trim()||'Biglietto';
+  const isFlight=document.getElementById('adType').value==='flight';
+  const tk={id:uid(),name:nm,code,type:isFlight?'flight':'attraction',actId:curActId()};
+  t.tickets.push(tk);
+  document.getElementById('adTkCode').value='';
+  save();renderAdTkList();
+  toast('🎫 Biglietto aggiunto a questa attività');
 }
-function renderAdTkPrev(){
-  const t=T(),el=document.getElementById('adTkPrev');if(!t||!el)return;
-  const v=document.getElementById('adTicket').value;
-  const tk=v?t.tickets.find(x=>x.id===parseInt(v)):null;
-  if(!tk){el.innerHTML='';return;}
-  if(tk.img){
-    el.innerHTML=`<img data-adtki="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:240px;max-height:150px;object-fit:contain;border-radius:10px;display:block;background:var(--paper);border:1px solid var(--line)" alt="biglietto">`;
-    idbP().then(db=>{const rq=db.transaction('ph').objectStore('ph').get(tk.img);
-      rq.onsuccess=e=>{const rec=e.target.result;const im=el.querySelector('img[data-adtki]');if(!im)return;
-        if(rec)im.src=rec.data;
-        else im.outerHTML='<div style="font-size:.72rem;color:var(--ink-faint);padding:.7rem;border:1px dashed var(--line);border-radius:10px">Immagine salvata sul telefono che l\'ha caricata</div>';};
-    }).catch(()=>{});
-  }else{
-    el.innerHTML=`<div style="font-size:.74rem;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem">🎫 Codice: <b style="word-break:break-all">${esc(String(tk.code).slice(0,42))}${String(tk.code).length>42?'…':''}</b> · il QR grande è in Biglietti</div>`;
-  }
+function renderAdTkList(){
+  const t=T(),wrap=document.getElementById('adTkListWrap');if(!t||!wrap)return;
+  const actId=curActId();
+  const list=actId==null?[]:t.tickets.filter(tk=>tk.actId===actId);
+  if(!list.length){wrap.innerHTML='';return;}
+  wrap.innerHTML=list.map((tk,i)=>`<div class="tk-mini"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="removeAdTicket(${tk.id})">✕</button><div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">Biglietto ${i+1}</div>${tk.img?`<img data-tkimg="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:160px;max-height:130px;object-fit:contain;border-radius:8px;display:block;margin:0 auto;background:var(--surface)" alt="biglietto">`:`<div class="qr-box" id="adqr-${tk.id}" style="display:inline-block"></div>`}</div>`).join('');
+  list.forEach(tk=>drawTicketCode(tk,'adqr-'+tk.id,120));
+  hydrateTicketImgs();
 }
+function removeAdTicket(id){const t=T();const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=null;save();renderAdTkList();toast('Biglietto scollegato (resta in Biglietti)');}
 function tkLinkLabel(t,tk){
+  if(tk.actId==null)return 'Collega ad attività';
   for(let di=0;di<t.days.length;di++){
-    const a=(t.days[di].activities||[]).find(x=>x.ticketId===tk.id);
+    const a=(t.days[di].activities||[]).find(x=>x.id===tk.actId);
     if(a)return 'In programma: G'+(di+1)+' · '+esc(a.name).slice(0,18);
   }
   return 'Collega ad attività';
 }
-let tkLinkId=null;
-function openTkLink(id){
-  const t=T();tkLinkId=id;
-  const sel=document.getElementById('tlAct');
-  sel.innerHTML=t.days.map((d,di)=>(d.activities||[]).map(a=>`<option value="${di}:${a.id}" ${a.ticketId===id?'selected':''}>G${di+1} ${a.time||''} · ${esc(a.name)}</option>`).join('')).join('')||'<option value="">Nessuna attività nel viaggio</option>';
+let tkLinkIds=[];
+function openTkLink(ids){
+  const t=T();if(!t)return;
+  tkLinkIds=Array.isArray(ids)?ids.slice():[ids];
+  const cur=(tkLinkIds.length===1)?t.tickets.find(x=>x.id===tkLinkIds[0]):null;
+  let opts='<option value="">Nessuna attività</option>';
+  t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{opts+=`<option value="${a.id}" ${cur&&cur.actId===a.id?'selected':''}>G${di+1} ${a.time||''} · ${esc(a.name)}</option>`;});});
+  document.getElementById('tlAct').innerHTML=opts;
+  document.getElementById('mTkLinkHint').textContent=tkLinkIds.length>1?('Colleghi insieme '+tkLinkIds.length+' biglietti'):'';
   openSheet('mTkLink');
 }
 function saveTkLink(){
-  const t=T(),v=document.getElementById('tlAct').value;
-  if(!v||tkLinkId==null){closeSheet('mTkLink');return;}
-  const[di,aid]=v.split(':').map(Number);
-  t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.ticketId===tkLinkId)a.ticketId=null;}));
-  const a=(t.days[di].activities||[]).find(x=>x.id===aid);
-  if(a)a.ticketId=tkLinkId;
+  const t=T();if(!t||!tkLinkIds.length){closeSheet('mTkLink');return;}
+  const v=document.getElementById('tlAct').value;
+  const aid=v?parseInt(v):null;
+  tkLinkIds.forEach(id=>{const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=aid;});
+  tkLinkIds=[];
   save();renderAll();closeSheet('mTkLink');
-  toast('Biglietto collegato: lo trovi aprendo l\'attività');
+  toast(aid?'Biglietto collegato: lo trovi aprendo l\'attività':'Ok, resta senza attività collegata');
+}
+function drawTicketCode(tk,elId,size){
+  if(tk.img)return;
+  const el=document.getElementById(elId||('qr-'+tk.id));if(!el)return;
+  size=size||170;
+  el.innerHTML='';
+  const bc=(tk.fmt&&tk.fmt!=='qrcode')?tk.fmt:null;
+  if(bc&&typeof bwipjs!=='undefined'){
+    try{
+      const cv=document.createElement('canvas');
+      const opt={bcid:bc,text:tk.code,scale:2,includetext:false,paddingwidth:8,paddingheight:8};
+      if(bc==='pdf417')opt.height=10;
+      bwipjs.toCanvas(cv,opt);
+      cv.style.maxWidth='100%';cv.style.background='#fff';cv.style.borderRadius='8px';
+      el.appendChild(cv);
+      return;
+    }catch(e){}
+  }
+  try{new QRCode(el,{text:tk.code,width:size,height:size,colorDark:'#0C110E'});}catch(e){}
+}
+function hydrateTicketImgs(){
+  document.querySelectorAll('img[data-tkimg]').forEach(im=>{
+    idbP().then(db=>{const rq=db.transaction('ph').objectStore('ph').get(im.dataset.tkimg);
+      rq.onsuccess=e=>{const v=e.target.result;if(v){im.src=v.data;}else{im.outerHTML='<div style=\"font-size:.72rem;color:var(--ink-faint);padding:.7rem;border:1px dashed var(--line);border-radius:10px\">Immagine salvata sul telefono che l\'ha caricata</div>';}};
+      rq.onerror=()=>{im.style.display='none';};
+    }).catch(()=>{});
+  });
+}
+function ticketCardHtml(tk,label){
+  const title=label||((tk.type==='flight'?'✈️ ':'')+esc(tk.name));
+  return `<div class="ticket"><div class="ticket-n">${title}</div>${tk.img?`<img data-tkimg="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="openTkLink(${tk.id})">${tkLinkLabel(T(),tk)}</button><button class="chip" style="color:var(--red)" onclick="delTicket(${tk.id})">Elimina</button></div></div>`;
 }
 function renderTickets(){
   const t=T(),c=document.getElementById('ticketsList');
   if(!t||!t.tickets.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🎫</div><div class="empty-t">Nessun biglietto</div></div>`;return;}
-  c.innerHTML=t.tickets.map(tk=>`<div class="ticket"><div class="ticket-n">${tk.type==='flight'?'✈️ ':''}${esc(tk.name)}</div>${tk.img?`<img data-tki="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="openTkLink(${tk.id})">${tkLinkLabel(t,tk)}</button><button class="chip" style="color:var(--red)" onclick="delTicket(${tk.id})">Elimina</button></div></div>`).join('');
-  t.tickets.forEach(tk=>{
-    if(tk.img)return;
-    const el=document.getElementById(`qr-${tk.id}`);if(!el)return;
-    el.innerHTML='';
-    const bc=(tk.fmt&&tk.fmt!=='qrcode')?tk.fmt:null;
-    if(bc&&typeof bwipjs!=='undefined'){
-      try{
-        const cv=document.createElement('canvas');
-        const opt={bcid:bc,text:tk.code,scale:2,includetext:false,paddingwidth:8,paddingheight:8};
-        if(bc==='pdf417')opt.height=10;
-        bwipjs.toCanvas(cv,opt);
-        cv.style.maxWidth='100%';cv.style.background='#fff';cv.style.borderRadius='8px';
-        el.appendChild(cv);
-        return;
-      }catch(e){}
-    }
-    try{new QRCode(el,{text:tk.code,width:170,height:170,colorDark:'#0C110E'});}catch(e){}
+  const groups=[],seen=new Set();
+  t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{
+    const list=t.tickets.filter(tk=>tk.actId===a.id);
+    if(list.length){groups.push({act:a,tickets:list});list.forEach(tk=>seen.add(tk.id));}
+  });});
+  const loose=t.tickets.filter(tk=>!seen.has(tk.id));
+  let html='';
+  groups.forEach(g=>{
+    html+=`<div class="card"><div class="card-head"><div><div class="card-h" style="font-size:1rem">${esc(g.act.name)}</div><div class="card-sub">${g.tickets.length} bigliett${g.tickets.length===1?'o':'i'}</div></div></div>`;
+    g.tickets.forEach((tk,i)=>{html+=ticketCardHtml(tk,'Biglietto '+(i+1));});
+    html+='</div>';
   });
-  document.querySelectorAll('img[data-tki]').forEach(im=>{idbP().then(db=>{const rq=db.transaction('ph').objectStore('ph').get(im.dataset.tki);rq.onsuccess=e=>{const v=e.target.result;if(v){im.src=v.data;}else{im.outerHTML='<div style=\"font-size:.72rem;color:var(--ink-faint);padding:.8rem;border:1px dashed var(--line);border-radius:10px\">Immagine salvata sul telefono che l\'ha caricata</div>';}};rq.onerror=()=>{im.style.display='none';};}).catch(()=>{});});
+  loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
+  c.innerHTML=html;
+  t.tickets.forEach(tk=>drawTicketCode(tk));
+  hydrateTicketImgs();
 }
 function openTkImg(iid){
   idbP().then(db=>{db.transaction('ph').objectStore('ph').get(iid).onsuccess=e=>{
@@ -1917,7 +1989,19 @@ function scanLoop(){
   requestAnimationFrame(scanLoop);
 }
 function onScan(data){
-  if(scanTarget==='adTk'){scanOn=false;if(navigator.vibrate)navigator.vibrate(200);const f=document.getElementById('adTkCode');if(f)f.value=data;scanTarget=null;closeScanner();toast('Codice inserito nell\'attività');return;}
+  if(scanTarget==='actTk'){
+    scanOn=false;if(navigator.vibrate)navigator.vibrate(200);
+    const t=T();scanTarget=null;closeScanner();
+    if(!t){return;}
+    const nm=document.getElementById('adName').value.trim()||'Biglietto';
+    const isFlight=document.getElementById('adType').value==='flight';
+    const tk={id:uid(),name:nm,code:data,type:isFlight?'flight':'attraction',actId:curActId()};
+    t.tickets.push(tk);save();
+    document.getElementById('adTkChk').checked=true;document.getElementById('adTkFields').style.display='block';
+    renderAdTkList();
+    toast('🎫 Biglietto aggiunto a questa attività');
+    return;
+  }
   scanOn=false;if(navigator.vibrate)navigator.vibrate(200);
   closeScanner();
   openTicketSheet();
@@ -2617,8 +2701,8 @@ function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno el
 function openActDetail(di,id){
   const t=T(),d=t.days[di];if(!d)return;
   const isNew=(id==null);
-  const a=isNew?{name:'',time:'',timeEnd:'',type:'outdoor',notes:'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},ticketId:null,parentId:null,lat:null,lng:null,poiId:null}:d.activities.find(x=>x.id===id);
-  if(!a)return;adRef={di,id:isNew?null:id};
+  const a=isNew?{name:'',time:'',timeEnd:'',type:'outdoor',notes:'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},parentId:null,lat:null,lng:null,poiId:null}:d.activities.find(x=>x.id===id);
+  if(!a)return;adRef={di,id:isNew?null:id,pendingId:isNew?uid():null};
   document.getElementById('adTitle').textContent=isNew?'Nuova attività':'Attività';
   document.getElementById('adName').value=a.name||'';
   document.getElementById('adTime').value=a.time||'';
@@ -2650,16 +2734,17 @@ function openActDetail(di,id){
   document.getElementById('adBookCat').value=bex0?bex0.category:catGuess(a.name||'');
   document.getElementById('adBookHint').textContent='';
   document.getElementById('adWho').innerHTML=t.participants.map(pp=>{const on=(a.who&&a.who.length)?a.who.includes(pp.id):true;return `<label class="split-item ${on?'on':''}"><input type="checkbox" value="${pp.id}" ${on?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked)"><span>${esc(pp.name)}${pp.isMe?' (tu)':''}</span></label>`;}).join('');
-  document.getElementById('adTicket').innerHTML='<option value="">Nessuno</option>'+t.tickets.map(tk=>`<option value="${tk.id}" ${a.ticketId===tk.id?'selected':''}>${esc(tk.name)}</option>`).join('');
   document.getElementById('adTkCode').value='';
-  setTimeout(renderAdTkPrev,30);
+  {const tkCount=t.tickets.filter(tk=>tk.actId===curActId()).length;
+   document.getElementById('adTkChk').checked=tkCount>0;
+   document.getElementById('adTkFields').style.display=tkCount>0?'block':'none';}
+  renderAdTkList();
   adPoiPick=null;window._flyHint=false;
   const pcur=document.getElementById('adPoiCur'),psrc=document.getElementById('adPoiSearch');
   document.getElementById('adPoiRes').innerHTML='';psrc.value='';
   if(a.poiId||a.lat){const lp=a.poiId?t.pois.find(x=>x.id===a.poiId):null;document.getElementById('adPoiName').textContent=lp?lp.name:a.name;pcur.style.display='flex';psrc.style.display='none';}
   else{pcur.style.display='none';psrc.style.display='block';}
   renderAdVotes(isNew?null:a);
-  document.getElementById('adTicket').onchange=renderAdQR;renderAdQR();
   document.getElementById('adNotes').value=a.notes||'';
   document.getElementById('adNav').style.display=(!isNew&&a.lat)?'block':'none';
   const g=document.getElementById('adGcal');
@@ -2668,19 +2753,12 @@ function openActDetail(di,id){
   document.getElementById('adDel').style.display=isNew?'none':'block';
   closeSheet('mDay');openSheet('mActDetail');
 }
-function renderAdQR(){
-  const t=T(),box=document.getElementById('adQR');box.innerHTML='';
-  const id=parseInt(document.getElementById('adTicket').value);if(!id)return;
-  const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
-  const q=document.createElement('div');q.className='qr-box';box.appendChild(q);
-  try{new QRCode(q,{text:tk.code,width:150,height:150,colorDark:'#0E1512'});}catch(e){}
-}
 function saveActDetail(){
   if(!adRef)return;const t=T();const di=adRef.di;
   const isNew=(adRef.id==null);
   let list=t.days[di].activities,ix=-1,a;
   if(!isNew){ix=list.findIndex(x=>x.id===adRef.id);if(ix<0)return;a=list[ix];}
-  else a={id:uid(),lat:null,lng:null,poiId:null,priority:null};
+  else a={id:adRef.pendingId||uid(),lat:null,lng:null,poiId:null,priority:null};
   const name=document.getElementById('adName').value.trim();
   if(!name){toast('Dai un nome all\'attività');return;}
   const time=document.getElementById('adTime').value,timeEnd=document.getElementById('adTimeEnd').value;
@@ -2716,9 +2794,6 @@ function saveActDetail(){
   a.type=document.getElementById('adType').value;
   a.notes=document.getElementById('adNotes').value;
   a.completed=document.getElementById('adDone').checked;
-  const code=document.getElementById('adTkCode').value.trim();
-  if(code){const tk={id:uid(),name:name,code};t.tickets.push(tk);a.ticketId=tk.id;}
-  else{const tkv=document.getElementById('adTicket').value;a.ticketId=tkv?parseInt(tkv):null;}
   const needed=document.getElementById('adBookChk').checked;
   const nb={needed,done:document.getElementById('adBookDone').value==='si',by:document.getElementById('adBookBy').value,time:document.getElementById('adBookTime').value,url:document.getElementById('adBookUrl').value.trim(),who,seats:who.length||1};
   const ob=a.booking||{};nb.notified=(ob.by===nb.by&&ob.time===nb.time)?!!ob.notified:false;
@@ -3457,6 +3532,14 @@ function migrateData(){
   app.trips.forEach(t=>{
     if(!Array.isArray(t.hotels))t.hotels=[];
     if(!Array.isArray(t.guests))t.guests=[];
+    if(!Array.isArray(t.tickets))t.tickets=[];
+    t.days.forEach(d=>(d.activities||[]).forEach(a=>{
+      if(a.ticketId){
+        const tk=t.tickets.find(x=>x.id===a.ticketId);
+        if(tk&&tk.actId==null)tk.actId=a.id;
+        delete a.ticketId;
+      }
+    }));
     t.days.forEach(d=>{const ids=new Set((d.activities||[]).map(x=>x.id));(d.activities||[]).forEach(a=>{if(a.parentId&&(!ids.has(a.parentId)||a.parentId===a.id))a.parentId=null;});});
     if(t.hotel&&t.hotel.lat&&!t.hotels.length){t.hotels.push({id:uid(),name:t.hotel.name,lat:t.hotel.lat,lng:t.hotel.lng,address:t.hotel.address||'',checkIn:t.start||'',checkOut:t.end||''});delete t.hotel;}
     const seen={},remap={};
