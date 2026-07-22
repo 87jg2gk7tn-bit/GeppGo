@@ -605,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r25</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r26</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -971,7 +971,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderAll();
 });
 
-function initMap(){map=L.map('map',{zoomControl:true}).setView([20,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);drawMarkers();}
+function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);drawMarkers();}
 function drawMarkers(){
   if(!map||typeof L==='undefined')return;
   markers.forEach(m=>map.removeLayer(m));markers=[];const t=T();if(!t)return;
@@ -1277,7 +1277,10 @@ function reschedule(di,ai){
 }
 function moveAct(f,ai,to){const t=T();const[a]=t.days[f].activities.splice(ai,1);t.days[to].activities.push(a);save();renderTimeline();toast('✅ Spostata');}
 function toggleAct(di,id){const t=T();const a=t.days[di].activities.find(x=>x.id===id);if(a){a.completed=!a.completed;save();renderTimeline();}}
-function delAct(di,id){const t=T();t.days[di].activities=t.days[di].activities.filter(a=>a.id!==id);save();renderTimeline();}
+function delAct(di,id){
+  const t=T();const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);save();renderTimeline();});
+}
 function openAddAct(di){openActDetail(di,null);}
 function dayLoc(t,day){
   if(day.city){const cc=(t.cities||[]).find(c=>c.name===day.city&&c.lat);if(cc)return{lat:cc.lat,lng:cc.lng};}
@@ -1897,7 +1900,10 @@ function renderAdTkList(){
   list.forEach(tk=>drawTicketCode(tk,'adqr-'+tk.id,120));
   hydrateTicketImgs();
 }
-function removeAdTicket(id){const t=T();const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=null;save();renderAdTkList();toast('Biglietto scollegato (resta in Biglietti)');}
+function removeAdTicket(id){
+  const t=T();const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
+  confirmDo('Scollegare il biglietto?','Resta comunque salvato nella sezione Biglietti.',()=>{tk.actId=null;save();renderAdTkList();toast('Biglietto scollegato (resta in Biglietti)');},'🔗','Scollega','btn-blue');
+}
 function renderAdExpList(){
   const t=T(),wrap=document.getElementById('adExpListWrap');if(!t||!wrap)return;
   const actId=curActId();
@@ -1921,7 +1927,10 @@ function linkAdExpense(){
   save();renderAdExpList();renderAdExpPick();
   toast('💸 Spesa collegata a questa attività');
 }
-function unlinkAdExpense(id){const t=T();const exp=t.expenses.find(x=>x.id===id);if(exp)exp.actId=null;save();renderAdExpList();renderAdExpPick();toast('Spesa scollegata (resta in Spese)');}
+function unlinkAdExpense(id){
+  const t=T();const exp=t.expenses.find(x=>x.id===id);if(!exp)return;
+  confirmDo('Scollegare la spesa?','Resta comunque salvata nella sezione Spese.',()=>{exp.actId=null;save();renderAdExpList();renderAdExpPick();toast('Spesa scollegata (resta in Spese)');},'🔗','Scollega','btn-blue');
+}
 function tkLinkLabel(t,tk){
   if(tk.actId==null)return 'Collega ad attività';
   for(let di=0;di<t.days.length;di++){
@@ -2018,7 +2027,14 @@ function openTkImg(iid){
     openSheet('mPhoto');
   };}).catch(()=>{});
 }
-function delTicket(id){const t=T();const tk=t.tickets.find(x=>x.id===id);t.tickets=t.tickets.filter(x=>x.id!==id);if(tk&&tk.img){idbP().then(db=>{db.transaction('ph','readwrite').objectStore('ph').delete(tk.img);}).catch(()=>{});}save();renderTickets();}
+function delTicket(id){
+  const t=T();const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
+  confirmDo('Eliminare il biglietto?','Il codice e il QR andranno persi definitivamente.',()=>{
+    t.tickets=t.tickets.filter(x=>x.id!==id);
+    if(tk.img){idbP().then(db=>{db.transaction('ph','readwrite').objectStore('ph').delete(tk.img);}).catch(()=>{});}
+    save();renderTickets();
+  });
+}
 async function openScanner(){
   if(!T()){toast('Crea prima un viaggio');return;}
   openSheet('mScanner');document.getElementById('scanResult').innerHTML='';
@@ -3857,7 +3873,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r25</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r26</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
