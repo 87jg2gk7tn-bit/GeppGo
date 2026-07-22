@@ -605,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r27</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r28</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -824,6 +824,11 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div id="mTkLinkHint" style="font-size:.8rem;color:var(--ink-faint);margin:-.3rem 0 .8rem"></div>
   <div class="fg"><label>Quale attività usa questo biglietto?</label><select id="tlAct"></select></div>
   <button class="btn btn-grad btn-block" onclick="saveTkLink()">Collega</button>
+</div></div>
+<div class="modal" id="mTicketBig"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="tkBigTitle">Biglietto</div><button class="x x-close" onclick="closeSheet('mTicketBig')">✕</button></div>
+  <div id="tkBigBody" style="text-align:center"></div>
 </div></div>
 <div class="modal" id="mPhoto"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1883,7 +1888,7 @@ async function actTicketFromImages(inp){
     r.ids.forEach(id=>{const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=actId;});
     save();
     document.getElementById('adTkChk').checked=true;document.getElementById('adTkFields').style.display='block';
-    renderAdTkList();
+    autoAssignActTickets();renderAdTkList();
     toast('🎫 '+r.ids.length+(r.ids.length===1?' biglietto collegato':' biglietti collegati')+' a questa attività');
   }else{
     toast('Nessun codice leggibile: ritaglia stretto sul codice e riprova');
@@ -1898,15 +1903,34 @@ function addActTicketManual(){
   const tk={id:uid(),name:nm,code,type:isFlight?'flight':'attraction',actId:curActId()};
   t.tickets.push(tk);
   document.getElementById('adTkCode').value='';
-  save();renderAdTkList();
+  autoAssignActTickets();save();renderAdTkList();
   toast('🎫 Biglietto aggiunto a questa attività');
+}
+function autoAssignActTickets(){
+  const t=T();if(!t)return;
+  const actId=curActId();if(actId==null)return;
+  const who=[...document.querySelectorAll('#adWho input:checked')].map(c=>parseInt(c.value));
+  const list=t.tickets.filter(tk=>tk.actId===actId);
+  if(!list.length||list.length!==who.length)return;
+  const used=new Set(list.filter(tk=>tk.personId!=null&&who.includes(tk.personId)).map(tk=>tk.personId));
+  const avail=who.filter(pid=>!used.has(pid));
+  let ai=0;
+  list.forEach(tk=>{
+    if(tk.personId==null||!who.includes(tk.personId)){
+      if(ai<avail.length){tk.personId=avail[ai];ai++;}
+    }
+  });
+  save();
 }
 function renderAdTkList(){
   const t=T(),wrap=document.getElementById('adTkListWrap');if(!t||!wrap)return;
   const actId=curActId();
   const list=actId==null?[]:t.tickets.filter(tk=>tk.actId===actId);
   if(!list.length){wrap.innerHTML='';return;}
-  wrap.innerHTML=list.map((tk,i)=>`<div class="tk-mini"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="removeAdTicket(${tk.id})">✕</button><div style="font-weight:800;font-size:.82rem;margin-bottom:.4rem">Biglietto ${i+1}</div>${tk.img?`<img data-tkimg="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:160px;max-height:130px;object-fit:contain;border-radius:8px;display:block;margin:0 auto;background:var(--surface)" alt="biglietto">`:`<div class="qr-box" id="adqr-${tk.id}" style="display:inline-block"></div>`}</div>`).join('');
+  wrap.innerHTML=list.map((tk,i)=>{
+    const person=tk.personId?t.participants.find(p=>p.id===tk.personId):null;
+    return `<div class="tk-mini" style="cursor:pointer" onclick="openTicketBig(${tk.id})"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="event.stopPropagation();removeAdTicket(${tk.id})">✕</button><div style="font-weight:800;font-size:.82rem;margin-bottom:.2rem">Biglietto ${i+1}</div>${person?`<div style="font-size:.7rem;color:var(--green-deep);font-weight:700;margin-bottom:.35rem">${esc(person.name)}</div>`:''}${tk.img?`<img data-tkimg="${tk.img}" style="width:100%;max-width:160px;max-height:130px;object-fit:contain;border-radius:8px;display:block;margin:0 auto;background:var(--surface)" alt="biglietto">`:`<div class="qr-box" id="adqr-${tk.id}" style="display:inline-block"></div>`}</div>`;
+  }).join('');
   list.forEach(tk=>drawTicketCode(tk,'adqr-'+tk.id,120));
   hydrateTicketImgs();
 }
@@ -2006,8 +2030,51 @@ function hydrateTicketImgs(){
   });
 }
 function ticketCardHtml(tk,label){
+  const t=T();
   const title=label||((tk.type==='flight'?'✈️ ':'')+esc(tk.name));
-  return `<div class="ticket"><div class="ticket-n">${title}</div>${tk.img?`<img data-tkimg="${tk.img}" onclick="openTkImg('${tk.img}')" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="openTkLink(${tk.id})">${tkLinkLabel(T(),tk)}</button><button class="chip" style="color:var(--red)" onclick="delTicket(${tk.id})">Elimina</button></div></div>`;
+  const person=tk.personId?t.participants.find(p=>p.id===tk.personId):null;
+  const personLine=person?`<div style="font-size:.72rem;color:var(--green-deep);font-weight:700;margin-top:-.25rem;margin-bottom:.4rem">${esc(person.name)}</div>`:'';
+  return `<div class="ticket" style="cursor:pointer" onclick="openTicketBig(${tk.id})"><div class="ticket-n">${title}</div>${personLine}${tk.img?`<img data-tkimg="${tk.img}" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="event.stopPropagation();openTkLink(${tk.id})">${tkLinkLabel(t,tk)}</button><button class="chip" style="color:var(--red)" onclick="event.stopPropagation();delTicket(${tk.id})">Elimina</button></div></div>`;
+}
+function findTicketActivity(t,tk){
+  if(tk.actId==null)return null;
+  for(let di=0;di<t.days.length;di++){
+    const a=(t.days[di].activities||[]).find(x=>x.id===tk.actId);
+    if(a)return {di,a};
+  }
+  return null;
+}
+function openTicketBig(id){
+  const t=T();if(!t)return;
+  const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
+  document.getElementById('tkBigTitle').textContent=tk.name||'Biglietto';
+  let html='';
+  if(tk.img){
+    html+=`<img data-tkimg="${tk.img}" style="width:100%;max-width:360px;border-radius:14px;display:block;margin:0 auto;background:var(--paper)" alt="biglietto">`;
+  }else{
+    html+=`<div class="qr-box" id="qr-big-${tk.id}" style="display:inline-block"></div><div class="ticket-c" style="margin-top:.6rem">${esc(tk.code||'')}</div>`;
+  }
+  let who=null;
+  if(adRef&&document.getElementById('mActDetail').classList.contains('active')&&curActId()===tk.actId){
+    who=[...document.querySelectorAll('#adWho input:checked')].map(c=>parseInt(c.value));
+  }else{
+    const found=findTicketActivity(t,tk);
+    if(found)who=found.a.who;
+  }
+  if(who&&who.length){
+    html+=`<div class="fg" style="text-align:left;margin-top:1.2rem"><label>Assegna a</label><select id="tkBigPerson" onchange="assignTicketPerson(${tk.id},this.value)"><option value="">Nessuno</option>${who.map(pid=>{const p=t.participants.find(x=>x.id===pid);return p?`<option value="${pid}" ${tk.personId===pid?'selected':''}>${esc(p.name)}</option>`:'';}).join('')}</select></div>`;
+  }
+  document.getElementById('tkBigBody').innerHTML=html;
+  if(!tk.img)drawTicketCode(tk,'qr-big-'+tk.id,240);
+  hydrateTicketImgs();
+  openSheet('mTicketBig');
+}
+function assignTicketPerson(id,val){
+  const t=T();if(!t)return;
+  const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
+  tk.personId=val?parseInt(val):null;
+  save();renderTickets();renderAdTkList();
+  toast(tk.personId?'🎫 Biglietto assegnato':'Assegnazione rimossa');
 }
 function renderTickets(){
   const t=T(),c=document.getElementById('ticketsList');
@@ -2081,9 +2148,9 @@ function onScan(data){
     const nm=document.getElementById('adName').value.trim()||'Biglietto';
     const isFlight=document.getElementById('adType').value==='flight';
     const tk={id:uid(),name:nm,code:data,type:isFlight?'flight':'attraction',actId:curActId()};
-    t.tickets.push(tk);save();
+    t.tickets.push(tk);
     document.getElementById('adTkChk').checked=true;document.getElementById('adTkFields').style.display='block';
-    renderAdTkList();
+    autoAssignActTickets();save();renderAdTkList();
     toast('🎫 Biglietto aggiunto a questa attività');
     return;
   }
@@ -2818,12 +2885,12 @@ function openActDetail(di,id){
   document.getElementById('adBookCur').innerHTML=curOpts(bex0?bex0.origCurrency:(t.currency||'EUR'));
   document.getElementById('adBookCat').value=bex0?bex0.category:catGuess(a.name||'');
   document.getElementById('adBookHint').textContent='';
-  document.getElementById('adWho').innerHTML=t.participants.map(pp=>{const on=(a.who&&a.who.length)?a.who.includes(pp.id):true;return `<label class="split-item ${on?'on':''}"><input type="checkbox" value="${pp.id}" ${on?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked)"><span>${esc(pp.name)}${pp.isMe?' (tu)':''}</span></label>`;}).join('');
+  document.getElementById('adWho').innerHTML=t.participants.map(pp=>{const on=(a.who&&a.who.length)?a.who.includes(pp.id):true;return `<label class="split-item ${on?'on':''}"><input type="checkbox" value="${pp.id}" ${on?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);autoAssignActTickets();renderAdTkList();"><span>${esc(pp.name)}${pp.isMe?' (tu)':''}</span></label>`;}).join('');
   document.getElementById('adTkCode').value='';
   {const tkCount=t.tickets.filter(tk=>tk.actId===curActId()).length;
    document.getElementById('adTkChk').checked=tkCount>0;
    document.getElementById('adTkFields').style.display=tkCount>0?'block':'none';}
-  renderAdTkList();
+  autoAssignActTickets();renderAdTkList();
   renderAdExpPick();renderAdExpList();
   adPoiPick=null;window._flyHint=false;
   const pcur=document.getElementById('adPoiCur'),psrc=document.getElementById('adPoiSearch');
@@ -3883,7 +3950,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r27</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r28</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
