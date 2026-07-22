@@ -605,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r24</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r25</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -750,6 +750,10 @@ body.dark .tt-cont{background:var(--beige)!important}
     <div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="scanInto('actTk')">📷 Scansiona</button><button class="btn btn-soft" style="flex:1" onclick="document.getElementById('adTkImgInp').click()">🖼️ Da immagine</button></div>
     <input type="file" id="adTkImgInp" accept="image/*" multiple style="display:none" onchange="actTicketFromImages(this)">
     <p style="font-size:.72rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Ogni biglietto aggiunto qui si collega subito a questa attività: puoi aggiungerne quanti ne servono (es. uno a persona).</p>
+  </div>
+  <div class="fg"><label>Collega una spesa già inserita <span style="font-weight:500;color:var(--ink-faint)">(es. l'hai già pagata e registrata in Spese)</span></label>
+    <div id="adExpListWrap"></div>
+    <div style="display:flex;gap:.5rem"><select id="adExpPick" style="flex:1"><option value="">Nessuna spesa da collegare</option></select><button class="chip" style="white-space:nowrap" onclick="linkAdExpense()">Collega</button></div>
   </div>
   <div class="fg"><label>Note</label><textarea id="adNotes"></textarea></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -1531,10 +1535,10 @@ function setExpAmt(t,e,amount,fromCur){
   if(e.origCurrency===(t.currency||'EUR')){e.rate=1;e.amount=amount;}
   else fixRate(t,e.id);
 }
-function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur){
+function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,splitAmong){
   const me=t.participants.find(pp=>pp.isMe);
   const fc=fromCur||t.currency||'EUR';
-  const e={id:uid(),desc:label,amount:amount,origAmount:amount,origCurrency:fc,rate:1,category:category,payerId:me?me.id:(t.participants[0]?t.participants[0].id:null),splitAmong:t.participants.map(pp=>pp.id),date:new Date().toISOString(),paid:!!paidBool};
+  const e={id:uid(),desc:label,amount:amount,origAmount:amount,origCurrency:fc,rate:1,category:category,payerId:me?me.id:(t.participants[0]?t.participants[0].id:null),splitAmong:(splitAmong&&splitAmong.length)?splitAmong.slice():t.participants.map(pp=>pp.id),date:new Date().toISOString(),paid:!!paidBool};
   if(linkKey)e[linkKey]=linkVal;
   t.expenses.push(e);
   if(fc!==(t.currency||'EUR'))fixRate(t,e.id);
@@ -1894,6 +1898,30 @@ function renderAdTkList(){
   hydrateTicketImgs();
 }
 function removeAdTicket(id){const t=T();const tk=t.tickets.find(x=>x.id===id);if(tk)tk.actId=null;save();renderAdTkList();toast('Biglietto scollegato (resta in Biglietti)');}
+function renderAdExpList(){
+  const t=T(),wrap=document.getElementById('adExpListWrap');if(!t||!wrap)return;
+  const actId=curActId();
+  const list=actId==null?[]:t.expenses.filter(e=>e.actId===actId);
+  if(!list.length){wrap.innerHTML='';return;}
+  wrap.innerHTML=list.map(e=>`<div class="tk-mini" style="text-align:left;padding:.6rem .8rem"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="unlinkAdExpense(${e.id})">✕</button><div style="font-weight:700;font-size:.85rem;padding-right:1.8rem">${esc(e.desc)}</div><div style="font-size:.76rem;color:var(--ink-faint);margin-top:.15rem">${fmtMoney(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</div></div>`).join('');
+}
+function renderAdExpPick(){
+  const t=T(),sel=document.getElementById('adExpPick');if(!t||!sel)return;
+  const actId=curActId();
+  const opts=t.expenses.filter(e=>e.type!=='transfer'&&e.actId==null).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  sel.innerHTML='<option value="">Nessuna spesa da collegare</option>'+opts.map(e=>`<option value="${e.id}">${esc(e.desc)} · ${fmtMoney(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</option>`).join('');
+}
+function linkAdExpense(){
+  const t=T(),sel=document.getElementById('adExpPick');if(!t||!sel)return;
+  const id=sel.value?parseInt(sel.value):null;if(!id)return;
+  const exp=t.expenses.find(x=>x.id===id);if(!exp)return;
+  exp.actId=curActId();
+  const who=[...document.querySelectorAll('#adWho input:checked')].map(c=>parseInt(c.value));
+  if(who.length)exp.splitAmong=who;
+  save();renderAdExpList();renderAdExpPick();
+  toast('💸 Spesa collegata a questa attività');
+}
+function unlinkAdExpense(id){const t=T();const exp=t.expenses.find(x=>x.id===id);if(exp)exp.actId=null;save();renderAdExpList();renderAdExpPick();toast('Spesa scollegata (resta in Spese)');}
 function tkLinkLabel(t,tk){
   if(tk.actId==null)return 'Collega ad attività';
   for(let di=0;di<t.days.length;di++){
@@ -2770,6 +2798,7 @@ function openActDetail(di,id){
    document.getElementById('adTkChk').checked=tkCount>0;
    document.getElementById('adTkFields').style.display=tkCount>0?'block':'none';}
   renderAdTkList();
+  renderAdExpPick();renderAdExpList();
   adPoiPick=null;window._flyHint=false;
   const pcur=document.getElementById('adPoiCur'),psrc=document.getElementById('adPoiSearch');
   document.getElementById('adPoiRes').innerHTML='';psrc.value='';
@@ -2817,8 +2846,8 @@ function saveActDetail(){
       const flbl=(rm==='fly'?'Volo ':'')+((a.flyFrom&&a.flyTo)?((rm==='fly'?'':a.name+' · ')+a.flyFrom+' → '+a.flyTo):a.name);
       const fcat=rm==='fly'?'Voli':'Trasporti';
       if(fc>0){
-        if(fex){fex.paid=(fp==='paid');fex.desc=flbl;fex.category=fcat;setExpAmt(t,fex,fc,fcur);}
-        else a.flyExpId=pushAutoExp(t,flbl,fc,fp==='paid',fcat,'flyRef',a.id,fcur);
+        if(fex){fex.paid=(fp==='paid');fex.desc=flbl;fex.category=fcat;fex.splitAmong=who.slice();setExpAmt(t,fex,fc,fcur);}
+        else a.flyExpId=pushAutoExp(t,flbl,fc,fp==='paid',fcat,'flyRef',a.id,fcur,who);
       }else if(fex&&fex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==fex.id);a.flyExpId=null;}
     }
   }
@@ -2835,8 +2864,8 @@ function saveActDetail(){
    const bcat=document.getElementById('adBookCat').value||'Attrazioni';
    let bex=a.bookExpId?t.expenses.find(x=>x.id===a.bookExpId):null;
    if(bc>0){
-     if(bex){bex.paid=(bp==='paid');bex.desc=a.name;bex.category=bcat;setExpAmt(t,bex,bc,bcur);}
-     else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur);
+     if(bex){bex.paid=(bp==='paid');bex.desc=a.name;bex.category=bcat;bex.splitAmong=who.slice();setExpAmt(t,bex,bc,bcur);}
+     else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur,who);
    }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);a.bookExpId=null;}
   }
   if(needed&&a.booking.by&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
@@ -2868,7 +2897,7 @@ function saveActDetail(){
 }
 function delActDetail(){
   if(!adRef)return;const t=T(),{di,id}=adRef;
-  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);save();renderAll();closeSheet('mActDetail');setTimeout(()=>openDay(di),150);});
+  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t.expenses.forEach(e=>{if(e.actId===id)e.actId=null;});save();renderAll();closeSheet('mActDetail');setTimeout(()=>openDay(di),150);});
 }
 function navFromDetail(){const t=T(),a=t.days[adRef.di].activities.find(x=>x.id===adRef.id);if(a&&a.lat){closeSheet('mActDetail');openNav(a.lat,a.lng,a.name);}}
 function gcalUrl(a,dateStr){
@@ -3828,7 +3857,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r24</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r25</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
