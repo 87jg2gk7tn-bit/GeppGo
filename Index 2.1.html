@@ -419,6 +419,13 @@ body.dark .tszr::after{background:rgba(255,255,255,.28)}
 
 .tt-cont{border-style:dashed!important;opacity:.94;background:var(--sand-tint)!important}
 body.dark .tt-cont{background:var(--beige)!important}
+.tt-multi{display:flex;gap:.7rem;overflow-x:auto;align-items:flex-start}
+.tt-col{flex:1 1 0;min-width:190px}
+.tt-col-h{font-size:.78rem;font-weight:800;text-align:center;padding:.4rem;border-radius:10px;background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);margin-bottom:.5rem}
+.tt-col-active .tt-col-h{background:var(--green);color:#fff;border-color:var(--green)}
+.tt-peek{opacity:.88}
+.tt-peek .tt-col-h{cursor:pointer}
+.tt-peek .tgrip,.tt-peek .tszr{visibility:hidden}
 </style>
 </head>
 <body>
@@ -606,7 +613,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r35</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r36</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2758,10 +2765,10 @@ function findConflict(t,day,cand,excludeId){
   return null;
 }
 function fmtT(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
-function buildTT(){
-  const _t0=T(),_d0=_t0?_t0.days[ttDay]:null,_dwx=(_t0&&_d0)?_t0.weather[_d0.date]:null;
-  const wpre=a=>(a&&a.type==='outdoor'&&_dwx)?wxEmo(_dwx)+' ':'';
-  const t=T(),d=t.days[ttDay],H=48;
+function isTTLandscapeWide(){return window.matchMedia('(orientation: landscape) and (min-width: 700px)').matches;}
+function buildTTDayInner(t,di){
+  const d=t.days[di],H=48,dwx=t.weather[d.date];
+  const wpre=a=>(a&&a.type==='outdoor'&&dwx)?wxEmo(dwx)+' ':'';
   const acts=d.activities||[];
   const untimed=acts.filter(a=>!actRange(a));
   const timed=acts.filter(a=>actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]||y.r[1]-x.r[1]);
@@ -2779,29 +2786,53 @@ function buildTT(){
   if(cur.length)clusters.push(cur);
   clusters.forEach(cl=>{const ends=[];cl.forEach(it=>{let ci=ends.findIndex(e=>e<=it.r[0]);if(ci<0){ci=ends.length;ends.push(0);}ends[ci]=it.r[1];it.col=ci;});cl.forEach(it=>it.cols=ends.length);});
   let html='';
-  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="openActDetail(${ttDay},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${ttDay},${a.id})">✎</button></div>`).join('');
+  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="openActDetail(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   tops.forEach(it=>{
     const a=it.a,top=(it.r[0]-360)/60*H,hei=Math.max(30,(it.r[1]-it.r[0])/60*H-4);
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
-    html+=`<div class="tt-block ${a.completed?'done':''}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="openActDetail(${ttDay},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
+    html+=`<div class="tt-block ${a.completed?'done':''}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="openActDetail(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
   });
-  const pd=t.days[ttDay-1];
+  const pd=t.days[di-1];
   if(pd)(pd.activities||[]).forEach(a=>{
     if(!a.nextDay||!a.time)return;
     const en=tMin(a.timeEnd);
     let hh2=40,lbl=a.timeEnd?('fino alle '+a.timeEnd):'in mattinata';
     if(en!=null&&en>360)hh2=Math.max(34,(en-360)/60*H-4);
-    html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="openActDetail(${ttDay-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">continua da ieri · ${lbl}${flyTag(a)}</span></div>`;
+    html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="openActDetail(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">continua da ieri · ${lbl}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
-  html+='<div class="tt-empty">Tieni premuto ⋮⋮ e trascina su/giù per spostare l\'orario · tocca per aprire</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
-  document.getElementById('ttBody').innerHTML=html;
-  tops.forEach(it=>{const el=document.querySelector(`.tt-block[data-id="${it.a.id}"]`);if(el)bindBlockDrag(el,it.a,t,d);});
-  document.querySelectorAll('.tt-child[data-id]').forEach(el=>{const idc=parseInt(el.dataset.id);const ac=(d.activities||[]).find(x=>x.id===idc);if(ac)bindChildDrag(el,ac,t,d);});
+  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto ⋮⋮ e trascina su/giù per spostare l\'orario · tocca per aprire</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
+  return {html,tops,d};
 }
+function buildTT(){
+  const t=T();if(!t)return;
+  const nDays=t.days.length;
+  const cols=(isTTLandscapeWide()&&nDays>1)?Math.min(3,nDays):1;
+  const start=Math.max(0,Math.min(ttDay,nDays-cols));
+  const idxs=[];for(let i=0;i<cols;i++)idxs.push(start+i);
+  let activeTops=null,activeD=null;
+  const colsHtml=idxs.map(di=>{
+    const r=buildTTDayInner(t,di);
+    if(di===ttDay){activeTops=r.tops;activeD=r.d;}
+    if(cols===1)return r.html;
+    const dd=t.days[di],isAct=di===ttDay;
+    const lbl=new Date(dd.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+    return `<div class="tt-col ${isAct?'tt-col-active':'tt-peek'}"><div class="tt-col-h" ${isAct?'':`onclick="openDay(${di})"`}>G${di+1} · ${esc(lbl)}</div>${r.html}</div>`;
+  }).join('');
+  document.getElementById('ttBody').innerHTML=cols>1?`<div class="tt-multi">${colsHtml}</div>`:colsHtml;
+  if(activeTops){
+    activeTops.forEach(it=>{const el=document.querySelector(`.tt-block[data-id="${it.a.id}"]`);if(el)bindBlockDrag(el,it.a,t,activeD);});
+    document.querySelectorAll('.tt-child[data-id]').forEach(el=>{const idc=parseInt(el.dataset.id);const ac=(activeD.activities||[]).find(x=>x.id===idc);if(ac)bindChildDrag(el,ac,t,activeD);});
+  }
+}
+let _ttResizeT=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_ttResizeT);
+  _ttResizeT=setTimeout(()=>{if(document.getElementById('mDay').classList.contains('active'))buildTT();},150);
+});
 function bindBlockDrag(el,act,t,d){
   const g=el.querySelector('.tgrip');if(!g)return;g.style.touchAction='none';
   let on=false,sy=0,orig=0,dur=60,hadEnd=false,ns=0;
@@ -4030,7 +4061,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r35</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r36</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
