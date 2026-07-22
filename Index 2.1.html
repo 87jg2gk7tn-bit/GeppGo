@@ -613,7 +613,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r37</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r38</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1131,11 +1131,13 @@ async function geoSearch(fullQ){
   return out;
 }
 async function doSearch(q){
+  const stillCurrent=()=>document.getElementById('poiSearch').value.trim()===q;
   try{
     let data=await geoSearch(q);
+    if(!stillCurrent())return;
     if(!data.length){document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--ink-faint)">Nessun risultato</div></div>`;return;}
     data=rankPlaces(data,q);renderResults(data,'searchResults');
-  }catch(e){document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--red)">⚠️ Errore connessione</div></div>`;}
+  }catch(e){if(stillCurrent())document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--red)">⚠️ Errore connessione</div></div>`;}
 }
 function rankPlaces(data,q){
   const ql=q.toLowerCase(),qw=ql.split(/\s+/).filter(w=>w.length>2);
@@ -4072,7 +4074,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r37</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r38</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
