@@ -509,13 +509,25 @@ body.dark .tt-cont{background:var(--beige)!important}
         </div>
       </div>
       <div id="impMode" style="display:none">
-        <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">📲 Importa da un reel o post</div><div class="card-sub">Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.</div></div>
-        <div class="fg"><label>Didascalia / testo del post</label><textarea id="impText" placeholder="Incolla qui il testo del reel con i posti consigliati..."></textarea></div>
-        <label class="file-btn btn-soft" style="background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:none;margin-bottom:.7rem">🖼️ Aggiungi screenshot (opzionale)<input type="file" accept="image/*" style="display:none" onchange="onImpImage(event)"></label>
-        <div id="impPrev"></div>
-        <button class="btn btn-grad btn-block" onclick="extractPlaces()">✦ Trova i posti</button>
-        <div id="impResult" style="margin-top:.85rem"></div>
-        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.</p>
+        <div class="seg" style="margin-bottom:.7rem">
+          <button class="seg-btn active" id="impSubPlaces" onclick="setImpSub('places')">📍 Posti da un reel</button>
+          <button class="seg-btn" id="impSubBooking" onclick="setImpSub('booking')">🎫 Prenotazione</button>
+        </div>
+        <div id="impPlacesSub">
+          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">📲 Importa da un reel o post</div><div class="card-sub">Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.</div></div>
+          <div class="fg"><label>Didascalia / testo del post</label><textarea id="impText" placeholder="Incolla qui il testo del reel con i posti consigliati..."></textarea></div>
+          <label class="file-btn btn-soft" style="background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:none;margin-bottom:.7rem">🖼️ Aggiungi screenshot (opzionale)<input type="file" accept="image/*" style="display:none" onchange="onImpImage(event)"></label>
+          <div id="impPrev"></div>
+          <button class="btn btn-grad btn-block" onclick="extractPlaces()">✦ Trova i posti</button>
+          <div id="impResult" style="margin-top:.85rem"></div>
+          <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.</p>
+        </div>
+        <div id="impBookingSub" style="display:none">
+          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">🎫 Incolla una conferma di prenotazione</div><div class="card-sub">Incolla il testo dell'email di conferma di un volo, treno o hotel: provo a riconoscere date, orari e luoghi. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.</div></div>
+          <div class="fg"><label>Testo della conferma</label><textarea id="bookText" placeholder="Incolla qui l'email o il testo della prenotazione..."></textarea></div>
+          <button class="btn btn-grad btn-block" onclick="analyzeBooking()">🔎 Analizza prenotazione</button>
+          <div id="bookResult" style="margin-top:.85rem"></div>
+        </div>
       </div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
@@ -613,7 +625,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r38</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r39</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2593,6 +2605,143 @@ async function addAllPlaces(list){
   save();renderAll();toast(`✅ ${n} posti aggiunti alla mappa`);go('plan');
 }
 
+function setImpSub(m){
+  document.getElementById('impPlacesSub').style.display=m==='places'?'block':'none';
+  document.getElementById('impBookingSub').style.display=m==='booking'?'block':'none';
+  document.getElementById('impSubPlaces').classList.toggle('active',m==='places');
+  document.getElementById('impSubBooking').classList.toggle('active',m==='booking');
+}
+
+/* ===== IMPORT PRENOTAZIONE DA TESTO (parser lato client, nessuna AI) ===== */
+const IT_MONTHS={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+const IT_MONTHS_RX='gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre';
+function bookParseDate(str){
+  let m=str.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})\b/);
+  if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  m=str.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  const rx=new RegExp(`\\b(\\d{1,2})\\s+(${IT_MONTHS_RX})\\s+(\\d{4})\\b`,'i');
+  m=str.match(rx);
+  if(m)return `${m[3]}-${String(IT_MONTHS[m[2].toLowerCase()]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  return '';
+}
+function bookAllDates(text){
+  const rx=new RegExp(`\\b\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{4}\\b|\\b\\d{4}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}\\s+(?:${IT_MONTHS_RX})\\s+\\d{4}\\b`,'gi');
+  return [...text.matchAll(rx)].map(m=>bookParseDate(m[0])).filter(Boolean);
+}
+function bookParseCode(text){
+  const m=text.match(/(?:PNR|codice(?:\s+di)?\s+prenotazione|localizzatore|booking\s*(?:number|code|id)|confirmation\s*(?:number|code)|numero\s+di\s+conferma)\s*[:\-]?\s*([A-Z0-9]{4,10})\b/i);
+  return m?m[1].toUpperCase():'';
+}
+function detectBookingType(text){
+  const low=text.toLowerCase();
+  if(/check[\s\-]?in|check[\s\-]?out|booking\.com|airbnb|\bhotel\b|alloggio|pernottamento|soggiorno/.test(low))return 'hotel';
+  if(/trenitalia|\bitalo\b|frecciarossa|frecciargento|frecciabianca|intercity|\btreno\b|binario/.test(low))return 'train';
+  if(/\bvolo\b|\bflight\b|imbarco|\bgate\b|carta d'imbarco|boarding pass|ita airways|ryanair|easyjet|lufthansa|\bairways\b/.test(low))return 'flight';
+  return 'unknown';
+}
+function bookParseRoute(text){
+  let m=text.match(/\bda\s+([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)\s+a\s+([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
+  if(m)return {from:m[1].trim(),to:m[2].trim()};
+  m=text.match(/([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)\s*(?:→|->)\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/);
+  if(m)return {from:m[1].trim(),to:m[2].trim()};
+  const mf=text.match(/(?:partenza|da)\s*[:\-]\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
+  const mt=text.match(/(?:arrivo|a)\s*[:\-]\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
+  if(mf||mt)return {from:mf?mf[1].trim():'',to:mt?mt[1].trim():''};
+  return {from:'',to:''};
+}
+function bookParseName(text,type){
+  if(type==='hotel'){
+    const m=text.match(/(?:hotel|struttura|alloggio)\s*[:\-]?\s*([^\n]{3,60})/i);
+    if(m)return m[1].trim();
+  }
+  if(type==='flight'){
+    const m=text.match(/\bvolo\s*[:\-]?\s*([A-Z]{2}\s?\d{2,4})/i)||text.match(/\b([A-Z]{2}\s?\d{2,4})\b/);
+    if(m)return 'Volo '+m[1].toUpperCase().replace(/\s+/,'');
+  }
+  if(type==='train'){
+    const m=text.match(/\b(frecciarossa|frecciargento|frecciabianca|italo|intercity|regionale)\s*(\d{1,4})?\b/i);
+    if(m)return m[1][0].toUpperCase()+m[1].slice(1).toLowerCase()+(m[2]?' '+m[2]:'');
+  }
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  return lines[0]?lines[0].slice(0,60):'';
+}
+function parseBookingText(text){
+  const type=detectBookingType(text);
+  const dates=bookAllDates(text);
+  const times=[...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(m=>`${m[1].padStart(2,'0')}:${m[2]}`);
+  const route=bookParseRoute(text);
+  return {
+    type,name:bookParseName(text,type),code:bookParseCode(text),
+    from:route.from,to:route.to,
+    dateStart:dates[0]||'',dateEnd:dates[1]||dates[0]||'',
+    timeStart:times[0]||''
+  };
+}
+let bookParsed=null;
+function analyzeBooking(){
+  const text=document.getElementById('bookText').value.trim();
+  if(!text){toast('Incolla prima il testo della conferma');return;}
+  bookParsed=parseBookingText(text);
+  renderBookingPreview();
+}
+function bookTypeLabel(t){return {flight:'✈️ Volo',train:'🚆 Treno',hotel:'🏨 Hotel',unknown:'❓ Non riconosciuto'}[t]||'';}
+function renderBookingPreview(){
+  const p=bookParsed,box=document.getElementById('bookResult'),t=T();
+  const dayOpts=t?t.days.map((d,i)=>`<option value="${i}" ${d.date===p.dateStart?'selected':''}>G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join(''):'';
+  box.innerHTML=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem"><span class="tag top">${bookTypeLabel(p.type)}</span></div>
+    ${!t?'<div style="font-size:.8rem;color:var(--red);margin-bottom:.6rem">Crea prima un viaggio per poter salvare</div>':''}
+    ${p.type==='unknown'?'<div style="font-size:.8rem;color:var(--ink-faint);margin-bottom:.6rem">Non ho riconosciuto automaticamente il tipo — controlla e completa i campi qui sotto prima di salvare.</div>':''}
+    <div class="fg"><label>Nome</label><input id="bpName" value="${esc(p.name)}"></div>
+    ${p.type==='hotel'?`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-in</label><input type="date" id="bpDateStart" value="${p.dateStart}"></div><div class="fg" style="flex:1"><label>Check-out</label><input type="date" id="bpDateEnd" value="${p.dateEnd}"></div></div>`
+    :`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Da</label><input id="bpFrom" value="${esc(p.from)}"></div><div class="fg" style="flex:1"><label>A</label><input id="bpTo" value="${esc(p.to)}"></div></div>
+    <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Giorno</label><select id="bpDay">${dayOpts}</select></div><div class="fg" style="flex:1"><label>Ora partenza</label><input type="time" id="bpTimeStart" value="${p.timeStart}"></div></div>`}
+    <div class="fg"><label>Codice prenotazione (opz.)</label><input id="bpCode" value="${esc(p.code)}"></div>
+    <button class="btn btn-grad btn-block" onclick="confirmBookingImport()" ${!t?'disabled':''}>✓ ${p.type==='hotel'?'Continua e salva hotel':'Continua e aggiungi attività'}</button>
+  </div>`;
+}
+function confirmBookingImport(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  const p=bookParsed;if(!p)return;
+  const name=document.getElementById('bpName').value.trim();
+  if(!name){toast('Dai un nome alla prenotazione');return;}
+  const code=document.getElementById('bpCode').value.trim();
+  if(p.type==='hotel'){
+    const ci=document.getElementById('bpDateStart').value,co=document.getElementById('bpDateEnd').value;
+    if(!ci||!co||co<=ci){toast('Metti check-in e check-out, in quest\'ordine');return;}
+    geoSearch(name+(t.destination?', '+t.destination:'')).then(res=>{
+      const r=res&&res[0];
+      pendingHotel={name,lat:r?parseFloat(r.lat):(t.destLoc?t.destLoc.lat:0),lng:r?parseFloat(r.lon):(t.destLoc?t.destLoc.lng:0),address:r?(r.display_name||''):'',editId:null};
+      document.getElementById('haName').value=name;
+      document.getElementById('haIn').value=ci;document.getElementById('haOut').value=co;
+      document.getElementById('haCost').value='';document.getElementById('haPaid').value='plan';
+      document.getElementById('haCur').innerHTML=curOpts(t.currency||'EUR');
+      openSheet('mHotelAdd');
+      toast(code?`Codice prenotazione ${code}: aggiungilo alle note se vuoi`:'Controlla i dati e salva');
+    });
+  }else{
+    const di=parseInt(document.getElementById('bpDay').value);
+    if(isNaN(di)||!t.days[di]){toast('Scegli un giorno del viaggio');return;}
+    const from=document.getElementById('bpFrom')?document.getElementById('bpFrom').value.trim():'';
+    const to=document.getElementById('bpTo')?document.getElementById('bpTo').value.trim():'';
+    const time=document.getElementById('bpTimeStart')?document.getElementById('bpTimeStart').value:'';
+    openActDetail(di,null);
+    document.getElementById('adName').value=name;
+    if(time)document.getElementById('adTime').value=time;
+    if(p.type==='flight'){
+      document.getElementById('adType').value='flight';window._routeMode='fly';
+      document.getElementById('adFlyFrom').value=from;document.getElementById('adFlyTo').value=to;
+    }else if(p.type==='train'){
+      window._routeMode='transit';
+      document.getElementById('adFlyFrom').value=from;document.getElementById('adFlyTo').value=to;
+    }
+    window._flyHint=true;setRouteLabels();updFlyVis();
+    if(code){const nt=document.getElementById('adNotes');nt.value=(nt.value?nt.value+'\n':'')+'Codice prenotazione: '+code;}
+    toast('Controlla i dati e premi Salva per aggiungere');
+  }
+}
+
 /* ===== VOLI (deep link Google Flights) ===== */
 function searchFlights(){
   if(!from||!to){toast('Inserisci partenza e destinazione');return;}
@@ -4074,7 +4223,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r38</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r39</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
