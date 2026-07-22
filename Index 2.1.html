@@ -377,6 +377,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
+.tt-travel-toggle{cursor:pointer;opacity:.6}
+.tt-travel-toggle:active{opacity:1}
 .tt-travel-modes{display:flex;gap:.2rem;flex-shrink:0}
 .tt-travel-mode{cursor:pointer;opacity:.4;font-size:.8rem}
 .tt-travel-mode.on{opacity:1}
@@ -631,7 +633,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r45</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r46</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -670,7 +672,11 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">🎒 Lista bagagli</div><button class="x x-close" onclick="closeSheet('mPacking')">✕</button></div>
   <div class="card-sub" style="margin:-.4rem 0 .8rem">Generata da durata, meteo e attività del viaggio. Spunta, modifica o aggiungi voci: resta tua.</div>
-  <div style="display:flex;gap:.5rem;margin-bottom:.8rem"><input id="packAddInp" placeholder="Aggiungi una voce..." style="flex:1" onkeydown="if(event.key==='Enter')addPackItem()"><button class="btn btn-soft" onclick="addPackItem()">+</button></div>
+  <div style="display:flex;gap:.5rem;margin-bottom:.8rem">
+    <select id="packAddCat" style="flex:0 0 auto;max-width:38%"><option>Documenti</option><option>Elettronica</option><option>Igiene</option><option>Abbigliamento</option><option selected>Extra</option></select>
+    <input id="packAddInp" placeholder="Aggiungi una voce..." style="flex:1" onkeydown="if(event.key==='Enter')addPackItem()">
+    <button class="btn btn-soft" onclick="addPackItem()">+</button>
+  </div>
   <div id="packList"></div>
   <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
 </div></div>
@@ -1195,8 +1201,9 @@ function renderPacking(){
 function addPackItem(){
   const t=T();if(!t)return;
   const inp=document.getElementById('packAddInp'),v=inp.value.trim();if(!v)return;
+  const cat=document.getElementById('packAddCat').value||'Extra';
   ensurePacking(t);
-  t.packing.push({id:uid(),cat:'Extra',label:v,checked:false,custom:true});
+  t.packing.push({id:uid(),cat,label:v,checked:false,custom:true});
   inp.value='';save();renderPacking();
 }
 function togglePackItem(id,val){const t=T();if(!t)return;const p=t.packing.find(x=>x.id===id);if(!p)return;p.checked=val;save();renderPacking();}
@@ -1459,6 +1466,7 @@ function addDay(){const t=T();if(!t)return;const date=document.getElementById('d
 function delDay(i){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(i,1);save();renderAll();});}
 /* ===== QW-4: STIME TEMPI/COSTI DI SPOSTAMENTO TRA TAPPE ===== */
 const TRAVEL_SPEED_KMH={walk:4.5,train:20,car:40};
+const DISTANT_GAP_MIN=180;
 function travelParams(day,modeOverride){
   const mode=modeOverride||(day&&day.travelMode)||'walk';
   return {mode,speed:TRAVEL_SPEED_KMH[mode]||4.5,fuelL100:app.settings.fuelConsumptionL100km||7,fuelPrice:app.settings.fuelPricePerL||1.8};
@@ -1469,18 +1477,21 @@ function travelEstimate(day,distM,modeOverride){
 }
 function computeDayTravel(day){
   const mode=day.travelMode||'walk';
-  const geo=(day.activities||[]).filter(a=>a.lat).sort((a,b)=>{if(!a.time&&!b.time)return 0;if(!a.time)return 1;if(!b.time)return -1;return a.time.localeCompare(b.time);});
+  const timed=(day.activities||[]).filter(a=>a.lat&&actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]);
   const segs=new Map();let totalMin=0,totalCost=0,hasCost=false;
-  for(let i=0;i<geo.length-1;i++){
-    if(geo[i].travelState==='skip')continue;
-    const est=travelEstimate(day,hav(geo[i],geo[i+1]),geo[i].segTravelMode);
-    segs.set(geo[i].id,est);totalMin+=est.minutes;
+  for(let i=0;i<timed.length-1;i++){
+    const cur=timed[i].a,gapStart=timed[i].r[1],gapEnd=timed[i+1].r[0];
+    if(gapEnd<=gapStart+4)continue;
+    if(cur.travelState==='skip')continue;
+    if((gapEnd-gapStart)>DISTANT_GAP_MIN&&cur.travelState!=='shown')continue;
+    const est=travelEstimate(day,hav(cur,timed[i+1].a),cur.segTravelMode);
+    segs.set(cur.id,est);totalMin+=est.minutes;
     if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
   }
   return {segs,totalMin,totalCost:hasCost?totalCost:null,mode};
 }
 function fmtMinutes(min){const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m}min`:`${m} min`;}
-function setDayTravelMode(di,mode){const t=T();if(!t||!t.days[di])return;t.days[di].travelMode=mode;save();buildTT();}
+function revealTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='shown';save();buildTT();}
 function skipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='skip';save();buildTT();}
 function unskipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState=null;save();buildTT();}
 function setSegTravelMode(di,actId,mode){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.segTravelMode=mode;save();buildTT();}
@@ -3069,9 +3080,9 @@ function buildTTDayInner(t,di){
   if(cur.length)clusters.push(cur);
   clusters.forEach(cl=>{const ends=[];cl.forEach(it=>{let ci=ends.findIndex(e=>e<=it.r[0]);if(ci<0){ci=ends.length;ends.push(0);}ends[ci]=it.r[1];it.col=ci;});cl.forEach(it=>it.cols=ends.length);});
   let html='';
-  const trav=computeDayTravel(d),dm=d.travelMode||'walk';
-  if(di===ttDay||trav.totalMin){
-    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap"><span style="font-size:.78rem;font-weight:700;color:var(--ink-soft)">${trav.totalMin?`${dm==='car'?'🚗':dm==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi`:'Nessuno spostamento da stimare oggi'}</span>${di===ttDay?`<div class="seg" style="margin:0;padding:.15rem;flex-shrink:0"><button class="seg-btn ${dm==='walk'?'active':''}" style="padding:.3rem .5rem;font-size:.72rem" onclick="setDayTravelMode(${di},'walk')">🚶</button><button class="seg-btn ${dm==='train'?'active':''}" style="padding:.3rem .5rem;font-size:.72rem" onclick="setDayTravelMode(${di},'train')">🚆</button><button class="seg-btn ${dm==='car'?'active':''}" style="padding:.3rem .5rem;font-size:.72rem" onclick="setDayTravelMode(${di},'car')">🚗</button></div>`:''}</div>`;
+  const trav=computeDayTravel(d);
+  if(trav.totalMin){
+    html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi</div>`;
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="openActDetail(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
@@ -3082,6 +3093,7 @@ function buildTTDayInner(t,di){
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
     html+=`<div class="tt-block ${a.completed?'done':''}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="openActDetail(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
   });
+  const dm=d.travelMode||'walk';
   for(let i=0;i<tops.length-1;i++){
     const cur=tops[i],nxt=tops[i+1];
     if(!cur.a.lat||!nxt.a.lat)continue;
@@ -3089,8 +3101,11 @@ function buildTTDayInner(t,di){
     if(gapEnd<=gapStart+4)continue;
     const state=cur.a.travelState;
     const gTop=(gapStart-360)/60*H,gH=Math.max(16,(gapEnd-gapStart)/60*H-2);
+    const isDistant=(gapEnd-gapStart)>DISTANT_GAP_MIN;
     if(state==='skip'){
       html+=`<div class="tt-travel tt-travel-skip" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();unskipTravel(${di},${cur.a.id})">necessario ↺</div>`;
+    }else if(isDistant&&state!=='shown'){
+      html+=`<div class="tt-travel tt-travel-toggle" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🧭 rileva distanza</div>`;
     }else{
       const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(cur.a,nxt.a),segMode);
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${cur.a.id},'${m}')">${ic}</span>`;
@@ -4378,7 +4393,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r45</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r46</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
