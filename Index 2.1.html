@@ -605,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r30</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r31</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -634,6 +634,11 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="fg" id="savePOIHourWrap" style="display:none"><label>A che ora? <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><input type="time" id="savePOIHour"></div>
   <div id="wxPreview"></div>
   <button class="btn btn-green btn-block" onclick="confirmSavePOI()">✓ Salva</button>
+</div></div>
+<div class="modal" id="mPlaceInfo"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="piTitle">Luogo</div><button class="x x-close" onclick="closeSheet('mPlaceInfo')">✕</button></div>
+  <div id="piBody"></div>
 </div></div>
 <div class="modal" id="mAddDay"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1149,9 +1154,56 @@ function renderResults(data,target){
     const type=p.type||p.class,hours=p.extratags?.opening_hours||'',website=p.extratags?.website||p.extratags?.['contact:website']||'',phone=p.extratags?.phone||p.extratags?.['contact:phone']||'';
     const lat=parseFloat(p.lat),lng=parseFloat(p.lon),ic=placeIcon(p.type,p.class);
     const pd=JSON.stringify({name,lat,lng,address:addr,type,hours,website,phone}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
-    return `<div class="res"><div class="res-top"><div class="res-ic">${ic}</div><div class="res-body"><div class="res-name">${esc(name)}</div><div class="res-addr">${esc(addr)}</div><div class="tags">${p._top?'<span class="tag top">⭐ Top</span>':''}${type?`<span class="tag">${esc(type)}</span>`:''}${hours?`<span class="tag b">🕐 ${esc(hours.substring(0,22))}</span>`:''}</div></div></div><div class="mini-map" id="${target}-mini-${i}"></div><div class="chips"><button class="chip green" onclick='openSavePOI(${pd})'>💾 Salva</button><a class="chip" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank">🗺️ Maps</a>${website?`<a class="chip" href="${esc(website)}" target="_blank">🌐 Sito</a>`:''}${phone?`<a class="chip" href="tel:${esc(phone)}">📞</a>`:''}</div></div>`;
+    return `<div class="res" style="cursor:pointer" onclick='openPlaceInfo(${pd})'><div class="res-top"><div class="res-ic">${ic}</div><div class="res-body"><div class="res-name">${esc(name)}</div><div class="res-addr">${esc(addr)}</div><div class="tags">${p._top?'<span class="tag top">⭐ Top</span>':''}${type?`<span class="tag">${esc(type)}</span>`:''}${hours?`<span class="tag b">🕐 ${esc(hours.substring(0,22))}</span>`:''}</div></div></div><div class="mini-map" id="${target}-mini-${i}"></div><div class="chips"><button class="chip green" onclick='event.stopPropagation();openSavePOI(${pd})'>💾 Salva</button><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank">🗺️ Maps</a>${website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(website)}" target="_blank">🌐 Sito</a>`:''}${phone?`<a class="chip" onclick="event.stopPropagation()" href="tel:${esc(phone)}">📞</a>`:''}</div></div>`;
   }).join('')}</div>`;
   data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
+}
+let piMapObj=null;
+async function openPlaceInfo(place){
+  document.getElementById('piTitle').textContent=place.name||'Luogo';
+  document.getElementById('piBody').innerHTML='<div style="text-align:center;padding:1.4rem;color:var(--ink-faint)">Carico i dettagli...</div>';
+  openSheet('mPlaceInfo');
+  let extra={};
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${place.lat}&lon=${place.lng}&format=json&extratags=1&addressdetails=1&accept-language=it`,{headers:{'Accept-Language':'it,en'}});
+    const d=await r.json();
+    extra={
+      hours:d.extratags?.opening_hours||'',
+      website:d.extratags?.website||d.extratags?.['contact:website']||'',
+      phone:d.extratags?.phone||d.extratags?.['contact:phone']||'',
+      wiki:d.extratags?.wikipedia||'',
+      cuisine:d.extratags?.cuisine||'',
+      fullAddr:d.display_name||''
+    };
+  }catch(e){}
+  renderPlaceInfo(place,extra);
+}
+function renderPlaceInfo(place,extra){
+  extra=extra||{};
+  const hours=extra.hours||place.hours||'',website=extra.website||place.website||'',phone=extra.phone||place.phone||'';
+  const addr=extra.fullAddr||place.address||'',ic=placeIcon(place.type,place.type);
+  let wikiUrl='';
+  if(extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2)wikiUrl=`https://${parts[0]}.wikipedia.org/wiki/${encodeURIComponent(parts[1])}`;}
+  document.getElementById('piBody').innerHTML=`
+    <div style="text-align:center;font-size:2.4rem;margin-bottom:.3rem">${ic}</div>
+    ${place.type||extra.cuisine?`<div style="text-align:center;margin-bottom:.8rem">${place.type?`<span class="tag">${esc(place.type)}</span>`:''}${extra.cuisine?` <span class="tag">${esc(extra.cuisine)}</span>`:''}</div>`:''}
+    ${addr?`<div class="fg"><label>Indirizzo</label><div style="font-size:.9rem;color:var(--ink-soft)">${esc(addr)}</div></div>`:''}
+    ${hours?`<div class="fg"><label>Orari</label><div style="font-size:.9rem;color:var(--ink-soft)">${esc(hours)}</div></div>`:''}
+    ${website?`<div class="fg"><label>Sito</label><a href="${esc(website)}" target="_blank" style="font-size:.9rem;word-break:break-all">${esc(website)}</a></div>`:''}
+    ${phone?`<div class="fg"><label>Telefono</label><a href="tel:${esc(phone)}" style="font-size:.9rem">${esc(phone)}</a></div>`:''}
+    ${wikiUrl?`<div class="fg"><label>Wikipedia</label><a href="${wikiUrl}" target="_blank" style="font-size:.9rem">Apri su Wikipedia</a></div>`:''}
+    <div class="mini-map" id="piMap" style="margin-top:.6rem"></div>
+    <div style="display:flex;gap:.5rem;margin-top:1rem">
+      <button class="btn btn-green" style="flex:1" onclick='openSavePOI(${JSON.stringify(place).replace(/'/g,"&apos;")})'>💾 Salva</button>
+      <button class="btn btn-soft" style="flex:1" onclick="openNav(${place.lat},${place.lng},${jesc(place.name)})">🧭 Naviga</button>
+    </div>`;
+  setTimeout(()=>{
+    if(piMapObj){try{piMapObj.remove()}catch(e){}piMapObj=null;}
+    if(typeof L==='undefined')return;
+    piMapObj=L.map('piMap',{zoomControl:false,attributionControl:false}).setView([place.lat,place.lng],16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(piMapObj);
+    L.marker([place.lat,place.lng]).addTo(piMapObj);
+  },150);
 }
 function initChat(){
   const starters=document.getElementById('aiStarters'),t=T(),dest=t?.destination||'';
@@ -3946,7 +3998,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r30</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r31</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
