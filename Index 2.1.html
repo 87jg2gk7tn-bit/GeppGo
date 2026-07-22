@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r47</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r48</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1472,18 +1472,25 @@ function travelParams(day,modeOverride){
   const mode=modeOverride||(day&&day.travelMode)||'walk';
   return {mode,speed:TRAVEL_SPEED_KMH[mode]||4.5,fuelL100:app.settings.fuelConsumptionL100km||7,fuelPrice:app.settings.fuelPricePerL||1.8};
 }
-function travelEstimate(day,distM,modeOverride){
+function travelEstimate(day,distM,modeOverride,rain){
   const p=travelParams(day,modeOverride),km=distM/1000;
-  return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/p.speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
+  const speed=(p.mode==='train'&&rain)?p.speed*0.75:p.speed;
+  return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
+}
+function dayIsRainy(t,day){const w=t&&t.weather&&t.weather[day.date];return !!(w&&w.precipitation>5);}
+function hotelMorningRef(t,day){
+  const h=hotelFor(t,day.date);
+  return (h&&h.checkIn&&day.date>h.checkIn)?h:null;
 }
 function computeDayTravel(day,t){
   const mode=day.travelMode||'walk';
+  const rain=t?dayIsRainy(t,day):false;
   const timed=(day.activities||[]).filter(a=>a.lat&&actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]);
   const segs=new Map();let totalMin=0,totalCost=0,hasCost=false;
   if(t&&day.hotelTravelState!=='skip'&&timed.length){
-    const refHotel=hotelFor(t,day.date);
+    const refHotel=hotelMorningRef(t,day);
     if(refHotel&&refHotel.lat&&timed[0].a.hotelId!==refHotel.id){
-      const est=travelEstimate(day,hav(refHotel,timed[0].a),day.hotelSegTravelMode);
+      const est=travelEstimate(day,hav(refHotel,timed[0].a),day.hotelSegTravelMode,rain);
       totalMin+=est.minutes;
       if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
     }
@@ -1493,7 +1500,7 @@ function computeDayTravel(day,t){
     if(gapEnd<=gapStart+4)continue;
     if(cur.travelState==='skip')continue;
     if((gapEnd-gapStart)>DISTANT_GAP_MIN&&cur.travelState!=='shown')continue;
-    const est=travelEstimate(day,hav(cur,timed[i+1].a),cur.segTravelMode);
+    const est=travelEstimate(day,hav(cur,timed[i+1].a),cur.segTravelMode,rain);
     segs.set(cur.id,est);totalMin+=est.minutes;
     if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
   }
@@ -3096,12 +3103,12 @@ function buildTTDayInner(t,di){
   if(trav.totalMin){
     html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi</div>`;
   }
-  const refHotel=hotelFor(t,d.date),firstTop=tops[0];
+  const refHotel=hotelMorningRef(t,d),firstTop=tops[0];
   if(refHotel&&refHotel.lat&&firstTop&&firstTop.a.lat&&firstTop.a.hotelId!==refHotel.id){
     if(d.hotelTravelState==='skip'){
       html+=`<div class="tt-hotel-travel tt-travel-skip" onclick="unskipHotelTravel(${di})">necessario ↺</div>`;
     }else{
-      const segMode=d.hotelSegTravelMode,est=travelEstimate(d,hav(refHotel,firstTop.a),segMode);
+      const segMode=d.hotelSegTravelMode,est=travelEstimate(d,hav(refHotel,firstTop.a),segMode,dwx&&dwx.precipitation>5);
       const dm2=d.travelMode||'walk';
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm2)===m?'on':''}" onclick="event.stopPropagation();setHotelSegTravelMode(${di},'${m}')">${ic}</span>`;
       html+=`<div class="tt-hotel-travel tt-travel-shown"><span>🏨 → ${esc(firstTop.a.name)}: ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})">non necessario ✕</span></div>`;
@@ -3130,7 +3137,7 @@ function buildTTDayInner(t,di){
     }else if(isDistant&&state!=='shown'){
       html+=`<div class="tt-travel tt-travel-toggle" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🧭 rileva distanza</div>`;
     }else{
-      const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(cur.a,nxt.a),segMode);
+      const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(cur.a,nxt.a),segMode,dwx&&dwx.precipitation>5);
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${cur.a.id},'${m}')">${ic}</span>`;
       html+=`<div class="tt-travel tt-travel-shown" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${cur.a.id})">non necessario ✕</span></div>`;
     }
@@ -4416,7 +4423,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r47</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r48</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
