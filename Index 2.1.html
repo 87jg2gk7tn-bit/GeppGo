@@ -625,7 +625,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r39</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r40</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -659,6 +659,14 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="piTitle">Luogo</div><button class="x x-close" onclick="closeSheet('mPlaceInfo')">✕</button></div>
   <div id="piBody"></div>
+</div></div>
+<div class="modal" id="mPacking"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🎒 Lista bagagli</div><button class="x x-close" onclick="closeSheet('mPacking')">✕</button></div>
+  <div class="card-sub" style="margin:-.4rem 0 .8rem">Generata da durata, meteo e attività del viaggio. Spunta, modifica o aggiungi voci: resta tua.</div>
+  <div style="display:flex;gap:.5rem;margin-bottom:.8rem"><input id="packAddInp" placeholder="Aggiungi una voce..." style="flex:1" onkeydown="if(event.key==='Enter')addPackItem()"><button class="btn btn-soft" onclick="addPackItem()">+</button></div>
+  <div id="packList"></div>
+  <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
 </div></div>
 <div class="modal" id="mAddDay"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1103,8 +1111,84 @@ function renderTripHero(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" onclick="openTimetable()"><div class="th-top"><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><div class="trip-hero-name">${esc(t.name)}</div><button class="pill-ghost" onclick="event.stopPropagation();openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="event.stopPropagation();openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="event.stopPropagation();openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button></div></div><button class="status-pill" onclick="event.stopPropagation();toggleStatus()">${tripPhase(t)}</button></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>`;
+  el.innerHTML=`<div class="trip-hero" onclick="openTimetable()"><div class="th-top"><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><div class="trip-hero-name">${esc(t.name)}</div><button class="pill-ghost" onclick="event.stopPropagation();openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="event.stopPropagation();openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="event.stopPropagation();openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="event.stopPropagation();openPacking()">🎒 Bagagli</button></div></div><button class="status-pill" onclick="event.stopPropagation();toggleStatus()">${tripPhase(t)}</button></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>`;
 }
+
+/* ===== QW-2: LISTA BAGAGLI AUTO-GENERATA (regole, nessuna AI) ===== */
+function packDestSignals(t){
+  const txt=((t.destination||'')+' '+t.days.flatMap(d=>(d.activities||[]).map(a=>a.name||'')).join(' ')+' '+t.pois.map(p=>p.name||'').join(' ')).toLowerCase();
+  return {
+    beach:/\bmare\b|spiaggia|beach|isola|costiera|\bcosta\b/.test(txt),
+    mountain:/montagna|rifugio|trekking|escursione|\bsci\b|\bneve\b|alpin/.test(txt),
+    hasFlight:t.days.some(d=>(d.activities||[]).some(a=>a.type==='flight'))
+  };
+}
+function packWxSignals(t){
+  const ws=t.days.map(d=>t.weather[d.date]).filter(Boolean);
+  if(!ws.length)return {hot:false,cold:false,rain:false};
+  const avgMax=ws.reduce((s,w)=>s+w.tempMax,0)/ws.length;
+  const avgMin=ws.reduce((s,w)=>s+w.tempMin,0)/ws.length;
+  return {hot:avgMax>=26,cold:avgMin<=10,rain:ws.some(w=>w.precipitation>3)};
+}
+function genPackingList(t){
+  const dur=Math.max(1,t.days.length),sig=packDestSignals(t),wx=packWxSignals(t);
+  const items=[],add=(cat,label)=>items.push({cat,label});
+  add('Documenti','Carta d\'identità o passaporto');
+  add('Documenti','Biglietti e conferme di prenotazione');
+  add('Documenti','Tessera sanitaria / assicurazione di viaggio');
+  add('Elettronica','Caricabatterie');
+  add('Elettronica','Power bank');
+  if(sig.hasFlight)add('Elettronica','Adattatore di corrente (se estero)');
+  add('Igiene','Spazzolino e dentifricio');
+  add('Igiene','Farmaci personali');
+  add('Abbigliamento',`Magliette (${dur+1})`);
+  add('Abbigliamento',`Biancheria intima (${dur+1})`);
+  add('Abbigliamento',`Calzini (${dur+1})`);
+  add('Abbigliamento','Pigiama');
+  if(wx.cold){add('Abbigliamento','Giacca pesante/piumino');add('Abbigliamento','Sciarpa e guanti');}
+  else add('Abbigliamento','Giacca leggera per la sera');
+  if(wx.hot){add('Abbigliamento','Vestiti leggeri e traspiranti');add('Igiene','Crema solare');}
+  if(wx.rain)add('Extra','Ombrello o k-way');
+  if(sig.beach){add('Abbigliamento','Costume da bagno');add('Extra','Telo mare');add('Abbigliamento','Infradito o sandali');}
+  if(sig.mountain){add('Abbigliamento','Scarpe da trekking');add('Extra','Borraccia');add('Extra','Zaino da escursione');}
+  if(!sig.beach&&!sig.mountain)add('Abbigliamento','Scarpe comode da città');
+  if(dur>=6)add('Extra','Sacchetto per il bucato');
+  return items;
+}
+function ensurePacking(t){t.packing=t.packing||[];}
+function mergePackingSuggestions(t){
+  ensurePacking(t);
+  const existing=new Set(t.packing.map(p=>p.label.toLowerCase()));
+  genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){t.packing.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false});existing.add(it.label.toLowerCase());}});
+}
+function openPacking(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  ensurePacking(t);
+  if(!t.packing.length)mergePackingSuggestions(t);
+  save();renderPacking();openSheet('mPacking');
+}
+function regenPacking(){
+  const t=T();if(!t)return;
+  const before=t.packing.length;
+  mergePackingSuggestions(t);
+  save();renderPacking();
+  toast(t.packing.length>before?`Aggiunte ${t.packing.length-before} voci nuove`:'Nessuna voce nuova da aggiungere');
+}
+function renderPacking(){
+  const t=T(),box=document.getElementById('packList');if(!t||!box)return;
+  if(!t.packing||!t.packing.length){box.innerHTML='<div class="empty"><div class="empty-t">Nessuna voce ancora</div></div>';return;}
+  const cats=[...new Set(t.packing.map(p=>p.cat))];
+  box.innerHTML=cats.map(cat=>`<div class="section-label" style="margin-top:.6rem">${esc(cat)}</div>${t.packing.filter(p=>p.cat===cat).map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`).join('');
+}
+function addPackItem(){
+  const t=T();if(!t)return;
+  const inp=document.getElementById('packAddInp'),v=inp.value.trim();if(!v)return;
+  ensurePacking(t);
+  t.packing.push({id:uid(),cat:'Extra',label:v,checked:false,custom:true});
+  inp.value='';save();renderPacking();
+}
+function togglePackItem(id,val){const t=T();if(!t)return;const p=t.packing.find(x=>x.id===id);if(!p)return;p.checked=val;save();renderPacking();}
+function delPackItem(id){const t=T();if(!t)return;t.packing=(t.packing||[]).filter(x=>x.id!==id);save();renderPacking();}
 
 function setDiscover(m){
   [['segSearch','search'],['segAI','ai'],['segImp','imp']].forEach(([b,k])=>document.getElementById(b).classList.toggle('active',m===k));
@@ -4223,7 +4307,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r39</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r40</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
