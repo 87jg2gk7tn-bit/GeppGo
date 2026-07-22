@@ -374,8 +374,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:8px;padding:.2rem .45rem;font-size:.65rem;font-weight:800;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
 .tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
-.tt-travel-icon{cursor:pointer;font-size:.9rem;opacity:.6}
-.tt-travel-icon:active{opacity:1}
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
@@ -483,7 +481,6 @@ body.dark .tt-cont{background:var(--beige)!important}
     <div class="page active" id="plan">
       <div id="tripHero"></div>
       <div id="cloudWarn"></div>
-      <div id="genCard"></div>
       <div id="tripRecap"></div>
       <div id="map"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -634,7 +631,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r44</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r45</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -754,7 +751,7 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="dayMapWrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div></div>
@@ -859,12 +856,12 @@ body.dark .tt-cont{background:var(--beige)!important}
 <div class="modal" id="mGen"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Autopilota</div><button class="x x-close" onclick="closeSheet('mGen')">✕</button></div>
-  <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.9rem">Riempio i <b>giorni vuoti</b> con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l'umano.</p>
+  <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.9rem">Riempio <b>questo giorno</b> con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l'umano.</p>
   <div class="fg"><label>Cosa ti interessa? <span style="font-weight:500;color:var(--ink-faint)">(opzionale, separa con la virgola)</span></label><input id="genCustom" type="text" autocomplete="off" placeholder="es. giardini zen, ramen, videogiochi retrò"></div>
   <div class="fg"><label>Oppure scegli uno stile</label><select id="genStyle"><option value="mix">Un po' di tutto</option><option value="arte">Arte e storia</option><option value="cibo">Cibo e mercati</option><option value="natura">Natura e panorami</option></select></div>
-  <div class="fg"><label>Ritmo</label><select id="genPace"><option value="3">Rilassato · 3 tappe al giorno</option><option value="4" selected>Normale · 4 tappe</option><option value="5">Pieno · 5 tappe</option></select></div>
+  <div class="fg"><label>Ritmo</label><select id="genPace"><option value="3">Rilassato · 3 tappe</option><option value="4" selected>Normale · 4 tappe</option><option value="5">Pieno · 5 tappe</option></select></div>
   <div id="genStatus" style="font-size:.8rem;color:var(--ink-soft);min-height:1.1rem;margin-bottom:.7rem"></div>
-  <button class="btn btn-grad btn-block" onclick="runGen()">Pianifica i giorni vuoti</button>
+  <button class="btn btn-grad btn-block" onclick="runGen()">Pianifica questo giorno</button>
 </div></div>
 <div class="modal" id="mTkLink"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1484,9 +1481,8 @@ function computeDayTravel(day){
 }
 function fmtMinutes(min){const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m}min`:`${m} min`;}
 function setDayTravelMode(di,mode){const t=T();if(!t||!t.days[di])return;t.days[di].travelMode=mode;save();buildTT();}
-function revealTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='shown';save();buildTT();}
 function skipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='skip';save();buildTT();}
-function unskipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='shown';save();buildTT();}
+function unskipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState=null;save();buildTT();}
 function setSegTravelMode(di,actId,mode){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.segTravelMode=mode;save();buildTT();}
 function renderTimeline(){
   const c=document.getElementById('timeline');if(!c)return;const t=T();
@@ -3095,12 +3091,10 @@ function buildTTDayInner(t,di){
     const gTop=(gapStart-360)/60*H,gH=Math.max(16,(gapEnd-gapStart)/60*H-2);
     if(state==='skip'){
       html+=`<div class="tt-travel tt-travel-skip" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();unskipTravel(${di},${cur.a.id})">necessario ↺</div>`;
-    }else if(state==='shown'){
+    }else{
       const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(cur.a,nxt.a),segMode);
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${cur.a.id},'${m}')">${ic}</span>`;
       html+=`<div class="tt-travel tt-travel-shown" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${cur.a.id})">non necessario ✕</span></div>`;
-    }else{
-      html+=`<div class="tt-travel tt-travel-icon" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🚶</div>`;
     }
   }
   const pd=t.days[di-1];
@@ -4384,7 +4378,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r44</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r45</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -4438,14 +4432,8 @@ function updateAdParent(){
 function hav(a,b){const R=6371000,q=Math.PI/180;const dLa=(b.lat-a.lat)*q,dLo=(b.lng-a.lng)*q;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*q)*Math.cos(b.lat*q)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function nnChain(base,arr){const out=[];let cur=base,rest=arr.slice();while(rest.length){let bi=0,bd=1e15;rest.forEach((x,i)=>{const d=hav(cur,x);if(d<bd){bd=d;bi=i;}});cur=rest.splice(bi,1)[0];out.push(cur);}return out;}
 function hotelFor(t,date){return (t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&date>=h.checkIn&&date<h.checkOut)||null;}
-function renderGenCard(){
-  const box=document.getElementById('genCard');if(!box)return;const t=T();
-  if(!t){box.innerHTML='';return;}
-  const emptyN=t.days.filter(d=>!(d.activities||[]).length).length;
-  const sub=emptyN?`${emptyN} ${emptyN===1?'giorno vuoto':'giorni vuoti'}: te li riempio io`:`Scrivi cosa ti interessa: trovo i posti e li salvo in Scopri`;
-  box.innerHTML=`<div class="card"><div class="card-head" style="margin-bottom:0"><div><div class="card-h">Autopilota</div><div class="card-sub">${sub}</div></div><button class="btn btn-grad" onclick="openSheet('mGen')">Apri</button></div></div>`;
-}
-let genBusy=false;
+let genBusy=false,genTargetDay=0;
+function openGenForDay(){genTargetDay=ttDay;document.getElementById('genStatus').textContent='';closeSheet('mDay');setTimeout(()=>openSheet('mGen'),160);}
 const GEN_STYLE_TAGS={
   mix:[['tourism','attraction'],['tourism','museum'],['leisure','park'],['amenity','marketplace']],
   arte:[['tourism','museum'],['tourism','gallery'],['historic',null],['amenity','place_of_worship']],
@@ -4507,8 +4495,8 @@ function genPoolFromOverpass(data,seen){
 async function runGen(){
   const t=T();if(!t||genBusy)return;
   const st=document.getElementById('genStatus');
-  const emptyDays=t.days.filter(d=>!(d.activities||[]).length);
-  const toDays=emptyDays.length>0;
+  const d=t.days[genTargetDay];
+  if(!d){st.textContent='Apri Autopilota da un giorno specifico, nella sua timetable.';return;}
   genBusy=true;
   const style=document.getElementById('genStyle').value,pace=parseInt(document.getElementById('genPace').value);
   const custom=(document.getElementById('genCustom').value||'').split(/[,\n]/).map(x=>x.trim()).filter(x=>x.length>1).slice(0,6);
@@ -4517,7 +4505,7 @@ async function runGen(){
   st.textContent='Cerco '+city+'...';
   await ensureDestLoc(t);
   if(!t.destLoc){st.textContent='Non trovo questa destinazione: prova a scriverla in modo più preciso.';genBusy=false;return;}
-  const need=toDays?Math.min(emptyDays.length*pace,25):12;
+  const need=pace;
   let tagPairs=custom.length?genInterestTags(custom.join(' ')):null;
   if(!tagPairs||!tagPairs.length)tagPairs=GEN_STYLE_TAGS[style]||GEN_STYLE_TAGS.mix;
   tagPairs=genDedupeTags(tagPairs);
@@ -4533,32 +4521,22 @@ async function runGen(){
     if(pool.length<need)radius*=1.8;
   }
   if(pool.length<2){st.textContent='Ho trovato troppo poco da queste parti: prova un altro stile o controlla la destinazione.';genBusy=false;return;}
-  if(!toDays){
-    const picks=nnChain(t.destLoc,pool).slice(0,need);
-    picks.forEach(pk=>{t.pois.push({id:uid(),name:pk.name,lat:pk.lat,lng:pk.lng,notes:'',priority:'skippable',assignedDay:null});});
-    save();renderAll();genBusy=false;closeSheet('mGen');
-    toast('Salvati '+picks.length+' posti tra i tuoi luoghi: li trovi in Scopri e sulla mappa');
-    return;
-  }
   st.textContent='Metto in ordine il giro...';
-  const base=hotelFor(t,emptyDays[0].date)||t.destLoc;
-  const chain=nnChain(base,pool).slice(0,need);
-  let ci=0,tot=0;
-  emptyDays.forEach(d=>{
-    const picks=chain.slice(ci,ci+pace);ci+=pace;if(!picks.length)return;
-    let tmin=570,prev=null;
-    picks.forEach(pk=>{
-      if(prev)tmin+=Math.max(8,Math.round(hav(prev,pk)/75));
-      if(tmin>=765&&tmin<840)tmin=840;
-      if(tmin>1320)return;
-      const poi={id:uid(),name:pk.name,lat:pk.lat,lng:pk.lng,notes:'',priority:'essential',assignedDay:d.date};t.pois.push(poi);
-      d.activities.push({id:uid(),name:pk.name,time:fmtT(tmin),timeEnd:fmtT(Math.min(tmin+105,1380)),type:(pk.cls==='leisure'||pk.typ==='park'||pk.typ==='garden'||pk.typ==='viewpoint')?'outdoor':'any',notes:'',who:t.participants.map(pp=>pp.id),completed:false,booking:{needed:false,done:false},poiId:poi.id,lat:pk.lat,lng:pk.lng,priority:'essential'});
-      tmin+=115;prev=pk;tot++;
-    });
+  const base=hotelFor(t,d.date)||t.destLoc;
+  const picks=nnChain(base,pool).slice(0,need);
+  let tmin=570,prev=null,tot=0;
+  picks.forEach(pk=>{
+    if(prev)tmin+=Math.max(8,Math.round(hav(prev,pk)/75));
+    if(tmin>=765&&tmin<840)tmin=840;
+    if(tmin>1320)return;
+    const poi={id:uid(),name:pk.name,lat:pk.lat,lng:pk.lng,notes:'',priority:'essential',assignedDay:d.date};t.pois.push(poi);
+    d.activities.push({id:uid(),name:pk.name,time:fmtT(tmin),timeEnd:fmtT(Math.min(tmin+105,1380)),type:(pk.cls==='leisure'||pk.typ==='park'||pk.typ==='garden'||pk.typ==='viewpoint')?'outdoor':'any',notes:'',who:t.participants.map(pp=>pp.id),completed:false,booking:{needed:false,done:false},poiId:poi.id,lat:pk.lat,lng:pk.lng,priority:'essential'});
+    tmin+=115;prev=pk;tot++;
   });
   save();renderAll();refreshWeather();
   genBusy=false;closeSheet('mGen');
-  toast('Pianificate '+tot+' tappe nei giorni vuoti: apri e aggiusta a piacere');
+  toast('Pianificate '+tot+' tappe per questo giorno: apri e aggiusta a piacere');
+  setTimeout(()=>openDay(genTargetDay),160);
 }
 
 function runOptimizeDay(t,d,pins,frees,start,seedFar){
@@ -4777,7 +4755,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderTripHero();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderGenCard();renderAds();renderBookings();renderTripRecap();}
+  migrateData();renderTripPick();renderTripHero();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripRecap();}
 
 </script>
 </body>
