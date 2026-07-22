@@ -1939,7 +1939,16 @@ function drawTicketCode(tk,elId,size){
       return;
     }catch(e){}
   }
-  try{new QRCode(el,{text:tk.code,width:size,height:size,colorDark:'#0C110E'});}catch(e){}
+  if(typeof QRCode!=='undefined'&&QRCode.toCanvas){
+    try{
+      const cv=document.createElement('canvas');
+      QRCode.toCanvas(cv,tk.code,{width:size,margin:1,color:{dark:'#0C110E',light:'#ffffff'}},err=>{
+        if(err)return;
+        cv.style.maxWidth='100%';cv.style.background='#fff';cv.style.borderRadius='8px';
+        el.appendChild(cv);
+      });
+    }catch(e){}
+  }
 }
 function hydrateTicketImgs(){
   document.querySelectorAll('img[data-tkimg]').forEach(im=>{
