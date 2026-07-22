@@ -373,6 +373,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:8px;padding:.2rem .45rem;font-size:.65rem;font-weight:800;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
+.tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem}
 
 .edit-ic{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
 .edit-ic:active{transform:scale(.92)}
@@ -475,6 +476,7 @@ body.dark .tt-cont{background:var(--beige)!important}
       <div id="tripHero"></div>
       <div id="cloudWarn"></div>
       <div id="genCard"></div>
+      <div id="travelCard"></div>
       <div id="tripRecap"></div>
       <div id="map"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -625,7 +627,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r40</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r41</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1445,6 +1447,42 @@ function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività co
 function openAddDay(){if(!T()){toast('Crea prima un viaggio');return;}document.getElementById('dayDate').value='';document.getElementById('dayTitle').value='';openSheet('mAddDay');}
 function addDay(){const t=T();if(!t)return;const date=document.getElementById('dayDate').value;if(!date){toast('Inserisci una data');return;}t.days.push({id:uid(),date,title:document.getElementById('dayTitle').value,activities:[]});t.days.sort((a,b)=>new Date(a.date)-new Date(b.date));save();renderAll();closeSheet('mAddDay');refreshWeather();if(fromDayFlag){fromDayFlag=false;const idx=t.days.findIndex(x=>x.date===date);setTimeout(()=>openDay(Math.max(idx,0)),170);}}
 function delDay(i){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(i,1);save();renderAll();});}
+/* ===== QW-4: STIME TEMPI/COSTI DI SPOSTAMENTO TRA TAPPE ===== */
+function travelParams(){
+  const s=app.settings,mode=s.travelMode||'walk';
+  return {mode,speed:mode==='car'?(s.carSpeedKmh||40):(s.walkSpeedKmh||4.5),fuelL100:s.fuelConsumptionL100km||7,fuelPrice:s.fuelPricePerL||1.8};
+}
+function travelEstimate(distM){
+  const p=travelParams(),km=distM/1000;
+  return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/p.speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
+}
+function computeDayTravel(day){
+  const mode=travelParams().mode;
+  const geo=(day.activities||[]).filter(a=>a.lat).sort((a,b)=>{if(!a.time&&!b.time)return 0;if(!a.time)return 1;if(!b.time)return -1;return a.time.localeCompare(b.time);});
+  const segs=new Map();let totalMin=0,totalCost=0,hasCost=false;
+  for(let i=0;i<geo.length-1;i++){
+    const est=travelEstimate(hav(geo[i],geo[i+1]));
+    segs.set(geo[i].id,est);totalMin+=est.minutes;
+    if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
+  }
+  return {segs,totalMin,totalCost:hasCost?totalCost:null,mode};
+}
+function fmtMinutes(min){const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m}min`:`${m} min`;}
+function setTravelMode(m){app.settings.travelMode=m;save();renderTravelCard();renderTimeline();}
+function renderTravelCard(){
+  const t=T(),box=document.getElementById('travelCard');if(!box)return;
+  if(!t||!t.days.length){box.innerHTML='';return;}
+  const mode=app.settings.travelMode||'walk';
+  let totalMin=0,totalCost=0,hasCost=false;
+  t.days.forEach(d=>{const tr=computeDayTravel(d);totalMin+=tr.totalMin;if(tr.totalCost!=null){totalCost+=tr.totalCost;hasCost=true;}});
+  if(!totalMin){box.innerHTML='';return;}
+  box.innerHTML=`<div class="card">
+    <div class="card-head"><div><div class="card-h">🧭 Spostamenti stimati</div><div class="card-sub">Tempo${mode==='car'?' e carburante':''} tra le tappe con luogo, per tutto il viaggio</div></div></div>
+    <div class="seg" style="margin:.6rem 0"><button class="seg-btn ${mode==='walk'?'active':''}" onclick="setTravelMode('walk')">🚶 A piedi</button><button class="seg-btn ${mode==='car'?'active':''}" onclick="setTravelMode('car')">🚗 In auto</button></div>
+    <div class="trip-hero-stats" style="margin-top:.2rem;color:var(--ink)"><div><div class="ths-n">${fmtMinutes(totalMin)}</div><div class="ths-l" style="color:var(--ink-faint)">Tempo totale</div></div>${mode==='car'?`<div><div class="ths-n">${hasCost?fmtMoney(totalCost,t.currency||'EUR'):'—'}</div><div class="ths-l" style="color:var(--ink-faint)">Carburante stimato</div></div>`:''}</div>
+    ${mode==='car'?`<div style="display:flex;gap:.6rem;margin-top:.8rem"><div class="fg" style="flex:1;margin:0"><label>Consumo (L/100km)</label><input type="number" step="0.1" value="${app.settings.fuelConsumptionL100km||7}" onchange="app.settings.fuelConsumptionL100km=num(this.value)||7;save();renderTravelCard();renderTimeline();"></div><div class="fg" style="flex:1;margin:0"><label>Prezzo (€/L)</label><input type="number" step="0.01" value="${app.settings.fuelPricePerL||1.8}" onchange="app.settings.fuelPricePerL=num(this.value)||1.8;save();renderTravelCard();renderTimeline();"></div></div>`:''}
+  </div>`;
+}
 function renderTimeline(){
   const c=document.getElementById('timeline');if(!c)return;const t=T();
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">🌍</div><div class="empty-t">Nessun viaggio ancora.</div><button class="btn btn-grad" onclick="openNewTrip()">Crea viaggio</button></div>`;return;}
@@ -3039,6 +3077,15 @@ function buildTTDayInner(t,di){
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
     html+=`<div class="tt-block ${a.completed?'done':''}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="openActDetail(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
   });
+  for(let i=0;i<tops.length-1;i++){
+    const cur=tops[i],nxt=tops[i+1];
+    if(!cur.a.lat||!nxt.a.lat)continue;
+    const gapStart=cur.r[1],gapEnd=nxt.r[0];
+    if(gapEnd<=gapStart+4)continue;
+    const est=travelEstimate(hav(cur.a,nxt.a));
+    const gTop=(gapStart-360)/60*H,gH=Math.max(16,(gapEnd-gapStart)/60*H-2);
+    html+=`<div class="tt-travel" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)">${est.mode==='car'?'🚗':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</div>`;
+  }
   const pd=t.days[di-1];
   if(pd)(pd.activities||[]).forEach(a=>{
     if(!a.nextDay||!a.time)return;
@@ -4307,7 +4354,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r40</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r41</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
@@ -4666,7 +4713,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderTripHero();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderGenCard();renderAds();renderBookings();renderTripRecap();}
+  migrateData();renderTripPick();renderTripHero();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderGenCard();renderAds();renderBookings();renderTripRecap();renderTravelCard();}
 
 </script>
 </body>
