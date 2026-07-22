@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r48</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r49</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1174,41 +1174,51 @@ function genPackingList(t){
   if(dur>=6)add('Extra','Sacchetto per il bucato');
   return items;
 }
-function ensurePacking(t){t.packing=t.packing||[];}
+/* La lista bagagli è personale: resta solo su questo dispositivo/account,
+   mai nel blob del viaggio che viene sincronizzato/condiviso con gli altri. */
+function packingKey(t){return `geppgo2_pack_${t.id}_${myUid||'local'}`;}
+function getPacking(t){
+  if(t.packing){const key=packingKey(t);if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(t.packing));delete t.packing;save();}
+  try{return JSON.parse(localStorage.getItem(packingKey(t))||'[]');}catch(e){return [];}
+}
+function savePacking(t,arr){localStorage.setItem(packingKey(t),JSON.stringify(arr));}
 function mergePackingSuggestions(t){
-  ensurePacking(t);
-  const existing=new Set(t.packing.map(p=>p.label.toLowerCase()));
-  genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){t.packing.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false});existing.add(it.label.toLowerCase());}});
+  const list=getPacking(t);
+  const existing=new Set(list.map(p=>p.label.toLowerCase()));
+  genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){list.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false});existing.add(it.label.toLowerCase());}});
+  savePacking(t,list);
 }
 function openPacking(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
-  ensurePacking(t);
-  if(!t.packing.length)mergePackingSuggestions(t);
-  save();renderPacking();openSheet('mPacking');
+  if(!getPacking(t).length)mergePackingSuggestions(t);
+  renderPacking();openSheet('mPacking');
 }
 function regenPacking(){
   const t=T();if(!t)return;
-  const before=t.packing.length;
+  const before=getPacking(t).length;
   mergePackingSuggestions(t);
-  save();renderPacking();
-  toast(t.packing.length>before?`Aggiunte ${t.packing.length-before} voci nuove`:'Nessuna voce nuova da aggiungere');
+  renderPacking();
+  const after=getPacking(t).length;
+  toast(after>before?`Aggiunte ${after-before} voci nuove`:'Nessuna voce nuova da aggiungere');
 }
 function renderPacking(){
   const t=T(),box=document.getElementById('packList');if(!t||!box)return;
-  if(!t.packing||!t.packing.length){box.innerHTML='<div class="empty"><div class="empty-t">Nessuna voce ancora</div></div>';return;}
-  const cats=[...new Set(t.packing.map(p=>p.cat))];
-  box.innerHTML=cats.map(cat=>`<div class="section-label" style="margin-top:.6rem">${esc(cat)}</div>${t.packing.filter(p=>p.cat===cat).map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`).join('');
+  const list=getPacking(t);
+  if(!list.length){box.innerHTML='<div class="empty"><div class="empty-t">Nessuna voce ancora</div></div>';return;}
+  const cats=[...new Set(list.map(p=>p.cat))];
+  box.innerHTML=cats.map(cat=>`<div class="section-label" style="margin-top:.6rem">${esc(cat)}</div>${list.filter(p=>p.cat===cat).map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`).join('');
 }
 function addPackItem(){
   const t=T();if(!t)return;
   const inp=document.getElementById('packAddInp'),v=inp.value.trim();if(!v)return;
   const cat=document.getElementById('packAddCat').value||'Extra';
-  ensurePacking(t);
-  t.packing.push({id:uid(),cat,label:v,checked:false,custom:true});
-  inp.value='';save();renderPacking();
+  const list=getPacking(t);
+  list.push({id:uid(),cat,label:v,checked:false,custom:true});
+  savePacking(t,list);
+  inp.value='';renderPacking();
 }
-function togglePackItem(id,val){const t=T();if(!t)return;const p=t.packing.find(x=>x.id===id);if(!p)return;p.checked=val;save();renderPacking();}
-function delPackItem(id){const t=T();if(!t)return;t.packing=(t.packing||[]).filter(x=>x.id!==id);save();renderPacking();}
+function togglePackItem(id,val){const t=T();if(!t)return;const list=getPacking(t);const p=list.find(x=>x.id===id);if(!p)return;p.checked=val;savePacking(t,list);renderPacking();}
+function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filter(x=>x.id!==id);savePacking(t,list);renderPacking();}
 
 function setDiscover(m){
   [['segSearch','search'],['segAI','ai'],['segImp','imp']].forEach(([b,k])=>document.getElementById(b).classList.toggle('active',m===k));
@@ -3649,7 +3659,7 @@ function initSheetClose(){
 function scheduleSync(){if(!sb||!session)return;clearTimeout(syncT);syncT=setTimeout(syncPush,900);}
 function cleanTrip(t){
   const c=JSON.parse(JSON.stringify(t));
-  delete c.cid;delete c._invite;delete c._owner;
+  delete c.cid;delete c._invite;delete c._owner;delete c.packing;
   (c.participants||[]).forEach(pp=>{delete pp.isMe;});
   return c;
 }
@@ -4423,7 +4433,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r48</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r49</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
