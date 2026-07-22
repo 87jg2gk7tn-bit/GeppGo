@@ -613,7 +613,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r36</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r37</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1184,9 +1184,9 @@ async function openPlaceInfo(place){
     };
   }catch(e){}
   try{
-    let lang='it',title='';
-    if(extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2){lang=parts[0];title=parts[1];}}
-    else if(place.name){title=place.name;}
+    const lang='it';let title='';
+    if(extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2&&parts[0]==='it')title=parts[1];}
+    if(!title&&place.name)title=place.name;
     if(title){
       const wr=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,{headers:{'Accept-Language':'it'}});
       if(wr.ok){
@@ -2725,7 +2725,7 @@ function renderTripRecap(){
 
 
 /* ===== TIME-TABLE VERTICALE DEL GIORNO ===== */
-let ttDay=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false;
+let ttDay=0,ttWinStart=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false;
 function openTimetable(){const t=T();if(!t){toast('Crea prima un viaggio');return;}if(!t.days.length){fromDayFlag=true;openAddDay();return;}openDay(0);}
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
@@ -2736,7 +2736,16 @@ function openDay(i){
   buildTT();buildDayMap();
   openSheet('mDay');initTTFab();
 }
-function ttNav(dir){const t=T();let n=ttDay+dir;if(n<0)n=0;if(n>t.days.length-1)n=t.days.length-1;if(n!==ttDay)openDay(n);}
+function ttNav(dir){
+  const t=T();if(!t)return;
+  let n=ttDay+dir;if(n<0)n=0;if(n>t.days.length-1)n=t.days.length-1;
+  if(n===ttDay)return;
+  if(isTTLandscapeWide()&&t.days.length>1){
+    const cols=Math.min(3,t.days.length);
+    ttWinStart=Math.max(0,Math.min(ttWinStart+dir,t.days.length-cols));
+  }
+  openDay(n);
+}
 function tMin(x){if(!x)return null;const p=x.split(':');return (+p[0])*60+(+p[1]);}
 function actRange(a){const st=tMin(a.time);if(st===null)return null;let en=tMin(a.timeEnd);if(a&&a.nextDay)en=1440;else if(en===null||en<=st)en=st+60;return[st,en];}
 function whoOf(a,t){return (a.who&&a.who.length)?a.who:t.participants.map(p=>p.id);}
@@ -2811,8 +2820,10 @@ function buildTT(){
   const t=T();if(!t)return;
   const nDays=t.days.length;
   const cols=(isTTLandscapeWide()&&nDays>1)?Math.min(3,nDays):1;
-  const start=Math.max(0,Math.min(ttDay,nDays-cols));
-  const idxs=[];for(let i=0;i<cols;i++)idxs.push(start+i);
+  if(ttDay<ttWinStart)ttWinStart=ttDay;
+  else if(ttDay>ttWinStart+cols-1)ttWinStart=ttDay-cols+1;
+  ttWinStart=Math.max(0,Math.min(ttWinStart,nDays-cols));
+  const idxs=[];for(let i=0;i<cols;i++)idxs.push(ttWinStart+i);
   let activeTops=null,activeD=null;
   const colsHtml=idxs.map(di=>{
     const r=buildTTDayInner(t,di);
@@ -4061,7 +4072,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r36</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r37</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
