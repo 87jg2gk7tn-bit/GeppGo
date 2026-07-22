@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r49</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r50</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -680,6 +680,12 @@ body.dark .tt-cont{background:var(--beige)!important}
   </div>
   <div id="packList"></div>
   <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
+  <div class="card" style="margin-top:.9rem">
+    <div class="card-h" style="margin-bottom:.3rem;font-size:.85rem">🤖 Importa da testo</div>
+    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco (anche generato da un'AI, una voce per riga): sostituisce del tutto la lista attuale, con spunta, modifica ed eliminazione come sempre.</p>
+    <textarea id="packImportText" placeholder="Costume da bagno&#10;Crema solare&#10;Passaporto" style="min-height:80px"></textarea>
+    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="importPackingText()">Sostituisci lista con questo testo</button>
+  </div>
 </div></div>
 <div class="modal" id="mRestore"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1206,7 +1212,7 @@ function renderPacking(){
   const list=getPacking(t);
   if(!list.length){box.innerHTML='<div class="empty"><div class="empty-t">Nessuna voce ancora</div></div>';return;}
   const cats=[...new Set(list.map(p=>p.cat))];
-  box.innerHTML=cats.map(cat=>`<div class="section-label" style="margin-top:.6rem">${esc(cat)}</div>${list.filter(p=>p.cat===cat).map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`).join('');
+  box.innerHTML=cats.map(cat=>`<div class="section-label" style="margin-top:.6rem">${esc(cat)}</div>${list.filter(p=>p.cat===cat).map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="edit-ic" style="flex-shrink:0" onclick="editPackItem(${p.id})">✎</button><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`).join('');
 }
 function addPackItem(){
   const t=T();if(!t)return;
@@ -1218,7 +1224,28 @@ function addPackItem(){
   inp.value='';renderPacking();
 }
 function togglePackItem(id,val){const t=T();if(!t)return;const list=getPacking(t);const p=list.find(x=>x.id===id);if(!p)return;p.checked=val;savePacking(t,list);renderPacking();}
+function editPackItem(id){
+  const t=T();if(!t)return;
+  const list=getPacking(t),p=list.find(x=>x.id===id);if(!p)return;
+  const val=prompt('Modifica voce:',p.label);
+  if(val==null)return;
+  const v=val.trim();if(!v)return;
+  p.label=v;savePacking(t,list);renderPacking();
+}
 function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filter(x=>x.id!==id);savePacking(t,list);renderPacking();}
+function importPackingText(){
+  const t=T();if(!t)return;
+  const raw=document.getElementById('packImportText').value;
+  const items=raw.split('\n').map(l=>l.replace(/^[-*•\d.)\s]+/,'').trim()).filter(Boolean);
+  if(!items.length){toast('Incolla prima un elenco di voci');return;}
+  confirmDo('Sostituire la lista bagagli?',`La lista attuale verrà cancellata e sostituita con le ${items.length} voci incollate.`,()=>{
+    const list=items.map(label=>({id:uid(),cat:'Importato',label,checked:false,custom:true}));
+    savePacking(t,list);
+    document.getElementById('packImportText').value='';
+    renderPacking();
+    toast(`Lista sostituita: ${list.length} voci`);
+  });
+}
 
 function setDiscover(m){
   [['segSearch','search'],['segAI','ai'],['segImp','imp']].forEach(([b,k])=>document.getElementById(b).classList.toggle('active',m===k));
@@ -4433,7 +4460,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r49</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r50</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
