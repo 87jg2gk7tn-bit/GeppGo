@@ -379,6 +379,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
 .tt-travel-toggle{cursor:pointer;opacity:.6}
 .tt-travel-toggle:active{opacity:1}
+.tt-hotel-travel{display:flex;align-items:center;font-size:.72rem;font-weight:700;color:var(--ink-faint);border:1px dashed var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .tt-travel-modes{display:flex;gap:.2rem;flex-shrink:0}
 .tt-travel-mode{cursor:pointer;opacity:.4;font-size:.8rem}
 .tt-travel-mode.on{opacity:1}
@@ -633,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r46</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r47</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1475,10 +1476,18 @@ function travelEstimate(day,distM,modeOverride){
   const p=travelParams(day,modeOverride),km=distM/1000;
   return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/p.speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
 }
-function computeDayTravel(day){
+function computeDayTravel(day,t){
   const mode=day.travelMode||'walk';
   const timed=(day.activities||[]).filter(a=>a.lat&&actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]);
   const segs=new Map();let totalMin=0,totalCost=0,hasCost=false;
+  if(t&&day.hotelTravelState!=='skip'&&timed.length){
+    const refHotel=hotelFor(t,day.date);
+    if(refHotel&&refHotel.lat&&timed[0].a.hotelId!==refHotel.id){
+      const est=travelEstimate(day,hav(refHotel,timed[0].a),day.hotelSegTravelMode);
+      totalMin+=est.minutes;
+      if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
+    }
+  }
   for(let i=0;i<timed.length-1;i++){
     const cur=timed[i].a,gapStart=timed[i].r[1],gapEnd=timed[i+1].r[0];
     if(gapEnd<=gapStart+4)continue;
@@ -1495,6 +1504,9 @@ function revealTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.
 function skipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState='skip';save();buildTT();}
 function unskipTravel(di,actId){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.travelState=null;save();buildTT();}
 function setSegTravelMode(di,actId,mode){const t=T();if(!t||!t.days[di])return;const a=t.days[di].activities.find(x=>x.id===actId);if(!a)return;a.segTravelMode=mode;save();buildTT();}
+function skipHotelTravel(di){const t=T();if(!t||!t.days[di])return;t.days[di].hotelTravelState='skip';save();buildTT();}
+function unskipHotelTravel(di){const t=T();if(!t||!t.days[di])return;t.days[di].hotelTravelState=null;save();buildTT();}
+function setHotelSegTravelMode(di,mode){const t=T();if(!t||!t.days[di])return;t.days[di].hotelSegTravelMode=mode;save();buildTT();}
 function renderTimeline(){
   const c=document.getElementById('timeline');if(!c)return;const t=T();
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">🌍</div><div class="empty-t">Nessun viaggio ancora.</div><button class="btn btn-grad" onclick="openNewTrip()">Crea viaggio</button></div>`;return;}
@@ -3080,9 +3092,20 @@ function buildTTDayInner(t,di){
   if(cur.length)clusters.push(cur);
   clusters.forEach(cl=>{const ends=[];cl.forEach(it=>{let ci=ends.findIndex(e=>e<=it.r[0]);if(ci<0){ci=ends.length;ends.push(0);}ends[ci]=it.r[1];it.col=ci;});cl.forEach(it=>it.cols=ends.length);});
   let html='';
-  const trav=computeDayTravel(d);
+  const trav=computeDayTravel(d,t);
   if(trav.totalMin){
     html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi</div>`;
+  }
+  const refHotel=hotelFor(t,d.date),firstTop=tops[0];
+  if(refHotel&&refHotel.lat&&firstTop&&firstTop.a.lat&&firstTop.a.hotelId!==refHotel.id){
+    if(d.hotelTravelState==='skip'){
+      html+=`<div class="tt-hotel-travel tt-travel-skip" onclick="unskipHotelTravel(${di})">necessario ↺</div>`;
+    }else{
+      const segMode=d.hotelSegTravelMode,est=travelEstimate(d,hav(refHotel,firstTop.a),segMode);
+      const dm2=d.travelMode||'walk';
+      const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm2)===m?'on':''}" onclick="event.stopPropagation();setHotelSegTravelMode(${di},'${m}')">${ic}</span>`;
+      html+=`<div class="tt-hotel-travel tt-travel-shown"><span>🏨 → ${esc(firstTop.a.name)}: ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})">non necessario ✕</span></div>`;
+    }
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="openActDetail(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
@@ -4393,7 +4416,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r46</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r47</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
