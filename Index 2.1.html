@@ -605,7 +605,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r28</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r29</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1308,7 +1308,7 @@ function dayLoc(t,day){
   return null;
 }
 async function ensureDestLoc(t){
-  if((t.destLoc&&t.destBB)||!t.destination)return;
+  if(t.destLoc||!t.destination)return;
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json();
@@ -1342,10 +1342,6 @@ function dayLoc(t,day){
   const pp=t.pois.filter(x=>x.assignedDay===day.date);
   if(pp.length)return{lat:pp[0].lat,lng:pp[0].lng};
   return null;
-}
-async function ensureDestLoc(t){
-  if(t.destLoc||!t.destination)return;
-  try{const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});const d=await r.json();if(d.length){t.destLoc={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};save();}}catch(e){}
 }
 function renderWeather(){
   renderCityEditor();
@@ -3950,7 +3946,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r28</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r29</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
@@ -4012,6 +4008,64 @@ function renderGenCard(){
   box.innerHTML=`<div class="card"><div class="card-head" style="margin-bottom:0"><div><div class="card-h">Autopilota</div><div class="card-sub">${sub}</div></div><button class="btn btn-grad" onclick="openSheet('mGen')">Apri</button></div></div>`;
 }
 let genBusy=false;
+const GEN_STYLE_TAGS={
+  mix:[['tourism','attraction'],['tourism','museum'],['leisure','park'],['amenity','marketplace']],
+  arte:[['tourism','museum'],['tourism','gallery'],['historic',null],['amenity','place_of_worship']],
+  cibo:[['amenity','marketplace'],['amenity','restaurant'],['amenity','cafe'],['amenity','fast_food']],
+  natura:[['leisure','park'],['leisure','garden'],['tourism','viewpoint'],['natural','water']]
+};
+function genInterestTags(text){
+  const map=[
+    [/muse|arte|galleria/i,[['tourism','museum'],['tourism','gallery']]],
+    [/monument|storic|castell|rovin|templ|tempio|santuario|shrine|temple/i,[['historic',null]]],
+    [/chiesa|cattedrale|duomo|tempio|basilica|religios/i,[['amenity','place_of_worship']]],
+    [/mercat/i,[['amenity','marketplace']]],
+    [/ristorant|cibo|gastronom|cucina|street ?food|pasticceri|caff[eè]|food/i,[['amenity','restaurant'],['amenity','cafe']]],
+    [/parc|giardin|natura|verde|green/i,[['leisure','park'],['leisure','garden']]],
+    [/panoram|belvedere|vista|view/i,[['tourism','viewpoint']]],
+    [/spiagg|mare|beach/i,[['natural','beach']]],
+    [/notturn|bar|locali|nightlife/i,[['amenity','bar']]],
+    [/shopping|negozi/i,[['shop','mall']]],
+    [/attrazion|turistic|monumento|sight/i,[['tourism','attraction']]]
+  ];
+  const out=[];
+  map.forEach(([re,tags])=>{if(re.test(text))tags.forEach(tg=>out.push(tg));});
+  return out;
+}
+function genDedupeTags(tagPairs){
+  const seen=new Set();
+  return tagPairs.filter(([k,v])=>{const key=k+'='+(v||'*');if(seen.has(key))return false;seen.add(key);return true;});
+}
+function genBuildQuery(lat,lng,radius,tagPairs){
+  const parts=[];
+  tagPairs.forEach(([k,v])=>{
+    const sel=v?`["${k}"="${v}"]`:`["${k}"]`;
+    parts.push(`node${sel}(around:${radius},${lat},${lng});way${sel}(around:${radius},${lat},${lng});`);
+  });
+  return `[out:json][timeout:25];(${parts.join('')});out center 80;`;
+}
+async function genFetchOverpass(query){
+  const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query)});
+  if(!r.ok)throw new Error('overpass '+r.status);
+  return r.json();
+}
+function genPoolFromOverpass(data,seen){
+  const pool=[];
+  (data.elements||[]).forEach(el=>{
+    const nm=el.tags&&el.tags.name;
+    if(!nm||seen.has(nm.toLowerCase()))return;
+    let lat=el.lat,lng=el.lon;
+    if(lat==null&&el.center){lat=el.center.lat;lng=el.center.lon;}
+    if(lat==null)return;
+    seen.add(nm.toLowerCase());
+    let cls='',typ='';
+    for(const k of ['tourism','leisure','historic','amenity','natural','shop']){
+      if(el.tags[k]){cls=k;typ=el.tags[k];break;}
+    }
+    pool.push({name:nm,lat,lng,cls,typ});
+  });
+  return pool;
+}
 async function runGen(){
   const t=T();if(!t||genBusy)return;
   const st=document.getElementById('genStatus');
@@ -4019,37 +4073,37 @@ async function runGen(){
   const toDays=emptyDays.length>0;
   genBusy=true;
   const style=document.getElementById('genStyle').value,pace=parseInt(document.getElementById('genPace').value);
-  const custom=(document.getElementById('genCustom').value||'').split(/[,\n]/).map(x=>x.trim()).filter(x=>x.length>1).slice(0,5);
-  const cats=custom.length?custom:{mix:['attrazione turistica','museo','parco','mercato'],arte:['museo','monumento storico','galleria d\'arte','cattedrale'],cibo:['mercato','ristorante tipico','pasticceria storica','street food'],natura:['parco','giardino botanico','belvedere','lungofiume']}[style];
+  const custom=(document.getElementById('genCustom').value||'').split(/[,\n]/).map(x=>x.trim()).filter(x=>x.length>1).slice(0,6);
   const city=(t.destination||'').split(',')[0].trim();
   if(!city){st.textContent='Metti prima una destinazione al viaggio (Impostazioni del viaggio).';genBusy=false;return;}
+  st.textContent='Cerco '+city+'...';
+  await ensureDestLoc(t);
+  if(!t.destLoc){st.textContent='Non trovo questa destinazione: prova a scriverla in modo più preciso.';genBusy=false;return;}
   const need=toDays?Math.min(emptyDays.length*pace,25):12;
-  const pool=[],seen=new Set(t.pois.map(pp=>pp.name.toLowerCase()));
-  for(const c of cats){
-    st.textContent=`Cerco: ${c}...`;
+  let tagPairs=custom.length?genInterestTags(custom.join(' ')):null;
+  if(!tagPairs||!tagPairs.length)tagPairs=GEN_STYLE_TAGS[style]||GEN_STYLE_TAGS.mix;
+  tagPairs=genDedupeTags(tagPairs);
+  const seen=new Set(t.pois.map(pp=>pp.name.toLowerCase()));
+  let pool=[],radius=9000;
+  st.textContent='Cerco posti adatti ai tuoi interessi...';
+  for(let attempt=0;attempt<2&&pool.length<need;attempt++){
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c+' '+city)}&format=json&accept-language=it&limit=10`,{headers:{'Accept-Language':'it,en'}});
-      const d=await r.json();
-      (d||[]).forEach(x=>{
-        const nm=String(x.display_name||'').split(',')[0].trim();
-        if(!nm||seen.has(nm.toLowerCase())||!x.lat)return;
-        seen.add(nm.toLowerCase());
-        pool.push({name:nm,lat:parseFloat(x.lat),lng:parseFloat(x.lon),cls:x.class||'',typ:x.type||''});
-      });
+      const q=genBuildQuery(t.destLoc.lat,t.destLoc.lng,Math.round(radius),tagPairs);
+      const data=await genFetchOverpass(q);
+      pool=pool.concat(genPoolFromOverpass(data,seen));
     }catch(e){}
-    if(pool.length>=need*1.6)break;
-    await new Promise(r2=>setTimeout(r2,1100));
+    if(pool.length<need)radius*=1.8;
   }
-  if(pool.length<2){st.textContent='Ho trovato troppo poco: prova con termini diversi o una città più precisa.';genBusy=false;return;}
+  if(pool.length<2){st.textContent='Ho trovato troppo poco da queste parti: prova un altro stile o controlla la destinazione.';genBusy=false;return;}
   if(!toDays){
-    const picks=nnChain(t.destLoc||pool[0],pool).slice(0,need);
+    const picks=nnChain(t.destLoc,pool).slice(0,need);
     picks.forEach(pk=>{t.pois.push({id:uid(),name:pk.name,lat:pk.lat,lng:pk.lng,notes:'',priority:'skippable',assignedDay:null});});
     save();renderAll();genBusy=false;closeSheet('mGen');
     toast('Salvati '+picks.length+' posti tra i tuoi luoghi: li trovi in Scopri e sulla mappa');
     return;
   }
   st.textContent='Metto in ordine il giro...';
-  const base=hotelFor(t,emptyDays[0].date)||t.destLoc||pool[0];
+  const base=hotelFor(t,emptyDays[0].date)||t.destLoc;
   const chain=nnChain(base,pool).slice(0,need);
   let ci=0,tot=0;
   emptyDays.forEach(d=>{
