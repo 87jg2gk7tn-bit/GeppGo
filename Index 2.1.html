@@ -606,7 +606,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r34</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r35</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1184,21 +1184,36 @@ async function openPlaceInfo(place){
       const wr=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,{headers:{'Accept-Language':'it'}});
       if(wr.ok){
         const wd=await wr.json();
-        if(wd.type!=='disambiguation'&&wd.extract){extra.summary=wd.extract;extra.wikiUrl=wd.content_urls?.desktop?.page||'';}
+        if(wd.type!=='disambiguation'){
+          extra.wikiUrl=wd.content_urls?.desktop?.page||'';
+          extra.photo=wd.thumbnail?.source||wd.originalimage?.source||'';
+          extra.summary=wd.extract||'';
+          const pageTitle=(wd.titles&&wd.titles.canonical)||title;
+          try{
+            const ar=await fetch(`https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&exsentences=8&explaintext=1&redirects=1&titles=${encodeURIComponent(pageTitle)}&format=json&origin=*`);
+            if(ar.ok){
+              const ad=await ar.json();
+              const first=Object.values(ad.query?.pages||{})[0];
+              if(first&&first.extract)extra.summary=first.extract;
+            }
+          }catch(e){}
+        }
       }
     }
   }catch(e){}
   renderPlaceInfo(place,extra);
 }
+const PLACE_TYPE_IT={attraction:'Attrazione',museum:'Museo',castle:'Castello',palace:'Palazzo',cathedral:'Cattedrale',church:'Chiesa',monument:'Monumento',memorial:'Memoriale',ruins:'Rovine',hotel:'Hotel',guest_house:'B&B',hostel:'Ostello',restaurant:'Ristorante',cafe:'Caffè',bar:'Bar',pub:'Pub',fast_food:'Fast food',park:'Parco',garden:'Giardino',beach:'Spiaggia',viewpoint:'Punto panoramico',theme_park:'Parco divertimenti',zoo:'Zoo',aquarium:'Acquario',archaeological_site:'Sito archeologico',artwork:'Opera d\'arte',station:'Stazione',bus_station:'Stazione bus',subway_entrance:'Metro',airport:'Aeroporto',aerodrome:'Aeroporto',gallery:'Galleria',stadium:'Stadio',peak:'Vetta'};
 function renderPlaceInfo(place,extra){
   extra=extra||{};
   const hours=extra.hours||place.hours||'',website=extra.website||place.website||'',phone=extra.phone||place.phone||'';
   const addr=extra.fullAddr||place.address||'',ic=placeIcon(place.type,place.type);
+  const typeLbl=PLACE_TYPE_IT[place.type]||place.type;
   let wikiUrl=extra.wikiUrl||'';
   if(!wikiUrl&&extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2)wikiUrl=`https://${parts[0]}.wikipedia.org/wiki/${encodeURIComponent(parts[1])}`;}
   document.getElementById('piBody').innerHTML=`
-    <div style="text-align:center;font-size:2.4rem;margin-bottom:.3rem">${ic}</div>
-    ${place.type||extra.cuisine?`<div style="text-align:center;margin-bottom:.8rem">${place.type?`<span class="tag">${esc(place.type)}</span>`:''}${extra.cuisine?` <span class="tag">${esc(extra.cuisine)}</span>`:''}</div>`:''}
+    ${extra.photo?`<img src="${esc(extra.photo)}" style="width:100%;max-height:190px;object-fit:cover;border-radius:var(--r-md);margin-bottom:.7rem" alt="">`:`<div style="text-align:center;font-size:2.4rem;margin-bottom:.3rem">${ic}</div>`}
+    ${typeLbl||extra.cuisine?`<div style="text-align:center;margin-bottom:.8rem">${typeLbl?`<span class="tag">${esc(typeLbl)}</span>`:''}${extra.cuisine?` <span class="tag">${esc(extra.cuisine)}</span>`:''}</div>`:''}
     ${extra.summary?`<div class="fg"><label>Un po' di storia</label><div style="font-size:.9rem;color:var(--ink-soft);line-height:1.55">${esc(extra.summary)}</div></div>`:''}
     ${addr?`<div class="fg"><label>Indirizzo</label><div style="font-size:.9rem;color:var(--ink-soft)">${esc(addr)}</div></div>`:''}
     ${hours?`<div class="fg"><label>Orari</label><div style="font-size:.9rem;color:var(--ink-soft)">${esc(hours)}</div></div>`:''}
@@ -1316,7 +1331,10 @@ function renderSaved(){
   const t=T(),c=document.getElementById('savedPOIs'),cnt=document.getElementById('savedCount');
   if(!t||!t.pois.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗺️</div><div class="empty-t">Nessun luogo salvato</div></div>`;cnt.textContent='0 luoghi';return;}
   cnt.textContent=`${t.pois.length} ${t.pois.length===1?'luogo':'luoghi'}`;
-  c.innerHTML=t.pois.map(p=>`<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`).join('');
+  c.innerHTML=t.pois.map(p=>{
+    const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
+    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
+  }).join('');
 }
 function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId===id)a.poiId=null;}));t.pois=t.pois.filter(pp=>pp.id!==id);save();renderAll();});}
 function openAddDay(){if(!T()){toast('Crea prima un viaggio');return;}document.getElementById('dayDate').value='';document.getElementById('dayTitle').value='';openSheet('mAddDay');}
@@ -4012,7 +4030,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
   const snapRows=snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r34</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r35</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRows}</div>`;
 }
 function restoreSnap(ts){
