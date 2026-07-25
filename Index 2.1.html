@@ -640,7 +640,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r56</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r57</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1522,14 +1522,21 @@ function openAddDay(){if(!T()){toast('Crea prima un viaggio');return;}document.g
 function addDay(){const t=T();if(!t)return;const date=document.getElementById('dayDate').value;if(!date){toast('Inserisci una data');return;}t.days.push({id:uid(),date,title:document.getElementById('dayTitle').value,activities:[]});t.days.sort((a,b)=>new Date(a.date)-new Date(b.date));save();renderAll();closeSheet('mAddDay');refreshWeather();if(fromDayFlag){fromDayFlag=false;const idx=t.days.findIndex(x=>x.date===date);setTimeout(()=>openDay(Math.max(idx,0)),170);}}
 function delDay(i){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(i,1);save();renderAll();});}
 /* ===== QW-4: STIME TEMPI/COSTI DI SPOSTAMENTO TRA TAPPE ===== */
-const TRAVEL_SPEED_KMH={walk:4.5,train:20,car:40};
+/* La distanza tra due tappe si calcola in linea d'aria (non c'è un servizio di
+   instradamento reale su strada). In una città, il percorso a piedi o in auto è
+   sempre più lungo della linea d'aria per via di isolati, sensi unici, corsi
+   d'acqua ecc.: un fattore di "circuitosità" corregge questa sottostima
+   sistematica. La velocità a piedi è una media da passeggiata turistica (con
+   soste ad attraversamenti, foto ecc.), non un passo sportivo continuo. */
+const TRAVEL_SPEED_KMH={walk:4.2,train:20,car:40};
+const ROUTE_CIRCUITY={walk:1.35,car:1.25};
 const DISTANT_GAP_MIN=180;
 function travelParams(day,modeOverride){
   const mode=modeOverride||(day&&day.travelMode)||'walk';
   return {mode,speed:TRAVEL_SPEED_KMH[mode]||4.5,fuelL100:app.settings.fuelConsumptionL100km||7,fuelPrice:app.settings.fuelPricePerL||1.8};
 }
 function travelEstimate(day,distM,modeOverride,rain){
-  const p=travelParams(day,modeOverride),km=distM/1000;
+  const p=travelParams(day,modeOverride),km=(distM/1000)*(ROUTE_CIRCUITY[p.mode]||1);
   const speed=(p.mode==='train'&&rain)?p.speed*0.75:p.speed;
   return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
 }
@@ -4633,7 +4640,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r56</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r57</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -4685,6 +4692,7 @@ function updateAdParent(){
 }
 /* ===== AUTOPILOTA + GIRO + FOTO + VOTI ===== */
 function hav(a,b){const R=6371000,q=Math.PI/180;const dLa=(b.lat-a.lat)*q,dLo=(b.lng-a.lng)*q;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*q)*Math.cos(b.lat*q)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+function walkEtaMin(a,b){return Math.round(hav(a,b)/1000*(ROUTE_CIRCUITY.walk||1)/TRAVEL_SPEED_KMH.walk*60);}
 function nnChain(base,arr){const out=[];let cur=base,rest=arr.slice();while(rest.length){let bi=0,bd=1e15;rest.forEach((x,i)=>{const d=hav(cur,x);if(d<bd){bd=d;bi=i;}});cur=rest.splice(bi,1)[0];out.push(cur);}return out;}
 function hotelFor(t,date){return (t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&date>=h.checkIn&&date<h.checkOut)||null;}
 let genBusy=false,genTargetDay=0;
@@ -4781,7 +4789,7 @@ async function runGen(){
   const picks=nnChain(base,pool).slice(0,need);
   let tmin=570,prev=null,tot=0;
   picks.forEach(pk=>{
-    if(prev)tmin+=Math.max(8,Math.round(hav(prev,pk)/75));
+    if(prev)tmin+=Math.max(8,walkEtaMin(prev,pk));
     if(tmin>=765&&tmin<840)tmin=840;
     if(tmin>1320)return;
     const poi={id:uid(),name:pk.name,lat:pk.lat,lng:pk.lng,notes:'',priority:'essential',assignedDay:d.date};t.pois.push(poi);
@@ -4795,7 +4803,7 @@ async function runGen(){
 }
 
 function runOptimizeDay(t,d,pins,frees,start,seedFar){
-  const wm=(a,b)=>((a&&b&&a.lat&&b.lat)?Math.max(8,Math.round(hav(a,b)/75)):10);
+  const wm=(a,b)=>((a&&b&&a.lat&&b.lat)?Math.max(8,walkEtaMin(a,b)):10);
   let cur=start;
   let tmin=570;
   if(pins.length)tmin=Math.min(tmin,tMin(pins[0].time));
