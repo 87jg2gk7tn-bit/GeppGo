@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r52</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r53</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1012,6 +1012,11 @@ let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false;
 let chatHistory=[],rateCache={};
 let scanTarget=null;
 let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},syncT=null;
+/* lastPush deve sopravvivere ai riavvii dell'app: altrimenti, ad ogni riapertura,
+   non c'è modo di sapere se lo stato locale contiene modifiche non ancora
+   arrivate al cloud, e un pull all'avvio può sovrascriverle senza accorgersene. */
+try{lastPush=JSON.parse(localStorage.getItem('geppgo2_lastpush')||'{}');}catch(e){lastPush={};}
+function persistLastPush(){try{localStorage.setItem('geppgo2_lastpush',JSON.stringify(lastPush));}catch(e){}}
 const CURR=[{c:'EUR',s:'€'},{c:'USD',s:'$'},{c:'GBP',s:'£'},{c:'JPY',s:'¥'},{c:'CHF',s:'CHF'},{c:'CNY',s:'¥'},{c:'KRW',s:'₩'},{c:'THB',s:'฿'},{c:'INR',s:'₹'},{c:'AUD',s:'A$'},{c:'CAD',s:'C$'},{c:'NZD',s:'NZ$'},{c:'MXN',s:'$'},{c:'BRL',s:'R$'},{c:'ZAR',s:'R'},{c:'AED',s:'AED'},{c:'TRY',s:'₺'},{c:'SEK',s:'kr'},{c:'NOK',s:'kr'},{c:'DKK',s:'kr'},{c:'PLN',s:'zł'},{c:'CZK',s:'Kč'},{c:'HUF',s:'Ft'},{c:'SGD',s:'S$'},{c:'HKD',s:'HK$'},{c:'IDR',s:'Rp'},{c:'MYR',s:'RM'},{c:'PHP',s:'₱'},{c:'VND',s:'₫'},{c:'EGP',s:'E£'},{c:'MAD',s:'DH'},{c:'ILS',s:'₪'},{c:'SAR',s:'SAR'},{c:'TWD',s:'NT$'},{c:'ISK',s:'kr'},{c:'CLP',s:'$'},{c:'COP',s:'$'},{c:'ARS',s:'$'},{c:'PEN',s:'S/'}];
 const C2C={JP:'JPY',US:'USD',GB:'GBP',IE:'EUR',FR:'EUR',DE:'EUR',IT:'EUR',ES:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',AT:'EUR',GR:'EUR',FI:'EUR',LU:'EUR',SK:'EUR',SI:'EUR',EE:'EUR',LV:'EUR',LT:'EUR',CY:'EUR',MT:'EUR',HR:'EUR',CH:'CHF',CN:'CNY',KR:'KRW',TH:'THB',IN:'INR',AU:'AUD',CA:'CAD',NZ:'NZD',MX:'MXN',BR:'BRL',ZA:'ZAR',AE:'AED',TR:'TRY',SE:'SEK',NO:'NOK',DK:'DKK',PL:'PLN',CZ:'CZK',HU:'HUF',SG:'SGD',HK:'HKD',ID:'IDR',MY:'MYR',PH:'PHP',VN:'VND',EG:'EGP',MA:'MAD',IL:'ILS',SA:'SAR',TW:'TWD',IS:'ISK',CL:'CLP',CO:'COP',AR:'ARS',PE:'PEN'};
 function curSym(c){const f=CURR.find(x=>x.c===c);return f?f.s:c;}
@@ -1985,13 +1990,13 @@ function askDeleteTrip(id){
     if(t._owner){
       confirmDo('Eliminare per tutti?','Sei il proprietario: il viaggio sparirà anche dai telefoni dei compagni. Definitivo.',async()=>{
         try{await sb.from('trips').delete().eq('id',t.cid);}catch(e){}
-        delete lastPush[t.cid];delete memByTrip[t.cid];
+        delete lastPush[t.cid];persistLastPush();delete memByTrip[t.cid];
         finishLocal();toast('Viaggio eliminato per tutti');
       });
     }else{
       confirmDo('Uscire dal viaggio?','Il viaggio resterà ai compagni: semplicemente tu non lo vedrai più.',async()=>{
         try{await sb.from('trip_members').delete().eq('trip_id',t.cid).eq('user_id',myUid);}catch(e){}
-        delete lastPush[t.cid];delete memByTrip[t.cid];
+        delete lastPush[t.cid];persistLastPush();delete memByTrip[t.cid];
         finishLocal();toast('Sei uscito dal viaggio');
       });
     }
@@ -3710,7 +3715,7 @@ async function syncPush(){
       if(lastPush[t.cid]===j)continue;
       try{
         const{error}=await sb.from('trips').update({data:body,updated_at:new Date().toISOString(),updated_by:myUid}).eq('id',t.cid);
-        if(!error)lastPush[t.cid]=j;
+        if(!error){lastPush[t.cid]=j;persistLastPush();}
       }catch(e){}
     }
   }finally{syncBusy=false;}
@@ -3721,7 +3726,7 @@ async function cloudCreate(t){
     const{data,error}=await sb.from('trips').insert({owner:myUid,data:body,updated_by:myUid}).select().single();
     if(error||!data)return{ok:false,error:error?error.message:"risposta vuota"};
     t.cid=data.id;t._invite=data.invite_code;t._owner=true;
-    lastPush[t.cid]=JSON.stringify(body);
+    lastPush[t.cid]=JSON.stringify(body);persistLastPush();
     const me=(t.participants||[]).find(pp=>pp.isMe);
     await sb.from('trip_members').insert({trip_id:data.id,user_id:myUid,participant_id:me?me.id:null,member_name:app.myName||(me?me.name:'Io')});
     memByTrip[t.cid]={trip_id:t.cid,user_id:myUid,participant_id:me?me.id:null};
@@ -3767,7 +3772,7 @@ async function supaBoot(){
       }
     }
     afterAuth();
-    if(session)setTimeout(()=>{if(localStorage.getItem('geppgo2_fp')){localStorage.removeItem('geppgo2_fp');lastPush={};}syncPush();},600);
+    if(session)setTimeout(()=>{if(localStorage.getItem('geppgo2_fp')){localStorage.removeItem('geppgo2_fp');lastPush={};persistLastPush();}syncPush();},600);
     if(wasRecovery&&session){setTimeout(openNewPass,400);}
     else if(wasRecovery||authErr){
       const m=document.getElementById('auMsg');
@@ -3789,6 +3794,12 @@ async function cloudStart(){
   await pullCloud();
   subscribeRT();
   if(pendingJoin2){const c=pendingJoin2;pendingJoin2=null;doJoin2(c);}
+  /* Un push può fallire in silenzio (rete assente mentre si è in viaggio): senza
+     un nuovo tentativo automatico, quella modifica resterebbe solo su questo
+     telefono a tempo indefinito. Ci riprova da sola ogni 20s finché non va a segno
+     (syncPush non fa nulla se non c'è nulla di nuovo da mandare). */
+  clearInterval(window._syncRetryInt);
+  window._syncRetryInt=setInterval(()=>{if(navigator.onLine!==false)syncPush();},20000);
 }
 async function pullCloud(){
   try{
@@ -3796,7 +3807,7 @@ async function pullCloud(){
     const{data:rows}=await sb.from('trips').select('*');
     const{data:mems}=await sb.from('trip_members').select('*').eq('user_id',myUid);
     memByTrip={};(mems||[]).forEach(m=>{memByTrip[m.trip_id]=m;});
-    const dupRows=[];
+    const dupRows=[];let needsResync=false;
     (rows||[]).forEach(r=>{
       const remote=r.data||{};
       remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
@@ -3804,7 +3815,14 @@ async function pullCloud(){
       let i=app.trips.findIndex(x=>x.cid===r.id);
       if(i<0){const k=app.trips.findIndex(x=>!x.cid&&x.id===remote.id);if(k>=0)i=k;}
       if(i>=0){
-        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i])))snapNow(true);
+        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i]))){
+          /* Questo dispositivo ha modifiche locali non ancora arrivate al cloud
+             (es. rete assente quando sono state fatte, o l'app chiusa prima che
+             il salvataggio partisse): NON le sovrascrivo con la versione remota,
+             che sarebbe più vecchia. Le proteggo e le rimando appena possibile. */
+          snapNow(true);needsResync=true;
+          return;
+        }
         app.trips[i]=remote;
       }
       else{
@@ -3813,6 +3831,8 @@ async function pullCloud(){
       }
       lastPush[r.id]=JSON.stringify(cleanTrip(remote));
     });
+    persistLastPush();
+    if(needsResync)scheduleSync();
     if(dupRows.length){
       dupRows.forEach(r=>{if(r.owner===myUid){sb.from('trips').delete().eq('id',r.id).then(()=>{});}});
       toast('Ripuliti '+dupRows.length+' viaggi duplicati');
@@ -3829,7 +3849,7 @@ function handleRealtimeChange(payload){
     const i=app.trips.findIndex(x=>x.cid===cid);
     if(i>=0){
       const wasCur=app.trips[i].id===app.currentTripId;
-      app.trips.splice(i,1);delete lastPush[cid];
+      app.trips.splice(i,1);delete lastPush[cid];persistLastPush();
       if(wasCur)app.currentTripId=app.trips[0]?app.trips[0].id:null;
       localStorage.setItem('geppgo2',JSON.stringify(app));
       renderAll();toast('Un viaggio condiviso è stato eliminato');
@@ -3852,7 +3872,7 @@ function handleRealtimeChange(payload){
   decorateTrip(remote);
   const i2=app.trips.findIndex(x=>x.cid===r.id);
   if(i2>=0)app.trips[i2]=remote;else app.trips.push(remote);
-  lastPush[r.id]=JSON.stringify(cleanTrip(remote));
+  lastPush[r.id]=JSON.stringify(cleanTrip(remote));persistLastPush();
   localStorage.setItem('geppgo2',JSON.stringify(app));
   renderAll();
 }
@@ -3931,7 +3951,7 @@ async function doJoin2(code){
     decorateTrip(remote);
     const i=app.trips.findIndex(x=>x.cid===cid);
     if(i>=0)app.trips[i]=remote;else app.trips.push(remote);
-    lastPush[cid]=JSON.stringify(cleanTrip(remote));
+    lastPush[cid]=JSON.stringify(cleanTrip(remote));persistLastPush();
     app.currentTripId=remote.id;
     localStorage.setItem('geppgo2',JSON.stringify(app));
     renderAll();closeSheet('mCode');toast('Sei dentro: '+remote.name);
@@ -4481,7 +4501,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r52</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r53</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
