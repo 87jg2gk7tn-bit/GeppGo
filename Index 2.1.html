@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r51</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r52</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3803,7 +3803,10 @@ async function pullCloud(){
       decorateTrip(remote);
       let i=app.trips.findIndex(x=>x.cid===r.id);
       if(i<0){const k=app.trips.findIndex(x=>!x.cid&&x.id===remote.id);if(k>=0)i=k;}
-      if(i>=0)app.trips[i]=remote;
+      if(i>=0){
+        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i])))snapNow(true);
+        app.trips[i]=remote;
+      }
       else{
         if(app.trips.some(x=>x.id===remote.id)){dupRows.push(r);return;}
         app.trips.push(remote);
@@ -3820,32 +3823,42 @@ async function pullCloud(){
     scheduleSync();
   }catch(e){}
 }
+function handleRealtimeChange(payload){
+  if(payload.eventType==='DELETE'){
+    const cid=payload.old&&payload.old.id;if(!cid)return;
+    const i=app.trips.findIndex(x=>x.cid===cid);
+    if(i>=0){
+      const wasCur=app.trips[i].id===app.currentTripId;
+      app.trips.splice(i,1);delete lastPush[cid];
+      if(wasCur)app.currentTripId=app.trips[0]?app.trips[0].id:null;
+      localStorage.setItem('geppgo2',JSON.stringify(app));
+      renderAll();toast('Un viaggio condiviso è stato eliminato');
+    }
+    return;
+  }
+  const r=payload.new;if(!r)return;
+  if(r.updated_by===myUid)return;
+  const i=app.trips.findIndex(x=>x.cid===r.id);
+  if(i>=0&&lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i]))){
+    /* Hai modifiche locali non ancora salvate mentre arriva un aggiornamento da un
+       altro dispositivo/persona: NON le sovrascrivo. Le metto al sicuro con un punto
+       di ripristino e do priorità al salvarle io per prime. */
+    snapNow(true);scheduleSync();
+    toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
+    return;
+  }
+  const remote=r.data||{};
+  remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
+  decorateTrip(remote);
+  const i2=app.trips.findIndex(x=>x.cid===r.id);
+  if(i2>=0)app.trips[i2]=remote;else app.trips.push(remote);
+  lastPush[r.id]=JSON.stringify(cleanTrip(remote));
+  localStorage.setItem('geppgo2',JSON.stringify(app));
+  renderAll();
+}
 function subscribeRT(){
   if(rtChan){try{sb.removeChannel(rtChan);}catch(e){}rtChan=null;}
-  rtChan=sb.channel('trips-rt').on('postgres_changes',{event:'*',schema:'public',table:'trips'},payload=>{
-    if(payload.eventType==='DELETE'){
-      const cid=payload.old&&payload.old.id;if(!cid)return;
-      const i=app.trips.findIndex(x=>x.cid===cid);
-      if(i>=0){
-        const wasCur=app.trips[i].id===app.currentTripId;
-        app.trips.splice(i,1);delete lastPush[cid];
-        if(wasCur)app.currentTripId=app.trips[0]?app.trips[0].id:null;
-        localStorage.setItem('geppgo2',JSON.stringify(app));
-        renderAll();toast('Un viaggio condiviso è stato eliminato');
-      }
-      return;
-    }
-    const r=payload.new;if(!r)return;
-    if(r.updated_by===myUid)return;
-    const remote=r.data||{};
-    remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
-    decorateTrip(remote);
-    const i=app.trips.findIndex(x=>x.cid===r.id);
-    if(i>=0)app.trips[i]=remote;else app.trips.push(remote);
-    lastPush[r.id]=JSON.stringify(cleanTrip(remote));
-    localStorage.setItem('geppgo2',JSON.stringify(app));
-    renderAll();
-  }).subscribe();
+  rtChan=sb.channel('trips-rt').on('postgres_changes',{event:'*',schema:'public',table:'trips'},handleRealtimeChange).subscribe();
 }
 function identityCheck(){
   const t=T();if(!t||!t.cid)return;
@@ -4468,7 +4481,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r51</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r52</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
