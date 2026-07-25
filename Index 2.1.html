@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r53</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r54</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1503,7 +1503,7 @@ function renderSaved(){
     return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
   }).join('');
 }
-function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId===id)a.poiId=null;}));t.pois=t.pois.filter(pp=>pp.id!==id);save();renderAll();});}
+function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId===id)a.poiId=null;}));t.pois=t.pois.filter(pp=>pp.id!==id);t._delPoi=t._delPoi||{};t._delPoi[id]=Date.now();save();renderAll();});}
 function openAddDay(){if(!T()){toast('Crea prima un viaggio');return;}document.getElementById('dayDate').value='';document.getElementById('dayTitle').value='';openSheet('mAddDay');}
 function addDay(){const t=T();if(!t)return;const date=document.getElementById('dayDate').value;if(!date){toast('Inserisci una data');return;}t.days.push({id:uid(),date,title:document.getElementById('dayTitle').value,activities:[]});t.days.sort((a,b)=>new Date(a.date)-new Date(b.date));save();renderAll();closeSheet('mAddDay');refreshWeather();if(fromDayFlag){fromDayFlag=false;const idx=t.days.findIndex(x=>x.date===date);setTimeout(()=>openDay(Math.max(idx,0)),170);}}
 function delDay(i){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(i,1);save();renderAll();});}
@@ -1593,7 +1593,7 @@ function moveAct(f,ai,to){const t=T();const[a]=t.days[f].activities.splice(ai,1)
 function toggleAct(di,id){const t=T();const a=t.days[di].activities.find(x=>x.id===id);if(a){a.completed=!a.completed;save();renderTimeline();}}
 function delAct(di,id){
   const t=T();const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
-  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);save();renderTimeline();});
+  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t._delAct=t._delAct||{};t._delAct[id]=Date.now();save();renderTimeline();});
 }
 function openAddAct(di){openActDetail(di,null);}
 function dayLoc(t,day){
@@ -1874,7 +1874,7 @@ async function addExpense(){
   else{t.expenses.push({id:uid(),...data});toast('✅ Spesa aggiunta');}
   expEditId=null;save();renderAll();closeSheet('mExpense');
 }
-function delExpense(id){const t=T();confirmDo('Eliminare la spesa?','L\'operazione non si può annullare.',()=>{t.expenses=t.expenses.filter(e=>e.id!==id);expEditId=null;save();renderAll();closeSheet('mExpense');});}
+function delExpense(id){const t=T();confirmDo('Eliminare la spesa?','L\'operazione non si può annullare.',()=>{t.expenses=t.expenses.filter(e=>e.id!==id);t._delExp=t._delExp||{};t._delExp[id]=Date.now();expEditId=null;save();renderAll();closeSheet('mExpense');});}
 function renderBudget(){
   const t=T(),cats=['Voli','Hotel','Cibo','Attrazioni','Trasporti','Shopping'],ic={Voli:'✈️',Hotel:'🏨',Cibo:'🍜',Attrazioni:'🎭',Trasporti:'🚇',Shopping:'🛍️'};
   const sel=document.getElementById('budgetWho');
@@ -2403,6 +2403,7 @@ function delTicket(id){
   const t=T();const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
   confirmDo('Eliminare il biglietto?','Il codice e il QR andranno persi definitivamente.',()=>{
     t.tickets=t.tickets.filter(x=>x.id!==id);
+    t._delTicket=t._delTicket||{};t._delTicket[id]=Date.now();
     if(tk.img){idbP().then(db=>{db.transaction('ph','readwrite').objectStore('ph').delete(tk.img);}).catch(()=>{});}
     save();renderTickets();
   });
@@ -3443,7 +3444,7 @@ function saveActDetail(){
       if(fc>0){
         if(fex){fex.paid=(fp==='paid');fex.desc=flbl;fex.category=fcat;fex.splitAmong=who.slice();setExpAmt(t,fex,fc,fcur);}
         else a.flyExpId=pushAutoExp(t,flbl,fc,fp==='paid',fcat,'flyRef',a.id,fcur,who);
-      }else if(fex&&fex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==fex.id);a.flyExpId=null;}
+      }else if(fex&&fex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==fex.id);t._delExp=t._delExp||{};t._delExp[fex.id]=Date.now();a.flyExpId=null;}
     }
   }
   a.type=document.getElementById('adType').value;
@@ -3461,7 +3462,7 @@ function saveActDetail(){
    if(bc>0){
      if(bex){bex.paid=(bp==='paid');bex.desc=a.name;bex.category=bcat;bex.splitAmong=who.slice();setExpAmt(t,bex,bc,bcur);}
      else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur,who);
-   }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);a.bookExpId=null;}
+   }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);t._delExp=t._delExp||{};t._delExp[bex.id]=Date.now();a.bookExpId=null;}
   }
   if(needed&&a.booking.by&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
   if(adPoiPick&&!adPoiPick.clear){
@@ -3492,7 +3493,7 @@ function saveActDetail(){
 }
 function delActDetail(){
   if(!adRef)return;const t=T(),{di,id}=adRef;
-  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t.expenses.forEach(e=>{if(e.actId===id)e.actId=null;});save();renderAll();closeSheet('mActDetail');setTimeout(()=>openDay(di),150);});
+  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t._delAct=t._delAct||{};t._delAct[id]=Date.now();t.expenses.forEach(e=>{if(e.actId===id)e.actId=null;});save();renderAll();closeSheet('mActDetail');setTimeout(()=>openDay(di),150);});
 }
 function navFromDetail(){const t=T(),a=t.days[adRef.di].activities.find(x=>x.id===adRef.id);if(a&&a.lat){closeSheet('mActDetail');openNav(a.lat,a.lng,a.name);}}
 function gcalUrl(a,dateStr){
@@ -3695,6 +3696,45 @@ function cleanTrip(t){
   (c.participants||[]).forEach(pp=>{delete pp.isMe;});
   return c;
 }
+/* La sincronizzazione scrive l'intero documento del viaggio: se due dispositivi
+   (o due persone) salvano quasi insieme, l'ultimo che scrive può far sparire senza
+   accorgersene le aggiunte dell'altro - anche restando sempre online, senza mai
+   perdere la connessione. Per i dati che non si possono perdere (spese, attività,
+   hotel, biglietti, POI) non sovrascriviamo più l'array intero: lo uniamo per id.
+   Un elemento sparisce SOLO se è stato esplicitamente cancellato (registrato in una
+   "lapide" _del*), mai per una semplice race di salvataggio. */
+function mergeArr(arrA,arrB,tombA,tombB){
+  const tomb={};
+  Object.keys(tombB||{}).forEach(id=>{tomb[id]=tombB[id];});
+  Object.keys(tombA||{}).forEach(id=>{tomb[id]=Math.max(tomb[id]||0,tombA[id]);});
+  const map=new Map();
+  (arrB||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  (arrA||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  return{merged:Array.from(map.values()).filter(x=>!(x.id in tomb)),tomb};
+}
+function mergedRecordFields(localT,remoteT){
+  const out={};
+  [['expenses','_delExp'],['pois','_delPoi'],['hotels','_delHotel'],['tickets','_delTicket']].forEach(([key,tk])=>{
+    const{merged,tomb}=mergeArr(localT[key],remoteT[key],localT[tk],remoteT[tk]);
+    out[key]=merged;out[tk]=tomb;
+  });
+  const tombAct={};
+  Object.keys(remoteT._delAct||{}).forEach(id=>{tombAct[id]=remoteT._delAct[id];});
+  Object.keys(localT._delAct||{}).forEach(id=>{tombAct[id]=Math.max(tombAct[id]||0,localT._delAct[id]);});
+  const localDays=localT.days||[],remoteDays=remoteT.days||[];
+  out.days=remoteDays.map(rd=>{
+    const ld=localDays.find(x=>x.id===rd.id);
+    const map=new Map();
+    (rd.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    if(ld)(ld.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    const acts=Array.from(map.values()).filter(a=>!(a.id in tombAct));
+    return Object.assign({},rd,{activities:acts});
+  });
+  localDays.forEach(ld=>{if(!remoteDays.some(rd=>rd.id===ld.id))out.days.push(Object.assign({},ld));});
+  out.days.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  out._delAct=tombAct;
+  return out;
+}
 function decorateTrip(t){
   const mem=memByTrip[t.cid];
   (t.participants||[]).forEach(pp=>{pp.isMe=!!(mem&&mem.participant_id===pp.id);});
@@ -3814,22 +3854,28 @@ async function pullCloud(){
       decorateTrip(remote);
       let i=app.trips.findIndex(x=>x.cid===r.id);
       if(i<0){const k=app.trips.findIndex(x=>!x.cid&&x.id===remote.id);if(k>=0)i=k;}
+      const rawHash=JSON.stringify(cleanTrip(remote));
       if(i>=0){
-        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i]))){
+        const localT=app.trips[i];
+        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(localT))){
           /* Questo dispositivo ha modifiche locali non ancora arrivate al cloud
              (es. rete assente quando sono state fatte, o l'app chiusa prima che
              il salvataggio partisse): NON le sovrascrivo con la versione remota,
-             che sarebbe più vecchia. Le proteggo e le rimando appena possibile. */
+             che sarebbe più vecchia. Recupero però dal cloud eventuali spese/attività
+             aggiunte da un altro dispositivo che qui non ho ancora, così non si perdono
+             a vicenda. Il resto lo proteggo e lo rimando appena possibile. */
+          Object.assign(localT,mergedRecordFields(localT,remote));
           snapNow(true);needsResync=true;
           return;
         }
+        Object.assign(remote,mergedRecordFields(localT,remote));
         app.trips[i]=remote;
       }
       else{
         if(app.trips.some(x=>x.id===remote.id)){dupRows.push(r);return;}
         app.trips.push(remote);
       }
-      lastPush[r.id]=JSON.stringify(cleanTrip(remote));
+      lastPush[r.id]=rawHash;
     });
     persistLastPush();
     if(needsResync)scheduleSync();
@@ -3861,8 +3907,12 @@ function handleRealtimeChange(payload){
   const i=app.trips.findIndex(x=>x.cid===r.id);
   if(i>=0&&lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i]))){
     /* Hai modifiche locali non ancora salvate mentre arriva un aggiornamento da un
-       altro dispositivo/persona: NON le sovrascrivo. Le metto al sicuro con un punto
-       di ripristino e do priorità al salvarle io per prime. */
+       altro dispositivo/persona: NON le sovrascrivo. Recupero comunque dall'aggiornamento
+       eventuali spese/attività/hotel/biglietti/POI che qui non ho ancora, così nessuno dei
+       due perde le proprie aggiunte. Il resto lo metto al sicuro con un punto di ripristino
+       e do priorità al salvarlo io per primo. */
+    const remoteData=r.data||{};
+    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData));
     snapNow(true);scheduleSync();
     toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
     return;
@@ -3871,10 +3921,15 @@ function handleRealtimeChange(payload){
   remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
   decorateTrip(remote);
   const i2=app.trips.findIndex(x=>x.cid===r.id);
-  if(i2>=0)app.trips[i2]=remote;else app.trips.push(remote);
-  lastPush[r.id]=JSON.stringify(cleanTrip(remote));persistLastPush();
+  const rawHash=JSON.stringify(cleanTrip(remote));
+  if(i2>=0){
+    Object.assign(remote,mergedRecordFields(app.trips[i2],remote));
+    app.trips[i2]=remote;
+  }else app.trips.push(remote);
+  lastPush[r.id]=rawHash;persistLastPush();
   localStorage.setItem('geppgo2',JSON.stringify(app));
   renderAll();
+  scheduleSync();
 }
 function subscribeRT(){
   if(rtChan){try{sb.removeChannel(rtChan);}catch(e){}rtChan=null;}
@@ -4307,7 +4362,8 @@ function saveHotelAdd(){
   t.hotels=t.hotels||[];
   if(pendingHotel.editId){
     const h=t.hotels.find(x=>x.id===pendingHotel.editId);if(!h)return;
-    t.days.forEach(d=>d.activities=d.activities.filter(a=>a.hotelId!==h.id));
+    t._delAct=t._delAct||{};
+    t.days.forEach(d=>{d.activities.forEach(a=>{if(a.hotelId===h.id)t._delAct[a.id]=Date.now();});d.activities=d.activities.filter(a=>a.hotelId!==h.id);});
     h.name=name;h.checkIn=ci;h.checkOut=co;
     addHotelActs(t,h);
   }else{
@@ -4338,7 +4394,11 @@ function addHotelActs(t,h){
 function delHotel(id){
   const t=T();confirmDo('Eliminare questo hotel?','Tolgo anche check-in/out e la spesa prevista collegata (quelle già pagate restano).',()=>{
     t.hotels=(t.hotels||[]).filter(h=>h.id!==id);
-    t.days.forEach(d=>d.activities=d.activities.filter(a=>a.hotelId!==id));
+    t._delHotel=t._delHotel||{};t._delHotel[id]=Date.now();
+    t._delAct=t._delAct||{};
+    t.days.forEach(d=>{d.activities.forEach(a=>{if(a.hotelId===id)t._delAct[a.id]=Date.now();});d.activities=d.activities.filter(a=>a.hotelId!==id);});
+    t._delExp=t._delExp||{};
+    t.expenses.forEach(e=>{if(e.hotelId===id&&e.paid===false)t._delExp[e.id]=Date.now();});
     t.expenses=t.expenses.filter(e=>!(e.hotelId===id&&e.paid===false));
     save();renderAll();
   });
@@ -4501,7 +4561,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r53</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r54</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
