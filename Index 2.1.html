@@ -634,7 +634,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r54</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r55</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -700,6 +700,14 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="fg"><label>Titolo <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><input id="dayTitle" placeholder="es. Zona o tema della giornata"></div>
   <button class="btn btn-blue btn-block" onclick="addDay()">Aggiungi</button>
 </div></div>
+<div class="modal" id="mImportDay"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Importa lista del giorno</div><button class="x x-close" onclick="closeSheet('mImportDay')">✕</button></div>
+  <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Incolla un elenco di posti con l'orario (anche generato da un'AI, uno per riga): li aggiungo come attività a questa giornata, in aggiunta a quelle già presenti.</p>
+  <div class="fg"><textarea id="dayImportText" placeholder="09:00 Colosseo&#10;11:00 Foro Romano&#10;13:00 Pranzo in trattoria&#10;15:30 Pantheon" style="min-height:140px"></textarea></div>
+  <button class="btn btn-grad btn-block" id="dayImportBtn" onclick="importDayText()">Aggiungi alla giornata</button>
+  <div id="dayImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.6rem;line-height:1.5"></div>
+</div></div>
 <div class="modal" id="mPerson"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Aggiungi persona</div><button class="x x-close" onclick="closeSheet('mPerson')">✕</button></div>
@@ -764,7 +772,7 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="dayMapWrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div></div>
@@ -3350,6 +3358,58 @@ function buildDayMap(){
   },320);
 }
 function addFromDay(){fromDayFlag=true;closeSheet('mDay');setTimeout(()=>openAddAct(ttDay),120);}
+function addHotelStopAct(){
+  const t=T();if(!t)return;const di=ttDay,d=t.days[di];if(!d)return;
+  const h=hotelFor(t,d.date)||hotelMorningRef(t,d);
+  if(!h){toast('Aggiungi prima un hotel per questo giorno');return;}
+  const a={id:uid(),name:'Rientro in hotel · '+h.name,time:'',timeEnd:'',type:'any',notes:h.address||'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},hotelId:h.id,lat:h.lat,lng:h.lng,poiId:null};
+  d.activities.push(a);
+  save();renderAll();closeSheet('mDay');
+  setTimeout(()=>openActDetail(di,a.id),150);
+}
+function openImportDay(){closeSheet('mDay');document.getElementById('dayImportText').value='';document.getElementById('dayImportStatus').textContent='';setTimeout(()=>openSheet('mImportDay'),160);}
+let dayImportBusy=false;
+/* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
+   un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
+   Le righe senza orario riconoscibile vengono comunque aggiunte, senza orario. */
+async function importDayText(){
+  const t=T();if(!t||dayImportBusy)return;const di=ttDay,d=t.days[di];if(!d)return;
+  const raw=document.getElementById('dayImportText').value;
+  const timeRe=/([01]?\d|2[0-3])[:.]([0-5]\d)/;
+  const lines=raw.split('\n').map(l=>l.replace(/^(?:[-*•]\s*|\d+[.)]\s+)/,'').trim()).filter(Boolean);
+  if(!lines.length){toast('Incolla prima un elenco di orari e posti');return;}
+  dayImportBusy=true;
+  const st=document.getElementById('dayImportStatus'),btn=document.getElementById('dayImportBtn');
+  if(btn)btn.disabled=true;
+  const whoAll=t.participants.map(p=>p.id);
+  let added=0;
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(st)st.textContent=`${i+1}/${lines.length}...`;
+    const m=line.match(timeRe);
+    let time='',name=line;
+    if(m){
+      time=String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
+      name=(line.slice(0,m.index)+line.slice(m.index+m[0].length)).replace(/^[\s\-–—:·|]+|[\s\-–—:·|]+$/g,'').trim();
+      if(!name)name=line;
+    }
+    if(!name)continue;
+    const a={id:uid(),name,time,timeEnd:'',type:'any',notes:'',who:whoAll.slice(),completed:false,booking:{needed:false,done:false},lat:null,lng:null,poiId:null};
+    try{
+      const res=await geoSearch(t.destination?name+', '+t.destination:name);
+      const r=res&&res[0];
+      if(r){a.lat=parseFloat(r.lat);a.lng=parseFloat(r.lon);}
+    }catch(e){}
+    d.activities.push(a);added++;
+    if(i<lines.length-1)await new Promise(r2=>setTimeout(r2,1100));
+  }
+  save();renderAll();dayImportBusy=false;if(btn)btn.disabled=false;
+  document.getElementById('dayImportText').value='';
+  if(st)st.textContent=`Aggiunte ${added} attività.`;
+  toast(`${added} attività aggiunte a G${di+1}`);
+  closeSheet('mImportDay');
+  setTimeout(()=>openDay(di),150);
+}
 function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(ttDay,1);save();renderAll();closeSheet('mDay');});}
 
 /* ===== DETTAGLIO ATTIVITÀ (info + modifica + QR) ===== */
@@ -4561,7 +4621,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r54</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r55</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
