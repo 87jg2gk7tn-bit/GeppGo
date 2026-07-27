@@ -312,6 +312,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .fab:active{transform:scale(.9)}
 @media(max-width:600px){.fab{right:1.1rem}}
 .fab.clay{background:var(--grad-clay);box-shadow:var(--sh-lg),var(--sh-clay)}
+.map-wrap{position:relative}
+.locate-fab{position:absolute;right:.6rem;bottom:.6rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1rem;cursor:pointer;box-shadow:var(--sh-sm);z-index:400;display:flex;align-items:center;justify-content:center}
+.locate-fab.on{background:var(--green-tint);color:var(--green-deep);border-color:transparent}
+.locate-fab:active{transform:scale(.92)}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -491,7 +495,7 @@ body.dark .tt-cont{background:var(--beige)!important}
       <div id="tripHero"></div>
       <div id="cloudWarn"></div>
       <div id="tripRecap"></div>
-      <div id="map"></div>
+      <div class="map-wrap"><div id="map"></div><button class="locate-fab" id="locateFab" onclick="locateFab()" title="La mia posizione">🧭</button></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
       <div id="bookings"></div>
     </div>
@@ -640,7 +644,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r59</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r60</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -781,7 +785,7 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
-  <div id="dayMapWrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div></div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
@@ -1025,7 +1029,7 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
    Basta definire window.GEPPGO_AI_URL prima di questo blocco. */
 const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
-let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set();
+let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false;
 let chatHistory=[],rateCache={};
 let scanTarget=null;
@@ -2585,6 +2589,7 @@ async function internalNav(lat,lng,name){
 function endNav(){if(routeLine){map.removeLayer(routeLine);routeLine=null;}const n=document.querySelector('.navbar');if(n)n.remove();}
 function toggleGPS(){if(gpsId!==null)return stopGPS();if(app.consentNotif===undefined){pendingConsentCb=startGPS;openSheet('mNotif');return;}startGPS();}
 async function startGPS(){
+  startHeading();
   if(NATIVE&&nPlug('Geolocation'))return startGPSNative();
   if(!navigator.geolocation){toast('GPS non disponibile sul dispositivo');return;}
   toast('📍 Attivo il GPS...');
@@ -2595,6 +2600,7 @@ async function startGPS(){
   );
 }
 async function startGPSNative(){
+  startHeading();
   const G=nPlug('Geolocation');toast('📍 Attivo il GPS...');
   try{
     let p=await G.checkPermissions();
@@ -2602,7 +2608,7 @@ async function startGPSNative(){
     const pos=await G.getCurrentPosition({enableHighAccuracy:true});
     placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);
     gpsId=await G.watchPosition({enableHighAccuracy:true},(pos,err)=>{if(err||!pos)return;placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);});
-    gpsNative=true;document.getElementById('gpsPill').classList.add('on');
+    gpsNative=true;document.getElementById('gpsPill').classList.add('on');document.getElementById('locateFab').classList.add('on');document.getElementById('locateFabDay').classList.add('on');
     const BG=nPlug('BackgroundGeolocation');
     if(BG){try{
       await BG.addWatcher({backgroundMessage:'GeppGo ti avvisa quando sei vicino a una tappa',backgroundTitle:'GeppGo · GPS attivo',requestPermissions:true,stale:false,distanceFilter:40},
@@ -2617,17 +2623,57 @@ function beginWatch(){
     err=>{gpsError(err);},
     {enableHighAccuracy:true,maximumAge:5000,timeout:20000}
   );
-  document.getElementById('gpsPill').classList.add('on');
+  document.getElementById('gpsPill').classList.add('on');document.getElementById('locateFab').classList.add('on');document.getElementById('locateFabDay').classList.add('on');
 }
-let meHalo=null,meCentered=false;
+let meHalo=null,meCentered=false,dayMeMarker=null,dayMeHalo=null,myHeading=null,headingOn=false;
+/* Il pallino della posizione ha un cono di visibilità (come Google Maps) quando
+   il dispositivo fornisce la bussola: ruota con l'orientamento del telefono,
+   così capisci subito da che parte stai guardando rispetto alle tappe vicine. */
+function meDivIcon(heading){
+  const cone=(heading!=null)?`<div style="position:absolute;left:50%;top:50%;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:26px solid rgba(0,103,71,.35);transform:translate(-50%,-100%) rotate(${Math.round(heading)}deg);transform-origin:50% 100%"></div>`:'';
+  return L.divIcon({className:'',html:`<div style="position:relative;width:20px;height:20px">${cone}<div style="position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#006747;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div></div>`,iconSize:[20,20],iconAnchor:[10,10]});
+}
+function updateMeIcon(){
+  const icon=meDivIcon(myHeading);
+  if(meMarker)meMarker.setIcon(icon);
+  if(dayMeMarker)dayMeMarker.setIcon(icon);
+}
+function onHeadingEvent(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;
+  else if(e.alpha!=null)h=(360-e.alpha)%360;
+  if(h==null)return;
+  myHeading=h;updateMeIcon();
+}
+function startHeading(){
+  if(headingOn||typeof DeviceOrientationEvent==='undefined')return;
+  headingOn=true;
+  if(typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted'){window.addEventListener('deviceorientation',onHeadingEvent,true);}}).catch(()=>{});
+  }else{
+    window.addEventListener('deviceorientationabsolute',onHeadingEvent,true);
+    window.addEventListener('deviceorientation',onHeadingEvent,true);
+  }
+}
+function stopHeading(){
+  if(!headingOn)return;headingOn=false;myHeading=null;
+  window.removeEventListener('deviceorientation',onHeadingEvent,true);
+  window.removeEventListener('deviceorientationabsolute',onHeadingEvent,true);
+}
 function placeMe(pos){
   if(!map||typeof L==='undefined')return;
   const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy||30;
   if(meMarker)map.removeLayer(meMarker);
   if(meHalo)map.removeLayer(meHalo);
   meHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#006747',weight:0,fillColor:'#006747',fillOpacity:.14}).addTo(map);
-  meMarker=L.circleMarker([lat,lng],{radius:8,fillColor:'#006747',color:'#fff',weight:3,fillOpacity:1}).addTo(map);
+  meMarker=L.marker([lat,lng],{icon:meDivIcon(myHeading)}).addTo(map);
   meMarker.bindPopup('📍 Sei qui');
+  if(dayMapObj){
+    if(dayMeMarker)dayMapObj.removeLayer(dayMeMarker);
+    if(dayMeHalo)dayMapObj.removeLayer(dayMeHalo);
+    dayMeHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#006747',weight:0,fillColor:'#006747',fillOpacity:.14}).addTo(dayMapObj);
+    dayMeMarker=L.marker([lat,lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
+  }
   const t=T();
   if(t&&t.pois.length){
     let near=null,nd=1e9;
@@ -2637,6 +2683,8 @@ function placeMe(pos){
   if(!meCentered){map.setView([lat,lng],15);meCentered=true;}
 }
 function centerMe(){if(meMarker){map.setView(meMarker.getLatLng(),16);}else toast('Attiva prima il GPS');}
+function locateFab(){if(gpsId===null){toggleGPS();return;}centerMe();}
+function locateFabDay(){if(gpsId===null){toggleGPS();return;}if(dayMeMarker&&dayMapObj)dayMapObj.setView(dayMeMarker.getLatLng(),16);else toast('Sto ancora cercando la tua posizione...');}
 function gpsError(err){
   document.getElementById('gpsPill').classList.remove('on');
   if(gpsId){navigator.geolocation.clearWatch(gpsId);gpsId=null;}
@@ -2653,7 +2701,13 @@ function stopGPS(){
     gpsId=null;gpsNative=false;
   }
   if(meMarker){map.removeLayer(meMarker);meMarker=null;}
-  document.getElementById('gpsPill').classList.remove('on');notified.clear();toast('GPS disattivato');
+  if(meHalo){map.removeLayer(meHalo);meHalo=null;}
+  if(dayMapObj&&dayMeMarker){try{dayMapObj.removeLayer(dayMeMarker);}catch(e){}}
+  if(dayMapObj&&dayMeHalo){try{dayMapObj.removeLayer(dayMeHalo);}catch(e){}}
+  dayMeMarker=null;dayMeHalo=null;meCentered=false;
+  stopHeading();
+  document.getElementById('gpsPill').classList.remove('on');document.getElementById('locateFab').classList.remove('on');document.getElementById('locateFabDay').classList.remove('on');
+  notified.clear();toast('GPS disattivato');
 }
 function calcDist(la1,lo1,la2,lo2){const R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 let farUntil=0;
@@ -2710,15 +2764,29 @@ function checkProx(lat,lng){
     });
   });
 }
+/* Se due tappe entrano in raggio quasi insieme, il vecchio codice sostituiva
+   subito il banner in schermo con quello nuovo: la prima proposta spariva senza
+   che l'utente facesse in tempo a vederla, dando l'impressione che "non l'avesse
+   proposta". Ora le proposte si accodano e vengono mostrate una alla volta. */
+let proxQueue=[];
+function showNextProx(){
+  if(document.querySelector('.prox'))return;
+  const item=proxQueue.shift();if(!item)return;
+  if(item.kind==='poi')renderProxPoi(item.poi,item.dist);else renderProxSug(item.t,item.sp,item.idx,item.dist);
+}
+function dismissProx(el){if(el&&el.parentNode)el.remove();setTimeout(showNextProx,250);}
+function renderProxPoi(poi,dist){
+  const el=document.createElement('div');el.className='prox';
+  el.innerHTML=`<div class="prox-t">📍 ${esc(poi.name)} è vicino!</div><div class="prox-d">A circa ${dist} m da te${poi.priority==='essential'?' · ⭐ tappa essenziale':''}</div><div class="prox-a"><button class="btn btn-grad" style="flex:1" onclick="dismissProx(this.closest('.prox'));openNav(${poi.lat},${poi.lng},${jesc(poi.name)})">✓ Accetta</button><button class="btn btn-soft" onclick="dismissProx(this.closest('.prox'));markVisitedPoi(${poi.id})">Visitato</button><button class="btn btn-soft" onclick="dismissProx(this.closest('.prox'))">Non ora</button></div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)dismissProx(el);},20000);
+}
 function proxAlert(poi,dist){
   if(navigator.vibrate)navigator.vibrate([200,100,200]);
   const H=nPlug('Haptics');if(H){try{H.vibrate({duration:400});}catch(e){}}
   nNotify(`📍 ${poi.name} è vicino!`,`A circa ${dist} m da te${poi.priority==='essential'?' · tappa essenziale':''}`,{lat:poi.lat,lng:poi.lng,name:poi.name});
-  const old=document.querySelector('.prox');if(old)old.remove();
-  const el=document.createElement('div');el.className='prox';
-  el.innerHTML=`<div class="prox-t">📍 ${esc(poi.name)} è vicino!</div><div class="prox-d">A circa ${dist} m da te${poi.priority==='essential'?' · ⭐ tappa essenziale':''}</div><div class="prox-a"><button class="btn btn-grad" style="flex:1" onclick="this.closest('.prox').remove();openNav(${poi.lat},${poi.lng},${jesc(poi.name)})">✓ Accetta</button><button class="btn btn-soft" onclick="this.closest('.prox').remove();markVisitedPoi(${poi.id})">Visitato</button><button class="btn btn-soft" onclick="this.closest('.prox').remove()">Non ora</button></div>`;
-  document.body.appendChild(el);
-  setTimeout(()=>{if(el.parentNode)el.remove();},20000);
+  proxQueue.push({kind:'poi',poi,dist});if(proxQueue.length>5)proxQueue.shift();
+  showNextProx();
 }
 
 /* ===== SETTINGS / DATA ===== */
@@ -3222,10 +3290,12 @@ function buildTTDayInner(t,di){
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   tops.forEach(it=>{
     const a=it.a,top=(it.r[0]-360)/60*H,durMin=it.r[1]-it.r[0];
-    /* Sotto mezz'ora il layout impilato (nome sopra, orario sotto) non ci sta più:
-       passiamo a una riga sola (nome e orario affiancati), riquadro più basso ma
-       sempre leggibile e tappabile, invece di tagliare il testo o farlo sparire. */
-    const compact=durMin<30;
+    /* Sotto l'ora il layout impilato (nome sopra, orario sotto) rischia di non
+       starci più, specie con nomi lunghi (es. "Giardini del Lussemburgo: Jardin
+       du Luxembourg"): passiamo a una riga sola (nome e orario affiancati),
+       riquadro più basso ma sempre leggibile e tappabile, invece di tagliare
+       il testo o farlo sovrapporre a quanto sotto. */
+    const compact=durMin<60;
     const hei=compact?Math.max(22,durMin/60*H-2):Math.max(30,durMin/60*H-4);
     const cls='tt-block'+(compact?' tt-compact':'')+(a.completed?' done':'');
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
@@ -3395,6 +3465,7 @@ function buildDayMap(){
   const pts=(d.activities||[]).filter(a=>a.lat).sort((x,y)=>String(x.time||'99').localeCompare(String(y.time||'99')));
   const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&d.date>=h.checkIn&&d.date<h.checkOut);
   if(dayMapObj){try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
+  dayMeMarker=null;dayMeHalo=null;
   if(!pts.length&&!hh){wrap.style.display='none';return;}
   if(typeof L==='undefined'){wrap.style.display='none';return;}
   wrap.style.display='block';
@@ -3411,6 +3482,11 @@ function buildDayMap(){
       L.marker([hh.lat,hh.lng],{icon:hi}).addTo(dayMapObj).bindPopup(`<strong>${esc(hh.name)}</strong>`);
     }
     const all=pts.map(a=>[a.lat,a.lng]).concat(hh?[[hh.lat,hh.lng]]:[]);
+    if(meMarker){
+      const mm=meMarker.getLatLng();
+      dayMeMarker=L.marker([mm.lat,mm.lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
+      all.push([mm.lat,mm.lng]);
+    }
     if(all.length>1)dayMapObj.fitBounds(L.latLngBounds(all),{padding:[28,28]});
     setTimeout(()=>dayMapObj.invalidateSize(),120);
   },320);
@@ -3773,14 +3849,17 @@ async function refreshSuggestions(t){
   }catch(e){}
   sugBusy=false;
 }
+function renderProxSug(t,sp,idx,dist){
+  const el=document.createElement('div');el.className='prox';el.style.borderColor='var(--clay)';
+  el.innerHTML=`<div class="prox-t" style="color:var(--clay-deep)">Consiglio: ${esc(sp.name)}</div><div class="prox-d">In linea col tuo viaggio · a circa ${dist} m</div><div class="prox-a"><button class="btn btn-grad" style="flex:1" onclick="dismissProx(this.closest('.prox'));quickSaveSug(${t.id},${idx})">Salva</button><button class="btn btn-soft" style="flex:1" onclick="dismissProx(this.closest('.prox'));openNav(${sp.lat},${sp.lng},${jesc(sp.name)})">Vai</button><button class="btn btn-soft" onclick="dismissProx(this.closest('.prox'));dismissSugN(${t.id},${jesc(sp.name)})">No</button></div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)dismissProx(el);},20000);
+}
 function suggestAlert(t,sp,idx,dist){
   if(navigator.vibrate)navigator.vibrate(160);
   nNotify('Nei dintorni: '+sp.name,'In linea col tuo viaggio · a circa '+dist+' m',{lat:sp.lat,lng:sp.lng,name:sp.name});
-  const old=document.querySelector('.prox');if(old)old.remove();
-  const el=document.createElement('div');el.className='prox';el.style.borderColor='var(--clay)';
-  el.innerHTML=`<div class="prox-t" style="color:var(--clay-deep)">Consiglio: ${esc(sp.name)}</div><div class="prox-d">In linea col tuo viaggio · a circa ${dist} m</div><div class="prox-a"><button class="btn btn-grad" style="flex:1" onclick="this.closest('.prox').remove();quickSaveSug(${t.id},${idx})">Salva</button><button class="btn btn-soft" style="flex:1" onclick="this.closest('.prox').remove();openNav(${sp.lat},${sp.lng},${jesc(sp.name)})">Vai</button><button class="btn btn-soft" onclick="this.closest('.prox').remove();dismissSugN(${t.id},${jesc(sp.name)})">No</button></div>`;
-  document.body.appendChild(el);
-  setTimeout(()=>{if(el.parentNode)el.remove();},20000);
+  proxQueue.push({kind:'sug',t,sp,idx,dist});if(proxQueue.length>5)proxQueue.shift();
+  showNextProx();
 }
 function quickSaveSug(tid,idx){
   const t=app.trips.find(x=>x.id===tid);if(!t||!t.suggested||!t.suggested[idx])return;
@@ -4691,7 +4770,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r59</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r60</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
