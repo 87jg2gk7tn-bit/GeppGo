@@ -324,7 +324,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .modal-top{align-items:flex-start}
 .sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
 .modal-top.active .sheet-top{transform:translateY(0)}
-.tripzoom-handle{text-align:center;font-size:.72rem;font-weight:700;color:var(--ink-faint);padding:0 0 .8rem;cursor:grab;touch-action:pan-y}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -652,10 +651,10 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r63</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r64</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
-  <div class="tripzoom-handle" id="tripZoomHandle">‹ scorri per tornare indietro</div>
+  <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
   <div id="tripZoomBody"></div>
   <div class="map-wrap"><div id="map"></div><button class="locate-fab" id="locateFab" onclick="locateFab()" title="La mia posizione">🧭</button></div>
 </div></div>
@@ -1090,7 +1089,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   document.getElementById('navPref').value=app.settings.nav||'ask';
   fillCurrencySelect(document.getElementById('expCur'));
-  initSheetSwipe();initSheetClose();initTripZoomSwipe();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
+  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
   renderAll();
 });
 
@@ -3929,19 +3928,6 @@ function initSheetSwipe(){
     grip.addEventListener('pointerup',fin);grip.addEventListener('pointercancel',fin);
   });
 }
-/* Il dettaglio del viaggio scende dall'alto: si chiude con uno swipe a sinistra
-   sulla sua maniglia dedicata (non sulla mappa, per non litigare con lo
-   spostamento/zoom della mappa stessa). */
-function initTripZoomSwipe(){
-  const handle=document.getElementById('tripZoomHandle'),sheet=document.getElementById('tripZoomSheet');
-  if(!handle||!sheet)return;
-  let sx=0,dx=0,on=false;
-  handle.style.touchAction='pan-y';
-  handle.addEventListener('pointerdown',e=>{on=true;sx=e.clientX;dx=0;sheet.style.transition='none';handle.setPointerCapture(e.pointerId);});
-  handle.addEventListener('pointermove',e=>{if(!on)return;dx=e.clientX-sx;if(dx>0)dx=0;sheet.style.transform=`translateX(${dx}px)`;});
-  const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dx<-70)closeTripZoom();dx=0;};
-  handle.addEventListener('pointerup',fin);handle.addEventListener('pointercancel',fin);
-}
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
     if(m.id==='mJoin'||m.id==='mNotif')return;
@@ -4829,7 +4815,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r63</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r64</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
