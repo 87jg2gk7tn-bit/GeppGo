@@ -316,12 +316,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .locate-fab{position:absolute;right:.6rem;bottom:.6rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1rem;cursor:pointer;box-shadow:var(--sh-sm);z-index:400;display:flex;align-items:center;justify-content:center}
 .locate-fab.on{background:var(--green-tint);color:var(--green-deep);border-color:transparent}
 .locate-fab:active{transform:scale(.92)}
-.trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.95rem}
-.trip-sq{position:relative;aspect-ratio:1/1;border-radius:var(--r-xl);overflow:hidden;background:var(--grad);box-shadow:var(--sh-blue);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;padding:1rem}
+.trip-grid{display:flex;flex-direction:column;gap:.8rem;margin-bottom:.95rem}
+.trip-sq{position:relative;width:100%;aspect-ratio:2.8/1;border-radius:var(--r-xl);overflow:hidden;background:var(--grad);box-shadow:var(--sh-blue);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;padding:1rem}
 .trip-sq::after{content:'';position:absolute;right:-30px;top:-30px;width:170px;height:170px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);pointer-events:none}
-.trip-sq:active{transform:scale(.96)}
-.trip-sq.trip-sq-wide{grid-column:1/-1;aspect-ratio:2.6/1}
-.trip-sq-name{position:relative;font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;color:#fff;text-align:center;line-height:1.25}
+.trip-sq:active{transform:scale(.98)}
+.trip-sq-name{position:relative;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;letter-spacing:-.01em;color:#fff;text-align:center;line-height:1.25}
 .modal-top{align-items:flex-start}
 .sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
 .modal-top.active .sheet-top{transform:translateY(0)}
@@ -653,7 +652,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r61</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r62</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="tripzoom-handle" id="tripZoomHandle">‹ scorri per tornare indietro</div>
@@ -1044,7 +1043,7 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
 const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
-let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false;
+let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
 let chatHistory=[],rateCache={};
 let scanTarget=null;
 let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},syncT=null;
@@ -1067,6 +1066,16 @@ function T(){return app.trips.find(t=>t.id===app.currentTripId);}
 function uid(){return Date.now()+Math.floor(Math.random()*10000);}
 function jesc(x){return JSON.stringify(x||'').replace(/"/g,'&quot;');}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* Registra la service worker che mette in cache la shell dell'app: dopo la
+   prima apertura con internet, l'app si apre e resta usabile (creare un
+   viaggio, aggiungere attività...) anche senza connessione e senza GPS. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+/* Appena torna la connessione, prova subito a rimandare le modifiche fatte
+   offline, invece di aspettare il prossimo giro del retry periodico (20s). */
+window.addEventListener('online',()=>{if(sb&&session)syncPush();});
 
 document.addEventListener('DOMContentLoaded',()=>{
   if(app.premium===undefined)app.premium=false;
@@ -1179,7 +1188,7 @@ function toggleStatus(){
 function renderTripGrid(){
   const box=document.getElementById('tripGrid');if(!box)return;
   const open=app.trips.filter(t=>t.status!=='closed');
-  box.innerHTML=open.length?open.map(t=>`<div class="trip-sq${open.length===1?' trip-sq-wide':''}" onclick="openTripZoom(${t.id})"><div class="trip-sq-name">${esc(t.name)}</div></div>`).join(''):'<div class="card" style="text-align:center;padding:1.7rem 1rem;grid-column:1/-1"><div class="empty-t" style="margin-bottom:0">Nessun viaggio in corso</div></div>';
+  box.innerHTML=open.length?open.map(t=>`<div class="trip-sq" onclick="openTripZoom(${t.id})"><div class="trip-sq-name">${esc(t.name)}</div></div>`).join(''):'<div class="card" style="text-align:center;padding:1.7rem 1rem"><div class="empty-t" style="margin-bottom:0">Nessun viaggio in corso</div></div>';
 }
 function renderTripAddRow(){
   const box=document.getElementById('tripAddRow');if(!box)return;
@@ -2494,6 +2503,7 @@ function delTicket(id){
 }
 async function openScanner(){
   if(!T()){toast('Crea prima un viaggio');return;}
+  scanGen++;scanZxLast=0;
   openSheet('mScanner');document.getElementById('scanResult').innerHTML='';
   const v=document.getElementById('scanVid');
   v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.muted=true;v.playsInline=true;v.autoplay=true;
@@ -2517,7 +2527,20 @@ async function openScanner(){
 }
 function scanLoop(){
   if(!scanOn)return;const v=document.getElementById('scanVid');
-  if(v.readyState===v.HAVE_ENOUGH_DATA){const cv=document.createElement('canvas');cv.width=v.videoWidth;cv.height=v.videoHeight;const ctx=cv.getContext('2d');ctx.drawImage(v,0,0,cv.width,cv.height);try{const img=ctx.getImageData(0,0,cv.width,cv.height);const code=jsQR(img.data,img.width,img.height);if(code){onScan(code.data);return;}}catch(e){}}
+  if(v.readyState===v.HAVE_ENOUGH_DATA){
+    const cv=document.createElement('canvas');cv.width=v.videoWidth;cv.height=v.videoHeight;const ctx=cv.getContext('2d');ctx.drawImage(v,0,0,cv.width,cv.height);
+    try{const img=ctx.getImageData(0,0,cv.width,cv.height);const code=jsQR(img.data,img.width,img.height);if(code){onScan(code.data);return;}}catch(e){}
+    /* jsQR legge solo QR: le carte d'imbarco usano il formato PDF417, un'altra
+       codifica a barre 2D che jsQR non sa decodificare. Ogni ~400ms proviamo
+       anche con ZXing (più lento ma copre PDF417 e altri formati), senza
+       rallentare il loop veloce di jsQR sui QR normali. */
+    const now=Date.now();
+    if(now-scanZxLast>400){
+      scanZxLast=now;
+      const myGen=scanGen;
+      zxDecode(cv.toDataURL('image/jpeg',.85)).then(hit=>{if(hit&&scanOn&&myGen===scanGen)onScan(hit.code);}).catch(()=>{});
+    }
+  }
   requestAnimationFrame(scanLoop);
 }
 function onScan(data){
@@ -2541,7 +2564,7 @@ function onScan(data){
   toast('Codice letto: dagli un nome e, se vuoi, un giorno');
 }
 function scanInto(tg){scanTarget=tg;const m=document.getElementById('mScanner');if(m)m.style.zIndex=10050;openScanner();}
-function closeScanner(){scanTarget=null;const _m=document.getElementById('mScanner');if(_m)_m.style.zIndex='';scanOn=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}closeSheet('mScanner');}
+function closeScanner(){scanTarget=null;scanGen++;const _m=document.getElementById('mScanner');if(_m)_m.style.zIndex='';scanOn=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}closeSheet('mScanner');}
 
 /* ===== GPS — punto di forza: avvisi di prossimità ===== */
 /* ===== PONTE NATIVO (Capacitor) — si attiva da solo dentro l'app nativa ===== */
@@ -4806,7 +4829,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r61</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r62</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -5175,7 +5198,9 @@ function initDaySwipe(){
     if(t0.closest&&t0.closest('#dayMap,#dayPhotos,#dayChips,#dayCityChips,.tgrip,.tszr,input,select,textarea'))return;
     ttNav(dx<0?1:-1);
   },{passive:true});
-  if(!window._swHint){window._swHint=1;setTimeout(()=>toast('Scorri con un dito ← → per cambiare giorno'),600);}
+  /* Il suggerimento riguarda solo la time-table: se nel frattempo l'utente è già
+     tornato alla home (o altrove) prima che scatti, non ha senso mostrarlo lì. */
+  if(!window._swHint){window._swHint=1;setTimeout(()=>{if(document.getElementById('mDay').classList.contains('active'))toast('Scorri con un dito ← → per cambiare giorno');},600);}
 }
 function looksFlight(str){return /aeroport|airport|flughafen|a[ée]roport|\bvolo\b|\bflight\b/i.test(str||'');}
 function flyDetect(extra){
