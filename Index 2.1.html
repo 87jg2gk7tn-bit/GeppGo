@@ -316,6 +316,16 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .locate-fab{position:absolute;right:.6rem;bottom:.6rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1rem;cursor:pointer;box-shadow:var(--sh-sm);z-index:400;display:flex;align-items:center;justify-content:center}
 .locate-fab.on{background:var(--green-tint);color:var(--green-deep);border-color:transparent}
 .locate-fab:active{transform:scale(.92)}
+.trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.95rem}
+.trip-sq{position:relative;aspect-ratio:1/1;border-radius:var(--r-xl);overflow:hidden;background:var(--grad);box-shadow:var(--sh-blue);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;padding:1rem}
+.trip-sq::after{content:'';position:absolute;right:-30px;top:-30px;width:170px;height:170px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);pointer-events:none}
+.trip-sq:active{transform:scale(.96)}
+.trip-sq.trip-sq-wide{grid-column:1/-1;aspect-ratio:2.6/1}
+.trip-sq-name{position:relative;font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;color:#fff;text-align:center;line-height:1.25}
+.modal-top{align-items:flex-start}
+.sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
+.modal-top.active .sheet-top{transform:translateY(0)}
+.tripzoom-handle{text-align:center;font-size:.72rem;font-weight:700;color:var(--ink-faint);padding:0 0 .8rem;cursor:grab;touch-action:pan-y}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -492,10 +502,9 @@ body.dark .tt-cont{background:var(--beige)!important}
   </div>
   <div class="scroll">
     <div class="page active" id="plan">
-      <div id="tripHero"></div>
       <div id="cloudWarn"></div>
-      <div id="tripRecap"></div>
-      <div class="map-wrap"><div id="map"></div><button class="locate-fab" id="locateFab" onclick="locateFab()" title="La mia posizione">🧭</button></div>
+      <div id="tripGrid" class="trip-grid"></div>
+      <div id="tripAddRow"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
       <div id="bookings"></div>
     </div>
@@ -644,7 +653,12 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r60</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r61</div>
+</div></div>
+<div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
+  <div class="tripzoom-handle" id="tripZoomHandle">‹ scorri per tornare indietro</div>
+  <div id="tripZoomBody"></div>
+  <div class="map-wrap"><div id="map"></div><button class="locate-fab" id="locateFab" onclick="locateFab()" title="La mia posizione">🧭</button></div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1067,7 +1081,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   document.getElementById('navPref').value=app.settings.nav||'ask';
   fillCurrencySelect(document.getElementById('expCur'));
-  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
+  initSheetSwipe();initSheetClose();initTripZoomSwipe();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
   renderAll();
 });
 
@@ -1158,12 +1172,33 @@ function toggleStatus(){
   if(t.status==='open'){confirmDo('Concludere il viaggio?','Lo sposti tra i viaggi conclusi. Potrai riaprirlo da "I tuoi viaggi".',()=>{t.status='closed';const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:t.id;save();renderAll();toast('🏁 Viaggio concluso');},'🏁','Concludi','btn-blue');}
   else{t.status='open';app.currentTripId=t.id;save();renderAll();toast('✅ Viaggio riaperto');}
 }
-function renderTripHero(){
-  const t=T(),el=document.getElementById('tripHero');if(!t||t.status==='closed'){el.innerHTML='<div class="card" style="text-align:center;padding:1.7rem 1rem"><div class="empty-t" style="margin-bottom:0">Nessun viaggio in corso</div></div>';return;}
+/* Home mostra un quadrato per viaggio con solo il nome: il dettaglio (date,
+   destinazione, pillole, statistiche, mappa) si apre in una tendina che scende
+   dall'alto solo quando lo tocchi, invece di ingombrare la home con tutto
+   sempre visibile. */
+function renderTripGrid(){
+  const box=document.getElementById('tripGrid');if(!box)return;
+  const open=app.trips.filter(t=>t.status!=='closed');
+  box.innerHTML=open.length?open.map(t=>`<div class="trip-sq${open.length===1?' trip-sq-wide':''}" onclick="openTripZoom(${t.id})"><div class="trip-sq-name">${esc(t.name)}</div></div>`).join(''):'<div class="card" style="text-align:center;padding:1.7rem 1rem;grid-column:1/-1"><div class="empty-t" style="margin-bottom:0">Nessun viaggio in corso</div></div>';
+}
+function renderTripAddRow(){
+  const box=document.getElementById('tripAddRow');if(!box)return;
+  box.innerHTML=`<div style="display:flex;gap:.6rem;margin-top:.2rem"><button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button><button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:.6rem"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:.78rem;font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
+}
+function openTripZoom(id){
+  app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
+  save();renderAll();identityCheck();
+  openSheet('mTripZoom');
+  setTimeout(()=>{if(map)map.invalidateSize();},350);
+}
+function closeTripZoom(){closeSheet('mTripZoom');}
+function renderTripZoomBody(){
+  const t=T(),el=document.getElementById('tripZoomBody');if(!el)return;
+  if(!t){el.innerHTML='';return;}
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" onclick="openTimetable()"><div class="th-top"><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><div class="trip-hero-name">${esc(t.name)}</div><button class="pill-ghost" onclick="event.stopPropagation();openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="event.stopPropagation();openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="event.stopPropagation();openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="event.stopPropagation();openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="event.stopPropagation();openRestore()">✓ ${lastSnapLabel()}</button></div></div><button class="status-pill" onclick="event.stopPropagation();toggleStatus()">${tripPhase(t)}</button></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>`;
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>`;
 }
 
 /* ===== QW-2: LISTA BAGAGLI AUTO-GENERATA (regole, nessuna AI) ===== */
@@ -3178,18 +3213,6 @@ async function geoImported(id){
 
 
 /* ===== CHIPS VIAGGI IN HOME (solo attivi) ===== */
-function switchTo(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}save();renderAll();identityCheck();}
-function renderTripRecap(){
-  const box=document.getElementById('tripRecap');if(!box)return;
-  const act=app.trips.filter(t=>t.status!=='closed');
-  const btn=`<button class="btn btn-green btn-block" style="margin-top:.3rem" onclick="openNewTrip()">Aggiungi viaggio</button><div style="text-align:center;margin-top:.55rem"><button onclick="openSheet('mCode')" style="background:none;border:none;font-family:inherit;font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer">Ho un codice invito ›</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:.6rem"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:.78rem;font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
-  const others=act.filter(t=>t.id!==app.currentTripId);
-  const cards=others.map(t=>{
-    let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}`;}
-    return `<div class="trip-hero" style="padding:1.05rem 1.15rem;margin-bottom:.7rem" onclick="switchTo(${t.id})"><div class="th-top" style="margin-bottom:0"><div style="min-width:0"><div class="trip-hero-name" style="font-size:1.05rem">${esc(t.name)}</div>${dates?`<div class="trip-hero-dates">${dates}</div>`:''}</div><button class="status-pill" onclick="event.stopPropagation();switchTo(${t.id})">${tripPhase(t)}</button></div></div>`;
-  }).join('');
-  box.innerHTML=cards+btn;
-}
 
 
 
@@ -3882,6 +3905,19 @@ function initSheetSwipe(){
     const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dy>90){if(modal.id==='mScanner')closeScanner();else if(modal.id==='mActDetail')cancelActDetail();else modal.classList.remove('active');}dy=0;};
     grip.addEventListener('pointerup',fin);grip.addEventListener('pointercancel',fin);
   });
+}
+/* Il dettaglio del viaggio scende dall'alto: si chiude con uno swipe a sinistra
+   sulla sua maniglia dedicata (non sulla mappa, per non litigare con lo
+   spostamento/zoom della mappa stessa). */
+function initTripZoomSwipe(){
+  const handle=document.getElementById('tripZoomHandle'),sheet=document.getElementById('tripZoomSheet');
+  if(!handle||!sheet)return;
+  let sx=0,dx=0,on=false;
+  handle.style.touchAction='pan-y';
+  handle.addEventListener('pointerdown',e=>{on=true;sx=e.clientX;dx=0;sheet.style.transition='none';handle.setPointerCapture(e.pointerId);});
+  handle.addEventListener('pointermove',e=>{if(!on)return;dx=e.clientX-sx;if(dx>0)dx=0;sheet.style.transform=`translateX(${dx}px)`;});
+  const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dx<-70)closeTripZoom();dx=0;};
+  handle.addEventListener('pointerup',fin);handle.addEventListener('pointercancel',fin);
 }
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
@@ -4770,7 +4806,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r60</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r61</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -5175,7 +5211,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderTripHero();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripRecap();}
+  migrateData();renderTripPick();renderTripGrid();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
 
 </script>
 </body>
