@@ -640,7 +640,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r57</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r58</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -789,9 +789,13 @@ body.dark .tt-cont{background:var(--beige)!important}
 <div class="modal" id="mActDetail"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="adTitle">Attività</div><button class="x x-close" onclick="closeSheet('mActDetail')">✕</button></div>
-  <div class="fg"><label>Nome</label><input id="adName" type="text" name="titolo-attivita" onblur="flyDetect()" autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true"></div>
+  <div class="fg"><label>Nome</label><input id="adName" type="text" name="titolo-attivita" onblur="flyDetect()" oninput="adNameInput()" autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true">
+    <div id="adNameSug"></div>
+  </div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Inizio</label><input type="time" id="adTime"></div><div class="fg" style="flex:1"><label>Fine</label><input type="time" id="adTimeEnd"></div></div>
   <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adNextDay"><span>Finisce il giorno dopo (es. volo notturno)</span></label></div>
+  <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adRemindChk" onchange="document.getElementById('adRemindFields').style.display=this.checked?'block':'none'"><span>🔔 Avvisami un po' prima che inizi</span></label></div>
+  <div id="adRemindFields" style="display:none;margin-bottom:.9rem"><select id="adRemindMin"><option value="10">10 minuti prima</option><option value="15">15 minuti prima</option><option value="30" selected>30 minuti prima</option><option value="60">1 ora prima</option><option value="120">2 ore prima</option><option value="1440">Il giorno prima</option></select></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Giorno</label><select id="adDay"></select></div><div class="fg" style="flex:1"><label>Tipo</label><select id="adType"><option value="outdoor">All'aperto</option><option value="indoor">Al chiuso</option><option value="any">Indifferente</option><option value="flight">Volo ✈️</option></select></div></div>
   <div id="adFlyWrap" style="display:none"><div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label id="lblFlyFrom">Aeroporto di partenza</label><input id="adFlyFrom" type="text" autocomplete="off" placeholder="es. MXP"></div><div class="fg" style="flex:1"><label id="lblFlyTo">Aeroporto di arrivo</label><input id="adFlyTo" type="text" autocomplete="off" placeholder="es. NRT"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label id="lblFlyCost">Costo volo (opz.)</label><input id="adFlyCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="adFlyCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="adFlyPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div></div>
@@ -845,7 +849,7 @@ body.dark .tt-cont{background:var(--beige)!important}
 <div class="modal" id="mNotif"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Notifiche di GeppGo</div></div>
-  <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.65;margin-bottom:.9rem">GeppGo può avvisarti in due momenti: quando <strong>passi vicino a una tappa salvata</strong> (anche a schermo bloccato, nell'app installata) e quando <strong>scade il termine per prenotare</strong> un'attività.</p>
+  <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.65;margin-bottom:.9rem">GeppGo può avvisarti in tre momenti: quando <strong>passi vicino a una tappa salvata</strong> (anche a schermo bloccato, nell'app installata), quando <strong>scade il termine per prenotare</strong> un'attività, e un po' <strong>prima che inizi un'attività</strong> se lo chiedi.</p>
   <p style="font-size:.85rem;color:var(--ink-faint);line-height:1.6;margin-bottom:1rem">In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.</p>
   <div style="display:flex;gap:.6rem"><button class="btn btn-grad" style="flex:1" onclick="consentYes()">Attiva le notifiche</button><button class="btn btn-soft" style="flex:1" onclick="consentNo()">Non ora</button></div>
 </div></div>
@@ -1059,7 +1063,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   document.getElementById('navPref').value=app.settings.nav||'ask';
   fillCurrencySelect(document.getElementById('expCur'));
-  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);
+  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
   renderAll();
 });
 
@@ -1316,7 +1320,7 @@ function rankPlaces(data,q){
   const HI={attraction:1500,monument:1500,castle:1400,palace:1400,cathedral:1400,church:1100,museum:1400,memorial:1200,ruins:1300,archaeological_site:1300,artwork:1000,viewpoint:1100,theme_park:1200,zoo:1100,aquarium:1100,station:1300,aerodrome:1500,airport:1500,bus_station:1100,subway_entrance:1000,ferry_terminal:1100,hotel:900,hostel:800,restaurant:700,cafe:500,historic:1200,tourism:1100};
   const LO={highway:-500,residential:-800,house:-600,building:-300,apartments:-700,school:-300,office:-400,fast_food:-200};
   data=data.map(p=>{
-    let s=0;const dn=p.display_name.toLowerCase(),fp=p.display_name.split(',')[0].toLowerCase(),imp=parseFloat(p.importance||0);
+    let s=0;const dnRaw=p.display_name||'',dn=dnRaw.toLowerCase(),fp=dnRaw.split(',')[0].toLowerCase(),imp=parseFloat(p.importance||0);
     s+=imp*200;if(fp===ql)s+=1500;if(qw.every(w=>fp.includes(w)))s+=800;if(qw.every(w=>dn.includes(w)))s+=300;
     if(HI[p.type])s+=HI[p.type];if(HI[p.class])s+=HI[p.class]/2;if(LO[p.type])s+=LO[p.type];if(LO[p.class])s+=LO[p.class];
     if((ql.includes('stazione')||ql.includes('station'))&&(p.type==='station'||p.class==='railway'))s+=1000;
@@ -1793,11 +1797,31 @@ function checkBookRem(){
     }));
   });
 }
+function checkActReminders(){
+  const now=Date.now();
+  app.trips.forEach(t=>{
+    if(t.status==='closed')return;
+    t.days.forEach(d=>(d.activities||[]).forEach(a=>{
+      if(!a.remindMin||!a.time||a.remindNotified)return;
+      const at=new Date(d.date+'T'+a.time+':00').getTime()-a.remindMin*60000;
+      if(isNaN(at)||now<at||now-at>432e5)return;
+      a.remindNotified=true;save();
+      const msg=a.name+' · alle '+a.time;
+      if(app.consentNotif&&typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification('GeppGo',{body:'Tra poco: '+msg});}catch(e){}}
+      nNotify('⏰ Tra poco: '+a.name,'Inizia alle '+a.time);
+      if(navigator.vibrate)navigator.vibrate([200,80,200]);
+      toast('🔔 Tra poco: '+msg);
+    }));
+  });
+}
 async function autoLinkPoi(t,a,dayDate){
   try{
     if(!a.name||a.name.length<4)return;
-    const res=await geoSearch(t.destination?a.name+', '+t.destination:a.name);
-    const r=res&&res[0];if(!r)return;
+    const city=tripCityHint(t);
+    let res=await geoSearch(city?a.name+', '+city:a.name);
+    if(!res.length&&city)res=await geoSearch(a.name);
+    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,a.name):res;
+    const r=ranked&&ranked[0];if(!r)return;
     const cls=String(r.class||'')+' '+String(r.type||'');
     const okK=['tourism','leisure','historic','attraction','theme_park','museum','park','zoo','aquarium','castle','monument','viewpoint','gallery','stadium','ruins','peak','restaurant','cafe','bar','pub','fast_food','hotel','guest_house','hostel','beach','church','cathedral','memorial','archaeological_site','artwork','station','airport','aerodrome','garden'];
     if(!okK.some(k=>cls.includes(k)))return;
@@ -3415,8 +3439,11 @@ async function importDayText(){
     if(!name)continue;
     const a={id:uid(),name,time,timeEnd:'',type:'any',notes:'',who:whoAll.slice(),completed:false,booking:{needed:false,done:false},lat:null,lng:null,poiId:null};
     try{
-      const res=await geoSearch(t.destination?name+', '+t.destination:name);
-      const r=res&&res[0];
+      const city=tripCityHint(t);
+      let res=await geoSearch(city?name+', '+city:name);
+      if(!res.length&&city)res=await geoSearch(name);
+      const ranked=(typeof rankPlaces==='function')?rankPlaces(res,name):res;
+      const r=ranked&&ranked[0];
       if(r){a.lat=parseFloat(r.lat);a.lng=parseFloat(r.lon);}
     }catch(e){}
     d.activities.push(a);added++;
@@ -3442,6 +3469,10 @@ function openActDetail(di,id){
   document.getElementById('adTime').value=a.time||'';
   document.getElementById('adTimeEnd').value=a.timeEnd||'';
   document.getElementById('adNextDay').checked=!!a.nextDay;
+  document.getElementById('adRemindChk').checked=!!a.remindMin;
+  document.getElementById('adRemindFields').style.display=a.remindMin?'block':'none';
+  document.getElementById('adRemindMin').value=a.remindMin||30;
+  document.getElementById('adNameSug').innerHTML='';
   document.getElementById('adFlyFrom').value=a.flyFrom||'';document.getElementById('adFlyTo').value=a.flyTo||'';
   const fex0=a.flyExpId?t.expenses.find(x=>x.id===a.flyExpId):null;
   document.getElementById('adFlyCost').value=fex0?fex0.origAmount:'';
@@ -3507,7 +3538,12 @@ function saveActDetail(){
   const cand={time,timeEnd,who,lat:a.lat,lng:a.lng,poiId:a.poiId,parentId,nextDay:nx};
   const conf=findConflict(t,t.days[newDi],cand,isNew?null:adRef.id);
   if(conf)toast(`⚠️ Si sovrappone a "${conf.act.name}" per ${conf.names} — salvato lo stesso`);
+  const oldTime=a.time,oldRemindMin=a.remindMin;
   a.name=name;a.time=time;a.timeEnd=timeEnd;a.nextDay=nx;a.who=who;a.parentId=parentId;
+  const remindOn=document.getElementById('adRemindChk').checked;
+  const newRemindMin=remindOn?parseInt(document.getElementById('adRemindMin').value,10):null;
+  a.remindNotified=(oldRemindMin===newRemindMin&&oldTime===time)?!!a.remindNotified:false;
+  a.remindMin=newRemindMin;
   a.flyFrom=document.getElementById('adFlyFrom').value.trim();a.flyTo=document.getElementById('adFlyTo').value.trim();
   {
     const isFly=document.getElementById('adType').value==='flight';
@@ -3543,7 +3579,7 @@ function saveActDetail(){
      else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur,who);
    }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);t._delExp=t._delExp||{};t._delExp[bex.id]=Date.now();a.bookExpId=null;}
   }
-  if(needed&&a.booking.by&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
+  if((needed&&a.booking.by||remindOn)&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
   if(adPoiPick&&!adPoiPick.clear){
     const ex=t.pois.find(pp=>pp.name.toLowerCase()===adPoiPick.name.toLowerCase());
     if(ex){a.poiId=ex.id;if(!ex.assignedDay)ex.assignedDay=t.days[newDi].date;}
@@ -3616,7 +3652,7 @@ function markPaid(from,to,amount){
 
 /* ===== CONSENSO NOTIFICHE ===== */
 let pendingConsentCb=null;
-function consentYes(){app.consentNotif=true;save();closeSheet('mNotif');if(NATIVE){const LN=nPlug('LocalNotifications');if(LN)LN.requestPermissions().catch(()=>{});}const cb=pendingConsentCb;pendingConsentCb=null;if(cb)cb();toast('Notifiche attive');}
+function consentYes(){app.consentNotif=true;save();closeSheet('mNotif');if(NATIVE){const LN=nPlug('LocalNotifications');if(LN)LN.requestPermissions().catch(()=>{});}else if(typeof Notification!=='undefined'&&Notification.permission==='default'){try{Notification.requestPermission();}catch(e){}}const cb=pendingConsentCb;pendingConsentCb=null;if(cb)cb();toast('Notifiche attive');}
 function consentNo(){app.consentNotif=false;save();closeSheet('mNotif');const cb=pendingConsentCb;pendingConsentCb=null;if(cb)cb();}
 
 /* ===== CERCA ONLINE SE SERVE PRENOTARE (AI + web) ===== */
@@ -4640,7 +4676,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r57</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r58</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -4673,6 +4709,33 @@ function adPoiSel(i){
   document.getElementById('adPoiCur').style.display='flex';
   document.getElementById('adPoiSearch').style.display='none';
   document.getElementById('adPoiRes').innerHTML='';
+}
+/* Se il viaggio non ha una destinazione compilata a parte, usiamo il nome del
+   viaggio stesso per restringere la ricerca del posto alla città giusta. */
+function tripCityHint(t){return (t&&(t.destination||t.name))||'';}
+let adNameT=null,lastAdNameRes=[];
+function adNameInput(){
+  clearTimeout(adNameT);
+  const q=document.getElementById('adName').value.trim(),box=document.getElementById('adNameSug');
+  if(q.length<3||document.getElementById('adPoiCur').style.display==='flex'){box.innerHTML='';return;}
+  adNameT=setTimeout(async()=>{
+    const t=T(),city=tripCityHint(t);
+    let dd=await geoSearch(city?q+', '+city:q);
+    if(!dd.length&&city)dd=await geoSearch(q);
+    if(document.getElementById('adName').value.trim()!==q)return;
+    lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
+    box.innerHTML=lastAdNameRes.slice(0,5).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<button class="chip" style="display:block;width:100%;text-align:left;margin-top:.35rem;white-space:normal" onclick="adNameSel(${i})"><b>${esc(parts[0]||'')}</b> <span style="color:var(--ink-faint)">${esc(parts.slice(1,3).join(','))}</span></button>`;}).join('');
+  },420);
+}
+function adNameSel(i){
+  const r=lastAdNameRes[i];if(!r)return;
+  adPoiPick={name:String(r.display_name||'').split(',')[0].trim(),lat:parseFloat(r.lat),lng:parseFloat(r.lon)};
+  document.getElementById('adPoiName').textContent=adPoiPick.name;
+  flyDetect(adPoiPick.name);
+  document.getElementById('adPoiCur').style.display='flex';
+  document.getElementById('adPoiSearch').style.display='none';
+  document.getElementById('adPoiRes').innerHTML='';
+  document.getElementById('adNameSug').innerHTML='';
 }
 function adPoiChange(){
   document.getElementById('adPoiCur').style.display='none';
