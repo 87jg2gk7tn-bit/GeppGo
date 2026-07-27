@@ -640,7 +640,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r58</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r59</div>
 </div></div>
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -788,7 +788,7 @@ body.dark .tt-cont{background:var(--beige)!important}
 <button class="fab" id="ttFab" style="z-index:10002">＋</button></div>
 <div class="modal" id="mActDetail"><div class="sheet">
   <div class="sheet-grip"></div>
-  <div class="sheet-head"><div class="sheet-t" id="adTitle">Attività</div><button class="x x-close" onclick="closeSheet('mActDetail')">✕</button></div>
+  <div class="sheet-head"><div class="sheet-t" id="adTitle">Attività</div><button class="x x-close" onclick="cancelActDetail()">✕</button></div>
   <div class="fg"><label>Nome</label><input id="adName" type="text" name="titolo-attivita" onblur="flyDetect()" oninput="adNameInput()" autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true">
     <div id="adNameSug"></div>
   </div>
@@ -2742,6 +2742,15 @@ function confirmDo(title,msg,cb,icon,okText,okClass){
 /* ===== HELPERS ===== */
 function openSheet(id){document.getElementById(id).classList.add('active');}
 function closeSheet(id){document.getElementById(id).classList.remove('active');}
+/* Uscire dal dettaglio attività senza salvare deve tornare al giorno che si stava
+   guardando (da cui il dettaglio era stato aperto), non lasciare l'utente sulla
+   home: openActDetail chiude sempre mDay all'apertura, quindi senza questo passo
+   esplicito non c'è nulla che lo riapra all'annullamento. */
+function cancelActDetail(){
+  const di=adRef?adRef.di:null;
+  closeSheet('mActDetail');
+  if(di!=null)setTimeout(()=>openDay(di),150);
+}
 function toast(msg){const old=document.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2600);}
 /* ===== CIRCLE TO FIND — identifica un monumento dalla foto ===== */
 let idImg=null,idSel=null,idDrag=false,idStart=null;
@@ -3118,7 +3127,13 @@ function renderTripRecap(){
 
 /* ===== TIME-TABLE VERTICALE DEL GIORNO ===== */
 let ttDay=0,ttWinStart=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false;
-function openTimetable(){const t=T();if(!t){toast('Crea prima un viaggio');return;}if(!t.days.length){fromDayFlag=true;openAddDay();return;}openDay(0);}
+function openTimetable(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  if(!t.days.length){fromDayFlag=true;openAddDay();return;}
+  const todayStr=new Date().toISOString().split('T')[0];
+  const idx=t.days.findIndex(x=>x.date===todayStr);
+  openDay(idx>=0?idx:0);
+}
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
@@ -3785,14 +3800,14 @@ function initSheetSwipe(){
     grip.style.padding='16px 44px';grip.style.margin='-16px auto -6px';grip.style.boxSizing='content-box';grip.style.touchAction='none';grip.style.cursor='grab';
     grip.addEventListener('pointerdown',e=>{on=true;sy=e.clientY;dy=0;sheet.style.transition='none';grip.setPointerCapture(e.pointerId);});
     grip.addEventListener('pointermove',e=>{if(!on)return;dy=e.clientY-sy;if(dy<0)dy=0;sheet.style.transform=`translateY(${dy}px)`;});
-    const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dy>90){if(modal.id==='mScanner')closeScanner();else modal.classList.remove('active');}dy=0;};
+    const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dy>90){if(modal.id==='mScanner')closeScanner();else if(modal.id==='mActDetail')cancelActDetail();else modal.classList.remove('active');}dy=0;};
     grip.addEventListener('pointerup',fin);grip.addEventListener('pointercancel',fin);
   });
 }
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
     if(m.id==='mJoin'||m.id==='mNotif')return;
-    m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else m.classList.remove('active');}});
+    m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else m.classList.remove('active');}});
     const head=m.querySelector('.sheet-head');
     if(!head||head.querySelector('.x-close'))return;
     const b=document.createElement('button');
@@ -4676,7 +4691,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r58</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r59</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
