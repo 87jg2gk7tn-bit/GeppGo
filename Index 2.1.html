@@ -246,6 +246,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .modal{position:fixed;inset:0;background:rgba(27,35,30,.45);backdrop-filter:blur(5px);z-index:9999;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .3s var(--ease)}
 .modal.active{display:flex;opacity:1}
 .sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.4rem 1.25rem calc(1.4rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s var(--spring)}
+/* Biglietto a schermo intero, sempre bianco a massimo contrasto (anche col
+   tema scuro): è pensato per essere letto da uno scanner al gate, quindi
+   deve restare il più luminoso e leggibile possibile. */
+#mTicketBig .sheet{background:#fff;color:#111}
+#mTicketBig .sheet-t,#mTicketBig .ticket-c{color:#111}
+#mTicketBig .x{color:#111}
 .modal.active .sheet{transform:translateY(0)}
 .sheet-grip{width:36px;height:5px;border-radius:100px;background:var(--ink-faint);opacity:.55;background-clip:content-box;margin:0 auto 1rem}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
@@ -672,7 +678,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r67</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r68</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -835,8 +841,10 @@ body.dark .tt-cont{background:var(--beige)!important}
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
-  <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
+  <div id="amBtns" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
     <button class="btn btn-soft btn-block" onclick="actMenuHistory()">📖 Storia del posto</button>
+    <button class="btn btn-soft btn-block" id="amNavBtn" style="display:none" onclick="actMenuNav()">🧭 Naviga</button>
+    <button class="btn btn-soft btn-block" id="amTkBtn" style="display:none" onclick="actMenuTicket()">🎫 Biglietto</button>
     <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
   </div>
 </div></div>
@@ -887,7 +895,6 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="fg"><label>Note</label><textarea id="adNotes"></textarea></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
     <button class="btn btn-grad" style="flex:2" onclick="saveActDetail()">Salva</button>
-    <button class="btn btn-soft" id="adNav" style="flex:1;display:none" onclick="navFromDetail()">Naviga</button>
     <a class="btn btn-soft" id="adGcal" style="flex:1;display:none" target="_blank">Calendario</a>
     <button class="btn btn-danger" id="adDel" onclick="delActDetail()">Elimina</button>
   </div>
@@ -1761,6 +1768,9 @@ function tapAct(di,id){
   const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
   actMenuRef={di,id};
   document.getElementById('amName').textContent=a.name||'Attività';
+  document.getElementById('amNavBtn').style.display=a.lat!=null?'block':'none';
+  const tk=t.tickets.find(x=>x.actId===id);
+  document.getElementById('amTkBtn').style.display=tk?'block':'none';
   openSheet('mActMenu');
 }
 function actMenuHistory(){
@@ -1770,6 +1780,20 @@ function actMenuHistory(){
   closeSheet('mActMenu');
   const poi=a.poiId?t.pois.find(x=>x.id===a.poiId):null;
   openPlaceInfo({name:a.name,lat:a.lat!=null?a.lat:(poi?poi.lat:null),lng:a.lng!=null?a.lng:(poi?poi.lng:null),address:poi?poi.address:'',type:poi?poi.type:'',hours:poi?poi.hours:'',website:poi?poi.website:'',phone:poi?poi.phone:'',photo:poi?poi.photo:''},{hideSave:true});
+}
+function actMenuNav(){
+  if(!actMenuRef)return;const {di,id}=actMenuRef;
+  const t=T();if(!t||!t.days[di])return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a||a.lat==null)return;
+  closeSheet('mActMenu');
+  openNav(a.lat,a.lng,a.name);
+}
+function actMenuTicket(){
+  if(!actMenuRef)return;const {di,id}=actMenuRef;
+  const t=T();if(!t)return;
+  const tk=t.tickets.find(x=>x.actId===id);if(!tk)return;
+  closeSheet('mActMenu');
+  openTicketBig(tk.id);
 }
 function actMenuEdit(){
   if(!actMenuRef)return;const {di,id}=actMenuRef;
@@ -3825,7 +3849,6 @@ function openActDetail(di,id){
   else pcur.style.display='none';
   renderAdVotes(isNew?null:a);
   document.getElementById('adNotes').value=a.notes||'';
-  document.getElementById('adNav').style.display=(!isNew&&a.lat)?'block':'none';
   const g=document.getElementById('adGcal');
   const url=(!isNew)?gcalUrl(a,t.days[di].date):'';
   if(url){g.href=url;g.style.display='flex';}else g.style.display='none';
@@ -5039,7 +5062,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r67</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r68</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
