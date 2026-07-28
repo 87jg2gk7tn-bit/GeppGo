@@ -333,6 +333,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .modal-top{align-items:flex-start}
 .sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
 .modal-top.active .sheet-top{transform:translateY(0)}
+/* Tutte le tendine (i menu a scelta, cioè i <select>) si aprono come le
+   altre tendine dell'app: da sotto, non come il picker nativo del sistema. */
+.picker-opt{display:block;width:100%;text-align:left;padding:.9rem .95rem;border:none;border-bottom:1px solid var(--line-soft);background:none;font-family:inherit;font-size:.92rem;color:var(--ink);cursor:pointer}
+.picker-opt:last-child{border-bottom:none}
+.picker-opt.sel{font-weight:800;color:var(--green-deep)}
+.picker-opt.sel::after{content:'✓';float:right}
+.picker-opt:disabled{color:var(--ink-faint);opacity:.5}
+.picker-opt:active{background:var(--paper)}
+#mPicker{z-index:10100}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -678,7 +687,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r72</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r73</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -845,6 +854,11 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-soft btn-block" id="amTkBtn" style="display:none" onclick="actMenuTicket()">🎫 Biglietto</button>
     <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
   </div>
+</div></div>
+<div class="modal" id="mPicker"><div class="sheet" style="max-width:420px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="pickerTitle">Scegli</div><button class="x x-close" onclick="closeSheet('mPicker')">✕</button></div>
+  <div id="pickerList"></div>
 </div></div>
 <div class="modal" id="mActDetail"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3109,6 +3123,55 @@ function confirmDo(title,msg,cb,icon,okText,okClass){
 /* ===== HELPERS ===== */
 function openSheet(id){document.getElementById(id).classList.add('active');}
 function closeSheet(id){document.getElementById(id).classList.remove('active');}
+/* ===== Tendine (select) sempre dal basso, come il resto dell'app =====
+   Ogni <select> nativo viene "avvolto" in un contenitore invisibile con
+   sopra un livello trasparente che intercetta il tap: così il picker di
+   sistema non si apre mai, e al suo posto usiamo la stessa tendina a
+   comparsa dal basso di tutto il resto dell'app. Il <select> vero resta
+   nel DOM (stesso value, stessi onchange), quindi nessun codice esistente
+   deve cambiare: scegliendo un'opzione impostiamo il suo value e simuliamo
+   un evento 'change' reale. */
+let _pickerSel=null,_pickerOpts=[];
+function openSelectPicker(sel){
+  if(!sel||sel.disabled)return;
+  const opts=[...sel.options];
+  if(!opts.length)return;
+  _pickerSel=sel;_pickerOpts=opts;
+  document.getElementById('pickerTitle').textContent=sel.dataset.pickerTitle||sel.getAttribute('aria-label')||'Scegli';
+  document.getElementById('pickerList').innerHTML=opts.map((o,i)=>`<button class="picker-opt ${o.selected?'sel':''}" ${o.disabled?'disabled':''} onclick="pickSelectOption(${i})">${esc(o.text)}</button>`).join('');
+  openSheet('mPicker');
+}
+function pickSelectOption(i){
+  const sel=_pickerSel,o=_pickerOpts[i];if(!sel||!o)return;
+  sel.value=o.value;
+  sel.dispatchEvent(new Event('change',{bubbles:true}));
+  closeSheet('mPicker');
+}
+function wireBottomSheetSelect(sel){
+  if(!sel||sel.dataset.bsWired||!sel.parentNode)return;
+  sel.dataset.bsWired='1';
+  const cs=getComputedStyle(sel);
+  const wrap=document.createElement('span');
+  wrap.style.cssText=`position:relative;display:block;width:${cs.width};flex:${cs.flexGrow} ${cs.flexShrink} ${cs.flexBasis};margin:${cs.marginTop} ${cs.marginRight} ${cs.marginBottom} ${cs.marginLeft}`;
+  sel.parentNode.insertBefore(wrap,sel);
+  wrap.appendChild(sel);
+  sel.style.margin='0';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:absolute;inset:0;cursor:pointer;z-index:2';
+  overlay.addEventListener('click',e=>{e.preventDefault();openSelectPicker(sel);});
+  wrap.appendChild(overlay);
+}
+function scanForBottomSheetSelects(root){
+  if(!root)return;
+  if(root.tagName==='SELECT')wireBottomSheetSelect(root);
+  else if(root.querySelectorAll)root.querySelectorAll('select').forEach(wireBottomSheetSelect);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  scanForBottomSheetSelects(document.body);
+  new MutationObserver(muts=>{
+    muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scanForBottomSheetSelects(n);}));
+  }).observe(document.body,{childList:true,subtree:true});
+});
 /* Uscire dal dettaglio attività senza salvare deve tornare al giorno che si stava
    guardando (da cui il dettaglio era stato aperto), non lasciare l'utente sulla
    home: openActDetail chiude sempre mDay all'apertura, quindi senza questo passo
@@ -5103,7 +5166,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r72</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r73</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
