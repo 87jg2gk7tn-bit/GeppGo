@@ -687,7 +687,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r73</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r74</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1872,43 +1872,94 @@ async function translateQuery(q,lang){
    chiese, piazze, palazzi e simili. */
 const FP_BAD_TITLE=/\bmunicipio\b|\bcircoscrizion\w*\b|\bprovincia di\b|\bcittà metropolitana\b|\bcomune di\b|\bzona \d|\bquartiere\b|\bdiocesi\b|\barcidiocesi\b|\bdistretto\b|\(metropolitana|\(stazione della metropolitana|\(fermata/i;
 const FP_BAD_CAT=/municipi di|circoscrizioni|suddivisioni amministrative|stazioni della metropolitana|quartieri di|diocesi|distretti di|zone urbanistiche|comuni (della|d')/i;
+/* Una singola chiamata a geosearch a volte non basta a raggiungere almeno
+   una ventina di posti validi dopo il filtro (specie tolte le voci
+   amministrative): con la continuazione dell'API prendiamo altre pagine di
+   risultati finché non ne abbiamo abbastanza o Wikipedia non ne ha più. */
 async function fetchFamousPlaces(lat,lng){
-  try{
-    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=10000&ggslimit=60&prop=pageimages%7Ccoordinates%7Cextracts%7Ccategories&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=2&cllimit=30`;
-    const r=await fetch(url);
-    const d=await r.json();
-    const pages=Object.values((d.query&&d.query.pages)||{});
-    const items=pages.map(p=>({
-      name:p.title,
-      lat:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lat:null,
-      lng:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lon:null,
-      photo:p.thumbnail?p.thumbnail.source:null,
-      extract:p.extract||'',
-      _idx:p.index||999,
-      _cats:(p.categories||[]).map(c=>c.title||'').join(' | ')
-    })).filter(x=>x.lat!=null&&x.lng!=null)
-      .filter(x=>!FP_BAD_TITLE.test(x.name))
-      .filter(x=>!FP_BAD_CAT.test(x._cats));
-    items.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0)||a._idx-b._idx);
-    return items.slice(0,40);
-  }catch(e){return [];}
+  const seen=new Set(),all=[];
+  let cont={};
+  for(let page=0;page<4;page++){
+    try{
+      const cp=Object.entries(cont).map(([k,v])=>`&${k}=${encodeURIComponent(v)}`).join('');
+      const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=10000&ggslimit=60&prop=pageimages%7Ccoordinates%7Cextracts%7Ccategories&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=2&cllimit=30${cp}`;
+      const r=await fetch(url);
+      const d=await r.json();
+      const pages=Object.values((d.query&&d.query.pages)||{});
+      pages.map(p=>({
+        name:p.title,
+        lat:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lat:null,
+        lng:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lon:null,
+        photo:p.thumbnail?p.thumbnail.source:null,
+        extract:p.extract||'',
+        _idx:p.index||999,
+        _cats:(p.categories||[]).map(c=>c.title||'').join(' | ')
+      })).filter(x=>x.lat!=null&&x.lng!=null)
+        .filter(x=>!FP_BAD_TITLE.test(x.name))
+        .filter(x=>!FP_BAD_CAT.test(x._cats))
+        .forEach(it=>{const k=it.name.toLowerCase();if(!seen.has(k)){seen.add(k);all.push(it);}});
+      if(!d.continue||all.length>=60)break;
+      cont=d.continue;
+    }catch(e){break;}
+  }
+  all.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0)||a._idx-b._idx);
+  return all;
 }
-let fpItems=[],fpTripId=null;
+/* Similarità tra due posti in base a quante categorie Wikipedia hanno in
+   comune (es. entrambi "Chiese di Milano"): serve a scegliere, tra quelli
+   non ancora mostrati, il più simile a quello appena spuntato. */
+/* Categorie troppo generiche (quasi ogni attrazione le ha) andrebbero
+   escluse dal confronto, altrimenti "sembrano tutti simili a tutti":
+   contano solo le categorie più specifiche condivise. */
+const FP_GENERIC_CAT=/attrazioni turistiche|luoghi d'interesse|punti di interesse|pagine con mappe/i;
+function fpCatOverlap(a,b){
+  if(!a||!b)return 0;
+  const clean=s=>s.split(' | ').filter(Boolean).filter(c=>!FP_GENERIC_CAT.test(c));
+  const sa=new Set(clean(a)),listB=clean(b);
+  let n=0;listB.forEach(c=>{if(sa.has(c))n++;});
+  return n;
+}
+let fpItems=[],fpReserve=[],fpTripId=null,fpSuggested=null;
 async function openFamousPlaces(t){
   if(!t||!t.destLoc)return;
-  fpTripId=t.id;fpItems=[];
+  fpTripId=t.id;fpItems=[];fpReserve=[];fpSuggested=new Set();
   const nameEl=document.getElementById('fpCityName');
   if(nameEl)nameEl.textContent=t.destination?('a '+t.destination):'';
   document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">🔍 Cerco i posti più famosi...</div>';
   openSheet('mFamousPlaces');
   const items=await fetchFamousPlaces(t.destLoc.lat,t.destLoc.lng);
   if(fpTripId!==t.id)return; // l'utente ha già chiuso o cambiato viaggio nel frattempo
-  fpItems=items;
+  fpItems=items.slice(0,30);fpReserve=items.slice(30);
   if(!items.length){document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">Non ho trovato posti noti per questa destinazione: puoi comunque cercarli a mano in "Scopri".</div>';return;}
   renderFamousPlacesList();
 }
 function renderFamousPlacesList(){
-  document.getElementById('fpList').innerHTML=fpItems.map((p,i)=>`<label class="split-item" style="display:flex;gap:.7rem;align-items:center;padding:.6rem;margin-bottom:.5rem"><input type="checkbox" data-fp="${i}" style="flex-shrink:0;width:20px;height:20px">${p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem">🏛️</div>`}<div style="min-width:0"><div style="font-weight:700;font-size:.88rem">${esc(p.name)}</div>${p.extract?`<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(p.extract)}</div>`:''}</div></label>`).join('');
+  document.getElementById('fpList').innerHTML=fpItems.map((p,i)=>`<label class="split-item" style="display:flex;gap:.7rem;align-items:center;padding:.6rem;margin-bottom:.5rem"><input type="checkbox" data-fp="${i}" onchange="onFpCheck(${i})" style="flex-shrink:0;width:20px;height:20px">${p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem">🏛️</div>`}<div style="min-width:0">${p._simTo?`<div style="font-size:.68rem;color:var(--green-deep);font-weight:800;margin-bottom:.1rem">✨ SIMILE A ${esc(p._simTo.toUpperCase())}</div>`:''}<div style="font-weight:700;font-size:.88rem">${esc(p.name)}</div>${p.extract?`<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(p.extract)}</div>`:''}</div></label>`).join('');
+}
+/* Quando si spunta un posto, se in coda ai risultati (non ancora mostrati)
+   c'è qualcosa di simile per categoria, lo aggiungiamo in fondo alla
+   lista: un piccolo suggerimento "già che ci sei" invece di doverlo
+   cercare a mano in Scopri. */
+function onFpCheck(i){
+  const cb=document.querySelector(`#fpList input[data-fp="${i}"]`);
+  if(!cb||!cb.checked)return;
+  const chosen=fpItems[i];if(!chosen||!fpReserve.length)return;
+  let best=-1,bestScore=0;
+  fpReserve.forEach((cand,j)=>{
+    if(fpSuggested.has(cand.name))return;
+    const s=fpCatOverlap(chosen._cats,cand._cats);
+    if(s>bestScore){bestScore=s;best=j;}
+  });
+  if(best<0||bestScore<=0)return;
+  /* Il re-render ricrea tutte le caselle da zero: teniamo da parte quali
+     erano già spuntate per rimetterle a posto dopo, non solo l'ultima. */
+  const wasChecked=[...document.querySelectorAll('#fpList input[type=checkbox]:checked')].map(c=>parseInt(c.dataset.fp,10));
+  const cand=fpReserve[best];
+  fpSuggested.add(cand.name);
+  cand._simTo=chosen.name;
+  fpItems.push(cand);
+  renderFamousPlacesList();
+  wasChecked.forEach(idx=>{const c=document.querySelector(`#fpList input[data-fp="${idx}"]`);if(c)c.checked=true;});
 }
 function addFamousPlaces(){
   const t=app.trips.find(x=>x.id===fpTripId);
@@ -5166,7 +5217,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r73</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r74</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
