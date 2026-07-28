@@ -678,7 +678,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r69</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r70</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1850,9 +1850,17 @@ async function translateQuery(q,lang){
    senza chiave, e le voci con un articolo enciclopedico sono già di per sé un
    buon indicatore di notorietà). Selezionandoli finiscono tra i luoghi salvati
    in "Scopri", e da lì compaiono anche sulla mappa dell'anteprima viaggio. ===== */
+/* Wikipedia "geosearch" restituisce QUALSIASI voce enciclopedica vicina alle
+   coordinate, non solo le mete turistiche: municipi, circoscrizioni,
+   fermate della metropolitana, diocesi... roba che un turista non mette
+   mai in un itinerario. Filtriamo per titolo e per categoria quel tipo di
+   voci amministrative/di infrastruttura, tenendo solo monumenti, musei,
+   chiese, piazze, palazzi e simili. */
+const FP_BAD_TITLE=/\bmunicipio\b|\bcircoscrizion\w*\b|\bprovincia di\b|\bcittà metropolitana\b|\bcomune di\b|\bzona \d|\bquartiere\b|\bdiocesi\b|\barcidiocesi\b|\bdistretto\b|\(metropolitana|\(stazione della metropolitana|\(fermata/i;
+const FP_BAD_CAT=/municipi di|circoscrizioni|suddivisioni amministrative|stazioni della metropolitana|quartieri di|diocesi|distretti di|zone urbanistiche|comuni (della|d')/i;
 async function fetchFamousPlaces(lat,lng){
   try{
-    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=9000&ggslimit=24&prop=pageimages%7Ccoordinates%7Cextracts&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=2`;
+    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=9000&ggslimit=40&prop=pageimages%7Ccoordinates%7Cextracts%7Ccategories&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=2&cllimit=30`;
     const r=await fetch(url);
     const d=await r.json();
     const pages=Object.values((d.query&&d.query.pages)||{});
@@ -1861,10 +1869,14 @@ async function fetchFamousPlaces(lat,lng){
       lat:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lat:null,
       lng:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lon:null,
       photo:p.thumbnail?p.thumbnail.source:null,
-      extract:p.extract||''
-    })).filter(x=>x.lat!=null&&x.lng!=null);
-    items.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0));
-    return items;
+      extract:p.extract||'',
+      _idx:p.index||999,
+      _cats:(p.categories||[]).map(c=>c.title||'').join(' | ')
+    })).filter(x=>x.lat!=null&&x.lng!=null)
+      .filter(x=>!FP_BAD_TITLE.test(x.name))
+      .filter(x=>!FP_BAD_CAT.test(x._cats));
+    items.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0)||a._idx-b._idx);
+    return items.slice(0,20);
   }catch(e){return [];}
 }
 let fpItems=[],fpTripId=null;
@@ -5068,7 +5080,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r69</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r70</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
