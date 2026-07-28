@@ -34,6 +34,9 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 .app{max-width:560px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative}
+#bootSplash{position:fixed;inset:0;z-index:99999;background:#006747;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+#bootSplash.hide{opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+.bootSplash-name{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;letter-spacing:.02em;color:#E9DFC8}
 .topbar{background:var(--surface);padding:calc(env(safe-area-inset-top) + .9rem) 1.15rem .75rem;border-bottom:1px solid var(--line-soft);position:relative;z-index:20}
 .topbar-row{display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:.6rem}
@@ -373,8 +376,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-line{position:absolute;left:0;right:0;border-top:1px dashed var(--line-soft)}
 .tt-line span{position:absolute;left:0;top:-8px;background:var(--surface);padding-right:6px;font-family:'Fraunces',serif;font-size:.72rem;color:var(--ink-faint)}
 .tt-block{position:absolute;background:var(--green-tint);border:1px solid var(--green-soft);border-radius:10px;padding:.38rem 1.45rem .38rem .55rem;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:.08rem;transition:box-shadow .15s var(--ease)}
-.tt-block .tname{font-size:.78rem;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tt-block .tsub{font-size:.64rem;color:var(--green-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-block .tname{font-size:.86rem;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-block .tsub{font-size:.7rem;color:var(--green-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-block .tgrip{position:absolute;right:.22rem;top:.18rem;color:var(--green-deep);opacity:.75;cursor:grab;padding:.18rem .2rem;font-size:.82rem}
 .tt-block.done{opacity:.55}.tt-block.done .tname{text-decoration:line-through}
 .tt-block.tt-compact{padding:.1rem 1.3rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
@@ -391,15 +394,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:8px;padding:.2rem .45rem;font-size:.65rem;font-weight:800;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
-.tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
+.tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
 .tt-travel-toggle{cursor:pointer;opacity:.6}
 .tt-travel-toggle:active{opacity:1}
-.tt-hotel-travel{display:flex;align-items:center;font-size:.72rem;font-weight:700;color:var(--ink-faint);border:1px dashed var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.tt-travel-modes{display:flex;gap:.2rem;flex-shrink:0}
-.tt-travel-mode{cursor:pointer;opacity:.4;font-size:.8rem}
+.tt-hotel-travel{display:flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--ink-faint);border:1px dashed var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tt-travel-modes{display:flex;gap:.3rem;flex-shrink:0}
+.tt-travel-mode{cursor:pointer;opacity:.4;font-size:.95rem}
 .tt-travel-mode.on{opacity:1}
 
 .edit-ic{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
@@ -457,6 +460,24 @@ body.dark .tt-cont{background:var(--beige)!important}
 </style>
 </head>
 <body>
+<div id="bootSplash">
+  <svg width="86" height="86" viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="23" fill="#E9DFC8"/>
+    <g stroke="#006747" fill="none" stroke-linecap="round">
+      <g transform="rotate(22 24 19)">
+        <circle cx="24" cy="19" r="10" stroke-width="1.6"/>
+        <ellipse cx="24" cy="19" rx="4.2" ry="10" stroke-width="1.3"/>
+        <line x1="14" y1="19" x2="34" y2="19" stroke-width="1.3"/>
+        <path d="M16 13.4 Q24 16.7 32 13.4" stroke-width="1.3"/>
+        <path d="M16 24.6 Q24 21.3 32 24.6" stroke-width="1.3"/>
+        <path d="M24 6.6 A12.4 12.4 0 0 1 24 31.4" stroke-width="2.1"/>
+      </g>
+      <line x1="19.3" y1="30.6" x2="19.3" y2="36" stroke-width="2.1"/>
+      <line x1="13" y1="37.4" x2="25.5" y2="37.4" stroke-width="2.4"/>
+    </g>
+  </svg>
+  <div class="bootSplash-name">GeppGo</div>
+</div>
 <div class="app">
   <div class="topbar">
     <div class="topbar-row">
@@ -651,7 +672,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r66</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r67</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -802,6 +823,7 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
+  <div id="dayRainSwaps"></div>
   <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
@@ -810,6 +832,14 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div style="height:74px"></div>
 </div>
 <button class="fab" id="ttFab" style="z-index:10002">＋</button></div>
+<div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
+  <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
+    <button class="btn btn-soft btn-block" onclick="actMenuHistory()">📖 Storia del posto</button>
+    <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
+  </div>
+</div></div>
 <div class="modal" id="mActDetail"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="adTitle">Attività</div><button class="x x-close" onclick="cancelActDetail()">✕</button></div>
@@ -827,10 +857,9 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="fg"><label>Per chi è l'attività?</label><div class="split-list" id="adWho"></div></div>
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="adDone"><span>Attività completata</span></label></div>
   <div class="fg"><label>Si svolge dentro un'altra attività? <span style="font-weight:500;color:var(--ink-faint)">(es. ristorante nel parco)</span></label><select id="adParent"><option value="">No, indipendente</option></select></div>
-  <div class="fg"><label>È un luogo preciso? <span style="font-weight:500;color:var(--ink-faint)">(mappa e meteo del giorno)</span></label>
-    <div id="adPoiCur" style="display:none;align-items:center;gap:.5rem;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .7rem"><span id="adPoiName" style="font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><span style="display:flex;gap:.35rem;flex-shrink:0"><button class="chip" onclick="adPoiChange()">Cambia</button><button class="chip" onclick="adPoiClear()">No</button></span></div>
-    <input id="adPoiSearch" placeholder="Cerca il luogo (es. Louvre)" autocomplete="off" oninput="adPoiInput()" style="display:none">
-    <div id="adPoiRes"></div>
+  <div class="fg"><label>Luogo <span style="font-weight:500;color:var(--ink-faint)">(mappa e meteo del giorno)</span></label>
+    <div id="adPoiCur" style="display:none;align-items:center;gap:.5rem;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .7rem"><span style="display:flex;align-items:center;gap:.4rem;min-width:0;overflow:hidden"><span>📍</span><span id="adPoiName" style="font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></span><button class="chip" style="flex-shrink:0" onclick="adPoiClear()">Non è questo</button></div>
+    <div id="adPoiHint" style="font-size:.76rem;color:var(--ink-faint);margin-top:.25rem"></div>
   </div>
   <div id="adVotes" style="margin:-.2rem 0 .9rem"></div>
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="adBookChk" onchange="document.getElementById('adBookFields').style.display=this.checked?'block':'none'"><span>Serve prenotare</span></label></div>
@@ -1099,7 +1128,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   fillCurrencySelect(document.getElementById('expCur'));
   initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
   renderAll();
+  hideBootSplash();
 });
+/* Tenerla visibile un attimo anche ad avvio velocissimo dà la sensazione di
+   un'app nativa che si carica, invece di un semplice sito che "scatta". */
+function hideBootSplash(){
+  const sp=document.getElementById('bootSplash');if(!sp)return;
+  setTimeout(()=>{sp.classList.add('hide');setTimeout(()=>sp.remove(),380);},320);
+}
 
 function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);drawMarkers();}
 function drawMarkers(){
@@ -1338,7 +1374,7 @@ function onSearch(){
   document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--blue)">🔍 Ricerca...</div></div>`;
   searchT=setTimeout(()=>doSearch(q),500);
 }
-async function geoSearch(fullQ){
+async function geoSearch(fullQ,langHint){
   const out=[],seen=new Set();
   const add=r=>{
     if(!r||!r.lat)return;
@@ -1359,12 +1395,21 @@ async function geoSearch(fullQ){
       });
     }catch(e){}
   }
+  if(out.length<3&&langHint){
+    const tq=await translateQuery(fullQ,langHint);
+    if(tq){
+      try{
+        const r3=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(tq)}&format=json&accept-language=it&limit=10`,{headers:{'Accept-Language':'it,en'}});
+        ((await r3.json())||[]).forEach(add);
+      }catch(e){}
+    }
+  }
   return out;
 }
 async function doSearch(q){
   const stillCurrent=()=>document.getElementById('poiSearch').value.trim()===q;
   try{
-    let data=await geoSearch(q);
+    let data=await geoSearch(q,destLangHint(T()));
     if(!stillCurrent())return;
     if(!data.length){document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--ink-faint)">Nessun risultato</div></div>`;return;}
     data=rankPlaces(data,q);renderResults(data,'searchResults');
@@ -1380,8 +1425,12 @@ function rankPlaces(data,q){
     if(HI[p.type])s+=HI[p.type];if(HI[p.class])s+=HI[p.class]/2;if(LO[p.type])s+=LO[p.type];if(LO[p.class])s+=LO[p.class];
     if((ql.includes('stazione')||ql.includes('station'))&&(p.type==='station'||p.class==='railway'))s+=1000;
     if((ql.includes('aeroporto')||ql.includes('airport'))&&(p.type==='aerodrome'||p.type==='airport'))s+=1200;
+    /* Bonus di somiglianza (tollera refusi: "tour i fellets" resta vicino a
+       "Torre Eiffel") così un nome quasi giusto non perde punti solo perché
+       le singole parole non combaciano lettera per lettera. */
+    const sim=strSim(fp,ql);s+=sim*900;
     const main=qw.filter(w=>!['di','da','la','il','le','in','a','the','of'].includes(w));
-    if(main.length){const m=main.filter(w=>fp.includes(w)).length;if(m/main.length<0.5)s-=400;}
+    if(main.length){const m=main.filter(w=>fp.includes(w)).length;if(m/main.length<0.5&&sim<0.55)s-=400;}
     return {...p,_s:s,_top:(HI[p.type]||0)>=1200};
   });
   data.sort((a,b)=>b._s-a._s);return data.filter(d=>d._s>-200).slice(0,8);
@@ -1399,23 +1448,22 @@ function renderResults(data,target){
   data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
 }
 let piMapObj=null;
-async function openPlaceInfo(place){
-  document.getElementById('piTitle').textContent=place.name||'Luogo';
-  document.getElementById('piBody').innerHTML='<div style="text-align:center;padding:1.4rem;color:var(--ink-faint)">Carico i dettagli...</div>';
-  openSheet('mPlaceInfo');
+async function fetchPlaceExtra(place){
   let extra={};
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${place.lat}&lon=${place.lng}&format=json&extratags=1&addressdetails=1&accept-language=it`,{headers:{'Accept-Language':'it,en'}});
-    const d=await r.json();
-    extra={
-      hours:d.extratags?.opening_hours||'',
-      website:d.extratags?.website||d.extratags?.['contact:website']||'',
-      phone:d.extratags?.phone||d.extratags?.['contact:phone']||'',
-      wiki:d.extratags?.wikipedia||'',
-      cuisine:d.extratags?.cuisine||'',
-      fullAddr:d.display_name||''
-    };
-  }catch(e){}
+  if(place.lat!=null&&place.lng!=null){
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${place.lat}&lon=${place.lng}&format=json&extratags=1&addressdetails=1&accept-language=it`,{headers:{'Accept-Language':'it,en'}});
+      const d=await r.json();
+      extra={
+        hours:d.extratags?.opening_hours||'',
+        website:d.extratags?.website||d.extratags?.['contact:website']||'',
+        phone:d.extratags?.phone||d.extratags?.['contact:phone']||'',
+        wiki:d.extratags?.wikipedia||'',
+        cuisine:d.extratags?.cuisine||'',
+        fullAddr:d.display_name||''
+      };
+    }catch(e){}
+  }
   try{
     const lang='it';let title='';
     if(extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2&&parts[0]==='it')title=parts[1];}
@@ -1441,18 +1489,28 @@ async function openPlaceInfo(place){
       }
     }
   }catch(e){}
-  renderPlaceInfo(place,extra);
+  return extra;
+}
+async function openPlaceInfo(place,opts){
+  document.getElementById('piTitle').textContent=place.name||'Luogo';
+  document.getElementById('piBody').innerHTML='<div style="text-align:center;padding:1.4rem;color:var(--ink-faint)">Carico i dettagli...</div>';
+  openSheet('mPlaceInfo');
+  const extra=await fetchPlaceExtra(place);
+  renderPlaceInfo(place,extra,opts);
 }
 const PLACE_TYPE_IT={attraction:'Attrazione',museum:'Museo',castle:'Castello',palace:'Palazzo',cathedral:'Cattedrale',church:'Chiesa',monument:'Monumento',memorial:'Memoriale',ruins:'Rovine',hotel:'Hotel',guest_house:'B&B',hostel:'Ostello',restaurant:'Ristorante',cafe:'Caffè',bar:'Bar',pub:'Pub',fast_food:'Fast food',park:'Parco',garden:'Giardino',beach:'Spiaggia',viewpoint:'Punto panoramico',theme_park:'Parco divertimenti',zoo:'Zoo',aquarium:'Acquario',archaeological_site:'Sito archeologico',artwork:'Opera d\'arte',station:'Stazione',bus_station:'Stazione bus',subway_entrance:'Metro',airport:'Aeroporto',aerodrome:'Aeroporto',gallery:'Galleria',stadium:'Stadio',peak:'Vetta'};
-function renderPlaceInfo(place,extra){
-  extra=extra||{};
+function renderPlaceInfo(place,extra,opts){
+  extra=extra||{};opts=opts||{};
+  const hasLoc=place.lat!=null&&place.lng!=null;
   const hours=extra.hours||place.hours||'',website=extra.website||place.website||'',phone=extra.phone||place.phone||'';
   const addr=extra.fullAddr||place.address||'',ic=placeIcon(place.type,place.type);
   const typeLbl=PLACE_TYPE_IT[place.type]||place.type;
   let wikiUrl=extra.wikiUrl||'';
   if(!wikiUrl&&extra.wiki){const parts=extra.wiki.split(':');if(parts.length===2)wikiUrl=`https://${parts[0]}.wikipedia.org/wiki/${encodeURIComponent(parts[1])}`;}
+  const photo=extra.photo||place.photo||'';
+  const savePlace={...place,photo,summary:extra.summary||''};
   document.getElementById('piBody').innerHTML=`
-    ${extra.photo?`<img src="${esc(extra.photo)}" style="width:100%;max-height:190px;object-fit:cover;border-radius:var(--r-md);margin-bottom:.7rem" alt="">`:`<div style="text-align:center;font-size:2.4rem;margin-bottom:.3rem">${ic}</div>`}
+    ${photo?`<img src="${esc(photo)}" style="width:100%;max-height:190px;object-fit:cover;border-radius:var(--r-md);margin-bottom:.7rem" alt="">`:`<div style="text-align:center;font-size:2.4rem;margin-bottom:.3rem">${ic}</div>`}
     ${typeLbl||extra.cuisine?`<div style="text-align:center;margin-bottom:.8rem">${typeLbl?`<span class="tag">${esc(typeLbl)}</span>`:''}${extra.cuisine?` <span class="tag">${esc(extra.cuisine)}</span>`:''}</div>`:''}
     ${extra.summary?`<div class="fg"><label>Un po' di storia</label><div style="font-size:.9rem;color:var(--ink-soft);line-height:1.55">${esc(extra.summary)}</div></div>`:''}
     ${addr?`<div class="fg"><label>Indirizzo</label><div style="font-size:.9rem;color:var(--ink-soft)">${esc(addr)}</div></div>`:''}
@@ -1460,12 +1518,12 @@ function renderPlaceInfo(place,extra){
     ${website?`<div class="fg"><label>Sito</label><a href="${esc(website)}" target="_blank" style="font-size:.9rem;word-break:break-all">${esc(website)}</a></div>`:''}
     ${phone?`<div class="fg"><label>Telefono</label><a href="tel:${esc(phone)}" style="font-size:.9rem">${esc(phone)}</a></div>`:''}
     ${wikiUrl?`<div class="fg"><label>Wikipedia</label><a href="${wikiUrl}" target="_blank" style="font-size:.9rem">Apri su Wikipedia</a></div>`:''}
-    <div class="mini-map" id="piMap" style="margin-top:.6rem"></div>
+    ${hasLoc?'<div class="mini-map" id="piMap" style="margin-top:.6rem"></div>':''}
     <div style="display:flex;gap:.5rem;margin-top:1rem">
-      <button class="btn btn-green" style="flex:1" onclick='openSavePOI(${JSON.stringify(place).replace(/'/g,"&apos;")})'>💾 Salva</button>
-      <button class="btn btn-soft" style="flex:1" onclick="openNav(${place.lat},${place.lng},${jesc(place.name)})">🧭 Naviga</button>
+      ${opts.hideSave?'':`<button class="btn btn-green" style="flex:1" onclick='openSavePOI(${JSON.stringify(savePlace).replace(/'/g,"&apos;")})'>💾 Salva</button>`}
+      ${hasLoc?`<button class="btn btn-soft" style="flex:1" onclick="openNav(${place.lat},${place.lng},${jesc(place.name)})">🧭 Naviga</button>`:''}
     </div>`;
-  setTimeout(()=>{
+  if(hasLoc)setTimeout(()=>{
     if(piMapObj){try{piMapObj.remove()}catch(e){}piMapObj=null;}
     if(typeof L==='undefined')return;
     piMapObj=L.map('piMap',{zoomControl:false,attributionControl:false}).setView([place.lat,place.lng],16);
@@ -1548,8 +1606,9 @@ function confirmSavePOI(){
   const day=document.getElementById('savePOIDay').value;
   const pri=day?'essential':document.querySelector('#mSavePOI [name="pri"]:checked').value;
   let notes='';if(pendingPOI.hours)notes+=`Orari: ${pendingPOI.hours}\n`;if(pendingPOI.phone)notes+=`Tel: ${pendingPOI.phone}\n`;if(pendingPOI.website)notes+=`Web: ${pendingPOI.website}\n`;if(pendingPOI.address)notes+=pendingPOI.address;
-  const poi={id:uid(),name:pendingPOI.name,lat:pendingPOI.lat,lng:pendingPOI.lng,notes:notes.trim(),website:pendingPOI.website,phone:pendingPOI.phone,hours:pendingPOI.hours,address:pendingPOI.address,priority:pri,assignedDay:day||null};
+  const poi={id:uid(),name:pendingPOI.name,lat:pendingPOI.lat,lng:pendingPOI.lng,notes:notes.trim(),website:pendingPOI.website,phone:pendingPOI.phone,hours:pendingPOI.hours,address:pendingPOI.address,photo:pendingPOI.photo||'',priority:pri,assignedDay:day||null};
   t.pois.push(poi);
+  if(!poi.photo)enrichPoiPhoto(t.id,poi.id,poi.name,poi.lat,poi.lng);
   let newActId=null,newDi=-1;
   if(day){
     const d=t.days.find(x=>x.date===day);let hr=document.getElementById('savePOIHour').value||'';
@@ -1567,13 +1626,28 @@ function confirmSavePOI(){
   if(newActId!=null){toast('Salvato come essenziale · completa i dettagli');setTimeout(()=>openActDetail(newDi,newActId),350);}
   else toast(pri==='essential'?'Salvato tra gli essenziali':'Salvato: ti avviso se ci passi vicino');
 }
+/* Se un luogo è stato salvato direttamente dai risultati di ricerca (senza
+   passare dalla scheda dettaglio, che già cerca la foto su Wikipedia), la
+   cerchiamo comunque in background: quando arriva, il luogo salvato mostra
+   la sua miniatura come tutti gli altri. */
+async function enrichPoiPhoto(tripId,poiId,name,lat,lng){
+  try{
+    const extra=await fetchPlaceExtra({name,lat,lng});
+    if(!extra.photo)return;
+    const t2=app.trips.find(x=>x.id===tripId);if(!t2)return;
+    const p2=t2.pois.find(x=>x.id===poiId);if(!p2||p2.photo)return;
+    p2.photo=extra.photo;save();
+    if(T()&&T().id===tripId)renderSaved();
+  }catch(e){}
+}
 function renderSaved(){
   const t=T(),c=document.getElementById('savedPOIs'),cnt=document.getElementById('savedCount');
   if(!t||!t.pois.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗺️</div><div class="empty-t">Nessun luogo salvato</div></div>`;cnt.textContent='0 luoghi';return;}
   cnt.textContent=`${t.pois.length} ${t.pois.length===1?'luogo':'luoghi'}`;
   c.innerHTML=t.pois.map(p=>{
-    const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
-    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
+    const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||'',photo:p.photo||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
+    const thumb=p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">${placeIcon(p.type,p.type)}</div>`;
+    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
   }).join('');
 }
 function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId===id)a.poiId=null;}));t.pois=t.pois.filter(pp=>pp.id!==id);t._delPoi=t._delPoi||{};t._delPoi[id]=Date.now();save();renderAll();});}
@@ -1590,6 +1664,11 @@ function delDay(i){const t=T();confirmDo('Eliminare il giorno?','Verranno elimin
 const TRAVEL_SPEED_KMH={walk:4.2,train:20,car:40};
 const ROUTE_CIRCUITY={walk:1.35,car:1.25};
 const DISTANT_GAP_MIN=180;
+/* Altezza in px di un'ora nella timetable: più alta = più "zoom", attività
+   vicine tra loro nell'orario restano leggibili invece di schiacciarsi.
+   Usata sia per disegnare i blocchi sia (deve restare la stessa!) per la
+   matematica di trascinamento/ridimensionamento più sotto. */
+const TT_H=64;
 function travelParams(day,modeOverride){
   const mode=modeOverride||(day&&day.travelMode)||'walk';
   return {mode,speed:TRAVEL_SPEED_KMH[mode]||4.5,fuelL100:app.settings.fuelConsumptionL100km||7,fuelPrice:app.settings.fuelPricePerL||1.8};
@@ -1676,6 +1755,27 @@ function delAct(di,id){
   confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t._delAct=t._delAct||{};t._delAct[id]=Date.now();save();renderTimeline();});
 }
 function openAddAct(di){openActDetail(di,null);}
+let actMenuRef=null;
+function tapAct(di,id){
+  const t=T();if(!t||!t.days[di])return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  actMenuRef={di,id};
+  document.getElementById('amName').textContent=a.name||'Attività';
+  openSheet('mActMenu');
+}
+function actMenuHistory(){
+  if(!actMenuRef)return;const {di,id}=actMenuRef;
+  const t=T();if(!t||!t.days[di])return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  closeSheet('mActMenu');
+  const poi=a.poiId?t.pois.find(x=>x.id===a.poiId):null;
+  openPlaceInfo({name:a.name,lat:a.lat!=null?a.lat:(poi?poi.lat:null),lng:a.lng!=null?a.lng:(poi?poi.lng:null),address:poi?poi.address:'',type:poi?poi.type:'',hours:poi?poi.hours:'',website:poi?poi.website:'',phone:poi?poi.phone:'',photo:poi?poi.photo:''},{hideSave:true});
+}
+function actMenuEdit(){
+  if(!actMenuRef)return;const {di,id}=actMenuRef;
+  closeSheet('mActMenu');
+  openActDetail(di,id);
+}
 function dayLoc(t,day){
   if(day.city){const cc=(t.cities||[]).find(c=>c.name===day.city&&c.lat);if(cc)return{lat:cc.lat,lng:cc.lng};}
   const pts=(day.activities||[]).filter(a=>a.lat);
@@ -1689,15 +1789,32 @@ function dayLoc(t,day){
 async function ensureDestLoc(t){
   if(t.destLoc||!t.destination)return;
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json();
     if(d.length){
       t.destLoc={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
       const bb=d[0].boundingbox;
       if(bb&&bb.length===4)t.destBB=[parseFloat(bb[0]),parseFloat(bb[1]),parseFloat(bb[2]),parseFloat(bb[3])];
+      if(d[0].address&&d[0].address.country_code)t.destCountry=d[0].address.country_code;
       save();
     }
   }catch(e){}
+}
+/* ===== Ricerca multilingua: se cerco "hotel X" in italiano ma nel motore di
+   ricerca il posto è indicizzato solo nel nome locale (es. in giapponese),
+   la ricerca testuale altrimenti non troverebbe nulla. Per le destinazioni
+   con lingua/alfabeto molto diverso dall'italiano, in aggiunta ai risultati
+   normali proviamo anche una traduzione della query (gratis, senza chiave)
+   e la ricerchiamo di nuovo. ===== */
+const COUNTRY_LANG={jp:'ja',cn:'zh-CN',tw:'zh-TW',hk:'zh-TW',kr:'ko',th:'th',vn:'vi',ru:'ru',gr:'el',il:'he',sa:'ar',ae:'ar',eg:'ar',qa:'ar',kw:'ar',jo:'ar',ma:'ar',ir:'fa',in:'hi',mm:'my',kh:'km',la:'lo',bg:'bg',rs:'sr',ua:'uk',mn:'mn',et:'am',np:'ne',lk:'si',bd:'bn',ge:'ka',am:'hy',mk:'mk'};
+function destLangHint(t){return (t&&t.destCountry&&COUNTRY_LANG[t.destCountry])||null;}
+async function translateQuery(q,lang){
+  try{
+    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=it|${lang}`);
+    const d=await r.json();
+    const tt=d&&d.responseData&&d.responseData.translatedText;
+    return (tt&&tt.trim()&&tt.trim().toLowerCase()!==q.trim().toLowerCase())?tt.trim():null;
+  }catch(e){return null;}
 }
 /* ===== Posti famosi della destinazione, con foto (Wikipedia geosearch: gratis,
    senza chiave, e le voci con un articolo enciclopedico sono già di per sé un
@@ -1705,7 +1822,7 @@ async function ensureDestLoc(t){
    in "Scopri", e da lì compaiono anche sulla mappa dell'anteprima viaggio. ===== */
 async function fetchFamousPlaces(lat,lng){
   try{
-    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=9000&ggslimit=24&prop=pageimages%7Ccoordinates%7Cextracts&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=1`;
+    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=9000&ggslimit=24&prop=pageimages%7Ccoordinates%7Cextracts&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=2`;
     const r=await fetch(url);
     const d=await r.json();
     const pages=Object.values((d.query&&d.query.pages)||{});
@@ -1745,7 +1862,7 @@ function addFamousPlaces(){
   checks.forEach(c=>{
     const p=fpItems[parseInt(c.dataset.fp,10)];if(!p)return;
     if(t.pois.some(pp=>pp.name.toLowerCase()===p.name.toLowerCase()))return;
-    t.pois.push({id:uid(),name:p.name,lat:p.lat,lng:p.lng,notes:p.extract||'',priority:'essential',assignedDay:null});
+    t.pois.push({id:uid(),name:p.name,lat:p.lat,lng:p.lng,notes:p.extract||'',photo:p.photo||'',priority:'essential',assignedDay:null});
     added++;
   });
   save();renderAll();closeSheet('mFamousPlaces');
@@ -3356,7 +3473,7 @@ function findConflict(t,day,cand,excludeId){
 function fmtT(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
 function isTTLandscapeWide(){return window.matchMedia('(orientation: landscape) and (min-width: 700px)').matches;}
 function buildTTDayInner(t,di){
-  const d=t.days[di],H=48,dwx=t.weather[d.date];
+  const d=t.days[di],H=TT_H,dwx=t.weather[d.date];
   const wpre=a=>(a&&a.type==='outdoor'&&dwx)?wxEmo(dwx)+' ':'';
   const acts=d.activities||[];
   const untimed=acts.filter(a=>!actRange(a));
@@ -3390,7 +3507,7 @@ function buildTTDayInner(t,di){
       html+=`<div class="tt-hotel-travel tt-travel-shown"><span>🏨 → ${esc(firstTop.a.name)}: ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})">non necessario ✕</span></div>`;
     }
   }
-  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="openActDetail(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
+  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   tops.forEach(it=>{
@@ -3405,7 +3522,7 @@ function buildTTDayInner(t,di){
     const cls='tt-block'+(compact?' tt-compact':'')+(a.completed?' done':'');
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="openActDetail(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
   });
   const dm=d.travelMode||'walk';
   for(let i=0;i<tops.length-1;i++){
@@ -3432,7 +3549,7 @@ function buildTTDayInner(t,di){
     const en=tMin(a.timeEnd);
     let hh2=40,lbl=a.timeEnd?('fino alle '+a.timeEnd):'in mattinata';
     if(en!=null&&en>360)hh2=Math.max(34,(en-360)/60*H-4);
-    html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="openActDetail(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">continua da ieri · ${lbl}${flyTag(a)}</span></div>`;
+    html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="tapAct(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">continua da ieri · ${lbl}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
   if(di===ttDay)html+='<div class="tt-empty">Tieni premuto ⋮⋮ e trascina su/giù per spostare l\'orario · tocca per aprire</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
@@ -3470,7 +3587,7 @@ function bindBlockDrag(el,act,t,d){
   const g=el.querySelector('.tgrip');if(!g)return;g.style.touchAction='none';
   let on=false,sy=0,orig=0,dur=60,hadEnd=false,ns=0;
   g.addEventListener('pointerdown',e=>{const r=actRange(act);if(!r)return;on=true;sy=e.clientY;orig=r[0];ns=orig;dur=r[1]-r[0];hadEnd=!!act.timeEnd;el.style.zIndex=9;el.style.boxShadow='var(--sh-lg)';g.setPointerCapture(e.pointerId);e.preventDefault();});
-  g.addEventListener('pointermove',e=>{if(!on)return;const dy=e.clientY-sy;ns=orig+Math.round(dy/48*60/15)*15;ns=Math.max(360,Math.min(1440-dur,ns));el.style.top=((ns-360)/60*48)+'px';});
+  g.addEventListener('pointermove',e=>{if(!on)return;const dy=e.clientY-sy;ns=orig+Math.round(dy/TT_H*60/15)*15;ns=Math.max(360,Math.min(1440-dur,ns));el.style.top=((ns-360)/60*TT_H)+'px';});
   const fin=()=>{if(!on)return;on=false;el.style.zIndex='';el.style.boxShadow='';
     if(ns===orig){buildTT();return;}
     const cand={time:fmtT(ns),timeEnd:act.nextDay?act.timeEnd:fmtT(ns+dur),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,nextDay:act.nextDay};
@@ -3484,7 +3601,7 @@ function bindBlockDrag(el,act,t,d){
     rz.style.touchAction='none';
     let ron=false,rsy=0,rs0=0,re0=0,nend=0;
     rz.addEventListener('pointerdown',e=>{const r=actRange(act);if(!r||act.nextDay)return;ron=true;rsy=e.clientY;rs0=r[0];re0=r[1];nend=re0;el.style.zIndex=9;rz.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();});
-    rz.addEventListener('pointermove',e=>{if(!ron)return;const dy=e.clientY-rsy;nend=re0+Math.round(dy/48*60/15)*15;nend=Math.max(rs0+15,Math.min(1440,nend));el.style.height=Math.max(28,(nend-rs0)/60*48-4)+'px';});
+    rz.addEventListener('pointermove',e=>{if(!ron)return;const dy=e.clientY-rsy;nend=re0+Math.round(dy/TT_H*60/15)*15;nend=Math.max(rs0+15,Math.min(1440,nend));el.style.height=Math.max(28,(nend-rs0)/60*TT_H-4)+'px';});
     const rfin=()=>{
       if(!ron)return;ron=false;el.style.zIndex='';
       if(nend===re0){buildTT();return;}
@@ -3506,7 +3623,7 @@ function bindBlockDrag(el,act,t,d){
     if(!pOn||e.touches.length!==2)return;e.preventDefault();
     const dn=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
     pnd=Math.max(15,Math.min(1440-ps0,Math.round(pdur*dn/pd0/15)*15));
-    el.style.height=Math.max(28,pnd/60*48-4)+'px';
+    el.style.height=Math.max(28,pnd/60*TT_H-4)+'px';
   },{passive:false});
   el.addEventListener('touchend',()=>{
     if(!pOn)return;pOn=false;
@@ -3535,13 +3652,13 @@ function bindChildDrag(el,act,t,d){
     if(Math.abs(dy)>8)moved=true;
     if(!moved)return;
     e.preventDefault();
-    const dmin=Math.round(dy/48*60/15)*15;
+    const dmin=Math.round(dy/TT_H*60/15)*15;
     ns=Math.max(360,Math.min(1440-dur,r0+dmin));
-    el.style.top=(top0+(ns-r0)/60*48)+'px';el.style.zIndex=9;
+    el.style.top=(top0+(ns-r0)/60*TT_H)+'px';el.style.zIndex=9;
   });
   const fin=e=>{
     if(!on)return;on=false;el.style.zIndex='';
-    if(!moved){openActDetail(ttDay,act.id);return;}
+    if(!moved){tapAct(ttDay,act.id);return;}
     if(ns===r0){buildTT();return;}
     const cand={time:fmtT(ns),timeEnd:act.nextDay?act.timeEnd:(hadEnd?fmtT(ns+dur):''),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,nextDay:act.nextDay,id:act.id};
     const c=findConflict(t,d,cand,act.id);
@@ -3702,10 +3819,10 @@ function openActDetail(di,id){
   autoAssignActTickets();renderAdTkList();
   renderAdExpPick();renderAdExpList();
   adPoiPick=null;window._flyHint=false;
-  const pcur=document.getElementById('adPoiCur'),psrc=document.getElementById('adPoiSearch');
-  document.getElementById('adPoiRes').innerHTML='';psrc.value='';
-  if(a.poiId||a.lat){const lp=a.poiId?t.pois.find(x=>x.id===a.poiId):null;document.getElementById('adPoiName').textContent=lp?lp.name:a.name;pcur.style.display='flex';psrc.style.display='none';}
-  else{pcur.style.display='none';psrc.style.display='block';}
+  const pcur=document.getElementById('adPoiCur');
+  document.getElementById('adNameSug').innerHTML='';document.getElementById('adPoiHint').textContent='';
+  if(a.poiId||a.lat){const lp=a.poiId?t.pois.find(x=>x.id===a.poiId):null;document.getElementById('adPoiName').textContent=lp?lp.name:a.name;pcur.style.display='flex';}
+  else pcur.style.display='none';
   renderAdVotes(isNew?null:a);
   document.getElementById('adNotes').value=a.notes||'';
   document.getElementById('adNav').style.display=(!isNew&&a.lat)?'block':'none';
@@ -3779,7 +3896,7 @@ function saveActDetail(){
   if(adPoiPick&&!adPoiPick.clear){
     const ex=t.pois.find(pp=>pp.name.toLowerCase()===adPoiPick.name.toLowerCase());
     if(ex){a.poiId=ex.id;if(!ex.assignedDay)ex.assignedDay=t.days[newDi].date;}
-    else{const poi={id:uid(),name:adPoiPick.name,lat:a.lat,lng:a.lng,notes:'',priority:'essential',assignedDay:t.days[newDi].date};t.pois.push(poi);a.poiId=poi.id;}
+    else{const poi={id:uid(),name:adPoiPick.name,lat:a.lat,lng:a.lng,notes:'',photo:'',priority:'essential',assignedDay:t.days[newDi].date};t.pois.push(poi);a.poiId=poi.id;enrichPoiPhoto(t.id,poi.id,poi.name,poi.lat,poi.lng);}
   }
   adPoiPick=null;
   if(a.completed&&a.poiId){const pp=t.pois.find(x=>x.id===a.poiId);if(pp)pp.visited=true;}
@@ -4535,13 +4652,14 @@ let rainHide={};
 function renderRainTip(){
   const t=T(),d=t.days[ttDay],box=document.getElementById('dayRainTip');if(!box)return;
   box.innerHTML='';
-  const w=t.weather[d.date];if(!w||w.precipitation<=5||rainHide[d.date])return;
-  const outs=(d.activities||[]).filter(a=>a.type==='outdoor');if(!outs.length)return;
+  const w=t.weather[d.date];if(!w||w.precipitation<=5||rainHide[d.date]){renderRainSwaps();return;}
+  const outs=(d.activities||[]).filter(a=>a.type==='outdoor');if(!outs.length){renderRainSwaps();return;}
   let best=-1,bw=1e9;
   t.days.forEach((dd,j)=>{if(j===ttDay)return;const w2=t.weather[dd.date];if(!w2)return;if(w2.precipitation<bw){bw=w2.precipitation;best=j;}});
-  if(best<0||bw>2||bw>=w.precipitation-2)return;
+  if(best<0||bw>2||bw>=w.precipitation-2){renderRainSwaps();return;}
   const bd=new Date(t.days[best].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
   box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.8rem;margin-bottom:.8rem"><div style="font-weight:800;font-size:.86rem;color:var(--clay-deep)">Pioggia prevista (${w.precipitation} mm) e ${outs.length} attività all'aperto</div><div style="font-size:.8rem;color:var(--ink-soft);margin:.25rem 0 .6rem">${bd} è previsto ${bw<1?'asciutto':'quasi asciutto'}: vuoi spostarle lì?</div><div style="display:flex;gap:.5rem"><button class="btn btn-grad" style="flex:1;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">Sposta le attività all'aperto</button><button class="btn btn-soft" style="padding:.6rem" onclick="rainHide['${d.date}']=1;renderRainTip()">No</button></div></div>`;
+  renderRainSwaps();
 }
 function moveOutdoor(from,to){
   const t=T(),src=t.days[from],dst=t.days[to];if(!src||!dst)return;
@@ -4553,6 +4671,52 @@ function moveOutdoor(from,to){
   });
   src.activities=src.activities.filter(a=>a.type!=='outdoor');
   save();renderAll();openDay(to);toast(moved+' attività spostate al giorno asciutto');
+}
+/* ===== Se piove: propone anche di scambiare, una alla volta, un'attività
+   all'aperto di oggi con una al chiuso/indifferente di un altro giorno che
+   sia geograficamente vicina (così il giro di oggi resta coerente, invece
+   di spostare in blocco tutto quanto in un giorno lontano). ===== */
+let rainSwapHide={};
+function findRainSwaps(t,dayIdx){
+  const d=t.days[dayIdx],w=t.weather[d.date];
+  if(!w||w.precipitation<=5)return[];
+  const outs=(d.activities||[]).filter(a=>a.type==='outdoor'&&a.lat!=null&&a.lng!=null);
+  if(!outs.length)return[];
+  const usedIn=new Set(),sugg=[];
+  outs.forEach(out=>{
+    let best=null,bestDist=3000;
+    t.days.forEach((dd,j)=>{
+      if(j===dayIdx)return;
+      (dd.activities||[]).forEach(cand=>{
+        if(cand.type==='outdoor'||cand.lat==null||cand.lng==null||usedIn.has(cand.id))return;
+        const dist=calcDist(out.lat,out.lng,cand.lat,cand.lng);
+        if(dist<bestDist){bestDist=dist;best={day:j,act:cand};}
+      });
+    });
+    if(best){usedIn.add(best.act.id);sugg.push({outAct:out,inDay:best.day,inAct:best.act,dist:bestDist});}
+  });
+  return sugg;
+}
+function renderRainSwaps(){
+  const t=T(),d=t.days[ttDay],box=document.getElementById('dayRainSwaps');if(!box)return;
+  const sugg=findRainSwaps(t,ttDay).filter(s=>!rainSwapHide[d.date+':'+s.outAct.id+':'+s.inAct.id]);
+  if(!sugg.length){box.innerHTML='';return;}
+  box.innerHTML=sugg.map(s=>{
+    const dLbl=new Date(t.days[s.inDay].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+    const km=(s.dist/1000).toFixed(s.dist<1000?0:1);
+    return `<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.75rem;margin-bottom:.6rem"><div style="font-size:.82rem;color:var(--ink-soft);line-height:1.5">Con la pioggia niente <b>${esc(s.outAct.name)}</b>: <b>${esc(s.inAct.name)}</b> (${dLbl}) è al chiuso e a ${s.dist<1000?km+' m':km+' km'} da lì. Le scambio?</div><div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn btn-grad" style="flex:1;padding:.55rem" onclick="swapRainActs(${ttDay},${s.outAct.id},${s.inDay},${s.inAct.id})">🔄 Scambia</button><button class="btn btn-soft" style="padding:.55rem" onclick="rainSwapHide['${d.date+':'+s.outAct.id+':'+s.inAct.id}']=1;renderRainSwaps()">No</button></div></div>`;
+  }).join('');
+}
+function swapRainActs(dayA,idA,dayB,idB){
+  const t=T();const da=t.days[dayA],db=t.days[dayB];if(!da||!db)return;
+  const ia=da.activities.findIndex(x=>x.id===idA),ib=db.activities.findIndex(x=>x.id===idB);
+  if(ia<0||ib<0)return;
+  const a=da.activities[ia],b=db.activities[ib];
+  a.parentId=null;b.parentId=null;
+  if(b.time){const c1=findConflict(t,da,{time:b.time,timeEnd:b.timeEnd,who:b.who,lat:b.lat,lng:b.lng,poiId:b.poiId,parentId:null},b.id);if(c1)toast('⚠️ Si sovrappone a "'+c1.act.name+'"');}
+  if(a.time){const c2=findConflict(t,db,{time:a.time,timeEnd:a.timeEnd,who:a.who,lat:a.lat,lng:a.lng,poiId:a.poiId,parentId:null},a.id);if(c2)toast('⚠️ Si sovrappone a "'+c2.act.name+'"');}
+  da.activities.splice(ia,1,b);db.activities.splice(ib,1,a);
+  save();renderAll();openDay(dayA);toast('🔄 Attività scambiate');
 }
 function updateAdWx(){
   const t=T(),el=document.getElementById('adWx');if(!el||!t)return;
@@ -4875,7 +5039,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r66</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r67</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -4887,43 +5051,57 @@ function restoreSnap(ts){
     location.reload();
   });
 }
-let adPoiPick=null,adPoiT=null,lastAdPoiRes=[];
-function adPoiInput(){
-  clearTimeout(adPoiT);
-  const q=document.getElementById('adPoiSearch').value.trim(),box=document.getElementById('adPoiRes');
-  if(q.length<2){box.innerHTML='';return;}
-  adPoiT=setTimeout(async()=>{
-    const t=T();
-    let dd=await geoSearch(q);
-    if(!dd.length&&t&&t.destination)dd=await geoSearch(q+', '+t.destination);
-    lastAdPoiRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
-    box.innerHTML=lastAdPoiRes.slice(0,6).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<button class="chip" style="display:block;width:100%;text-align:left;margin-top:.35rem;white-space:normal" onclick="adPoiSel(${i})"><b>${esc(parts[0]||'')}</b> <span style="color:var(--ink-faint)">${esc(parts.slice(1,3).join(','))}</span></button>`;}).join('')||'<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.3rem">Niente: prova con la città accanto</div>';
-  },420);
-}
-function adPoiSel(i){
-  const r=lastAdPoiRes[i];if(!r)return;
-  adPoiPick={name:String(r.display_name||'').split(',')[0].trim(),lat:parseFloat(r.lat),lng:parseFloat(r.lon)};
-  document.getElementById('adPoiName').textContent=adPoiPick.name;
-  flyDetect(adPoiPick.name);
-  document.getElementById('adPoiCur').style.display='flex';
-  document.getElementById('adPoiSearch').style.display='none';
-  document.getElementById('adPoiRes').innerHTML='';
-}
+let adPoiPick=null;
 /* Se il viaggio non ha una destinazione compilata a parte, usiamo il nome del
    viaggio stesso per restringere la ricerca del posto alla città giusta. */
 function tripCityHint(t){return (t&&(t.destination||t.name))||'';}
+/* Similarità 0..1 tra due stringhe (distanza di Levenshtein normalizzata):
+   serve sia per capire quanto ci si può fidare di un risultato trovato
+   automaticamente, sia per tollerare refusi digitando il nome di un luogo
+   (es. "tour i fellets" deve comunque avvicinarsi a "Torre Eiffel"). */
+function strSim(a,b){
+  a=(a||'').toLowerCase().trim();b=(b||'').toLowerCase().trim();
+  if(!a.length||!b.length)return 0;
+  const m=a.length,n=b.length,dp=new Array(n+1);
+  for(let j=0;j<=n;j++)dp[j]=j;
+  for(let i=1;i<=m;i++){
+    let prev=dp[0];dp[0]=i;
+    for(let j=1;j<=n;j++){
+      const tmp=dp[j];
+      dp[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,dp[j],dp[j-1]);
+      prev=tmp;
+    }
+  }
+  return 1-dp[n]/Math.max(m,n);
+}
 let adNameT=null,lastAdNameRes=[];
 function adNameInput(){
   clearTimeout(adNameT);
-  const q=document.getElementById('adName').value.trim(),box=document.getElementById('adNameSug');
-  if(q.length<3||document.getElementById('adPoiCur').style.display==='flex'){box.innerHTML='';return;}
+  const q=document.getElementById('adName').value.trim(),box=document.getElementById('adNameSug'),hint=document.getElementById('adPoiHint');
+  if(document.getElementById('adPoiCur').style.display==='flex'){box.innerHTML='';return;}
+  if(q.length<3){box.innerHTML='';hint.textContent='';return;}
+  hint.textContent='🔍 Verifico se è un luogo reale...';
   adNameT=setTimeout(async()=>{
-    const t=T(),city=tripCityHint(t);
-    let dd=await geoSearch(city?q+', '+city:q);
-    if(!dd.length&&city)dd=await geoSearch(q);
+    const t=T(),city=tripCityHint(t),lh=destLangHint(t);
+    let dd=await geoSearch(city?q+', '+city:q,lh);
+    if(!dd.length&&city)dd=await geoSearch(q,lh);
     if(document.getElementById('adName').value.trim()!==q)return;
     lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
-    box.innerHTML=lastAdNameRes.slice(0,5).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<button class="chip" style="display:block;width:100%;text-align:left;margin-top:.35rem;white-space:normal" onclick="adNameSel(${i})"><b>${esc(parts[0]||'')}</b> <span style="color:var(--ink-faint)">${esc(parts.slice(1,3).join(','))}</span></button>`;}).join('');
+    hint.textContent='';
+    if(!lastAdNameRes.length){box.innerHTML='';return;}
+    /* Il risultato migliore, se assomiglia abbastanza a quello scritto, viene
+       collegato subito da solo: non serve più cercarlo a mano. Se non siamo
+       abbastanza sicuri (nome generico, non un luogo preciso) lasciamo
+       semplicemente la lista di suggerimenti da scegliere a mano. */
+    const top=lastAdNameRes[0],topName=String(top.display_name||'').split(',')[0].trim();
+    const sim=strSim(topName,q);
+    const confident=sim>=0.5||(top._top&&sim>=0.35);
+    if(confident){
+      adNameSel(0);
+      box.innerHTML=lastAdNameRes.length>1?'<div style="font-size:.72rem;color:var(--ink-faint);margin:.3rem 0 .2rem">Non è questo?</div>'+lastAdNameRes.slice(1,5).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<button class="chip" style="display:block;width:100%;text-align:left;margin-top:.3rem;white-space:normal" onclick="adNameSel(${i+1})"><b>${esc(parts[0]||'')}</b> <span style="color:var(--ink-faint)">${esc(parts.slice(1,3).join(','))}</span></button>`;}).join(''):'';
+    }else{
+      box.innerHTML=lastAdNameRes.slice(0,5).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<button class="chip" style="display:block;width:100%;text-align:left;margin-top:.35rem;white-space:normal" onclick="adNameSel(${i})"><b>${esc(parts[0]||'')}</b> <span style="color:var(--ink-faint)">${esc(parts.slice(1,3).join(','))}</span></button>`;}).join('');
+    }
   },420);
 }
 function adNameSel(i){
@@ -4932,18 +5110,12 @@ function adNameSel(i){
   document.getElementById('adPoiName').textContent=adPoiPick.name;
   flyDetect(adPoiPick.name);
   document.getElementById('adPoiCur').style.display='flex';
-  document.getElementById('adPoiSearch').style.display='none';
-  document.getElementById('adPoiRes').innerHTML='';
   document.getElementById('adNameSug').innerHTML='';
-}
-function adPoiChange(){
-  document.getElementById('adPoiCur').style.display='none';
-  const ps=document.getElementById('adPoiSearch');ps.style.display='block';ps.focus();
 }
 function adPoiClear(){
   adPoiPick={clear:true};
   document.getElementById('adPoiCur').style.display='none';
-  document.getElementById('adPoiSearch').style.display='block';
+  document.getElementById('adName').focus();
 }
 function updateAdParent(){
   const t=T();if(!t||!adRef)return;
