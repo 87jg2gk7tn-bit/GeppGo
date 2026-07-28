@@ -694,7 +694,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r76</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r77</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1878,13 +1878,19 @@ async function translateQuery(q,lang){
    voci amministrative/di infrastruttura, tenendo solo monumenti, musei,
    chiese, piazze, palazzi e simili. */
 const FP_BAD_TITLE=/\bmunicipio\b|\bcircoscrizion\w*\b|\bprovincia di\b|\bcittà metropolitana\b|\bcomune di\b|\bzona \d|\bquartiere\b|\bdiocesi\b|\barcidiocesi\b|\bdistretto\b|\(metropolitana|\(stazione della metropolitana|\(fermata/i;
-const FP_BAD_CAT=/municipi di|circoscrizioni|suddivisioni amministrative|stazioni della metropolitana|quartieri di|diocesi|distretti di|zone urbanistiche|comuni (della|d')/i;
+const FP_BAD_CAT=/municipi di|circoscrizioni|suddivisioni amministrative|stazioni della metropolitana|quartieri di|diocesi|distretti di|zone urbanistiche|comuni (della|d')|regioni (del|della|dell)|stati federati|comunità autonome|contee (del|della|dell)|province (del|della|dell)/i;
+/* Voci come "Boemia Centrale" (una regione) non hanno una parola-spia nel
+   titolo, ma quasi sempre Wikipedia le apre descrivendole esplicitamente
+   come regione/stato/provincia/land/contea/cantone: un turista non la
+   mette in un itinerario di cose da visitare, quindi la scartiamo. */
+const FP_BAD_EXTRACT_START=/^[^.]{0,40}\bè (una regione|uno stato|una provincia|un land|una contea|un distretto|un cantone|una prefettura|una comunità autonoma|un'area metropolitana)\b/i;
 /* Una singola chiamata a geosearch a volte non basta a raggiungere almeno
    una ventina di posti validi dopo il filtro (specie tolte le voci
    amministrative): con la continuazione dell'API prendiamo altre pagine di
    risultati finché non ne abbiamo abbastanza o Wikipedia non ne ha più. */
-async function fetchFamousPlaces(lat,lng){
+async function fetchFamousPlaces(lat,lng,destName){
   const seen=new Set(),all=[];
+  const destL=(destName||'').split(',')[0].trim().toLowerCase();
   let cont={};
   for(let page=0;page<4;page++){
     try{
@@ -1902,8 +1908,10 @@ async function fetchFamousPlaces(lat,lng){
         _idx:p.index||999,
         _cats:(p.categories||[]).map(c=>c.title||'').join(' | ')
       })).filter(x=>x.lat!=null&&x.lng!=null)
+        .filter(x=>!destL||x.name.toLowerCase()!==destL)
         .filter(x=>!FP_BAD_TITLE.test(x.name))
         .filter(x=>!FP_BAD_CAT.test(x._cats))
+        .filter(x=>!FP_BAD_EXTRACT_START.test(x.extract))
         .forEach(it=>{const k=it.name.toLowerCase();if(!seen.has(k)){seen.add(k);all.push(it);}});
       if(!d.continue||all.length>=60)break;
       cont=d.continue;
@@ -1915,12 +1923,14 @@ async function fetchFamousPlaces(lat,lng){
 }
 /* "pageimages" (usato sopra) sceglie la foto dall'infobox dell'articolo con
    un algoritmo piuttosto rigido: spesso la salta (e il posto resta con
-   l'iconcina generica) anche quando l'articolo ha davvero una foto, perché
-   l'endpoint REST "page/summary" usa un algoritmo diverso e più permissivo
-   per scegliere l'immagine. Per i posti rimasti senza foto proviamo quindi
-   anche lì, in parallelo, prima di rinunciare del tutto. */
+   l'iconcina generica) anche quando l'articolo ha davvero una foto. Per i
+   posti rimasti senza foto proviamo altri due endpoint, in ordine, prima
+   di rinunciare del tutto: prima "page/summary" (algoritmo diverso e più
+   permissivo per la stessa immagine "di copertina"), poi "media-list"
+   (elenca TUTTE le immagini dell'articolo: se non c'è una copertina scelta
+   ne prendiamo comunque una qualunque, meglio di niente). */
 async function fpEnrichMissingPhotos(items){
-  const missing=items.filter(x=>!x.photo);
+  let missing=items.filter(x=>!x.photo);
   if(!missing.length)return;
   await Promise.all(missing.map(async(it)=>{
     try{
@@ -1929,6 +1939,19 @@ async function fpEnrichMissingPhotos(items){
       const d=await r.json();
       if(d.type==='disambiguation')return;
       it.photo=(d.thumbnail&&d.thumbnail.source)||(d.originalimage&&d.originalimage.source)||null;
+    }catch(e){}
+  }));
+  missing=items.filter(x=>!x.photo);
+  if(!missing.length)return;
+  await Promise.all(missing.map(async(it)=>{
+    try{
+      const r=await fetch(`https://it.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(it.name)}`);
+      if(!r.ok)return;
+      const d=await r.json();
+      const img=(d.items||[]).find(m=>m.type==='image'&&m.srcset&&m.srcset.length);
+      if(!img)return;
+      const src=img.srcset[img.srcset.length-1].src;
+      it.photo=src.startsWith('//')?'https:'+src:src;
     }catch(e){}
   }));
 }
@@ -1954,7 +1977,7 @@ async function openFamousPlaces(t){
   if(nameEl)nameEl.textContent=t.destination?('a '+t.destination):'';
   document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">🔍 Cerco i posti più famosi...</div>';
   openSheet('mFamousPlaces');
-  const items=await fetchFamousPlaces(t.destLoc.lat,t.destLoc.lng);
+  const items=await fetchFamousPlaces(t.destLoc.lat,t.destLoc.lng,t.destination);
   if(fpTripId!==t.id)return; // l'utente ha già chiuso o cambiato viaggio nel frattempo
   fpItems=items.slice(0,30);fpReserve=items.slice(30);
   if(!items.length){document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">Non ho trovato posti noti per questa destinazione: puoi comunque cercarli a mano in "Scopri".</div>';return;}
@@ -5244,7 +5267,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r76</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r77</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
