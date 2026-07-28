@@ -651,7 +651,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r65</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r66</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -672,6 +672,13 @@ body.dark .tt-cont{background:var(--beige)!important}
   <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="ntMulti" onchange="document.getElementById('ntCitiesWrap').style.display=this.checked?'block':'none'"><span>Il viaggio tocca più città (meteo calcolato sul luogo di ogni giorno)</span></label></div>
   <div class="fg" id="ntCitiesWrap" style="display:none"><label>Quali città? <span style="font-weight:500;color:var(--ink-faint)">(separale con la virgola)</span></label><input id="ntCities" placeholder="es. Tokyo, Kyoto, Osaka" autocomplete="off" oninput="cityAuto(this,'ntCitySug')"><div id="ntCitySug"></div></div>
   <button class="btn btn-grad btn-block" onclick="createTrip()">Crea viaggio</button>
+</div></div>
+<div class="modal" id="mFamousPlaces"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Posti famosi <span id="fpCityName" style="font-weight:500;color:var(--ink-faint);font-size:.85rem"></span></div><button class="x x-close" onclick="closeSheet('mFamousPlaces')">✕</button></div>
+  <p style="font-size:.8rem;color:var(--ink-faint);margin-bottom:.8rem;line-height:1.5">Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell'anteprima del viaggio.</p>
+  <div id="fpList"></div>
+  <button class="btn btn-grad btn-block" style="margin-top:.6rem" onclick="addFamousPlaces()">Aggiungi selezionati</button>
 </div></div>
 <div class="modal" id="mSavePOI"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -1159,7 +1166,7 @@ function createTrip(){
   ntPeople.forEach(n=>participants.push({id:uid(),name:n,isMe:false}));
   const trip={id:uid(),name,destination:dest,currency:cur,status:'open',start,end,participants,suggestOn:document.getElementById('ntSuggest').checked,interests:document.getElementById('ntInterests').value.trim(),multiCity:document.getElementById('ntMulti').checked,cities:(document.getElementById('ntCities').value||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean).map(n=>({name:n})),suggested:[],days:[],pois:[],expenses:[],tickets:[],weather:{},createdAt:Date.now()};
   if(start&&end){const s=new Date(start),e=new Date(end);for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))trip.days.push({id:uid(),date:d.toISOString().split('T')[0],title:'',activities:[]});}
-  app.trips.push(trip);ensureDestLoc(trip).then(()=>drawMarkers());geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
+  app.trips.push(trip);ensureDestLoc(trip).then(()=>{drawMarkers();if(trip.destLoc)openFamousPlaces(trip);});geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
 }
 function switchTrip(){const id=parseInt(document.getElementById('tripPick').value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
 function renderTripPick(){
@@ -1691,6 +1698,58 @@ async function ensureDestLoc(t){
       save();
     }
   }catch(e){}
+}
+/* ===== Posti famosi della destinazione, con foto (Wikipedia geosearch: gratis,
+   senza chiave, e le voci con un articolo enciclopedico sono già di per sé un
+   buon indicatore di notorietà). Selezionandoli finiscono tra i luoghi salvati
+   in "Scopri", e da lì compaiono anche sulla mappa dell'anteprima viaggio. ===== */
+async function fetchFamousPlaces(lat,lng){
+  try{
+    const url=`https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=9000&ggslimit=24&prop=pageimages%7Ccoordinates%7Cextracts&piprop=thumbnail&pithumbsize=400&exintro=1&explaintext=1&exsentences=1`;
+    const r=await fetch(url);
+    const d=await r.json();
+    const pages=Object.values((d.query&&d.query.pages)||{});
+    const items=pages.map(p=>({
+      name:p.title,
+      lat:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lat:null,
+      lng:(p.coordinates&&p.coordinates[0])?p.coordinates[0].lon:null,
+      photo:p.thumbnail?p.thumbnail.source:null,
+      extract:p.extract||''
+    })).filter(x=>x.lat!=null&&x.lng!=null);
+    items.sort((a,b)=>(b.photo?1:0)-(a.photo?1:0));
+    return items;
+  }catch(e){return [];}
+}
+let fpItems=[],fpTripId=null;
+async function openFamousPlaces(t){
+  if(!t||!t.destLoc)return;
+  fpTripId=t.id;fpItems=[];
+  const nameEl=document.getElementById('fpCityName');
+  if(nameEl)nameEl.textContent=t.destination?('a '+t.destination):'';
+  document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">🔍 Cerco i posti più famosi...</div>';
+  openSheet('mFamousPlaces');
+  const items=await fetchFamousPlaces(t.destLoc.lat,t.destLoc.lng);
+  if(fpTripId!==t.id)return; // l'utente ha già chiuso o cambiato viaggio nel frattempo
+  fpItems=items;
+  if(!items.length){document.getElementById('fpList').innerHTML='<div style="text-align:center;color:var(--ink-faint);padding:1rem">Non ho trovato posti noti per questa destinazione: puoi comunque cercarli a mano in "Scopri".</div>';return;}
+  renderFamousPlacesList();
+}
+function renderFamousPlacesList(){
+  document.getElementById('fpList').innerHTML=fpItems.map((p,i)=>`<label class="split-item" style="display:flex;gap:.7rem;align-items:center;padding:.6rem;margin-bottom:.5rem"><input type="checkbox" data-fp="${i}" style="flex-shrink:0;width:20px;height:20px">${p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem">🏛️</div>`}<div style="min-width:0"><div style="font-weight:700;font-size:.88rem">${esc(p.name)}</div>${p.extract?`<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(p.extract)}</div>`:''}</div></label>`).join('');
+}
+function addFamousPlaces(){
+  const t=app.trips.find(x=>x.id===fpTripId);
+  if(!t){closeSheet('mFamousPlaces');return;}
+  const checks=[...document.querySelectorAll('#fpList input[type=checkbox]:checked')];
+  let added=0;
+  checks.forEach(c=>{
+    const p=fpItems[parseInt(c.dataset.fp,10)];if(!p)return;
+    if(t.pois.some(pp=>pp.name.toLowerCase()===p.name.toLowerCase()))return;
+    t.pois.push({id:uid(),name:p.name,lat:p.lat,lng:p.lng,notes:p.extract||'',priority:'essential',assignedDay:null});
+    added++;
+  });
+  save();renderAll();closeSheet('mFamousPlaces');
+  toast(added?`✅ ${added} post${added===1?'o aggiunto':'i aggiunti'} ai luoghi salvati`:'Nessun posto selezionato');
 }
 
 async function refreshWeather(){
@@ -4816,7 +4875,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r65</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r66</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
