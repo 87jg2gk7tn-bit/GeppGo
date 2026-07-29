@@ -326,11 +326,6 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .locate-fab{position:absolute;right:.6rem;bottom:.6rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1rem;cursor:pointer;box-shadow:var(--sh-sm);z-index:400;display:flex;align-items:center;justify-content:center}
 .locate-fab.on{background:var(--green-tint);color:var(--green-deep);border-color:transparent}
 .locate-fab:active{transform:scale(.92)}
-.trip-grid{display:flex;flex-direction:column;gap:.8rem;margin-bottom:.95rem}
-.trip-sq{position:relative;width:100%;aspect-ratio:2.8/1;border-radius:var(--r-xl);overflow:hidden;background:var(--grad);box-shadow:var(--sh-blue);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;padding:1rem}
-.trip-sq::after{content:'';position:absolute;right:-30px;top:-30px;width:170px;height:170px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);pointer-events:none}
-.trip-sq:active{transform:scale(.98)}
-.trip-sq-name{position:relative;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;letter-spacing:-.01em;color:#fff;text-align:center;line-height:1.25}
 .modal-top{align-items:flex-start}
 .sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
 .modal-top.active .sheet-top{transform:translateY(0)}
@@ -954,7 +949,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r84</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r85</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1518,15 +1513,6 @@ function toggleStatus(){
   if(t.status==='open'){confirmDo('Concludere il viaggio?','Lo sposti tra i viaggi conclusi. Potrai riaprirlo da "I tuoi viaggi".',()=>{t.status='closed';const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:t.id;save();renderAll();toast('🏁 Viaggio concluso');},'🏁','Concludi','btn-blue');}
   else{t.status='open';app.currentTripId=t.id;save();renderAll();toast('✅ Viaggio riaperto');}
 }
-/* Home mostra un quadrato per viaggio con solo il nome: il dettaglio (date,
-   destinazione, pillole, statistiche, mappa) si apre in una tendina che scende
-   dall'alto solo quando lo tocchi, invece di ingombrare la home con tutto
-   sempre visibile. */
-function renderTripGrid(){
-  const box=document.getElementById('tripGrid');if(!box)return;
-  const open=app.trips.filter(t=>t.status!=='closed');
-  box.innerHTML=open.length?open.map(t=>`<div class="trip-sq" onclick="openTripZoom(${t.id})"><div class="trip-sq-name">${esc(t.name)}</div></div>`).join(''):'<div class="card" style="text-align:center;padding:1.7rem 1rem"><div class="empty-t" style="margin-bottom:0">Nessun viaggio in corso</div></div>';
-}
 function renderTripAddRow(){
   const box=document.getElementById('tripAddRow');if(!box)return;
   box.innerHTML=`<div style="display:flex;gap:.6rem;margin-top:.2rem"><button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button><button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:.6rem"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:.78rem;font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
@@ -1565,6 +1551,27 @@ function homeDayIndex(t){
   return t.days.length-1;
 }
 function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+/* Quanto ci metti a piedi da dove sei alla prossima tappa. Passo a 4,5 km/h
+   (75 m al minuto), che è l'andatura di uno che cammina in città guardandosi
+   intorno. Oltre gli 8 km il tempo a piedi non dice più niente di utile e si
+   mostra la distanza secca. */
+function walkText(lat,lng){
+  if(!myPos||lat==null||lng==null)return'';
+  const m=calcDist(myPos.lat,myPos.lng,lat,lng);
+  if(!isFinite(m))return'';
+  if(m>8000)return (m/1000).toFixed(m<20000?1:0)+' km da qui';
+  const min=Math.max(1,Math.round(m/75));
+  return min+(min===1?' minuto a piedi':' minuti a piedi');
+}
+/* Aggiorna solo la riga della card "fra poco", senza ridisegnare tutta la home:
+   la posizione arriva a ogni battito del GPS e un render intero sarebbe sprecato. */
+function updateSoonWalk(){
+  const box=document.querySelector('.hh-soon');if(!box)return;
+  const s=box.querySelector('.hh-soon-s');if(!s)return;
+  const lat=parseFloat(box.dataset.lat),lng=parseFloat(box.dataset.lng);
+  const w=(!isNaN(lat)&&!isNaN(lng))?walkText(lat,lng):'';
+  s.textContent=[box.dataset.base||'',w].filter(Boolean).join(' · ');
+}
 /* il "+" della barra: aggiunge al giorno mostrato, o crea il viaggio se non c'è */
 function homeAdd(){
   const t=T();
@@ -1643,14 +1650,17 @@ function renderHomeHero(){
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
   </div>
-  ${nx?`<div class="hh-soon" onclick="openDay(${i})">
+  ${nx?(()=>{
+    const base=String(nx.a.notes||'')||(nx.a.time?'alle '+nx.a.time:'');
+    const walk=walkText(nx.a.lat,nx.a.lng);
+    return `<div class="hh-soon" onclick="openDay(${i})" data-base="${esc(base)}"${nx.a.lat!=null&&nx.a.lng!=null?` data-lat="${nx.a.lat}" data-lng="${nx.a.lng}"`:''}>
     <div class="hh-ring" style="--p:${ring}"><span>${nx.mins!==null?nx.mins+'′':esc(nx.a.time||'')}</span></div>
     <div style="min-width:0;flex:1">
       <div class="hh-soon-l">FRA POCO</div>
       <div class="hh-soon-n">${esc(nx.a.name||'')}</div>
-      <div class="hh-soon-s">${esc(nx.a.notes||'')||(nx.a.time?'alle '+esc(nx.a.time):'')}</div>
+      <div class="hh-soon-s">${esc([base,walk].filter(Boolean).join(' · '))}</div>
     </div>
-  </div>`:''}
+  </div>`;})():''}
   <div class="hh-days">${t.days.map((d,j)=>{
     const dt=new Date(d.date);
     const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
@@ -3429,6 +3439,7 @@ function beginWatch(){
   document.getElementById('gpsPill').classList.add('on');document.getElementById('locateFab').classList.add('on');document.getElementById('locateFabDay').classList.add('on');
 }
 let meHalo=null,meCentered=false,dayMeMarker=null,dayMeHalo=null,myHeading=null,headingOn=false;
+let myPos=null; /* ultima posizione nota, per il "a piedi" della card "fra poco" */
 /* Il pallino della posizione ha un cono di visibilità (come Google Maps) quando
    il dispositivo fornisce la bussola: ruota con l'orientamento del telefono,
    così capisci subito da che parte stai guardando rispetto alle tappe vicine. */
@@ -3534,6 +3545,7 @@ function dismissSugN(tid,name){
   save();
 }
 function checkProx(lat,lng){
+  myPos={lat:lat,lng:lng};updateSoonWalk();
   const now=Date.now();
   if(now<farUntil)return;
   const rE=app.settings.proxRadius||200,rS=Math.round(rE*0.6),rSug=Math.round(rE*0.45);
@@ -5656,7 +5668,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r84</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r85</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -6071,7 +6083,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderTripGrid();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
+  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
 
 </script>
 </body>
