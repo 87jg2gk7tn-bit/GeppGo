@@ -747,13 +747,23 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 .nav-item svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ni-tx{font-size:1.24rem;font-weight:600;line-height:23px;display:block}
 .nav-item.active{background:var(--ink);color:var(--paper)}
-.nav-add{
-  flex:0 0 auto;width:47px;height:47px;border-radius:50%;border:none;cursor:pointer;
-  background:var(--grad);color:#fff;font-size:1.45rem;font-weight:300;line-height:1;
-  display:grid;place-items:center;box-shadow:var(--sh-green);
-  transition:var(--ease);margin:0 .18rem;font-family:inherit;
+
+/* ── "La giornata": il + di aggiunta le sta accanto, non più in barra ── */
+.hh-sec-l{display:flex;align-items:center;gap:.6rem}
+.hh-add{
+  width:26px;height:26px;border-radius:50%;border:1px solid var(--green);
+  background:transparent;color:var(--green-deep);cursor:pointer;font-family:inherit;
+  font-size:1.05rem;font-weight:400;line-height:1;display:grid;place-items:center;
+  transition:var(--ease);
 }
-.nav-add:active{transform:scale(.92)}
+.hh-add:active{transform:scale(.9)}
+
+/* ── mappa della giornata: segue la card più a sinistra nella striscia ── */
+.hh-map-wrap{
+  margin:.2rem -1.15rem 1rem;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid var(--line-soft);box-shadow:var(--sh-xs);
+}
+.hh-map-wrap #homeMap{height:180px;width:100%;background:var(--sand-tint)}
 
 /* ══════════════════════════════════════════════════════════════════
    GEPPGO · HOME "CIELO" — FINE
@@ -808,7 +818,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="nav">
     <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
     <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
-    <button class="nav-add" onclick="homeAdd()" title="Aggiungi" aria-label="Aggiungi">＋</button>
     <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><span class="ni-tx">€</span></div>
     <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
     <div class="nav-item" data-p="weather" onclick="go('weather')" title="Meteo" aria-label="Meteo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.9"/><path d="M12 3.2v2.1M12 18.7v2.1M4.8 4.8l1.5 1.5M17.7 17.7l1.5 1.5M3.2 12h2.1M18.7 12h2.1M4.8 19.2l1.5-1.5M17.7 6.3l1.5-1.5"/></svg></div>
@@ -971,7 +980,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r89</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r90</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1604,7 +1613,70 @@ function updateSoonWalk(){
   const w=(!isNaN(lat)&&!isNaN(lng))?walkText(lat,lng):'';
   s.textContent=[box.dataset.base||'',w].filter(Boolean).join(' · ');
 }
-/* il "+" della barra: aggiunge al giorno mostrato, o crea il viaggio se non c'è */
+/* ===== MAPPA DELLA GIORNATA IN HOME =====
+   Mostra dove sono le tappe che scorri nelle card. La card più a sinistra è
+   quella "in mano": il suo segnaposto è scuro e la mappa la insegue. Toccando
+   un segnaposto la striscia scorre fino alla card corrispondente. */
+let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=false;
+function destroyHomeMap(){
+  if(homeMapObj){try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
+  homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
+}
+function homeMapIcon(n,on){
+  const sz=on?30:23;
+  return L.divIcon({
+    html:`<div style="background:${on?'#1E1A12':'#B8863C'};color:#fff;width:${sz}px;height:${sz}px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:${on?'.78rem':'.68rem'};font-weight:800;box-shadow:0 1px 5px rgba(0,0,0,.35)">${n}</div>`,
+    className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+  });
+}
+function buildHomeMap(t,day,acts){
+  const wrap=document.getElementById('homeMapWrap');if(!wrap)return;
+  if(typeof L==='undefined'){wrap.style.display='none';return;}
+  // solo le tappe di cui sappiamo dove sono: le altre non hanno niente da mostrare
+  const pts=(acts||[]).map((a,i)=>({a:a,i:i,loc:actLoc(t,a)})).filter(x=>x.loc);
+  if(!pts.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  homeMapPts=pts;
+  homeMapObj=L.map('homeMap',{zoomControl:false,attributionControl:false}).setView([pts[0].loc.lat,pts[0].loc.lng],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(homeMapObj);
+  pts.forEach((x,n)=>{
+    const mk=L.marker([x.loc.lat,x.loc.lng],{icon:homeMapIcon(n+1,false)}).addTo(homeMapObj);
+    mk.bindPopup(`<strong>${esc(x.a.name||'')}</strong>${x.a.time?'<br>ore '+esc(x.a.time):''}`);
+    mk.on('click',()=>homeScrollToCard(x.i));
+    homeMapMarks.push(mk);
+  });
+  if(pts.length>1)homeMapObj.fitBounds(L.latLngBounds(pts.map(x=>[x.loc.lat,x.loc.lng])),{padding:[34,34],maxZoom:15});
+  setTimeout(()=>{if(homeMapObj){homeMapObj.invalidateSize();homeCardsSync(true);}},220);
+  const strip=document.querySelector('.hh-cards');
+  if(strip)strip.addEventListener('scroll',()=>{
+    if(homeSyncQueued)return;homeSyncQueued=true;
+    requestAnimationFrame(()=>{homeSyncQueued=false;homeCardsSync();});
+  },{passive:true});
+}
+function homeMapSelect(cardIdx){
+  if(!homeMapObj||!homeMapPts.length)return;
+  let sel=-1;
+  homeMapPts.forEach((x,n)=>{if(x.i===cardIdx)sel=n;});
+  homeMapMarks.forEach((mk,n)=>mk.setIcon(homeMapIcon(n+1,n===sel)));
+  if(sel>=0)homeMapObj.panTo([homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng],{animate:true,duration:.45});
+}
+/* Qual è la card più a sinistra fra quelle visibili nella striscia. */
+function homeCardsSync(force){
+  const strip=document.querySelector('.hh-cards');if(!strip)return;
+  const cards=[...strip.querySelectorAll('.hh-card')];if(!cards.length)return;
+  const sl=strip.getBoundingClientRect().left;
+  let idx=cards.length-1;
+  for(let n=0;n<cards.length;n++){
+    if(cards[n].getBoundingClientRect().right>sl+10){idx=n;break;}
+  }
+  if(force||idx!==homeCardSel){homeCardSel=idx;homeMapSelect(idx);}
+}
+function homeScrollToCard(i){
+  const strip=document.querySelector('.hh-cards');if(!strip)return;
+  const c=strip.querySelectorAll('.hh-card')[i];if(!c)return;
+  strip.scrollLeft+=(c.getBoundingClientRect().left-strip.getBoundingClientRect().left);
+}
+/* il "+" accanto a "La giornata": aggiunge al giorno mostrato, o crea il viaggio se non c'è */
 function homeAdd(){
   const t=T();
   if(!t||!t.days||!t.days.length){openNewTrip();return;}
@@ -1625,20 +1697,56 @@ function homeSunset(w){
 function homeActs(day){
   return ((day&&day.activities)||[]).slice().sort((x,y)=>String(x.time||'99:99').localeCompare(String(y.time||'99:99')));
 }
+/* Orario assoluto di una tappa (data del giorno + ora). Prima si confrontavano
+   solo i minuti dentro la giornata e per ogni giorno diverso da oggi si finiva
+   con mins=null, cioè "fra poco" scritto sopra una tappa distante giorni e
+   l'anello sempre pieno. */
+function actWhen(day,a){
+  if(!day||!a||!a.time)return null;
+  const p=String(a.time).split(':');if(p.length<2)return null;
+  const d=new Date(day.date);if(isNaN(d.getTime()))return null;
+  d.setHours(parseInt(p[0],10)||0,parseInt(p[1],10)||0,0,0);
+  return d.getTime();
+}
 function homeNext(t,day){
   const acts=homeActs(day).filter(a=>a.time);
   if(!acts.length)return null;
-  const dd=new Date(day.date);
-  if(isNaN(dd.getTime()))return{a:acts[0],mins:null};
-  dd.setHours(0,0,0,0);
-  const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
-  const t0=new Date();t0.setHours(0,0,0,0);
-  if(dd.getTime()!==t0.getTime())return{a:acts[0],mins:null};
+  const now=Date.now();
   for(const a of acts){
-    const p=String(a.time).split(':'),am=(+p[0])*60+(+p[1]);
-    if(!isNaN(am)&&am>=nowM)return{a:a,mins:am-nowM};
+    const ms=actWhen(day,a);
+    if(ms!=null&&ms>=now)return{a:a,mins:Math.round((ms-now)/60000)};
   }
-  return null;
+  return null; // tutte già passate: la card sparisce invece di mentire
+}
+/* "Fra poco" solo se manca davvero poco; altrimenti si dice quando. */
+function soonLabel(m){
+  if(m<=0)return'ADESSO';
+  if(m<90)return'FRA POCO';
+  if(m<1440)return'PIÙ TARDI';
+  if(m<2880)return'DOMANI';
+  return 'FRA '+Math.round(m/1440)+' GIORNI';
+}
+/* Dentro l'anello ci sta poco: forma compatta. */
+function soonRingText(m){
+  if(m<=0)return'ora';
+  if(m<60)return m+'′';
+  if(m<1440)return Math.floor(m/60)+'h';
+  return Math.round(m/1440)+'g';
+}
+/* Quanto manca, per esteso, sotto il nome. */
+function soonWhen(m,a){
+  const ora=(a&&a.time)?a.time:'';
+  if(m<=0)return'adesso';
+  if(m<60)return'fra '+m+(m===1?' minuto':' minuti');
+  if(m<1440){const h=Math.floor(m/60),r=m%60;return'fra '+h+'h'+(r?' '+r+'′':'')+(ora?' · alle '+ora:'');}
+  if(m<2880)return'domani'+(ora?' alle '+ora:'');
+  return 'fra '+Math.round(m/1440)+' giorni'+(ora?' · alle '+ora:'');
+}
+/* L'anello si riempie avvicinandosi: quasi vuoto a due ore, pieno all'ora. */
+function soonRing(m){
+  const H=120;
+  if(m<=0)return 100;
+  return Math.max(4,Math.min(100,Math.round((H-Math.min(m,H))/H*100)));
 }
 function renderHomeHero(){
   const box=document.getElementById('homeHero');if(!box)return;
@@ -1647,10 +1755,29 @@ function renderHomeHero(){
      sembrava che il calendario "slittasse". Ci si ricorda dove erano. */
   const keepD=(box.querySelector('.hh-days')||{}).scrollLeft||0;
   const keepT=(box.querySelector('.hh-trips')||{}).scrollLeft||0;
+  /* Le due strisce vengono ricostruite a ogni render e ripartirebbero da capo:
+     su un viaggio lungo, scegliere il 20 agosto rimandava la riga sul 7. Qui si
+     porta in vista l'elemento evidenziato, centrandolo quando c'è spazio; solo
+     se non c'è un evidenziato si ripiega sulla posizione di prima. Le misure
+     sono prese con getBoundingClientRect perché non dipendono da chi sia
+     l'offsetParent della striscia. */
+  const center=(strip,sel,fallback)=>{
+    if(!strip)return;
+    const on=strip.querySelector(sel);
+    if(!on){strip.scrollLeft=fallback;return;}
+    const sr=strip.getBoundingClientRect(),or=on.getBoundingClientRect();
+    strip.scrollLeft+=(or.left-sr.left)-(sr.width-or.width)/2;
+  };
   const paint=html=>{
+    destroyHomeMap();
     box.innerHTML=html;
-    const d=box.querySelector('.hh-days');if(d)d.scrollLeft=keepD;
-    const tr=box.querySelector('.hh-trips');if(tr)tr.scrollLeft=keepT;
+    const place=()=>{
+      center(box.querySelector('.hh-days'),'.hh-day.on',keepD);
+      center(box.querySelector('.hh-trips'),'.hh-trip.on',keepT);
+    };
+    place();
+    // Se il layout non era ancora pronto la prima assegnazione viene ignorata.
+    requestAnimationFrame(place);
   };
   const t=T();
   if(!t){
@@ -1691,7 +1818,6 @@ function renderHomeHero(){
   const ss=homeSunset(w);if(ss)bits.push(`tramonto ${ss}`);
   bits.push(`${(t.participants||[]).length} in viaggio`);
   const nx=homeNext(t,day),acts=homeActs(day);
-  const ring=(nx&&nx.mins!==null)?Math.max(6,Math.min(100,Math.round((60-Math.min(nx.mins,60))/60*100))):100;
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
   paint(`<div class="hh">${tripsBar}
     <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
@@ -1700,12 +1826,13 @@ function renderHomeHero(){
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
   </div>
   ${nx?(()=>{
-    const base=String(nx.a.notes||'')||(nx.a.time?'alle '+nx.a.time:'');
-    const walk=walkText(nx.a.lat,nx.a.lng);
-    return `<div class="hh-soon" onclick="tapAct(${i},${nx.a.id})" data-base="${esc(base)}"${nx.a.lat!=null&&nx.a.lng!=null?` data-lat="${nx.a.lat}" data-lng="${nx.a.lng}"`:''}>
-    <div class="hh-ring" style="--p:${ring}"><span>${nx.mins!==null?nx.mins+'′':esc(nx.a.time||'')}</span></div>
+    const loc=actLoc(t,nx.a);
+    const base=[soonWhen(nx.mins,nx.a),String(nx.a.notes||'')].filter(Boolean).join(' · ');
+    const walk=loc?walkText(loc.lat,loc.lng):'';
+    return `<div class="hh-soon" onclick="tapAct(${i},${nx.a.id})" data-base="${esc(base)}"${loc?` data-lat="${loc.lat}" data-lng="${loc.lng}"`:''}>
+    <div class="hh-ring" style="--p:${soonRing(nx.mins)}"><span>${esc(soonRingText(nx.mins))}</span></div>
     <div style="min-width:0;flex:1">
-      <div class="hh-soon-l">FRA POCO</div>
+      <div class="hh-soon-l">${esc(soonLabel(nx.mins))}</div>
       <div class="hh-soon-n">${esc(nx.a.name||'')}</div>
       <div class="hh-soon-s">${esc([base,walk].filter(Boolean).join(' · '))}</div>
     </div>
@@ -1715,7 +1842,10 @@ function renderHomeHero(){
     const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
     return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})">${esc(lb)}</button>`;
   }).join('')}</div>
-  <div class="hh-sec"><div class="hh-sec-t">La giornata</div><div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div></div>
+  <div class="hh-sec">
+    <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa">+</button></div>
+    <div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div>
+  </div>
   ${acts.length?`<div class="hh-cards">${acts.map(a=>{
     const av=avOf(a);
     return `<div class="hh-card${nx&&nx.a.id===a.id?' next':''}" onclick="tapAct(${i},${a.id})">
@@ -1724,7 +1854,9 @@ function renderHomeHero(){
       ${a.notes?`<div class="hh-card-s">${esc(a.notes)}</div>`:''}
       ${av?`<div class="hh-avs">${av}</div>`:''}
     </div>`;
-  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
+  }).join('')}</div>
+  <div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div></div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
+  buildHomeMap(t,day,acts);
 }
 
 /* ===== QW-2: LISTA BAGAGLI AUTO-GENERATA (regole, nessuna AI) ===== */
@@ -2230,12 +2362,24 @@ function delAct(di,id){
 }
 function openAddAct(di){openActDetail(di,null);}
 let actMenuRef=null;
+/* Dove si trova un'attività: le sue coordinate, altrimenti quelle del luogo
+   collegato, altrimenti quelle dell'hotel. Guardando solo a.lat il tasto
+   "Naviga" spariva su attività che una posizione ce l'avevano eccome — solo
+   non su di sé: ci arrivavano tramite il POI (è il caso di tutte quelle nate
+   dai luoghi famosi o dalla ricerca) o tramite l'hotel. */
+function actLoc(t,a){
+  if(!a)return null;
+  if(a.lat!=null&&a.lng!=null)return{lat:a.lat,lng:a.lng};
+  if(t&&a.poiId){const p=(t.pois||[]).find(x=>x.id===a.poiId);if(p&&p.lat!=null)return{lat:p.lat,lng:p.lng};}
+  if(t&&a.hotelId){const h=(t.hotels||[]).find(x=>x.id===a.hotelId);if(h&&h.lat!=null)return{lat:h.lat,lng:h.lng};}
+  return null;
+}
 function tapAct(di,id){
   const t=T();if(!t||!t.days[di])return;
   const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
   actMenuRef={di,id};
   document.getElementById('amName').textContent=a.name||'Attività';
-  document.getElementById('amNavBtn').style.display=a.lat!=null?'block':'none';
+  document.getElementById('amNavBtn').style.display=actLoc(t,a)?'block':'none';
   const tk=t.tickets.find(x=>x.actId===id);
   document.getElementById('amTkBtn').style.display=tk?'block':'none';
   openSheet('mActMenu');
@@ -2251,9 +2395,10 @@ function actMenuHistory(){
 function actMenuNav(){
   if(!actMenuRef)return;const {di,id}=actMenuRef;
   const t=T();if(!t||!t.days[di])return;
-  const a=t.days[di].activities.find(x=>x.id===id);if(!a||a.lat==null)return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  const loc=actLoc(t,a);if(!loc)return;
   closeSheet('mActMenu');
-  openNav(a.lat,a.lng,a.name);
+  openNav(loc.lat,loc.lng,a.name);
 }
 function actMenuTicket(){
   if(!actMenuRef)return;const {di,id}=actMenuRef;
@@ -5740,7 +5885,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r89</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r90</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
