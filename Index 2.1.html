@@ -161,7 +161,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .wc-l{display:flex;align-items:center;gap:.85rem}
 .wc-emoji{font-size:2.2rem;line-height:1}
 .wc-t{font-weight:800;font-size:.95rem}
-.wc-d{font-size:.78rem;opacity:.92;margin-top:.12rem}
+.wc-d{font-family:'Fraunces',serif;font-style:italic;font-size:.82rem;opacity:.92;margin-top:.12rem}
 .wc-temp{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;line-height:1;text-align:right}
 .wc-min{font-size:.76rem;opacity:.88;margin-top:.2rem;text-align:right}
 .budget-hero{background:var(--grad);color:#fff;padding:1.4rem;border-radius:var(--r-xl);margin-bottom:.95rem;box-shadow:var(--sh-blue);position:relative;overflow:hidden}
@@ -695,7 +695,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r79</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r80</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -2073,7 +2073,7 @@ function renderWeather(){
   c.innerHTML=rows||`<div class="empty"><div class="empty-t">Nessun giorno</div></div>`;
 }
 function wxEmoji(c){if(c===0)return'☀️';if(c<=3)return'⛅';if(c<=49)return'🌫️';if(c<=67)return'🌧️';if(c<=77)return'❄️';if(c<=82)return'🌦️';if(c<=99)return'⛈️';return'🌤️';}
-function wxDesc(c){if(c===0)return'Sereno';if(c<=3)return'Parz. nuvoloso';if(c<=49)return'Nebbia';if(c<=67)return'Pioggia';if(c<=77)return'Neve';if(c<=82)return'Acquazzoni';if(c<=99)return'Temporale';return'Variabile';}
+function wxDesc(c){if(c===0)return'cielo limpido';if(c<=3)return'nuvole leggere';if(c<=49)return'foschia sottile';if(c<=67)return'pioggia leggera';if(c<=77)return'neve leggera';if(c<=82)return'acquazzoni improvvisi';if(c<=99)return'temporale in arrivo';return'cielo variabile';}
 function fillCurrencySelect(sel){sel.innerHTML=CURR.map(c=>`<option value="${c.c}">${c.c} ${c.s!==c.c?'('+c.s+')':''}</option>`).join('');}
 async function getRate(from,to){
   if(from===to)return 1;const key=from,now=Date.now();
@@ -5273,7 +5273,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r79</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r80</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
