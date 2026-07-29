@@ -971,7 +971,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r87</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r88</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1572,7 +1572,9 @@ function homeDayIndex(t){
   if(!isNaN(f.getTime())){f.setHours(0,0,0,0);if(today<f)return 0;}
   return t.days.length-1;
 }
-function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+/* Toccare un giorno del calendario in home lo seleziona e apre la sua giornata:
+   chiudendo la time-table la home resta su quel giorno. */
+function selHomeDay(i){homeDaySel=i;renderHomeHero();openDay(i);}
 /* Cambio viaggio dalla home. Azzera il giorno scelto a mano, così il viaggio
    nuovo riparte dal suo giorno di oggi invece che da un indice rimasto lì. */
 function homeSwitchTrip(id){
@@ -1640,9 +1642,19 @@ function homeNext(t,day){
 }
 function renderHomeHero(){
   const box=document.getElementById('homeHero');if(!box)return;
+  /* Le due strisce orizzontali (giorni e viaggi) vengono ricostruite a ogni
+     render: senza questo, scegliere un giorno le riportava a inizio riga e
+     sembrava che il calendario "slittasse". Ci si ricorda dove erano. */
+  const keepD=(box.querySelector('.hh-days')||{}).scrollLeft||0;
+  const keepT=(box.querySelector('.hh-trips')||{}).scrollLeft||0;
+  const paint=html=>{
+    box.innerHTML=html;
+    const d=box.querySelector('.hh-days');if(d)d.scrollLeft=keepD;
+    const tr=box.querySelector('.hh-trips');if(tr)tr.scrollLeft=keepT;
+  };
   const t=T();
   if(!t){
-    box.innerHTML=`<div class="hh">
+    paint(`<div class="hh">
       <div class="hh-eyebrow">GEPPGO</div>
       <div class="hh-city" style="cursor:default">Si parte?</div>
       <div class="hh-mood">il primo viaggio</div>
@@ -1651,7 +1663,7 @@ function renderHomeHero(){
     <div style="display:flex;gap:.6rem;margin-top:1.3rem">
       <button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button>
       <button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button>
-    </div>`;
+    </div>`);
     return;
   }
   // Riga dei viaggi aperti: scorre in orizzontale come la barra in basso quando
@@ -1662,11 +1674,11 @@ function renderHomeHero(){
     <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio">+</button>
   </div>`;
   if(!t.days||!t.days.length){
-    box.innerHTML=`<div class="hh">${tripsBar}
+    paint(`<div class="hh">${tripsBar}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
-    </div>`;
+    </div>`);
     return;
   }
   const i=homeDayIndex(t),day=t.days[i];
@@ -1681,7 +1693,7 @@ function renderHomeHero(){
   const nx=homeNext(t,day),acts=homeActs(day);
   const ring=(nx&&nx.mins!==null)?Math.max(6,Math.min(100,Math.round((60-Math.min(nx.mins,60))/60*100))):100;
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
-  box.innerHTML=`<div class="hh">${tripsBar}
+  paint(`<div class="hh">${tripsBar}
     <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
@@ -1712,7 +1724,7 @@ function renderHomeHero(){
       ${a.notes?`<div class="hh-card-s">${esc(a.notes)}</div>`:''}
       ${av?`<div class="hh-avs">${av}</div>`:''}
     </div>`;
-  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`;
+  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
 }
 
 /* ===== QW-2: LISTA BAGAGLI AUTO-GENERATA (regole, nessuna AI) ===== */
@@ -2629,25 +2641,48 @@ function checkActReminders(){
     }));
   });
 }
+/* Di un volo, sulla mappa del viaggio conta l'aeroporto dal lato della vacanza:
+   all'andata quello dove atterri, al ritorno quello da cui riparti. Prendere
+   l'altro significherebbe piantare un segnaposto all'aeroporto di casa e
+   allargare la mappa a tutta la tratta, che è poi il motivo per cui si
+   "avvallava". I voli interni al viaggio usano l'arrivo, dove starai. */
+function flightAnchor(t,a){
+  if(!t||!a||a.type!=='flight')return null;
+  const voli=[];
+  (t.days||[]).forEach((d,di)=>(d.activities||[]).forEach(x=>{
+    if(x.type==='flight')voli.push({id:x.id,di:di,time:String(x.time||'99:99')});
+  }));
+  voli.sort((p,q)=>p.di-q.di||p.time.localeCompare(q.time));
+  const ritorno=voli.length>1&&voli[voli.length-1].id===a.id;
+  const from=String(a.flyFrom||'').trim(),to=String(a.flyTo||'').trim();
+  return (ritorno?(from||to):(to||from))||null;
+}
 async function autoLinkPoi(t,a,dayDate){
   try{
-    if(!a.name||a.name.length<4)return;
-    const city=tripCityHint(t);
-    let res=await geoSearch(city?a.name+', '+city:a.name);
-    if(!res.length&&city)res=await geoSearch(a.name);
-    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,a.name):res;
+    // Per i voli si cerca l'aeroporto giusto, non il nome dell'attività, e senza
+    // il suggerimento della città: l'aeroporto può stare in tutt'altro comune.
+    const aero=flightAnchor(t,a);
+    const target=aero||a.name;
+    if(!target||target.length<3)return;
+    const city=aero?'':tripCityHint(t);
+    let res=await geoSearch(city?target+', '+city:target);
+    if(!res.length&&aero)res=await geoSearch('aeroporto '+target);
+    if(!res.length&&city)res=await geoSearch(target);
+    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,target):res;
     const r=ranked&&ranked[0];if(!r)return;
     const cls=String(r.class||'')+' '+String(r.type||'');
     const okK=['tourism','leisure','historic','attraction','theme_park','museum','park','zoo','aquarium','castle','monument','viewpoint','gallery','stadium','ruins','peak','restaurant','cafe','bar','pub','fast_food','hotel','guest_house','hostel','beach','church','cathedral','memorial','archaeological_site','artwork','station','airport','aerodrome','garden'];
     if(!okK.some(k=>cls.includes(k)))return;
     a.lat=parseFloat(r.lat);a.lng=parseFloat(r.lon);
-    const ex=t.pois.find(pp=>pp.name.toLowerCase()===a.name.toLowerCase());
+    // Il segnaposto di un volo porta il nome dell'aeroporto, non "Volo · ...".
+    const poiName=aero||a.name;
+    const ex=t.pois.find(pp=>pp.name.toLowerCase()===poiName.toLowerCase());
     if(ex){a.poiId=ex.id;if(!ex.assignedDay)ex.assignedDay=dayDate;}
-    else{const poi={id:uid(),name:a.name,lat:a.lat,lng:a.lng,notes:'',priority:'essential',assignedDay:dayDate};t.pois.push(poi);a.poiId=poi.id;}
+    else{const poi={id:uid(),name:poiName,lat:a.lat,lng:a.lng,notes:'',priority:'essential',assignedDay:dayDate};t.pois.push(poi);a.poiId=poi.id;}
     save();renderAll();
     const d=t.days.find(x=>x.date===dayDate);
     if(d)fetchDayWx(t,d).then(()=>renderWeather());
-    toast('Riconosciuto come luogo: è su mappa e meteo');
+    toast(aero?`Aeroporto ${aero} messo su mappa`:'Riconosciuto come luogo: è su mappa e meteo');
   }catch(e){}
 }
 function openExpense(id){
@@ -5705,7 +5740,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r87</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r88</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
