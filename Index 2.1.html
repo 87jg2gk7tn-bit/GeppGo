@@ -590,6 +590,133 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 /* ══════════════════════════════════════════════════════════════════
    GEPPGO · PELLE "CIELO" · LAYOUT — FINE
    ══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
+   GEPPGO · HOME "CIELO" — INIZIO
+   Intestazione del giorno, card "fra poco", pillole dei giorni,
+   tappe scorrevoli, barra a icone. Cancella da INIZIO a FINE per
+   tornare alla home precedente.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root{--cielo-a:#AEB9C6;--cielo-b:#F6EEDD}
+body.dark{--cielo-a:#1B2333;--cielo-b:#0E0C09}
+
+/* ── intestazione del giorno ───────────────────────────────────── */
+.hh{
+  position:relative;
+  margin:-1.1rem -1.15rem 0;
+  padding:2.4rem 1.15rem 2.6rem;
+  background:linear-gradient(180deg,var(--cielo-a) 0%,var(--cielo-b) 82%);
+  overflow:hidden;
+}
+.hh::after{
+  content:'';position:absolute;right:-34px;top:44px;width:150px;height:150px;
+  border-radius:50%;background:rgba(255,255,255,.13);pointer-events:none;
+}
+body.dark .hh::after{background:rgba(255,255,255,.05)}
+.hh-eyebrow{
+  position:relative;font-size:.68rem;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-soft);opacity:.85;margin-bottom:.5rem;
+}
+.hh-city{
+  position:relative;font-family:'Fraunces',serif;font-weight:600;
+  font-size:clamp(3rem,15vw,4.4rem);line-height:.88;letter-spacing:-.025em;
+  color:var(--ink);cursor:pointer;
+}
+.hh-mood{
+  position:relative;font-family:'Fraunces',serif;font-style:italic;font-weight:500;
+  font-size:clamp(1.7rem,8vw,2.5rem);line-height:1.05;color:var(--green);
+  margin-top:.1rem;
+}
+.hh-meta{
+  position:relative;font-size:.9rem;color:var(--ink-soft);margin-top:.9rem;
+}
+
+/* ── card "fra poco" ───────────────────────────────────────────── */
+.hh-soon{
+  display:flex;align-items:center;gap:1rem;
+  margin:-1.5rem .1rem 0;padding:1.05rem 1.15rem;
+  background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--sh-md);border:1px solid var(--line-soft);
+  cursor:pointer;position:relative;z-index:2;transition:var(--ease);
+}
+.hh-soon:active{transform:scale(.985)}
+.hh-ring{
+  position:relative;width:58px;height:58px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) calc(var(--p,100) * 1%),var(--line-soft) 0);
+  display:grid;place-items:center;
+}
+.hh-ring::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--surface)}
+.hh-ring span{position:relative;font-weight:700;font-size:.82rem;color:var(--green-deep)}
+.hh-soon-l{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+.hh-soon-n{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;line-height:1.15;margin-top:.18rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hh-soon-s{font-size:.84rem;color:var(--ink-soft);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── pillole dei giorni ────────────────────────────────────────── */
+.hh-days{
+  display:flex;gap:.4rem;overflow-x:auto;scrollbar-width:none;
+  margin:1.5rem -1.15rem .2rem;padding:0 1.15rem .2rem;
+}
+.hh-days::-webkit-scrollbar{display:none}
+.hh-day{
+  flex:0 0 auto;border:none;background:transparent;cursor:pointer;
+  font-family:inherit;font-weight:600;font-size:.86rem;color:var(--ink-faint);
+  padding:.5rem .9rem;border-radius:999px;transition:var(--ease);white-space:nowrap;
+}
+.hh-day:active{transform:scale(.95)}
+.hh-day.on{background:var(--ink);color:var(--paper)}
+
+/* ── titolo di sezione ─────────────────────────────────────────── */
+.hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:1.5rem .1rem .8rem}
+.hh-sec-t{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;color:var(--ink)}
+.hh-sec-c{font-size:.66rem;font-weight:700;letter-spacing:.14em;color:var(--ink-faint)}
+
+/* ── tappe della giornata, scorrevoli in orizzontale ───────────── */
+.hh-cards{
+  display:flex;gap:.7rem;overflow-x:auto;scrollbar-width:none;
+  margin:0 -1.15rem;padding:.2rem 1.15rem 1rem;scroll-snap-type:x mandatory;
+}
+.hh-cards::-webkit-scrollbar{display:none}
+.hh-card{
+  flex:0 0 76%;max-width:300px;scroll-snap-align:start;cursor:pointer;
+  background:var(--sand-tint);border:1px solid var(--line-soft);
+  border-radius:var(--r-xl);padding:1.15rem;transition:var(--ease);
+  display:flex;flex-direction:column;min-height:150px;
+}
+.hh-card:active{transform:scale(.98)}
+.hh-card.next{background:var(--surface);border-color:var(--green);box-shadow:var(--sh-sm)}
+.hh-card-t{font-weight:700;font-size:1.02rem;color:var(--green-deep);letter-spacing:.01em}
+.hh-card-n{font-family:'Fraunces',serif;font-size:1.42rem;font-weight:600;line-height:1.12;margin-top:.45rem;color:var(--ink)}
+.hh-card-s{font-size:.84rem;color:var(--ink-faint);margin-top:.3rem;line-height:1.4}
+.hh-avs{display:flex;margin-top:auto;padding-top:.9rem}
+.hh-av{
+  width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;
+  display:grid;place-items:center;font-size:.7rem;font-weight:800;
+  border:2px solid var(--surface);margin-right:-7px;
+}
+.hh-empty{
+  background:var(--surface);border:1px dashed var(--line);border-radius:var(--r-lg);
+  padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
+}
+
+/* ── testata: tasti tema chiaro/scuro ──────────────────────────── */
+.th-btn{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+  font-size:1rem;line-height:1;display:grid;place-items:center;
+  transition:var(--ease);margin-left:.4rem;
+}
+.th-btn:active{transform:scale(.92)}
+body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ── barra in basso: icone invece che sole parole ──────────────── */
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:.12rem;padding:.5rem .62rem}
+.ni-ic{font-size:1.16rem;line-height:1}
+.ni-l{font-size:.6rem;font-weight:600;letter-spacing:.01em}
+
+/* ══════════════════════════════════════════════════════════════════
+   GEPPGO · HOME "CIELO" — FINE
+   ══════════════════════════════════════════════════════════════════ */
 </style>
 </head>
 <body>
@@ -633,6 +760,8 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
         <div class="brand-name">Gepp<span class="brand-go">Go</span></div>
       </div>
       <button class="gps-pill" id="gpsPill" onclick="toggleGPS()"><span class="gps-dot"></span>GPS</button>
+      <button class="th-btn" id="thDark" onclick="toggleDark(true)" title="Tema scuro" aria-label="Tema scuro">☾</button>
+      <button class="th-btn" id="thLight" onclick="toggleDark(false)" title="Tema chiaro" aria-label="Tema chiaro">☀</button>
     </div>
     <div class="tripbar">
       <select class="trip-pick" id="tripPick" onchange="switchTrip()"><option>Nessun viaggio</option></select>
@@ -641,19 +770,20 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
     </div>
   </div>
   <div class="nav">
-    <div class="nav-item active" data-p="plan" onclick="go('plan')">Home</div>
-    <div class="nav-item" data-p="discover" onclick="go('discover')">Scopri</div>
-    <div class="nav-item" data-p="weather" onclick="go('weather')">Meteo</div>
-    <div class="nav-item" data-p="money" onclick="go('money')">Spese</div>
-    <div class="nav-item" data-p="budget" onclick="go('budget')">Budget</div>
-    <div class="nav-item" data-p="hotels" onclick="go('hotels')">Hotel</div>
-    <div class="nav-item" data-p="tickets" onclick="go('tickets')">Biglietti</div>
-    <div class="nav-item" data-p="identify" onclick="go('identify')">Identifica</div>
-    <div class="nav-item" data-p="trips" onclick="go('trips')">Profilo</div>
-    <div class="nav-item" data-p="settings" onclick="go('settings')">Impostazioni</div>
+    <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home"><span class="ni-ic">🗺️</span><span class="ni-l">Home</span></div>
+    <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri"><span class="ni-ic">🔍</span><span class="ni-l">Scopri</span></div>
+    <div class="nav-item" data-p="weather" onclick="go('weather')" title="Meteo"><span class="ni-ic">⛅</span><span class="ni-l">Meteo</span></div>
+    <div class="nav-item" data-p="money" onclick="go('money')" title="Spese"><span class="ni-ic">💶</span><span class="ni-l">Spese</span></div>
+    <div class="nav-item" data-p="budget" onclick="go('budget')" title="Budget"><span class="ni-ic">📊</span><span class="ni-l">Budget</span></div>
+    <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel"><span class="ni-ic">🏨</span><span class="ni-l">Hotel</span></div>
+    <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti"><span class="ni-ic">🎫</span><span class="ni-l">Biglietti</span></div>
+    <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica"><span class="ni-ic">📷</span><span class="ni-l">Identifica</span></div>
+    <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo"><span class="ni-ic">👤</span><span class="ni-l">Profilo</span></div>
+    <div class="nav-item" data-p="settings" onclick="go('settings')" title="Impostazioni"><span class="ni-ic">⚙️</span><span class="ni-l">Impostazioni</span></div>
   </div>
   <div class="scroll">
     <div class="page active" id="plan">
+      <div id="homeHero"></div>
       <div id="cloudWarn"></div>
       <div id="tripGrid" class="trip-grid"></div>
       <div id="tripAddRow"></div>
@@ -805,7 +935,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r81</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r82</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1395,6 +1525,101 @@ function renderTripZoomBody(){
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
   el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>`;
+}
+
+/* ===== HOME "CIELO": giorno corrente, prossima tappa, tappe della giornata =====
+   Tutto additivo: la timetable, il trascinamento e le altre pagine restano
+   esattamente com'erano. Qui si legge soltanto, non si scrive nulla nei dati. */
+let homeDaySel=null;
+function homeDayIndex(t){
+  if(!t||!t.days||!t.days.length)return 0;
+  if(homeDaySel!==null&&homeDaySel>=0&&homeDaySel<t.days.length)return homeDaySel;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=0;i<t.days.length;i++){
+    const dd=new Date(t.days[i].date);if(isNaN(dd.getTime()))continue;
+    dd.setHours(0,0,0,0);
+    if(dd.getTime()===today.getTime())return i;
+  }
+  const f=new Date(t.days[0].date);
+  if(!isNaN(f.getTime())){f.setHours(0,0,0,0);if(today<f)return 0;}
+  return t.days.length-1;
+}
+function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+function homeMood(code){
+  const h=new Date().getHours();
+  const part=h<12?['mattina','f']:(h<18?['pomeriggio','m']:['sera','f']);
+  const a=code===0?['limpido','limpida']:code<=3?['velato','velata']:code<=49?['nebbioso','nebbiosa']:code<=67?['piovoso','piovosa']:code<=77?['nevoso','nevosa']:code<=82?['instabile','instabile']:code<=99?['tempestoso','tempestosa']:['incerto','incerta'];
+  return part[0]+' '+(part[1]==='f'?a[1]:a[0]);
+}
+function wxShort(c){if(c===0)return'sereno';if(c<=3)return'poco nuvoloso';if(c<=49)return'nebbia';if(c<=67)return'pioggia';if(c<=77)return'neve';if(c<=82)return'acquazzoni';if(c<=99)return'temporale';return'variabile';}
+function homeSunset(w){
+  if(!w||!w.sunset)return'';
+  const m=String(w.sunset).match(/T(\d{2}:\d{2})/);
+  return m?m[1]:'';
+}
+function homeActs(day){
+  return ((day&&day.activities)||[]).slice().sort((x,y)=>String(x.time||'99:99').localeCompare(String(y.time||'99:99')));
+}
+function homeNext(t,day){
+  const acts=homeActs(day).filter(a=>a.time);
+  if(!acts.length)return null;
+  const dd=new Date(day.date);
+  if(isNaN(dd.getTime()))return{a:acts[0],mins:null};
+  dd.setHours(0,0,0,0);
+  const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
+  const t0=new Date();t0.setHours(0,0,0,0);
+  if(dd.getTime()!==t0.getTime())return{a:acts[0],mins:null};
+  for(const a of acts){
+    const p=String(a.time).split(':'),am=(+p[0])*60+(+p[1]);
+    if(!isNaN(am)&&am>=nowM)return{a:a,mins:am-nowM};
+  }
+  return null;
+}
+function renderHomeHero(){
+  const box=document.getElementById('homeHero');if(!box)return;
+  const t=T();
+  if(!t||!t.days||!t.days.length){box.innerHTML='';return;}
+  const i=homeDayIndex(t),day=t.days[i];
+  if(!day){box.innerHTML='';return;}
+  const w=(t.weather||{})[day.date];
+  const city=day.city||(day.cities&&day.cities[0])||t.destination||t.name||'';
+  const mood=w?homeMood(w.code):'';
+  const bits=[];
+  if(w)bits.push(`${Math.round(w.tempMax)}° ${wxShort(w.code)}`);
+  const ss=homeSunset(w);if(ss)bits.push(`tramonto ${ss}`);
+  bits.push(`${(t.participants||[]).length} in viaggio`);
+  const nx=homeNext(t,day),acts=homeActs(day);
+  const ring=(nx&&nx.mins!==null)?Math.max(6,Math.min(100,Math.round((60-Math.min(nx.mins,60))/60*100))):100;
+  const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
+  box.innerHTML=`<div class="hh">
+    <div class="hh-eyebrow">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length}</div>
+    <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
+    ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
+    <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
+  </div>
+  ${nx?`<div class="hh-soon" onclick="openDay(${i})">
+    <div class="hh-ring" style="--p:${ring}"><span>${nx.mins!==null?nx.mins+'′':esc(nx.a.time||'')}</span></div>
+    <div style="min-width:0;flex:1">
+      <div class="hh-soon-l">FRA POCO</div>
+      <div class="hh-soon-n">${esc(nx.a.name||'')}</div>
+      <div class="hh-soon-s">${esc(nx.a.notes||'')||(nx.a.time?'alle '+esc(nx.a.time):'')}</div>
+    </div>
+  </div>`:''}
+  <div class="hh-days">${t.days.map((d,j)=>{
+    const dt=new Date(d.date);
+    const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
+    return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})">${esc(lb)}</button>`;
+  }).join('')}</div>
+  <div class="hh-sec"><div class="hh-sec-t">La giornata</div><div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div></div>
+  ${acts.length?`<div class="hh-cards">${acts.map(a=>{
+    const av=avOf(a);
+    return `<div class="hh-card${nx&&nx.a.id===a.id?' next':''}" onclick="openDay(${i})">
+      <div class="hh-card-t">${esc(a.time||'—')}</div>
+      <div class="hh-card-n">${esc(a.name||'')}</div>
+      ${a.notes?`<div class="hh-card-s">${esc(a.notes)}</div>`:''}
+      ${av?`<div class="hh-avs">${av}</div>`:''}
+    </div>`;
+  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`;
 }
 
 /* ===== QW-2: LISTA BAGAGLI AUTO-GENERATA (regole, nessuna AI) ===== */
@@ -4938,11 +5163,11 @@ async function copyText(txt){
 
 function wxEmo(w){if(!w)return'';if(w.precipitation>5)return'🌧️';if(w.precipitation<1&&w.tempMax>20)return'☀️';return'⛅';}
 async function fetchDayWx(t,day){
-  const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max';
+  const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunset';
   const one=async loc=>{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&daily=${F}&timezone=auto&start_date=${day.date}&end_date=${day.date}`;
     const r=await fetch(u);const d2=await r.json();
-    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0]};
+    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0],sunset:(d2.daily.sunset&&d2.daily.sunset[0])||null};
     return null;
   };
   try{
@@ -5383,7 +5608,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r81</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r82</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
@@ -5798,7 +6023,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderTripGrid();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
+  migrateData();renderTripPick();renderTripGrid();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
 
 </script>
 </body>
