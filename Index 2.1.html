@@ -1591,9 +1591,9 @@ function homeDayIndex(t){
   if(!isNaN(f.getTime())){f.setHours(0,0,0,0);if(today<f)return 0;}
   return t.days.length-1;
 }
-/* Toccare un giorno del calendario in home lo seleziona e apre la sua giornata:
-   chiudendo la time-table la home resta su quel giorno. */
-function selHomeDay(i){homeDaySel=i;renderHomeHero();openDay(i);}
+/* Toccare un giorno del calendario in home lo seleziona soltanto: la
+   time-table si apre solo toccando il nome del viaggio, non da qui. */
+function selHomeDay(i){homeDaySel=i;renderHomeHero();}
 /* Cambio viaggio dalla home. Azzera il giorno scelto a mano, così il viaggio
    nuovo riparte dal suo giorno di oggi invece che da un indice rimasto lì. */
 function homeSwitchTrip(id){
@@ -1830,7 +1830,7 @@ function renderHomeHero(){
   const nx=homeNext(t,day),acts=homeActs(day);
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
   paint(`<div class="hh">${tripsBar}
-    <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
+    <div class="hh-eyebrow hh-tap" onclick="openDay(${i})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
