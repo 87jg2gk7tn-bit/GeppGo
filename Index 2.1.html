@@ -694,12 +694,20 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
 }
 
-/* ── switcher dei viaggi, solo se ce n'è più di uno aperto ─────── */
+/* ── riga dei viaggi aperti, col "+" fermo a destra ────────────── */
+.hh-tripbar{position:relative;display:flex;align-items:center;gap:.5rem;margin-bottom:.95rem}
 .hh-trips{
-  position:relative;display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;
-  margin:0 -1.15rem .95rem;padding:0 1.15rem;
+  display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;
+  flex:1;min-width:0;padding:.15rem 0;
 }
 .hh-trips::-webkit-scrollbar{display:none}
+.hh-trip-add{
+  flex:0 0 auto;width:31px;height:31px;border-radius:50%;cursor:pointer;
+  border:1px solid var(--green);background:transparent;color:var(--green-deep);
+  font-family:inherit;font-size:1.1rem;font-weight:400;line-height:1;
+  display:grid;place-items:center;transition:var(--ease);
+}
+.hh-trip-add:active{transform:scale(.9)}
 .hh-trip{
   flex:0 0 auto;cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;
   color:var(--ink-soft);background:transparent;border:1px solid var(--line);
@@ -963,7 +971,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r86</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r87</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1646,10 +1654,13 @@ function renderHomeHero(){
     </div>`;
     return;
   }
-  // Lo switcher compare solo con più di un viaggio aperto: con uno solo la home
-  // resta identica al mock.
+  // Riga dei viaggi aperti: scorre in orizzontale come la barra in basso quando
+  // sono tanti, e il "+" resta fermo a destra così non scappa via scorrendo.
   const aperti=app.trips.filter(x=>x.status!=='closed');
-  const tripsBar=aperti.length>1?`<div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>`:'';
+  const tripsBar=`<div class="hh-tripbar">
+    <div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>
+    <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio">+</button>
+  </div>`;
   if(!t.days||!t.days.length){
     box.innerHTML=`<div class="hh">${tripsBar}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
@@ -5694,7 +5705,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r86</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r87</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
