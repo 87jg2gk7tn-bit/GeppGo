@@ -605,7 +605,7 @@ body.dark{--cielo-a:#1B2333;--cielo-b:#0E0C09}
 .hh{
   position:relative;
   margin:-1.1rem -1.15rem 0;
-  padding:2.4rem 1.15rem 2.6rem;
+  padding:4.2rem 1.15rem 2.9rem;
   background:linear-gradient(180deg,var(--cielo-a) 0%,var(--cielo-b) 82%);
   overflow:hidden;
 }
@@ -709,10 +709,21 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .th-btn:active{transform:scale(.92)}
 body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
-/* ── barra in basso: icone invece che sole parole ──────────────── */
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:.12rem;padding:.5rem .62rem}
-.ni-ic{font-size:1.16rem;line-height:1}
-.ni-l{font-size:.6rem;font-weight:600;letter-spacing:.01em}
+/* ── barra in basso: icone in tratto sottile, "+" oro al centro ──
+   A riposo si vedono le cinque del mock (mappa, lente, +, €, persona);
+   le altre cinque restano raggiungibili scorrendo la pillola. */
+.nav{align-items:center;gap:.1rem}
+.nav-item{display:grid;place-items:center;padding:.55rem .68rem;color:var(--ink-faint)}
+.nav-item svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ni-tx{font-size:1.24rem;font-weight:600;line-height:23px;display:block}
+.nav-item.active{background:var(--ink);color:var(--paper)}
+.nav-add{
+  flex:0 0 auto;width:47px;height:47px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--grad);color:#fff;font-size:1.45rem;font-weight:300;line-height:1;
+  display:grid;place-items:center;box-shadow:var(--sh-green);
+  transition:var(--ease);margin:0 .18rem;font-family:inherit;
+}
+.nav-add:active{transform:scale(.92)}
 
 /* ══════════════════════════════════════════════════════════════════
    GEPPGO · HOME "CIELO" — FINE
@@ -770,16 +781,17 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
   </div>
   <div class="nav">
-    <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home"><span class="ni-ic">🗺️</span><span class="ni-l">Home</span></div>
-    <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri"><span class="ni-ic">🔍</span><span class="ni-l">Scopri</span></div>
-    <div class="nav-item" data-p="weather" onclick="go('weather')" title="Meteo"><span class="ni-ic">⛅</span><span class="ni-l">Meteo</span></div>
-    <div class="nav-item" data-p="money" onclick="go('money')" title="Spese"><span class="ni-ic">💶</span><span class="ni-l">Spese</span></div>
-    <div class="nav-item" data-p="budget" onclick="go('budget')" title="Budget"><span class="ni-ic">📊</span><span class="ni-l">Budget</span></div>
-    <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel"><span class="ni-ic">🏨</span><span class="ni-l">Hotel</span></div>
-    <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti"><span class="ni-ic">🎫</span><span class="ni-l">Biglietti</span></div>
-    <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica"><span class="ni-ic">📷</span><span class="ni-l">Identifica</span></div>
-    <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo"><span class="ni-ic">👤</span><span class="ni-l">Profilo</span></div>
-    <div class="nav-item" data-p="settings" onclick="go('settings')" title="Impostazioni"><span class="ni-ic">⚙️</span><span class="ni-l">Impostazioni</span></div>
+    <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
+    <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
+    <button class="nav-add" onclick="homeAdd()" title="Aggiungi" aria-label="Aggiungi">＋</button>
+    <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><span class="ni-tx">€</span></div>
+    <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
+    <div class="nav-item" data-p="weather" onclick="go('weather')" title="Meteo" aria-label="Meteo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.9"/><path d="M12 3.2v2.1M12 18.7v2.1M4.8 4.8l1.5 1.5M17.7 17.7l1.5 1.5M3.2 12h2.1M18.7 12h2.1M4.8 19.2l1.5-1.5M17.7 6.3l1.5-1.5"/></svg></div>
+    <div class="nav-item" data-p="budget" onclick="go('budget')" title="Budget" aria-label="Budget"><svg viewBox="0 0 24 24"><path d="M5.5 20v-8M12 20V4.5M18.5 20v-5.5"/></svg></div>
+    <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></div>
+    <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></div>
+    <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></div>
+    <div class="nav-item" data-p="settings" onclick="go('settings')" title="Impostazioni" aria-label="Impostazioni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.9"/><path d="M12 3.4v2.3M12 18.3v2.3M3.4 12h2.3M18.3 12h2.3M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg></div>
   </div>
   <div class="scroll">
     <div class="page active" id="plan">
@@ -935,7 +947,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r82</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r83</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1545,6 +1557,12 @@ function homeDayIndex(t){
   return t.days.length-1;
 }
 function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+/* il "+" della barra: aggiunge al giorno mostrato, o crea il viaggio se non c'è */
+function homeAdd(){
+  const t=T();
+  if(!t||!t.days||!t.days.length){openNewTrip();return;}
+  openAddAct(homeDayIndex(t));
+}
 function homeMood(code){
   const h=new Date().getHours();
   const part=h<12?['mattina','f']:(h<18?['pomeriggio','m']:['sera','f']);
@@ -5608,7 +5626,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r82</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r83</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
