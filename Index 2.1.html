@@ -699,6 +699,19 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
 }
 
+/* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
+.hh-tap{cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
+.hh-chev{font-size:1rem;line-height:1;opacity:.7;letter-spacing:0}
+
+/* ── testata: GPS ridotto a cerchio, come i tasti tema ─────────── */
+.gps-pill{
+  position:relative;width:38px;height:38px;padding:0;border-radius:50%;
+  justify-content:center;gap:0;background:var(--surface);flex-shrink:0;
+}
+.gps-ic{width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.gps-pill .gps-dot{position:absolute;right:5px;top:5px;width:7px;height:7px;border:1.5px solid var(--surface)}
+.gps-pill.on{background:var(--green-tint);color:var(--green-deep)}
+
 /* ── testata: tasti tema chiaro/scuro ──────────────────────────── */
 .th-btn{
   width:38px;height:38px;border-radius:50%;flex-shrink:0;cursor:pointer;
@@ -770,14 +783,9 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         </svg>
         <div class="brand-name">Gepp<span class="brand-go">Go</span></div>
       </div>
-      <button class="gps-pill" id="gpsPill" onclick="toggleGPS()"><span class="gps-dot"></span>GPS</button>
+      <button class="gps-pill" id="gpsPill" onclick="toggleGPS()" title="GPS" aria-label="Attiva o disattiva il GPS"><svg class="gps-ic" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></svg><span class="gps-dot"></span></button>
       <button class="th-btn" id="thDark" onclick="toggleDark(true)" title="Tema scuro" aria-label="Tema scuro">☾</button>
       <button class="th-btn" id="thLight" onclick="toggleDark(false)" title="Tema chiaro" aria-label="Tema chiaro">☀</button>
-    </div>
-    <div class="tripbar">
-      <select class="trip-pick" id="tripPick" onchange="switchTrip()"><option>Nessun viaggio</option></select>
-      <button class="trip-add soft" onclick="openSheet('mImport')" title="Importa viaggio">⤓</button>
-      <button class="trip-add" onclick="openNewTrip()">+</button>
     </div>
   </div>
   <div class="nav">
@@ -797,8 +805,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <div class="page active" id="plan">
       <div id="homeHero"></div>
       <div id="cloudWarn"></div>
-      <div id="tripGrid" class="trip-grid"></div>
-      <div id="tripAddRow"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
       <div id="bookings"></div>
     </div>
@@ -898,6 +904,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
     <div class="page" id="trips">
       <div id="profileCard"></div>
+      <div id="tripAddRow"></div>
       <div class="section-label">In corso</div><div id="openTrips"></div>
       <div class="section-label">Conclusi</div><div id="closedTrips"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -947,7 +954,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r83</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r84</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1490,9 +1497,10 @@ function createTrip(){
   if(start&&end){const s=new Date(start),e=new Date(end);for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))trip.days.push({id:uid(),date:d.toISOString().split('T')[0],title:'',activities:[]});}
   app.trips.push(trip);ensureDestLoc(trip).then(()=>{drawMarkers();if(trip.destLoc)openFamousPlaces(trip);});geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
 }
-function switchTrip(){const id=parseInt(document.getElementById('tripPick').value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
+function switchTrip(){const el=document.getElementById('tripPick');if(!el)return;const id=parseInt(el.value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
 function renderTripPick(){
-  const sel=document.getElementById('tripPick'),active=app.trips.filter(t=>t.status!=='closed');
+  const sel=document.getElementById('tripPick');if(!sel)return;
+  const active=app.trips.filter(t=>t.status!=='closed');
   if(!active.length){sel.innerHTML='<option>Nessun viaggio</option>';return;}
   sel.innerHTML=active.map(t=>`<option value="${t.id}" ${t.id===app.currentTripId?'selected':''}>${esc(t.name)}</option>`).join('');
 }
@@ -1596,7 +1604,27 @@ function homeNext(t,day){
 function renderHomeHero(){
   const box=document.getElementById('homeHero');if(!box)return;
   const t=T();
-  if(!t||!t.days||!t.days.length){box.innerHTML='';return;}
+  if(!t){
+    box.innerHTML=`<div class="hh">
+      <div class="hh-eyebrow">GEPPGO</div>
+      <div class="hh-city" style="cursor:default">Si parte?</div>
+      <div class="hh-mood">il primo viaggio</div>
+      <div class="hh-meta">Crea un viaggio, o entra con un codice che ti hanno condiviso.</div>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1.3rem">
+      <button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button>
+      <button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button>
+    </div>`;
+    return;
+  }
+  if(!t.days||!t.days.length){
+    box.innerHTML=`<div class="hh">
+      <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
+      <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
+      <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
+    </div>`;
+    return;
+  }
   const i=homeDayIndex(t),day=t.days[i];
   if(!day){box.innerHTML='';return;}
   const w=(t.weather||{})[day.date];
@@ -1610,7 +1638,7 @@ function renderHomeHero(){
   const ring=(nx&&nx.mins!==null)?Math.max(6,Math.min(100,Math.round((60-Math.min(nx.mins,60))/60*100))):100;
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
   box.innerHTML=`<div class="hh">
-    <div class="hh-eyebrow">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length}</div>
+    <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
@@ -2743,7 +2771,9 @@ function renderTripsList(){
   const card=(t,isClosed)=>{
     const spent=t.expenses.reduce((s,e)=>s+(e.type==='transfer'?0:e.amount),0),cur=t.currency||'EUR';
     let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
-    return `<div class="hist-card" onclick="openDetail(${t.id})"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${dates||'Senza date'} · ${t.days.length} giorni · ${fmtMoney(spent,cur)}</div></div><div style="color:var(--ink-faint)">›</div></div>`;
+    // In corso: ci si passa sopra e si apre la scheda del viaggio (era quello
+    // che facevano i quadrati in home). Concluso: resta il riepilogo in sola lettura.
+    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${dates||'Senza date'} · ${t.days.length} giorni · ${fmtMoney(spent,cur)}</div></div><div style="color:var(--ink-faint)">›</div></div>`;
   };
   document.getElementById('openTrips').innerHTML=open.length?open.map(t=>card(t,false)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio in corso</div></div>`;
   document.getElementById('closedTrips').innerHTML=closed.length?closed.map(t=>card(t,true)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio concluso</div></div>`;
@@ -5626,7 +5656,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r83</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r84</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
