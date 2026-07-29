@@ -10,7 +10,7 @@
    cache qui: senza rete non servirebbero comunque a molto (es. la mappa
    avrebbe comunque bisogno delle tile, che non si possono precaricare tutte),
    e il codice dell'app già degrada con calma quando mancano. */
-const CACHE_NAME = 'geppgo-shell-v2';
+const CACHE_NAME = 'geppgo-shell-v3';
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html'];
 
 self.addEventListener('install', (event) => {
@@ -40,20 +40,36 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // solo la shell dell'app, non le API/librerie esterne
 
+  // L'HTML dell'app (la "shell") va preso dalla rete quando c'è, altrimenti
+  // resteresti indietro di un deploy: la vecchia strategia rispondeva sempre
+  // dalla cache e aggiornava solo in background, quindi ogni apertura mostrava
+  // la build precedente. La cache resta come copia di riserva per l'offline.
+  const isShell = req.mode === 'navigate' || /\.html$/i.test(url.pathname) || url.pathname === '/';
+
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
+
+    if (isShell) {
+      try {
+        const fresh = await fetch(req, { cache: 'no-store' });
+        if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
+      } catch (e) {}
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      const fallback = await cache.match('./Index%202.1.html');
+      if (fallback) return fallback;
+      return new Response('Offline e nessuna copia salvata di questa risorsa.', { status: 503, statusText: 'Offline' });
+    }
+
+    // Tutto il resto (icone, manifest, ...) resta cache-first: cambia di rado.
     const cached = await cache.match(req);
     const fetchPromise = fetch(req).then((res) => {
       if (res && res.ok) cache.put(req, res.clone());
       return res;
     }).catch(() => null);
-    if (cached) { fetchPromise; return cached; } // rispondi subito dalla cache, aggiornala in background
+    if (cached) { fetchPromise; return cached; }
     const fresh = await fetchPromise;
     if (fresh) return fresh;
-    if (req.mode === 'navigate') {
-      const fallback = await cache.match('./Index%202.1.html');
-      if (fallback) return fallback;
-    }
     return new Response('Offline e nessuna copia salvata di questa risorsa.', { status: 503, statusText: 'Offline' });
   })());
 });
