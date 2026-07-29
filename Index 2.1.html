@@ -480,6 +480,116 @@ body.dark .tt-cont{background:var(--beige)!important}
 .tt-peek{opacity:.88}
 .tt-peek .tt-col-h{cursor:pointer}
 .tt-peek .tgrip,.tt-peek .tszr{visibility:hidden}
+
+/* ══════════════════════════════════════════════════════════════════
+   GEPPGO · PELLE "CIELO" · LAYOUT — INIZIO
+   Cancella da INIZIO a FINE per tornare al layout precedente.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root{--vetro-barra:rgba(255,252,246,.86)}
+body.dark{--vetro-barra:rgba(16,22,35,.82)}
+
+/* ── 1 · INTESTAZIONE DEL VIAGGIO ───────────────────────────────
+   Da riquadro verde a titolo di pagina. Il cielo si vede dietro. */
+.trip-hero{
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--ink)!important;
+  border-radius:0;
+  padding:1.5rem 0 0;
+  margin-bottom:1.4rem;
+  overflow:visible;
+}
+.trip-hero::after{display:none!important}
+.trip-hero-name{
+  font-size:clamp(2.6rem,11vw,3.4rem)!important;
+  line-height:.9;
+  flex-basis:100%;            /* il tasto Condividi va a capo, sotto */
+  margin-bottom:.2rem;
+}
+.trip-hero-dates{
+  font-size:.92rem;
+  color:var(--ink-soft);
+  opacity:1;
+  margin-top:.55rem;
+}
+/* i tasti fantasma non stanno più su fondo verde: gli serve un bordo */
+.trip-hero .pill-ghost,.trip-hero .status-pill{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+  backdrop-filter:none;
+  padding:.42rem .8rem;
+}
+.trip-hero .status-pill{border-color:var(--green);color:var(--green-deep)}
+/* le statistiche: sotto una linea, respirate */
+.trip-hero-stats{
+  gap:2.2rem;
+  margin-top:1.5rem;
+  padding-top:1.15rem;
+  border-top:1px solid var(--line);
+}
+.ths-n{font-size:1.85rem!important;line-height:1}
+.ths-l{opacity:1;color:var(--ink-faint);margin-top:.35rem;letter-spacing:.1em;font-size:.66rem}
+
+/* ── 2 · TESTATA PIÙ LEGGERA ────────────────────────────────────── */
+.topbar{padding-bottom:.5rem;border-bottom:none}
+.brand-logo{width:36px;height:36px}
+.tripbar{margin-top:.6rem}
+.trip-pick{
+  background:var(--surface);
+  border-color:var(--line-soft);
+  box-shadow:var(--sh-xs);
+}
+
+/* ── 3 · LA BARRA DELLE SEZIONI SCENDE IN BASSO ─────────────────
+   Diventa una pillola di vetro flottante. Le voci scorrono dentro. */
+.nav{
+  position:fixed;
+  left:.85rem; right:.85rem;
+  bottom:calc(.85rem + env(safe-area-inset-bottom));
+  max-width:520px; margin:0 auto;
+  z-index:9000;
+  padding:.32rem;
+  border-radius:999px;
+  border-bottom:none;
+  background:var(--vetro-barra);
+  backdrop-filter:blur(24px) saturate(165%);
+  -webkit-backdrop-filter:blur(24px) saturate(165%);
+  border:1px solid var(--line);
+  box-shadow:var(--sh-lg);
+  scroll-padding:.32rem;
+}
+.nav-item{
+  border-bottom:none!important;
+  border-radius:999px;
+  padding:.62rem .88rem;
+  font-size:.8rem;
+}
+.nav-item.active{
+  background:var(--ink);
+  color:var(--paper)!important;
+}
+/* spazio in fondo alle pagine, così la pillola non copre l'ultima riga */
+.scroll{padding-bottom:calc(5.2rem + env(safe-area-inset-bottom))}
+
+/* ── 4 · CHI STAVA IN BASSO SALE ────────────────────────────────── */
+.fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
+.toast{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
+.navbar{bottom:calc(5.4rem + env(safe-area-inset-bottom))}
+/* dentro il foglio del giorno il fab resta dov'era: lì la pillola non c'è */
+#mDay .fab{bottom:calc(1.2rem + env(safe-area-inset-bottom))}
+
+/* ── 5 · RESPIRO ────────────────────────────────────────────────── */
+.page{padding:1.1rem 1.15rem}
+.card,.day{padding:1.3rem}
+.section-label{letter-spacing:.14em;font-size:.66rem;margin:1.8rem .25rem .7rem}
+.card-h{font-size:1.35rem!important}
+.sheet-t{font-size:1.5rem!important}
+
+/* ══════════════════════════════════════════════════════════════════
+   GEPPGO · PELLE "CIELO" · LAYOUT — FINE
+   ══════════════════════════════════════════════════════════════════ */
 </style>
 </head>
 <body>
@@ -695,7 +805,7 @@ body.dark .tt-cont{background:var(--beige)!important}
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r80</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r81</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -5273,7 +5383,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r80</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r81</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
