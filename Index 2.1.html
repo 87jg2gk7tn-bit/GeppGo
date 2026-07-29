@@ -694,6 +694,20 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
 }
 
+/* ── switcher dei viaggi, solo se ce n'è più di uno aperto ─────── */
+.hh-trips{
+  position:relative;display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;
+  margin:0 -1.15rem .95rem;padding:0 1.15rem;
+}
+.hh-trips::-webkit-scrollbar{display:none}
+.hh-trip{
+  flex:0 0 auto;cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;
+  color:var(--ink-soft);background:transparent;border:1px solid var(--line);
+  padding:.34rem .78rem;border-radius:999px;white-space:nowrap;transition:var(--ease);
+}
+.hh-trip:active{transform:scale(.95)}
+.hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
 /* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
 .hh-tap{cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
 .hh-chev{font-size:1rem;line-height:1;opacity:.7;letter-spacing:0}
@@ -949,7 +963,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r85</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r86</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -1551,6 +1565,14 @@ function homeDayIndex(t){
   return t.days.length-1;
 }
 function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+/* Cambio viaggio dalla home. Azzera il giorno scelto a mano, così il viaggio
+   nuovo riparte dal suo giorno di oggi invece che da un indice rimasto lì. */
+function homeSwitchTrip(id){
+  if(app.currentTripId===id)return;
+  app.currentTripId=id;homeDaySel=null;
+  chatHistory=[];const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
+  save();renderAll();
+}
 /* Quanto ci metti a piedi da dove sei alla prossima tappa. Passo a 4,5 km/h
    (75 m al minuto), che è l'andatura di uno che cammina in città guardandosi
    intorno. Oltre gli 8 km il tempo a piedi non dice più niente di utile e si
@@ -1624,8 +1646,12 @@ function renderHomeHero(){
     </div>`;
     return;
   }
+  // Lo switcher compare solo con più di un viaggio aperto: con uno solo la home
+  // resta identica al mock.
+  const aperti=app.trips.filter(x=>x.status!=='closed');
+  const tripsBar=aperti.length>1?`<div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>`:'';
   if(!t.days||!t.days.length){
-    box.innerHTML=`<div class="hh">
+    box.innerHTML=`<div class="hh">${tripsBar}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
@@ -1644,7 +1670,7 @@ function renderHomeHero(){
   const nx=homeNext(t,day),acts=homeActs(day);
   const ring=(nx&&nx.mins!==null)?Math.max(6,Math.min(100,Math.round((60-Math.min(nx.mins,60))/60*100))):100;
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
-  box.innerHTML=`<div class="hh">
+  box.innerHTML=`<div class="hh">${tripsBar}
     <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
@@ -5668,7 +5694,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r85</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r86</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
