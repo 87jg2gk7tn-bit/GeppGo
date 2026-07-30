@@ -2143,6 +2143,84 @@ function renderResults(data,target){
   data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
 }
 let piMapObj=null;
+/* ===== FOTO DI UN LUOGO: ricerca profonda ==========================
+   Un solo tentativo sul titolo esatto della Wikipedia italiana lasciava
+   senza immagine tutto quello che non ha una voce con quel nome preciso:
+   "Paris-Orly Airport" (da noi "Aeroporto di Parigi-Orly"), gli hotel, i
+   ristoranti. Qui si prova in ordine — dal riferimento più affidabile al
+   più generico — e ci si ferma alla prima immagine trovata. */
+const PHOTO_TRY_VERSION=2;
+async function jget(url){
+  try{const r=await fetch(url,{headers:{'Accept-Language':'it,en'}});if(!r.ok)return null;return await r.json();}catch(e){return null;}
+}
+/* Da "File:Louvre.jpg" all'immagine vera e propria, ridimensionata. */
+function commonsFileUrl(file,width){
+  const f=String(file).replace(/^File:/i,'').replace(/ /g,'_');
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=${width||400}`;
+}
+function firstThumb(data){
+  const pages=data&&data.query&&data.query.pages;if(!pages)return null;
+  const arr=Object.values(pages).sort((a,b)=>(a.index||99)-(b.index||99));
+  for(const p of arr){
+    if(p.thumbnail&&p.thumbnail.source)return p.thumbnail.source;
+    const ii=p.imageinfo&&p.imageinfo[0];
+    if(ii&&(ii.thumburl||ii.url))return ii.thumburl||ii.url;
+  }
+  return null;
+}
+async function wikiPhotoByTitle(lang,title){
+  const d=await jget(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+  if(!d||d.type==='disambiguation')return null;
+  return (d.thumbnail&&d.thumbnail.source)||(d.originalimage&&d.originalimage.source)||null;
+}
+/* La voce più pertinente per quel nome, anche se si chiama diversamente. */
+async function wikiPhotoBySearch(lang,q){
+  return firstThumb(await jget(`https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`));
+}
+/* Cosa racconta Wikipedia proprio lì attorno: prende chi ha una foto. */
+async function wikiPhotoByGeo(lang,lat,lng,radius){
+  return firstThumb(await jget(`https://${lang}.wikipedia.org/w/api.php?action=query&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=${radius||400}&ggslimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`));
+}
+/* L'immagine ufficiale dichiarata su Wikidata (proprietà P18). */
+async function wikidataPhoto(qid){
+  const d=await jget(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${encodeURIComponent(qid)}&property=P18&format=json&origin=*`);
+  const c=d&&d.claims&&d.claims.P18&&d.claims.P18[0];
+  const f=c&&c.mainsnak&&c.mainsnak.datavalue&&c.mainsnak.datavalue.value;
+  return f?commonsFileUrl(f,400):null;
+}
+/* Ultima rete: una qualunque foto scattata lì, dall'archivio di Commons. */
+async function commonsPhotoByGeo(lat,lng,radius){
+  return firstThumb(await jget(`https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=${lat}%7C${lng}&ggsradius=${radius||250}&ggslimit=5&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`));
+}
+async function findPlacePhoto(place,extra){
+  extra=extra||{};
+  const name=String(place.name||'').trim();
+  const lat=place.lat,lng=place.lng,hasLoc=lat!=null&&lng!=null;
+  // 1. la voce indicata da OpenStreetMap, in qualsiasi lingua (non solo it)
+  if(extra.wiki){
+    const ix=String(extra.wiki).indexOf(':');
+    const lang=ix>0?extra.wiki.slice(0,ix):'it',title=ix>0?extra.wiki.slice(ix+1):extra.wiki;
+    if(/^[a-z]{2,3}$/.test(lang)){const ph=await wikiPhotoByTitle(lang,title);if(ph)return ph;}
+  }
+  // 2. l'immagine ufficiale su Wikidata
+  if(extra.wikidata){const ph=await wikidataPhoto(extra.wikidata);if(ph)return ph;}
+  // 3. la foto messa direttamente sul punto in OpenStreetMap
+  if(extra.image&&/^https?:\/\//i.test(extra.image))return extra.image;
+  // 4. per nome: prima la voce omonima, poi la ricerca vera e propria
+  if(name){
+    for(const lang of ['it','en']){
+      let ph=await wikiPhotoByTitle(lang,name);if(ph)return ph;
+      ph=await wikiPhotoBySearch(lang,name);if(ph)return ph;
+    }
+  }
+  // 5. per posizione: il posto non ha una voce sua, ma sta dentro qualcosa
+  //    che ce l'ha (un ristorante dentro un parco, un gate in aeroporto)
+  if(hasLoc){
+    for(const lang of ['it','en']){const ph=await wikiPhotoByGeo(lang,lat,lng,400);if(ph)return ph;}
+    const ph=await commonsPhotoByGeo(lat,lng,250);if(ph)return ph;
+  }
+  return null;
+}
 async function fetchPlaceExtra(place){
   let extra={};
   if(place.lat!=null&&place.lng!=null){
@@ -2154,6 +2232,8 @@ async function fetchPlaceExtra(place){
         website:d.extratags?.website||d.extratags?.['contact:website']||'',
         phone:d.extratags?.phone||d.extratags?.['contact:phone']||'',
         wiki:d.extratags?.wikipedia||'',
+        wikidata:d.extratags?.wikidata||'',
+        image:d.extratags?.image||'',
         cuisine:d.extratags?.cuisine||'',
         fullAddr:d.display_name||''
       };
@@ -2184,6 +2264,9 @@ async function fetchPlaceExtra(place){
       }
     }
   }catch(e){}
+  // La voce omonima in italiano è solo il caso fortunato: se non c'è (o non
+  // ha immagini) si passa alla ricerca profonda, che quasi sempre trova.
+  if(!extra.photo){try{extra.photo=await findPlacePhoto(place,extra)||'';}catch(e){}}
   return extra;
 }
 async function openPlaceInfo(place,opts){
@@ -2330,20 +2413,45 @@ async function enrichPoiPhoto(tripId,poiId,name,lat,lng){
     const extra=await fetchPlaceExtra({name,lat,lng});
     const t2=app.trips.find(x=>x.id===tripId);if(!t2)return;
     const p2=t2.pois.find(x=>x.id===poiId);if(!p2||p2.photo)return;
-    p2._photoTried=true;
+    p2._photoTry=PHOTO_TRY_VERSION;
     if(extra.photo)p2.photo=extra.photo;
     save();
     if(T()&&T().id===tripId)renderSaved();
   }catch(e){}
 }
-/* Luoghi salvati prima di questa modifica (o arrivati da un'importazione
-   che non cercava la foto) restano senza immagine per sempre: qui la
-   recuperiamo in background, poche alla volta, la prima volta che si apre
-   l'elenco. _photoTried evita di ritentare ogni volta lo stesso luogo. */
+/* Recupero in background delle foto mancanti: i luoghi arrivati da
+   un'importazione di gruppo, o salvati quando la ricerca era ancora quella
+   superficiale, non hanno immagine. Si scorrono tutti in fila, uno alla
+   volta — Nominatim chiede non più di una richiesta al secondo — e la
+   lista si aggiorna man mano che le foto arrivano.
+   _photoTry tiene il numero di versione della ricerca usata: quando la
+   ricerca migliora basta alzarlo per ritentare anche i luoghi già dati
+   per persi, senza però ripetere all'infinito quelli appena falliti. */
+let poiPhotoBusy=false;
 function backfillPoiPhotos(t){
-  if(!t)return;
-  const missing=t.pois.filter(p=>!p.photo&&!p._photoTried&&p.lat!=null&&p.lng!=null);
-  missing.slice(0,4).forEach(p=>{p._photoTried=true;enrichPoiPhoto(t.id,p.id,p.name,p.lat,p.lng);});
+  if(!t||poiPhotoBusy)return;
+  const todo=t.pois.filter(p=>!p.photo&&(p._photoTry||0)<PHOTO_TRY_VERSION);
+  if(!todo.length)return;
+  poiPhotoBusy=true;
+  (async()=>{
+    try{
+      for(const p of todo){
+        // Se nel frattempo si cambia viaggio, questa coda non serve più.
+        const cur=T();if(!cur||cur.id!==t.id)break;
+        if(p.photo)continue;
+        p._photoTry=PHOTO_TRY_VERSION;
+        try{
+          const extra=await fetchPlaceExtra({name:p.name,lat:p.lat,lng:p.lng});
+          if(extra.photo&&!p.photo){
+            p.photo=extra.photo;save();
+            const now=T();if(now&&now.id===t.id)renderSaved();
+          }
+        }catch(e){}
+        await new Promise(r=>setTimeout(r,1200));
+      }
+      save();
+    }finally{poiPhotoBusy=false;}
+  })();
 }
 function renderSaved(){
   const t=T(),c=document.getElementById('savedPOIs'),cnt=document.getElementById('savedCount');
