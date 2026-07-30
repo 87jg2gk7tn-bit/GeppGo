@@ -3908,7 +3908,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 function cancelActDetail(){
   const di=adRef?adRef.di:null;
   closeSheet('mActDetail');
-  if(di!=null)setTimeout(()=>openDay(di),150);
+  if(di!=null&&adFromTimetable)setTimeout(()=>openDay(di),150);
 }
 function toast(msg){const old=document.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2600);}
 /* ===== CIRCLE TO FIND — identifica un monumento dalla foto ===== */
@@ -4273,7 +4273,7 @@ async function geoImported(id){
 
 
 /* ===== TIME-TABLE VERTICALE DEL GIORNO ===== */
-let ttDay=0,ttWinStart=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false;
+let ttDay=0,ttWinStart=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false,adFromTimetable=false;
 function openTimetable(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
   if(!t.days.length){fromDayFlag=true;openAddDay();return;}
@@ -4577,7 +4577,7 @@ function addHotelStopAct(){
   if(!h){toast('Aggiungi prima un hotel per questo giorno');return;}
   const a={id:uid(),name:'Rientro in hotel · '+h.name,time:'',timeEnd:'',type:'any',notes:h.address||'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},hotelId:h.id,lat:h.lat,lng:h.lng,poiId:null};
   d.activities.push(a);
-  save();renderAll();closeSheet('mDay');
+  save();renderAll();fromDayFlag=true;closeSheet('mDay');
   setTimeout(()=>openActDetail(di,a.id),150);
 }
 function openImportDay(){closeSheet('mDay');document.getElementById('dayImportText').value='';document.getElementById('dayImportStatus').textContent='';setTimeout(()=>openSheet('mImportDay'),160);}
@@ -4631,6 +4631,11 @@ function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno el
 /* ===== DETTAGLIO ATTIVITÀ (info + modifica + QR) ===== */
 function openActDetail(di,id){
   const t=T(),d=t.days[di];if(!d)return;
+  // Se non veniamo dalla time-table (aperta ora, o appena chiusa per il
+  // passaggio a questo foglio, vedi fromDayFlag), chiudendo si torna dove
+  // si era: non ha senso "atterrare" sulla time-table se non l'hai mai aperta.
+  adFromTimetable=fromDayFlag||document.getElementById('mDay').classList.contains('active');
+  fromDayFlag=false;
   const isNew=(id==null);
   const a=isNew?{name:'',time:'',timeEnd:'',type:'outdoor',notes:'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},parentId:null,lat:null,lng:null,poiId:null}:d.activities.find(x=>x.id===id);
   if(!a)return;adRef={di,id:isNew?null:id,pendingId:isNew?uid():null};
@@ -4772,12 +4777,11 @@ function saveActDetail(){
   }
   if(isNew&&!a.poiId&&!a.lat)autoLinkPoi(t,a,t.days[newDi].date);
   save();renderAll();closeSheet('mActDetail');toast(isNew?'Attività aggiunta':'Salvato');
-  fromDayFlag=false;
-  setTimeout(()=>openDay(newDi),150);
+  if(adFromTimetable)setTimeout(()=>openDay(newDi),150);
 }
 function delActDetail(){
   if(!adRef)return;const t=T(),{di,id}=adRef;
-  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t._delAct=t._delAct||{};t._delAct[id]=Date.now();t.expenses.forEach(e=>{if(e.actId===id)e.actId=null;});save();renderAll();closeSheet('mActDetail');setTimeout(()=>openDay(di),150);});
+  confirmDo('Eliminare l\'attività?','',()=>{t.days[di].activities=t.days[di].activities.filter(x=>x.id!==id);t._delAct=t._delAct||{};t._delAct[id]=Date.now();t.expenses.forEach(e=>{if(e.actId===id)e.actId=null;});save();renderAll();closeSheet('mActDetail');if(adFromTimetable)setTimeout(()=>openDay(di),150);});
 }
 function navFromDetail(){const t=T(),a=t.days[adRef.di].activities.find(x=>x.id===adRef.id);if(a&&a.lat){closeSheet('mActDetail');openNav(a.lat,a.lng,a.name);}}
 function gcalUrl(a,dateStr){
