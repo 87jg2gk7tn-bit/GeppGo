@@ -1789,9 +1789,38 @@ function updateSoonWalk(){
    quella "in mano": il suo segnaposto è scuro e la mappa la insegue. Toccando
    un segnaposto la striscia scorre fino alla card corrispondente. */
 let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=false,homeMoveT=null;
+/* Le tappe del giorno mostrato, nello stesso ordine delle card: servono per
+   riempire il riquadro in cima con quella evidenziata. */
+let homeSoonActs=[],homeSoonDay=null,homeSoonDi=0;
 function destroyHomeMap(){
   if(homeMapObj){try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
+}
+/* Il riquadro col conto alla rovescia diceva sempre e solo la prossima tappa,
+   anche mentre in mappa se ne stava guardando un'altra: due cose diverse una
+   sopra l'altra. Ora segue la tappa evidenziata - suo nome, suo orario, sua
+   distanza da qui - e toccandolo si apre quella. */
+function homeSoonFill(idx){
+  const box=document.querySelector('.hh-soon');if(!box)return;
+  const a=homeSoonActs[idx],t=T();
+  if(!a||!t)return;
+  const ms=actWhen(homeSoonDay,a),mins=ms!=null?Math.round((ms-Date.now())/60000):null;
+  const loc=actLoc(t,a);
+  const quando=mins!=null?soonWhen(mins,a):(a.time?('alle '+a.time):'senza orario');
+  box.dataset.base=[quando,String(a.notes||'')].filter(Boolean).join(' · ');
+  if(loc){box.dataset.lat=loc.lat;box.dataset.lng=loc.lng;}
+  else{delete box.dataset.lat;delete box.dataset.lng;}
+  box.setAttribute('onclick',`tapAct(${homeSoonDi},${a.id})`);
+  const ring=box.querySelector('.hh-ring');
+  if(ring){
+    ring.style.setProperty('--p',mins!=null?soonRing(mins):0);
+    const sp=ring.querySelector('span');if(sp)sp.textContent=mins!=null?soonRingText(mins):'·';
+  }
+  const lab=box.querySelector('.hh-soon-l');
+  if(lab)lab.textContent=mins!=null?soonLabel(mins):'IN PROGRAMMA';
+  const nome=box.querySelector('.hh-soon-n');
+  if(nome)nome.textContent=a.name||'';
+  updateSoonWalk();
 }
 function homeMapIcon(n,on){
   const sz=on?30:23;
@@ -1824,7 +1853,17 @@ function buildHomeMap(t,day,acts){
     const idealZoom=homeMapObj.getBoundsZoom(bounds,false,[34,34]);
     homeMapObj.setView(bounds.getCenter(),Math.max(13,Math.min(idealZoom,16)));
   }
-  setTimeout(()=>{if(homeMapObj){homeMapObj.invalidateSize();homeCardsSync(true);}},220);
+  /* Si parte dalla prossima tappa, non dalla prima della giornata: se le prime
+     sono già passate, mappa, card e riquadro in cima dicevano tre cose diverse
+     appena aperta la home. */
+  const nx=homeNext(t,day);
+  const partenza=nx?(acts||[]).findIndex(a=>a.id===nx.a.id):0;
+  setTimeout(()=>{
+    if(!homeMapObj)return;
+    homeMapObj.invalidateSize();
+    if(partenza>0)homeScrollToCard(partenza);
+    homeCardsSync(true);
+  },220);
   const strip=document.querySelector('.hh-cards');
   if(strip)strip.addEventListener('scroll',()=>{
     if(homeSyncQueued)return;homeSyncQueued=true;
@@ -1869,7 +1908,7 @@ function homeCardsSync(force){
     const d=Math.abs(c.getBoundingClientRect().left-sl);
     if(d<best){best=d;idx=n;}
   });
-  if(force||idx!==homeCardSel){homeCardSel=idx;homeMapSelect(idx);}
+  if(force||idx!==homeCardSel){homeCardSel=idx;homeMapSelect(idx);homeSoonFill(idx);}
 }
 function homeScrollToCard(i){
   const strip=document.querySelector('.hh-cards');if(!strip)return;
@@ -1926,8 +1965,11 @@ function homeNext(t,day){
   }
   return null; // tutte già passate: la card sparisce invece di mentire
 }
-/* "Fra poco" solo se manca davvero poco; altrimenti si dice quando. */
+/* "Fra poco" solo se manca davvero poco; altrimenti si dice quando. Il riquadro
+   ora segue la tappa che si sta guardando in mappa, che può anche essere già
+   passata: allora lo dice, invece di scrivere "adesso" su una cosa finita. */
 function soonLabel(m){
+  if(m<-60)return'GIÀ PASSATA';
   if(m<=0)return'ADESSO';
   if(m<90)return'FRA POCO';
   if(m<1440)return'PIÙ TARDI';
@@ -1936,6 +1978,7 @@ function soonLabel(m){
 }
 /* Dentro l'anello ci sta poco: forma compatta. */
 function soonRingText(m){
+  if(m<-60)return'✓';
   if(m<=0)return'ora';
   if(m<60)return m+'′';
   if(m<1440)return Math.floor(m/60)+'h';
@@ -1944,6 +1987,7 @@ function soonRingText(m){
 /* Quanto manca, per esteso, sotto il nome. */
 function soonWhen(m,a){
   const ora=(a&&a.time)?a.time:'';
+  if(m<-60)return ora?('era alle '+ora):'già passata';
   if(m<=0)return'adesso';
   if(m<60)return'fra '+m+(m===1?' minuto':' minuti');
   if(m<1440){const h=Math.floor(m/60),r=m%60;return'fra '+h+'h'+(r?' '+r+'′':'')+(ora?' · alle '+ora:'');}
@@ -2049,18 +2093,25 @@ function renderHomeHero(){
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
     ${actsBar}
   </div>
-  ${nx?(()=>{
-    const loc=actLoc(t,nx.a);
-    const base=[soonWhen(nx.mins,nx.a),String(nx.a.notes||'')].filter(Boolean).join(' · ');
+  ${(()=>{
+    /* Il riquadro c'è finché c'è una tappa da mostrare, anche se sono tutte
+       passate: scorrendo la mappa lo si porta su quella, e sparire vorrebbe
+       dire lasciare a metà chi la sta guardando. Si parte dalla prossima. */
+    const a0=nx?nx.a:acts[0];
+    if(!a0)return'';
+    const ms=actWhen(day,a0),mins=ms!=null?Math.round((ms-Date.now())/60000):null;
+    const loc=actLoc(t,a0);
+    const quando=mins!=null?soonWhen(mins,a0):(a0.time?('alle '+a0.time):'senza orario');
+    const base=[quando,String(a0.notes||'')].filter(Boolean).join(' · ');
     const walk=loc?walkText(loc.lat,loc.lng):'';
-    return `<div class="hh-soon" onclick="tapAct(${i},${nx.a.id})" data-base="${esc(base)}"${loc?` data-lat="${loc.lat}" data-lng="${loc.lng}"`:''}>
-    <div class="hh-ring" style="--p:${soonRing(nx.mins)}"><span>${esc(soonRingText(nx.mins))}</span></div>
+    return `<div class="hh-soon" onclick="tapAct(${i},${a0.id})" data-base="${esc(base)}"${loc?` data-lat="${loc.lat}" data-lng="${loc.lng}"`:''}>
+    <div class="hh-ring" style="--p:${mins!=null?soonRing(mins):0}"><span>${esc(mins!=null?soonRingText(mins):'·')}</span></div>
     <div style="min-width:0;flex:1">
-      <div class="hh-soon-l">${esc(soonLabel(nx.mins))}</div>
-      <div class="hh-soon-n">${esc(nx.a.name||'')}</div>
+      <div class="hh-soon-l">${esc(mins!=null?soonLabel(mins):'IN PROGRAMMA')}</div>
+      <div class="hh-soon-n">${esc(a0.name||'')}</div>
       <div class="hh-soon-s">${esc([base,walk].filter(Boolean).join(' · '))}</div>
     </div>
-  </div>`;})():''}
+  </div>`;})()}
   <div class="hh-days">${t.days.map((d,j)=>{
     const dt=new Date(d.date);
     const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
@@ -2084,6 +2135,7 @@ function renderHomeHero(){
       ${av?`<div class="hh-avs">${av}</div>`:''}
     </div>`;
   }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
+  homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
   buildHomeMap(t,day,acts);
 }
 
