@@ -1829,7 +1829,10 @@ function homeMapSelect(cardIdx){
   let sel=-1;
   homeMapPts.forEach((x,n)=>{if(x.i===cardIdx)sel=n;});
   homeMapMarks.forEach((mk,n)=>mk.setIcon(homeMapIcon(n+1,n===sel)));
-  if(sel>=0)homeMapObj.panTo([homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng],{animate:true,duration:.45});
+  /* Prima la mappa si limitava a spostarsi restando all'inquadratura larga
+     che teneva dentro tutte le tappe: della tappa in mano non si vedeva la via,
+     solo il quartiere. Ora ci si avvicina davvero. */
+  if(sel>=0)homeMapObj.setView([homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng],16,{animate:true,duration:.45});
 }
 /* Qual è la card più a sinistra fra quelle visibili nella striscia. */
 function homeCardsSync(force){
@@ -6392,6 +6395,12 @@ function adNameInput(){
     let dd=await geoSearch(city?q+', '+city:q,lh);
     if(!dd.length&&city)dd=await geoSearch(q,lh);
     if(document.getElementById('adName').value.trim()!==q)return;
+    /* Nel frattempo puo' essere stato incollato un indirizzo: la ricerca per
+       nome era partita quando ancora non c'era nulla, e senza questo controllo
+       si prendeva il posto trovato lei, buttando via quello scelto a mano.
+       La guardia in cima alla funzione non basta: vale quando si digita, non
+       quando la risposta arriva. */
+    if(document.getElementById('adPoiCur').style.display==='flex'){box.innerHTML='';hint.textContent='';return;}
     lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
     hint.textContent='';
     if(!lastAdNameRes.length){box.innerHTML='';hint.textContent='Non l\'ho riconosciuto come luogo: incolla qui sotto l\'indirizzo.';return;}
