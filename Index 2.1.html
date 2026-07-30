@@ -6549,6 +6549,16 @@ function adSetPlace(name,lat,lng){
   document.getElementById('adNameSug').innerHTML='';
   adAddrSync();
 }
+/* Su un indirizzo che non digerisce, il servizio di ricerca non risponde
+   "non lo so": restituisce il pezzo piu' grande che riconosce - il quartiere,
+   il comune, il confine amministrativo. Accettandolo, l'attivita' finiva a
+   puntare al centro di Shibuya invece che al locale. Questi risultati si
+   scartano finche' resta una variante da provare. */
+function troppoGenerico(r){
+  const cl=String(r&&r.class||''),ty=String(r&&r.type||'');
+  if(cl==='boundary')return true;
+  return cl==='place'&&/^(city|town|village|suburb|quarter|neighbourhood|city_district|district|borough|state|region|county|province|municipality|island)$/.test(ty);
+}
 async function adAddrFind(){
   const inp=document.getElementById('adAddr'),q=inp.value.trim();
   const hint=document.getElementById('adAddrHint');
@@ -6573,17 +6583,30 @@ async function adAddrFind(){
   const base=placeNameFromUrl(q)||q;
   const prove=addrVariants(base);
   if(city)prove.push(base.split(',')[0].trim()+', '+city);
-  let dd=[],usata='';
+  /* Un locale si trova meglio col suo nome che con l'indirizzo dell'isolato:
+     "Gonpachi, Tokyo" batte "1 Chome-13-11 Shibuya". Si prova dopo le varianti
+     dell'indirizzo, prima di rassegnarsi a un risultato generico. */
+  const nomeAtt=document.getElementById('adName').value.trim();
+  if(nomeAtt&&city)prove.push(nomeAtt+', '+city);
+  if(nomeAtt)prove.push(nomeAtt);
+  let dd=[],usata='',ripiego=null;
   for(const v of prove){
-    try{dd=await geoSearch(v,lh);}catch(e){dd=[];}
-    if(dd.length){usata=v;break;}
+    let res=[];
+    try{res=await geoSearch(v,lh);}catch(e){res=[];}
+    if(!res.length)continue;
+    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,v):res;
+    const preciso=ranked.find(x=>!troppoGenerico(x));
+    if(preciso){dd=[preciso];usata=v;break;}
+    if(!ripiego)ripiego={r:ranked[0],v};   // il meglio del generico, per ora da parte
   }
+  let generico=false;
+  if(!dd.length&&ripiego){dd=[ripiego.r];usata=ripiego.v;generico=true;}
   if(!dd.length){
     hint.textContent='Non l\'ho trovato. Prova con meno dettagli (via e citta\u0027), oppure incolla le coordinate.';
     return;
   }
-  hint.textContent='';
-  lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,usata):dd;
+  hint.textContent=generico?'Ho trovato solo la zona, non il posto preciso: controlla la foto, o incolla le coordinate.':'';
+  lastAdNameRes=dd;
   adNameSel(0);
   inp.value='';
   toast('\uD83D\uDCCD Posizione agganciata');
