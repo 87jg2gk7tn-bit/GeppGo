@@ -2640,6 +2640,27 @@ function hotelMorningRef(t,day){
   const h=hotelFor(t,day.date);
   return (h&&h.checkIn&&day.date>h.checkIn)?h:null;
 }
+/* Chi partecipa a una tappa: nessun elenco vuol dire "tutti", quindi va
+   d'accordo con chiunque. */
+function gruppiSiIncrociano(a,b){
+  const x=(a.who&&a.who.length)?a.who:null,y=(b.who&&b.who.length)?b.who:null;
+  if(!x||!y)return true;
+  return x.some(p=>y.indexOf(p)>=0);
+}
+/* Da dove si arriva a una tappa: l'ultima che finisce prima che lei cominci,
+   preferendo quelle con persone in comune. Serve quando il gruppo si divide -
+   quattro a Fujiyoshida, due a Disneysea: in ordine di orario la seconda meta'
+   viene dopo la prima, ma non ci si arriva da li'. Non avendo nessuno prima,
+   si parte dall'hotel; altrimenti dall'ultima tappa fatta insieme. */
+function tappaDaCuiSiArriva(voci,voce){
+  let best=null,bestIns=false;
+  for(const p of voci){
+    if(p===voce||!p.loc||!p.r||p.r[1]>voce.r[0])continue;
+    const ins=gruppiSiIncrociano(p.a,voce.a);
+    if(!best||(ins&&!bestIns)||(ins===bestIns&&p.r[1]>best.r[1])){best=p;bestIns=ins;}
+  }
+  return best;
+}
 function computeDayTravel(day,t){
   const mode=day.travelMode||'walk';
   const rain=t?dayIsRainy(t,day):false;
@@ -2649,27 +2670,30 @@ function computeDayTravel(day,t){
      avessero una posizione, e il loro tratto spariva dai conti. */
   const timed=(day.activities||[]).map(a=>({a,r:actRange(a),loc:actLoc(t,a)})).filter(x=>x.loc&&x.r).sort((x,y)=>x.r[0]-y.r[0]);
   const segs=new Map();let totalMin=0,totalCost=0,hasCost=false;
-  if(t&&day.hotelTravelState!=='skip'&&timed.length){
-    const refHotel=hotelMorningRef(t,day);
-    if(refHotel&&refHotel.lat&&timed[0].a.hotelId!==refHotel.id){
-      const est=travelEstimate(day,hav(refHotel,timed[0].loc),day.hotelSegTravelMode,rain);
+  const refHotel=t?hotelMorningRef(t,day):null;
+  /* Ogni tappa si chiede da dove ci si arriva. Se non ha niente prima si parte
+     dall'hotel: quando il gruppo si divide le mete senza niente prima sono due,
+     e nel totale del giorno devono entrarci tutte e due - prima ci finiva solo
+     la prima e il conto del giorno era muto sull'altra. */
+  timed.forEach(voce=>{
+    const cur=voce.a,prec=tappaDaCuiSiArriva(timed,voce);
+    if(!prec){
+      if(!refHotel||!refHotel.lat)return;
+      if(day.hotelTravelState==='skip'||cur.hotelId===refHotel.id)return;
+      const est=travelEstimate(day,hav(refHotel,voce.loc),day.hotelSegTravelMode,rain);
       totalMin+=est.minutes;
       if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
+      return;
     }
-  }
-  for(let i=0;i<timed.length-1;i++){
-    const cur=timed[i].a,gapStart=timed[i].r[1],gapEnd=timed[i+1].r[0];
     /* Due tappe attaccate (19:00-19:00) non hanno buco fra loro, ma la strada
-       da fare c'è comunque: prima non finiva nel totale del giorno. Si salta
-       solo quando si accavallano davvero, cioè la seconda comincia prima che
-       la prima sia finita. */
-    if(gapEnd<gapStart)continue;
-    if(cur.travelState==='skip')continue;
-    if((gapEnd-gapStart)>DISTANT_GAP_MIN&&cur.travelState!=='shown')continue;
-    const est=travelEstimate(day,hav(timed[i].loc,timed[i+1].loc),cur.segTravelMode,rain);
+       da fare c'è comunque: prima non finiva nel totale del giorno. */
+    const gapStart=prec.r[1],gapEnd=voce.r[0];
+    if(cur.travelState==='skip')return;
+    if((gapEnd-gapStart)>DISTANT_GAP_MIN&&cur.travelState!=='shown')return;
+    const est=travelEstimate(day,hav(prec.loc,voce.loc),cur.segTravelMode,rain);
     segs.set(cur.id,est);totalMin+=est.minutes;
     if(est.cost!=null){totalCost+=est.cost;hasCost=true;}
-  }
+  });
   return {segs,totalMin,totalCost:hasCost?totalCost:null,mode};
 }
 function fmtMinutes(min){const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m}min`:`${m} min`;}
@@ -4756,7 +4780,7 @@ function buildTTDayInner(t,di){
   const wpre=a=>(a&&a.type==='outdoor'&&dwx)?wxEmo(dwx)+' ':'';
   const acts=d.activities||[];
   const untimed=acts.filter(a=>!actRange(a));
-  const timed=acts.filter(a=>actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]||y.r[1]-x.r[1]);
+  const timed=acts.filter(a=>actRange(a)).map(a=>({a,r:actRange(a),loc:actLoc(t,a)})).sort((x,y)=>x.r[0]-y.r[0]||y.r[1]-x.r[1]);
   const byId={};timed.forEach(it=>byId[it.a.id]=it);
   const kids={};
   /* Due tappe affiancate hanno lo stesso orario, quindi ciascuna "contiene"
@@ -4789,16 +4813,24 @@ function buildTTDayInner(t,di){
   if(trav.totalMin){
     html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi</div>`;
   }
-  const refHotel=hotelMorningRef(t,d),firstTop=tops[0];
-  if(refHotel&&refHotel.lat&&firstTop&&firstTop.a.lat&&firstTop.a.hotelId!==refHotel.id){
-    if(d.hotelTravelState==='skip'){
-      html+=`<div class="tt-hotel-travel tt-travel-skip" onclick="unskipHotelTravel(${di})">necessario ↺</div>`;
-    }else{
-      const segMode=d.hotelSegTravelMode,est=travelEstimate(d,hav(refHotel,firstTop.a),segMode,dwx&&dwx.precipitation>5);
+  /* Quando il gruppo si divide - quattro a Fujiyoshida, due a Disneysea - dall'
+     hotel si parte in due direzioni, ma il tratto veniva contato solo per la
+     prima: dell'altra non si sapeva ne' quanto ci volesse ne' quanto distasse.
+     Ora la riga dell'hotel tocca a ogni tappa che non ha niente prima di se':
+     una sola se vanno tutti nello stesso posto, una per ramo se si separano. */
+  const refHotel=hotelMorningRef(t,d);
+  if(refHotel&&refHotel.lat){
+    const rami=tops.filter(it=>it.loc&&it.a.hotelId!==refHotel.id&&!tappaDaCuiSiArriva(tops,it));
+    rami.forEach((it,n)=>{
+      if(d.hotelTravelState==='skip'){
+        if(n===0)html+=`<div class="tt-hotel-travel tt-travel-skip" onclick="unskipHotelTravel(${di})">necessario ↺</div>`;
+        return;
+      }
+      const segMode=d.hotelSegTravelMode,est=travelEstimate(d,hav(refHotel,it.loc),segMode,dwx&&dwx.precipitation>5);
       const dm2=d.travelMode||'walk';
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm2)===m?'on':''}" onclick="event.stopPropagation();setHotelSegTravelMode(${di},'${m}')">${ic}</span>`;
-      html+=`<div class="tt-hotel-travel tt-travel-shown"><span>🏨 → ${esc(firstTop.a.name)}: ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})">non necessario ✕</span></div>`;
-    }
+      html+=`<div class="tt-hotel-travel tt-travel-shown"><span>\uD83C\uDFE8 \u2192 ${esc(it.a.name)}: ${est.mode==='car'?'\uD83D\uDE97':est.mode==='train'?'\uD83D\uDE86':'\uD83D\uDEB6'} ${est.minutes} min \u00b7 ${est.km} km${est.cost!=null?' \u00b7 ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','\uD83D\uDEB6')}${modeBtn('train','\uD83D\uDE86')}${modeBtn('car','\uD83D\uDE97')}</span>${n===0?`<span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})">non necessario \u2715</span>`:''}</div>`;
+    });
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
@@ -4818,13 +4850,22 @@ function buildTTDayInner(t,di){
     html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
-  for(let i=0;i<tops.length-1;i++){
-    const cur=tops[i],nxt=tops[i+1];
-    const lc=actLoc(t,cur.a),ln=actLoc(t,nxt.a);
-    if(!lc||!ln)continue;
+  /* Le strisce si disegnavano solo fra tappe consecutive in ordine di orario:
+     se il gruppo si separa, la seconda meta' viene dopo la prima nell'elenco
+     ma non ci si arriva da li', e restava senza nessun conto. Ora e' ogni
+     tappa a cercarsi da dove ci si arriva, cosi' ogni ramo ha la sua striscia,
+     disegnata nella sua colonna. */
+  tops.forEach(nxt=>{
+    const ln=nxt.loc;
+    if(!ln)return;
+    const cur=tappaDaCuiSiArriva(tops,nxt);
+    if(!cur)return;   // non ha niente prima: e' un ramo che parte dall'hotel
+    const lc=cur.loc;
     const gapStart=cur.r[1],gapEnd=nxt.r[0];
-    if(gapEnd<gapStart)continue;   // si accavallano: non c'è un "fra le due"
-    const state=cur.a.travelState;
+    /* Il tratto è "di chi arriva", non "di chi parte": partendo dallo stesso
+       posto in due direzioni diverse, ogni ramo si spegne e si cambia mezzo
+       per conto suo. */
+    const state=nxt.a.travelState;
     /* Con le tappe attaccate, o quasi, fra i due riquadri non resta l'altezza
        per la striscia intera: veniva saltata del tutto e la distanza non si
        vedeva mai. In quel caso si usa una targhetta bassa, appoggiata sopra la
@@ -4840,20 +4881,27 @@ function buildTTDayInner(t,di){
        basso da non avere spazio, non lo si sfora comunque. */
     const cimaPrec=(cur.r[0]-360)/60*H;
     const gTop=tight?Math.max(cimaPrec+2,(gapStart-360)/60*H-44):((gapStart-360)/60*H),gH=tight?20:Math.max(16,gapPx-2);
-    const geo=tight?`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`
-                   :`top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)`;
+    /* Con i rami affiancati due strisce cadrebbero nello stesso punto e si
+       coprirebbero: ciascuna sta nella colonna della tappa a cui porta. Con
+       una colonna sola - il caso di tutti i giorni - la geometria e' quella
+       di prima, tutta larghezza. */
+    const aCol=nxt.cols>1;
+    const colL=`calc(52px + ${nxt.col} * ((100% - 58px)/${nxt.cols}))`,colW=`calc((100% - 58px)/${nxt.cols} - 4px)`;
+    const geo=tight?(aCol?`top:${gTop}px;height:${gH}px;left:${colL};width:${colW}`
+                         :`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`)
+                   :`top:${gTop}px;height:${gH}px;left:${aCol?colL:'52px'};width:${aCol?colW:'calc(100% - 58px)'}`;
     const tcls=tight?' tt-travel-tight':'';
     const isDistant=(gapEnd-gapStart)>DISTANT_GAP_MIN;
     if(state==='skip'){
-      html+=`<div class="tt-travel tt-travel-skip${tcls}" style="${geo}" onclick="event.stopPropagation();unskipTravel(${di},${cur.a.id})">necessario ↺</div>`;
+      html+=`<div class="tt-travel tt-travel-skip${tcls}" style="${geo}" onclick="event.stopPropagation();unskipTravel(${di},${nxt.a.id})">necessario ↺</div>`;
     }else if(isDistant&&state!=='shown'){
-      html+=`<div class="tt-travel tt-travel-toggle${tcls}" style="${geo}" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🧭 rileva distanza</div>`;
+      html+=`<div class="tt-travel tt-travel-toggle${tcls}" style="${geo}" onclick="event.stopPropagation();revealTravel(${di},${nxt.a.id})">🧭 rileva distanza</div>`;
     }else{
-      const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(lc,ln),segMode,dwx&&dwx.precipitation>5);
-      const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${cur.a.id},'${m}')">${ic}</span>`;
-      html+=`<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${cur.a.id})">non necessario ✕</span></div>`;
+      const segMode=nxt.a.segTravelMode,est=travelEstimate(d,hav(lc,ln),segMode,dwx&&dwx.precipitation>5);
+      const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${nxt.a.id},'${m}')">${ic}</span>`;
+      html+=`<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})">non necessario ✕</span></div>`;
     }
-  }
+  });
   const pd=t.days[di-1];
   if(pd)(pd.activities||[]).forEach(a=>{
     if(!a.nextDay||!a.time)return;
