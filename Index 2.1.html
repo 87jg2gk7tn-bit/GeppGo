@@ -201,6 +201,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .add-row{display:flex;gap:.5rem;margin-top:.5rem}
 .add-row input{flex:1}
 .add-row button{flex-shrink:0;width:46px;padding:0;font-size:1.2rem}
+/* Le altre righe di questo tipo hanno un tasto largo quanto un "+": qui c'è
+   scritto "Cerca" e va lasciato respirare, altrimenti esce dal bordo. */
+#adAddrWrap .add-row button{width:auto;padding:0 .95rem;font-size:.86rem}
 .split-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem}
 .split-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;background:var(--paper);border-radius:var(--r-sm);cursor:pointer}
 .split-item input{width:auto;accent-color:var(--blue)}
@@ -1241,6 +1244,9 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Si svolge dentro un'altra attività? <span style="font-weight:500;color:var(--ink-faint)">(es. ristorante nel parco)</span></label><select id="adParent"><option value="">No, indipendente</option></select></div>
   <div class="fg"><label>Luogo <span style="font-weight:500;color:var(--ink-faint)">(mappa e meteo del giorno)</span></label>
     <div id="adPoiCur" style="display:none;align-items:center;gap:.5rem;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .7rem"><span style="display:flex;align-items:center;gap:.4rem;min-width:0;overflow:hidden"><span>📍</span><span id="adPoiName" style="font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></span><button class="chip" style="flex-shrink:0" onclick="adPoiClear()">Non è questo</button></div>
+    <div id="adAddrWrap" style="display:none">
+      <div class="add-row"><input id="adAddr" placeholder="Incolla qui l'indirizzo" autocomplete="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter'){event.preventDefault();adAddrFind();}"><button class="btn btn-blue" onclick="adAddrFind()">Cerca</button></div>
+    </div>
     <div id="adPoiHint" style="font-size:.76rem;color:var(--ink-faint);margin-top:.25rem"></div>
   </div>
   <div id="adVotes" style="margin:-.2rem 0 .9rem"></div>
@@ -5023,6 +5029,7 @@ function openActDetail(di,id){
   document.getElementById('adNameSug').innerHTML='';document.getElementById('adPoiHint').textContent='';
   if(a.poiId||a.lat){const lp=a.poiId?t.pois.find(x=>x.id===a.poiId):null;document.getElementById('adPoiName').textContent=lp?lp.name:a.name;pcur.style.display='flex';}
   else pcur.style.display='none';
+  document.getElementById('adAddr').value='';adAddrSync();
   renderAdVotes(isNew?null:a);
   document.getElementById('adNotes').value=a.notes||'';
   const g=document.getElementById('adGcal');
@@ -6300,7 +6307,7 @@ function adNameInput(){
     if(document.getElementById('adName').value.trim()!==q)return;
     lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
     hint.textContent='';
-    if(!lastAdNameRes.length){box.innerHTML='';return;}
+    if(!lastAdNameRes.length){box.innerHTML='';hint.textContent='Non l\'ho riconosciuto come luogo: incolla qui sotto l\'indirizzo.';return;}
     /* Il risultato migliore, se assomiglia abbastanza a quello scritto, viene
        collegato subito da solo: non serve più cercarlo a mano. Se non siamo
        abbastanza sicuri (nome generico, non un luogo preciso) lasciamo
@@ -6323,11 +6330,42 @@ function adNameSel(i){
   flyDetect(adPoiPick.name);
   document.getElementById('adPoiCur').style.display='flex';
   document.getElementById('adNameSug').innerHTML='';
+  adAddrSync();
 }
 function adPoiClear(){
   adPoiPick={clear:true};
   document.getElementById('adPoiCur').style.display='none';
+  adAddrSync();
   document.getElementById('adName').focus();
+}
+/* Il riquadro dell'indirizzo serve solo finche' un posto non e' agganciato:
+   quando c'e' gia' sparisce, e ricompare se lo si toglie. */
+function adAddrSync(){
+  const w=document.getElementById('adAddrWrap');if(!w)return;
+  w.style.display=document.getElementById('adPoiCur').style.display==='flex'?'none':'block';
+}
+/* Il nome dell'attivita' non sempre basta a riconoscere il posto: un
+   ristorante con un nome comune, una casa privata, un nome inventato. Prima,
+   in quel caso, non restava alcun modo di dire dov'e' - niente mappa, niente
+   meteo del posto, niente distanze fra le tappe. Qui si incolla l'indirizzo
+   e si cerca quello invece del nome. */
+async function adAddrFind(){
+  const inp=document.getElementById('adAddr'),q=inp.value.trim();
+  if(q.length<3){toast('Scrivi o incolla un indirizzo');return;}
+  const hint=document.getElementById('adPoiHint');
+  hint.textContent='\uD83D\uDD0D Cerco l\'indirizzo...';
+  const t=T(),city=tripCityHint(t),lh=destLangHint(t);
+  let dd=[];
+  try{
+    dd=await geoSearch(q,lh);
+    if(!dd.length&&city)dd=await geoSearch(q+', '+city,lh);
+  }catch(e){}
+  if(!dd.length){hint.textContent='Non ho trovato questo indirizzo. Prova ad aggiungere la citta\u0027.';return;}
+  hint.textContent='';
+  lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
+  adNameSel(0);
+  inp.value='';
+  toast('\uD83D\uDCCD Posizione agganciata');
 }
 function updateAdParent(){
   const t=T();if(!t||!adRef)return;
