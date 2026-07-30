@@ -5021,6 +5021,17 @@ let dayImportBusy=false;
    Le righe senza orario riconoscibile vengono comunque aggiunte, senza orario. */
 async function importDayText(){
   const t=T();if(!t||dayImportBusy)return;const di=ttDay,d=t.days[di];if(!d)return;
+  /* L'importazione dura secondi: una riga al secondo piu' il tempo di cercare
+     ogni posto. Tenere qui il giorno e scriverci dentro alla fine e' fragile -
+     se nel frattempo arrivano i dati dal cloud, gli oggetti giorno vengono
+     ricreati e le attivita' finirebbero in un oggetto ormai scollegato, senza
+     comparire da nessuna parte. Si tiene l'identificativo e si ritrova il
+     giorno vero a ogni riga. */
+  const tripId=t.id,dayId=d.id;
+  const giornoVero=()=>{
+    const t2=app.trips.find(x=>x.id===tripId);
+    return t2?(t2.days||[]).find(x=>x.id===dayId):null;
+  };
   const raw=document.getElementById('dayImportText').value;
   const timeRe=/([01]?\d|2[0-3])[:.]([0-5]\d)/;
   const lines=raw.split('\n').map(l=>l.replace(/^(?:[-*•]\s*|\d+[.)]\s+)/,'').trim()).filter(Boolean);
@@ -5050,15 +5061,24 @@ async function importDayText(){
       const r=ranked&&ranked[0];
       if(r){a.lat=parseFloat(r.lat);a.lng=parseFloat(r.lon);}
     }catch(e){}
-    d.activities.push(a);added++;
+    const dv=giornoVero();
+    if(!dv){if(st)st.textContent='Il giorno non c\'e\' piu\': importazione interrotta.';break;}
+    dv.activities.push(a);added++;
+    /* Si salva riga per riga: se l'app viene chiusa a meta' importazione, quello
+       che e' gia' entrato resta. Prima si salvava solo alla fine e un'uscita
+       anticipata portava via tutto. */
+    save();
     if(i<lines.length-1)await new Promise(r2=>setTimeout(r2,1100));
   }
   save();renderAll();dayImportBusy=false;if(btn)btn.disabled=false;
   document.getElementById('dayImportText').value='';
   if(st)st.textContent=`Aggiunte ${added} attività.`;
-  toast(`${added} attività aggiunte a G${di+1}`);
+  // L'indice del giorno puo' essere cambiato nel frattempo: si riapre quello giusto.
+  const t3=app.trips.find(x=>x.id===tripId);
+  const idx=t3?(t3.days||[]).findIndex(x=>x.id===dayId):-1;
+  toast(`${added} attività aggiunte a G${(idx>=0?idx:di)+1}`);
   closeSheet('mImportDay');
-  setTimeout(()=>openDay(di),150);
+  if(idx>=0)setTimeout(()=>openDay(idx),150);
 }
 function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(ttDay,1);save();renderAll();closeSheet('mDay');});}
 
