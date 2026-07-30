@@ -1771,17 +1771,18 @@ function homeMapSelect(cardIdx){
 function homeCardsSync(force){
   const strip=document.querySelector('.hh-cards');if(!strip)return;
   const cards=[...strip.querySelectorAll('.hh-card')];if(!cards.length)return;
+  /* La tappa "in mano" è quella agganciata al bordo sinistro della striscia:
+     si prende quella col bordo sinistro più vicino, non la prima che spunta.
+     In verticale se ne vede una alla volta e le due regole coincidono, ma in
+     orizzontale se ne vedono tre e "la prima che spunta" indicava la tappa
+     sbagliata. Questa regola vale anche a fine corsa, dove l'ultima card non
+     arriva mai al bordo ma resta comunque la più vicina: nessun caso a parte. */
   const sl=strip.getBoundingClientRect().left;
-  let idx=cards.length-1;
-  for(let n=0;n<cards.length;n++){
-    if(cards[n].getBoundingClientRect().right>sl+10){idx=n;break;}
-  }
-  /* A fine corsa l'ultima tappa non arriva mai a sinistra: dopo di lei non
-     c'è altro da scorrere, quindi resta accostata a destra e la "più a
-     sinistra" continua a essere la penultima. Senza questo, l'ultima tappa
-     non si evidenziava mai sulla mappa se non spingendo la striscia oltre
-     il fermo con il dito. Lo stesso vale toccandone il segnaposto. */
-  if(strip.scrollLeft>=strip.scrollWidth-strip.clientWidth-4)idx=cards.length-1;
+  let idx=0,best=Infinity;
+  cards.forEach((c,n)=>{
+    const d=Math.abs(c.getBoundingClientRect().left-sl);
+    if(d<best){best=d;idx=n;}
+  });
   if(force||idx!==homeCardSel){homeCardSel=idx;homeMapSelect(idx);}
 }
 function homeScrollToCard(i){
@@ -4692,7 +4693,15 @@ function buildTT(){
 let _ttResizeT=null;
 window.addEventListener('resize',()=>{
   clearTimeout(_ttResizeT);
-  _ttResizeT=setTimeout(()=>{if(document.getElementById('mDay').classList.contains('active'))buildTT();},150);
+  _ttResizeT=setTimeout(()=>{
+    if(document.getElementById('mDay').classList.contains('active'))buildTT();
+    /* Ruotando il telefono le mappe restano convinte di avere le misure di
+       prima: segnaposto fuori posto e riquadri di mappa mancanti finché non
+       le si tocca. E la striscia cambia quante tappe mostra, quindi cambia
+       anche quale è quella in mano: vanno ricalcolate entrambe. */
+    try{if(homeMapObj){homeMapObj.invalidateSize();homeCardsSync(true);}}catch(e){}
+    try{if(dayMapObj)dayMapObj.invalidateSize();}catch(e){}
+  },150);
 });
 function bindBlockDrag(el,act,t,d){
   const g=el.querySelector('.tgrip');if(!g)return;g.style.touchAction='none';
