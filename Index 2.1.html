@@ -450,6 +450,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-toggle{cursor:pointer;opacity:.6}
 .tt-travel-toggle:active{opacity:1}
 .tt-hotel-travel{display:flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--ink-faint);border:1px dashed var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* Targhetta per le tappe attaccate: sta sopra le altre cose e ha il fondo
+   pieno, altrimenti sulla linea di confine non si leggerebbe. */
+.tt-travel-tight{z-index:8;background:var(--paper);border-style:solid;padding:0 .45rem;gap:.35rem;justify-content:flex-end;white-space:nowrap;overflow:hidden;font-size:.7rem;box-shadow:var(--sh-xs)}
+.tt-travel-tight .tt-travel-x{display:none}
 .tt-travel-modes{display:flex;gap:.3rem;flex-shrink:0}
 .tt-travel-mode{cursor:pointer;opacity:.4;font-size:.95rem}
 .tt-travel-mode.on{opacity:1}
@@ -2608,7 +2612,11 @@ function computeDayTravel(day,t){
   }
   for(let i=0;i<timed.length-1;i++){
     const cur=timed[i].a,gapStart=timed[i].r[1],gapEnd=timed[i+1].r[0];
-    if(gapEnd<=gapStart+4)continue;
+    /* Due tappe attaccate (19:00-19:00) non hanno buco fra loro, ma la strada
+       da fare c'è comunque: prima non finiva nel totale del giorno. Si salta
+       solo quando si accavallano davvero, cioè la seconda comincia prima che
+       la prima sia finita. */
+    if(gapEnd<gapStart)continue;
     if(cur.travelState==='skip')continue;
     if((gapEnd-gapStart)>DISTANT_GAP_MIN&&cur.travelState!=='shown')continue;
     const est=travelEstimate(day,hav(cur,timed[i+1].a),cur.segTravelMode,rain);
@@ -4697,18 +4705,29 @@ function buildTTDayInner(t,di){
     const cur=tops[i],nxt=tops[i+1];
     if(!cur.a.lat||!nxt.a.lat)continue;
     const gapStart=cur.r[1],gapEnd=nxt.r[0];
-    if(gapEnd<=gapStart+4)continue;
+    if(gapEnd<gapStart)continue;   // si accavallano: non c'è un "fra le due"
     const state=cur.a.travelState;
-    const gTop=(gapStart-360)/60*H,gH=Math.max(16,(gapEnd-gapStart)/60*H-2);
+    /* Con le tappe attaccate, o quasi, fra i due riquadri non resta l'altezza
+       per la striscia intera: veniva saltata del tutto e la distanza non si
+       vedeva mai. In quel caso si usa una targhetta bassa, appoggiata sopra la
+       linea di confine — dove il riquadro di prima è quasi sempre vuoto,
+       perché il suo contenuto sta in alto — invece di coprire il nome della
+       tappa che segue. */
+    const gapPx=(gapEnd-gapStart)/60*H;
+    const tight=gapPx<24;
+    const gTop=tight?((gapStart-360)/60*H-21):((gapStart-360)/60*H),gH=tight?20:Math.max(16,gapPx-2);
+    const geo=tight?`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`
+                   :`top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)`;
+    const tcls=tight?' tt-travel-tight':'';
     const isDistant=(gapEnd-gapStart)>DISTANT_GAP_MIN;
     if(state==='skip'){
-      html+=`<div class="tt-travel tt-travel-skip" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();unskipTravel(${di},${cur.a.id})">necessario ↺</div>`;
+      html+=`<div class="tt-travel tt-travel-skip${tcls}" style="${geo}" onclick="event.stopPropagation();unskipTravel(${di},${cur.a.id})">necessario ↺</div>`;
     }else if(isDistant&&state!=='shown'){
-      html+=`<div class="tt-travel tt-travel-toggle" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🧭 rileva distanza</div>`;
+      html+=`<div class="tt-travel tt-travel-toggle${tcls}" style="${geo}" onclick="event.stopPropagation();revealTravel(${di},${cur.a.id})">🧭 rileva distanza</div>`;
     }else{
       const segMode=cur.a.segTravelMode,est=travelEstimate(d,hav(cur.a,nxt.a),segMode,dwx&&dwx.precipitation>5);
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${cur.a.id},'${m}')">${ic}</span>`;
-      html+=`<div class="tt-travel tt-travel-shown" style="top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${cur.a.id})">non necessario ✕</span></div>`;
+      html+=`<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${cur.a.id})">non necessario ✕</span></div>`;
     }
   }
   const pd=t.days[di-1];
