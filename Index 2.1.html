@@ -3117,7 +3117,13 @@ function bookingCal(){
   const tm=(document.getElementById('adBookTime').value||'09:00').replace(':','');
   const name=document.getElementById('adName').value.trim()||'Attività';
   const ds=d.replace(/-/g,'');
-  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Prenotare: '+name)}&dates=${ds}T${tm}00/${ds}T${tm}00&details=${encodeURIComponent('Promemoria creato con GeppGo')}`;
+  /* Se la prenotazione e' gia' fatta, sul calendario ci va il nome e basta:
+     "Prenotare: ..." era un promemoria di qualcosa da fare, e leggerlo su un
+     evento gia' sistemato fa credere che ci sia ancora da muoversi. */
+  const fatta=document.getElementById('adBookDone').value==='si';
+  const titolo=fatta?name:'Prenotare: '+name;
+  const dett=fatta?'Prenotazione confermata · da GeppGo':'Promemoria creato con GeppGo';
+  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${ds}T${tm}00/${ds}T${tm}00&details=${encodeURIComponent(dett)}`;
   window.open(url,'_blank');
 }
 function checkBookRem(){
