@@ -743,6 +743,18 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-trip:active{transform:scale(.95)}
 .hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+/* ── scorciatoie del viaggio, sotto al titolo in home ──────────────
+   Vanno a capo invece di scorrere: sono poche e vanno viste tutte,
+   erano introvabili quando stavano solo dentro la scheda del viaggio. */
+.hh-acts{position:relative;display:flex;flex-wrap:wrap;gap:.35rem;margin-top:1rem}
+.hh-act{
+  cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;
+  color:var(--ink-soft);background:transparent;border:1px solid var(--line);
+  padding:.34rem .78rem;border-radius:999px;white-space:nowrap;transition:var(--ease);
+}
+.hh-act:active{transform:scale(.95)}
+.hh-act.on{border-color:var(--green);color:var(--green-deep)}
+
 /* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
 .hh-tap{cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
 .hh-chev{font-size:1rem;line-height:1;opacity:.7;letter-spacing:0}
@@ -1862,11 +1874,25 @@ function renderHomeHero(){
     <div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>
     <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   </div>`;
+  /* Le scorciatoie del viaggio: stato, rinomina, condividi, persone, consigli,
+     bagagli e ripristino stavano solo dentro la scheda del viaggio, che si apre
+     toccando il nome — di fatto introvabili. Qui stanno sotto al titolo, in
+     home, e restano ovviamente anche là dentro. */
+  const actsBar=`<div class="hh-acts">
+    <button class="hh-act" onclick="toggleStatus()">${esc(tripPhase(t))}</button>
+    <button class="hh-act" onclick="renameTrip(${t.id})">✎ Rinomina</button>
+    <button class="hh-act" onclick="openShare()">Condividi</button>
+    <button class="hh-act" onclick="openPeople()">Persone</button>
+    <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
+    <button class="hh-act" onclick="openPacking()">🎒 Bagagli</button>
+    <button class="hh-act" onclick="openRestore()">✓ ${esc(lastSnapLabel())}</button>
+  </div>`;
   if(!t.days||!t.days.length){
     paint(`<div class="hh">${tripsBar}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
+      ${actsBar}
     </div>`);
     return;
   }
@@ -1886,6 +1912,7 @@ function renderHomeHero(){
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
+    ${actsBar}
   </div>
   ${nx?(()=>{
     const loc=actLoc(t,nx.a);
