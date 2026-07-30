@@ -1226,7 +1226,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
   <div id="amBtns" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
     <button class="btn btn-soft btn-block" onclick="actMenuInfo()">ℹ️ Info</button>
-    <button class="btn btn-soft btn-block" onclick="actMenuTimetable()">🕒 Apri la Time Table</button>
+    <button class="btn btn-soft btn-block" id="amTtBtn" onclick="actMenuTimetable()">🕒 Apri la Time Table</button>
     <button class="btn btn-soft btn-block" id="amNavBtn" style="display:none" onclick="actMenuNav()">🧭 Naviga</button>
     <button class="btn btn-soft btn-block" id="amTkBtn" style="display:none" onclick="actMenuTicket()">🎫 Biglietto</button>
     <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
@@ -2739,6 +2739,10 @@ function tapAct(di,id){
   actMenuRef={di,id};
   document.getElementById('amName').textContent=a.name||'Attività';
   document.getElementById('amNavBtn').style.display=actLoc(t,a)?'block':'none';
+  /* Se si sta gia' guardando la time-table, proporre di aprirla non porta da
+     nessuna parte. La voce serve arrivando da altrove, tipicamente dalla home. */
+  const inTT=document.getElementById('mDay').classList.contains('active');
+  document.getElementById('amTtBtn').style.display=inTT?'none':'block';
   const tk=t.tickets.find(x=>x.actId===id);
   document.getElementById('amTkBtn').style.display=tk?'block':'none';
   openSheet('mActMenu');
