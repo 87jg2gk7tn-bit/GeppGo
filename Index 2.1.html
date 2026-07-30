@@ -1460,7 +1460,35 @@ const CURR=[{c:'EUR',s:'€'},{c:'USD',s:'$'},{c:'GBP',s:'£'},{c:'JPY',s:'¥'},
 const C2C={JP:'JPY',US:'USD',GB:'GBP',IE:'EUR',FR:'EUR',DE:'EUR',IT:'EUR',ES:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',AT:'EUR',GR:'EUR',FI:'EUR',LU:'EUR',SK:'EUR',SI:'EUR',EE:'EUR',LV:'EUR',LT:'EUR',CY:'EUR',MT:'EUR',HR:'EUR',CH:'CHF',CN:'CNY',KR:'KRW',TH:'THB',IN:'INR',AU:'AUD',CA:'CAD',NZ:'NZD',MX:'MXN',BR:'BRL',ZA:'ZAR',AE:'AED',TR:'TRY',SE:'SEK',NO:'NOK',DK:'DKK',PL:'PLN',CZ:'CZK',HU:'HUF',SG:'SGD',HK:'HKD',ID:'IDR',MY:'MYR',PH:'PHP',VN:'VND',EG:'EGP',MA:'MAD',IL:'ILS',SA:'SAR',TW:'TWD',IS:'ISK',CL:'CLP',CO:'COP',AR:'ARS',PE:'PEN'};
 function curSym(c){const f=CURR.find(x=>x.c===c);return f?f.s:c;}
 function fmtMoney(a,c){return curSym(c)+(a||0).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function save(){snapNow(false);localStorage.setItem('geppgo2',JSON.stringify(app));try{const d=new Date().toISOString().split('T')[0];if(localStorage.getItem('geppgo2_bakd')!==d){localStorage.setItem('geppgo2_bak',localStorage.getItem('geppgo2')||'');localStorage.setItem('geppgo2_bakd',d);}}catch(e){}scheduleSync();}
+/* Il salvataggio non deve MAI fallire in silenzio: la spesa appena scritta è
+   già nell'oggetto in memoria, quindi a schermo si vede, ma se la scrittura su
+   disco salta ci si accorge di averla persa solo riaprendo l'app. Prima questa
+   riga non era protetta: a memoria piena l'eccezione usciva da save() e portava
+   via anche scheduleSync(), cioè si perdeva pure la copia nel cloud. */
+let storageFull=false;
+function save(){
+  snapNow(false);
+  const payload=JSON.stringify(app);
+  let ok=false;
+  try{localStorage.setItem('geppgo2',payload);ok=true;}
+  catch(e){
+    /* Memoria esaurita. Le copie di sicurezza pesano più dei dati veri (fino a
+       sei istantanee più il backup del giorno) e sono la prima cosa da
+       sacrificare: un ripristino vecchio vale molto meno di quello che si sta
+       scrivendo adesso. Si liberano una alla volta, riprovando ogni volta. */
+    ['geppgo2_snap','geppgo2_bak','geppgo2_bakd'].forEach(k=>{
+      if(ok)return;
+      try{localStorage.removeItem(k);localStorage.setItem('geppgo2',payload);ok=true;}catch(e2){}
+    });
+  }
+  if(storageFull!==!ok){storageFull=!ok;try{renderCloudWarn();}catch(e){}}
+  if(!ok)toast('⚠️ Memoria piena: questa modifica non è stata salvata');
+  // Il backup del giorno solo se c'è spazio: se abbiamo appena liberato per far
+  // stare i dati veri, riscriverlo qui rimetterebbe il problema com'era.
+  if(ok)try{const d=new Date().toISOString().split('T')[0];if(localStorage.getItem('geppgo2_bakd')!==d){localStorage.setItem('geppgo2_bak',payload);localStorage.setItem('geppgo2_bakd',d);}}catch(e){}
+  // Va tentato comunque: se il disco è pieno, il cloud è l'unica copia che resta.
+  scheduleSync();
+}
 function restoreBak(){
   const b=localStorage.getItem('geppgo2_bak'),d=localStorage.getItem('geppgo2_bakd');
   if(!b){toast('Nessuna copia automatica ancora');return;}
@@ -5874,6 +5902,12 @@ function migrateData(){
 function renderCloudWarn(){
   const box=document.getElementById('cloudWarn');if(!box)return;
   const cfg=window.GEPPGO_SUPA_URL&&window.GEPPGO_SUPA_KEY;
+  /* Memoria piena: è l'avviso più urgente che ci sia, perché da qui in poi
+     tutto quello che si scrive resta solo a schermo. Va prima di ogni altro. */
+  if(storageFull){
+    box.innerHTML=`<div class="card" style="background:var(--red-tint);border-color:#F0C9C0"><div style="font-weight:800;font-size:.88rem;color:var(--red);margin-bottom:.25rem">⚠️ Memoria del telefono piena</div><div style="font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.6rem">Le ultime modifiche sono rimaste solo a schermo: riaprendo l'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.</div><button class="btn btn-grad btn-block" onclick="exportData()">Esporta i dati adesso</button></div>`;
+    return;
+  }
   if(cfg&&sb&&!session&&app.trips.length){
     box.innerHTML=`<div class="card" style="background:var(--clay-tint);border-color:#EDD2C3"><div style="font-weight:800;font-size:.88rem;color:var(--clay-deep);margin-bottom:.25rem">⚠️ Viaggi solo su questo telefono</div><div style="font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.6rem">Non sei connesso all'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.</div><button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi ora</button></div>`;
   } else box.innerHTML='';
@@ -6104,7 +6138,13 @@ function snapNow(force){
     if(arr.length&&arr[arr.length-1].data===cur)return;
     arr.push({ts:now,data:cur});
     while(arr.length>6)arr.shift();
-    localStorage.setItem('geppgo2_snap',JSON.stringify(arr));
+    /* Sei copie intere del viaggio pesano più del viaggio stesso: su un
+       viaggio lungo sono loro a riempire la memoria e a far fallire il
+       salvataggio vero. Sopra una certa soglia si buttano le più vecchie —
+       si perde un punto di ripristino, mai un dato appena scritto. */
+    let out=JSON.stringify(arr);
+    while(arr.length>1&&out.length>1500000){arr.shift();out=JSON.stringify(arr);}
+    localStorage.setItem('geppgo2_snap',out);
   }catch(e){}
 }
 function applyTheme(){document.body.classList.toggle('dark',!!app.settings.dark);}
