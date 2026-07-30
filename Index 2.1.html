@@ -2220,7 +2220,11 @@ async function geoSearch(fullQ,langHint){
     }catch(e){}
   }
   if(out.length<3&&langHint){
-    const tq=await translateQuery(fullQ,langHint);
+    /* La traduzione della ricerca e' un tentativo in piu', non una condizione:
+       se il servizio non risponde o va in errore, l'eccezione usciva da qui e
+       si perdevano anche i risultati gia' trovati sopra. */
+    let tq=null;
+    try{tq=await translateQuery(fullQ,langHint);}catch(e){}
     if(tq){
       try{
         const r3=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(tq)}&format=json&accept-language=it&limit=10`,{headers:{'Accept-Language':'it,en'}});
@@ -6515,29 +6519,43 @@ function placeNameFromUrl(txt){
    non lo trova, "Via Tortona 27, Milano" si'. Qui si costruiscono varianti via
    via piu' corte, da provare in ordine finche' una risponde. */
 function addrVariants(raw){
-  const s=String(raw||'').replace(/\s+/g,' ').trim();
+  /* Quello che si copia da Google Maps in Giappone non somiglia a un indirizzo
+     nostro: "Giappone, \u3012150-0044 Tokyo, Shibuya, Maruyamacho, 3\u22126 E-Space
+     Tower, \uFF11\uFF14\uFF26 \u30D5\u30ED\u30A2A". C'e' il simbolo della posta, cifre e lettere a
+     doppia larghezza, un trattino che non e' un trattino, il piano - e
+     soprattutto l'ordine e' rovesciato: prima il Paese, per ultimo il civico. */
+  let s=String(raw||'').normalize('NFKC')
+        .replace(/[\u2010-\u2015\u2212\uFF0D]/g,'-')   // trattini di ogni forma
+        .replace(/\u3012/g,' ')                        // il simbolo della posta
+        .replace(/\s+/g,' ').trim();
   const out=[s];
-  let pulito=s.replace(/\b\d{3}-\d{4}\b/g,' ')           // il CAP giapponese: 150-0042
-              .replace(/\b\d{5}\b/g,' ')                  // il CAP nostro
-              .replace(/\b[A-Z]{2}\b(?=\s*(,|$))/g,' ')    // la sigla della provincia
+  let pulito=s.replace(/\b\d{3}-\d{4}\b/g,' ')          // il CAP giapponese
+              .replace(/\b\d{5}\b/g,' ')                // il CAP nostro
+              .replace(/\b[A-Z]{2}\b(?=\s*(,|$))/g,' ')  // la sigla della provincia
               .replace(/\s*,\s*/g,', ').replace(/\s{2,}/g,' ')
               .replace(/(,\s*)+/g,', ').replace(/^,\s*|,\s*$/g,'').trim();
   /* Google separa la via dal numero civico con una virgola - "Via Tortona, 27" -
-     e cosi' il civico sembra un pezzo di indirizzo a se'. Riattaccandolo alla
-     via, il servizio di ricerca lo riconosce. */
+     e cosi' il civico sembra un pezzo di indirizzo a se'. */
   pulito=pulito.replace(/,\s*(\d+[a-zA-Z]?)(?=,|$)/g,' $1');
   if(pulito&&pulito!==s)out.push(pulito);
-  const parts=pulito.split(',').map(x=>x.trim()).filter(Boolean);
-  if(parts.length>2){
-    out.push(parts.slice(0,parts.length-1).join(', '));  // senza la nazione in coda
-    out.push(parts[0]+', '+parts[1]);                    // solo via e quartiere
-    /* Fuori Italia la citta' non e' quasi mai il secondo pezzo: in Giappone
-       "15-1 Udagawacho, Shibuya, Tokyo, Giappone" la tiene al terzultimo posto.
-       Si prova anche l'accoppiata via + penultimo pezzo. */
-    out.push(parts[0]+', '+parts[parts.length-2]);
-  }
-  if(parts.length>1)out.push(parts[0]+', '+parts[parts.length-1]);
-  if(parts.length)out.push(parts[0]);
+  let parts=pulito.split(',').map(x=>x.trim()).filter(Boolean);
+  // il piano e la stanza non aiutano a trovare l'edificio: solo rumore
+  parts=parts.filter(x=>!/^\d+\s*F\b|\u30D5\u30ED\u30A2|\u968E|^\d+\s*\u00b0?\s*piano\b/i.test(x));
+  /* Dallo specifico al generale: e' l'ordine che i servizi di ricerca si
+     aspettano. Non sapendo in quale dei due ordini sia arrivato l'indirizzo,
+     si provano tutti e due. */
+  const daOrdine=ps=>{
+    const v=[];
+    if(ps.length>2){
+      v.push(ps.slice(0,ps.length-1).join(', '));  // senza la nazione in coda
+      v.push(ps[0]+', '+ps[1]);                    // primo pezzo e quello dopo
+      v.push(ps[0]+', '+ps[ps.length-2]);          // primo pezzo e la citta'
+    }
+    if(ps.length>1)v.push(ps[0]+', '+ps[ps.length-1]);
+    if(ps.length)v.push(ps[0]);
+    return v;
+  };
+  out.push(...daOrdine(parts),...daOrdine(parts.slice().reverse()));
   return [...new Set(out.map(x=>x.trim()).filter(x=>x.length>2))];
 }
 function adSetPlace(name,lat,lng){
@@ -6594,10 +6612,16 @@ async function adAddrFind(){
     let res=[];
     try{res=await geoSearch(v,lh);}catch(e){res=[];}
     if(!res.length)continue;
-    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,v):res;
+    /* Il punteggio di pertinenza scarta i risultati troppo lontani da quello
+       che si e' scritto. Con un indirizzo lungo e in un'altra lingua li scarta
+       tutti, e restavamo con le mani vuote pur avendo trovato il posto: qui la
+       ricerca l'abbiamo costruita noi, quindi cio' che torna e' gia' pertinente.
+       Se il filtro non lascia nulla, si tiene la risposta cosi' com'e'. */
+    const rank=(typeof rankPlaces==='function')?rankPlaces(res,v):res;
+    const ranked=(rank&&rank.length)?rank:res;
     const preciso=ranked.find(x=>!troppoGenerico(x));
     if(preciso){dd=[preciso];usata=v;break;}
-    if(!ripiego)ripiego={r:ranked[0],v};   // il meglio del generico, per ora da parte
+    if(!ripiego&&ranked[0])ripiego={r:ranked[0],v};   // il meglio del generico, da parte
   }
   let generico=false;
   if(!dd.length&&ripiego){dd=[ripiego.r];usata=ripiego.v;generico=true;}
