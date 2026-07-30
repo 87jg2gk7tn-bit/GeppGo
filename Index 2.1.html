@@ -377,6 +377,32 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tchip{flex:0 0 auto;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);padding:.5rem .9rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.8rem;cursor:pointer;transition:var(--ease)}
 .tchip.on{background:var(--green);border-color:var(--green);color:#fff}
 .tchip:active{transform:scale(.95)}
+
+/* ── Time Table: testata come l'occhiello di home, non più "Giorno" ──── */
+.tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
+.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
+.tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
+.tt-daynav{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
+.tt-daynav .x{flex-shrink:0}
+/* ── pillole dei giorni della time-table: come quelle di home, in cerchio ── */
+.tt-day{
+  position:relative;flex:0 0 auto;width:50px;height:50px;border-radius:50%;border:none;
+  background:var(--sand-tint);color:var(--ink-soft);font-family:inherit;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.05;transition:var(--ease);
+}
+.tt-day-wd{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
+.tt-day-n{font-size:1.05rem;font-weight:800;margin-top:.05rem}
+.tt-day-wx{position:absolute;top:-3px;right:-3px;font-size:.72rem}
+.tt-day.on{background:var(--green);color:#fff}
+.tt-day:active{transform:scale(.94)}
+.tt-day-add{
+  flex:0 0 auto;width:38px;height:38px;align-self:center;border-radius:50%;cursor:pointer;
+  border:1px solid var(--green);background:transparent;color:var(--green-deep);
+  display:grid;place-items:center;transition:var(--ease);
+}
+.tt-day-add svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round}
+.tt-day-add:active{transform:scale(.9)}
 .tt-hour{display:flex;gap:.6rem;border-top:1px dashed var(--line);padding:.15rem 0}
 .tt-h{width:46px;flex-shrink:0;text-align:right;font-family:'Fraunces',serif;font-size:.82rem;color:var(--ink-faint);padding-top:.55rem}
 .tt-slot{flex:1;min-height:38px;display:flex;flex-direction:column;gap:.4rem;padding:.3rem 0}
@@ -818,6 +844,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   </div>
   <div class="nav">
     <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
+    <div class="nav-item" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
     <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
     <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><span class="ni-tx">€</span></div>
     <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
@@ -1123,10 +1150,22 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="detailTitle">Viaggio</div><button class="x x-close" onclick="closeSheet('mDetail')">✕</button></div>
   <div id="detailBody"></div>
 </div></div>
-<div class="modal" id="mDay"><div class="sheet" style="max-height:94vh">
+<div class="modal" id="mDay"><div class="sheet tt-sheet" style="max-height:94vh">
   <div class="sheet-grip"></div>
-  <div class="sheet-head"><div style="display:flex;align-items:center;gap:.4rem"><button class="x" onclick="ttNav(-1)">‹</button><div class="sheet-t" id="dayTt" style="font-size:1.05rem">Giorno</div><button class="x" onclick="ttNav(1)">›</button></div><button class="x x-close" onclick="closeSheet('mDay')">✕</button></div>
-  <div class="chiprow-x" id="dayChips"></div>
+  <div class="tt-head">
+    <div style="min-width:0">
+      <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="closeSheet('mDay');setTimeout(()=>openTripZoom(T().id),160)">Viaggio · Giorno <span class="hh-chev">›</span></div>
+      <div class="tt-title">Time Table</div>
+      <div class="tt-sub" id="dayTt">Giorno</div>
+    </div>
+    <button class="x x-close" onclick="closeSheet('mDay')">✕</button>
+  </div>
+  <div class="tt-daynav">
+    <button class="x" onclick="ttNav(-1)">‹</button>
+    <div class="chiprow-x" id="dayChips" style="flex:1"></div>
+    <button class="x" onclick="ttNav(1)">›</button>
+  </div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
   <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
@@ -1134,7 +1173,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
-  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
@@ -3438,16 +3476,14 @@ function openTicketBig(id){
     const found=findTicketActivity(t,tk);
     if(found)who=found.a.who;
   }
-  /* Qui, a schermo intero per lo scan al gate, la tendina delle persone
-     serve solo quando c'è davvero un'ambiguità da sciogliere al volo: più
-     persone nell'attività E più biglietti da distinguere tra loro. Con una
-     sola persona, o un solo biglietto per l'attività (qualunque sia il
-     numero di persone), l'assegnazione è già ovvia o già fissata altrove:
-     mostriamo solo il nome, senza un controllo interattivo di troppo. Resta
-     comunque sempre modificabile nella scheda di modifica. */
-  const tkSiblings=t.tickets.filter(x=>x.actId===tk.actId).length;
-  if(who&&who.length>1&&tkSiblings>1){
-    html+=`<div class="fg" style="text-align:left;margin-top:1.2rem"><label>Assegna a</label><select id="tkBigPerson" onchange="assignTicketPerson(${tk.id},this.value)"><option value="">Nessuno</option>${who.map(pid=>{const p=t.participants.find(x=>x.id===pid);return p?`<option value="${pid}" ${tk.personId===pid?'selected':''}>${esc(p.name)}</option>`:'';}).join('')}</select></div>`;
+  /* Qui, a schermo intero per lo scan al gate, la tendina serve a scegliere
+     DI CHI vedere il biglietto (ognuno ha il proprio QR), non più a chi
+     assegnare quello aperto: prima si finiva per vedere sempre lo stesso
+     biglietto e riassegnarlo a rotazione. L'assegnazione vera e propria
+     resta nella scheda di modifica dell'attività (un menu per biglietto). */
+  const tkSiblings=t.tickets.filter(x=>x.actId===tk.actId);
+  if(who&&who.length>1&&tkSiblings.length>1){
+    html+=`<div class="fg" style="text-align:left;margin-top:1.2rem"><label>Vedi il biglietto di</label><select id="tkBigPerson" onchange="switchTicketBig(${tk.actId},${tk.id},this.value)">${who.map(pid=>{const p=t.participants.find(x=>x.id===pid);return p?`<option value="${pid}" ${tk.personId===pid?'selected':''}>${esc(p.name)}</option>`:'';}).join('')}</select></div>`;
   }else if(who&&who.length){
     const person=tk.personId?t.participants.find(p=>p.id===tk.personId):null;
     html+=`<div class="fg" style="text-align:left;margin-top:1.2rem"><label>Assegnato a</label><div style="font-weight:700">${person?esc(person.name):'Nessuno'}</div></div>`;
@@ -3463,6 +3499,19 @@ function assignTicketPerson(id,val){
   tk.personId=val?parseInt(val):null;
   save();renderTickets();renderAdTkList();
   toast(tk.personId?'🎫 Biglietto assegnato':'Assegnazione rimossa');
+}
+/* La tendina della vista a schermo intero sceglie di chi vedere il
+   biglietto, tra i fratelli già assegnati alla stessa attività: se quella
+   persona non ha ancora un biglietto suo, si resta su quello aperto invece
+   di mostrare un vuoto. */
+function switchTicketBig(actId,curId,val){
+  const t=T();if(!t)return;
+  const pid=val?parseInt(val):null;
+  const sib=t.tickets.find(x=>x.actId===actId&&x.personId===pid);
+  if(sib){openTicketBig(sib.id);return;}
+  toast('Nessun biglietto assegnato a questa persona');
+  const sel=document.getElementById('tkBigPerson'),cur=t.tickets.find(x=>x.id===curId);
+  if(sel&&cur)sel.value=cur.personId||'';
 }
 function renderTickets(){
   const t=T(),c=document.getElementById('ticketsList');
@@ -4303,7 +4352,13 @@ function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('dayTt').textContent=(d.title?d.title+' · ':'')+ds;
-  document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>`<button class="tchip ${j===i?'on':''}" onclick="openDay(${j})">G${j+1}${wxEmo(t.weather[x.date])}</button>`).join('')+`<button class="tchip" onclick="fromDayFlag=true;closeSheet('mDay');setTimeout(openAddDay,140)">+ giorno</button>`;
+  document.getElementById('ttEyebrow').innerHTML=`${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span>`;
+  document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>{
+    const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
+    const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString('it-IT',{weekday:'short'});
+    const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
+    return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
+  }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;closeSheet('mDay');setTimeout(openAddDay,140)" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   renderDayCity(t,d);renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
   buildTT();buildDayMap();
   openSheet('mDay');initTTFab();
