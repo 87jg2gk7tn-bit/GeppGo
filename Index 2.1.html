@@ -1743,6 +1743,12 @@ function homeCardsSync(force){
   for(let n=0;n<cards.length;n++){
     if(cards[n].getBoundingClientRect().right>sl+10){idx=n;break;}
   }
+  /* A fine corsa l'ultima tappa non arriva mai a sinistra: dopo di lei non
+     c'è altro da scorrere, quindi resta accostata a destra e la "più a
+     sinistra" continua a essere la penultima. Senza questo, l'ultima tappa
+     non si evidenziava mai sulla mappa se non spingendo la striscia oltre
+     il fermo con il dito. Lo stesso vale toccandone il segnaposto. */
+  if(strip.scrollLeft>=strip.scrollWidth-strip.clientWidth-4)idx=cards.length-1;
   if(force||idx!==homeCardSel){homeCardSel=idx;homeMapSelect(idx);}
 }
 function homeScrollToCard(i){
