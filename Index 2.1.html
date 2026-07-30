@@ -500,7 +500,7 @@ body.dark img.leaflet-tile{filter:brightness(.92) contrast(1.02)}
   .sheet{max-width:min(94vw,920px);border-radius:var(--r-xl)}
   .page{padding-left:1.6rem;padding-right:1.6rem}
 }
-.tszr{position:absolute;left:0;right:0;bottom:0;height:16px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;cursor:ns-resize}
+.tszr{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;cursor:ns-resize}
 .tszr::after{content:'';width:32px;height:4px;border-radius:4px;background:rgba(0,0,0,.18)}
 body.dark .tszr::after{background:rgba(255,255,255,.28)}
 
@@ -4833,7 +4833,13 @@ function buildTTDayInner(t,di){
        tappa che segue. */
     const gapPx=(gapEnd-gapStart)/60*H;
     const tight=gapPx<24;
-    const gTop=tight?((gapStart-360)/60*H-21):((gapStart-360)/60*H),gH=tight?20:Math.max(16,gapPx-2);
+    /* La targhetta compatta stava appoggiata al confine, cioe' proprio sopra la
+       maniglia con cui si allunga e si accorcia la tappa: il dito prendeva lei
+       e la maniglia non rispondeva piu'. Ora si tiene piu' in alto, lasciando
+       libera tutta la striscia della maniglia. Se il riquadro di prima e' cosi'
+       basso da non avere spazio, non lo si sfora comunque. */
+    const cimaPrec=(cur.r[0]-360)/60*H;
+    const gTop=tight?Math.max(cimaPrec+2,(gapStart-360)/60*H-44):((gapStart-360)/60*H),gH=tight?20:Math.max(16,gapPx-2);
     const geo=tight?`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`
                    :`top:${gTop}px;height:${gH}px;left:52px;width:calc(100% - 58px)`;
     const tcls=tight?' tt-travel-tight':'';
