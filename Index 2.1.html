@@ -3112,20 +3112,38 @@ function whoName(t,id){
   return pp?pp.name:'—';
 }
 function bookingCal(){
+  const name=document.getElementById('adName').value.trim()||'Attivita\u0027';
+  const fatta=document.getElementById('adBookDone').value==='si';
+  const pad=n=>String(n).padStart(2,'0');
+  const gcal=(titolo,ini,fin,dett)=>{
+    const f=x=>x.getFullYear()+pad(x.getMonth()+1)+pad(x.getDate())+'T'+pad(x.getHours())+pad(x.getMinutes())+'00';
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${f(ini)}/${f(fin)}&details=${encodeURIComponent(dett)}`,'_blank');
+  };
+  if(fatta){
+    /* Prenotazione gia' fatta: sul calendario non serve un promemoria per
+       prenotare, serve l'appuntamento vero. Ci va quindi il giorno e l'ora
+       dell'attivita', non la data entro cui si sarebbe dovuto prenotare. */
+    const t=T(),d=t&&adRef?t.days[adRef.di]:null;
+    const ora=document.getElementById('adTime').value;
+    if(!d||!ora){toast('Metti prima l\'orario dell\'attivita\u0027');return;}
+    const ini=new Date(d.date+'T'+ora);
+    const oraFine=document.getElementById('adTimeEnd').value;
+    const fin=(oraFine&&oraFine>ora)?new Date(d.date+'T'+oraFine):new Date(ini.getTime()+36e5);
+    /* L'avviso non si puo' impostare da un collegamento: Google prende titolo,
+       date e note, non la sveglia. Se e' stato chiesto un preavviso lo si dice
+       nelle note, cosi' resta scritto e si puo' impostare in un tocco. */
+    const av=document.getElementById('adRemindChk').checked?parseInt(document.getElementById('adRemindMin').value,10):0;
+    const dett='Prenotazione confermata \u00b7 da GeppGo'+(av?`\nAvviso chiesto: ${av>=1440?'il giorno prima':av+' minuti prima'} (impostalo qui come promemoria)`:'');
+    gcal(name,ini,fin,dett);
+    return;
+  }
   const d=document.getElementById('adBookBy').value;
   if(!d){toast('Metti prima il giorno dell\'avviso');return;}
-  const tm=(document.getElementById('adBookTime').value||'09:00').replace(':','');
-  const name=document.getElementById('adName').value.trim()||'Attività';
-  const ds=d.replace(/-/g,'');
-  /* Se la prenotazione e' gia' fatta, sul calendario ci va il nome e basta:
-     "Prenotare: ..." era un promemoria di qualcosa da fare, e leggerlo su un
-     evento gia' sistemato fa credere che ci sia ancora da muoversi. */
-  const fatta=document.getElementById('adBookDone').value==='si';
-  const titolo=fatta?name:'Prenotare: '+name;
-  const dett=fatta?'Prenotazione confermata · da GeppGo':'Promemoria creato con GeppGo';
-  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${ds}T${tm}00/${ds}T${tm}00&details=${encodeURIComponent(dett)}`;
-  window.open(url,'_blank');
+  const tm=document.getElementById('adBookTime').value||'09:00';
+  const ini=new Date(d+'T'+tm);
+  gcal('Prenotare: '+name,ini,ini,'Promemoria creato con GeppGo');
 }
+
 function checkBookRem(){
   const now=Date.now();
   app.trips.forEach(t=>{
@@ -5375,7 +5393,12 @@ function exportICS(){
     if(a.time){
       const s0=new Date(d.date+'T'+a.time),e0=(a.timeEnd&&a.timeEnd>a.time)?new Date(d.date+'T'+a.timeEnd):new Date(s0.getTime()+36e5);
       const f=x=>x.getFullYear()+pad(x.getMonth()+1)+pad(x.getDate())+'T'+pad(x.getHours())+pad(x.getMinutes())+'00';
-      lines.push('BEGIN:VEVENT','UID:'+uid()+'@geppgo','DTSTART:'+f(s0),'DTEND:'+f(e0),'SUMMARY:'+escT(a.name),'DESCRIPTION:'+escT(t.name+(a.notes?' · '+a.notes:'')),'END:VEVENT');n++;
+      /* Qui, a differenza del collegamento a Google, la sveglia si puo'
+         scrivere davvero: se e' stato chiesto un preavviso il calendario
+         avvisera' da solo, all'anticipo indicato. */
+      const ev=['BEGIN:VEVENT','UID:'+uid()+'@geppgo','DTSTART:'+f(s0),'DTEND:'+f(e0),'SUMMARY:'+escT(a.name),'DESCRIPTION:'+escT(t.name+(a.notes?' · '+a.notes:''))];
+      if(a.remindMin>0)ev.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+escT(a.name),'TRIGGER:-PT'+a.remindMin+'M','END:VALARM');
+      ev.push('END:VEVENT');lines.push(...ev);n++;
     }
     if(a.booking&&a.booking.needed&&!a.booking.done&&a.booking.by){
       const dt=a.booking.by.replace(/-/g,'');
