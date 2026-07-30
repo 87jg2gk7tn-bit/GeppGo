@@ -6438,7 +6438,10 @@ function adNameInput(){
        La guardia in cima alla funzione non basta: vale quando si digita, non
        quando la risposta arriva. */
     if(document.getElementById('adPoiCur').style.display==='flex'){box.innerHTML='';hint.textContent='';return;}
-    lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
+    /* Come per l'indirizzo: se il punteggio di pertinenza scarta ogni cosa, si
+       tiene la risposta com'e' invece di dire che non si e' trovato niente. */
+    const rk=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
+    lastAdNameRes=(rk&&rk.length)?rk:dd;
     hint.textContent='';
     if(!lastAdNameRes.length){box.innerHTML='';hint.textContent='Non l\'ho riconosciuto come luogo: incolla qui sotto l\'indirizzo.';return;}
     /* Il risultato migliore, se assomiglia abbastanza a quello scritto, viene
@@ -6572,6 +6575,16 @@ function adSetPlace(name,lat,lng){
    il comune, il confine amministrativo. Accettandolo, l'attivita' finiva a
    puntare al centro di Shibuya invece che al locale. Questi risultati si
    scartano finche' resta una variante da provare. */
+/* Il controllo che vale per ogni Paese, senza sapere niente di come si
+   scrivono li' gli indirizzi: il posto trovato deve stare dove si sta andando.
+   Vie e locali omonimi esistono ovunque, e un risultato a mille chilometri
+   dalla destinazione e' sbagliato comunque sia scritto l'indirizzo. */
+function lontanoDallaMeta(t,r){
+  if(!t||!t.destLoc)return false;
+  const la=parseFloat(r&&(r.lat!=null?r.lat:r.latitude)),ln=parseFloat(r&&(r.lon!=null?r.lon:r.lng));
+  if(!isFinite(la)||!isFinite(ln))return false;
+  return hav({lat:t.destLoc.lat,lng:t.destLoc.lng},{lat:la,lng:ln})>300000;   // oltre 300 km
+}
 function troppoGenerico(r){
   const cl=String(r&&r.class||''),ty=String(r&&r.type||'');
   if(cl==='boundary')return true;
@@ -6607,7 +6620,7 @@ async function adAddrFind(){
   const nomeAtt=document.getElementById('adName').value.trim();
   if(nomeAtt&&city)prove.push(nomeAtt+', '+city);
   if(nomeAtt)prove.push(nomeAtt);
-  let dd=[],usata='',ripiego=null;
+  let dd=[],usata='',ripiego=null,lontano=null;
   for(const v of prove){
     let res=[];
     try{res=await geoSearch(v,lh);}catch(e){res=[];}
@@ -6619,17 +6632,22 @@ async function adAddrFind(){
        Se il filtro non lascia nulla, si tiene la risposta cosi' com'e'. */
     const rank=(typeof rankPlaces==='function')?rankPlaces(res,v):res;
     const ranked=(rank&&rank.length)?rank:res;
-    const preciso=ranked.find(x=>!troppoGenerico(x));
+    const buoni=ranked.filter(x=>!lontanoDallaMeta(t,x));
+    const preciso=buoni.find(x=>!troppoGenerico(x));
     if(preciso){dd=[preciso];usata=v;break;}
-    if(!ripiego&&ranked[0])ripiego={r:ranked[0],v};   // il meglio del generico, da parte
+    // Da parte il meglio che c'e': prima un generico vicino, poi il resto.
+    if(!ripiego&&buoni[0])ripiego={r:buoni[0],v};
+    if(!lontano&&ranked[0])lontano={r:ranked[0],v};
   }
-  let generico=false;
+  let generico=false,fuoriZona=false;
   if(!dd.length&&ripiego){dd=[ripiego.r];usata=ripiego.v;generico=true;}
+  if(!dd.length&&lontano){dd=[lontano.r];usata=lontano.v;fuoriZona=true;}
   if(!dd.length){
     hint.textContent='Non l\'ho trovato. Prova con meno dettagli (via e citta\u0027), oppure incolla le coordinate.';
     return;
   }
-  hint.textContent=generico?'Ho trovato solo la zona, non il posto preciso: controlla la foto, o incolla le coordinate.':'';
+  hint.textContent=fuoriZona?'Attenzione: l\'unico risultato è lontano dalla destinazione del viaggio. Controlla la foto, o incolla le coordinate.'
+    :(generico?'Ho trovato solo la zona, non il posto preciso: controlla la foto, o incolla le coordinate.':'');
   lastAdNameRes=dd;
   adNameSel(0);
   inp.value='';
