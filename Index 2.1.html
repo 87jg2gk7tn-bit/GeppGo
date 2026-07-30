@@ -4713,11 +4713,25 @@ function buildTTDayInner(t,di){
   const timed=acts.filter(a=>actRange(a)).map(a=>({a,r:actRange(a)})).sort((x,y)=>x.r[0]-y.r[0]||y.r[1]-x.r[1]);
   const byId={};timed.forEach(it=>byId[it.a.id]=it);
   const kids={};
+  /* Due tappe affiancate hanno lo stesso orario, quindi ciascuna "contiene"
+     l'altra: erano diventate una la figlia dell'altra e sparivano tutte e due,
+     perche' una figlia si disegna dentro il riquadro del genitore e li' di
+     riquadri non ne restava nessuno. Per contenere davvero, una tappa deve
+     durare piu' a lungo. */
+  const contiene=(o,it)=>o.r[0]<=it.r[0]&&it.r[1]<=o.r[1]&&(o.r[1]-o.r[0])>(it.r[1]-it.r[0]);
   timed.forEach(it=>{
     let par=(it.a.parentId&&byId[it.a.parentId])||null;
-    if(par&&!(par.r[0]<=it.r[0]&&it.r[1]<=par.r[1]))par=null;
-    if(!par){for(const o of timed){if(o===it)continue;if(o.r[0]<=it.r[0]&&it.r[1]<=o.r[1]&&samePlace(it.a,o.a)){par=o;break;}}}
-    if(par&&par!==it){(kids[par.a.id]=kids[par.a.id]||[]).push(it);it._child=true;}
+    if(par&&!contiene(par,it))par=null;
+    if(!par){for(const o of timed){if(o===it)continue;if(contiene(o,it)&&samePlace(it.a,o.a)){par=o;break;}}}
+    if(par&&par!==it){it._par=par;}
+  });
+  /* Rete di sicurezza: se il genitore di una tappa e' a sua volta figlio, la
+     catena non ha un riquadro dove appoggiarsi. Meglio disegnarla da sola che
+     non disegnarla affatto: da qui non deve sparire niente, mai. */
+  timed.forEach(it=>{
+    let p=it._par,giri=0;
+    while(p&&p._par&&giri++<50)p=p._par;
+    if(p&&p!==it){(kids[p.a.id]=kids[p.a.id]||[]).push(it);it._child=true;}
   });
   const tops=timed.filter(it=>!it._child);
   let clusters=[],cur=[],curEnd=-1;
