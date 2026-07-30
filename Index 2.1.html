@@ -353,6 +353,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    anche il foglio sottostante. Le diamo un livello più alto così è sempre
    sopra qualunque altro foglio da cui viene aperta. */
 #mPlaceInfo{z-index:10050}
+/* "Come ci andiamo?" e' la risposta a un tocco dato dentro un altro foglio -
+   quasi sempre proprio la scheda Info qui sopra, che sta a 10050. A 9999
+   finiva dietro: si toccava "Naviga" e non succedeva niente in vista, il menu
+   si trovava solo chiudendo la scheda. Sta sopra a tutti i fogli da cui puo'
+   essere aperto, e sotto al picker delle tendine. */
+#mNav{z-index:10080}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -4197,6 +4203,10 @@ function navGo(kind,lat,lng,name){
   const saved=app.settings.nav;app.settings.nav=kind;openNav(lat,lng,name);app.settings.nav=saved||'ask';
 }
 async function internalNav(lat,lng,name){
+  /* Il navigatore interno disegna il percorso sulla mappa grande, che sta
+     dietro: se il foglio da cui si e' partiti resta aperto, si va sulla mappa
+     e non si vede niente. Si chiude tutto quello che e' rimasto davanti. */
+  document.querySelectorAll('.modal.active').forEach(m2=>m2.classList.remove('active'));
   if(!meMarker){toast('Attiva prima il GPS');return;}
   const m=meMarker.getLatLng();go('plan');toast('🧭 Calcolo il percorso...');
   try{
