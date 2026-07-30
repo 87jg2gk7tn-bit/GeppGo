@@ -346,7 +346,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .picker-opt:disabled{color:var(--ink-faint);opacity:.5}
 .picker-opt:active{background:var(--paper)}
 #mPicker{z-index:10100}
-/* mPlaceInfo (la pagina "Storia del posto") viene aperta spesso SOPRA un
+/* mPlaceInfo (la scheda "Info" del luogo) viene aperta spesso SOPRA un
    altro foglio già attivo (es. la timetable, tramite il menu dell'attività):
    essendo definita prima nell'HTML, a parità di z-index con gli altri
    fogli finiva sotto invece che sopra, nascosta finché non si chiudeva
@@ -1219,7 +1219,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
   <div id="amBtns" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
-    <button class="btn btn-soft btn-block" onclick="actMenuHistory()">📖 Storia del posto</button>
+    <button class="btn btn-soft btn-block" onclick="actMenuInfo()">ℹ️ Info</button>
     <button class="btn btn-soft btn-block" id="amNavBtn" style="display:none" onclick="actMenuNav()">🧭 Naviga</button>
     <button class="btn btn-soft btn-block" id="amTkBtn" style="display:none" onclick="actMenuTicket()">🎫 Biglietto</button>
     <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
@@ -2713,7 +2713,7 @@ function tapAct(di,id){
   document.getElementById('amTkBtn').style.display=tk?'block':'none';
   openSheet('mActMenu');
 }
-function actMenuHistory(){
+function actMenuInfo(){
   if(!actMenuRef)return;const {di,id}=actMenuRef;
   const t=T();if(!t||!t.days[di])return;
   const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
