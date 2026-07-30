@@ -1124,6 +1124,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.7rem">Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.</p>
   <div id="restoreBody"></div>
 </div></div>
+<div class="modal" id="mTripDates"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Durata del viaggio</div><button class="x x-close" onclick="closeSheet('mTripDates')">✕</button></div>
+  <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Inizio</label><input type="date" id="tdStart"></div><div class="fg" style="flex:1"><label>Fine</label><input type="date" id="tdEnd"></div></div>
+  <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.8rem">Creo i giorni che mancano nell'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.</p>
+  <button class="btn btn-grad btn-block" onclick="saveTripDates()">Aggiorna i giorni</button>
+</div></div>
 <div class="modal" id="mAddDay"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Aggiungi giorno</div><button class="x x-close" onclick="closeSheet('mAddDay')">✕</button></div>
@@ -1619,6 +1626,34 @@ function createTrip(){
   if(!trip.days.length)trip.days.push({id:uid(),date:start||end||todayISO(),title:'',activities:[]});
   app.trips.push(trip);ensureDestLoc(trip).then(()=>{drawMarkers();if(trip.destLoc)openFamousPlaces(trip);});geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
 }
+/* Le date si potevano indicare solo alla creazione: se il viaggio nasceva
+   senza, restava con un giorno solo e gli altri andavano aggiunti a uno a uno.
+   Qui si dichiara la durata anche dopo, e i giorni mancanti compaiono tutti
+   insieme. Si aggiunge soltanto: un giorno gi\u00e0 presente non viene toccato e
+   nessuno viene mai tolto, perch\u00e9 potrebbe avere delle attivit\u00e0 dentro. */
+function openTripDates(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  document.getElementById('tdStart').value=t.start||'';
+  document.getElementById('tdEnd').value=t.end||'';
+  openSheet('mTripDates');
+}
+function saveTripDates(){
+  const t=T();if(!t)return;
+  const s=document.getElementById('tdStart').value,e=document.getElementById('tdEnd').value;
+  if(!s||!e){toast('Servono sia la data di inizio sia quella di fine');return;}
+  if(e<s){toast('La fine viene prima dell\'inizio');return;}
+  t.start=s;t.end=e;
+  const gia=new Set(t.days.map(d=>d.date));
+  const fine=new Date(e);let n=0;
+  for(let d=new Date(s);d<=fine;d.setDate(d.getDate()+1)){
+    const iso=d.toISOString().split('T')[0];
+    if(!gia.has(iso)){t.days.push({id:uid(),date:iso,title:'',activities:[]});n++;}
+  }
+  t.days.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  save();renderAll();closeSheet('mTripDates');
+  toast(n?`\u2705 ${n} giorn${n===1?'o aggiunto':'i aggiunti'}`:'I giorni c\'erano gi\u00e0 tutti');
+  refreshWeather();
+}
 function switchTrip(){const el=document.getElementById('tripPick');if(!el)return;const id=parseInt(el.value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
 function renderTripPick(){
   const sel=document.getElementById('tripPick');if(!sel)return;
@@ -1657,7 +1692,7 @@ function renderTripZoomBody(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtMoney(spent,t.currency||'EUR')}</div><div class="ths-l">Tua spesa</div></div></div></div>
   <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
     <button class="btn btn-soft" style="flex:1" onclick="toggleStatus()">🏁 Concludi viaggio</button>
     <!-- "Elimina" è TEMPORANEO, solo per i test: quando avremo Premium, qui
@@ -1941,6 +1976,7 @@ function renderHomeHero(){
   const actsBar=`<div class="hh-acts">
     <button class="hh-act" onclick="toggleStatus()">${esc(tripPhase(t))}</button>
     <button class="hh-act" onclick="renameTrip(${t.id})">✎ Rinomina</button>
+    <button class="hh-act" onclick="openTripDates()">📅 Giorni</button>
     <button class="hh-act" onclick="openShare()">Condividi</button>
     <button class="hh-act" onclick="openPeople()">Persone</button>
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
