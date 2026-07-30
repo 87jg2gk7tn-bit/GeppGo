@@ -1159,9 +1159,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mImportDay"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Importa lista del giorno</div><button class="x x-close" onclick="closeSheet('mImportDay')">✕</button></div>
-  <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Incolla un elenco di posti con l'orario (anche generato da un'AI, uno per riga): li aggiungo come attività a questa giornata, in aggiunta a quelle già presenti.</p>
-  <div class="fg"><textarea id="dayImportText" placeholder="09:00 Colosseo&#10;11:00 Foro Romano&#10;13:00 Pranzo in trattoria&#10;15:30 Pantheon" style="min-height:140px"></textarea></div>
-  <button class="btn btn-grad btn-block" id="dayImportBtn" onclick="importDayText()">Aggiungi alla giornata</button>
+  <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Incolla un elenco di posti, uno per riga (anche generato da un'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono, <strong>Autopilota</strong> li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all'ora giusta, e lascia il tempo per spostarsi da un posto all'altro.</p>
+  <div class="fg"><textarea id="dayImportText" placeholder="Colosseo&#10;Foro Romano&#10;Pranzo in trattoria&#10;Pantheon&#10;Cena a Trastevere" style="min-height:140px"></textarea></div>
+  <button class="btn btn-grad btn-block" id="dayAutoBtn" onclick="autopilotDay()">🪄 Autopilota — mettili in orario tu</button>
+  <button class="btn btn-soft btn-block" id="dayImportBtn" style="margin-top:.5rem" onclick="importDayText()">Aggiungi così come sono</button>
   <div id="dayImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.6rem;line-height:1.5"></div>
 </div></div>
 <div class="modal" id="mPerson"><div class="sheet">
@@ -5327,6 +5328,80 @@ function addHotelStopAct(){
   setTimeout(()=>openActDetail(di,a.id),150);
 }
 function openImportDay(){document.getElementById('dayImportText').value='';document.getElementById('dayImportStatus').textContent='';setTimeout(()=>openSheet('mImportDay'),160);}
+/* ===== AUTOPILOTA =====
+   Una lista di posti senza orari non e' una giornata: bisogna decidere in che
+   ordine, quanto starci e a che ora. Qui si prova a farlo come lo farebbe uno
+   che il posto lo conosce - un museo ti prende due ore, una chiesa quaranta
+   minuti; a mezzogiorno e mezzo si mangia e alle otto si cena, non quando
+   capita; e fra un posto e l'altro c'e' la strada da fare, che va tolta dal
+   tempo a disposizione invece di far comparire tappe attaccate impossibili. */
+const AP_DURATA={colazione:45,brunch:90,pranzo:75,cena:105,aperitivo:60,caffe:30,
+  museo:120,parco:75,monumento:60,culto:40,quartiere:90,shopping:75,panorama:45,
+  mercato:60,spettacolo:150,terme:120,default:75};
+/* Prima ora sensata per i pasti: se il giro arriva li' dopo, si mangia dopo -
+   non si torna mai indietro nel tempo. */
+const AP_FINESTRA={colazione:'08:30',brunch:'11:00',pranzo:'12:30',aperitivo:'18:00',cena:'19:30'};
+const AP_INIZIO='09:00',AP_FINE='23:30';
+function hhmm(min){
+  const m=Math.max(0,Math.round(min));
+  return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+/* Che cosa e' questa riga. Il nome ha sempre ragione sulla mappa: se scrivi
+   "cena da Gonpachi" vuoi una cena, anche se OpenStreetMap lo chiama soltanto
+   "ristorante". Quando il nome non dice niente - "Gonpachi Shibuya" e basta -
+   allora si guarda che cosa e' quel punto secondo la mappa, ed e' li' che si
+   scopre che e' un locale e non un monumento. */
+function apGenere(nome,osm){
+  const s=' '+String(nome||'').toLowerCase()+' ';
+  if(/colazion|breakfast/.test(s))return'colazione';
+  if(/brunch/.test(s))return'brunch';
+  if(/pranz|lunch|\bmezzogiorno\b/.test(s))return'pranzo';
+  if(/\bcena\b|cenare|\bdinner\b|izakaya/.test(s))return'cena';
+  if(/aperitiv|cocktail|\bdrink|happy hour/.test(s))return'aperitivo';
+  if(/caff[eè]\b|coffee|colazione al bar/.test(s))return'caffe';
+  if(/muse|galler[ia]|pinacotec|mostra|exhibition/.test(s))return'museo';
+  if(/parco|park|giardin|garden|jardin|orto botanico/.test(s))return'parco';
+  if(/tempio|temple|santuario|shrine|jinja|chiesa|church|duomo|basilic|cattedral|moschea|sinagog/.test(s))return'culto';
+  if(/mercato|market|ichiba|bazar|souk/.test(s))return'mercato';
+  if(/shopping|negozi|outlet|centro commerciale|\bmall\b|boutique/.test(s))return'shopping';
+  if(/torre|tower|osservatori|observator|skytree|panoram|belvedere|terrazz|vista su/.test(s))return'panorama';
+  if(/quartiere|district|crossing|zona di|giro per/.test(s))return'quartiere';
+  if(/spettacol|teatro|theatre|concerto|kabuki|opera|show/.test(s))return'spettacolo';
+  if(/terme|onsen|spa\b/.test(s))return'terme';
+  if(/castello|castle|palazzo|palace|forte|rocca|monument|statua|ponte/.test(s))return'monumento';
+  const cls=((osm&&(osm.class||osm.osm_key))||'')+'='+((osm&&(osm.type||osm.osm_value))||'');
+  if(/^amenity=(restaurant|fast_food|food_court|biergarten|pub)$/.test(cls))return'pasto';
+  if(/^amenity=(cafe|ice_cream)$/.test(cls))return'caffe';
+  if(/^amenity=(bar|nightclub)$/.test(cls))return'aperitivo';
+  if(/^amenity=marketplace$/.test(cls))return'mercato';
+  if(/^amenity=place_of_worship$/.test(cls)||/^building=(temple|church|cathedral|mosque)$/.test(cls))return'culto';
+  if(/^amenity=(theatre|cinema)$/.test(cls))return'spettacolo';
+  if(/^tourism=(museum|gallery)$/.test(cls))return'museo';
+  if(/^tourism=viewpoint$/.test(cls))return'panorama';
+  if(/^tourism=(theme_park|zoo|aquarium)$/.test(cls))return'spettacolo';
+  if(/^leisure=(park|garden|nature_reserve)$/.test(cls))return'parco';
+  if(/^(shop|craft)=/.test(cls))return'shopping';
+  if(/^historic=/.test(cls))return'monumento';
+  if(/^(place|boundary)=/.test(cls))return'quartiere';
+  return'';
+}
+/* Un locale che il nome non qualifica - "Gonpachi", e basta, e solo la mappa
+   sa che e' un ristorante - non e' mai una colazione: in un ristorante ci si
+   siede a pranzo o a cena. Prendere l'ora in cui il giro ci arriva e chiamarla
+   colazione lo piazzerebbe alle dieci del mattino, che e' proprio il tipo di
+   errore che l'autopilota deve evitare. Se il pranzo e' gia' passato, o e'
+   gia' stato messo, si va a cena. */
+function apPastoDelMomento(min,fatti){
+  if(min>=tMin('16:30'))return'cena';
+  if(fatti&&fatti.has('pranzo'))return'cena';
+  return'pranzo';
+}
+/* Il tipo dell'attività, per il meteo e per l'emoji: all'aperto o al chiuso. */
+function apTipo(g){
+  if(g==='parco'||g==='quartiere'||g==='panorama'||g==='mercato'||g==='monumento')return'outdoor';
+  if(g==='museo'||g==='spettacolo'||g==='terme'||g==='shopping')return'indoor';
+  return'any';
+}
 let dayImportBusy=false;
 /* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
    un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
@@ -5393,6 +5468,114 @@ async function importDayText(){
   if(idx>=0)setTimeout(()=>openDay(idx),150);
 }
 function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(ttDay,1);save();renderAll();closeSheet('mDay');});}
+async function autopilotDay(){
+  const t=T();if(!t||dayImportBusy)return;
+  const di=ttDay,d0=t.days[di];if(!d0)return;
+  const tripId=t.id,dayId=d0.id;
+  const giornoVero=()=>{const t2=app.trips.find(x=>x.id===tripId);return t2?(t2.days||[]).find(x=>x.id===dayId):null;};
+  const raw=document.getElementById('dayImportText').value;
+  const timeRe=/([01]?\d|2[0-3])[:.]([0-5]\d)/;
+  const lines=raw.split('\n').map(l=>l.replace(/^(?:[-*•]\s*|\d+[.)]\s+)/,'').trim()).filter(Boolean);
+  if(!lines.length){toast('Incolla prima un elenco di posti');return;}
+  dayImportBusy=true;
+  const st=document.getElementById('dayImportStatus');
+  const btnA=document.getElementById('dayAutoBtn'),btnI=document.getElementById('dayImportBtn');
+  if(btnA)btnA.disabled=true;if(btnI)btnI.disabled=true;
+  const whoAll=t.participants.map(p=>p.id);
+  const city=tripCityHint(t);
+  /* Primo giro: si cerca dove sta ogni riga. Serve sia per la mappa sia per
+     decidere i tempi, perche' la strada fra due posti si sa solo sapendo dove
+     sono. */
+  const voci=[];
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(st)st.textContent=`Cerco i posti… ${i+1}/${lines.length}`;
+    const m=line.match(timeRe);
+    let time='',name=line;
+    if(m){
+      time=String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
+      name=(line.slice(0,m.index)+line.slice(m.index+m[0].length)).replace(/^[\s\-–—:·|]+|[\s\-–—:·|]+$/g,'').trim();
+      if(!name)name=line;
+    }
+    let loc=null,osm=null;
+    try{
+      let res=await geoSearch(city?name+', '+city:name);
+      if(!res.length&&city)res=await geoSearch(name);
+      const ranked=(typeof rankPlaces==='function')?rankPlaces(res,name):res;
+      const r=(ranked&&ranked.length?ranked:res)[0];
+      if(r){loc={lat:parseFloat(r.lat),lng:parseFloat(r.lon)};osm=r;}
+    }catch(e){}
+    voci.push({name,time,loc,osm,genere:apGenere(name,osm)});
+    if(i<lines.length-1)await new Promise(r2=>setTimeout(r2,1100));
+  }
+  /* Secondo giro: gli orari. Si parte dopo l'ultima attivita' gia' in giornata
+     - l'autopilota aggiunge, non riscrive quello che c'e' - e si avanza
+     sommando quanto si sta in ogni posto piu' quanto ci vuole ad arrivare al
+     successivo. I pasti non si lasciano trascinare: aspettano la loro ora. */
+  const dv0=giornoVero()||d0;
+  const rain=dayIsRainy(t,dv0);
+  let clock=tMin(AP_INIZIO);
+  (dv0.activities||[]).forEach(a=>{const r=actRange(a);if(r&&r[1]>clock)clock=r[1];});
+  const fine=tMin(AP_FINE);
+  let fuoriTempo=0;
+  const pastiFatti=new Set();
+  voci.forEach((v,i)=>{
+    let g=v.genere||'default';
+    if(v.time){
+      // orario scritto a mano: comanda quello, e il giro riparte da li'
+      const st2=tMin(v.time);
+      if(st2!=null)clock=Math.max(clock,st2);
+      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
+    }else{
+      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
+      const f=AP_FINESTRA[g];
+      if(f&&clock<tMin(f))clock=tMin(f);
+      if(clock>fine){v.fuori=true;fuoriTempo++;return;}
+      v.time=hhmm(clock);
+    }
+    v.genere=g;
+    if(AP_FINESTRA[g])pastiFatti.add(g);
+    const dur=AP_DURATA[g]||AP_DURATA.default;
+    v.timeEnd=hhmm(Math.min(clock+dur,1439));
+    clock+=dur;
+    const nx=voci[i+1];
+    if(nx&&v.loc&&nx.loc){
+      const est=travelEstimate(dv0,hav(v.loc,nx.loc),null,rain);
+      clock+=est.minutes;
+      v.versoProssima=est.minutes;
+    }
+  });
+  /* Si scrive tutto insieme, ma una riga alla volta e salvando: se l'app viene
+     chiusa a meta', quello che e' entrato resta. Il giorno si ritrova ogni
+     volta per id, che nel frattempo puo' essere arrivata la sincronizzazione. */
+  let added=0;
+  voci.forEach(v=>{
+    const dv=giornoVero();if(!dv)return;
+    dv.activities.push({id:uid(),name:v.name,time:v.time||'',timeEnd:v.timeEnd||'',
+      type:apTipo(v.genere),notes:'',who:whoAll.slice(),completed:false,
+      booking:{needed:false,done:false},
+      lat:v.loc?v.loc.lat:null,lng:v.loc?v.loc.lng:null,poiId:null});
+    added++;save();
+  });
+  save();renderAll();
+  dayImportBusy=false;if(btnA)btnA.disabled=false;if(btnI)btnI.disabled=false;
+  document.getElementById('dayImportText').value='';
+  const senzaPosto=voci.filter(v=>!v.loc).length;
+  const inOrario=added-fuoriTempo;
+  const note=[inOrario===1?'Messa in orario 1 tappa.':`Messe in orario ${inOrario} tappe.`];
+  if(fuoriTempo)note.push(fuoriTempo===1
+    ?'1 non ci stava nella giornata: aggiunta senza orario, in cima.'
+    :`${fuoriTempo} non ci stavano nella giornata: aggiunte senza orario, in cima.`);
+  if(senzaPosto)note.push(senzaPosto===1
+    ?'1 senza posizione: aprila e incolla l\'indirizzo.'
+    :`${senzaPosto} senza posizione: aprile e incolla l'indirizzo.`);
+  if(st)st.textContent=note.join(' ');
+  const t3=app.trips.find(x=>x.id===tripId);
+  const idx=t3?(t3.days||[]).findIndex(x=>x.id===dayId):-1;
+  toast(`🪄 ${added} tappe in G${(idx>=0?idx:di)+1}`);
+  closeSheet('mImportDay');
+  if(idx>=0)setTimeout(()=>openDay(idx),150);
+}
 
 /* ===== AVVISO "ORA DI PARTIRE": comandi del foglio attività ===== */
 let adLeaveMode='walk',adLeaveAsked=false;
