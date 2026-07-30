@@ -615,6 +615,10 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
    dosso il vestito da foglio e il "+" sale sopra la barra in basso. */
 .tt-sheet{background:transparent;padding:0;border-radius:0;box-shadow:none;max-width:none;width:auto;overflow:visible;transform:none}
 #mDay .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
+/* Un trascinamento sbagliato si annulla da qui: sta dall'altra parte rispetto
+   al "+", cosi' non si tocca per sbaglio quello mentre si cerca questo. */
+.tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;transition:var(--ease)}
+.tt-undo:active{transform:scale(.92)}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
 .page{padding:1.1rem 1.15rem}
@@ -1036,6 +1040,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
+<button class="tt-undo" id="ttUndo" style="display:none" onclick="undoDrag()" title="Annulla lo spostamento" aria-label="Annulla lo spostamento">↩</button>
 <button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
@@ -4613,6 +4618,7 @@ function openDay(i){
     const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
     return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
   }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
+  clearDragUndo();
   renderDayCity(t,d);renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
   buildTT();buildDayMap();
   go('mDay');initTTFab();
@@ -4807,6 +4813,37 @@ window.addEventListener('resize',()=>{
    stretta perche' e' la piu' specifica (il pranzo sta nel giro del pomeriggio,
    non nell'intera giornata). Si escludono se stessa e le proprie dipendenti,
    per non creare un anello. */
+/* L'ultimo spostamento fatto col dito, per poterlo disfare: un trascinamento
+   e' facile da sbagliare e senza questo l'orario di prima era perso. Si tiene
+   solo l'ultimo, che e' quello che si vuole annullare subito dopo averlo
+   sbagliato. */
+let lastDrag=null;
+function markDrag(a,prev){
+  lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId};
+  const b=document.getElementById('ttUndo');if(b)b.style.display='grid';
+}
+function clearDragUndo(){
+  lastDrag=null;
+  const b=document.getElementById('ttUndo');if(b)b.style.display='none';
+}
+function undoDrag(){
+  if(!lastDrag){clearDragUndo();return;}
+  const t=T(),d=t&&t.days[lastDrag.di];
+  const a=d&&(d.activities||[]).find(x=>x.id===lastDrag.id);
+  if(!a){clearDragUndo();return;}
+  a.time=lastDrag.time;a.timeEnd=lastDrag.timeEnd;a.parentId=lastDrag.parentId;
+  clearDragUndo();
+  save();buildTT();
+  toast('↩ Spostamento annullato');
+}
+/* Dopo uno spostamento l'attivita' entra o esce da quella che la contiene. */
+function reparentAfterDrag(d,act){
+  const nr=actRange(act);if(!nr)return;
+  const host=hostAt(d,nr,act.id),dopo=host?host.id:null;
+  if((act.parentId||null)===dopo)return;
+  act.parentId=dopo;
+  toast(dopo?`Ora fa parte di "${host.name}"`:'Ora e\' indipendente');
+}
 function hostAt(d,r,selfId){
   let best=null,span=Infinity;
   (d.activities||[]).forEach(o=>{
@@ -4826,19 +4863,12 @@ function bindBlockDrag(el,act,t,d){
     const cand={time:fmtT(ns),timeEnd:act.nextDay?act.timeEnd:fmtT(ns+dur),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,nextDay:act.nextDay};
     const c=findConflict(t,d,cand,act.id);
     if(c)toast(`⚠️ Si sovrappone a "${c.act.name}" per ${c.names}`);
+    const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
     act.time=cand.time;if(hadEnd)act.timeEnd=cand.timeEnd;
     /* Trascinandola dentro l'orario di un'altra, l'attivita' le diventa
-       dipendente; portandola fuori torna indipendente. Prima l'annidamento si
-       poteva dichiarare solo dal menu "Si svolge dentro un'altra attivita'",
-       e trascinare non lo cambiava mai. */
-    const nr=actRange(act);
-    if(nr){
-      const host=hostAt(d,nr,act.id),prima=act.parentId||null,dopo=host?host.id:null;
-      if(prima!==dopo){
-        act.parentId=dopo;
-        toast(dopo?`Ora fa parte di "${host.name}"`:'Ora e\' indipendente');
-      }
-    }
+       dipendente; portandola fuori torna indipendente. */
+    reparentAfterDrag(d,act);
+    markDrag(act,prev);
     save();buildTT();};
   g.addEventListener('pointerup',fin);g.addEventListener('pointercancel',fin);
   const rz=el.querySelector('.tszr');
@@ -4908,7 +4938,13 @@ function bindChildDrag(el,act,t,d){
     const cand={time:fmtT(ns),timeEnd:act.nextDay?act.timeEnd:(hadEnd?fmtT(ns+dur):''),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,nextDay:act.nextDay,id:act.id};
     const c=findConflict(t,d,cand,act.id);
     if(c)toast(`⚠️ Si sovrappone a "${c.act.name}" per ${c.names}`);
+    const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
     act.time=cand.time;if(hadEnd&&!act.nextDay)act.timeEnd=cand.timeEnd;
+    /* Vale anche per le tappe annidate: trascinandole fuori dal riquadro che
+       le contiene tornano indipendenti. Prima restavano agganciate anche una
+       volta portate altrove, e non c'era modo di liberarle col dito. */
+    reparentAfterDrag(d,act);
+    markDrag(act,prev);
     save();buildTT();
   };
   el.addEventListener('pointerup',fin);el.addEventListener('pointercancel',fin);
