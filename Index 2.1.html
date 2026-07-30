@@ -4654,6 +4654,23 @@ function findConflict(t,day,cand,excludeId){
 }
 function fmtT(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
 function isTTLandscapeWide(){return window.matchMedia('(orientation: landscape) and (min-width: 700px)').matches;}
+/* Le tappe dentro una piu' grande - il pranzo dentro la giornata al parco -
+   avevano il loro riquadro ma nessuna indicazione di quanta strada ci sia
+   dall'una all'altra: il calcolo guardava solo le tappe di primo livello e
+   qui dentro non arrivava mai. */
+function childrenHtml(ks,par,d,t,H,dwx,wpre){
+  let h='';
+  ks.forEach((k,n)=>{
+    const kt=Math.max(24,(k.r[0]-par.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);
+    h+=`<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;
+    const nx=ks[n+1];
+    if(!nx||!k.a.lat||!nx.a.lat||nx.r[0]<k.r[1])return;
+    const est=travelEstimate(d,hav(k.a,nx.a),k.a.segTravelMode,dwx&&dwx.precipitation>5);
+    const top=Math.max(20,(nx.r[0]-par.r[0])/60*H-19);
+    h+=`<div class="tt-travel tt-travel-shown tt-travel-tight" style="top:${top}px;height:18px;right:6px;left:auto;width:auto;max-width:calc(100% - 12px)" onclick="event.stopPropagation()"><span>${est.mode==='car'?'\uD83D\uDE97':est.mode==='train'?'\uD83D\uDE86':'\uD83D\uDEB6'} ${est.minutes} min \u00b7 ${est.km} km</span></div>`;
+  });
+  return h;
+}
 function buildTTDayInner(t,di){
   const d=t.days[di],H=TT_H,dwx=t.weather[d.date];
   const wpre=a=>(a&&a.type==='outdoor'&&dwx)?wxEmo(dwx)+' ':'';
@@ -4704,7 +4721,7 @@ function buildTTDayInner(t,di){
     const cls='tt-block'+(compact?' tt-compact':'')+(a.completed?' done':'');
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${(kids[a.id]||[]).map(k=>{const kt=Math.max(24,(k.r[0]-it.r[0])/60*H+3),kh=Math.max(17,(k.r[1]-k.r[0])/60*H-5);return `<div class="tt-child" data-id="${k.a.id}" style="top:${kt}px;height:${kh}px" onclick="event.stopPropagation()">${k.a.time||''} ${wpre(k.a)}${esc(k.a.name)}</div>`;}).join('')}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
   for(let i=0;i<tops.length-1;i++){
@@ -4784,6 +4801,19 @@ window.addEventListener('resize',()=>{
     try{if(dayMapObj)dayMapObj.invalidateSize();}catch(e){}
   },150);
 });
+/* L'attivita' piu' stretta che contiene per intero questo intervallo: la piu'
+   stretta perche' e' la piu' specifica (il pranzo sta nel giro del pomeriggio,
+   non nell'intera giornata). Si escludono se stessa e le proprie dipendenti,
+   per non creare un anello. */
+function hostAt(d,r,selfId){
+  let best=null,span=Infinity;
+  (d.activities||[]).forEach(o=>{
+    if(o.id===selfId||o.parentId===selfId)return;
+    const or=actRange(o);if(!or)return;
+    if(or[0]<=r[0]&&r[1]<=or[1]&&(or[1]-or[0])<span){span=or[1]-or[0];best=o;}
+  });
+  return best;
+}
 function bindBlockDrag(el,act,t,d){
   const g=el.querySelector('.tgrip');if(!g)return;g.style.touchAction='none';
   let on=false,sy=0,orig=0,dur=60,hadEnd=false,ns=0;
@@ -4795,6 +4825,18 @@ function bindBlockDrag(el,act,t,d){
     const c=findConflict(t,d,cand,act.id);
     if(c)toast(`⚠️ Si sovrappone a "${c.act.name}" per ${c.names}`);
     act.time=cand.time;if(hadEnd)act.timeEnd=cand.timeEnd;
+    /* Trascinandola dentro l'orario di un'altra, l'attivita' le diventa
+       dipendente; portandola fuori torna indipendente. Prima l'annidamento si
+       poteva dichiarare solo dal menu "Si svolge dentro un'altra attivita'",
+       e trascinare non lo cambiava mai. */
+    const nr=actRange(act);
+    if(nr){
+      const host=hostAt(d,nr,act.id),prima=act.parentId||null,dopo=host?host.id:null;
+      if(prima!==dopo){
+        act.parentId=dopo;
+        toast(dopo?`Ora fa parte di "${host.name}"`:'Ora e\' indipendente');
+      }
+    }
     save();buildTT();};
   g.addEventListener('pointerup',fin);g.addEventListener('pointercancel',fin);
   const rz=el.querySelector('.tszr');
