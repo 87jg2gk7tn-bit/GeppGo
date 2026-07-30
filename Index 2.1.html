@@ -821,6 +821,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   margin:.2rem -1.15rem 1rem;border-radius:var(--r-lg);overflow:hidden;
   border:1px solid var(--line-soft);box-shadow:var(--sh-xs);
 }
+/* Scorrendo si puo' arrivare a una tappa senza posizione: la mappa non ha
+   niente da mostrare e prima restava ferma su quella di prima, come se fosse
+   ancora quella in mano. Meglio dirlo. */
+.hh-map-note{position:absolute;left:.5rem;right:.5rem;bottom:.5rem;background:var(--ink);color:var(--paper);font-size:.72rem;font-weight:700;padding:.4rem .6rem;border-radius:10px;text-align:center;z-index:500;pointer-events:none}
+.hh-map-wrap{position:relative}
 .hh-map-wrap #homeMap{height:180px;width:100%;background:var(--sand-tint)}
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1829,6 +1834,9 @@ function homeMapSelect(cardIdx){
   let sel=-1;
   homeMapPts.forEach((x,n)=>{if(x.i===cardIdx)sel=n;});
   homeMapMarks.forEach((mk,n)=>mk.setIcon(homeMapIcon(n+1,n===sel)));
+  // Nessun segnaposto per questa tappa: si dice perche', invece di tacere.
+  const nota=document.getElementById('homeMapNote');
+  if(nota)nota.style.display=sel<0?'block':'none';
   /* Prima la mappa si limitava a spostarsi restando all'inquadratura larga
      che teneva dentro tutte le tappe: della tappa in mano non si vedeva la via,
      solo il quartiere. Ora ci si avvicina davvero. */
@@ -2051,7 +2059,7 @@ function renderHomeHero(){
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div>
   </div>
-  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div></div>
+  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div></div>
   <div class="hh-cards">${acts.map(a=>{
     const av=avOf(a);
     return `<div class="hh-card${nx&&nx.a.id===a.id?' next':''}" onclick="tapAct(${i},${a.id})">
@@ -6488,7 +6496,8 @@ function placeNameFromUrl(txt){
 function addrVariants(raw){
   const s=String(raw||'').replace(/\s+/g,' ').trim();
   const out=[s];
-  let pulito=s.replace(/\b\d{5}\b/g,' ')                  // il CAP
+  let pulito=s.replace(/\b\d{3}-\d{4}\b/g,' ')           // il CAP giapponese: 150-0042
+              .replace(/\b\d{5}\b/g,' ')                  // il CAP nostro
               .replace(/\b[A-Z]{2}\b(?=\s*(,|$))/g,' ')    // la sigla della provincia
               .replace(/\s*,\s*/g,', ').replace(/\s{2,}/g,' ')
               .replace(/(,\s*)+/g,', ').replace(/^,\s*|,\s*$/g,'').trim();
@@ -6500,7 +6509,11 @@ function addrVariants(raw){
   const parts=pulito.split(',').map(x=>x.trim()).filter(Boolean);
   if(parts.length>2){
     out.push(parts.slice(0,parts.length-1).join(', '));  // senza la nazione in coda
-    out.push(parts[0]+', '+parts[1]);                    // solo via e citta'
+    out.push(parts[0]+', '+parts[1]);                    // solo via e quartiere
+    /* Fuori Italia la citta' non e' quasi mai il secondo pezzo: in Giappone
+       "15-1 Udagawacho, Shibuya, Tokyo, Giappone" la tiene al terzultimo posto.
+       Si prova anche l'accoppiata via + penultimo pezzo. */
+    out.push(parts[0]+', '+parts[parts.length-2]);
   }
   if(parts.length>1)out.push(parts[0]+', '+parts[parts.length-1]);
   if(parts.length)out.push(parts[0]);
