@@ -604,7 +604,10 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 .toast{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
 .navbar{bottom:calc(5.4rem + env(safe-area-inset-bottom))}
 /* dentro il foglio del giorno il fab resta dov'era: lì la pillola non c'è */
-#mDay .fab{bottom:calc(1.2rem + env(safe-area-inset-bottom))}
+/* La time-table è una pagina, non più un foglio sovrapposto: si toglie di
+   dosso il vestito da foglio e il "+" sale sopra la barra in basso. */
+.tt-sheet{background:transparent;padding:0;border-radius:0;box-shadow:none;max-width:none;width:auto;overflow:visible;transform:none}
+#mDay .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
 .page{padding:1.1rem 1.15rem}
@@ -861,7 +864,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   </div>
   <div class="nav">
     <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
-    <div class="nav-item" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
+    <div class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
     <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
     <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><span class="ni-tx">€</span></div>
     <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
@@ -1001,6 +1004,32 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <button class="btn btn-danger btn-block" onclick="confirmReset()">Reset completo</button></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
+<div class="page" id="mDay"><div class="tt-sheet">
+  <div class="tt-head">
+    <div style="min-width:0">
+      <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="openTripZoom(T().id)">Viaggio · Giorno <span class="hh-chev">›</span></div>
+      <div class="tt-title">Time Table</div>
+      <div class="tt-sub" id="dayTt">Giorno</div>
+    </div>
+    <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home">✕</button>
+  </div>
+  <div class="tt-daynav">
+    <button class="x" onclick="ttNav(-1)">‹</button>
+    <div class="chiprow-x" id="dayChips" style="flex:1"></div>
+    <button class="x" onclick="ttNav(1)">›</button>
+  </div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
+  <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
+  <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
+  <div id="dayRainTip"></div>
+  <div id="dayRainSwaps"></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
+  <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
+  <div id="ttBody"></div>
+  <div style="height:74px"></div>
+</div>
+<button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
 <div id="authGate"><div class="auth-card">
@@ -1167,33 +1196,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="detailTitle">Viaggio</div><button class="x x-close" onclick="closeSheet('mDetail')">✕</button></div>
   <div id="detailBody"></div>
 </div></div>
-<div class="modal" id="mDay"><div class="sheet tt-sheet" style="max-height:94vh">
-  <div class="sheet-grip"></div>
-  <div class="tt-head">
-    <div style="min-width:0">
-      <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="closeSheet('mDay');setTimeout(()=>openTripZoom(T().id),160)">Viaggio · Giorno <span class="hh-chev">›</span></div>
-      <div class="tt-title">Time Table</div>
-      <div class="tt-sub" id="dayTt">Giorno</div>
-    </div>
-    <button class="x x-close" onclick="closeSheet('mDay')">✕</button>
-  </div>
-  <div class="tt-daynav">
-    <button class="x" onclick="ttNav(-1)">‹</button>
-    <div class="chiprow-x" id="dayChips" style="flex:1"></div>
-    <button class="x" onclick="ttNav(1)">›</button>
-  </div>
-  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
-  <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
-  <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
-  <div id="dayRainTip"></div>
-  <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
-  <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
-  <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
-  <div id="ttBody"></div>
-  <div style="height:74px"></div>
-</div>
-<button class="fab" id="ttFab" style="z-index:10002">＋</button></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
@@ -4558,10 +4560,10 @@ function openDay(i){
     const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString('it-IT',{weekday:'short'});
     const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
     return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
-  }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;closeSheet('mDay');setTimeout(openAddDay,140)" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
+  }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   renderDayCity(t,d);renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
   buildTT();buildDayMap();
-  openSheet('mDay');initTTFab();
+  go('mDay');initTTFab();
 }
 function ttNav(dir){
   const t=T();if(!t)return;
@@ -4851,17 +4853,17 @@ function buildDayMap(){
     setTimeout(()=>dayMapObj.invalidateSize(),120);
   },320);
 }
-function addFromDay(){fromDayFlag=true;closeSheet('mDay');setTimeout(()=>openAddAct(ttDay),120);}
+function addFromDay(){fromDayFlag=true;openAddAct(ttDay);}
 function addHotelStopAct(){
   const t=T();if(!t)return;const di=ttDay,d=t.days[di];if(!d)return;
   const h=hotelFor(t,d.date)||hotelMorningRef(t,d);
   if(!h){toast('Aggiungi prima un hotel per questo giorno');return;}
   const a={id:uid(),name:'Rientro in hotel · '+h.name,time:'',timeEnd:'',type:'any',notes:h.address||'',who:t.participants.map(p=>p.id),completed:false,booking:{needed:false,done:false},hotelId:h.id,lat:h.lat,lng:h.lng,poiId:null};
   d.activities.push(a);
-  save();renderAll();fromDayFlag=true;closeSheet('mDay');
+  save();renderAll();fromDayFlag=true;
   setTimeout(()=>openActDetail(di,a.id),150);
 }
-function openImportDay(){closeSheet('mDay');document.getElementById('dayImportText').value='';document.getElementById('dayImportStatus').textContent='';setTimeout(()=>openSheet('mImportDay'),160);}
+function openImportDay(){document.getElementById('dayImportText').value='';document.getElementById('dayImportStatus').textContent='';setTimeout(()=>openSheet('mImportDay'),160);}
 let dayImportBusy=false;
 /* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
    un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
@@ -4972,7 +4974,7 @@ function openActDetail(di,id){
   const url=(!isNew)?gcalUrl(a,t.days[di].date):'';
   if(url){g.href=url;g.style.display='flex';}else g.style.display='none';
   document.getElementById('adDel').style.display=isNew?'none':'block';
-  closeSheet('mDay');openSheet('mActDetail');
+  openSheet('mActDetail');
 }
 function saveActDetail(){
   if(!adRef)return;const t=T();const di=adRef.di;
@@ -6285,7 +6287,7 @@ function walkEtaMin(a,b){return Math.round(hav(a,b)/1000*(ROUTE_CIRCUITY.walk||1
 function nnChain(base,arr){const out=[];let cur=base,rest=arr.slice();while(rest.length){let bi=0,bd=1e15;rest.forEach((x,i)=>{const d=hav(cur,x);if(d<bd){bd=d;bi=i;}});cur=rest.splice(bi,1)[0];out.push(cur);}return out;}
 function hotelFor(t,date){return (t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&date>=h.checkIn&&date<h.checkOut)||null;}
 let genBusy=false,genTargetDay=0;
-function openGenForDay(){genTargetDay=ttDay;document.getElementById('genStatus').textContent='';closeSheet('mDay');setTimeout(()=>openSheet('mGen'),160);}
+function openGenForDay(){genTargetDay=ttDay;document.getElementById('genStatus').textContent='';setTimeout(()=>openSheet('mGen'),160);}
 const GEN_STYLE_TAGS={
   mix:[['tourism','attraction'],['tourism','museum'],['leisure','park'],['amenity','marketplace']],
   arte:[['tourism','museum'],['tourism','gallery'],['historic',null],['amenity','place_of_worship']],
@@ -6559,7 +6561,7 @@ function castVote(k){
 }
 function initDaySwipe(){
   const m=document.getElementById('mDay');if(!m||m._sw)return;m._sw=1;
-  const sh=m.querySelector('.sheet');
+  const sh=m.querySelector('.tt-sheet');
   let sx=0,sy=0,tg=null;
   sh.addEventListener('touchstart',e=>{
     if(e.touches.length!==1){tg=null;return;}
