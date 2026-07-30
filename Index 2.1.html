@@ -1787,7 +1787,7 @@ function updateSoonWalk(){
    Mostra dove sono le tappe che scorri nelle card. La card più a sinistra è
    quella "in mano": il suo segnaposto è scuro e la mappa la insegue. Toccando
    un segnaposto la striscia scorre fino alla card corrispondente. */
-let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=false;
+let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=false,homeMoveT=null;
 function destroyHomeMap(){
   if(homeMapObj){try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
@@ -1838,10 +1838,19 @@ function homeMapSelect(cardIdx){
   // Nessun segnaposto per questa tappa: si dice perche', invece di tacere.
   const nota=document.getElementById('homeMapNote');
   if(nota)nota.style.display=sel<0?'block':'none';
-  /* Prima la mappa si limitava a spostarsi restando all'inquadratura larga
-     che teneva dentro tutte le tappe: della tappa in mano non si vedeva la via,
-     solo il quartiere. Ora ci si avvicina davvero. */
-  if(sel>=0)homeMapObj.setView([homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng],16,{animate:true,duration:.45});
+  /* Il segnaposto si accende subito, ma la mappa aspetta che il dito si fermi:
+     scorrendo veloce fra le tappe partiva un'animazione per ciascuna, le une
+     sopra le altre, e la mappa sembrava impazzita invece che seguire.
+     Lo zoom non scende mai sotto quello scelto a mano, altrimenti ogni volta
+     che ci si allarga per guardarsi intorno la mappa ti richiude in faccia. */
+  if(sel<0)return;
+  const meta=[homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng];
+  clearTimeout(homeMoveT);
+  homeMoveT=setTimeout(()=>{
+    if(!homeMapObj)return;
+    const zc=(typeof homeMapObj.getZoom==='function'?homeMapObj.getZoom():0)||0;
+    try{homeMapObj.setView(meta,Math.max(zc,16),{animate:true,duration:.4});}catch(e){}
+  },180);
 }
 /* Qual è la card più a sinistra fra quelle visibili nella striscia. */
 function homeCardsSync(force){
@@ -5029,9 +5038,13 @@ function buildDayMap(){
     if(meMarker){
       const mm=meMarker.getLatLng();
       dayMeMarker=L.marker([mm.lat,mm.lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
-      all.push([mm.lat,mm.lng]);
+      /* La propria posizione si vede, ma non entra nell'inquadratura: partendo
+         da casa si e' a mille chilometri dalle tappe e la mappa si allargava
+         fin li', mostrando mezzo continente invece della giornata. Il tasto
+         della bussola resta per andarci quando serve. */
     }
-    if(all.length>1)dayMapObj.fitBounds(L.latLngBounds(all),{padding:[28,28]});
+    if(all.length>1)dayMapObj.fitBounds(L.latLngBounds(all),{padding:[28,28],maxZoom:16});
+    else if(all.length===1)dayMapObj.setView(all[0],16);
     setTimeout(()=>dayMapObj.invalidateSize(),120);
   },320);
 }
