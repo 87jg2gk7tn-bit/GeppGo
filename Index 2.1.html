@@ -1252,6 +1252,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adNextDay"><span>Finisce il giorno dopo (es. volo notturno)</span></label></div>
   <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adRemindChk" onchange="document.getElementById('adRemindFields').style.display=this.checked?'block':'none'"><span>🔔 Avvisami un po' prima che inizi</span></label></div>
   <div id="adRemindFields" style="display:none;margin-bottom:.9rem"><select id="adRemindMin"><option value="10">10 minuti prima</option><option value="15">15 minuti prima</option><option value="30" selected>30 minuti prima</option><option value="60">1 ora prima</option><option value="120">2 ore prima</option><option value="1440">Il giorno prima</option></select></div>
+  <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adLeaveChk" onchange="adLeaveSync()"><span>🚦 Avvisami quando devo partire</span></label></div>
+  <div id="adLeaveFields" style="display:none;margin-bottom:.9rem">
+    <label style="display:block;font-size:.78rem;font-weight:700;color:var(--ink-soft);margin:.5rem 0 .35rem">Come ci vai</label>
+    <div class="chips" style="margin-top:0" id="adLeaveModes">
+      <button type="button" class="chip" data-m="walk"  onclick="adSetLeaveMode('walk')">🚶 A piedi</button>
+      <button type="button" class="chip" data-m="train" onclick="adSetLeaveMode('train')">🚆 Treno e metro</button>
+      <button type="button" class="chip" data-m="car"   onclick="adSetLeaveMode('car')">🚗 Macchina</button>
+    </div>
+    <div id="adLeaveHint" style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.45rem"></div>
+  </div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Giorno</label><select id="adDay"></select></div><div class="fg" style="flex:1"><label>Tipo</label><select id="adType"><option value="outdoor">All'aperto</option><option value="indoor">Al chiuso</option><option value="any">Indifferente</option><option value="flight">Volo ✈️</option></select></div></div>
   <div id="adFlyWrap" style="display:none"><div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label id="lblFlyFrom">Aeroporto di partenza</label><input id="adFlyFrom" type="text" autocomplete="off" placeholder="es. MXP"></div><div class="fg" style="flex:1"><label id="lblFlyTo">Aeroporto di arrivo</label><input id="adFlyTo" type="text" autocomplete="off" placeholder="es. NRT"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label id="lblFlyCost">Costo volo (opz.)</label><input id="adFlyCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="adFlyCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="adFlyPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div></div>
@@ -1559,7 +1569,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   document.getElementById('navPref').value=app.settings.nav||'ask';
   fillCurrencySelect(document.getElementById('expCur'));
-  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);
+  initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);checkLeaveAlerts();setInterval(checkLeaveAlerts,60000);
   renderAll();
   hideBootSplash();
 });
@@ -2688,6 +2698,41 @@ function travelEstimate(day,distM,modeOverride,rain){
   return {mode:p.mode,km:Math.round(km*10)/10,minutes:Math.max(1,Math.round(km/speed*60)),cost:p.mode==='car'?km*(p.fuelL100/100)*p.fuelPrice:null};
 }
 function dayIsRainy(t,day){const w=t&&t.weather&&t.weather[day.date];return !!(w&&w.precipitation>5);}
+/* ===== QUANTO CI METTO AD ARRIVARE, DA DOVE SONO ADESSO =====
+   Serve per l'avviso "e' ora di partire", e non basta la distanza in linea
+   d'aria diviso la velocita'. Col treno la corsa e' il pezzo piu' corto: c'e'
+   la camminata fino alla fermata, l'attesa sul binario, spesso un cambio, e
+   l'ultimo tratto a piedi dall'uscita alla meta - cioe' la metro. Ignorarli
+   vuol dire far partire tardi, che e' proprio quello che l'avviso deve
+   evitare. In macchina si mette da conto anche il parcheggio.
+   Sotto il chilometro e mezzo scendere in metro fa perdere tempo: si va a
+   piedi, e l'avviso lo dice invece di fingere. */
+const METRO_PIEDI_MIN=6;    // a tratta: fino alla fermata, e dall'uscita alla meta
+const METRO_ATTESA_MIN=5;   // attesa media sul binario, cambio compreso
+const AUTO_PARCHEGGIO_MIN=3;
+function partenzaStima(distM,mode){
+  const km=Math.max(0,distM)/1000;
+  let m=mode||'walk';
+  if(m==='train'&&km<1.5)m='walk';
+  if(m==='car'){
+    const kmS=km*ROUTE_CIRCUITY.car;
+    return {mode:'car',km:Math.round(kmS*10)/10,
+            minutes:Math.max(2,Math.round(kmS/TRAVEL_SPEED_KMH.car*60))+AUTO_PARCHEGGIO_MIN,
+            voci:[['in strada',Math.max(2,Math.round(kmS/TRAVEL_SPEED_KMH.car*60))],['parcheggio',AUTO_PARCHEGGIO_MIN]]};
+  }
+  if(m==='train'){
+    const kmS=km*1.2,corsa=Math.max(1,Math.round(kmS/TRAVEL_SPEED_KMH.train*60));
+    return {mode:'train',km:Math.round(kmS*10)/10,
+            minutes:METRO_PIEDI_MIN*2+METRO_ATTESA_MIN+corsa,
+            voci:[['a piedi fino alla fermata',METRO_PIEDI_MIN],['attesa',METRO_ATTESA_MIN],['in metro',corsa],['a piedi fino alla meta',METRO_PIEDI_MIN]]};
+  }
+  const kmS=km*ROUTE_CIRCUITY.walk;
+  const min=Math.max(1,Math.round(kmS/TRAVEL_SPEED_KMH.walk*60));
+  return {mode:'walk',km:Math.round(kmS*10)/10,minutes:min,voci:[['a piedi',min]],
+          ripiego:(mode==='train'&&km<1.5)};
+}
+function modeEmo(m){return m==='car'?'🚗':m==='train'?'🚆':'🚶';}
+function modeNome(m){return m==='car'?'in macchina':m==='train'?'in metro':'a piedi';}
 function hotelMorningRef(t,day){
   const h=hotelFor(t,day.date);
   return (h&&h.checkIn&&day.date>h.checkIn)?h:null;
@@ -3254,6 +3299,77 @@ function checkActReminders(){
       nNotify('⏰ Tra poco: '+a.name,'Inizia alle '+a.time);
       if(navigator.vibrate)navigator.vibrate([200,80,200]);
       toast('🔔 Tra poco: '+msg);
+    }));
+  });
+}
+/* ===== "E' ORA DI PARTIRE" =====
+   Un promemoria a orario fisso non sa dove sei: "fra 30 minuti" e' inutile se
+   la meta e' a un'ora di strada, perche' quando suona hai gia' perso
+   l'appuntamento. Qui si guarda quanto sei lontano adesso, col mezzo che hai
+   detto di usare, e si suona quando serve davvero partire.
+   Se sei gia' sul posto non c'e' niente da annunciare: arriva il normale
+   "fra poco inizia". Se sei gia' in ritardo lo si dice, con quanto. */
+const PARTENZA_MARGINE_MIN=5;   // per prepararsi e uscire di casa
+const GIA_SUL_POSTO_M=250;
+function fmtDurata(m){
+  m=Math.max(0,Math.round(m));
+  const h=Math.floor(m/60),r=m%60;
+  return h?(h+'h'+(r?' '+r+'min':'')):(m+' min');
+}
+function actStartMs(d,a){
+  if(!d||!a||!a.time)return NaN;
+  return new Date(d.date+'T'+a.time+':00').getTime();
+}
+function avvisaPartenza(titolo,corpo){
+  if(app.consentNotif&&typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification('GeppGo',{body:titolo+' — '+corpo});}catch(e){}}
+  nNotify(titolo,corpo);
+  if(navigator.vibrate)navigator.vibrate([220,90,220]);
+  toast(titolo+' · '+corpo);
+}
+function checkLeaveAlerts(){
+  const now=Date.now();
+  app.trips.forEach(t=>{
+    if(t.status==='closed')return;
+    t.days.forEach(d=>(d.activities||[]).forEach(a=>{
+      if(!a.leaveAlert||!a.time)return;
+      const start=actStartMs(d,a);
+      if(isNaN(start)||now>start)return;
+      if(start-now>432e5)return;            // oltre le 12 ore non serve guardarci
+      const loc=actLoc(t,a);
+      if(!loc)return;                       // senza un posto non c'e' distanza da fare
+      /* Il GPS spento e' l'unico modo per cui questo avviso non puo' funzionare:
+         invece di tacere e far tardi, lo si dice una volta sola quando manca
+         un'ora e mezza. */
+      if(!myPos||now-myPosAt>POS_FRESCA_MS){
+        if(start-now<=54e5&&!a.leaveNoGps){
+          a.leaveNoGps=true;save();
+          avvisaPartenza('📍 Accendi il GPS','Per dirti quando partire per "'+a.name+'" mi serve sapere dove sei.');
+        }
+        return;
+      }
+      if(a.leaveNotified)return;
+      const dist=calcDist(myPos.lat,myPos.lng,loc.lat,loc.lng);
+      if(!isFinite(dist))return;
+      const mancano=Math.round((start-now)/60000);
+      if(dist<=GIA_SUL_POSTO_M){
+        /* Gia' arrivato: nessuna partenza da annunciare, solo il conto alla
+           rovescia - alla stessa ora del promemoria normale. */
+        if(mancano<=(a.remindMin||30)){
+          a.leaveNotified=true;save();
+          avvisaPartenza('📍 Sei già sul posto','"'+a.name+'" inizia alle '+a.time+', fra '+fmtDurata(mancano)+'.');
+        }
+        return;
+      }
+      const st=partenzaStima(dist,a.leaveMode||'walk');
+      if(now<start-(st.minutes+PARTENZA_MARGINE_MIN)*60000)return;
+      a.leaveNotified=true;save();
+      const dove=fmtDurata(st.minutes)+' '+modeEmo(st.mode)+' ('+st.km+' km)';
+      const ritardo=st.minutes+PARTENZA_MARGINE_MIN-mancano;
+      const corpo=ritardo>PARTENZA_MARGINE_MIN
+        ? 'Sei a '+dove+' e inizia alle '+a.time+': arriveresti '+fmtDurata(ritardo)+' in ritardo. Parti subito.'
+        : 'Sei a '+dove+', inizia alle '+a.time+'. Parti adesso o arrivi in ritardo.'
+          +(st.ripiego?' Per così poco la metro fa perdere tempo: meglio a piedi.':'');
+      avvisaPartenza('🚦 Ora di partire per "'+a.name+'"',corpo);
     }));
   });
 }
@@ -4139,6 +4255,11 @@ function beginWatch(){
 }
 let meHalo=null,meCentered=false,dayMeMarker=null,dayMeHalo=null,myHeading=null,headingOn=false;
 let myPos=null; /* ultima posizione nota, per il "a piedi" della card "fra poco" */
+/* Quando e' stata letta. Per il "a piedi" una posizione di dieci minuti fa va
+   benissimo; per dire quando partire no: col GPS spento resterebbe ferma dove
+   eri, e ti direbbe che sei gia' sul posto mentre sei dall'altra parte. */
+let myPosAt=0;
+const POS_FRESCA_MS=9e5;   // un quarto d'ora
 /* Il pallino della posizione ha un cono di visibilità (come Google Maps) quando
    il dispositivo fornisce la bussola: ruota con l'orientamento del telefono,
    così capisci subito da che parte stai guardando rispetto alle tappe vicine. */
@@ -4244,7 +4365,11 @@ function dismissSugN(tid,name){
   save();
 }
 function checkProx(lat,lng){
-  myPos={lat:lat,lng:lng};updateSoonWalk();
+  myPos={lat:lat,lng:lng};myPosAt=Date.now();updateSoonWalk();
+  /* Sta prima della pausa risparmio-batteria: quella salta i luoghi salvati
+     quando sei lontano da tutti, ma l'ora di partire e' proprio quando sei
+     lontano che conta. */
+  checkLeaveAlerts();
   const now=Date.now();
   if(now<farUntil)return;
   const rE=app.settings.proxRadius||200,rS=Math.round(rE*0.6),rSug=Math.round(rE*0.45);
@@ -5269,12 +5394,36 @@ async function importDayText(){
 }
 function askDelDayTT(){const t=T();confirmDo('Eliminare il giorno?','Verranno eliminate anche le sue attività.',()=>{t.days.splice(ttDay,1);save();renderAll();closeSheet('mDay');});}
 
+/* ===== AVVISO "ORA DI PARTIRE": comandi del foglio attività ===== */
+let adLeaveMode='walk',adLeaveAsked=false;
+function adSetLeaveMode(m){adLeaveMode=m;adLeaveSync();}
+function adLeaveSync(){
+  const on=document.getElementById('adLeaveChk').checked;
+  document.getElementById('adLeaveFields').style.display=on?'block':'none';
+  [...document.querySelectorAll('#adLeaveModes .chip')].forEach(b=>{
+    b.classList.toggle('green',b.dataset.m===adLeaveMode);
+  });
+  const hint=document.getElementById('adLeaveHint');
+  if(!on||!hint)return;
+  /* Si dice subito cosa manca perche' l'avviso possa funzionare, invece di
+     lasciarlo scoprire il giorno stesso non ricevendo niente. */
+  const t=T(),loc=(t&&adRef)?actLoc(t,(t.days[adRef.di].activities||[]).find(x=>x.id===adRef.id)||{}):null;
+  const puntoOk=loc||(adPoiPick&&!adPoiPick.clear);
+  if(!puntoOk){hint.textContent='Aggancia un luogo all\'attività: senza sapere dov\'è non posso dirti quanta strada c\'è.';return;}
+  if(!myPos||Date.now()-myPosAt>POS_FRESCA_MS){hint.textContent='Tieni acceso il GPS: la distanza la misuro da dove sei in quel momento.';return;}
+  const p=loc||adPoiPick;
+  const st=partenzaStima(calcDist(myPos.lat,myPos.lng,p.lat,p.lng),adLeaveMode);
+  const voci=st.voci.map(v=>v[0]+' '+v[1]+'′').join(' + ');
+  hint.textContent='Da dove sei ora: '+fmtDurata(st.minutes)+' '+modeEmo(st.mode)+' ('+voci+'). Ti avviso '+PARTENZA_MARGINE_MIN+' minuti prima che serva partire.'
+    +(st.ripiego?' Per meno di un chilometro e mezzo la metro fa perdere tempo: conto la camminata.':'');
+}
 /* ===== DETTAGLIO ATTIVITÀ (info + modifica + QR) ===== */
 function openActDetail(di,id){
   const t=T(),d=t.days[di];if(!d)return;
   // Se non veniamo dalla time-table (aperta ora, o appena chiusa per il
   // passaggio a questo foglio, vedi fromDayFlag), chiudendo si torna dove
   // si era: non ha senso "atterrare" sulla time-table se non l'hai mai aperta.
+  adLeaveAsked=false;
   adFromTimetable=fromDayFlag||document.getElementById('mDay').classList.contains('active');
   fromDayFlag=false;
   const isNew=(id==null);
@@ -5288,6 +5437,9 @@ function openActDetail(di,id){
   document.getElementById('adRemindChk').checked=!!a.remindMin;
   document.getElementById('adRemindFields').style.display=a.remindMin?'block':'none';
   document.getElementById('adRemindMin').value=a.remindMin||30;
+  document.getElementById('adLeaveChk').checked=!!a.leaveAlert;
+  adLeaveMode=a.leaveMode||(t.days[di]&&t.days[di].travelMode)||'walk';
+  adLeaveSync();
   document.getElementById('adNameSug').innerHTML='';
   document.getElementById('adFlyFrom').value=a.flyFrom||'';document.getElementById('adFlyTo').value=a.flyTo||'';
   const fex0=a.flyExpId?t.expenses.find(x=>x.id===a.flyExpId):null;
@@ -5360,6 +5512,13 @@ function saveActDetail(){
   const newRemindMin=remindOn?parseInt(document.getElementById('adRemindMin').value,10):null;
   a.remindNotified=(oldRemindMin===newRemindMin&&oldTime===time)?!!a.remindNotified:false;
   a.remindMin=newRemindMin;
+  /* L'avviso di partenza suona una volta sola: se cambia l'ora, il mezzo o
+     l'avviso stesso, quello vecchio non vale piu' e si riarma. */
+  const oldLeave=!!a.leaveAlert,oldLeaveMode=a.leaveMode;
+  const leaveOn=document.getElementById('adLeaveChk').checked;
+  a.leaveAlert=leaveOn;
+  a.leaveMode=leaveOn?adLeaveMode:null;
+  if(!(oldLeave===leaveOn&&oldLeaveMode===a.leaveMode&&oldTime===time)){a.leaveNotified=false;a.leaveNoGps=false;}
   a.flyFrom=document.getElementById('adFlyFrom').value.trim();a.flyTo=document.getElementById('adFlyTo').value.trim();
   {
     const isFly=document.getElementById('adType').value==='flight';
@@ -5395,7 +5554,7 @@ function saveActDetail(){
      else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur,who);
    }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);t._delExp=t._delExp||{};t._delExp[bex.id]=Date.now();a.bookExpId=null;}
   }
-  if((needed&&a.booking.by||remindOn)&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
+  if((needed&&a.booking.by||remindOn||leaveOn)&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
   if(adPoiPick&&!adPoiPick.clear){
     const ex=t.pois.find(pp=>pp.name.toLowerCase()===adPoiPick.name.toLowerCase());
     if(ex){a.poiId=ex.id;if(!ex.assignedDay)ex.assignedDay=t.days[newDi].date;}
@@ -5420,6 +5579,29 @@ function saveActDetail(){
   if(isNew&&!a.poiId&&!a.lat)autoLinkPoi(t,a,t.days[newDi].date);
   save();renderAll();closeSheet('mActDetail');toast(isNew?'Attività aggiunta':'Salvato');
   if(adFromTimetable)setTimeout(()=>openDay(newDi),150);
+  proponiPartenza(t,t.days[newDi],a);
+}
+/* Chiedere un promemoria a orario fisso e' meta' della storia: "fra 30 minuti"
+   non serve a niente se la meta e' a un'ora di strada. Chi mette la sveglia
+   senza aver mai deciso su questa cosa se lo sente proporre una volta - poi la
+   spunta resta li' nel foglio e la domanda non torna piu'. */
+function proponiPartenza(t,d,a){
+  if(!a||!a.time||a.leaveAlert||a.leaveAsked)return;
+  if(!a.remindMin)return;
+  if(!actLoc(t,a))return;
+  const start=actStartMs(d,a);
+  if(isNaN(start)||start<Date.now())return;
+  a.leaveAsked=true;save();
+  setTimeout(()=>{
+    confirmDo('Ti avviso anche quando partire?',
+      'Con il GPS acceso guardo quanto sei lontano da "'+a.name+'" e ti dico quando muoverti, invece di avvisarti a orario fisso e farti arrivare tardi.',
+      ()=>{
+        a.leaveAlert=true;
+        a.leaveMode=a.leaveMode||d.travelMode||'walk';
+        a.leaveNotified=false;save();
+        toast('🚦 Ti avviso quando partire · '+modeNome(a.leaveMode)+' — cambia il mezzo dalla scheda');
+      },'🚦','Sì, avvisami','btn-green');
+  },400);
 }
 function delActDetail(){
   if(!adRef)return;const t=T(),{di,id}=adRef;
