@@ -1230,6 +1230,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="adTitle">Attività</div><button class="x x-close" onclick="cancelActDetail()">✕</button></div>
   <div class="fg"><label>Nome</label><input id="adName" type="text" name="titolo-attivita" onblur="flyDetect()" oninput="adNameInput()" autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true">
     <div id="adNameSug"></div>
+    <div id="adAddrWrap" style="display:none;margin-top:.55rem">
+      <div style="font-size:.78rem;color:var(--ink-faint);font-weight:600">Non appare nei suggeriti? Incolla qui l'indirizzo</div>
+      <div class="add-row"><input id="adAddr" placeholder="Indirizzo, coordinate o link della mappa" autocomplete="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter'){event.preventDefault();adAddrFind();}"><button class="btn btn-blue" onclick="adAddrFind()">Cerca</button></div>
+      <div id="adAddrHint" style="font-size:.76rem;color:var(--ink-faint);margin-top:.3rem"></div>
+    </div>
   </div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Inizio</label><input type="time" id="adTime"></div><div class="fg" style="flex:1"><label>Fine</label><input type="time" id="adTimeEnd"></div></div>
   <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="adNextDay"><span>Finisce il giorno dopo (es. volo notturno)</span></label></div>
@@ -1244,9 +1249,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Si svolge dentro un'altra attività? <span style="font-weight:500;color:var(--ink-faint)">(es. ristorante nel parco)</span></label><select id="adParent"><option value="">No, indipendente</option></select></div>
   <div class="fg"><label>Luogo <span style="font-weight:500;color:var(--ink-faint)">(mappa e meteo del giorno)</span></label>
     <div id="adPoiCur" style="display:none;align-items:center;gap:.5rem;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .7rem"><span style="display:flex;align-items:center;gap:.4rem;min-width:0;overflow:hidden"><span>📍</span><span id="adPoiName" style="font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></span><button class="chip" style="flex-shrink:0" onclick="adPoiClear()">Non è questo</button></div>
-    <div id="adAddrWrap" style="display:none">
-      <div class="add-row"><input id="adAddr" placeholder="Incolla qui l'indirizzo" autocomplete="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter'){event.preventDefault();adAddrFind();}"><button class="btn btn-blue" onclick="adAddrFind()">Cerca</button></div>
-    </div>
     <div id="adPoiHint" style="font-size:.76rem;color:var(--ink-faint);margin-top:.25rem"></div>
   </div>
   <div id="adVotes" style="margin:-.2rem 0 .9rem"></div>
@@ -5071,7 +5073,7 @@ function openActDetail(di,id){
   document.getElementById('adNameSug').innerHTML='';document.getElementById('adPoiHint').textContent='';
   if(a.poiId||a.lat){const lp=a.poiId?t.pois.find(x=>x.id===a.poiId):null;document.getElementById('adPoiName').textContent=lp?lp.name:a.name;pcur.style.display='flex';}
   else pcur.style.display='none';
-  document.getElementById('adAddr').value='';adAddrSync();
+  document.getElementById('adAddr').value='';document.getElementById('adAddrHint').textContent='';adAddrSync();
   renderAdVotes(isNew?null:a);
   document.getElementById('adNotes').value=a.notes||'';
   const g=document.getElementById('adGcal');
@@ -6367,12 +6369,7 @@ function adNameInput(){
 }
 function adNameSel(i){
   const r=lastAdNameRes[i];if(!r)return;
-  adPoiPick={name:String(r.display_name||'').split(',')[0].trim(),lat:parseFloat(r.lat),lng:parseFloat(r.lon)};
-  document.getElementById('adPoiName').textContent=adPoiPick.name;
-  flyDetect(adPoiPick.name);
-  document.getElementById('adPoiCur').style.display='flex';
-  document.getElementById('adNameSug').innerHTML='';
-  adAddrSync();
+  adSetPlace(String(r.display_name||'').split(',')[0].trim(),parseFloat(r.lat),parseFloat(r.lon));
 }
 function adPoiClear(){
   adPoiPick={clear:true};
@@ -6391,20 +6388,95 @@ function adAddrSync(){
    in quel caso, non restava alcun modo di dire dov'e' - niente mappa, niente
    meteo del posto, niente distanze fra le tappe. Qui si incolla l'indirizzo
    e si cerca quello invece del nome. */
+/* Coordinate nascoste dentro quello che si incolla. Da Google arriva di tutto:
+   il link lungo della mappa (le coordinate stanno dopo la @ o in !3d..!4d),
+   quello di condivisione, o la coppia di numeri copiata a mano. Quando ci sono
+   le coordinate non serve cercare nulla: e' gia' la posizione esatta. */
+function coordsFromText(txt){
+  const s=String(txt||'');
+  let m=s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+      ||s.match(/@(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/)
+      ||s.match(/[?&](?:q|query|ll|center|daddr|destination)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/);
+  if(!m&&/^\s*-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\.\d+\s*$/.test(s))m=s.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  if(!m)return null;
+  const lat=parseFloat(m[1]),lng=parseFloat(m[2]);
+  if(!isFinite(lat)||!isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
+  return {lat,lng};
+}
+/* Il nome del posto dentro un link lungo di Google: .../place/Nome+Del+Posto/@... */
+function placeNameFromUrl(txt){
+  const m=String(txt||'').match(/\/place\/([^/@?]+)/);
+  if(!m)return '';
+  try{return decodeURIComponent(m[1]).replace(/\+/g,' ').trim();}catch(e){return m[1].replace(/\+/g,' ').trim();}
+}
+/* Un indirizzo copiato da Google e' quasi sempre piu' lungo di quello che il
+   servizio di ricerca sa digerire: "Via Tortona, 27, 20144 Milano MI, Italia"
+   non lo trova, "Via Tortona 27, Milano" si'. Qui si costruiscono varianti via
+   via piu' corte, da provare in ordine finche' una risponde. */
+function addrVariants(raw){
+  const s=String(raw||'').replace(/\s+/g,' ').trim();
+  const out=[s];
+  let pulito=s.replace(/\b\d{5}\b/g,' ')                  // il CAP
+              .replace(/\b[A-Z]{2}\b(?=\s*(,|$))/g,' ')    // la sigla della provincia
+              .replace(/\s*,\s*/g,', ').replace(/\s{2,}/g,' ')
+              .replace(/(,\s*)+/g,', ').replace(/^,\s*|,\s*$/g,'').trim();
+  /* Google separa la via dal numero civico con una virgola - "Via Tortona, 27" -
+     e cosi' il civico sembra un pezzo di indirizzo a se'. Riattaccandolo alla
+     via, il servizio di ricerca lo riconosce. */
+  pulito=pulito.replace(/,\s*(\d+[a-zA-Z]?)(?=,|$)/g,' $1');
+  if(pulito&&pulito!==s)out.push(pulito);
+  const parts=pulito.split(',').map(x=>x.trim()).filter(Boolean);
+  if(parts.length>2){
+    out.push(parts.slice(0,parts.length-1).join(', '));  // senza la nazione in coda
+    out.push(parts[0]+', '+parts[1]);                    // solo via e citta'
+  }
+  if(parts.length>1)out.push(parts[0]+', '+parts[parts.length-1]);
+  if(parts.length)out.push(parts[0]);
+  return [...new Set(out.map(x=>x.trim()).filter(x=>x.length>2))];
+}
+function adSetPlace(name,lat,lng){
+  adPoiPick={name,lat,lng};
+  document.getElementById('adPoiName').textContent=name;
+  flyDetect(name);
+  document.getElementById('adPoiCur').style.display='flex';
+  document.getElementById('adNameSug').innerHTML='';
+  adAddrSync();
+}
 async function adAddrFind(){
   const inp=document.getElementById('adAddr'),q=inp.value.trim();
-  if(q.length<3){toast('Scrivi o incolla un indirizzo');return;}
-  const hint=document.getElementById('adPoiHint');
-  hint.textContent='\uD83D\uDD0D Cerco l\'indirizzo...';
+  const hint=document.getElementById('adAddrHint');
+  if(q.length<3){hint.textContent='Scrivi o incolla un indirizzo.';return;}
+  // 1. le coordinate, se ci sono, valgono piu' di qualsiasi ricerca
+  const c=coordsFromText(q);
+  if(c){
+    const nome=placeNameFromUrl(q)||document.getElementById('adName').value.trim()||'Posizione incollata';
+    adSetPlace(nome,c.lat,c.lng);
+    inp.value='';hint.textContent='';
+    toast('\uD83D\uDCCD Posizione agganciata dalle coordinate');
+    return;
+  }
+  // 2. i link accorciati non dicono dove sono senza essere aperti
+  if(/^https?:\/\//i.test(q)&&!placeNameFromUrl(q)){
+    hint.textContent='Da questo link non riesco a ricavare il posto. Aprilo e copia l\'indirizzo, oppure le coordinate.';
+    return;
+  }
+  hint.textContent='\uD83D\uDD0D Cerco...';
   const t=T(),city=tripCityHint(t),lh=destLangHint(t);
-  let dd=[];
-  try{
-    dd=await geoSearch(q,lh);
-    if(!dd.length&&city)dd=await geoSearch(q+', '+city,lh);
-  }catch(e){}
-  if(!dd.length){hint.textContent='Non ho trovato questo indirizzo. Prova ad aggiungere la citta\u0027.';return;}
+  // 3. dal link lungo si recupera almeno il nome del posto
+  const base=placeNameFromUrl(q)||q;
+  const prove=addrVariants(base);
+  if(city)prove.push(base.split(',')[0].trim()+', '+city);
+  let dd=[],usata='';
+  for(const v of prove){
+    try{dd=await geoSearch(v,lh);}catch(e){dd=[];}
+    if(dd.length){usata=v;break;}
+  }
+  if(!dd.length){
+    hint.textContent='Non l\'ho trovato. Prova con meno dettagli (via e citta\u0027), oppure incolla le coordinate.';
+    return;
+  }
   hint.textContent='';
-  lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,q):dd;
+  lastAdNameRes=(typeof rankPlaces==='function')?rankPlaces(dd,usata):dd;
   adNameSel(0);
   inp.value='';
   toast('\uD83D\uDCCD Posizione agganciata');
