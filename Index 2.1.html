@@ -313,6 +313,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .mh-me{display:inline-block;margin-top:.9rem;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:.4rem .85rem;border-radius:100px;font-size:.82rem;font-weight:800;position:relative}
 .mh-me.neg{background:rgba(184,92,56,.55)}
 .ibtn.ghost{background:rgba(255,255,255,.18);border-color:transparent;color:#fff;width:34px;height:34px;font-size:.95rem;backdrop-filter:blur(8px)}
+/* Il "+" della testata è l'azione principale, non un'utilità come le altre:
+   stesso formato, ma più marcato. Croce disegnata, non il carattere "+",
+   che a seconda del font non sta mai in mezzo al tondo. */
+.ibtn.ghost.add{background:rgba(255,255,255,.36)}
+.ibtn.ghost.add svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round}
 .exp-row{display:flex;align-items:center;gap:.7rem;padding:.75rem .5rem;border-bottom:1px solid var(--line-soft);cursor:pointer;border-radius:var(--r-sm);transition:var(--ease)}
 .exp-row:last-child{border-bottom:none}
 .exp-row:active{background:var(--paper);transform:scale(.99)}
@@ -2912,7 +2917,7 @@ function renderTricount(){
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
-  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone · ${cur}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi">🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
+  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone · ${cur}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi">🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
     <div class="mh-tot">${fmtMoney(total,cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtMoney(planned,cur)} previste dal gruppo · tua parte ${fmtMoney(plannedMine,cur)}</div>`:``}
     <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?`Ti devono ${fmtMoney(myBal,cur)}`:`Devi ${fmtMoney(Math.abs(myBal),cur)}`)}</div></div>
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
