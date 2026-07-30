@@ -1496,6 +1496,10 @@ function restoreBak(){
 }
 function T(){return app.trips.find(t=>t.id===app.currentTripId);}
 function uid(){return Date.now()+Math.floor(Math.random()*10000);}
+/* La data di oggi come la vede chi tiene in mano il telefono. toISOString()
+   da solo dà quella di Greenwich: di sera, in Italia, sarebbe già il giorno
+   dopo o ancora quello prima a seconda dell'ora. */
+function todayISO(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split('T')[0];}
 function jesc(x){return JSON.stringify(x||'').replace(/"/g,'&quot;');}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -1605,6 +1609,12 @@ function createTrip(){
   const destCities=parseDestCities(dest),isMulti=destCities.length>1;
   const trip={id:uid(),name,destination:dest,currency:cur,status:'open',start,end,participants,suggestOn:document.getElementById('ntSuggest').checked,interests:document.getElementById('ntInterests').value.trim(),multiCity:isMulti,cities:isMulti?destCities.map(n=>({name:n})):[],suggested:[],days:[],pois:[],expenses:[],tickets:[],weather:{},createdAt:Date.now()};
   if(start&&end){const s=new Date(start),e=new Date(end);for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))trip.days.push({id:uid(),date:d.toISOString().split('T')[0],title:'',activities:[]});}
+  /* Le date sono facoltative, ma senza nemmeno un giorno il viaggio nasce
+     senza time-table: non c'è dove mettere le attività e da home il "+" non
+     sa a quale giorno aggiungerle. Si parte quindi sempre da un giorno —
+     quello di partenza se indicato, altrimenti oggi — e gli altri si
+     aggiungono quando servono. */
+  if(!trip.days.length)trip.days.push({id:uid(),date:start||end||todayISO(),title:'',activities:[]});
   app.trips.push(trip);ensureDestLoc(trip).then(()=>{drawMarkers();if(trip.destLoc)openFamousPlaces(trip);});geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
 }
 function switchTrip(){const el=document.getElementById('tripPick');if(!el)return;const id=parseInt(el.value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
@@ -1793,7 +1803,15 @@ function homeScrollToCard(i){
 /* il "+" accanto a "La giornata": aggiunge al giorno mostrato, o crea il viaggio se non c'è */
 function homeAdd(){
   const t=T();
-  if(!t||!t.days||!t.days.length){openNewTrip();return;}
+  if(!t){openNewTrip();return;}
+  /* Un viaggio senza giorni ormai non nasce più, ma quelli creati prima ci
+     sono ancora: il "+" apriva la creazione di un ALTRO viaggio, che non è
+     quello che si sta chiedendo. Si crea il giorno mancante e si va dritti
+     all'attività. */
+  if(!t.days||!t.days.length){
+    t.days.push({id:uid(),date:t.start||todayISO(),title:'',activities:[]});
+    save();renderAll();
+  }
   openAddAct(homeDayIndex(t));
 }
 function homeMood(code){
