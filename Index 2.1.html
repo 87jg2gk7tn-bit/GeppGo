@@ -5953,7 +5953,18 @@ async function copyText(txt){
 }
 
 
-function wxEmo(w){if(!w)return'';if(w.precipitation>5)return'🌧️';if(w.precipitation<1&&w.tempMax>20)return'☀️';return'⛅';}
+/* Il meteo del giorno in una faccina. Prima erano solo tre esiti decisi da
+   pioggia e temperatura, quindi una giornata di nebbia o di neve finiva
+   comunque col sole. Ora si usa il codice meteo vero, lo stesso che racconta
+   il tempo nella sezione dedicata; la vecchia regola resta per i giorni di cui
+   sappiamo solo pioggia e gradi. */
+function wxEmo(w){
+  if(!w)return'';
+  if(w.code!=null&&typeof wxEmoji==='function')return wxEmoji(w.code);
+  if(w.precipitation>5)return'🌧️';
+  if(w.precipitation<1&&w.tempMax>20)return'☀️';
+  return'⛅';
+}
 async function fetchDayWx(t,day){
   const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunset';
   const one=async loc=>{
