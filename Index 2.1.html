@@ -5457,6 +5457,68 @@ function apPastoDelMomento(min,fatti){
   if(fatti&&fatti.has('pranzo'))return'cena';
   return'pranzo';
 }
+/* Mette in fila un elenco di tappe. Si parte dopo l'ultima gia' in orario -
+   l'autopilota aggiunge, non riscrive quello che c'e' - e si avanza sommando
+   quanto si sta in ogni posto piu' quanto ci vuole ad arrivare al successivo.
+   I pasti non si lasciano trascinare: aspettano la loro ora, ma non si torna
+   mai indietro nel tempo.
+   Ogni voce e' {name, time, loc, genere} e ci si scrive dentro time/timeEnd;
+   se ha .esistente, quella e' una tappa gia' in giornata che si sta solo
+   mettendo in orario, e quindi non fa da muro a se stessa. */
+function apMettiInOrario(t,d,voci){
+  const rain=dayIsRainy(t,d);
+  let clock=tMin(AP_INIZIO),ultima=null;
+  (d.activities||[]).forEach(a=>{
+    if(voci.some(v=>v.esistente===a))return;
+    const r=actRange(a);
+    if(r&&r[1]>=clock){clock=r[1];ultima=a;}
+  });
+  // il tempo per arrivare alla prima, da dove si era rimasti
+  if(voci.length&&ultima){
+    const l1=actLoc(t,ultima),l2=voci[0].loc;
+    if(l1&&l2)clock+=travelEstimate(d,hav(l1,l2),null,rain).minutes;
+  }
+  const fine=tMin(AP_FINE),pastiFatti=new Set();
+  let fuori=0;
+  voci.forEach((v,i)=>{
+    let g=v.genere||'default';
+    if(v.time){
+      // orario scritto a mano: comanda quello, e il giro riparte da li'
+      const st2=tMin(v.time);
+      if(st2!=null)clock=Math.max(clock,st2);
+      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
+    }else{
+      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
+      const f=AP_FINESTRA[g];
+      if(f&&clock<tMin(f))clock=tMin(f);
+      if(clock>fine){v.fuori=true;fuori++;return;}
+      v.time=hhmm(clock);
+    }
+    v.genere=g;
+    if(AP_FINESTRA[g])pastiFatti.add(g);
+    const dur=AP_DURATA[g]||AP_DURATA.default;
+    v.timeEnd=hhmm(Math.min(clock+dur,1439));
+    clock+=dur;
+    const nx=voci[i+1];
+    if(nx&&v.loc&&nx.loc)clock+=travelEstimate(d,hav(v.loc,nx.loc),null,rain).minutes;
+  });
+  return fuori;
+}
+/* Una tappa aggiunta senza orario restava nell'elenco in cima, fuori dalla
+   time-table, e l'ora bisognava darla a mano. Ora ce la mette l'app: in coda a
+   quello che c'e' gia', con la durata che si addice al tipo di posto e il
+   tempo per arrivarci dalla tappa di prima. Resta spostabile come le altre.
+   Se la giornata e' piena non si inventa un orario da notte fonda: meglio
+   lasciarla senza. */
+function dagliUnOrario(t,d,a){
+  if(!t||!d||!a||a.time)return'';
+  const voce={name:a.name,time:'',loc:actLoc(t,a),genere:apGenere(a.name,null),esistente:a};
+  apMettiInOrario(t,d,[voce]);
+  if(voce.fuori||!voce.time)return'';
+  a.time=voce.time;a.timeEnd=voce.timeEnd;
+  if(!a.type||a.type==='outdoor')a.type=apTipo(voce.genere);
+  return voce.time;
+}
 /* Il tipo dell'attività, per il meteo e per l'emoji: all'aperto o al chiuso. */
 function apTipo(g){
   if(g==='parco'||g==='quartiere'||g==='panorama'||g==='mercato'||g==='monumento')return'outdoor';
@@ -5537,7 +5599,10 @@ async function autopilotDay(){
   const raw=document.getElementById('dayImportText').value;
   const timeRe=/([01]?\d|2[0-3])[:.]([0-5]\d)/;
   const lines=raw.split('\n').map(l=>l.replace(/^(?:[-*•]\s*|\d+[.)]\s+)/,'').trim()).filter(Boolean);
-  if(!lines.length){toast('Incolla prima un elenco di posti');return;}
+  /* Si puo' anche non incollare niente: se in giornata ci sono tappe senza
+     orario, l'autopilota serve proprio a dargliene uno. */
+  const daSistemare=(d0.activities||[]).filter(a=>!actRange(a)).length;
+  if(!lines.length&&!daSistemare){toast('Incolla un elenco di posti, o aggiungine qualcuna senza orario');return;}
   dayImportBusy=true;
   const st=document.getElementById('dayImportStatus');
   const btnA=document.getElementById('dayAutoBtn'),btnI=document.getElementById('dayImportBtn');
@@ -5569,48 +5634,25 @@ async function autopilotDay(){
     voci.push({name,time,loc,osm,genere:apGenere(name,osm)});
     if(i<lines.length-1)await new Promise(r2=>setTimeout(r2,1100));
   }
-  /* Secondo giro: gli orari. Si parte dopo l'ultima attivita' gia' in giornata
-     - l'autopilota aggiunge, non riscrive quello che c'e' - e si avanza
-     sommando quanto si sta in ogni posto piu' quanto ci vuole ad arrivare al
-     successivo. I pasti non si lasciano trascinare: aspettano la loro ora. */
+  /* Secondo giro: gli orari. Insieme alle righe incollate ci vanno anche le
+     tappe che sono gia' in giornata senza orario - quelle nell'elenco in cima:
+     l'autopilota serve anche a togliere di li' quelle, non solo ad aggiungere. */
   const dv0=giornoVero()||d0;
-  const rain=dayIsRainy(t,dv0);
-  let clock=tMin(AP_INIZIO);
-  (dv0.activities||[]).forEach(a=>{const r=actRange(a);if(r&&r[1]>clock)clock=r[1];});
-  const fine=tMin(AP_FINE);
-  let fuoriTempo=0;
-  const pastiFatti=new Set();
-  voci.forEach((v,i)=>{
-    let g=v.genere||'default';
-    if(v.time){
-      // orario scritto a mano: comanda quello, e il giro riparte da li'
-      const st2=tMin(v.time);
-      if(st2!=null)clock=Math.max(clock,st2);
-      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
-    }else{
-      if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
-      const f=AP_FINESTRA[g];
-      if(f&&clock<tMin(f))clock=tMin(f);
-      if(clock>fine){v.fuori=true;fuoriTempo++;return;}
-      v.time=hhmm(clock);
-    }
-    v.genere=g;
-    if(AP_FINESTRA[g])pastiFatti.add(g);
-    const dur=AP_DURATA[g]||AP_DURATA.default;
-    v.timeEnd=hhmm(Math.min(clock+dur,1439));
-    clock+=dur;
-    const nx=voci[i+1];
-    if(nx&&v.loc&&nx.loc){
-      const est=travelEstimate(dv0,hav(v.loc,nx.loc),null,rain);
-      clock+=est.minutes;
-      v.versoProssima=est.minutes;
-    }
+  (dv0.activities||[]).forEach(a=>{
+    if(actRange(a))return;
+    voci.push({name:a.name,time:'',loc:actLoc(t,a),osm:null,genere:apGenere(a.name,null),esistente:a});
   });
+  const fuoriTempo=apMettiInOrario(t,dv0,voci);
   /* Si scrive tutto insieme, ma una riga alla volta e salvando: se l'app viene
      chiusa a meta', quello che e' entrato resta. Il giorno si ritrova ogni
      volta per id, che nel frattempo puo' essere arrivata la sincronizzazione. */
-  let added=0;
+  let added=0,sistemate=0;
   voci.forEach(v=>{
+    if(v.esistente){
+      if(v.fuori)return;
+      v.esistente.time=v.time||'';v.esistente.timeEnd=v.timeEnd||'';
+      sistemate++;save();return;
+    }
     const dv=giornoVero();if(!dv)return;
     dv.activities.push({id:uid(),name:v.name,time:v.time||'',timeEnd:v.timeEnd||'',
       type:apTipo(v.genere),notes:'',who:whoAll.slice(),completed:false,
@@ -5621,19 +5663,22 @@ async function autopilotDay(){
   save();renderAll();
   dayImportBusy=false;if(btnA)btnA.disabled=false;if(btnI)btnI.disabled=false;
   document.getElementById('dayImportText').value='';
-  const senzaPosto=voci.filter(v=>!v.loc).length;
-  const inOrario=added-fuoriTempo;
+  const senzaPosto=voci.filter(v=>!v.loc&&!v.fuori).length;
+  const inOrario=added+sistemate-fuoriTempo;
   const note=[inOrario===1?'Messa in orario 1 tappa.':`Messe in orario ${inOrario} tappe.`];
+  if(sistemate)note.push(sistemate===1
+    ?'1 era senza orario e adesso ce l\'ha.'
+    :`${sistemate} erano senza orario e adesso ce l'hanno.`);
   if(fuoriTempo)note.push(fuoriTempo===1
-    ?'1 non ci stava nella giornata: aggiunta senza orario, in cima.'
-    :`${fuoriTempo} non ci stavano nella giornata: aggiunte senza orario, in cima.`);
+    ?'1 non ci stava nella giornata: resta senza orario, in cima.'
+    :`${fuoriTempo} non ci stavano nella giornata: restano senza orario, in cima.`);
   if(senzaPosto)note.push(senzaPosto===1
     ?'1 senza posizione: aprila e incolla l\'indirizzo.'
     :`${senzaPosto} senza posizione: aprile e incolla l'indirizzo.`);
   if(st)st.textContent=note.join(' ');
   const t3=app.trips.find(x=>x.id===tripId);
   const idx=t3?(t3.days||[]).findIndex(x=>x.id===dayId):-1;
-  toast(`🪄 ${added} tappe in G${(idx>=0?idx:di)+1}`);
+  toast(`🪄 ${inOrario} tappe in orario in G${(idx>=0?idx:di)+1}`);
   closeSheet('mImportDay');
   if(idx>=0)setTimeout(()=>openDay(idx),150);
 }
@@ -5821,7 +5866,12 @@ function saveActDetail(){
     }
   }
   if(isNew&&!a.poiId&&!a.lat)autoLinkPoi(t,a,t.days[newDi].date);
-  save();renderAll();closeSheet('mActDetail');toast(isNew?'Attività aggiunta':'Salvato');
+  /* Aggiunta senza orario: l'ora ce la mette l'app, invece di lasciarla
+     nell'elenco in cima fuori dalla time-table. Si dice quale, cosi' se non
+     va la si sposta subito. */
+  const oraMessa=isNew?dagliUnOrario(t,t.days[newDi],a):'';
+  save();renderAll();closeSheet('mActDetail');
+  toast(isNew?(oraMessa?`Attività aggiunta alle ${oraMessa} — spostala se non va`:'Attività aggiunta'):'Salvato');
   if(adFromTimetable)setTimeout(()=>openDay(newDi),150);
   proponiPartenza(t,t.days[newDi],a);
 }
