@@ -7386,68 +7386,108 @@ async function runGen(){
 }
 
 function runOptimizeDay(t,d,pins,frees,start,seedFar){
-  const wm=(a,b)=>((a&&b&&a.lat&&b.lat)?Math.max(8,walkEtaMin(a,b)):10);
-  let cur=start;
-  let tmin=570;
-  if(pins.length)tmin=Math.min(tmin,tMin(pins[0].time));
-  let rem=frees.slice();
-  const durOf=a=>{const r=actRange(a);return r?Math.min(r[1]-r[0],360):90;};
-  const place=(a,st2)=>{a.time=fmtT(st2);if(!a.nextDay)a.timeEnd=fmtT(Math.min(st2+durOf(a),1439));};
-  /* Gli orari di partenza si tengono da parte: se una tappa non entra piu'
-     nella giornata, torna dov'era invece di restare senza orario. Prima le si
-     cancellava l'ora - e una tappa senza ora esce dalla time-table e finisce
-     nell'elenco in cima: si chiedeva di riordinare il giro e ci si ritrovava
-     mezza giornata buttata fuori, senza che niente lo dicesse. */
-  const orariPrima=new Map();
-  frees.forEach(a=>orariPrima.set(a,{time:a.time||'',timeEnd:a.timeEnd||''}));
-  const rimaste=[];
-  if(seedFar){
-    const ix=rem.indexOf(seedFar);
-    if(ix>=0){
-      rem.splice(ix,1);
-      const st2=Math.max(tmin+wm(cur,seedFar),tmin);
-      place(seedFar,st2);
-      tmin=st2+durOf(seedFar)+5;cur=seedFar;
+  /* Il tempo per spostarsi si conta col mezzo scelto per la giornata, non
+     sempre a piedi: fra Akihabara e Nakano ci sono due ore e mezza di
+     camminata e mezz'ora di metro, e dandole per camminate il giro sembrava
+     impossibile - poi le soste venivano accorciate all'osso per far tornare
+     i conti. E' la stessa stima delle strisce fra le tappe, quindi il piano e
+     i minuti scritti in time-table dicono la stessa cosa. */
+  const pioggia=dayIsRainy(t,d);
+  const wm=(a,b)=>((a&&b&&a.lat&&b.lat)?Math.max(8,travelEstimate(d,hav(a,b),null,pioggia).minutes):10);
+  const durBase=a=>{const r=actRange(a);return r?Math.min(r[1]-r[0],360):90;};
+  const FINE_GIORNATA=1410;   // 23:30
+  const SOSTA_MINIMA=25;      // sotto questo non e' piu' una visita, e' un passaggio
+  const SCORCIO_MAX=.35;      // non si accorcia oltre: meglio dire che non ci sta
+  /* Prova a sistemare il giro accorciando ogni sosta di un fattore, e dice
+     dove finirebbe ognuna e chi resta fuori - senza toccare niente. Cosi' si
+     puo' provare piu' volte finche' ci sta tutto. Il tempo per spostarsi non
+     si tocca: quello e' strada da fare, non si comprime. */
+  const prova=fattore=>{
+    const dur=a=>Math.max(SOSTA_MINIMA,Math.round(durBase(a)*fattore));
+    let cur=start,tmin=570;
+    if(pins.length)tmin=Math.min(tmin,tMin(pins[0].time));
+    const rem=frees.slice(),piani=new Map(),fuori=[];
+    const metti=(a,st2)=>piani.set(a,{start:st2,dur:dur(a)});
+    if(seedFar){
+      const ix=rem.indexOf(seedFar);
+      if(ix>=0){
+        rem.splice(ix,1);
+        const st2=Math.max(tmin+wm(cur,seedFar),tmin);
+        metti(seedFar,st2);
+        tmin=st2+dur(seedFar)+5;cur=seedFar;
+      }
     }
-  }
-  pins.forEach(pin=>{
-    const pStart=tMin(pin.time);
+    pins.forEach(pin=>{
+      const pStart=tMin(pin.time);
+      while(rem.length){
+        let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
+        const cnd=rem[bi];
+        let st2=Math.max(tmin+wm(cur,cnd),tmin);
+        if(st2>=765&&st2<840)st2=840;
+        const fin2=st2+dur(cnd);
+        if(fin2+wm(cnd,pin)>pStart)break;
+        rem.splice(bi,1);metti(cnd,st2);
+        tmin=fin2+5;cur=cnd;
+      }
+      const pr=actRange(pin);
+      tmin=Math.max(tmin,pr?pr[1]:pStart+30)+5;
+      if(pin.lat)cur=pin;
+    });
     while(rem.length){
       let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
-      const cnd=rem[bi];
-      let st2=Math.max(tmin+wm(cur,cnd),tmin);
+      const cnd=rem.splice(bi,1)[0];
+      let st2=tmin+wm(cur,cnd);
       if(st2>=765&&st2<840)st2=840;
-      const fin2=st2+durOf(cnd);
-      if(fin2+wm(cnd,pin)>pStart)break;
-      rem.splice(bi,1);place(cnd,st2);
-      tmin=fin2+5;cur=cnd;
+      /* Conta quando finisce, non quando comincia: guardando solo la partenza
+         una visita di quattro ore che parte alle 23:11 risultava "dentro la
+         giornata", e poi le si tagliava la coda a mezzanotte. */
+      if(st2+dur(cnd)>FINE_GIORNATA){fuori.push(cnd);continue;}
+      metti(cnd,st2);
+      tmin=st2+dur(cnd)+5;cur=cnd;
     }
-    const pr=actRange(pin);
-    tmin=Math.max(tmin,pr?pr[1]:pStart+30)+5;
-    if(pin.lat)cur=pin;
-  });
-  while(rem.length){
-    let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
-    const cnd=rem.splice(bi,1)[0];
-    let st2=tmin+wm(cur,cnd);
-    if(st2>=765&&st2<840)st2=840;
-    if(st2>1410){
-      // oltre le 23:30 non ci sta piu': la si rimette com'era, non la si perde
-      const p=orariPrima.get(cnd)||{time:'',timeEnd:''};
-      cnd.time=p.time;cnd.timeEnd=p.timeEnd;
-      rimaste.push(cnd);
-      continue;
+    return {piani,fuori};
+  };
+  /* Se con le soste intere il giro non ci sta, non si lasciano indietro le
+     ultime tappe: si accorciano tutte le soste quel tanto che serve. Meglio
+     mezz'ora in meno dappertutto che due posti buttati fuori dalla giornata.
+     Si prova un taglio per volta partendo dal piu' leggero e ci si ferma al
+     primo che fa entrare tutto, cosi' le soste restano le piu' lunghe
+     possibili. Niente ricerca per dimezzamenti: la regola del buco del pranzo
+     fa saltare un'ora in avanti, quindi accorciare non e' sempre un guadagno
+     e il campo non si puo' restringere a meta'. */
+  let piano=prova(1);
+  if(piano.fuori.length){
+    for(let f=.95;f>=SCORCIO_MAX-1e-9;f-=.05){
+      const x=prova(f);
+      if(!x.fuori.length){piano=x;break;}
+      if(x.fuori.length<piano.fuori.length)piano=x;   // comunque meglio di niente
     }
-    place(cnd,st2);
-    tmin=st2+durOf(cnd)+5;cur=cnd;
   }
+  /* Gli orari di partenza si tengono da parte: se una tappa non entra nella
+     giornata nemmeno accorciando, torna dov'era invece di restare senza
+     orario. Prima le si cancellava l'ora - e una tappa senza ora esce dalla
+     time-table e finisce nell'elenco in cima: si chiedeva di riordinare il
+     giro e ci si ritrovava mezza giornata buttata fuori, senza saperlo. */
+  const orariPrima=new Map();
+  frees.forEach(a=>orariPrima.set(a,{time:a.time||'',timeEnd:a.timeEnd||''}));
+  let accorciate=0;
+  piano.piani.forEach((p,a)=>{
+    // la durata di prima va letta adesso: fra un attimo l'orario e' cambiato
+    if(p.dur<durBase(a))accorciate++;
+    a.time=fmtT(p.start);
+    if(!a.nextDay)a.timeEnd=fmtT(Math.min(p.start+p.dur,1439));
+  });
+  piano.fuori.forEach(a=>{
+    const q=orariPrima.get(a)||{time:'',timeEnd:''};
+    a.time=q.time;a.timeEnd=q.timeEnd;
+  });
   save();renderAll();openDay(ttDay);
-  if(rimaste.length){
-    const conOra=rimaste.filter(a=>a.time).length;
-    toast(rimaste.length===1
-      ? `Giro ordinato · "${rimaste[0].name}" non ci stava: ${conOra?'lasciata al suo orario':'resta senza orario'}`
-      : `Giro ordinato · ${rimaste.length} tappe non ci stavano nella giornata: lasciate come prima`);
-  }else toast('Giro ordinato attorno alle ancore: controlla e trascina se serve');
+  const parti=[];
+  if(accorciate)parti.push(accorciate===1?'1 sosta accorciata per farci stare tutto':`${accorciate} soste accorciate per farci stare tutto`);
+  if(piano.fuori.length)parti.push(piano.fuori.length===1
+    ? `"${piano.fuori[0].name}" non ci sta comunque: lasciata com'era`
+    : `${piano.fuori.length} non ci stanno comunque: lasciate come prima`);
+  toast(parti.length?('Giro ordinato · '+parti.join(' · ')):'Giro ordinato attorno alle ancore: controlla e trascina se serve');
 }
 function askFarthestFirst(farthestAct,onDone){
   document.getElementById('cfIc').textContent='🧭';
