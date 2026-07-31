@@ -7393,6 +7393,14 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
   let rem=frees.slice();
   const durOf=a=>{const r=actRange(a);return r?Math.min(r[1]-r[0],360):90;};
   const place=(a,st2)=>{a.time=fmtT(st2);if(!a.nextDay)a.timeEnd=fmtT(Math.min(st2+durOf(a),1439));};
+  /* Gli orari di partenza si tengono da parte: se una tappa non entra piu'
+     nella giornata, torna dov'era invece di restare senza orario. Prima le si
+     cancellava l'ora - e una tappa senza ora esce dalla time-table e finisce
+     nell'elenco in cima: si chiedeva di riordinare il giro e ci si ritrovava
+     mezza giornata buttata fuori, senza che niente lo dicesse. */
+  const orariPrima=new Map();
+  frees.forEach(a=>orariPrima.set(a,{time:a.time||'',timeEnd:a.timeEnd||''}));
+  const rimaste=[];
   if(seedFar){
     const ix=rem.indexOf(seedFar);
     if(ix>=0){
@@ -7423,12 +7431,23 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
     const cnd=rem.splice(bi,1)[0];
     let st2=tmin+wm(cur,cnd);
     if(st2>=765&&st2<840)st2=840;
-    if(st2>1380){cnd.time='';cnd.timeEnd='';continue;}
+    if(st2>1410){
+      // oltre le 23:30 non ci sta piu': la si rimette com'era, non la si perde
+      const p=orariPrima.get(cnd)||{time:'',timeEnd:''};
+      cnd.time=p.time;cnd.timeEnd=p.timeEnd;
+      rimaste.push(cnd);
+      continue;
+    }
     place(cnd,st2);
     tmin=st2+durOf(cnd)+5;cur=cnd;
   }
   save();renderAll();openDay(ttDay);
-  toast('Giro ordinato attorno alle ancore: controlla e trascina se serve');
+  if(rimaste.length){
+    const conOra=rimaste.filter(a=>a.time).length;
+    toast(rimaste.length===1
+      ? `Giro ordinato · "${rimaste[0].name}" non ci stava: ${conOra?'lasciata al suo orario':'resta senza orario'}`
+      : `Giro ordinato · ${rimaste.length} tappe non ci stavano nella giornata: lasciate come prima`);
+  }else toast('Giro ordinato attorno alle ancore: controlla e trascina se serve');
 }
 function askFarthestFirst(farthestAct,onDone){
   document.getElementById('cfIc').textContent='🧭';
