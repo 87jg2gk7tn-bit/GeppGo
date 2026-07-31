@@ -1241,11 +1241,18 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
   <div id="amBtns" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
     <button class="btn btn-soft btn-block" onclick="actMenuInfo()">ℹ️ Info</button>
+    <button class="btn btn-soft btn-block" id="amNoteBtn" onclick="actMenuNote()">📝 Note</button>
     <button class="btn btn-soft btn-block" id="amTtBtn" onclick="actMenuTimetable()">🕒 Apri la Time Table</button>
     <button class="btn btn-soft btn-block" id="amNavBtn" style="display:none" onclick="actMenuNav()">🧭 Naviga</button>
     <button class="btn btn-soft btn-block" id="amTkBtn" style="display:none" onclick="actMenuTicket()">🎫 Biglietto</button>
     <button class="btn btn-grad btn-block" onclick="actMenuEdit()">✎ Modifica attività</button>
   </div>
+</div></div>
+<div class="modal" id="mActNote"><div class="sheet" style="max-width:420px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="anTitle">Note</div><button class="x x-close" onclick="closeSheet('mActNote')">✕</button></div>
+  <div class="fg"><textarea id="anText" placeholder="Cosa ricordarsi: il piatto da ordinare, il binario, chi ha i biglietti, l'ingresso giusto…" style="min-height:150px"></textarea></div>
+  <button class="btn btn-grad btn-block" onclick="saveActNote()">Salva</button>
 </div></div>
 <div class="modal" id="mPicker"><div class="sheet" style="max-width:420px">
   <div class="sheet-grip"></div>
@@ -2881,6 +2888,10 @@ function tapAct(di,id){
   document.getElementById('amTtBtn').style.display=inTT?'none':'block';
   const tk=t.tickets.find(x=>x.actId===id);
   document.getElementById('amTkBtn').style.display=tk?'block':'none';
+  /* Si vede dal menu se una nota c'e' gia': senza, per saperlo bisognerebbe
+     aprire ogni tappa una per una. */
+  const nb=document.getElementById('amNoteBtn');
+  if(nb)nb.textContent=(a.notes&&a.notes.trim())?'📝 Note · già scritte':'📝 Note';
   openSheet('mActMenu');
 }
 /* Dalla home si tocca una tappa e si finisce nel suo menu: da li' si puo'
@@ -2918,6 +2929,38 @@ function actMenuEdit(){
   if(!actMenuRef)return;const {di,id}=actMenuRef;
   closeSheet('mActMenu');
   openActDetail(di,id);
+}
+/* Le note stavano solo dentro la scheda completa dell'attivita', in mezzo a
+   orari, prenotazione, spese e partecipanti: per scrivere due righe - il
+   binario, il piatto da ordinare, chi ha i biglietti - bisognava aprire tutto
+   quel modulo e poi salvarlo. Qui sono una voce a se', dal menu della tappa. */
+let actNoteRef=null;
+function actMenuNote(){
+  if(!actMenuRef)return;const {di,id}=actMenuRef;
+  const t=T();if(!t||!t.days[di])return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  actNoteRef={di,id};
+  document.getElementById('anTitle').textContent=a.name||'Note';
+  document.getElementById('anText').value=a.notes||'';
+  closeSheet('mActMenu');
+  setTimeout(()=>{
+    openSheet('mActNote');
+    const el=document.getElementById('anText');
+    if(el){try{el.focus();el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}
+  },140);
+}
+function saveActNote(){
+  if(!actNoteRef)return;const {di,id}=actNoteRef;
+  const t=T();if(!t||!t.days[di])return;
+  /* La tappa si ricerca adesso per identificativo: fra l'apertura e il salva
+     puo' essere arrivata la sincronizzazione e aver rifatto gli oggetti. */
+  const a=t.days[di].activities.find(x=>x.id===id);
+  if(!a){toast('Questa tappa non c\'è più');closeSheet('mActNote');return;}
+  const testo=document.getElementById('anText').value.trim();
+  const cambiata=(a.notes||'')!==testo;
+  a.notes=testo;
+  save();renderAll();closeSheet('mActNote');
+  toast(cambiata?(testo?'📝 Nota salvata':'Nota svuotata'):'Nota invariata');
 }
 function dayLoc(t,day){
   if(day.city){const cc=(t.cities||[]).find(c=>c.name===day.city&&c.lat);if(cc)return{lat:cc.lat,lng:cc.lng};}
