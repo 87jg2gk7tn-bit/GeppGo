@@ -433,23 +433,24 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .ttgrid{position:relative;margin-top:.5rem}
 .tt-line{position:absolute;left:0;right:0;border-top:1px dashed var(--line-soft)}
 .tt-line span{position:absolute;left:0;top:-8px;background:var(--surface);padding-right:6px;font-family:'Fraunces',serif;font-size:.72rem;color:var(--ink-faint)}
-.tt-block{position:absolute;background:var(--green-tint);border:1px solid var(--green-soft);border-radius:10px;padding:.38rem 1.45rem .38rem .55rem;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:.08rem;transition:box-shadow .15s var(--ease)}
+.tt-block{position:absolute;background:var(--green-tint);border:1px solid var(--green-soft);border-radius:10px;padding:.38rem .6rem .38rem .55rem;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:.08rem;transition:box-shadow .15s var(--ease)}
 .tt-block .tname{font-size:.86rem;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-block .tsub{font-size:.7rem;color:var(--green-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* La distanza scritta di fianco all'orario, per le tappe attaccate dove fra i
    due riquadri non c'e' spazio per la targhetta: piu' chiara dell'orario, cosi'
    si distingue a colpo d'occhio che e' un'altra cosa. */
 .tt-block .tsub-tratto{color:var(--ink-faint);font-weight:700}
-.tt-block .tgrip{position:absolute;right:.22rem;top:.18rem;color:var(--green-deep);opacity:.75;cursor:grab;padding:.18rem .2rem;font-size:.82rem}
 .tt-block.done{opacity:.55}.tt-block.done .tname{text-decoration:line-through}
 /* Agganciato dalla pressione lunga: si stacca dalla pagina, cosi' si vede a
    colpo d'occhio che adesso e' lui a seguire il dito. */
 .tt-block.tt-moving{outline:2px solid var(--green);outline-offset:2px;transform:scale(1.02);opacity:.94;transition:none}
-.tt-block.tt-moving .tgrip{opacity:1}
-.tt-block.tt-compact{padding:.1rem 1.3rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
+/* Tenendo premuto su una tappa iOS faceva partire la selezione del testo: si
+   coloravano di blu le ore e i nomi, con tanto di maniglie, invece di
+   agganciare il riquadro. Nella time-table non c'e' niente da selezionare. */
+#ttBody,#ttBody *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tt-block.tt-compact{padding:.1rem .55rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
 .tt-block.tt-compact .tname{flex:1 1 auto;min-width:0}
 .tt-block.tt-compact .tsub{flex:0 0 auto}
-.tt-block.tt-compact .tgrip{top:0;right:.15rem;font-size:.66rem;padding:.05rem .12rem}
 .tt-block.tt-compact .tszr{height:8px}
 .tt-block.tt-compact .tszr::after{width:16px;height:3px}
 
@@ -5182,7 +5183,7 @@ function buildTTDayInner(t,di){
         inline=` <span class="tsub-tratto">→ ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min</span>`;
       }
     }
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
   tratti.forEach(tr=>{
@@ -5222,7 +5223,7 @@ function buildTTDayInner(t,di){
     html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="tapAct(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">continua da ieri · ${lbl}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
-  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto ⋮⋮ e trascina su/giù per spostare l\'orario · tocca per aprire</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
+  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
   return {html,tops,d};
 }
 function buildTT(){
