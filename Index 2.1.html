@@ -6363,6 +6363,51 @@ let dayImportBusy=false;
 /* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
    un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
    Le righe senza orario riconoscibile vengono comunque aggiunte, senza orario. */
+/* ===== CONTROLLO DEI POSTI SUL WEB =====
+   Nominatim è un indice di indirizzi, non un motore di ricerca: cerca la
+   stringa che gli dai, e se una riga incollata ha un nome storpiato, un nome
+   in italiano di un posto che si chiama in un altro modo, o solo l'insegna
+   senza la città, non trova niente e la tappa entra senza posizione.
+   Qui si passa prima dall'IA con la ricerca sul web (che il ponte traduce nel
+   grounding con la Ricerca Google): torna il nome ufficiale e l'indirizzo, e
+   la mappa la si interroga con quelli. Una chiamata sola per tutta la lista.
+   Se l'IA non risponde si va avanti come prima: verificare è un miglioramento,
+   non un requisito, e una lista non deve restare fuori perché la quota è
+   finita. */
+async function verificaPosti(t,nomi){
+  if(!nomi||!nomi.length)return null;
+  const dove=t&&t.destination?` Il viaggio è a ${t.destination}, quindi quasi certamente sono lì o nei dintorni.`:'';
+  try{
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:2000,
+      tools:[{type:"web_search_20250305",name:"web_search"}],
+      messages:[{role:"user",content:`Cerca su internet ognuno di questi posti e dimmi come si chiama davvero e dov'è, come sta scritto sulla sua scheda su Google Maps.${dove}
+
+${nomi.map((n,i)=>`${i}. ${n}`).join('\n')}
+
+Rispondi SOLO con JSON, senza backtick:
+{"posti":[{"i":0,"nome":"nome ufficiale","indirizzo":"via e numero, quartiere, città","cerca":"nome ufficiale, via, città","sicuro":"alta"}]}
+
+- "i" è il numero della riga qui sopra: mettilo sempre, e non saltare nessuna riga
+- "cerca" è la stringa con cui lo si trova su una mappa: nome + via + città
+- "sicuro" vale "alta" se l'hai trovato e sei certo che sia quello, "media" se il posto esiste ma potrebbe essercene più di uno con quel nome, "bassa" se non l'hai trovato
+- con "bassa" lascia "indirizzo" vuoto e rimetti in "nome" esattamente quello che ti ho dato io
+- non inventare mai un indirizzo: meglio "bassa" che un numero civico plausibile e sbagliato`}]
+    })});
+    const data=await res.json();
+    if(!data||data.error)return null;
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const out=[];
+    (r.posti||[]).forEach(p=>{
+      const i=parseInt(p.i,10);
+      if(i>=0&&i<nomi.length)out[i]={nome:p.nome||'',indirizzo:p.indirizzo||'',cerca:p.cerca||'',sicuro:p.sicuro||'media'};
+    });
+    return out.length?out:null;
+  }catch(e){return null;}
+}
+
 async function importDayText(){
   const t=T();if(!t||dayImportBusy)return;const di=ttDay,d=t.days[di];if(!d)return;
   /* L'importazione dura secondi: una riga al secondo piu' il tempo di cercare
@@ -6384,22 +6429,35 @@ async function importDayText(){
   const st=document.getElementById('dayImportStatus'),btn=document.getElementById('dayImportBtn');
   if(btn)btn.disabled=true;
   const whoAll=t.participants.map(p=>p.id);
-  let added=0;
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-    if(st)st.textContent=`${i+1}/${lines.length}...`;
+  /* Prima si spezzano tutte le righe, poi si chiede una volta sola all'IA di
+     verificarle sul web: una chiamata per l'intera lista, non una per riga.
+     Cosi' la ricerca su mappa parte dal nome ufficiale e dall'indirizzo, che
+     e' quello che Nominatim sa trovare - da un nome scritto a orecchio non
+     trovava niente e la tappa restava senza posizione. */
+  const voci=lines.map(line=>{
     const m=line.match(timeRe);
-    let time='',name=line;
-    if(m){
-      time=String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
-      name=(line.slice(0,m.index)+line.slice(m.index+m[0].length)).replace(/^[\s\-–—:·|]+|[\s\-–—:·|]+$/g,'').trim();
-      if(!name)name=line;
-    }
-    if(!name)continue;
-    const a={id:uid(),name,time,timeEnd:'',type:'any',notes:'',who:whoAll.slice(),completed:false,booking:{needed:false,done:false},lat:null,lng:null,poiId:null};
+    if(!m)return {time:'',name:line};
+    const time=String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
+    const name=(line.slice(0,m.index)+line.slice(m.index+m[0].length)).replace(/^[\s\-–—:·|]+|[\s\-–—:·|]+$/g,'').trim();
+    return {time,name:name||line};
+  }).filter(v=>v.name);
+  if(st)st.textContent='Controllo i posti su internet...';
+  const verificati=await verificaPosti(t,voci.map(v=>v.name));
+  let added=0,conIndirizzo=0,incerti=0;
+  for(let i=0;i<voci.length;i++){
+    const time=voci[i].time,v=verificati?verificati[i]:null;
+    /* Il nome ufficiale si prende solo se l'IA dice di esserne sicura: su un
+       "bassa" avrebbe tirato a indovinare, e riscrivere quello che hai messo
+       tu con una supposizione e' peggio che lasciarlo com'e'. */
+    const name=(v&&v.sicuro!=='bassa'&&v.nome)?v.nome:voci[i].name;
+    if(st)st.textContent=`${i+1}/${voci.length}...`;
+    const a={id:uid(),name,time,timeEnd:'',type:'any',notes:(v&&v.indirizzo)||'',who:whoAll.slice(),completed:false,booking:{needed:false,done:false},lat:null,lng:null,poiId:null};
+    if(v&&v.indirizzo)conIndirizzo++;
+    if(v&&v.sicuro==='bassa')incerti++;
     try{
       const city=tripCityHint(t);
-      let res=await geoSearch(city?name+', '+city:name);
+      let res=(v&&v.cerca)?await geoSearch(v.cerca):[];
+      if(!res.length)res=await geoSearch(city?name+', '+city:name);
       if(!res.length&&city)res=await geoSearch(name);
       const ranked=(typeof rankPlaces==='function')?rankPlaces(res,name):res;
       const r=ranked&&ranked[0];
@@ -6412,11 +6470,14 @@ async function importDayText(){
        che e' gia' entrato resta. Prima si salvava solo alla fine e un'uscita
        anticipata portava via tutto. */
     save();
-    if(i<lines.length-1)await new Promise(r2=>setTimeout(r2,1100));
+    if(i<voci.length-1)await new Promise(r2=>setTimeout(r2,1100));
   }
   save();renderAll();dayImportBusy=false;if(btn)btn.disabled=false;
   document.getElementById('dayImportText').value='';
-  if(st)st.textContent=`Aggiunte ${added} attività.`;
+  const nota=[`Aggiunte ${added} attività`];
+  if(conIndirizzo)nota.push(`${conIndirizzo} con l'indirizzo verificato`);
+  if(incerti)nota.push(`${incerti} che non ho trovato online: controllale`);
+  if(st)st.textContent=nota.join(' · ')+'.';
   // L'indice del giorno puo' essere cambiato nel frattempo: si riapre quello giusto.
   const t3=app.trips.find(x=>x.id===tripId);
   const idx=t3?(t3.days||[]).findIndex(x=>x.id===dayId):-1;

@@ -71,6 +71,7 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `importTrip` | 5086 | Trasforma un itinerario incollato in un viaggio |
 | `doCheckBooking` | 6218 | Cerca sul web se serve prenotare |
 | `refreshSuggestions` | 6304 | Consiglia attrazioni nei dintorni |
+| `verificaPosti` | 6350 | Controlla sul web nome e indirizzo dei posti incollati |
 | `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
 | `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
 
