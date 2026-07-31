@@ -2652,9 +2652,33 @@ function initChat(){
 }
 function askStarter(s){document.getElementById('chatInput').value=s;sendChat();}
 function addMsg(who,text){const box=document.getElementById('chatMsgs'),d=document.createElement('div');d.className='msg '+who;d.textContent=text;box.appendChild(d);box.scrollTop=box.scrollHeight;return d;}
+/* "Sposta il museo al pomeriggio" non è una domanda: è un ordine, e va al
+   motore delle mosse invece che alla chiacchierata. Riconoscerlo qui costa
+   niente e risparmia un giro: chiedere allo stesso modello di rispondere a
+   parole, elencare luoghi e sputare JSON tutto insieme è un'istruzione che i
+   modelli piccoli - e sul piano gratuito si finisce lì - non reggono.
+   Le domande vere restano alla chat: si escludono le aperture interrogative,
+   perché "cosa mi consigli di mettere giovedì" contiene "mett" ma è una
+   richiesta di consiglio, non di modifica. */
+const CMD_VERBI=/\b(sposta\w*|togli\w*|elimina\w*|cancella\w*|rimuov\w+|accorcia\w*|allunga\w*|aggiungi\w*|anticipa\w*|posticipa\w*|sistema\w*|alleggeri\w+|riordina\w*|ottimizza\w*|aggiusta\w*|correggi\w*|scambia\w*|inverti\w*|rimanda\w*|rinvia\w*|comprimi\w*|stringi\w*|libera\w*)\b/i;
+function sembraUnComando(s){
+  const t=(s||'').toLowerCase().trim();
+  if(/^(cosa|quali|quale|quanto|dove|quando|perch|come mai|mi consigli|consigliami|che ne pensi|secondo te|sai |conosci )/.test(t))return false;
+  if(CMD_VERBI.test(t))return true;
+  if(/\b(metti|mettimi|fammi|fai)\b/.test(t)&&/\b(alle|alla|prima|dopo|giorno|orari?o?|pomeriggio|mattina|sera)\b/.test(t))return true;
+  return /\bcambia\b.*\bora/.test(t)||/\bfai stare\b/.test(t);
+}
+
 async function sendChat(){
   const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
-  inp.value='';addMsg('me',text);chatHistory.push({role:'user',content:text});
+  inp.value='';addMsg('me',text);
+  const t0=T();
+  if(t0&&sembraUnComando(text)){
+    addMsg('ai','Guardo il programma e ti dico come lo cambierei.');
+    chiediMosse(text,(typeof ttDay==='number'&&t0.days[ttDay])?ttDay:0,'Come lo cambierei');
+    return;
+  }
+  chatHistory.push({role:'user',content:text});
   const typing=addMsg('ai typing','✦ Sto pensando...');const t=T();
   /* La chat vede il programma vero, non solo il nome del viaggio: senza, a
      "alleggerisci giovedì" può solo rispondere a vanvera. E può cambiarlo, ma
@@ -2662,27 +2686,22 @@ async function sendChat(){
   const prog=t?`\n\nProgramma attuale:\n${mosseContesto(t,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0)}`:'';
   const sys=`Sei l'assistente di viaggio dell'app GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto.${t?` Il viaggio attuale è "${t.name}"${t.destination?` con destinazione ${t.destination}`:''}${t.start&&t.end?`, dal ${t.start} al ${t.end}`:''}.`:''} Quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (max 5, nomi precisi cercabili su mappa, includi la città). Esempio: "LUOGHI: Senso-ji, Tokyo | Meiji Jingu, Tokyo". Niente riga LUOGHI se non consigli posti specifici.
 
-Se invece ti viene chiesto di CAMBIARE il programma - spostare una tappa di giorno o di orario, accorciarla, toglierla, aggiungerne una, alleggerire una giornata troppo piena - non descriverlo a parole: scrivi una frase breve di risposta e poi UNA riga che inizia ESATTAMENTE con "MOSSE:" seguita dal JSON su una riga sola. ${MOSSE_REGOLE}${prog}`;
+Se invece ti viene chiesto di CAMBIARE il programma - spostare una tappa di giorno o di orario, accorciarla, toglierla, aggiungerne una, sistemare gli orari, alleggerire una giornata troppo piena - non rispondere a parole e non spiegare: scrivi soltanto [MODIFICA] e nient'altro. Ci pensa l'app.${prog}`;
   try{
     const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:chatHistory})});
     const data=await res.json();
     let reply=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     if(!reply)throw new Error('empty');
-    chatHistory.push({role:'assistant',content:reply});
-    /* Una richiesta di modifica torna come riga MOSSE: si toglie dal testo -
-       nessuno vuole leggere del JSON in chat - e diventa il pannello da
-       confermare. Se il JSON è malformato si lascia perdere in silenzio: resta
-       la risposta a parole, che è comunque sensata. */
-    const mm=reply.match(/MOSSE:\s*(\{[\s\S]*\})\s*$/i);
-    if(mm&&t){
-      reply=reply.replace(/MOSSE:\s*\{[\s\S]*\}\s*$/i,'').trim();
-      try{
-        const r=JSON.parse(mm[1]);
-        const mosse=(r.mosse||[]).filter(x=>mossaValida(t,x)).slice(0,8);
-        if(mosse.length)setTimeout(()=>apriMosse(t,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0,mosse,'Come lo cambierei',r.commento||''),400);
-      }catch(e){}
-      if(!reply)reply='Ecco come lo cambierei.';
+    /* Rete di sicurezza: se la frase era un ordine che il riconoscitore non ha
+       colto, è il modello a dirlo, e si passa al motore delle mosse. */
+    if(t&&/\[MODIFICA\]/i.test(reply)){
+      typing.remove();
+      chatHistory.pop();
+      addMsg('ai','Guardo il programma e ti dico come lo cambierei.');
+      chiediMosse(text,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0,'Come lo cambierei');
+      return;
     }
+    chatHistory.push({role:'assistant',content:reply});
     let places=[];const m=reply.match(/LUOGHI:\s*(.+)$/im);
     if(m){places=m[1].split('|').map(s=>s.trim()).filter(Boolean);reply=reply.replace(/LUOGHI:.*$/im,'').trim();}
     typing.remove();const msgEl=addMsg('ai',reply);
@@ -5925,8 +5944,18 @@ async function chiediMosse(istruzione,oggi,titolo){
     const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
     const m=txt.match(/\{[\s\S]*\}/);
     const r=JSON.parse(m?m[0]:txt);
-    const mosse=(r.mosse||[]).filter(x=>mossaValida(t,x)).slice(0,8);
-    if(!mosse.length){toast(r.commento||'Per me va bene così');return;}
+    const grezze=Array.isArray(r.mosse)?r.mosse:[];
+    const mosse=grezze.filter(x=>mossaValida(t,x)).slice(0,8);
+    if(!mosse.length){
+      /* Distinzione che conta: "non c'è niente da cambiare" e "ha proposto
+         cose inapplicabili" sono due esiti opposti, e mostrare il commento del
+         modello in tutti e due i casi farebbe leggere "ho spostato tutto"
+         proprio mentre non è stato spostato niente. */
+      toast(grezze.length
+        ? 'Ci ho provato ma non è venuto fuori niente di applicabile. Riprova dicendolo in altre parole.'
+        : (r.commento||'Per me va bene così'));
+      return;
+    }
     apriMosse(t,oggi,mosse,titolo||'Proposte',r.commento||'');
   }catch(e){toast('⚠️ L\'IA non è raggiungibile');}
   finally{mosseBusy=false;}
