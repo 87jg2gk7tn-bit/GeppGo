@@ -232,8 +232,19 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .hist-body{flex:1;min-width:0}
 .hist-n{font-weight:800;font-size:.95rem}
 .hist-m{font-size:.76rem;color:var(--ink-faint);margin-top:.15rem}
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 300px);min-height:320px}
-.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.7rem;padding:.25rem}
+/* L'altezza non si indovina. Prima era calc(100vh - 300px): quel 300 era una
+   stima di quanto sta sopra, e basta un nome di viaggio lungo - che manda i
+   suggerimenti a capo su tre righe - perché il riquadro sfondi in basso e la
+   riga per scrivere finisca fuori schermo. Su iPhone, per giunta, 100vh conta
+   anche la parte coperta dalla barra di Safari.
+   Adesso il riquadro è alto quanto il suo contenuto: la riga per scrivere sta
+   sempre attaccata all'ultimo messaggio, e sono i messaggi a scorrere dentro
+   il loro spazio quando diventano tanti. */
+.chat-wrap{display:flex;flex-direction:column;min-height:0}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.7rem;padding:.25rem;min-height:120px;max-height:46dvh}
+/* Il max-height qui sopra è solo il valore di partenza, prima che il codice
+   misuri lo spazio vero: senza, all'apertura si vedrebbe un lampo di riquadro
+   sbagliato. Il valore buono lo scrive misuraChat(). */
 .msg{max-width:85%;padding:.8rem 1rem;border-radius:var(--r-lg);font-size:.9rem;line-height:1.55;white-space:pre-wrap}
 .msg.ai{background:var(--surface);border:1px solid var(--line-soft);align-self:flex-start;border-bottom-left-radius:6px;box-shadow:var(--sh-xs)}
 .msg.me{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:6px}
@@ -2643,15 +2654,39 @@ function renderPlaceInfo(place,extra,opts){
   },150);
 }
 function initChat(){
-  const starters=document.getElementById('aiStarters'),t=T(),dest=t?.destination||'';
+  /* Solo la prima città: con un viaggio multi-tappa il nome completo è
+     "Tokyo, Fujiyoshida, Hakone, Kyoto, Osaka" e il suggerimento da solo
+     occupava due righe, spingendo giù tutto il resto. */
+  const starters=document.getElementById('aiStarters'),t=T(),
+        dest=((t?.destination)||'').split(',')[0].trim();
   starters.innerHTML=['Cosa vedere assolutamente'+(dest?` a ${dest}`:''),'Posti per buon cibo locale','Gemme nascoste poco turistiche','Cosa fare se piove'].map(s=>`<button class="starter" onclick="askStarter('${s.replace(/'/g,"\\'")}')">${s}</button>`).join('');
   if(!document.getElementById('chatMsgs').dataset.init){
     document.getElementById('chatMsgs').dataset.init='1';
     addMsg('ai',t?.destination?`Ciao! Sono il tuo assistente per ${t.destination}. Dimmi cosa ti interessa e ti consiglio posti da vedere, pronti da aggiungere al viaggio.`:'Ciao! Crea o seleziona un viaggio con una destinazione e ti consiglierò posti su misura per i tuoi gusti.');
   }
+  /* Dopo che i suggerimenti sono stati scritti: solo allora si sa quante righe
+     occupano, e quindi quanto spazio resta sotto. */
+  setTimeout(misuraChat,60);
 }
+/* Quanto spazio resta davvero per i messaggi si misura, non si stima. Sopra ci
+   sono la card e i suggerimenti, che vanno a capo in modo diverso a seconda di
+   quanto è lungo il nome del viaggio e di quanto è largo lo schermo - con
+   cinque destinazioni diventano tre righe - e sotto c'è la barra di
+   navigazione. Qualunque numero fisso in CSS sbaglia su qualche telefono, ed è
+   il motivo per cui la riga per scrivere finiva fuori schermo. */
+function misuraChat(){
+  const box=document.getElementById('chatMsgs'),row=document.querySelector('.chat-in-row');
+  if(!box||!row||!box.offsetParent)return;
+  const nav=document.querySelector('.nav');
+  const giu=nav?nav.getBoundingClientRect().top:window.innerHeight;
+  const spazio=giu-box.getBoundingClientRect().top-row.getBoundingClientRect().height-22;
+  box.style.maxHeight=Math.max(110,Math.round(spazio))+'px';
+}
+window.addEventListener('resize',()=>{clearTimeout(misuraChat._t);misuraChat._t=setTimeout(misuraChat,120);});
+window.addEventListener('orientationchange',()=>setTimeout(misuraChat,300));
+
 function askStarter(s){document.getElementById('chatInput').value=s;sendChat();}
-function addMsg(who,text){const box=document.getElementById('chatMsgs'),d=document.createElement('div');d.className='msg '+who;d.textContent=text;box.appendChild(d);box.scrollTop=box.scrollHeight;return d;}
+function addMsg(who,text){const box=document.getElementById('chatMsgs'),d=document.createElement('div');d.className='msg '+who;d.textContent=text;box.appendChild(d);misuraChat();box.scrollTop=box.scrollHeight;return d;}
 /* "Sposta il museo al pomeriggio" non è una domanda: è un ordine, e va al
    motore delle mosse invece che alla chiacchierata. Riconoscerlo qui costa
    niente e risparmia un giro: chiedere allo stesso modello di rispondere a
