@@ -938,6 +938,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <div id="bulkStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
       </div>
         <div class="card" style="margin-top:1rem">
+          <div class="card-head"><div><div class="card-h">Nel programma</div><div class="card-sub" id="progCount">0 posti</div></div></div>
+          <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin:-.3rem 0 .7rem">I posti che hai già in time-table. Tocca l'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.</p>
+          <div id="progPOIs"></div>
+        </div>
+        <div class="card" style="margin-top:1rem">
           <div class="card-head"><div><div class="card-h">Luoghi salvati</div><div class="card-sub" id="savedCount">0 luoghi</div></div></div>
           <div id="savedPOIs"></div>
         </div>
@@ -1299,6 +1304,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label id="lblFlyCost">Costo volo (opz.)</label><input id="adFlyCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="adFlyCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="adFlyPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div></div>
   <div id="adWx" style="font-size:.78rem;color:var(--ink-soft);margin:-.2rem 0 .8rem;min-height:.9rem"></div>
   <div class="fg"><label>Per chi è l'attività?</label><div class="split-list" id="adWho"></div></div>
+  <div class="fg"><label>Quanto ci tieni? <span style="font-weight:500;color:var(--ink-faint)">(gli avvisi quando ci passi vicino cambiano di conseguenza)</span></label><select id="adPri"><option value="">Non indicato</option><option value="essential">⭐ Essenziale</option><option value="skippable">Saltabile</option></select></div>
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="adDone"><span>Attività completata</span></label></div>
   <div class="fg"><label>Si svolge dentro un'altra attività? <span style="font-weight:500;color:var(--ink-faint)">(es. ristorante nel parco)</span></label><select id="adParent"><option value="">No, indipendente</option></select></div>
   <div class="fg"><label>Luogo <span style="font-weight:500;color:var(--ink-faint)">(mappa e meteo del giorno)</span></label>
@@ -2700,6 +2706,53 @@ function renderSaved(){
     const thumb=p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">${placeIcon(p.type,p.type)}</div>`;
     return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
   }).join('');
+}
+/* ===== NEL PROGRAMMA: i posti che sono gia' in time-table =====
+   In "Scopri" c'erano solo i luoghi salvati, cioe' quelli cercati qui dentro:
+   di quello che si era gia' messo in giornata non c'era traccia, e per sapere
+   se una tappa era essenziale o saltabile bisognava aprirla una per una.
+   Qui ci sono tutte, in ordine di giornata, con l'etichetta a vista e
+   tappabile. */
+function renderProgramPlaces(){
+  const c=document.getElementById('progPOIs'),cnt=document.getElementById('progCount');
+  if(!c)return;
+  const t=T();
+  const voci=[];
+  if(t)(t.days||[]).forEach((d,di)=>(d.activities||[]).forEach(a=>{
+    if(!actLoc(t,a))return;
+    voci.push({a,di,d});
+  }));
+  if(cnt)cnt.textContent=`${voci.length} ${voci.length===1?'posto':'posti'}`;
+  if(!voci.length){
+    c.innerHTML='<div class="empty"><div class="empty-ic">🕒</div><div class="empty-t">Niente in time-table, per ora</div></div>';
+    return;
+  }
+  c.innerHTML=voci.map(({a,di,d})=>{
+    const poi=a.poiId?(t.pois||[]).find(x=>x.id===a.poiId):null;
+    const foto=poi&&poi.photo?poi.photo:'';
+    const thumb=foto?`<img src="${esc(foto)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0">`
+                    :`<div style="width:44px;height:44px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0">${a.type==='outdoor'?'🌳':a.type==='indoor'?'🏛️':'📍'}</div>`;
+    const pri=a.priority||(poi&&poi.priority)||'';
+    const lbl=pri==='essential'?'⭐ Essenziale':(pri==='skippable'?'Saltabile':'Non indicato');
+    const cls=pri==='essential'?'ess':'skip';
+    const quando=`G${di+1}${a.time?' · '+esc(a.time):''}`;
+    return `<div style="padding:.7rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;display:flex;gap:.6rem;align-items:center;cursor:pointer" onclick="openActDetail(${di},${a.id})">
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name||'')}</div>
+        <div style="font-size:.76rem;color:var(--ink-faint);margin-top:.1rem">${quando}</div>
+      </div>
+      <button class="pri-badge ${cls}" style="border:none;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();cyclePriority(${di},${a.id})">${lbl}</button>
+    </div>`;
+  }).join('');
+}
+/* Un tocco sull'etichetta gira fra i tre stati, senza aprire la scheda. */
+function cyclePriority(di,id){
+  const t=T();if(!t||!t.days[di])return;
+  const a=t.days[di].activities.find(x=>x.id===id);if(!a)return;
+  a.priority=a.priority==='essential'?'skippable':(a.priority==='skippable'?null:'essential');
+  if(a.poiId){const pp=(t.pois||[]).find(x=>x.id===a.poiId);if(pp&&a.priority)pp.priority=a.priority;}
+  save();renderProgramPlaces();renderSaved();drawMarkers();
 }
 function delPOI(id){const t=T();confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId===id)a.poiId=null;}));t.pois=t.pois.filter(pp=>pp.id!==id);t._delPoi=t._delPoi||{};t._delPoi[id]=Date.now();save();renderAll();});}
 function openAddDay(){if(!T()){toast('Crea prima un viaggio');return;}document.getElementById('dayDate').value='';document.getElementById('dayTitle').value='';openSheet('mAddDay');}
@@ -5861,6 +5914,7 @@ function openActDetail(di,id){
   document.getElementById('adType').value=a.type||'any';
   document.getElementById('adDay').onchange=()=>{updateAdWx();updateAdParent();};document.getElementById('adType').addEventListener('change',updateAdWx);document.getElementById('adType').addEventListener('change',updFlyVis);setTimeout(()=>{updateAdWx();updFlyVis();},50);
   document.getElementById('adDone').checked=!!a.completed;
+  document.getElementById('adPri').value=a.priority||'';
   document.getElementById('adParent').innerHTML='<option value="">No, indipendente</option>'+d.activities.filter(x=>x.id!==id&&actRange(x)).map(x=>`<option value="${x.id}" ${a.parentId===x.id?'selected':''}>${x.time||''} ${esc(x.name)}</option>`).join('');
   const b=a.booking||{needed:false,done:false};
   document.getElementById('adBookChk').checked=!!b.needed;
@@ -5949,6 +6003,11 @@ function saveActDetail(){
   a.type=document.getElementById('adType').value;
   a.notes=document.getElementById('adNotes').value;
   a.completed=document.getElementById('adDone').checked;
+  /* Essenziale o saltabile decide il raggio con cui l'app avvisa passandoci
+     vicino: se la tappa e' agganciata a un luogo salvato, i due devono dire
+     la stessa cosa, se no si guarda la scheda e si legge un'altra storia. */
+  a.priority=document.getElementById('adPri').value||null;
+  if(a.poiId){const pp=t.pois.find(x=>x.id===a.poiId);if(pp&&a.priority)pp.priority=a.priority;}
   const needed=document.getElementById('adBookChk').checked;
   const nb={needed,done:document.getElementById('adBookDone').value==='si',by:document.getElementById('adBookBy').value,time:document.getElementById('adBookTime').value,url:document.getElementById('adBookUrl').value.trim(),who,seats:who.length||1};
   const ob=a.booking||{};nb.notified=(ob.by===nb.by&&ob.time===nb.time)?!!ob.notified:false;
@@ -7832,7 +7891,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
+  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderProgramPlaces();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
 
 </script>
 </body>
