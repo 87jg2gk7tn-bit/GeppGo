@@ -5723,7 +5723,7 @@ function buildDayMap(){
     }
     if(all.length>1)dayMapObj.fitBounds(L.latLngBounds(all),{padding:[28,28],maxZoom:16});
     else if(all.length===1)dayMapObj.setView(all[0],16);
-    setTimeout(()=>dayMapObj.invalidateSize(),120);
+    setTimeout(()=>{if(dayMapObj)dayMapObj.invalidateSize();},120);
   },320);
 }
 function addFromDay(){fromDayFlag=true;openAddAct(ttDay);}
@@ -5906,8 +5906,9 @@ Ogni mossa è una di queste:
 
 Regole ferree:
 - usa SOLO gli ID che trovi qui sotto: non inventarne
-- gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00...
-- "perche" è una riga sola in italiano con il motivo vero e concreto (la distanza, la pioggia prevista, la giornata piena, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare"
+- gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00... mai :09, :15, :20
+- non proporre mosse che non cambiano niente: se una tappa è già alle 11:00 non dire di spostarla alle 11:00
+- "perche" è una riga sola in italiano con il motivo vero e concreto (i minuti di strada, la pioggia prevista, la giornata piena, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare" o "per una transizione fluida"
 - non muovere quello che è già al posto giusto: se va bene così rispondi {"mosse":[],"commento":"..."}
 - al massimo 8 mosse, le più utili`;
 
@@ -5926,10 +5927,59 @@ function mosseContesto(t,oggi){
     });
     return `  giorno ${i}${i===oggi?'  <<< QUESTO':''} — ${d.date}${meteo}\n${voci.join('\n')||'    (nessuna tappa)'}`;
   });
-  return `Viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}. Ci si sposta ${modeNome((t.days[oggi]||{}).travelMode||'walk')}.\n${g.join('\n')}`;
+  return `Viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}. Ci si sposta ${modeNome((t.days[oggi]||{}).travelMode||'walk')}.\n${g.join('\n')}\n${mosseDistanze(t,t.days[oggi])}`;
 }
 
+/* Dalle coordinate il modello non ricava niente di affidabile: chiedergli il
+   "miglior giro" senza dargli i minuti veri è chiedergli di indovinare. Le
+   distanze le calcola l'app, con il mezzo di quel giorno e la pioggia se c'è,
+   e gliele si passa già in minuti. Solo per il giorno su cui si lavora:
+   tutte le coppie di tutti i giorni sarebbero un muro inutile. */
+function mosseDistanze(t,d){
+  if(!d)return'';
+  const v=(d.activities||[]).filter(a=>actLoc(t,a));
+  if(v.length<2)return'';
+  const rain=dayIsRainy(t,d),righe=[];
+  for(let i=0;i<v.length;i++)for(let j=i+1;j<v.length;j++){
+    const e=travelEstimate(d,hav(actLoc(t,v[i]),actLoc(t,v[j])),null,rain);
+    righe.push(`    ${v[i].name} ↔ ${v[j].name}: ${e.minutes} min`);
+  }
+  return `  minuti di strada fra le tappe del giorno segnato, ${modeNome(d.travelMode||'walk')}:\n${righe.join('\n')}`;
+}
+
+/* orarioTondo arrotonda per eccesso, ed è giusto per l'autopilota: non si può
+   far partire una tappa prima di quando ci si arriva. Ma quando un orario c'è
+   già e va solo raddrizzato, per eccesso lo sposta sempre in avanti - le 10:09
+   diventerebbero le 10:30 - e su una giornata intera la slitta tutta. Qui si
+   va al più vicino: 10:09 → 10:00, 13:40 → 13:30. */
+function oraTonda(min){return Math.max(0,Math.min(1439,Math.round(min/PASSO_ORARIO)*PASSO_ORARIO));}
+
 let mosseProposte=null,mosseUndo=null,mosseGiorno=null,mosseBusy=false;
+
+/* Le tappe con l'orario storto che il modello non ha nominato. Un modello
+   piccolo ne elenca tre su cinque e si dimentica il resto: chiedergli di
+   fare l'appello completo è chiedergli la cosa che sa fare peggio. L'app sa
+   quali sono, e propone di finire il lavoro con una riga sua - spuntabile
+   come le altre, perché un 10:09 può anche essere l'orario vero di un treno. */
+function tappeStorte(t,oggi,gia){
+  const d=t.days[oggi];if(!d)return[];
+  const toccate=new Set((gia||[]).filter(m=>m.tappa!=null).map(m=>String(m.tappa)));
+  return (d.activities||[]).filter(a=>{
+    if(toccate.has(String(a.id)))return false;
+    const st=tMin(a.time);if(st==null)return false;
+    const r=actRange(a);
+    return st%PASSO_ORARIO!==0||(r&&(r[1]-r[0])%PASSO_ORARIO!==0);
+  });
+}
+function mossaArrotonda(t,oggi,istruzione,gia){
+  const parlaDiOrari=/\borari?\b|\btond|\bpuntual/i.test(istruzione||'')||
+    (gia||[]).some(m=>m.azione==='sposta_ora'||m.azione==='durata');
+  if(!parlaDiOrari)return null;
+  const storte=tappeStorte(t,oggi,gia);
+  if(!storte.length)return null;
+  return {azione:'arrotonda',tappe:storte.map(a=>a.id),_app:true,
+    perche:'Le porto alla mezz\'ora come le altre, senza spostarle di giornata.'};
+}
 
 async function chiediMosse(istruzione,oggi,titolo){
   const t=T();if(!t||mosseBusy)return;
@@ -5946,6 +5996,8 @@ async function chiediMosse(istruzione,oggi,titolo){
     const r=JSON.parse(m?m[0]:txt);
     const grezze=Array.isArray(r.mosse)?r.mosse:[];
     const mosse=grezze.filter(x=>mossaValida(t,x)).slice(0,8);
+    const finisci=mossaArrotonda(t,oggi,istruzione,mosse);
+    if(finisci)mosse.push(finisci);
     if(!mosse.length){
       /* Distinzione che conta: "non c'è niente da cambiare" e "ha proposto
          cose inapplicabili" sono due esiti opposti, e mostrare il commento del
@@ -5973,22 +6025,51 @@ function trovaTappa(t,id){
    punto in cui costa niente: più avanti si scriverebbe su una tappa a caso. */
 function mossaValida(t,m){
   if(!m||!m.azione)return false;
+  if(m.azione==='arrotonda')return Array.isArray(m.tappe)&&m.tappe.some(id=>trovaTappa(t,id));
   if(m.azione==='aggiungi')return !!(m.nome&&m.giorno!=null&&t.days[m.giorno]);
   const f=trovaTappa(t,m.tappa);if(!f)return false;
   if(m.azione==='sposta_giorno')return !!t.days[m.giorno]&&m.giorno!==f.di;
-  if(m.azione==='sposta_ora')return /^\d{1,2}:\d{2}$/.test(m.ora||'');
-  if(m.azione==='durata')return m.minuti>=15&&m.minuti<=600;
+  /* Una mossa che lascia le cose come stanno - "dalle 11:00 alle 11:00" - non
+     è una proposta, è rumore: fa sembrare che l'app stia lavorando quando non
+     sta facendo niente. Si confronta sull'orario tondo, che è quello che
+     verrebbe davvero scritto. */
+  if(m.azione==='sposta_ora'){
+    if(!/^\d{1,2}:\d{2}$/.test(m.ora||''))return false;
+    const st=tMin(m.ora);
+    return st!=null&&oraTonda(st)!==tMin(f.a.time);
+  }
+  if(m.azione==='durata'){
+    if(!(m.minuti>=15&&m.minuti<=600))return false;
+    const r=actRange(f.a);
+    return !r||durataTonda(m.minuti)!==r[1]-r[0];
+  }
   if(m.azione==='priorita')return m.valore==='essenziale'||m.valore==='saltabile';
   return m.azione==='togli';
 }
 
 function descriviMossa(t,m){
+  if(m.azione==='arrotonda'){
+    const n=m.tappe.map(id=>trovaTappa(t,id)).filter(Boolean);
+    return `🕒 Porto alla mezz'ora anche <b>${n.map(f=>esc(f.a.name)).join('</b>, <b>')}</b>`+
+      ` <span style="font-weight:500;color:var(--ink-soft)">(${n.map(f=>`${f.a.time}→${hhmm(oraTonda(tMin(f.a.time)))}`).join(', ')})</span>`;
+  }
   if(m.azione==='aggiungi')return `➕ Aggiungi <b>${esc(m.nome)}</b> al giorno ${(m.giorno||0)+1}${m.ora?` alle ${esc(m.ora)}`:''}`;
   const f=trovaTappa(t,m.tappa);if(!f)return'';
   const n=`<b>${esc(f.a.name)}</b>`;
   if(m.azione==='sposta_giorno')return `📅 Sposta ${n} al giorno ${m.giorno+1}`;
-  if(m.azione==='sposta_ora')return `🕒 ${n}: dalle ${esc(f.a.time||'—')} alle ${esc(m.ora)}`;
-  if(m.azione==='durata')return `⏱️ ${n}: ${m.minuti} minuti`;
+  /* Si scrive l'orario arrotondato, quello che l'app metterà davvero, e anche
+     la fine: leggere solo l'inizio faceva sembrare che la coda restasse
+     storta anche quando non era vero. */
+  if(m.azione==='sposta_ora'){
+    const r=actRange(f.a),st=oraTonda(tMin(m.ora));
+    const fine=hhmm(Math.min(st+durataTonda(r?r[1]-r[0]:60),1439));
+    return `🕒 ${n}: da ${esc(f.a.time||'—')}${f.a.timeEnd?'–'+esc(f.a.timeEnd):''} a <b>${hhmm(st)}–${fine}</b>`;
+  }
+  if(m.azione==='durata'){
+    const st=oraTonda(tMin(f.a.time)||0);
+    const fine=hhmm(Math.min(st+durataTonda(m.minuti),1439));
+    return `⏱️ ${n}: ${durataTonda(m.minuti)} minuti (${hhmm(st)}–${fine})`;
+  }
   if(m.azione==='togli')return `🗑️ Togli ${n}`;
   if(m.azione==='priorita')return `🏷️ ${n}: ${esc(m.valore)}`;
   return'';
@@ -6040,6 +6121,18 @@ async function applicaMossa(t,m){
     }else dagliUnOrario(t,d,a);
     return true;
   }
+  if(m.azione==='arrotonda'){
+    let n=0;
+    m.tappe.forEach(id=>{
+      const f=trovaTappa(t,id);if(!f)return;
+      const st0=tMin(f.a.time);if(st0==null)return;
+      const r=actRange(f.a),st=oraTonda(st0);
+      f.a.time=hhmm(st);
+      f.a.timeEnd=hhmm(Math.min(st+durataTonda(r?r[1]-r[0]:60),1439));
+      n++;
+    });
+    return n>0;
+  }
   const f=trovaTappa(t,m.tappa);if(!f)return false;
   const a=f.a,d=t.days[f.di];
   if(m.azione==='sposta_giorno'){
@@ -6052,14 +6145,22 @@ async function applicaMossa(t,m){
     dagliUnOrario(t,nd,a);
     return true;
   }
+  /* L'aritmetica non si lascia al modello: dice "arrotondo" e poi propone le
+     10:09, oppure sposta l'inizio all'ora tonda e si tiene una durata di 1h35,
+     che rimette la fine alle 11:35. Qui si arrotondano tutti e due i capi, e
+     la regola della mezz'ora vale per quello che l'app scrive, non per quello
+     che il modello promette. */
   if(m.azione==='sposta_ora'){
-    const st=tMin(m.ora);if(st==null)return false;
-    const r=actRange(a),dur=r?r[1]-r[0]:60;
-    a.time=hhmm(st);a.timeEnd=hhmm(Math.min(st+dur,1439));
+    const st0=tMin(m.ora);if(st0==null)return false;
+    const st=oraTonda(st0),r=actRange(a);
+    a.time=hhmm(st);
+    a.timeEnd=hhmm(Math.min(st+durataTonda(r?r[1]-r[0]:60),1439));
     return true;
   }
   if(m.azione==='durata'){
-    const st=tMin(a.time);if(st==null)return false;
+    const st0=tMin(a.time);if(st0==null)return false;
+    const st=oraTonda(st0);
+    a.time=hhmm(st);
     a.timeEnd=hhmm(Math.min(st+durataTonda(m.minuti),1439));
     return true;
   }
@@ -6223,7 +6324,15 @@ async function applicaItinerario(){
 /* Le porte d'ingresso. */
 function sistemaGiornata(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
-  chiediMosse('Guarda il giorno segnato con <<< QUESTO e sistemalo: ordine sensato rispetto alle distanze, i pasti alla loro ora, non due musei di fila, e se è troppo pieno sposta ad altri giorni quello che è saltabile o toglilo.',ttDay,'Come sistemerei la giornata');
+  chiediMosse(`Sistema il giorno segnato con <<< QUESTO.
+
+Ragiona in quest'ordine, e scrivilo nel commento:
+1. Qual è il giro migliore. Guarda i minuti di strada fra le tappe che ti ho dato e trova l'ordine che taglia gli avanti e indietro: se due tappe sono a 5 minuti vanno di fila, se una è a 40 minuti dalle altre va in cima o in fondo alla giornata, non in mezzo. Se il giro attuale fa attraversare la città due volte, dillo e raddrizzalo.
+2. Poi dai gli orari lungo quel giro, uno dopo l'altro, lasciando sempre il tempo di strada fra una tappa e la successiva. Non far partire una tappa prima che sia finita quella di prima più il viaggio.
+3. I pasti alla loro ora: pranzo fra le 12:00 e le 14:00, cena dalle 19:30 in poi.
+4. Se non ci sta tutto, sposta ad altri giorni quello che è segnato saltabile, o toglilo. Meglio una giornata che respira che una piena da cui si scappa.
+
+Non mettere due musei di fila, e non lasciare buchi di due ore senza motivo.`,ttDay,'Come sistemerei la giornata');
 }
 function alternativeMeteo(di){
   const t=T();if(!t)return;
