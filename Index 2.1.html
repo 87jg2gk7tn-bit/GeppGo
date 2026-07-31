@@ -1521,13 +1521,16 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
   window.GEPPGO_PUBLIC_URL=location.origin+location.pathname;
 </script>
 <script>
-/* Ponte verso il Worker Cloudflare che traduce verso Gemini */
+/* Il ponte su Cloudflare che tiene la chiave al sicuro e traduce verso Gemini.
+   L'app continua a parlare "anthropic": chi c'è dall'altra parte lo decide il
+   Worker, non questo file. Come rifarlo da zero, come cambiare motore e cosa
+   serve prima di pubblicare: GUIDA-AI.md, accanto a questo file. */
 window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
 
 /* ===== ENDPOINT AI =====
-   Anteprima Claude: lascia così, funziona da solo.
-   App nativa / sito pubblicato: vedi la GUIDA, passo 7.
-   Basta definire window.GEPPGO_AI_URL prima di questo blocco. */
+   L'indirizzo qui sopra vince. Se non fosse definito, si ricade sull'API di
+   Anthropic in chiaro: funziona solo dentro l'anteprima di Claude, che ci mette
+   l'autenticazione per conto suo. */
 const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
