@@ -2174,7 +2174,7 @@ function renderHomeHero(){
     const av=avOf(a);
     // La foto del luogo collegato: si riconosce la tappa senza leggerne il nome.
     const poiA=a.poiId?(t.pois||[]).find(pp=>pp.id===a.poiId):null;
-    const foto=poiA&&poiA.photo?poiA.photo:'';
+    const foto=a.photo||(poiA&&poiA.photo)||'';
     return `<div class="hh-card${nx&&nx.a.id===a.id?' next':''}" onclick="tapAct(${i},${a.id})">
       ${foto?`<img class="hh-card-ph" src="${esc(foto)}" alt="" onerror="this.remove()">`:''}
       <div class="hh-card-t">${esc(a.time||'—')}</div>
@@ -2184,6 +2184,7 @@ function renderHomeHero(){
     </div>`;
   }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
   homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
+  backfillActPhotos(t);
   buildHomeMap(t,day,acts);
 }
 
@@ -2392,7 +2393,7 @@ let piMapObj=null;
    "Paris-Orly Airport" (da noi "Aeroporto di Parigi-Orly"), gli hotel, i
    ristoranti. Qui si prova in ordine — dal riferimento più affidabile al
    più generico — e ci si ferma alla prima immagine trovata. */
-const PHOTO_TRY_VERSION=2;
+const PHOTO_TRY_VERSION=3;
 async function jget(url){
   try{const r=await fetch(url,{headers:{'Accept-Language':'it,en'}});if(!r.ok)return null;return await r.json();}catch(e){return null;}
 }
@@ -2400,6 +2401,32 @@ async function jget(url){
 function commonsFileUrl(file,width){
   const f=String(file).replace(/^File:/i,'').replace(/ /g,'_');
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=${width||400}`;
+}
+/* Una foto serve a riconoscere il posto: se al posto dell'edificio arriva il
+   logo, lo stemma, una mappa o - peggio - il ritratto di una persona che si
+   chiama come il quartiere, non serve a niente. Il nome del file dice quasi
+   sempre di che si tratta, e i disegni vettoriali sono quasi sempre loghi. */
+const FOTO_SCARTO=/(^|[^a-z])(logo|logotype|wordmark|icon|favicon|seal|emblem|crest|flag|coat[_ -]?of[_ -]?arms|stemma|bandiera|banner|map|mappa|plan|planimetria|diagram|schema|chart|graph|signature|firma)([^a-z]|$)/i;
+function fotoPlausibile(url){
+  if(!url)return false;
+  if(/\.svg(\?|$)/i.test(url))return false;
+  let nome='';
+  try{nome=decodeURIComponent(String(url).split('?')[0].split('/').pop()||'');}catch(e){nome=String(url);}
+  return !FOTO_SCARTO.test(nome.replace(/_/g,' '));
+}
+/* Le voci di persona hanno quasi sempre una descrizione che lo dice. "Shibuya"
+   e' anche un cognome, e la sua voce porta con se' un ritratto. */
+const DESCR_PERSONA=/\b(calciator|cestist|attore|attrice|cantante|politic|scrittor|regist|musicist|artista|giocator|atleta|nuotator|pittore|autore|imprenditor|nobile|samurai|footballer|actor|actress|singer|politician|writer|player|athlete|musician|painter|director|rapper|wrestler|novelist|businessman|born |nato |nata )/i;
+function voceDiPersona(d){
+  return !!(d&&d.description&&DESCR_PERSONA.test(d.description));
+}
+/* Se sappiamo dove sta il posto e la voce dice di stare altrove, e' un'altra
+   cosa con lo stesso nome. */
+function voceLontana(d,lat,lng){
+  if(lat==null||lng==null)return false;
+  const co=d&&d.coordinates;
+  if(!co||co.lat==null)return false;
+  return calcDist(lat,lng,co.lat,co.lon!=null?co.lon:co.lng)>3000;
 }
 function firstThumb(data){
   const pages=data&&data.query&&data.query.pages;if(!pages)return null;
@@ -2411,14 +2438,29 @@ function firstThumb(data){
   }
   return null;
 }
-async function wikiPhotoByTitle(lang,title){
+async function wikiPhotoByTitle(lang,title,lat,lng){
   const d=await jget(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
   if(!d||d.type==='disambiguation')return null;
-  return (d.thumbnail&&d.thumbnail.source)||(d.originalimage&&d.originalimage.source)||null;
+  if(voceDiPersona(d)||voceLontana(d,lat,lng))return null;
+  const src=(d.thumbnail&&d.thumbnail.source)||(d.originalimage&&d.originalimage.source)||null;
+  return fotoPlausibile(src)?src:null;
 }
-/* La voce più pertinente per quel nome, anche se si chiama diversamente. */
-async function wikiPhotoBySearch(lang,q){
-  return firstThumb(await jget(`https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`));
+/* La voce piu' pertinente per quel nome, anche se si chiama diversamente. Si
+   tengono solo le voci che hanno delle coordinate - cioe' parlano di un posto,
+   non di una persona - e che stanno davvero li' vicino. */
+async function wikiPhotoBySearch(lang,q,lat,lng){
+  const d=await jget(`https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=5&prop=pageimages%7Ccoordinates&piprop=thumbnail&pithumbsize=400&format=json&origin=*`);
+  const pages=d&&d.query&&d.query.pages;if(!pages)return null;
+  const arr=Object.values(pages).sort((a,b)=>(a.index||99)-(b.index||99));
+  for(const pg of arr){
+    const src=pg.thumbnail&&pg.thumbnail.source;
+    if(!fotoPlausibile(src))continue;
+    const co=pg.coordinates&&pg.coordinates[0];
+    if(!co)continue;
+    if(lat!=null&&lng!=null&&calcDist(lat,lng,co.lat,co.lon)>3000)continue;
+    return src;
+  }
+  return null;
 }
 /* Cosa racconta Wikipedia proprio lì attorno: prende chi ha una foto. */
 async function wikiPhotoByGeo(lang,lat,lng,radius){
@@ -2443,24 +2485,24 @@ async function findPlacePhoto(place,extra){
   if(extra.wiki){
     const ix=String(extra.wiki).indexOf(':');
     const lang=ix>0?extra.wiki.slice(0,ix):'it',title=ix>0?extra.wiki.slice(ix+1):extra.wiki;
-    if(/^[a-z]{2,3}$/.test(lang)){const ph=await wikiPhotoByTitle(lang,title);if(ph)return ph;}
+    if(/^[a-z]{2,3}$/.test(lang)){const ph=await wikiPhotoByTitle(lang,title,lat,lng);if(ph)return ph;}
   }
   // 2. l'immagine ufficiale su Wikidata
-  if(extra.wikidata){const ph=await wikidataPhoto(extra.wikidata);if(ph)return ph;}
-  // 3. la foto messa direttamente sul punto in OpenStreetMap
-  if(extra.image&&/^https?:\/\//i.test(extra.image))return extra.image;
+  if(extra.wikidata){const ph=await wikidataPhoto(extra.wikidata);if(fotoPlausibile(ph))return ph;}
+  // 3. la foto messa direttamente sul punto in OpenStreetMap - spesso e' il logo
+  if(extra.image&&/^https?:\/\//i.test(extra.image)&&fotoPlausibile(extra.image))return extra.image;
   // 4. per nome: prima la voce omonima, poi la ricerca vera e propria
   if(name){
     for(const lang of ['it','en']){
-      let ph=await wikiPhotoByTitle(lang,name);if(ph)return ph;
-      ph=await wikiPhotoBySearch(lang,name);if(ph)return ph;
+      let ph=await wikiPhotoByTitle(lang,name,lat,lng);if(ph)return ph;
+      ph=await wikiPhotoBySearch(lang,name,lat,lng);if(ph)return ph;
     }
   }
   // 5. per posizione: il posto non ha una voce sua, ma sta dentro qualcosa
   //    che ce l'ha (un ristorante dentro un parco, un gate in aeroporto)
   if(hasLoc){
-    for(const lang of ['it','en']){const ph=await wikiPhotoByGeo(lang,lat,lng,400);if(ph)return ph;}
-    const ph=await commonsPhotoByGeo(lat,lng,250);if(ph)return ph;
+    for(const lang of ['it','en']){const ph=await wikiPhotoByGeo(lang,lat,lng,400);if(fotoPlausibile(ph))return ph;}
+    const ph=await commonsPhotoByGeo(lat,lng,250);if(fotoPlausibile(ph))return ph;
   }
   return null;
 }
@@ -2490,9 +2532,11 @@ async function fetchPlaceExtra(place){
       const wr=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,{headers:{'Accept-Language':'it'}});
       if(wr.ok){
         const wd=await wr.json();
-        if(wd.type!=='disambiguation'){
+        const fuoriTema=voceDiPersona(wd)||voceLontana(wd,place.lat,place.lng);
+        if(wd.type!=='disambiguation'&&!fuoriTema){
           extra.wikiUrl=wd.content_urls?.desktop?.page||'';
-          extra.photo=wd.thumbnail?.source||wd.originalimage?.source||'';
+          const cand=wd.thumbnail?.source||wd.originalimage?.source||'';
+          extra.photo=fotoPlausibile(cand)?cand:'';
           extra.summary=wd.extract||'';
           const pageTitle=(wd.titles&&wd.titles.canonical)||title;
           try{
@@ -2670,6 +2714,44 @@ async function enrichPoiPhoto(tripId,poiId,name,lat,lng){
    _photoTry tiene il numero di versione della ricerca usata: quando la
    ricerca migliora basta alzarlo per ritentare anche i luoghi già dati
    per persi, senza però ripetere all'infinito quelli appena falliti. */
+/* Le tappe nate dall'autopilota o da una lista incollata non hanno dietro un
+   luogo salvato - poiId resta vuoto - e in home restavano senza foto: di un
+   nome straniero, da solo, non si capisce niente. La foto si cerca anche per
+   loro, con la stessa ricerca, e si tiene sulla tappa. */
+let actPhotoBusy=false;
+function backfillActPhotos(t){
+  if(!t||actPhotoBusy)return;
+  const todo=[];
+  (t.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{
+    if(a.photo)return;
+    if((a._photoTry||0)>=PHOTO_TRY_VERSION)return;
+    const poi=a.poiId?(t.pois||[]).find(x=>x.id===a.poiId):null;
+    if(poi&&poi.photo)return;             // ce l'ha gia' dal luogo salvato
+    if(!actLoc(t,a)&&!String(a.name||'').trim())return;
+    todo.push(a);
+  }));
+  if(!todo.length)return;
+  actPhotoBusy=true;
+  (async()=>{
+    try{
+      for(const a of todo){
+        const cur=T();if(!cur||cur.id!==t.id)break;
+        if(a.photo)continue;
+        a._photoTry=PHOTO_TRY_VERSION;
+        try{
+          const loc=actLoc(t,a)||{};
+          const extra=await fetchPlaceExtra({name:a.name,lat:loc.lat!=null?loc.lat:null,lng:loc.lng!=null?loc.lng:null});
+          if(extra.photo&&fotoPlausibile(extra.photo)&&!a.photo){
+            a.photo=extra.photo;save();
+            const now=T();if(now&&now.id===t.id){renderHomeHero();renderProgramPlaces();}
+          }
+        }catch(e){}
+        await new Promise(r=>setTimeout(r,1200));
+      }
+      save();
+    }finally{actPhotoBusy=false;}
+  })();
+}
 let poiPhotoBusy=false;
 function backfillPoiPhotos(t){
   if(!t||poiPhotoBusy)return;
@@ -2729,7 +2811,7 @@ function renderProgramPlaces(){
   }
   c.innerHTML=voci.map(({a,di,d})=>{
     const poi=a.poiId?(t.pois||[]).find(x=>x.id===a.poiId):null;
-    const foto=poi&&poi.photo?poi.photo:'';
+    const foto=a.photo||(poi&&poi.photo)||'';
     const thumb=foto?`<img src="${esc(foto)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0">`
                     :`<div style="width:44px;height:44px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0">${a.type==='outdoor'?'🌳':a.type==='indoor'?'🏛️':'📍'}</div>`;
     const pri=a.priority||(poi&&poi.priority)||'';
@@ -6929,6 +7011,11 @@ function migrateData(){
   app.trips.forEach(t=>{const k=t.id;if(seenT[k]==null){seenT[k]=outT.length;outT.push(t);}else if(scoreT(t)>scoreT(outT[seenT[k]]))outT[seenT[k]]=t;});
   if(outT.length!==app.trips.length)app.trips=outT;
   app.trips.forEach(t=>{
+    /* Le foto gia' scaricate col vecchio criterio possono essere loghi o
+       stemmi: si buttano via e si lascia che vengano ricercate. Il numero di
+       versione fa ritentare anche quelle che erano rimaste senza. */
+    (t.pois||[]).forEach(p=>{if(p.photo&&!fotoPlausibile(p.photo)){p.photo='';p._photoTry=0;}});
+    (t.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{if(a.photo&&!fotoPlausibile(a.photo)){a.photo='';a._photoTry=0;}}));
     if(!Array.isArray(t.hotels))t.hotels=[];
     if(!Array.isArray(t.guests))t.guests=[];
     if(!Array.isArray(t.tickets))t.tickets=[];
