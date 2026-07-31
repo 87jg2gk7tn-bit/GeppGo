@@ -1097,7 +1097,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip green" onclick="sistemaGiornata()">✦ Sistema con l'IA</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -5954,6 +5954,24 @@ function mosseDistanze(t,d){
    va al più vicino: 10:09 → 10:00, 13:40 → 13:30. */
 function oraTonda(min){return Math.max(0,Math.min(1439,Math.round(min/PASSO_ORARIO)*PASSO_ORARIO));}
 
+/* Il ponte sa benissimo perché non ha risposto - quota finita, troppe
+   richieste al minuto, chiave scaduta, modello ritirato - e l'app buttava via
+   tutto per mostrare sempre lo stesso "non è raggiungibile". Chi la usa non ha
+   modo di capire se deve aspettare trenta secondi o rifare la chiave. */
+function motivoAI(msg){
+  const m=String(msg||'');
+  if(/quota|rate.?limit|RESOURCE_EXHAUSTED|\b429\b/i.test(m)){
+    const s=(m.match(/retry in ([\d.]+)\s*s/i)||[])[1];
+    return s?`Troppe richieste di fila: riprova fra ${Math.ceil(+s)} secondi`
+            :'Richieste gratuite finite per adesso: riprova fra un minuto';
+  }
+  if(/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b/i.test(m))
+    return'La chiave AI non è valida o è scaduta (vedi GUIDA-AI.md)';
+  if(/no longer available|NOT_FOUND|not found/i.test(m))
+    return'Il modello non è più disponibile: va cambiato nel Worker';
+  return'L\'IA non ha risposto: '+m.slice(0,80);
+}
+
 let mosseProposte=null,mosseUndo=null,mosseGiorno=null,mosseBusy=false;
 
 /* Le tappe con l'orario storto che il modello non ha nominato. Un modello
@@ -5991,6 +6009,7 @@ async function chiediMosse(istruzione,oggi,titolo){
       messages:[{role:"user",content:`${istruzione}\n\n${MOSSE_REGOLE}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`}]
     })});
     const data=await res.json();
+    if(data&&data.error){toast(motivoAI(data.error.message));return;}
     const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
     const m=txt.match(/\{[\s\S]*\}/);
     const r=JSON.parse(m?m[0]:txt);
@@ -6257,6 +6276,7 @@ Regole ferree:
 - "perche" è concreto e legato ai gusti dichiarati, non una frase da dépliant`}]
     })});
     const data=await res.json();
+    if(data&&data.error){st.textContent='⚠️ '+motivoAI(data.error.message);return;}
     const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
     const m=txt.match(/\{[\s\S]*\}/);
     const r=JSON.parse(m?m[0]:txt);
@@ -6332,7 +6352,7 @@ Ragiona in quest'ordine, e scrivilo nel commento:
 3. I pasti alla loro ora: pranzo fra le 12:00 e le 14:00, cena dalle 19:30 in poi.
 4. Se non ci sta tutto, sposta ad altri giorni quello che è segnato saltabile, o toglilo. Meglio una giornata che respira che una piena da cui si scappa.
 
-Non mettere due musei di fila, e non lasciare buchi di due ore senza motivo.`,ttDay,'Come sistemerei la giornata');
+Non mettere due musei di fila, e non lasciare buchi di due ore senza motivo.`,ttDay,'Come ordinerei il giro');
 }
 function alternativeMeteo(di){
   const t=T();if(!t)return;
@@ -8260,151 +8280,6 @@ async function runGen(){
   setTimeout(()=>openDay(genTargetDay),160);
 }
 
-function runOptimizeDay(t,d,pins,frees,start,seedFar){
-  /* Il tempo per spostarsi si conta col mezzo scelto per la giornata, non
-     sempre a piedi: fra Akihabara e Nakano ci sono due ore e mezza di
-     camminata e mezz'ora di metro, e dandole per camminate il giro sembrava
-     impossibile - poi le soste venivano accorciate all'osso per far tornare
-     i conti. E' la stessa stima delle strisce fra le tappe, quindi il piano e
-     i minuti scritti in time-table dicono la stessa cosa. */
-  const pioggia=dayIsRainy(t,d);
-  const wm=(a,b)=>((a&&b&&a.lat&&b.lat)?Math.max(8,travelEstimate(d,hav(a,b),null,pioggia).minutes):10);
-  const durBase=a=>{const r=actRange(a);return r?Math.min(r[1]-r[0],360):90;};
-  const FINE_GIORNATA=1410;   // 23:30
-  const SOSTA_MINIMA=25;      // sotto questo non e' piu' una visita, e' un passaggio
-  const SCORCIO_MAX=.35;      // non si accorcia oltre: meglio dire che non ci sta
-  /* Prova a sistemare il giro accorciando ogni sosta di un fattore, e dice
-     dove finirebbe ognuna e chi resta fuori - senza toccare niente. Cosi' si
-     puo' provare piu' volte finche' ci sta tutto. Il tempo per spostarsi non
-     si tocca: quello e' strada da fare, non si comprime. */
-  const prova=fattore=>{
-    const dur=a=>Math.max(SOSTA_MINIMA,durataTonda(durBase(a)*fattore));
-    let cur=start,tmin=570;
-    if(pins.length)tmin=Math.min(tmin,tMin(pins[0].time));
-    const rem=frees.slice(),piani=new Map(),fuori=[];
-    const metti=(a,st2)=>piani.set(a,{start:st2,dur:dur(a)});
-    if(seedFar){
-      const ix=rem.indexOf(seedFar);
-      if(ix>=0){
-        rem.splice(ix,1);
-        const st2=orarioTondo(Math.max(tmin+wm(cur,seedFar),tmin));
-        metti(seedFar,st2);
-        tmin=st2+dur(seedFar)+5;cur=seedFar;
-      }
-    }
-    pins.forEach(pin=>{
-      const pStart=tMin(pin.time);
-      while(rem.length){
-        let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
-        const cnd=rem[bi];
-        let st2=orarioTondo(Math.max(tmin+wm(cur,cnd),tmin));
-        if(st2>=765&&st2<840)st2=840;
-        const fin2=st2+dur(cnd);
-        if(fin2+wm(cnd,pin)>pStart)break;
-        rem.splice(bi,1);metti(cnd,st2);
-        tmin=fin2+5;cur=cnd;
-      }
-      const pr=actRange(pin);
-      tmin=Math.max(tmin,pr?pr[1]:pStart+30)+5;
-      if(pin.lat)cur=pin;
-    });
-    while(rem.length){
-      let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
-      const cnd=rem.splice(bi,1)[0];
-      let st2=orarioTondo(tmin+wm(cur,cnd));
-      if(st2>=765&&st2<840)st2=840;
-      /* Conta quando finisce, non quando comincia: guardando solo la partenza
-         una visita di quattro ore che parte alle 23:11 risultava "dentro la
-         giornata", e poi le si tagliava la coda a mezzanotte. */
-      if(st2+dur(cnd)>FINE_GIORNATA){fuori.push(cnd);continue;}
-      metti(cnd,st2);
-      tmin=st2+dur(cnd)+5;cur=cnd;
-    }
-    return {piani,fuori};
-  };
-  /* Se con le soste intere il giro non ci sta, non si lasciano indietro le
-     ultime tappe: si accorciano tutte le soste quel tanto che serve. Meglio
-     mezz'ora in meno dappertutto che due posti buttati fuori dalla giornata.
-     Si prova un taglio per volta partendo dal piu' leggero e ci si ferma al
-     primo che fa entrare tutto, cosi' le soste restano le piu' lunghe
-     possibili. Niente ricerca per dimezzamenti: la regola del buco del pranzo
-     fa saltare un'ora in avanti, quindi accorciare non e' sempre un guadagno
-     e il campo non si puo' restringere a meta'. */
-  let piano=prova(1);
-  if(piano.fuori.length){
-    for(let f=.95;f>=SCORCIO_MAX-1e-9;f-=.05){
-      const x=prova(f);
-      if(!x.fuori.length){piano=x;break;}
-      if(x.fuori.length<piano.fuori.length)piano=x;   // comunque meglio di niente
-    }
-  }
-  /* Gli orari di partenza si tengono da parte: se una tappa non entra nella
-     giornata nemmeno accorciando, torna dov'era invece di restare senza
-     orario. Prima le si cancellava l'ora - e una tappa senza ora esce dalla
-     time-table e finisce nell'elenco in cima: si chiedeva di riordinare il
-     giro e ci si ritrovava mezza giornata buttata fuori, senza saperlo. */
-  const orariPrima=new Map();
-  frees.forEach(a=>orariPrima.set(a,{time:a.time||'',timeEnd:a.timeEnd||''}));
-  let accorciate=0;
-  piano.piani.forEach((p,a)=>{
-    // la durata di prima va letta adesso: fra un attimo l'orario e' cambiato
-    if(p.dur<durBase(a))accorciate++;
-    a.time=fmtT(p.start);
-    if(!a.nextDay)a.timeEnd=fmtT(Math.min(p.start+p.dur,1439));
-  });
-  piano.fuori.forEach(a=>{
-    const q=orariPrima.get(a)||{time:'',timeEnd:''};
-    a.time=q.time;a.timeEnd=q.timeEnd;
-  });
-  save();renderAll();openDay(ttDay);
-  const parti=[];
-  if(accorciate)parti.push(accorciate===1?'1 sosta accorciata per farci stare tutto':`${accorciate} soste accorciate per farci stare tutto`);
-  if(piano.fuori.length)parti.push(piano.fuori.length===1
-    ? `"${piano.fuori[0].name}" non ci sta comunque: lasciata com'era`
-    : `${piano.fuori.length} non ci stanno comunque: lasciate come prima`);
-  toast(parti.length?('Giro ordinato · '+parti.join(' · ')):'Giro ordinato attorno alle ancore: controlla e trascina se serve');
-}
-function askFarthestFirst(farthestAct,onDone){
-  document.getElementById('cfIc').textContent='🧭';
-  document.getElementById('cfTitle').textContent=`"${farthestAct.name}" è piuttosto lontana`;
-  document.getElementById('cfMsg').textContent='Vuoi iniziare da lì e avvicinarti via via all\'hotel, invece che il contrario?';
-  const ok=document.getElementById('cfOk');ok.textContent='Sì, parti da lì';ok.className='btn btn-blue';ok.style.flex='1';
-  const cancelBtn=document.querySelector('#mConfirm .confirm-a button.btn-soft');
-  const resetCancel=()=>{cancelBtn.onclick=()=>closeSheet('mConfirm');cancelBtn.textContent='Annulla';};
-  cancelBtn.textContent='No, dal più vicino';
-  ok.onclick=()=>{closeSheet('mConfirm');resetCancel();onDone(farthestAct);};
-  cancelBtn.onclick=()=>{closeSheet('mConfirm');resetCancel();onDone(null);};
-  openSheet('mConfirm');
-}
-function optimizeDay(){
-  const t=T(),d=t.days[ttDay];
-  const all=(d.activities||[]).filter(a=>!a.parentId);
-  const isAnchor=a=>!!(a.hotelId||a.type==='flight'||a.nextDay);
-  const pins=[],frees=[];
-  all.forEach(a=>{
-    if(isAnchor(a)){
-      if(!a.time&&a.hotelId)a.time=/^check-?out/i.test(a.name)?'10:00':'15:00';
-      if(a.time)pins.push(a);
-    }else if(a.lat)frees.push(a);
-  });
-  if(pins.length+frees.length<3){toast('Servono almeno 3 tappe (con luogo, o ancore come hotel e voli)');return;}
-  if(!frees.length){toast('Qui ci sono solo ancore (hotel e voli): restano dove sono');return;}
-  pins.sort((x,y)=>x.time.localeCompare(y.time));
-  const start=pins.find(p=>p.lat)||hotelFor(t,d.date)||frees[0];
-  confirmDo('Ordinare il giro di oggi?','Check-in, check-out e voli restano inchiodati ai loro orari: parto dal tuo punto di partenza e prendo ogni volta la tappa più vicina.',()=>{
-    let farthest=null;
-    if(start&&start.lat){
-      const dists=frees.filter(a=>a.lat&&a!==start).map(a=>({a,dist:hav(start,a)}));
-      if(dists.length>=2){
-        dists.sort((x,y)=>y.dist-x.dist);
-        const avgRest=dists.slice(1).reduce((s,x)=>s+x.dist,0)/(dists.length-1);
-        if(dists[0].dist>avgRest*1.8&&dists[0].dist>800)farthest=dists[0].a;
-      }
-    }
-    if(farthest)askFarthestFirst(farthest,seed=>runOptimizeDay(t,d,pins,frees,start,seed));
-    else runOptimizeDay(t,d,pins,frees,start,null);
-  });
-}
 /* — foto (IndexedDB) — */
 let phDB=null,phCur=null;
 function idbP(){return new Promise((res,rej)=>{if(phDB)return res(phDB);const q=indexedDB.open('geppgo_ph',1);q.onupgradeneeded=e=>{e.target.result.createObjectStore('ph',{keyPath:'id'});};q.onsuccess=e=>{phDB=e.target.result;res(phDB);};q.onerror=()=>rej(new Error('no-idb'));});}
