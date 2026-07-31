@@ -1243,6 +1243,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
+  <div id="amTravel" style="display:none;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.65rem .75rem;margin-bottom:.8rem"></div>
   <div id="amBtns" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:.4rem">
     <button class="btn btn-soft btn-block" onclick="actMenuInfo()">ℹ️ Info</button>
     <button class="btn btn-soft btn-block" id="amNoteBtn" onclick="actMenuNote()">📝 Note</button>
@@ -2896,7 +2897,58 @@ function tapAct(di,id){
      aprire ogni tappa una per una. */
   const nb=document.getElementById('amNoteBtn');
   if(nb)nb.textContent=(a.notes&&a.notes.trim())?'📝 Note · già scritte':'📝 Note';
+  amBuildTravel(t,di,a);
   openSheet('mActMenu');
+}
+/* Il mezzo per il tratto verso la tappa successiva. In time-table sta nella
+   striscia fra i due riquadri, ma quando le tappe sono attaccate la striscia
+   non c'e' - la distanza finisce nella riga dell'orario, dove le iconcine non
+   ci starebbero - e da li' non si poteva piu' cambiare niente. Qui c'e'
+   sempre, attaccate o no, e comanda gli stessi campi. */
+let amTravelRef=null;
+function amBuildTravel(t,di,a){
+  const box=document.getElementById('amTravel');
+  if(!box)return;
+  amTravelRef=null;box.innerHTML='';box.style.display='none';
+  const d=t.days[di];if(!d)return;
+  const timed=(d.activities||[]).filter(x=>!x.parentId)
+    .map(x=>({a:x,r:actRange(x),loc:actLoc(t,x)})).filter(x=>x.r&&x.loc)
+    .sort((x,y)=>x.r[0]-y.r[0]||y.r[1]-x.r[1]);
+  const qui=timed.find(x=>x.a.id===a.id);
+  if(!qui)return;
+  // la prossima e' quella che, per arrivarci, parte proprio da qui
+  const dopo=timed.find(x=>{const p=tappaDaCuiSiArriva(timed,x);return p&&p.a.id===a.id;});
+  if(!dopo)return;
+  amTravelRef={di,toId:dopo.a.id};
+  const stato=dopo.a.travelState,segMode=dopo.a.segTravelMode,dm=d.travelMode||'walk';
+  const est=travelEstimate(d,hav(qui.loc,dopo.loc),segMode,dayIsRainy(t,d));
+  const chip=(m,ic)=>`<button class="chip${(segMode||dm)===m?' green':''}" onclick="amSetTravelMode('${m}')">${ic}</button>`;
+  box.style.display='block';
+  box.innerHTML=`<div style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.4rem">Spostamento verso ${esc(dopo.a.name)}</div>
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span style="font-weight:800;font-size:.9rem;color:var(--ink)">${stato==='skip'?'non necessario':`${modeEmo(est.mode)} ${est.minutes} min · ${est.km} km`}</span>
+      <span style="margin-left:auto;display:flex;gap:.3rem">${chip('walk','🚶')}${chip('train','🚆')}${chip('car','🚗')}</span>
+    </div>
+    <button class="chip" style="margin-top:.5rem" onclick="amToggleTravel()">${stato==='skip'?'necessario ↺':'non necessario ✕'}</button>`;
+}
+function amRefreshTravel(){
+  if(!actMenuRef)return;
+  const t=T();if(!t||!t.days[actMenuRef.di])return;
+  const a=t.days[actMenuRef.di].activities.find(x=>x.id===actMenuRef.id);
+  if(a)amBuildTravel(t,actMenuRef.di,a);
+}
+function amSetTravelMode(m){
+  if(!amTravelRef)return;
+  setSegTravelMode(amTravelRef.di,amTravelRef.toId,m);
+  amRefreshTravel();
+}
+function amToggleTravel(){
+  if(!amTravelRef)return;
+  const {di,toId}=amTravelRef,t=T();
+  if(!t||!t.days[di])return;
+  const b=t.days[di].activities.find(x=>x.id===toId);if(!b)return;
+  if(b.travelState==='skip')unskipTravel(di,toId);else skipTravel(di,toId);
+  amRefreshTravel();
 }
 /* Dalla home si tocca una tappa e si finisce nel suo menu: da li' si puo'
    voler vedere com'e' fatta tutta la giornata attorno, non solo quella tappa.
