@@ -5943,6 +5943,8 @@ Regole ferree:
 - usa SOLO gli ID che trovi qui sotto: non inventarne
 - gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00... mai :09, :15, :20
 - non proporre mosse che non cambiano niente: se una tappa è già alle 11:00 non dire di spostarla alle 11:00
+- dove c'è scritto APERTO, quello e' l'orario in cui il posto è visitabile: non far cominciare una tappa prima che apra ne' finire dopo che ha chiuso. Se una tappa risulta chiusa quel giorno, spostala a un altro giorno o toglila, e dillo nel "perche'"
+- dove APERTO non c'e', l'orario di apertura non si sa: non inventarlo e non darlo per scontato
 - "perche" è una riga sola in italiano con il motivo vero e concreto (i minuti di strada, la pioggia prevista, la giornata piena, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare" o "per una transizione fluida"
 - non muovere quello che è già al posto giusto: se va bene così rispondi {"mosse":[],"commento":"..."}
 - al massimo 8 mosse, le più utili`;
@@ -5957,8 +5959,8 @@ function mosseContesto(t,oggi){
       const x=tMin(a.time),y=tMin(b.time);return (x==null?9999:x)-(y==null?9999:y);
     }).map(a=>{
       const pri=a.priority==='essential'?'essenziale':(a.priority==='skippable'?'saltabile':'non detto');
-      const loc=actLoc(t,a);
-      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
+      const loc=actLoc(t,a),ore=orariDi(t,a);
+      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${ore?` | APERTO ${ore}`:''}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
     });
     return `  giorno ${i}${i===oggi?'  <<< QUESTO':''} — ${d.date}${meteo}\n${voci.join('\n')||'    (nessuna tappa)'}`;
   });
@@ -6005,6 +6007,59 @@ function motivoAI(msg){
   if(/no longer available|NOT_FOUND|not found/i.test(m))
     return'Il modello non è più disponibile: va cambiato nel Worker';
   return'L\'IA non ha risposto: '+m.slice(0,80);
+}
+
+/* ===== ORARI DI APERTURA =====
+   Nessuno, dentro l'app, sa a che ora apre un posto: il modello non ce l'ha in
+   testa, e OpenStreetMap li conosce solo per le tappe nate dalla ricerca. Senza
+   questo, "ordina il giro" piazza i negozi di Akihabara alle 10:00 quando
+   aprono alle 11, e il giro è sbagliato pur essendo geometricamente perfetto.
+   Si chiedono al web una volta sola per tappa e si tengono da parte: gli orari
+   di apertura non cambiano da un giorno all'altro. */
+function orariDi(t,a){
+  if(a.hours)return a.hours;
+  if(a.poiId){const p=(t.pois||[]).find(x=>x.id===a.poiId);if(p&&p.hours)return p.hours;}
+  return '';
+}
+const GIORNI_SETT=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+async function verificaOrari(t,d){
+  if(!t||!d)return;
+  const da=(d.activities||[]).filter(a=>a.name&&!orariDi(t,a));
+  if(!da.length)return;
+  const dt=new Date(d.date);
+  const gs=isNaN(dt.getTime())?'':` di ${GIORNI_SETT[dt.getDay()]}`;
+  try{
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:1500,
+      tools:[{type:"web_search_20250305",name:"web_search"}],
+      messages:[{role:"user",content:`Cerca sul web a che ora aprono e chiudono questi posti${t.destination?`, a ${t.destination}`:''}, nella giornata${gs}.
+
+${da.map((a,i)=>`${i}. ${a.name}`).join('\n')}
+
+Rispondi SOLO con JSON, senza backtick:
+{"orari":[{"i":0,"apre":"11:00","chiude":"20:00"}]}
+
+- "i" è il numero della riga qui sopra
+- per un posto sempre accessibile (un quartiere, una strada, un parco pubblico senza cancelli) usa apre:"sempre"
+- se quel giorno è chiuso usa apre:"chiuso"
+- se non trovi un orario affidabile ometti del tutto la riga: un orario inventato è peggio di un orario mancante, perché ci si organizza sopra`}]
+    })});
+    const data=await res.json();
+    if(!data||data.error)return;
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    let n=0;
+    (r.orari||[]).forEach(o=>{
+      const i=parseInt(o.i,10),a=da[i];
+      if(!a||!o.apre)return;
+      a.hours=o.apre==='sempre'?'sempre aperto'
+             :o.apre==='chiuso'?`chiuso ${gs.replace(' di ','il ')||'quel giorno'}`
+             :(o.chiude?`${o.apre}-${o.chiude}`:`apre ${o.apre}`);
+      n++;
+    });
+    if(n)save();
+  }catch(e){}
 }
 
 let mosseProposte=null,mosseUndo=null,mosseGiorno=null,mosseBusy=false;
@@ -6377,8 +6432,15 @@ async function applicaItinerario(){
 }
 
 /* Le porte d'ingresso. */
-function sistemaGiornata(){
+async function sistemaGiornata(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  /* Prima gli orari di apertura, se non li abbiamo gia': senza, il giro viene
+     ordinato benissimo attorno a negozi ancora chiusi. */
+  const d=t.days[typeof ttDay==='number'?ttDay:0];
+  if(d&&(d.activities||[]).some(a=>a.name&&!orariDi(t,a))){
+    toast('✦ Controllo gli orari di apertura...');
+    await verificaOrari(t,d);
+  }
   chiediMosse(`Sistema il giorno segnato con <<< QUESTO.
 
 Ragiona in quest'ordine, e scrivilo nel commento:
