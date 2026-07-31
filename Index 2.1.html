@@ -1521,6 +1521,9 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
   window.GEPPGO_PUBLIC_URL=location.origin+location.pathname;
 </script>
 <script>
+/* Ponte verso il Worker Cloudflare che traduce verso Gemini */
+window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
+
 /* ===== ENDPOINT AI =====
    Anteprima Claude: lascia così, funziona da solo.
    App nativa / sito pubblicato: vedi la GUIDA, passo 7.
