@@ -5507,9 +5507,17 @@ function openImportDay(){document.getElementById('dayImportText').value='';docum
    minuti; a mezzogiorno e mezzo si mangia e alle otto si cena, non quando
    capita; e fra un posto e l'altro c'e' la strada da fare, che va tolta dal
    tempo a disposizione invece di far comparire tappe attaccate impossibili. */
-const AP_DURATA={colazione:45,brunch:90,pranzo:75,cena:105,aperitivo:60,caffe:30,
-  museo:120,parco:75,monumento:60,culto:40,quartiere:90,shopping:75,panorama:45,
-  mercato:60,spettacolo:150,terme:120,default:75};
+/* Gli orari che mette l'app vanno di mezz'ora in mezz'ora: "12:24" e "13:52"
+   sono orari da cronometro, non da giornata. Si arrotonda sempre in avanti,
+   mai indietro: tornare indietro vorrebbe dire promettere di essere in un
+   posto prima di poterci arrivare. Le durate sono gia' multipli di mezz'ora,
+   e chi le scala per far stare tutto le rimette in riga. */
+const PASSO_ORARIO=30;
+function orarioTondo(min){return Math.ceil(min/PASSO_ORARIO)*PASSO_ORARIO;}
+function durataTonda(min){return Math.max(PASSO_ORARIO,Math.round(min/PASSO_ORARIO)*PASSO_ORARIO);}
+const AP_DURATA={colazione:30,brunch:90,pranzo:60,cena:90,aperitivo:60,caffe:30,
+  museo:120,parco:90,monumento:60,culto:30,quartiere:90,shopping:90,panorama:60,
+  mercato:60,spettacolo:150,terme:120,default:60};
 /* Prima ora sensata per i pasti: se il giro arriva li' dopo, si mangia dopo -
    non si torna mai indietro nel tempo. */
 const AP_FINESTRA={colazione:'08:30',brunch:'11:00',pranzo:'12:30',aperitivo:'18:00',cena:'19:30'};
@@ -5602,12 +5610,13 @@ function apMettiInOrario(t,d,voci){
       if(g==='pasto')g=apPastoDelMomento(clock,pastiFatti);
       const f=AP_FINESTRA[g];
       if(f&&clock<tMin(f))clock=tMin(f);
+      clock=orarioTondo(clock);
       if(clock>fine){v.fuori=true;fuori++;return;}
       v.time=hhmm(clock);
     }
     v.genere=g;
     if(AP_FINESTRA[g])pastiFatti.add(g);
-    const dur=AP_DURATA[g]||AP_DURATA.default;
+    const dur=durataTonda(AP_DURATA[g]||AP_DURATA.default);
     v.timeEnd=hhmm(Math.min(clock+dur,1439));
     clock+=dur;
     const nx=voci[i+1];
@@ -7564,7 +7573,7 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
      puo' provare piu' volte finche' ci sta tutto. Il tempo per spostarsi non
      si tocca: quello e' strada da fare, non si comprime. */
   const prova=fattore=>{
-    const dur=a=>Math.max(SOSTA_MINIMA,Math.round(durBase(a)*fattore));
+    const dur=a=>Math.max(SOSTA_MINIMA,durataTonda(durBase(a)*fattore));
     let cur=start,tmin=570;
     if(pins.length)tmin=Math.min(tmin,tMin(pins[0].time));
     const rem=frees.slice(),piani=new Map(),fuori=[];
@@ -7573,7 +7582,7 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
       const ix=rem.indexOf(seedFar);
       if(ix>=0){
         rem.splice(ix,1);
-        const st2=Math.max(tmin+wm(cur,seedFar),tmin);
+        const st2=orarioTondo(Math.max(tmin+wm(cur,seedFar),tmin));
         metti(seedFar,st2);
         tmin=st2+dur(seedFar)+5;cur=seedFar;
       }
@@ -7583,7 +7592,7 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
       while(rem.length){
         let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
         const cnd=rem[bi];
-        let st2=Math.max(tmin+wm(cur,cnd),tmin);
+        let st2=orarioTondo(Math.max(tmin+wm(cur,cnd),tmin));
         if(st2>=765&&st2<840)st2=840;
         const fin2=st2+dur(cnd);
         if(fin2+wm(cnd,pin)>pStart)break;
@@ -7597,7 +7606,7 @@ function runOptimizeDay(t,d,pins,frees,start,seedFar){
     while(rem.length){
       let bi=0,bd=1e15;rem.forEach((x,k)=>{const dd=(cur&&cur.lat)?hav(cur,x):0;if(dd<bd){bd=dd;bi=k;}});
       const cnd=rem.splice(bi,1)[0];
-      let st2=tmin+wm(cur,cnd);
+      let st2=orarioTondo(tmin+wm(cur,cnd));
       if(st2>=765&&st2<840)st2=840;
       /* Conta quando finisce, non quando comincia: guardando solo la partenza
          una visita di quattro ore che parte alle 23:11 risultava "dentro la
