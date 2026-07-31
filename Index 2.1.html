@@ -249,6 +249,14 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .ms-row input{flex-shrink:0;width:20px;height:20px;margin-top:.1rem;accent-color:var(--green)}
 .ms-t{font-size:.88rem;font-weight:600;line-height:1.35}
 .ms-w{font-size:.78rem;color:var(--ink-soft);margin-top:.25rem;line-height:1.4}
+/* Il "torna com'era" non può stare dentro un toast: toast() cancella sempre
+   quello di prima, e basta un suggerimento qualsiasi - "scorri per cambiare
+   giorno" - per portarsi via il tasto mentre lo si sta per premere. Barra sua,
+   che nessun altro tocca. */
+.undo-bar{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:.7rem;background:var(--ink);color:#fff;padding:.7rem .8rem .7rem 1.2rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10001;font-weight:700;font-size:.88rem;max-width:92vw;animation:toast .35s var(--spring)}
+.undo-bar.on{display:flex}
+.undo-bar button{font-family:inherit;font-weight:800;font-size:.82rem;border:none;cursor:pointer;border-radius:100px;padding:.45rem .85rem;background:#fff;color:var(--ink)}
+.undo-bar .ub-x{background:transparent;color:#fff;opacity:.6;padding:.45rem .5rem}
 .chip-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
 .starter{background:var(--blue-tint);color:var(--blue-deep);border:none;padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:var(--ease)}
 .starter:active{transform:scale(.95)}
@@ -636,7 +644,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 
 /* ── 4 · CHI STAVA IN BASSO SALE ────────────────────────────────── */
 .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
-.toast{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
+.toast,.undo-bar{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
 .navbar{bottom:calc(5.4rem + env(safe-area-inset-bottom))}
 /* dentro il foglio del giorno il fab resta dov'era: lì la pillola non c'è */
 /* La time-table è una pagina, non più un foglio sovrapposto: si toglie di
@@ -1475,6 +1483,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <button class="btn btn-grad btn-block" id="premBtn" onclick="togglePremium()">✨ Attiva Premium (demo)</button>
   <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell'app nativa (Apple trattiene il 15–30%).</p>
 </div></div>
+<div class="undo-bar" id="mosseUndoBar"><span id="mosseUndoTxt"></span><button onclick="annullaMosse()">↩ Annulla</button><button class="ub-x" onclick="nascondiAnnulla()">✕</button></div>
 <div class="modal" id="mMosse"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="msTitle">Proposte</div><button class="x x-close" onclick="closeSheet('mMosse')">✕</button></div>
@@ -6012,19 +6021,23 @@ async function applicaMossa(t,m){
   return false;
 }
 
+let mosseUndoT=null;
 function mostraAnnulla(n){
-  const old=document.querySelector('.toast');if(old)old.remove();
-  const el=document.createElement('div');el.className='toast';
-  el.innerHTML=`✅ ${n} ${n===1?'modifica':'modifiche'} <button class="chip" style="margin-left:.6rem;vertical-align:middle" onclick="annullaMosse()">Annulla</button>`;
-  document.body.appendChild(el);
-  setTimeout(()=>{if(!document.body.contains(el))return;el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},8000);
+  document.getElementById('mosseUndoTxt').textContent=`✅ ${n} ${n===1?'modifica fatta':'modifiche fatte'}`;
+  document.getElementById('mosseUndoBar').classList.add('on');
+  clearTimeout(mosseUndoT);
+  mosseUndoT=setTimeout(nascondiAnnulla,15000);
+}
+function nascondiAnnulla(){
+  clearTimeout(mosseUndoT);
+  document.getElementById('mosseUndoBar').classList.remove('on');
 }
 function annullaMosse(){
-  const t=T();if(!t||!mosseUndo)return;
+  const t=T();if(!t||!mosseUndo){nascondiAnnulla();return;}
   t.days=JSON.parse(JSON.stringify(mosseUndo));mosseUndo=null;
   save();renderAll();
   if(typeof ttDay==='number'&&t.days[ttDay])buildTT();
-  const el=document.querySelector('.toast');if(el)el.remove();
+  nascondiAnnulla();
   toast('↩ Tornato com\'era');
 }
 
