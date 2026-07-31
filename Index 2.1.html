@@ -436,6 +436,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-block{position:absolute;background:var(--green-tint);border:1px solid var(--green-soft);border-radius:10px;padding:.38rem 1.45rem .38rem .55rem;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:.08rem;transition:box-shadow .15s var(--ease)}
 .tt-block .tname{font-size:.86rem;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-block .tsub{font-size:.7rem;color:var(--green-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* La distanza scritta di fianco all'orario, per le tappe attaccate dove fra i
+   due riquadri non c'e' spazio per la targhetta: piu' chiara dell'orario, cosi'
+   si distingue a colpo d'occhio che e' un'altra cosa. */
+.tt-block .tsub-tratto{color:var(--ink-faint);font-weight:700}
 .tt-block .tgrip{position:absolute;right:.22rem;top:.18rem;color:var(--green-deep);opacity:.75;cursor:grab;padding:.18rem .2rem;font-size:.82rem}
 .tt-block.done{opacity:.55}.tt-block.done .tname{text-decoration:line-through}
 .tt-block.tt-compact{padding:.1rem 1.3rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
@@ -5074,62 +5078,76 @@ function buildTTDayInner(t,di){
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
+  /* Misure dei riquadri, calcolate una volta sola: servono per disegnarli e
+     anche per sapere quanto spazio resta davvero fra l'uno e l'altro. Sotto
+     l'ora il layout impilato (nome sopra, orario sotto) rischia di non
+     starci più, specie con nomi lunghi (es. "Giardini del Lussemburgo: Jardin
+     du Luxembourg"): si passa a una riga sola, nome e orario affiancati. */
   tops.forEach(it=>{
-    const a=it.a,top=(it.r[0]-360)/60*H,durMin=it.r[1]-it.r[0];
-    /* Sotto l'ora il layout impilato (nome sopra, orario sotto) rischia di non
-       starci più, specie con nomi lunghi (es. "Giardini del Lussemburgo: Jardin
-       du Luxembourg"): passiamo a una riga sola (nome e orario affiancati),
-       riquadro più basso ma sempre leggibile e tappabile, invece di tagliare
-       il testo o farlo sovrapporre a quanto sotto. */
-    const compact=durMin<60;
-    const hei=compact?Math.max(22,durMin/60*H-2):Math.max(30,durMin/60*H-4);
-    const cls='tt-block'+(compact?' tt-compact':'')+(a.completed?' done':'');
+    const durMin=it.r[1]-it.r[0];
+    it.compact=durMin<60;
+    it.top=(it.r[0]-360)/60*H;
+    it.hei=it.compact?Math.max(22,durMin/60*H-2):Math.max(30,durMin/60*H-4);
+  });
+  /* Chi porta a chi, e quanto spazio c'è in mezzo. Si guarda lo spazio vero -
+     dal fondo del riquadro di prima alla cima di quello dopo - non i minuti:
+     due tappe attaccate non hanno un buco, ma fra i riquadri due o tre pixel
+     di margine ci sono comunque. */
+  const SPAZIO_TARGHETTA=22,SPAZIO_STRISCIA=30;
+  const tratti=[];
+  tops.forEach(nxt=>{
+    if(!nxt.loc)return;
+    const cur=tappaDaCuiSiArriva(tops,nxt);
+    if(!cur||!cur.loc)return;   // niente prima: e' un ramo che parte dall'hotel
+    const spazio=nxt.top-(cur.top+cur.hei);
+    const tr={cur,nxt,spazio,gapStart:cur.r[1],gapEnd:nxt.r[0]};
+    /* Quando non c'è spazio nemmeno per la targhetta bassa, la targhetta
+       finiva sopra il riquadro di prima e ne copriva l'orario: si vedeva la
+       distanza ma non si sapeva più a che ora fosse quella tappa. In quel
+       caso la distanza va a finire nella riga dell'orario, di fianco: si
+       vedono tutte e due le cose e non si copre niente. */
+    if(spazio<SPAZIO_TARGHETTA)cur.trattoInline=tr;
+    tratti.push(tr);
+  });
+  tops.forEach(it=>{
+    const a=it.a;
+    const cls='tt-block'+(it.compact?' tt-compact':'')+(a.completed?' done':'');
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
     const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${top}px;height:${hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
+    let inline='';
+    if(it.trattoInline){
+      const tr=it.trattoInline,st2=tr.nxt.a.travelState;
+      if(st2!=='skip'){
+        const est=travelEstimate(d,hav(tr.cur.loc,tr.nxt.loc),tr.nxt.a.segTravelMode,dwx&&dwx.precipitation>5);
+        inline=` <span class="tsub-tratto">→ ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min</span>`;
+      }
+    }
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
-  /* Le strisce si disegnavano solo fra tappe consecutive in ordine di orario:
-     se il gruppo si separa, la seconda meta' viene dopo la prima nell'elenco
-     ma non ci si arriva da li', e restava senza nessun conto. Ora e' ogni
-     tappa a cercarsi da dove ci si arriva, cosi' ogni ramo ha la sua striscia,
-     disegnata nella sua colonna. */
-  tops.forEach(nxt=>{
-    const ln=nxt.loc;
-    if(!ln)return;
-    const cur=tappaDaCuiSiArriva(tops,nxt);
-    if(!cur)return;   // non ha niente prima: e' un ramo che parte dall'hotel
-    const lc=cur.loc;
-    const gapStart=cur.r[1],gapEnd=nxt.r[0];
+  tratti.forEach(tr=>{
+    const {cur,nxt,spazio,gapStart,gapEnd}=tr;
+    if(spazio<SPAZIO_TARGHETTA)return;   // sta nella riga dell'orario, gia' scritta
+    const lc=cur.loc,ln=nxt.loc;
     /* Il tratto è "di chi arriva", non "di chi parte": partendo dallo stesso
        posto in due direzioni diverse, ogni ramo si spegne e si cambia mezzo
        per conto suo. */
     const state=nxt.a.travelState;
-    /* Con le tappe attaccate, o quasi, fra i due riquadri non resta l'altezza
-       per la striscia intera: veniva saltata del tutto e la distanza non si
-       vedeva mai. In quel caso si usa una targhetta bassa, appoggiata sopra la
-       linea di confine — dove il riquadro di prima è quasi sempre vuoto,
-       perché il suo contenuto sta in alto — invece di coprire il nome della
-       tappa che segue. */
-    const gapPx=(gapEnd-gapStart)/60*H;
-    const tight=gapPx<24;
-    /* La targhetta compatta stava appoggiata al confine, cioe' proprio sopra la
-       maniglia con cui si allunga e si accorcia la tappa: il dito prendeva lei
-       e la maniglia non rispondeva piu'. Ora si tiene piu' in alto, lasciando
-       libera tutta la striscia della maniglia. Se il riquadro di prima e' cosi'
-       basso da non avere spazio, non lo si sfora comunque. */
-    const cimaPrec=(cur.r[0]-360)/60*H;
-    const gTop=tight?Math.max(cimaPrec+2,(gapStart-360)/60*H-44):((gapStart-360)/60*H),gH=tight?20:Math.max(16,gapPx-2);
+    /* La striscia sta nel buco fra i due riquadri, senza coprire nessuno dei
+       due: intera se c'è altezza, altrimenti una targhetta bassa appoggiata
+       appena sopra il riquadro che segue. */
+    const stretta=spazio<SPAZIO_STRISCIA;
+    const gTop=stretta?(nxt.top-21):(cur.top+cur.hei+2);
+    const gH=stretta?20:Math.max(16,spazio-4);
     /* Con i rami affiancati due strisce cadrebbero nello stesso punto e si
        coprirebbero: ciascuna sta nella colonna della tappa a cui porta. Con
-       una colonna sola - il caso di tutti i giorni - la geometria e' quella
-       di prima, tutta larghezza. */
+       una colonna sola - il caso di tutti i giorni - e' tutta larghezza. */
     const aCol=nxt.cols>1;
     const colL=`calc(52px + ${nxt.col} * ((100% - 58px)/${nxt.cols}))`,colW=`calc((100% - 58px)/${nxt.cols} - 4px)`;
-    const geo=tight?(aCol?`top:${gTop}px;height:${gH}px;left:${colL};width:${colW}`
-                         :`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`)
-                   :`top:${gTop}px;height:${gH}px;left:${aCol?colL:'52px'};width:${aCol?colW:'calc(100% - 58px)'}`;
-    const tcls=tight?' tt-travel-tight':'';
+    const geo=stretta?(aCol?`top:${gTop}px;height:${gH}px;left:${colL};width:${colW}`
+                           :`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`)
+                     :`top:${gTop}px;height:${gH}px;left:${aCol?colL:'52px'};width:${aCol?colW:'calc(100% - 58px)'}`;
+    const tcls=stretta?' tt-travel-tight':'';
     const isDistant=(gapEnd-gapStart)>DISTANT_GAP_MIN;
     if(state==='skip'){
       html+=`<div class="tt-travel tt-travel-skip${tcls}" style="${geo}" onclick="event.stopPropagation();unskipTravel(${di},${nxt.a.id})">necessario ↺</div>`;
