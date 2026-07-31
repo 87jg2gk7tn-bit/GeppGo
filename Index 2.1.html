@@ -442,6 +442,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-block .tsub-tratto{color:var(--ink-faint);font-weight:700}
 .tt-block .tgrip{position:absolute;right:.22rem;top:.18rem;color:var(--green-deep);opacity:.75;cursor:grab;padding:.18rem .2rem;font-size:.82rem}
 .tt-block.done{opacity:.55}.tt-block.done .tname{text-decoration:line-through}
+/* Agganciato dalla pressione lunga: si stacca dalla pagina, cosi' si vede a
+   colpo d'occhio che adesso e' lui a seguire il dito. */
+.tt-block.tt-moving{outline:2px solid var(--green);outline-offset:2px;transform:scale(1.02);opacity:.94;transition:none}
+.tt-block.tt-moving .tgrip{opacity:1}
 .tt-block.tt-compact{padding:.1rem 1.3rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
 .tt-block.tt-compact .tname{flex:1 1 auto;min-width:0}
 .tt-block.tt-compact .tsub{flex:0 0 auto}
@@ -5145,7 +5149,11 @@ function buildTTDayInner(t,di){
      dal fondo del riquadro di prima alla cima di quello dopo - non i minuti:
      due tappe attaccate non hanno un buco, ma fra i riquadri due o tre pixel
      di margine ci sono comunque. */
-  const SPAZIO_TARGHETTA=22,SPAZIO_STRISCIA=30;
+  /* Una forma sola per tutti i tratti: o la striscia intera, larga quanto le
+     altre, o - se fra i due riquadri non c'e' abbastanza spazio - la scritta
+     di fianco all'orario. La targhetta bassa a meta' strada faceva sembrare
+     quel tratto diverso dagli altri senza motivo. */
+  const SPAZIO_STRISCIA=24;
   const tratti=[];
   tops.forEach(nxt=>{
     if(!nxt.loc)return;
@@ -5158,7 +5166,7 @@ function buildTTDayInner(t,di){
        distanza ma non si sapeva più a che ora fosse quella tappa. In quel
        caso la distanza va a finire nella riga dell'orario, di fianco: si
        vedono tutte e due le cose e non si copre niente. */
-    if(spazio<SPAZIO_TARGHETTA)cur.trattoInline=tr;
+    if(spazio<SPAZIO_STRISCIA)cur.trattoInline=tr;
     tratti.push(tr);
   });
   tops.forEach(it=>{
@@ -5174,32 +5182,26 @@ function buildTTDayInner(t,di){
         inline=` <span class="tsub-tratto">→ ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min</span>`;
       }
     }
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip" onclick="event.stopPropagation()">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tgrip">⋮⋮</span><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
   tratti.forEach(tr=>{
     const {cur,nxt,spazio,gapStart,gapEnd}=tr;
-    if(spazio<SPAZIO_TARGHETTA)return;   // sta nella riga dell'orario, gia' scritta
+    if(spazio<SPAZIO_STRISCIA)return;   // sta nella riga dell'orario, gia' scritta
     const lc=cur.loc,ln=nxt.loc;
     /* Il tratto è "di chi arriva", non "di chi parte": partendo dallo stesso
        posto in due direzioni diverse, ogni ramo si spegne e si cambia mezzo
        per conto suo. */
     const state=nxt.a.travelState;
-    /* La striscia sta nel buco fra i due riquadri, senza coprire nessuno dei
-       due: intera se c'è altezza, altrimenti una targhetta bassa appoggiata
-       appena sopra il riquadro che segue. */
-    const stretta=spazio<SPAZIO_STRISCIA;
-    const gTop=stretta?(nxt.top-21):(cur.top+cur.hei+2);
-    const gH=stretta?20:Math.max(16,spazio-4);
+    // la striscia sta nel buco fra i due riquadri, senza coprire nessuno dei due
+    const gTop=cur.top+cur.hei+2,gH=Math.max(16,spazio-4);
     /* Con i rami affiancati due strisce cadrebbero nello stesso punto e si
        coprirebbero: ciascuna sta nella colonna della tappa a cui porta. Con
        una colonna sola - il caso di tutti i giorni - e' tutta larghezza. */
     const aCol=nxt.cols>1;
     const colL=`calc(52px + ${nxt.col} * ((100% - 58px)/${nxt.cols}))`,colW=`calc((100% - 58px)/${nxt.cols} - 4px)`;
-    const geo=stretta?(aCol?`top:${gTop}px;height:${gH}px;left:${colL};width:${colW}`
-                           :`top:${gTop}px;height:${gH}px;right:6px;left:auto;width:auto;max-width:calc(100% - 60px)`)
-                     :`top:${gTop}px;height:${gH}px;left:${aCol?colL:'52px'};width:${aCol?colW:'calc(100% - 58px)'}`;
-    const tcls=stretta?' tt-travel-tight':'';
+    const geo=`top:${gTop}px;height:${gH}px;left:${aCol?colL:'52px'};width:${aCol?colW:'calc(100% - 58px)'}`;
+    const tcls='';
     const isDistant=(gapEnd-gapStart)>DISTANT_GAP_MIN;
     if(state==='skip'){
       html+=`<div class="tt-travel tt-travel-skip${tcls}" style="${geo}" onclick="event.stopPropagation();unskipTravel(${di},${nxt.a.id})">necessario ↺</div>`;
@@ -5303,12 +5305,50 @@ function hostAt(d,r,selfId){
   });
   return best;
 }
+/* Spostare una tappa: si tiene premuto sul riquadro e poi lo si trascina.
+   Prima bastava agganciare la maniglietta in alto a destra - proprio dove
+   passa il dito quando si scorre la giornata - e capitava di spostare gli
+   orari senza volerlo. Ora ci vuole una pressione lunga su tutto il riquadro:
+   scorrendo non scatta mai, perche' basta che il dito si muova di dieci pixel
+   per annullarla. Mentre e' agganciato il riquadro si solleva, cosi' si vede
+   che ora risponde al trascinamento. */
+const PRESSIONE_LUNGA_MS=600,SPOSTA_TOLLERANZA_PX=10;
 function bindBlockDrag(el,act,t,d){
-  const g=el.querySelector('.tgrip');if(!g)return;g.style.touchAction='none';
-  let on=false,sy=0,orig=0,dur=60,hadEnd=false,ns=0;
-  g.addEventListener('pointerdown',e=>{const r=actRange(act);if(!r)return;on=true;sy=e.clientY;orig=r[0];ns=orig;dur=r[1]-r[0];hadEnd=!!act.timeEnd;el.style.zIndex=9;el.style.boxShadow='var(--sh-lg)';g.setPointerCapture(e.pointerId);e.preventDefault();});
-  g.addEventListener('pointermove',e=>{if(!on)return;const dy=e.clientY-sy;ns=orig+Math.round(dy/TT_H*60/15)*15;ns=Math.max(360,Math.min(1440-dur,ns));el.style.top=((ns-360)/60*TT_H)+'px';});
-  const fin=()=>{if(!on)return;on=false;el.style.zIndex='';el.style.boxShadow='';
+  let on=false,armato=null,sy=0,sx=0,orig=0,dur=60,hadEnd=false,ns=0,pid=null,bloccaClick=false;
+  const disarma=()=>{if(armato){clearTimeout(armato);armato=null;}};
+  const aggancia=()=>{
+    armato=null;on=true;
+    el.classList.add('tt-moving');
+    el.style.zIndex=9;el.style.boxShadow='var(--sh-lg)';
+    if(navigator.vibrate)navigator.vibrate(18);
+    try{el.setPointerCapture(pid);}catch(e){}
+  };
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.tszr')||e.target.closest('.tt-child'))return;
+    const r=actRange(act);if(!r)return;
+    pid=e.pointerId;sy=e.clientY;sx=e.clientX;orig=r[0];ns=orig;dur=r[1]-r[0];hadEnd=!!act.timeEnd;
+    disarma();armato=setTimeout(aggancia,PRESSIONE_LUNGA_MS);
+  });
+  el.addEventListener('pointermove',e=>{
+    if(armato){
+      // il dito si muove prima che scatti: sta scorrendo la giornata, non spostando
+      if(Math.hypot(e.clientX-sx,e.clientY-sy)>SPOSTA_TOLLERANZA_PX)disarma();
+      return;
+    }
+    if(!on)return;
+    const dy=e.clientY-sy;ns=orig+Math.round(dy/TT_H*60/15)*15;
+    ns=Math.max(360,Math.min(1440-dur,ns));
+    el.style.top=((ns-360)/60*TT_H)+'px';
+  });
+  // agganciato, il dito muove il riquadro e non la pagina
+  el.addEventListener('touchmove',e=>{if(on)e.preventDefault();},{passive:false});
+  // finito uno spostamento, il tocco non deve anche aprire la tappa
+  el.addEventListener('click',e=>{if(bloccaClick){bloccaClick=false;e.stopPropagation();e.preventDefault();}},true);
+  const fin=()=>{
+    disarma();
+    if(!on)return;
+    on=false;el.classList.remove('tt-moving');el.style.zIndex='';el.style.boxShadow='';
+    bloccaClick=true;setTimeout(()=>{bloccaClick=false;},400);
     if(ns===orig){buildTT();return;}
     const cand={time:fmtT(ns),timeEnd:act.nextDay?act.timeEnd:fmtT(ns+dur),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,nextDay:act.nextDay};
     const c=findConflict(t,d,cand,act.id);
@@ -5320,7 +5360,7 @@ function bindBlockDrag(el,act,t,d){
     reparentAfterDrag(d,act);
     markDrag(act,prev);
     save();buildTT();};
-  g.addEventListener('pointerup',fin);g.addEventListener('pointercancel',fin);
+  el.addEventListener('pointerup',fin);el.addEventListener('pointercancel',fin);
   const rz=el.querySelector('.tszr');
   if(rz){
     rz.style.touchAction='none';
