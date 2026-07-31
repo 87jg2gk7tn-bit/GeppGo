@@ -971,7 +971,23 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <div id="impMode" style="display:none">
         <div class="seg" style="margin-bottom:.7rem">
           <button class="seg-btn active" id="impSubPlaces" onclick="setImpSub('places')">📍 Posti da un reel</button>
+          <button class="seg-btn" id="impSubItin" onclick="setImpSub('itin')">✦ Su misura</button>
           <button class="seg-btn" id="impSubBooking" onclick="setImpSub('booking')">🎫 Prenotazione</button>
+        </div>
+        <div id="impItinSub" style="display:none">
+          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">✦ Fammi l'itinerario</div><div class="card-sub" id="itinQuale">Dimmi cosa ti piace e che aria vuoi che abbia il viaggio: ai posti, agli orari e all'ordine ci penso io.</div></div>
+          <div class="fg"><label>Cosa ti piace <span style="font-weight:500;color:var(--ink-faint)">(più sei preciso, meno viene da cartolina)</span></label><textarea id="itinGusti" placeholder="es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file"></textarea></div>
+          <div class="fg"><label>Che viaggio vuoi</label><select id="itinStile">
+            <option value="tranquillo">Tranquillo — poche cose, con calma</option>
+            <option value="intenso">Intenso — sfruttare ogni ora</option>
+            <option value="esperti">Da chi c'è già stato — niente cartoline</option>
+            <option value="gruppo">In gruppo — cose che funzionano in comitiva</option>
+            <option value="famiglia">Con bambini</option>
+          </select></div>
+          <div class="fg"><label>Tappe al giorno</label><select id="itinRitmo"><option value="3">3 · si respira</option><option value="4" selected>4 · normale</option><option value="5">5 · pieno</option></select></div>
+          <button class="btn btn-grad btn-block" onclick="creaItinerarioIA()">✦ Fammi l'itinerario</button>
+          <div id="itinStatus" style="font-size:.8rem;color:var(--ink-soft);min-height:1.1rem;margin-top:.7rem;line-height:1.5"></div>
+          <div id="itinResult" style="margin-top:.6rem"></div>
         </div>
         <div id="impPlacesSub">
           <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">📲 Importa da un reel o post</div><div class="card-sub">Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.</div></div>
@@ -4926,9 +4942,21 @@ async function addAllPlaces(list){
 
 function setImpSub(m){
   document.getElementById('impPlacesSub').style.display=m==='places'?'block':'none';
+  document.getElementById('impItinSub').style.display=m==='itin'?'block':'none';
   document.getElementById('impBookingSub').style.display=m==='booking'?'block':'none';
   document.getElementById('impSubPlaces').classList.toggle('active',m==='places');
+  document.getElementById('impSubItin').classList.toggle('active',m==='itin');
   document.getElementById('impSubBooking').classList.toggle('active',m==='booking');
+  if(m==='itin')itinQualeViaggio();
+}
+/* Su misura di che cosa: chi apre la scheda deve vedere subito su quale
+   viaggio sta per lavorare, se no scopre di aver riempito quello sbagliato. */
+function itinQualeViaggio(){
+  const t=T(),el=document.getElementById('itinQuale');if(!el)return;
+  if(!t){el.textContent='Crea prima un viaggio con destinazione e date: da lì prendo dove si va e quanti giorni.';return;}
+  const n=t.days.length,pieni=t.days.filter(d=>(d.activities||[]).length).length;
+  el.textContent=`${t.destination||t.name} · ${n} ${n===1?'giorno':'giorni'}`+
+    (pieni?` · ${pieni} ${pieni===1?'ha':'hanno'} già qualcosa: ci lavoro attorno senza cancellare niente.`:' · tutti da riempire.');
 }
 
 /* ===== IMPORT PRENOTAZIONE DA TESTO (parser lato client, nessuna AI) ===== */
@@ -6039,6 +6067,128 @@ function annullaMosse(){
   if(typeof ttDay==='number'&&t.days[ttDay])buildTT();
   nascondiAnnulla();
   toast('↩ Tornato com\'era');
+}
+
+/* ===== L'ITINERARIO INTERO, CHIESTO A PAROLE =====
+   "Vado lì quattro giorni, mi piacciono queste cose, fammelo tu tranquillo."
+   Qui non si parte da una lista di posti da mettere in fila: i posti li sceglie
+   il modello. Perciò non passa dalle mosse - sarebbero trenta righe da
+   spuntare una per una - ma da un'anteprima giorno per giorno che si accetta
+   o si butta in blocco. L'annulla resta, con la stessa barra delle mosse. */
+const ITIN_STILI={
+  tranquillo:'Ritmo lento: poche cose al giorno, tempi larghi, nessuna sveglia all\'alba, pause vere fra una tappa e l\'altra, e le distanze corte.',
+  intenso:'Sfrutta ogni ora: si parte presto, si cammina, si incastra tutto il possibile senza tempi morti.',
+  esperti:'Per chi c\'è già stato: salta le tappe da cartolina più ovvie e proponi quello che conosce chi ci vive o chi ci torna. Se una tappa famosa è davvero imprescindibile mettila, ma a un\'ora in cui non c\'è la folla.',
+  gruppo:'Per una comitiva: posti dove si sta in tanti senza prenotare mesi prima, dove ci si può sedere tutti insieme, niente esperienze da due persone e niente code infinite.',
+  famiglia:'Con bambini: distanze corte, posti dove ci si può muovere e fare rumore, pause frequenti, niente musei silenziosi di tre ore.'
+};
+
+let itinBusy=false,itinProposta=null;
+
+async function creaItinerarioIA(){
+  const t=T();
+  if(!t){toast('Crea prima un viaggio');return;}
+  if(!t.days.length){toast('Il viaggio non ha giorni');return;}
+  if(itinBusy)return;
+  const st=document.getElementById('itinStatus'),box=document.getElementById('itinResult');
+  const gusti=document.getElementById('itinGusti').value.trim();
+  const stile=document.getElementById('itinStile').value;
+  const ritmo=+document.getElementById('itinRitmo').value||4;
+  itinBusy=true;box.innerHTML='';st.textContent='✦ Sto pensando all\'itinerario...';
+  try{
+    const giorni=t.days.map((d,i)=>{
+      const w=t.weather[d.date];
+      const meteo=w?` · previsto ${wxShort(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
+      const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time}-${a.timeEnd||''} ${a.name}`).join('; ');
+      return `giorno ${i} — ${d.date}${meteo}${gia?` — c'è già: ${gia}`:' — libero'}`;
+    }).join('\n');
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:4000,
+      messages:[{role:"user",content:`Fammi l'itinerario completo di questo viaggio.
+
+Destinazione: ${t.destination||t.name}
+Giorni:
+${giorni}
+
+Cosa piace a chi viaggia: ${gusti||'non specificato, scegli tu ma resta sul concreto'}
+Che aria deve avere: ${ITIN_STILI[stile]}
+Circa ${ritmo} tappe al giorno.
+
+Rispondi SOLO con JSON, senza backtick e senza altro testo:
+{"commento":"due righe su come l'hai pensato","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve del posto","cerca":"nome esatto + città, per trovarlo su mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor","perche":"una riga sul perché proprio questo, per questa persona"}]}]}
+
+Regole ferree:
+- posti VERI e visitabili oggi, con il nome esatto: niente "un ristorante tipico" o "passeggiata nel quartiere"
+- pranzo e cena sono tappe come le altre, con il nome di un locale vero
+- orari di mezz'ora in mezz'ora, la giornata sta fra le 09:00 e le 22:30
+- lascia il tempo per spostarsi: due posti lontani non possono essere a dieci minuti uno dall'altro
+- non sovrapporti a quello che nel giorno c'è già: lavoraci attorno
+- nei giorni con pioggia prevista metti roba al chiuso
+- "perche" è concreto e legato ai gusti dichiarati, non una frase da dépliant`}]
+    })});
+    const data=await res.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
+    if(!giorniOk.length){st.textContent='Non è venuto fuori niente di usabile. Riprova, magari scrivendo meglio cosa ti piace.';return;}
+    itinProposta={giorni:giorniOk,commento:r.commento||''};
+    st.textContent='';
+    mostraItinerario(t,itinProposta);
+  }catch(e){st.textContent='⚠️ L\'IA non è raggiungibile. Controlla il ponte (GUIDA-AI.md).';}
+  finally{itinBusy=false;}
+}
+
+function mostraItinerario(t,p){
+  const n=p.giorni.reduce((s,g)=>s+g.attivita.length,0);
+  document.getElementById('itinResult').innerHTML=
+    `<div class="card">${p.commento?`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.8rem">${esc(p.commento)}</div>`:''}
+     ${p.giorni.map(g=>{
+       const d=t.days[g.giorno],ds=new Date(d.date);
+       const et=isNaN(ds.getTime())?`Giorno ${g.giorno+1}`:ds.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+       return `<div style="margin-bottom:.9rem"><div class="card-h" style="font-size:.95rem;margin-bottom:.4rem">${esc(et)}</div>
+         ${g.attivita.map(a=>`<div class="ms-row" style="cursor:default"><div><div class="ms-t">${esc(a.ora||'')} · ${esc(a.nome)}</div>${a.perche?`<div class="ms-w">${esc(a.perche)}</div>`:''}</div></div>`).join('')}</div>`;
+     }).join('')}
+     <button class="btn btn-grad btn-block" onclick="applicaItinerario()">Mettilo nel viaggio · ${n} tappe</button>
+     <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="creaItinerarioIA()">Rifammelo diverso</button></div>`;
+}
+
+async function applicaItinerario(){
+  const t=T();if(!t||!itinProposta)return;
+  const st=document.getElementById('itinStatus');
+  /* Stessa rete di sicurezza delle mosse: qui ancora di più, perché le tappe
+     sono molte e le si accetta in blocco. */
+  mosseUndo=JSON.parse(JSON.stringify(t.days));
+  let messe=0,senzaPosto=0,tot=itinProposta.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
+  for(const g of itinProposta.giorni){
+    const d=t.days[g.giorno];if(!d)continue;
+    for(const a of g.attivita){
+      fatte++;st.textContent=`Cerco i posti sulla mappa... ${fatte}/${tot}`;
+      let lat=null,lng=null;
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a.cerca||a.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+        const gd=await r.json();
+        if(gd.length){lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);}
+      }catch(e){}
+      if(lat==null)senzaPosto++;
+      const st2=tMin(a.ora),dur=durataTonda(a.durata||60);
+      const act={id:uid(),name:a.nome,time:'',timeEnd:'',lat,lng,
+        type:(a.tipo==='indoor'||a.tipo==='outdoor')?a.tipo:'any',
+        notes:a.perche||'',who:t.participants.map(p=>p.id),booking:{needed:false,done:false}};
+      if(st2!=null){act.time=hhmm(orarioTondo(st2));act.timeEnd=hhmm(Math.min(tMin(act.time)+dur,1439));}
+      d.activities.push(act);
+      if(!act.time)dagliUnOrario(t,d,act);
+      messe++;
+      /* Nominatim chiede di non martellare: una richiesta al secondo. */
+      await new Promise(r=>setTimeout(r,1100));
+    }
+  }
+  itinProposta=null;
+  save();renderAll();
+  document.getElementById('itinResult').innerHTML='';
+  st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprile e correggi il nome`:'');
+  itinQualeViaggio();
+  mostraAnnulla(messe);
 }
 
 /* Le porte d'ingresso. */

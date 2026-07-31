@@ -71,8 +71,18 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `importTrip` | 5086 | Trasforma un itinerario incollato in un viaggio |
 | `doCheckBooking` | 6218 | Cerca sul web se serve prenotare |
 | `refreshSuggestions` | 6304 | Consiglia attrazioni nei dintorni |
+| `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
+| `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
+
+**Le ultime due non scrivono mai nei dati da sole.** `chiediMosse` restituisce un
+elenco di mosse che vengono mostrate una per una, spuntabili, con il motivo di
+ognuna; `creaItinerarioIA` mostra prima l'anteprima giorno per giorno. In tutti
+e due i casi resta la barra **↩ Annulla** per quindici secondi dopo aver
+applicato. È una scelta, non una limitazione tecnica: un'app che riordina il
+viaggio da sola mentre non guardi perde la fiducia di chi la usa molto più in
+fretta di quanta gliene faccia guadagnare un buon consiglio.
 
 ---
 
