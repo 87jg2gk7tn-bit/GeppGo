@@ -244,6 +244,19 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .chat-in-row{display:flex;gap:.5rem;margin-top:.7rem}
 .chat-in-row input{flex:1}
 .chat-in-row button{flex-shrink:0;width:48px;padding:0;font-size:1.1rem}
+/* Le proposte dell'IA: una riga per mossa, spuntabile una per una. */
+.ms-row{display:flex;gap:.7rem;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.7rem .8rem;margin-bottom:.5rem;cursor:pointer}
+.ms-row input{flex-shrink:0;width:20px;height:20px;margin-top:.1rem;accent-color:var(--green)}
+.ms-t{font-size:.88rem;font-weight:600;line-height:1.35}
+.ms-w{font-size:.78rem;color:var(--ink-soft);margin-top:.25rem;line-height:1.4}
+/* Il "torna com'era" non può stare dentro un toast: toast() cancella sempre
+   quello di prima, e basta un suggerimento qualsiasi - "scorri per cambiare
+   giorno" - per portarsi via il tasto mentre lo si sta per premere. Barra sua,
+   che nessun altro tocca. */
+.undo-bar{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:.7rem;background:var(--ink);color:#fff;padding:.7rem .8rem .7rem 1.2rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10001;font-weight:700;font-size:.88rem;max-width:92vw;animation:toast .35s var(--spring)}
+.undo-bar.on{display:flex}
+.undo-bar button{font-family:inherit;font-weight:800;font-size:.82rem;border:none;cursor:pointer;border-radius:100px;padding:.45rem .85rem;background:#fff;color:var(--ink)}
+.undo-bar .ub-x{background:transparent;color:#fff;opacity:.6;padding:.45rem .5rem}
 .chip-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
 .starter{background:var(--blue-tint);color:var(--blue-deep);border:none;padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:var(--ease)}
 .starter:active{transform:scale(.95)}
@@ -631,7 +644,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 
 /* ── 4 · CHI STAVA IN BASSO SALE ────────────────────────────────── */
 .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
-.toast{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
+.toast,.undo-bar{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
 .navbar{bottom:calc(5.4rem + env(safe-area-inset-bottom))}
 /* dentro il foglio del giorno il fab resta dov'era: lì la pillola non c'è */
 /* La time-table è una pagina, non più un foglio sovrapposto: si toglie di
@@ -958,7 +971,23 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <div id="impMode" style="display:none">
         <div class="seg" style="margin-bottom:.7rem">
           <button class="seg-btn active" id="impSubPlaces" onclick="setImpSub('places')">📍 Posti da un reel</button>
+          <button class="seg-btn" id="impSubItin" onclick="setImpSub('itin')">✦ Su misura</button>
           <button class="seg-btn" id="impSubBooking" onclick="setImpSub('booking')">🎫 Prenotazione</button>
+        </div>
+        <div id="impItinSub" style="display:none">
+          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">✦ Fammi l'itinerario</div><div class="card-sub" id="itinQuale">Dimmi cosa ti piace e che aria vuoi che abbia il viaggio: ai posti, agli orari e all'ordine ci penso io.</div></div>
+          <div class="fg"><label>Cosa ti piace <span style="font-weight:500;color:var(--ink-faint)">(più sei preciso, meno viene da cartolina)</span></label><textarea id="itinGusti" placeholder="es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file"></textarea></div>
+          <div class="fg"><label>Che viaggio vuoi</label><select id="itinStile">
+            <option value="tranquillo">Tranquillo — poche cose, con calma</option>
+            <option value="intenso">Intenso — sfruttare ogni ora</option>
+            <option value="esperti">Da chi c'è già stato — niente cartoline</option>
+            <option value="gruppo">In gruppo — cose che funzionano in comitiva</option>
+            <option value="famiglia">Con bambini</option>
+          </select></div>
+          <div class="fg"><label>Tappe al giorno</label><select id="itinRitmo"><option value="3">3 · si respira</option><option value="4" selected>4 · normale</option><option value="5">5 · pieno</option></select></div>
+          <button class="btn btn-grad btn-block" onclick="creaItinerarioIA()">✦ Fammi l'itinerario</button>
+          <div id="itinStatus" style="font-size:.8rem;color:var(--ink-soft);min-height:1.1rem;margin-top:.7rem;line-height:1.5"></div>
+          <div id="itinResult" style="margin-top:.6rem"></div>
         </div>
         <div id="impPlacesSub">
           <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">📲 Importa da un reel o post</div><div class="card-sub">Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.</div></div>
@@ -1068,7 +1097,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip" onclick="optimizeDay()">Ordina il giro</button><button class="chip green" onclick="sistemaGiornata()">✦ Sistema con l'IA</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -1470,6 +1499,17 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <button class="btn btn-grad btn-block" id="premBtn" onclick="togglePremium()">✨ Attiva Premium (demo)</button>
   <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell'app nativa (Apple trattiene il 15–30%).</p>
 </div></div>
+<div class="undo-bar" id="mosseUndoBar"><span id="mosseUndoTxt"></span><button onclick="annullaMosse()">↩ Annulla</button><button class="ub-x" onclick="nascondiAnnulla()">✕</button></div>
+<div class="modal" id="mMosse"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="msTitle">Proposte</div><button class="x x-close" onclick="closeSheet('mMosse')">✕</button></div>
+  <div id="msComment" style="font-size:.85rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.8rem"></div>
+  <div id="msList"></div>
+  <div style="display:flex;gap:.5rem;margin-top:.9rem">
+    <button class="btn btn-soft" style="flex:1" onclick="closeSheet('mMosse')">Lascia com'è</button>
+    <button class="btn btn-grad" style="flex:1" onclick="applicaMosse()">Applica</button>
+  </div>
+</div></div>
 <div class="modal" id="mConfirm"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="confirm-box"><div class="confirm-ic" id="cfIc">⚠️</div><div class="confirm-t" id="cfTitle"></div><div class="confirm-msg" id="cfMsg"></div>
@@ -1521,10 +1561,16 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
   window.GEPPGO_PUBLIC_URL=location.origin+location.pathname;
 </script>
 <script>
+/* Il ponte su Cloudflare che tiene la chiave al sicuro e traduce verso Gemini.
+   L'app continua a parlare "anthropic": chi c'è dall'altra parte lo decide il
+   Worker, non questo file. Come rifarlo da zero, come cambiare motore e cosa
+   serve prima di pubblicare: GUIDA-AI.md, accanto a questo file. */
+window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
+
 /* ===== ENDPOINT AI =====
-   Anteprima Claude: lascia così, funziona da solo.
-   App nativa / sito pubblicato: vedi la GUIDA, passo 7.
-   Basta definire window.GEPPGO_AI_URL prima di questo blocco. */
+   L'indirizzo qui sopra vince. Se non fosse definito, si ricade sull'API di
+   Anthropic in chiaro: funziona solo dentro l'anteprima di Claude, che ci mette
+   l'autenticazione per conto suo. */
 const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
@@ -2610,13 +2656,33 @@ async function sendChat(){
   const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
   inp.value='';addMsg('me',text);chatHistory.push({role:'user',content:text});
   const typing=addMsg('ai typing','✦ Sto pensando...');const t=T();
-  const sys=`Sei l'assistente di viaggio dell'app GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto.${t?` Il viaggio attuale è "${t.name}"${t.destination?` con destinazione ${t.destination}`:''}${t.start&&t.end?`, dal ${t.start} al ${t.end}`:''}.`:''} Quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (max 5, nomi precisi cercabili su mappa, includi la città). Esempio: "LUOGHI: Senso-ji, Tokyo | Meiji Jingu, Tokyo". Niente riga LUOGHI se non consigli posti specifici.`;
+  /* La chat vede il programma vero, non solo il nome del viaggio: senza, a
+     "alleggerisci giovedì" può solo rispondere a vanvera. E può cambiarlo, ma
+     sempre passando dalle mosse, che l'utente conferma una per una. */
+  const prog=t?`\n\nProgramma attuale:\n${mosseContesto(t,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0)}`:'';
+  const sys=`Sei l'assistente di viaggio dell'app GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto.${t?` Il viaggio attuale è "${t.name}"${t.destination?` con destinazione ${t.destination}`:''}${t.start&&t.end?`, dal ${t.start} al ${t.end}`:''}.`:''} Quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (max 5, nomi precisi cercabili su mappa, includi la città). Esempio: "LUOGHI: Senso-ji, Tokyo | Meiji Jingu, Tokyo". Niente riga LUOGHI se non consigli posti specifici.
+
+Se invece ti viene chiesto di CAMBIARE il programma - spostare una tappa di giorno o di orario, accorciarla, toglierla, aggiungerne una, alleggerire una giornata troppo piena - non descriverlo a parole: scrivi una frase breve di risposta e poi UNA riga che inizia ESATTAMENTE con "MOSSE:" seguita dal JSON su una riga sola. ${MOSSE_REGOLE}${prog}`;
   try{
     const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:chatHistory})});
     const data=await res.json();
     let reply=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     if(!reply)throw new Error('empty');
     chatHistory.push({role:'assistant',content:reply});
+    /* Una richiesta di modifica torna come riga MOSSE: si toglie dal testo -
+       nessuno vuole leggere del JSON in chat - e diventa il pannello da
+       confermare. Se il JSON è malformato si lascia perdere in silenzio: resta
+       la risposta a parole, che è comunque sensata. */
+    const mm=reply.match(/MOSSE:\s*(\{[\s\S]*\})\s*$/i);
+    if(mm&&t){
+      reply=reply.replace(/MOSSE:\s*\{[\s\S]*\}\s*$/i,'').trim();
+      try{
+        const r=JSON.parse(mm[1]);
+        const mosse=(r.mosse||[]).filter(x=>mossaValida(t,x)).slice(0,8);
+        if(mosse.length)setTimeout(()=>apriMosse(t,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0,mosse,'Come lo cambierei',r.commento||''),400);
+      }catch(e){}
+      if(!reply)reply='Ecco come lo cambierei.';
+    }
     let places=[];const m=reply.match(/LUOGHI:\s*(.+)$/im);
     if(m){places=m[1].split('|').map(s=>s.trim()).filter(Boolean);reply=reply.replace(/LUOGHI:.*$/im,'').trim();}
     typing.remove();const msgEl=addMsg('ai',reply);
@@ -2997,9 +3063,14 @@ function actHTML(a,di,ai,w){
 }
 function reschedule(di,ai){
   const t=T(),better=[];t.days.forEach((d,i)=>{if(i===di)return;const w=t.weather[d.date];if(w&&w.precipitation<2)better.push({i,date:d.date,w});});
-  if(!better.length)return `<div class="wbanner">⛈️ Outdoor con pioggia. Valuta musei, ristoranti o shopping.</div>`;
+  /* Il consiglio a regole sa solo dire "spostala a un giorno asciutto", e
+     quando giorni asciutti non ce ne sono resta il generico "valuta un museo".
+     Il bottone chiede all'IA quale museo: vicino a dov'eri e dentro lo stesso
+     buco di orario. */
+  const alt=`<button class="chip green" style="margin-top:.5rem" onclick="alternativeMeteo(${di})">✦ Alternative al coperto</button>`;
+  if(!better.length)return `<div class="wbanner">⛈️ Outdoor con pioggia.<br>${alt}</div>`;
   const b=better[0],ds=new Date(b.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
-  return `<div class="wbanner">💡 <strong>${ds}</strong> sarebbe meglio (${wxEmoji(b.w.code)} ${Math.round(b.w.tempMax)}°)<br><button class="chip green" style="margin-top:.5rem" onclick="moveAct(${di},${ai},${b.i})">↪️ Sposta a ${ds}</button></div>`;
+  return `<div class="wbanner">💡 <strong>${ds}</strong> sarebbe meglio (${wxEmoji(b.w.code)} ${Math.round(b.w.tempMax)}°)<br><button class="chip green" style="margin-top:.5rem" onclick="moveAct(${di},${ai},${b.i})">↪️ Sposta a ${ds}</button> ${alt}</div>`;
 }
 function moveAct(f,ai,to){const t=T();const[a]=t.days[f].activities.splice(ai,1);t.days[to].activities.push(a);save();renderTimeline();toast('✅ Spostata');}
 function toggleAct(di,id){const t=T();const a=t.days[di].activities.find(x=>x.id===id);if(a){a.completed=!a.completed;save();renderTimeline();}}
@@ -4871,9 +4942,21 @@ async function addAllPlaces(list){
 
 function setImpSub(m){
   document.getElementById('impPlacesSub').style.display=m==='places'?'block':'none';
+  document.getElementById('impItinSub').style.display=m==='itin'?'block':'none';
   document.getElementById('impBookingSub').style.display=m==='booking'?'block':'none';
   document.getElementById('impSubPlaces').classList.toggle('active',m==='places');
+  document.getElementById('impSubItin').classList.toggle('active',m==='itin');
   document.getElementById('impSubBooking').classList.toggle('active',m==='booking');
+  if(m==='itin')itinQualeViaggio();
+}
+/* Su misura di che cosa: chi apre la scheda deve vedere subito su quale
+   viaggio sta per lavorare, se no scopre di aver riempito quello sbagliato. */
+function itinQualeViaggio(){
+  const t=T(),el=document.getElementById('itinQuale');if(!el)return;
+  if(!t){el.textContent='Crea prima un viaggio con destinazione e date: da lì prendo dove si va e quanti giorni.';return;}
+  const n=t.days.length,pieni=t.days.filter(d=>(d.activities||[]).length).length;
+  el.textContent=`${t.destination||t.name} · ${n} ${n===1?'giorno':'giorni'}`+
+    (pieni?` · ${pieni} ${pieni===1?'ha':'hanno'} già qualcosa: ci lavoro attorno senza cancellare niente.`:' · tutti da riempire.');
 }
 
 /* ===== IMPORT PRENOTAZIONE DA TESTO (parser lato client, nessuna AI) ===== */
@@ -5780,6 +5863,344 @@ function apTipo(g){
   if(g==='museo'||g==='spettacolo'||g==='terme'||g==='shopping')return'indoor';
   return'any';
 }
+
+/* ===== L'IA CHE MODIFICA IL VIAGGIO =====
+   Il modello non scrive mai nei dati. Restituisce un elenco di mosse, l'app le
+   mostra con il motivo di ognuna e le esegue solo dopo un sì esplicito, una per
+   una: un'app che riordina il viaggio da sola mentre non guardi fa perdere
+   fiducia molto più in fretta di quanta ne faccia guadagnare un buon consiglio.
+   Le mosse indicano le tappe per identificativo e mai per nome: due tappe
+   possono chiamarsi uguale, e un nome storpiato manderebbe la modifica su
+   quella sbagliata senza che nessuno se ne accorga.
+   Tutte le porte d'ingresso - sistema la giornata, alternative per la pioggia,
+   e la chat a parole tue - passano da qui: cambia solo l'istruzione. */
+const MOSSE_REGOLE=`Rispondi SOLO con JSON, senza backtick e senza altro testo:
+{"commento":"una frase in italiano su cosa hai deciso","mosse":[...]}
+
+Ogni mossa è una di queste:
+{"azione":"sposta_giorno","tappa":ID,"giorno":N,"perche":"..."}
+{"azione":"sposta_ora","tappa":ID,"ora":"HH:MM","perche":"..."}
+{"azione":"durata","tappa":ID,"minuti":N,"perche":"..."}
+{"azione":"togli","tappa":ID,"perche":"..."}
+{"azione":"priorita","tappa":ID,"valore":"essenziale oppure saltabile","perche":"..."}
+{"azione":"aggiungi","nome":"nome breve","cerca":"nome + città, per trovarlo su mappa","giorno":N,"ora":"HH:MM","perche":"..."}
+
+Regole ferree:
+- usa SOLO gli ID che trovi qui sotto: non inventarne
+- gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00...
+- "perche" è una riga sola in italiano con il motivo vero e concreto (la distanza, la pioggia prevista, la giornata piena, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare"
+- non muovere quello che è già al posto giusto: se va bene così rispondi {"mosse":[],"commento":"..."}
+- al massimo 8 mosse, le più utili`;
+
+/* Il viaggio raccontato al modello: tutti i giorni, perché una tappa possa
+   essere spostata altrove, con quello segnato su cui si sta lavorando. */
+function mosseContesto(t,oggi){
+  const g=t.days.map((d,i)=>{
+    const w=t.weather[d.date];
+    const meteo=w?` · ${wxShort(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
+    const voci=(d.activities||[]).slice().sort((a,b)=>{
+      const x=tMin(a.time),y=tMin(b.time);return (x==null?9999:x)-(y==null?9999:y);
+    }).map(a=>{
+      const pri=a.priority==='essential'?'essenziale':(a.priority==='skippable'?'saltabile':'non detto');
+      const loc=actLoc(t,a);
+      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
+    });
+    return `  giorno ${i}${i===oggi?'  <<< QUESTO':''} — ${d.date}${meteo}\n${voci.join('\n')||'    (nessuna tappa)'}`;
+  });
+  return `Viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}. Ci si sposta ${modeNome((t.days[oggi]||{}).travelMode||'walk')}.\n${g.join('\n')}`;
+}
+
+let mosseProposte=null,mosseUndo=null,mosseGiorno=null,mosseBusy=false;
+
+async function chiediMosse(istruzione,oggi,titolo){
+  const t=T();if(!t||mosseBusy)return;
+  if(oggi==null||!t.days[oggi])oggi=(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0;
+  mosseBusy=true;toast('✦ Ci sto pensando...');
+  try{
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:1500,
+      messages:[{role:"user",content:`${istruzione}\n\n${MOSSE_REGOLE}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`}]
+    })});
+    const data=await res.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const mosse=(r.mosse||[]).filter(x=>mossaValida(t,x)).slice(0,8);
+    if(!mosse.length){toast(r.commento||'Per me va bene così');return;}
+    apriMosse(t,oggi,mosse,titolo||'Proposte',r.commento||'');
+  }catch(e){toast('⚠️ L\'IA non è raggiungibile');}
+  finally{mosseBusy=false;}
+}
+
+function trovaTappa(t,id){
+  for(let i=0;i<t.days.length;i++){
+    const a=(t.days[i].activities||[]).find(x=>String(x.id)===String(id));
+    if(a)return{a,di:i};
+  }
+  return null;
+}
+/* Un modello può restituire un ID che non esiste, un giorno fuori dal viaggio o
+   una durata assurda. Scartare qui, prima di mostrare la proposta, è l'unico
+   punto in cui costa niente: più avanti si scriverebbe su una tappa a caso. */
+function mossaValida(t,m){
+  if(!m||!m.azione)return false;
+  if(m.azione==='aggiungi')return !!(m.nome&&m.giorno!=null&&t.days[m.giorno]);
+  const f=trovaTappa(t,m.tappa);if(!f)return false;
+  if(m.azione==='sposta_giorno')return !!t.days[m.giorno]&&m.giorno!==f.di;
+  if(m.azione==='sposta_ora')return /^\d{1,2}:\d{2}$/.test(m.ora||'');
+  if(m.azione==='durata')return m.minuti>=15&&m.minuti<=600;
+  if(m.azione==='priorita')return m.valore==='essenziale'||m.valore==='saltabile';
+  return m.azione==='togli';
+}
+
+function descriviMossa(t,m){
+  if(m.azione==='aggiungi')return `➕ Aggiungi <b>${esc(m.nome)}</b> al giorno ${(m.giorno||0)+1}${m.ora?` alle ${esc(m.ora)}`:''}`;
+  const f=trovaTappa(t,m.tappa);if(!f)return'';
+  const n=`<b>${esc(f.a.name)}</b>`;
+  if(m.azione==='sposta_giorno')return `📅 Sposta ${n} al giorno ${m.giorno+1}`;
+  if(m.azione==='sposta_ora')return `🕒 ${n}: dalle ${esc(f.a.time||'—')} alle ${esc(m.ora)}`;
+  if(m.azione==='durata')return `⏱️ ${n}: ${m.minuti} minuti`;
+  if(m.azione==='togli')return `🗑️ Togli ${n}`;
+  if(m.azione==='priorita')return `🏷️ ${n}: ${esc(m.valore)}`;
+  return'';
+}
+
+function apriMosse(t,oggi,mosse,titolo,commento){
+  mosseProposte=mosse;mosseGiorno=oggi;
+  document.getElementById('msTitle').textContent=titolo;
+  document.getElementById('msComment').textContent=commento||'';
+  document.getElementById('msList').innerHTML=mosse.map((m,i)=>
+    `<label class="ms-row"><input type="checkbox" checked data-i="${i}"><div><div class="ms-t">${descriviMossa(t,m)}</div>${m.perche?`<div class="ms-w">${esc(m.perche)}</div>`:''}</div></label>`
+  ).join('');
+  openSheet('mMosse');
+}
+
+async function applicaMosse(){
+  const t=T();if(!t||!mosseProposte)return;
+  const scelte=[...document.querySelectorAll('#msList input[type=checkbox]')]
+    .filter(c=>c.checked).map(c=>mosseProposte[+c.dataset.i]).filter(Boolean);
+  closeSheet('mMosse');
+  if(!scelte.length)return;
+  /* Copia di sicurezza prima di toccare qualsiasi cosa: una proposta accettata
+     e poi rimpianta si annulla in un tocco, senza dover rimettere a mano. */
+  mosseUndo=JSON.parse(JSON.stringify(t.days));
+  let fatte=0;
+  for(const m of scelte){try{if(await applicaMossa(t,m))fatte++;}catch(e){}}
+  save();renderAll();
+  if(typeof ttDay==='number'&&t.days[ttDay])buildTT();
+  if(fatte)mostraAnnulla(fatte);else toast('Non è cambiato niente');
+}
+
+async function applicaMossa(t,m){
+  if(m.azione==='aggiungi'){
+    const d=t.days[m.giorno]||t.days[mosseGiorno];if(!d)return false;
+    let lat=null,lng=null;
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(m.cerca||m.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+      const g=await r.json();
+      if(g.length){lat=parseFloat(g[0].lat);lng=parseFloat(g[0].lon);}
+    }catch(e){}
+    const a={id:uid(),name:m.nome,time:'',timeEnd:'',lat,lng,
+             who:t.participants.map(p=>p.id),booking:{needed:false,done:false}};
+    const g=apGenere(a.name,null);a.type=apTipo(g);
+    d.activities.push(a);
+    if(m.ora&&/^\d{1,2}:\d{2}$/.test(m.ora)){
+      const st=tMin(m.ora);
+      a.time=hhmm(st);
+      a.timeEnd=hhmm(Math.min(st+durataTonda(AP_DURATA[g]||AP_DURATA.default),1439));
+    }else dagliUnOrario(t,d,a);
+    return true;
+  }
+  const f=trovaTappa(t,m.tappa);if(!f)return false;
+  const a=f.a,d=t.days[f.di];
+  if(m.azione==='sposta_giorno'){
+    const nd=t.days[m.giorno];if(!nd)return false;
+    d.activities=d.activities.filter(x=>x.id!==a.id);
+    /* L'orario del giorno di prima non vuol dire niente nel giorno nuovo:
+       si riparte da zero e glielo ridà l'app, in coda a quello che c'è già. */
+    a.time='';a.timeEnd='';
+    nd.activities.push(a);
+    dagliUnOrario(t,nd,a);
+    return true;
+  }
+  if(m.azione==='sposta_ora'){
+    const st=tMin(m.ora);if(st==null)return false;
+    const r=actRange(a),dur=r?r[1]-r[0]:60;
+    a.time=hhmm(st);a.timeEnd=hhmm(Math.min(st+dur,1439));
+    return true;
+  }
+  if(m.azione==='durata'){
+    const st=tMin(a.time);if(st==null)return false;
+    a.timeEnd=hhmm(Math.min(st+durataTonda(m.minuti),1439));
+    return true;
+  }
+  if(m.azione==='togli'){
+    d.activities=d.activities.filter(x=>x.id!==a.id);
+    /* La lapide serve al cloud: senza, alla prossima sincronizzazione la tappa
+       tornerebbe su, perché sugli altri telefoni esiste ancora. */
+    t._delAct=t._delAct||{};t._delAct[a.id]=Date.now();
+    return true;
+  }
+  if(m.azione==='priorita'){
+    a.priority=m.valore==='essenziale'?'essential':'skippable';
+    if(a.poiId){const pp=(t.pois||[]).find(x=>x.id===a.poiId);if(pp)pp.priority=a.priority;}
+    return true;
+  }
+  return false;
+}
+
+let mosseUndoT=null;
+function mostraAnnulla(n){
+  document.getElementById('mosseUndoTxt').textContent=`✅ ${n} ${n===1?'modifica fatta':'modifiche fatte'}`;
+  document.getElementById('mosseUndoBar').classList.add('on');
+  clearTimeout(mosseUndoT);
+  mosseUndoT=setTimeout(nascondiAnnulla,15000);
+}
+function nascondiAnnulla(){
+  clearTimeout(mosseUndoT);
+  document.getElementById('mosseUndoBar').classList.remove('on');
+}
+function annullaMosse(){
+  const t=T();if(!t||!mosseUndo){nascondiAnnulla();return;}
+  t.days=JSON.parse(JSON.stringify(mosseUndo));mosseUndo=null;
+  save();renderAll();
+  if(typeof ttDay==='number'&&t.days[ttDay])buildTT();
+  nascondiAnnulla();
+  toast('↩ Tornato com\'era');
+}
+
+/* ===== L'ITINERARIO INTERO, CHIESTO A PAROLE =====
+   "Vado lì quattro giorni, mi piacciono queste cose, fammelo tu tranquillo."
+   Qui non si parte da una lista di posti da mettere in fila: i posti li sceglie
+   il modello. Perciò non passa dalle mosse - sarebbero trenta righe da
+   spuntare una per una - ma da un'anteprima giorno per giorno che si accetta
+   o si butta in blocco. L'annulla resta, con la stessa barra delle mosse. */
+const ITIN_STILI={
+  tranquillo:'Ritmo lento: poche cose al giorno, tempi larghi, nessuna sveglia all\'alba, pause vere fra una tappa e l\'altra, e le distanze corte.',
+  intenso:'Sfrutta ogni ora: si parte presto, si cammina, si incastra tutto il possibile senza tempi morti.',
+  esperti:'Per chi c\'è già stato: salta le tappe da cartolina più ovvie e proponi quello che conosce chi ci vive o chi ci torna. Se una tappa famosa è davvero imprescindibile mettila, ma a un\'ora in cui non c\'è la folla.',
+  gruppo:'Per una comitiva: posti dove si sta in tanti senza prenotare mesi prima, dove ci si può sedere tutti insieme, niente esperienze da due persone e niente code infinite.',
+  famiglia:'Con bambini: distanze corte, posti dove ci si può muovere e fare rumore, pause frequenti, niente musei silenziosi di tre ore.'
+};
+
+let itinBusy=false,itinProposta=null;
+
+async function creaItinerarioIA(){
+  const t=T();
+  if(!t){toast('Crea prima un viaggio');return;}
+  if(!t.days.length){toast('Il viaggio non ha giorni');return;}
+  if(itinBusy)return;
+  const st=document.getElementById('itinStatus'),box=document.getElementById('itinResult');
+  const gusti=document.getElementById('itinGusti').value.trim();
+  const stile=document.getElementById('itinStile').value;
+  const ritmo=+document.getElementById('itinRitmo').value||4;
+  itinBusy=true;box.innerHTML='';st.textContent='✦ Sto pensando all\'itinerario...';
+  try{
+    const giorni=t.days.map((d,i)=>{
+      const w=t.weather[d.date];
+      const meteo=w?` · previsto ${wxShort(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
+      const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time}-${a.timeEnd||''} ${a.name}`).join('; ');
+      return `giorno ${i} — ${d.date}${meteo}${gia?` — c'è già: ${gia}`:' — libero'}`;
+    }).join('\n');
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:4000,
+      messages:[{role:"user",content:`Fammi l'itinerario completo di questo viaggio.
+
+Destinazione: ${t.destination||t.name}
+Giorni:
+${giorni}
+
+Cosa piace a chi viaggia: ${gusti||'non specificato, scegli tu ma resta sul concreto'}
+Che aria deve avere: ${ITIN_STILI[stile]}
+Circa ${ritmo} tappe al giorno.
+
+Rispondi SOLO con JSON, senza backtick e senza altro testo:
+{"commento":"due righe su come l'hai pensato","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve del posto","cerca":"nome esatto + città, per trovarlo su mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor","perche":"una riga sul perché proprio questo, per questa persona"}]}]}
+
+Regole ferree:
+- posti VERI e visitabili oggi, con il nome esatto: niente "un ristorante tipico" o "passeggiata nel quartiere"
+- pranzo e cena sono tappe come le altre, con il nome di un locale vero
+- orari di mezz'ora in mezz'ora, la giornata sta fra le 09:00 e le 22:30
+- lascia il tempo per spostarsi: due posti lontani non possono essere a dieci minuti uno dall'altro
+- non sovrapporti a quello che nel giorno c'è già: lavoraci attorno
+- nei giorni con pioggia prevista metti roba al chiuso
+- "perche" è concreto e legato ai gusti dichiarati, non una frase da dépliant`}]
+    })});
+    const data=await res.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
+    if(!giorniOk.length){st.textContent='Non è venuto fuori niente di usabile. Riprova, magari scrivendo meglio cosa ti piace.';return;}
+    itinProposta={giorni:giorniOk,commento:r.commento||''};
+    st.textContent='';
+    mostraItinerario(t,itinProposta);
+  }catch(e){st.textContent='⚠️ L\'IA non è raggiungibile. Controlla il ponte (GUIDA-AI.md).';}
+  finally{itinBusy=false;}
+}
+
+function mostraItinerario(t,p){
+  const n=p.giorni.reduce((s,g)=>s+g.attivita.length,0);
+  document.getElementById('itinResult').innerHTML=
+    `<div class="card">${p.commento?`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.8rem">${esc(p.commento)}</div>`:''}
+     ${p.giorni.map(g=>{
+       const d=t.days[g.giorno],ds=new Date(d.date);
+       const et=isNaN(ds.getTime())?`Giorno ${g.giorno+1}`:ds.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+       return `<div style="margin-bottom:.9rem"><div class="card-h" style="font-size:.95rem;margin-bottom:.4rem">${esc(et)}</div>
+         ${g.attivita.map(a=>`<div class="ms-row" style="cursor:default"><div><div class="ms-t">${esc(a.ora||'')} · ${esc(a.nome)}</div>${a.perche?`<div class="ms-w">${esc(a.perche)}</div>`:''}</div></div>`).join('')}</div>`;
+     }).join('')}
+     <button class="btn btn-grad btn-block" onclick="applicaItinerario()">Mettilo nel viaggio · ${n} tappe</button>
+     <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="creaItinerarioIA()">Rifammelo diverso</button></div>`;
+}
+
+async function applicaItinerario(){
+  const t=T();if(!t||!itinProposta)return;
+  const st=document.getElementById('itinStatus');
+  /* Stessa rete di sicurezza delle mosse: qui ancora di più, perché le tappe
+     sono molte e le si accetta in blocco. */
+  mosseUndo=JSON.parse(JSON.stringify(t.days));
+  let messe=0,senzaPosto=0,tot=itinProposta.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
+  for(const g of itinProposta.giorni){
+    const d=t.days[g.giorno];if(!d)continue;
+    for(const a of g.attivita){
+      fatte++;st.textContent=`Cerco i posti sulla mappa... ${fatte}/${tot}`;
+      let lat=null,lng=null;
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a.cerca||a.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+        const gd=await r.json();
+        if(gd.length){lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);}
+      }catch(e){}
+      if(lat==null)senzaPosto++;
+      const st2=tMin(a.ora),dur=durataTonda(a.durata||60);
+      const act={id:uid(),name:a.nome,time:'',timeEnd:'',lat,lng,
+        type:(a.tipo==='indoor'||a.tipo==='outdoor')?a.tipo:'any',
+        notes:a.perche||'',who:t.participants.map(p=>p.id),booking:{needed:false,done:false}};
+      if(st2!=null){act.time=hhmm(orarioTondo(st2));act.timeEnd=hhmm(Math.min(tMin(act.time)+dur,1439));}
+      d.activities.push(act);
+      if(!act.time)dagliUnOrario(t,d,act);
+      messe++;
+      /* Nominatim chiede di non martellare: una richiesta al secondo. */
+      await new Promise(r=>setTimeout(r,1100));
+    }
+  }
+  itinProposta=null;
+  save();renderAll();
+  document.getElementById('itinResult').innerHTML='';
+  st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprile e correggi il nome`:'');
+  itinQualeViaggio();
+  mostraAnnulla(messe);
+}
+
+/* Le porte d'ingresso. */
+function sistemaGiornata(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  chiediMosse('Guarda il giorno segnato con <<< QUESTO e sistemalo: ordine sensato rispetto alle distanze, i pasti alla loro ora, non due musei di fila, e se è troppo pieno sposta ad altri giorni quello che è saltabile o toglilo.',ttDay,'Come sistemerei la giornata');
+}
+function alternativeMeteo(di){
+  const t=T();if(!t)return;
+  chiediMosse('Nel giorno segnato con <<< QUESTO è previsto brutto tempo. Le tappe all\'aperto (type outdoor) rischiano: o spostale a un giorno asciutto, oppure toglile e al loro posto aggiungi qualcosa al coperto lì vicino, che stia nello stesso buco di orario. Le tappe al chiuso non toccarle.',di,'Alternative per la pioggia');
+}
+
 let dayImportBusy=false;
 /* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
    un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
