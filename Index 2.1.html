@@ -252,8 +252,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .chat-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem}
 .chat-place{display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:var(--brown-tint);border-radius:var(--r-md);padding:.6rem .8rem}
 .chat-place-n{font-weight:700;font-size:.85rem;color:var(--brown-deep)}
-.chat-in-row{display:flex;gap:.5rem;margin-top:.7rem}
-.chat-in-row input{flex:1}
+.chat-in-row{display:flex;gap:.5rem;margin-top:.7rem;align-items:flex-end}
+/* Il campo era un <input>, e un input a riga singola butta via gli a-capo:
+   incollare un itinerario di venti righe ne faceva arrivare una sola,
+   appiattita. Adesso e' un textarea che parte alto come prima e cresce
+   scrivendo, fino a un tetto oltre il quale scorre. */
+.chat-in-row textarea{flex:1;resize:none;min-height:46px;max-height:140px;overflow-y:auto}
 .chat-in-row button{flex-shrink:0;width:48px;padding:0;font-size:1.1rem}
 /* Le proposte dell'IA: una riga per mossa, spuntabile una per una. */
 .ms-row{display:flex;gap:.7rem;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.7rem .8rem;margin-bottom:.5rem;cursor:pointer}
@@ -976,7 +980,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <div class="chip-row" id="aiStarters"></div>
         <div class="chat-wrap">
           <div class="chat-msgs" id="chatMsgs"></div>
-          <div class="chat-in-row"><input id="chatInput" placeholder="Es. Amo arte e cibo di strada..." onkeydown="if(event.key==='Enter')sendChat()"><button class="btn btn-grad" onclick="sendChat()">➤</button></div>
+          <div class="chat-in-row"><textarea id="chatInput" rows="1" placeholder="Chiedi, oppure incolla qui un itinerario..." onkeydown="chatTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="sendChat()">➤</button></div>
         </div>
       </div>
       <div id="impMode" style="display:none">
@@ -2685,6 +2689,20 @@ function misuraChat(){
 window.addEventListener('resize',()=>{clearTimeout(misuraChat._t);misuraChat._t=setTimeout(misuraChat,120);});
 window.addEventListener('orientationchange',()=>setTimeout(misuraChat,300));
 
+/* Invio manda, maiuscolo+invio va a capo: chi incolla un testo lungo lo fa
+   con le dita, e deve poter aggiungere una riga senza spedire per sbaglio. */
+function chatTasto(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+}
+function chatCresci(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,140)+'px';
+  misuraChat();
+}
+function chatSvuota(){
+  const el=document.getElementById('chatInput');
+  if(!el)return;el.value='';el.style.height='';misuraChat();
+}
 function askStarter(s){document.getElementById('chatInput').value=s;sendChat();}
 function addMsg(who,text){const box=document.getElementById('chatMsgs'),d=document.createElement('div');d.className='msg '+who;d.textContent=text;box.appendChild(d);misuraChat();box.scrollTop=box.scrollHeight;return d;}
 /* "Sposta il museo al pomeriggio" non è una domanda: è un ordine, e va al
@@ -2706,8 +2724,17 @@ function sembraUnComando(s){
 
 async function sendChat(){
   const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
-  inp.value='';addMsg('me',text);
+  chatSvuota();addMsg('me',text);
   const t0=T();
+  /* Un blocco incollato va guardato prima: contiene quasi sempre un verbo da
+     comando ("ordina questi posti e mettili nel giorno 2"), e senza questo
+     controllo finirebbe al motore delle mosse, che sa spostare quello che c'e'
+     gia' ma non sa leggere un itinerario scritto da qualcun altro. */
+  if(t0&&sembraUnIncollato(text)){
+    addMsg('ai','Leggo il testo e cerco i posti, anche quelli nominati solo nella descrizione.');
+    pianificaDaTesto(text);
+    return;
+  }
   if(t0&&sembraUnComando(text)){
     addMsg('ai','Guardo il programma e ti dico come lo cambierei.');
     chiediMosse(text,(typeof ttDay==='number'&&t0.days[ttDay])?ttDay:0,'Come lo cambierei');
@@ -6379,9 +6406,90 @@ Regole ferree:
   finally{itinBusy=false;}
 }
 
-function mostraItinerario(t,p){
+/* ===== UN ITINERARIO SCRITTO DA UN'ALTRA IA, INCOLLATO IN CHAT =====
+   Il formato tipico: due righe di descrizione della giornata, poi un elenco di
+   posti con un commento di fianco, e a volte i posti citati solo nella prosa e
+   mai nell'elenco. Niente date, niente orari, o orari solo per qualcuno.
+   "Importa lista" non basta: quella prende una riga per volta e la cerca sulla
+   mappa, quindi sulla descrizione non trova niente e sull'elenco perde i
+   commenti. Qui si legge tutto insieme, si capisce a quale giorno del viaggio
+   si riferisce quello che è stato chiesto, e si esce con lo stesso formato
+   dell'anteprima di "Su misura" - che sa già geocodificare, inserire e
+   annullare. */
+function sembraUnIncollato(s){
+  const t=(s||'').trim();
+  if(t.length<180)return false;
+  const righe=t.split('\n').filter(x=>x.trim()).length;
+  return righe>=3||/(^|\n)\s*(?:[-*•]|\d+[.)])\s+\S/.test(t);
+}
+
+async function pianificaDaTesto(testo){
+  const t=T();
+  if(!t||!t.days.length){addMsg('ai','Crea prima un viaggio con dei giorni: è lì che devo metterli.');return;}
+  if(itinBusy)return;
+  itinBusy=true;
+  const el=document.createElement('div');
+  el.innerHTML=`<div id="chatItinStato" style="font-size:.82rem;color:var(--ink-soft);line-height:1.5">✦ Leggo la descrizione e cerco i posti...</div><div id="chatItinResult" style="margin-top:.6rem"></div>`;
+  document.getElementById('chatMsgs').appendChild(el);
+  misuraChat();
+  const stato=document.getElementById('chatItinStato');
+  try{
+    const giorni=t.days.map((d,i)=>{
+      const dt=new Date(d.date);
+      const gs=isNaN(dt.getTime())?'':GIORNI_SETT[dt.getDay()];
+      const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time} ${a.name}`).join('; ');
+      return `giorno ${i} — ${d.date}${gs?` (${gs})`:''}${gia?` — c'è già: ${gia}`:' — libero'}`;
+    }).join('\n');
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:4000,
+      messages:[{role:"user",content:`Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
+
+--- TESTO INCOLLATO ---
+${testo}
+--- FINE ---
+
+I giorni del viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}:
+${giorni}
+
+Metti i posti nel giorno che ti ho chiesto. Se non ho detto quale, usa il giorno ${(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0}. Se ho indicato più giorni, dividili come ho detto io.
+
+Rispondi SOLO con JSON, senza backtick:
+{"commento":"una o due frasi: quali posti hai riconosciuto, dove li hai messi e con che criterio li hai ordinati","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve","cerca":"nome esatto + città, per la mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor","perche":"una riga"}]}]}
+
+Regole ferree:
+- prendi i posti VERI e visitabili: sia quelli dell'elenco sia quelli nominati solo nella descrizione. Non inventarne di nuovi che non sono scritti da nessuna parte
+- scarta quello che non è un posto: consigli generici, frasi di collegamento, "colazione libera", "riposo"
+- ordina le tappe per come conviene girarle, non nell'ordine in cui sono scritte: vicine di fila, quella lontana in cima o in fondo alla giornata
+- orari di mezz'ora in mezz'ora, giornata fra le 09:00 e le 22:30, con il tempo per spostarsi fra una tappa e l'altra
+- se un posto ha un orario di apertura noto (i negozi aprono tardi, i musei chiudono presto, molti musei sono chiusi il lunedì) tienine conto
+- pranzo e cena vanno alla loro ora
+- non sovrapporti a quello che nel giorno c'è già
+- in "perche" usa il commento che c'era di fianco al posto nel testo, se c'era: è il motivo per cui chi ha scritto l'ha messo lì`}]
+    })});
+    const data=await res.json();
+    if(data&&data.error){stato.textContent='⚠️ '+motivoAI(data.error.message);return;}
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
+    if(!giorniOk.length){stato.textContent='Non ho riconosciuto posti utilizzabili in quel testo. Riprova incollando anche l\'elenco, non solo la descrizione.';return;}
+    itinProposta={giorni:giorniOk,commento:r.commento||''};
+    stato.textContent='';
+    mostraItinerario(t,itinProposta,'chatItinResult','chatItinStato');
+    misuraChat();
+    document.getElementById('chatMsgs').scrollTop=document.getElementById('chatMsgs').scrollHeight;
+  }catch(e){stato.textContent='⚠️ L\'IA non è raggiungibile.';}
+  finally{itinBusy=false;}
+}
+
+/* L'anteprima nasceva dentro la scheda "Su misura", ma la stessa cosa serve
+   anche in chat, dove si incolla l'itinerario che ha scritto un'altra IA. Si
+   dice dove disegnarsi e dove scrivere l'avanzamento, invece di darlo per
+   scontato. */
+function mostraItinerario(t,p,dove,stato){
+  dove=dove||'itinResult';stato=stato||'itinStatus';
   const n=p.giorni.reduce((s,g)=>s+g.attivita.length,0);
-  document.getElementById('itinResult').innerHTML=
+  document.getElementById(dove).innerHTML=
     `<div class="card">${p.commento?`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.8rem">${esc(p.commento)}</div>`:''}
      ${p.giorni.map(g=>{
        const d=t.days[g.giorno],ds=new Date(d.date);
@@ -6389,13 +6497,13 @@ function mostraItinerario(t,p){
        return `<div style="margin-bottom:.9rem"><div class="card-h" style="font-size:.95rem;margin-bottom:.4rem">${esc(et)}</div>
          ${g.attivita.map(a=>`<div class="ms-row" style="cursor:default"><div><div class="ms-t">${esc(a.ora||'')} · ${esc(a.nome)}</div>${a.perche?`<div class="ms-w">${esc(a.perche)}</div>`:''}</div></div>`).join('')}</div>`;
      }).join('')}
-     <button class="btn btn-grad btn-block" onclick="applicaItinerario()">Mettilo nel viaggio · ${n} tappe</button>
-     <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="creaItinerarioIA()">Rifammelo diverso</button></div>`;
+     <button class="btn btn-grad btn-block" onclick="applicaItinerario('${dove}','${stato}')">Mettilo nel viaggio · ${n} tappe</button>
+     ${dove==='itinResult'?'<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="creaItinerarioIA()">Rifammelo diverso</button>':''}</div>`;
 }
 
-async function applicaItinerario(){
+async function applicaItinerario(dove,stato){
   const t=T();if(!t||!itinProposta)return;
-  const st=document.getElementById('itinStatus');
+  const st=document.getElementById(stato||'itinStatus');
   /* Stessa rete di sicurezza delle mosse: qui ancora di più, perché le tappe
      sono molte e le si accetta in blocco. */
   mosseUndo=JSON.parse(JSON.stringify(t.days));
@@ -6425,7 +6533,7 @@ async function applicaItinerario(){
   }
   itinProposta=null;
   save();renderAll();
-  document.getElementById('itinResult').innerHTML='';
+  const box=document.getElementById(dove||'itinResult');if(box)box.innerHTML='';
   st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprile e correggi il nome`:'');
   itinQualeViaggio();
   mostraAnnulla(messe);
