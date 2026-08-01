@@ -6221,17 +6221,24 @@ function apriMosse(t,oggi,mosse,titolo,commento){
   openSheet('mMosse');
 }
 
+let applicaBusy=false;
 async function applicaMosse(){
-  const t=T();if(!t||!mosseProposte)return;
+  const t=T();if(!t||!mosseProposte||applicaBusy)return;
   const scelte=[...document.querySelectorAll('#msList input[type=checkbox]')]
     .filter(c=>c.checked).map(c=>mosseProposte[+c.dataset.i]).filter(Boolean);
+  /* Le proposte si azzerano subito: chiudere il foglio non basta, due tocchi
+     ravvicinati partono tutti e due prima che sparisca dallo schermo, e una
+     mossa "aggiungi" eseguita due volte mette la tappa in doppia copia. */
+  mosseProposte=null;
   closeSheet('mMosse');
   if(!scelte.length)return;
+  applicaBusy=true;
   /* Copia di sicurezza prima di toccare qualsiasi cosa: una proposta accettata
      e poi rimpianta si annulla in un tocco, senza dover rimettere a mano. */
   mosseUndo=JSON.parse(JSON.stringify(t.days));
   let fatte=0;
-  for(const m of scelte){try{if(await applicaMossa(t,m))fatte++;}catch(e){}}
+  try{for(const m of scelte){try{if(await applicaMossa(t,m))fatte++;}catch(e){}}}
+  finally{applicaBusy=false;}
   save();renderAll();
   if(typeof ttDay==='number'&&t.days[ttDay])buildTT();
   if(fatte)mostraAnnulla(fatte);else toast('Non è cambiato niente');
@@ -6502,13 +6509,24 @@ function mostraItinerario(t,p,dove,stato){
 }
 
 async function applicaItinerario(dove,stato){
-  const t=T();if(!t||!itinProposta)return;
+  const t=T();if(!t||!itinProposta||applicaBusy)return;
+  /* La proposta si prende e si azzera subito, prima di qualsiasi attesa.
+     Cercare i posti sulla mappa dura secondi - una richiesta al secondo, che
+     Nominatim pretende - e in quei secondi il tasto restava premibile: chi
+     schiacciava tre volte si ritrovava le tappe in triplice copia. Il blocco
+     qui sopra e lo svuotamento qui sotto reggono anche il doppio tocco
+     rapido, che arriva prima che il bottone sparisca dalla pagina. */
+  applicaBusy=true;
+  const prop=itinProposta;itinProposta=null;
   const st=document.getElementById(stato||'itinStatus');
+  const box0=document.getElementById(dove||'itinResult');
+  if(box0)box0.innerHTML='';
   /* Stessa rete di sicurezza delle mosse: qui ancora di più, perché le tappe
      sono molte e le si accetta in blocco. */
   mosseUndo=JSON.parse(JSON.stringify(t.days));
-  let messe=0,senzaPosto=0,tot=itinProposta.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
-  for(const g of itinProposta.giorni){
+  let messe=0,senzaPosto=0,tot=prop.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
+  try{
+  for(const g of prop.giorni){
     const d=t.days[g.giorno];if(!d)continue;
     for(const a of g.attivita){
       fatte++;st.textContent=`Cerco i posti sulla mappa... ${fatte}/${tot}`;
@@ -6531,10 +6549,9 @@ async function applicaItinerario(dove,stato){
       await new Promise(r=>setTimeout(r,1100));
     }
   }
-  itinProposta=null;
+  }finally{applicaBusy=false;}
   save();renderAll();
-  const box=document.getElementById(dove||'itinResult');if(box)box.innerHTML='';
-  st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprile e correggi il nome`:'');
+  if(st)st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprila e correggi il nome`:'');
   itinQualeViaggio();
   mostraAnnulla(messe);
 }
