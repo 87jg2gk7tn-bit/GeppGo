@@ -7795,6 +7795,13 @@ function renderDayWx(){
   }
 }
 let rainHide={};
+/* L'avviso della pioggia in time-table c'era, ma usciva solo quando esisteva
+   un altro giorno asciutto dove spostare le tappe: se piove tutta la settimana
+   - cioe' proprio quando serve saperlo - non compariva niente, e ci si arrivava
+   sotto l'acqua senza che nessuno l'avesse detto. Adesso l'avviso esce sempre,
+   e la proposta di spostare resta un'aggiunta per quando ha senso.
+   E c'e' scritto a chiare lettere che non viene toccato niente da solo:
+   qualunque cosa passa dal pannello con le spunte. */
 function renderRainTip(){
   const t=T(),d=t.days[ttDay],box=document.getElementById('dayRainTip');if(!box)return;
   box.innerHTML='';
@@ -7802,9 +7809,19 @@ function renderRainTip(){
   const outs=(d.activities||[]).filter(a=>a.type==='outdoor');if(!outs.length){renderRainSwaps();return;}
   let best=-1,bw=1e9;
   t.days.forEach((dd,j)=>{if(j===ttDay)return;const w2=t.weather[dd.date];if(!w2)return;if(w2.precipitation<bw){bw=w2.precipitation;best=j;}});
-  if(best<0||bw>2||bw>=w.precipitation-2){renderRainSwaps();return;}
-  const bd=new Date(t.days[best].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
-  box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.8rem;margin-bottom:.8rem"><div style="font-weight:800;font-size:.86rem;color:var(--clay-deep)">Pioggia prevista (${w.precipitation} mm) e ${outs.length} attività all'aperto</div><div style="font-size:.8rem;color:var(--ink-soft);margin:.25rem 0 .6rem">${bd} è previsto ${bw<1?'asciutto':'quasi asciutto'}: vuoi spostarle lì?</div><div style="display:flex;gap:.5rem"><button class="btn btn-grad" style="flex:1;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">Sposta le attività all'aperto</button><button class="btn btn-soft" style="padding:.6rem" onclick="rainHide['${d.date}']=1;renderRainTip()">No</button></div></div>`;
+  const asciutto=best>=0&&bw<=2&&bw<w.precipitation-2;
+  const bd=asciutto?new Date(t.days[best].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'}):'';
+  const quante=outs.length===1?"1 tappa all'aperto":`${outs.length} tappe all'aperto`;
+  box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.85rem;margin-bottom:.8rem">
+    <div style="font-weight:800;font-size:.9rem;color:var(--clay-deep)">⛈️ ${wxDesc(w.code)}, ${w.precipitation} mm di pioggia</div>
+    <div style="font-size:.82rem;color:var(--ink-soft);margin:.3rem 0 .7rem;line-height:1.5">${quante} in questa giornata: ${esc(outs.slice(0,3).map(a=>a.name).join(', '))}${outs.length>3?` e altre ${outs.length-3}`:''}.${asciutto?` <b>${bd}</b> è previsto ${bw<1?'asciutto':'quasi asciutto'}.`:''}</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-grad" style="flex:1;min-width:150px;padding:.6rem" onclick="alternativeMeteo(${ttDay})">✦ Alternative al coperto</button>
+      ${asciutto?`<button class="btn btn-soft" style="flex:1;min-width:130px;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">↪️ Sposta a ${bd.split(' ')[0]}</button>`:''}
+      <button class="btn btn-soft" style="padding:.6rem" onclick="rainHide['${d.date}']=1;renderRainTip()">Ignora</button>
+    </div>
+    <div style="font-size:.75rem;color:var(--ink-faint);margin-top:.6rem;line-height:1.45">Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.</div>
+  </div>`;
   renderRainSwaps();
 }
 function moveOutdoor(from,to){
