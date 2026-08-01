@@ -76,6 +76,7 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
 | `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
 | `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA e lo mette in un giorno |
+| `adqInvia` | 6640 | L'assistente dentro la time-table, che vede la giornata aperta |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
 
