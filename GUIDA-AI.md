@@ -75,6 +75,7 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `verificaOrari` | 5975 | Cerca sul web a che ora aprono e chiudono le tappe |
 | `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
 | `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
+| `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA e lo mette in un giorno |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
 
