@@ -387,6 +387,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    si trovava solo chiudendo la scheda. Sta sopra a tutti i fogli da cui puo'
    essere aperto, e sotto al picker delle tendine. */
 #mNav{z-index:10080}
+/* Il pannello delle proposte si apre sopra il foglio dell'assistente della
+   giornata, che a sua volta è un foglio: senza, i due si contendono lo stesso
+   livello e vince l'ordine nel documento, che non è un criterio. */
+#mMosse{z-index:10060}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
 .amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
 .amt-big:focus{outline:none;box-shadow:none!important}
@@ -1112,7 +1116,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -1524,6 +1528,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-soft" style="flex:1" onclick="closeSheet('mMosse')">Lascia com'è</button>
     <button class="btn btn-grad" style="flex:1" onclick="applicaMosse()">Applica</button>
   </div>
+</div></div>
+<div class="modal" id="mAiDay"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="adqTitle">Assistente</div><button class="x x-close" onclick="closeSheet('mAiDay')">✕</button></div>
+  <div class="chip-row" id="adqStarters" style="margin-bottom:.6rem"></div>
+  <div class="chat-msgs" id="adqMsgs" style="min-height:110px;max-height:38dvh"></div>
+  <div class="chat-in-row"><textarea id="adqInput" rows="1" placeholder="Chiedi qualcosa su questa giornata..." onkeydown="adqTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="adqInvia()">➤</button></div>
 </div></div>
 <div class="modal" id="mConfirm"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -6581,6 +6592,95 @@ async function applicaItinerario(dove,stato){
   if(st)st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprila e correggi il nome`:'');
   itinQualeViaggio();
   mostraAnnulla(messe);
+}
+
+/* ===== L'ASSISTENTE DELLA GIORNATA =====
+   Vive dentro la time-table, come foglio che si apre sopra: uscire dalla
+   pagina per andare in "Assistente" faceva perdere il giorno su cui si stava
+   lavorando, perché al ritorno la time-table riparte dal primo. Qui invece la
+   pagina sotto non si muove.
+   Il vantaggio vero però è un altro: l'assistente sa già quale giornata stai
+   guardando, quindi "cosa metto fra queste due tappe" ha un significato senza
+   che tu debba spiegargli quali sono. Riceve le tappe con i loro orari, gli
+   orari di apertura che conosciamo e i minuti di strada fra ogni coppia.
+   Le domande hanno risposta a parole; le richieste di modifica vanno al
+   motore delle mosse, che le fa confermare una per una. */
+let adqStoria=[],adqBusy=false;
+
+function adqMsg(who,text){
+  const box=document.getElementById('adqMsgs'),d=document.createElement('div');
+  d.className='msg '+who;d.textContent=text;box.appendChild(d);
+  box.scrollTop=box.scrollHeight;return d;
+}
+function adqTasto(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adqInvia();}}
+function adqChiedi(s){document.getElementById('adqInput').value=s;adqInvia();}
+
+function openAssistenteGiorno(){
+  const t=T();if(!t||!t.days[ttDay]){toast('Apri prima una giornata');return;}
+  const d=t.days[ttDay],dt=new Date(d.date);
+  const et=isNaN(dt.getTime())?`Giorno ${ttDay+1}`:dt.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  document.getElementById('adqTitle').textContent='Assistente · '+et;
+  document.getElementById('adqStarters').innerHTML=[
+    'Ha senso il giro di questa giornata?',
+    'Cosa posso mettere fra due tappe?',
+    'Come mi sposto fra le tappe?',
+    'Cosa toglieresti o aggiungeresti?'
+  ].map(s=>`<button class="starter" onclick='adqChiedi(${jesc(s)})'>${s}</button>`).join('');
+  /* La conversazione è legata alla giornata: cambiando giorno si riparte, se
+     no si continuerebbe a parlare di tappe che non si stanno più guardando. */
+  const box=document.getElementById('adqMsgs');
+  if(box.dataset.day!==String(d.id)){
+    box.dataset.day=String(d.id);box.innerHTML='';adqStoria=[];
+    const n=(d.activities||[]).length;
+    adqMsg('ai',n?`Sto guardando ${et}: ${n} ${n===1?'tappa':'tappe'}. Chiedimi del giro, di cosa manca, o di come spostarti fra due punti.`
+                :`${et} è ancora vuota. Dimmi cosa ti piacerebbe fare e ti propongo come riempirla.`);
+  }
+  openSheet('mAiDay');
+}
+
+async function adqInvia(){
+  const el=document.getElementById('adqInput'),text=(el.value||'').trim();
+  if(!text||adqBusy)return;
+  const t=T();if(!t||!t.days[ttDay])return;
+  el.value='';el.style.height='';
+  adqMsg('me',text);
+
+  if(sembraUnComando(text)){
+    adqMsg('ai','Guardo la giornata e ti dico come la cambierei.');
+    chiediMosse(text,ttDay,'Come lo cambierei');
+    return;
+  }
+
+  adqBusy=true;
+  const attesa=adqMsg('ai typing','✦ Sto guardando...');
+  try{
+    adqStoria.push({role:'user',content:text});
+    const sys=`Sei l'assistente di GeppGo e stai guardando UNA giornata precisa del viaggio, quella segnata con <<< QUESTO. Rispondi sempre in italiano, breve e concreto: due o tre frasi, niente elenchi lunghi.
+
+Cosa sai fare qui:
+- dire se il giro ha senso, guardando i minuti di strada che ti do: se si attraversa la città due volte dillo, e di' in che ordine andrebbero fatte
+- consigliare cosa mettere in un buco fra due tappe, con posti veri che stiano in quel buco e siano vicini a dove ci si trova in quel momento
+- spiegare come spostarsi fra due tappe: mezzo, linea, quanto ci vuole
+- dire cosa toglieresti o aggiungeresti, e perché
+
+Se ti viene chiesto di cambiare davvero il programma, rispondi in una riga che basta chiederlo ("dimmi 'sposta il museo alle 15' e te lo propongo"): a spostare le cose ci pensa l'app, non tu.
+Non inventare orari di apertura: usa quelli scritti come APERTO, e se non ci sono dillo.
+
+${mosseContesto(t,ttDay)}`;
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:900,system:sys,
+      tools:[{type:"web_search_20250305",name:"web_search"}],
+      messages:adqStoria.slice(-8)
+    })});
+    const data=await res.json();
+    attesa.remove();
+    if(data&&data.error){adqMsg('ai','⚠️ '+motivoAI(data.error.message));return;}
+    const r=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    if(!r){adqMsg('ai','Non ho capito, prova a dirlo in altre parole.');return;}
+    adqStoria.push({role:'assistant',content:r});
+    adqMsg('ai',r);
+  }catch(e){attesa.remove();adqMsg('ai','⚠️ L\'assistente non è raggiungibile.');}
+  finally{adqBusy=false;}
 }
 
 /* Le porte d'ingresso. */
