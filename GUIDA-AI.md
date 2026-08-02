@@ -79,6 +79,14 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
 
+**Un punto da tenere aggiornato a mano:** dentro `Index 2.1.html` c'è una
+costante `MAPPA_APP` che descrive all'assistente com'è fatta l'app — quali voci
+ci sono nella barra in basso, dove sta la lista bagagli, come si chiamano i
+tasti della time-table. Serve per rispondere a domande tipo *"dove trovo i
+bagagli?"*. Se si sposta o si rinomina qualcosa nell'interfaccia, va aggiornata
+lì dentro, altrimenti l'assistente manda le persone in un posto che non esiste
+più.
+
 **Le ultime due non scrivono mai nei dati da sole.** `chiediMosse` restituisce un
 elenco di mosse che vengono mostrate una per una, spuntabili, con il motivo di
 ognuna; `creaItinerarioIA` mostra prima l'anteprima giorno per giorno. In tutti
