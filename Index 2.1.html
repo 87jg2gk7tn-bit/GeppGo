@@ -2744,6 +2744,24 @@ function sembraUnComando(s){
    Adesso la conversazione sta nel viaggio e viene salvata come tutto il resto,
    quindi e' la stessa da qualunque parte si entri e sopravvive alla chiusura.
    Si tiene un tetto: le cose vecchie si buttano, ma non prima che siano tante. */
+/* L'assistente sa tutto del viaggio e niente dell'app che lo contiene: a
+   "dove trovo la lista bagagli" non sapeva rispondere, perche' nessuno gli ha
+   mai detto com'e' fatta GeppGo. Sono domande legittime - anzi, per chi apre
+   l'app la prima volta sono le piu' frequenti - e la risposta e' un percorso
+   preciso, non un consiglio di viaggio. Qui c'e' la mappa, tenuta corta perche'
+   viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
+const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
+- La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", e "Bagagli" - la lista bagagli sta li'.
+- Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
+- Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
+- Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
+- Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
+- Meteo: le previsioni giorno per giorno. Identifica: si fotografa un posto e l'app dice cos'e'.
+- Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
+
+Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
+
 const AI_MEMORIA_MAX=40;
 function aiMemoria(t){if(!t)return[];if(!Array.isArray(t.chat))t.chat=[];return t.chat;}
 function aiRicorda(t,role,content){
@@ -2803,6 +2821,8 @@ Regole:
 - non inventare orari di apertura: usa quelli scritti come APERTO, e dove non ci sono dillo invece di tirare a indovinare
 - quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (massimo 5, nomi precisi cercabili su mappa, con la citta'). Niente riga LUOGHI se non consigli posti specifici
 - se ti viene chiesto di CAMBIARE il programma - spostare, accorciare, togliere, aggiungere una tappa, sistemare gli orari, alleggerire una giornata - non rispondere a parole e non spiegare: scrivi soltanto [MODIFICA] e nient'altro, ci pensa l'app${dove}
+
+${MAPPA_APP}
 
 ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
     const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
