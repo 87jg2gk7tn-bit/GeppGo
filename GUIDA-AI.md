@@ -65,7 +65,7 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 
 | Funzione | Riga circa | Cosa fa |
 |---|---|---|
-| `sendChat` | 2618 | L'assistente di viaggio |
+| `assistenteChiedi` | 2680 | L'assistente, uno solo per la scheda e per la time-table |
 | `identifyPlace` | 4815 | "Che posto è questa foto" |
 | `importPlaces` | 4850 | Estrae i posti da un reel o uno screenshot |
 | `importTrip` | 5086 | Trasforma un itinerario incollato in un viaggio |
@@ -76,7 +76,6 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
 | `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
 | `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA e lo mette in un giorno |
-| `adqInvia` | 6640 | L'assistente dentro la time-table, che vede la giornata aperta |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
 
