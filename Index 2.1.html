@@ -2789,10 +2789,9 @@ function aiRiscrivi(t,box,quante){
    messaggi e quale giornata si sta guardando. */
 async function assistenteChiedi(text,ui){
   const t=T();
-  if(t&&sembraUnIncollato(text)){
+  if(t&&sembraUnIncollato(text)&&!ui.saltaIncollato){
     ui.msg('ai','Leggo il testo e cerco i posti, anche quelli nominati solo nella descrizione.');
-    aiRicorda(t,'user',text);
-    pianificaDaTesto(text);
+    pianificaDaTesto(text,ui);
     return;
   }
   if(t&&sembraUnComando(text)){
@@ -6547,22 +6546,32 @@ Regole ferree:
    dell'anteprima di "Su misura" - che sa già geocodificare, inserire e
    annullare. */
 function sembraUnIncollato(s){
-  const t=(s||'').trim();
-  if(t.length<180)return false;
-  const righe=t.split('\n').filter(x=>x.trim()).length;
-  return righe>=3||/(^|\n)\s*(?:[-*•]|\d+[.)])\s+\S/.test(t);
+  const righe=(s||'').trim().split('\n').map(x=>x.trim()).filter(Boolean);
+  /* Il segnale e' l'andare a capo, non la lunghezza. Prima si chiedevano
+     almeno 180 caratteri, ma un elenco di cinque posti - "Senso-ji /
+     Nakamise / Tokyo Skytree" - sono sessanta caratteri: le liste corte,
+     che sono quelle che si incollano piu' spesso, non venivano mai
+     riconosciute e finivano in chiacchierata. */
+  if(righe.length>=3)return true;
+  /* Due righe con la seconda puntata: "ecco i posti: / - Senso-ji" */
+  return righe.length===2&&/^(?:[-*•–]|\d+[.)])\s*\S/.test(righe[1]);
 }
 
-async function pianificaDaTesto(testo){
+let itinContatore=0;
+async function pianificaDaTesto(testo,ui){
   const t=T();
   if(!t||!t.days.length){addMsg('ai','Crea prima un viaggio con dei giorni: è lì che devo metterli.');return;}
   if(itinBusy)return;
   itinBusy=true;
+  /* Identificativi diversi a ogni incollata: erano fissi, quindi al secondo
+     testo incollato getElementById continuava a trovare il primo blocco e
+     l'anteprima nuova finiva dentro quello vecchio, o da nessuna parte. */
+  const n=++itinContatore, idS='chatItinStato'+n, idR='chatItinResult'+n;
   const el=document.createElement('div');
-  el.innerHTML=`<div id="chatItinStato" style="font-size:.82rem;color:var(--ink-soft);line-height:1.5">✦ Leggo la descrizione e cerco i posti...</div><div id="chatItinResult" style="margin-top:.6rem"></div>`;
-  document.getElementById('chatMsgs').appendChild(el);
+  el.innerHTML=`<div id="${idS}" style="font-size:.82rem;color:var(--ink-soft);line-height:1.5">✦ Leggo la descrizione e cerco i posti...</div><div id="${idR}" style="margin-top:.6rem"></div>`;
+  (ui&&ui.box?ui.box:document.getElementById('chatMsgs')).appendChild(el);
   misuraChat();
-  const stato=document.getElementById('chatItinStato');
+  const stato=document.getElementById(idS);
   try{
     const giorni=t.days.map((d,i)=>{
       const dt=new Date(d.date);
@@ -6602,10 +6611,20 @@ Regole ferree:
     const m=txt.match(/\{[\s\S]*\}/);
     const r=JSON.parse(m?m[0]:txt);
     const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
-    if(!giorniOk.length){stato.textContent='Non ho riconosciuto posti utilizzabili in quel testo. Riprova incollando anche l\'elenco, non solo la descrizione.';return;}
+    if(!giorniOk.length){
+      /* Il riconoscitore puo' sbagliarsi: tre righe possono essere una domanda
+         scritta larga, non un elenco. In quel caso non si lascia l'utente
+         davanti a un messaggio di errore per una cosa che non aveva chiesto:
+         si risponde come si sarebbe risposto normalmente. */
+      stato.textContent='Non ci ho trovato posti da mettere in programma.';
+      if(ui)assistenteChiedi(testo,Object.assign({},ui,{saltaIncollato:true}));
+      return;
+    }
     itinProposta={giorni:giorniOk,commento:r.commento||''};
+    aiRicorda(t,'user',testo.length>600?testo.slice(0,600)+'…':testo);
+    aiRicorda(t,'assistant',r.commento||'Ecco come li metterei in programma.');
     stato.textContent='';
-    mostraItinerario(t,itinProposta,'chatItinResult','chatItinStato');
+    mostraItinerario(t,itinProposta,idR,idS);
     misuraChat();
     document.getElementById('chatMsgs').scrollTop=document.getElementById('chatMsgs').scrollHeight;
   }catch(e){stato.textContent='⚠️ L\'IA non è raggiungibile.';}
