@@ -1601,7 +1601,7 @@ const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
-let chatHistory=[],rateCache={};
+let rateCache={};
 let scanTarget=null;
 let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},syncT=null;
 /* lastPush deve sopravvivere ai riavvii dell'app: altrimenti, ad ogni riapertura,
@@ -1798,7 +1798,7 @@ function saveTripDates(){
   toast(n?`\u2705 ${n} giorn${n===1?'o aggiunto':'i aggiunti'}`:'I giorni c\'erano gi\u00e0 tutti');
   refreshWeather();
 }
-function switchTrip(){const el=document.getElementById('tripPick');if(!el)return;const id=parseInt(el.value);if(id){app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
+function switchTrip(){const el=document.getElementById('tripPick');if(!el)return;const id=parseInt(el.value);if(id){app.currentTripId=id;const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();}}
 function renderTripPick(){
   const sel=document.getElementById('tripPick');if(!sel)return;
   const active=app.trips.filter(t=>t.status!=='closed');
@@ -1824,7 +1824,7 @@ function renderTripAddRow(){
   box.innerHTML=`<div style="display:flex;gap:.6rem;margin-top:.2rem"><button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button><button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:.6rem"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:.78rem;font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
 }
 function openTripZoom(id){
-  app.currentTripId=id;chatHistory=[];const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
+  app.currentTripId=id;const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
   save();renderAll();identityCheck();
   openSheet('mTripZoom');
   setTimeout(()=>{if(map)map.invalidateSize();},350);
@@ -1880,7 +1880,7 @@ function selHomeDay(i){homeDaySel=i;renderHomeHero();}
 function homeSwitchTrip(id){
   if(app.currentTripId===id)return;
   app.currentTripId=id;homeDaySel=null;
-  chatHistory=[];const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
+  const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
   save();renderAll();
 }
 /* Quanto ci metti a piedi da dove sei alla prossima tappa. Passo a 4,5 km/h
@@ -2675,9 +2675,11 @@ function initChat(){
   const starters=document.getElementById('aiStarters'),t=T(),
         dest=((t?.destination)||'').split(',')[0].trim();
   starters.innerHTML=['Cosa vedere assolutamente'+(dest?` a ${dest}`:''),'Posti per buon cibo locale','Gemme nascoste poco turistiche','Cosa fare se piove'].map(s=>`<button class="starter" onclick="askStarter('${s.replace(/'/g,"\\'")}')">${s}</button>`).join('');
-  if(!document.getElementById('chatMsgs').dataset.init){
-    document.getElementById('chatMsgs').dataset.init='1';
-    addMsg('ai',t?.destination?`Ciao! Sono il tuo assistente per ${t.destination}. Dimmi cosa ti interessa e ti consiglio posti da vedere, pronti da aggiungere al viaggio.`:'Ciao! Crea o seleziona un viaggio con una destinazione e ti consiglierò posti su misura per i tuoi gusti.');
+  const cm=document.getElementById('chatMsgs');
+  if(!cm.dataset.init){
+    cm.dataset.init='1';
+    if(!aiRiscrivi(t,cm,12))
+      addMsg('ai',t?.destination?`Ciao! Sono il tuo assistente per ${t.destination}. Dimmi cosa ti interessa e ti consiglio posti da vedere, pronti da aggiungere al viaggio.`:'Ciao! Crea o seleziona un viaggio con una destinazione e ti consiglierò posti su misura per i tuoi gusti.');
   }
   /* Dopo che i suggerimenti sono stati scritti: solo allora si sa quante righe
      occupano, e quindi quanto spazio resta sotto. */
@@ -2733,53 +2735,116 @@ function sembraUnComando(s){
   return /\bcambia\b.*\bora/.test(t)||/\bfai stare\b/.test(t);
 }
 
-async function sendChat(){
-  const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
-  chatSvuota();addMsg('me',text);
-  const t0=T();
-  /* Un blocco incollato va guardato prima: contiene quasi sempre un verbo da
-     comando ("ordina questi posti e mettili nel giorno 2"), e senza questo
-     controllo finirebbe al motore delle mosse, che sa spostare quello che c'e'
-     gia' ma non sa leggere un itinerario scritto da qualcun altro. */
-  if(t0&&sembraUnIncollato(text)){
-    addMsg('ai','Leggo il testo e cerco i posti, anche quelli nominati solo nella descrizione.');
+/* ===== UN ASSISTENTE SOLO, CON UNA MEMORIA SOLA =====
+   Prima ce n'erano due: quello della scheda Assistente e quello del foglio in
+   time-table, ognuno con la sua conversazione. Chi diceva una cosa a uno la
+   doveva ripetere all'altro, e in tutti e due i casi la memoria viveva in una
+   variabile che si azzerava riaprendo l'app: dopo due domande non ricordava
+   niente di quello che gli era stato detto.
+   Adesso la conversazione sta nel viaggio e viene salvata come tutto il resto,
+   quindi e' la stessa da qualunque parte si entri e sopravvive alla chiusura.
+   Si tiene un tetto: le cose vecchie si buttano, ma non prima che siano tante. */
+const AI_MEMORIA_MAX=40;
+function aiMemoria(t){if(!t)return[];if(!Array.isArray(t.chat))t.chat=[];return t.chat;}
+function aiRicorda(t,role,content){
+  if(!t)return;
+  const m=aiMemoria(t);m.push({role,content});
+  if(m.length>AI_MEMORIA_MAX)m.splice(0,m.length-AI_MEMORIA_MAX);
+  save();
+}
+/* Riscrive a schermo la conversazione salvata: senza, riaprendo si vedeva una
+   pagina vuota e sembrava che non si fosse mai parlato, anche quando il
+   modello invece si ricordava tutto. */
+function aiRiscrivi(t,box,quante){
+  if(!box)return 0;
+  const m=aiMemoria(t).slice(-(quante||12));
+  m.forEach(x=>{
+    const d=document.createElement('div');
+    d.className='msg '+(x.role==='user'?'me':'ai');
+    d.textContent=x.content;box.appendChild(d);
+  });
+  box.scrollTop=box.scrollHeight;
+  return m.length;
+}
+
+/* Il cuore, usato da tutte e due le schermate. Cambia solo dove si scrivono i
+   messaggi e quale giornata si sta guardando. */
+async function assistenteChiedi(text,ui){
+  const t=T();
+  if(t&&sembraUnIncollato(text)){
+    ui.msg('ai','Leggo il testo e cerco i posti, anche quelli nominati solo nella descrizione.');
+    aiRicorda(t,'user',text);
     pianificaDaTesto(text);
     return;
   }
-  if(t0&&sembraUnComando(text)){
-    addMsg('ai','Guardo il programma e ti dico come lo cambierei.');
-    chiediMosse(text,(typeof ttDay==='number'&&t0.days[ttDay])?ttDay:0,'Come lo cambierei');
+  if(t&&sembraUnComando(text)){
+    ui.msg('ai','Guardo il programma e ti dico come lo cambierei.');
+    /* Anche gli ordini entrano in memoria: se dopo si chiede "perche' l'hai
+       spostato?", senza questo turno la domanda non ha appigli. */
+    aiRicorda(t,'user',text);
+    chiediMosse(text,ui.giorno,'Come lo cambierei');
     return;
   }
-  chatHistory.push({role:'user',content:text});
-  const typing=addMsg('ai typing','✦ Sto pensando...');const t=T();
-  /* La chat vede il programma vero, non solo il nome del viaggio: senza, a
-     "alleggerisci giovedì" può solo rispondere a vanvera. E può cambiarlo, ma
-     sempre passando dalle mosse, che l'utente conferma una per una. */
-  const prog=t?`\n\nProgramma attuale:\n${mosseContesto(t,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0)}`:'';
-  const sys=`Sei l'assistente di viaggio dell'app GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto.${t?` Il viaggio attuale è "${t.name}"${t.destination?` con destinazione ${t.destination}`:''}${t.start&&t.end?`, dal ${t.start} al ${t.end}`:''}.`:''} Quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (max 5, nomi precisi cercabili su mappa, includi la città). Esempio: "LUOGHI: Senso-ji, Tokyo | Meiji Jingu, Tokyo". Niente riga LUOGHI se non consigli posti specifici.
-
-Se invece ti viene chiesto di CAMBIARE il programma - spostare una tappa di giorno o di orario, accorciarla, toglierla, aggiungerne una, sistemare gli orari, alleggerire una giornata troppo piena - non rispondere a parole e non spiegare: scrivi soltanto [MODIFICA] e nient'altro. Ci pensa l'app.${prog}`;
+  const attesa=ui.msg('ai typing','✦ Sto pensando...');
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:chatHistory})});
+    aiRicorda(t,'user',text);
+    const dove=t&&t.days[ui.giorno]?`\n\nStai guardando la giornata segnata con <<< QUESTO: quando si parla di "questa giornata", "queste tappe", "qui", si intende quella.`:'';
+    const sys=`Sei l'assistente di viaggio di GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto: due o tre frasi, niente elenchi lunghi e niente premesse.
+
+Hai la memoria di questa conversazione: quello che ti e' gia' stato detto vale ancora, non farlo ripetere. Se ti riferisci a qualcosa di cui avete gia' parlato, dallo per acquisito.
+
+Cosa sai fare:
+- dire se il giro di una giornata ha senso, usando i minuti di strada che trovi qui sotto: se si attraversa la citta' due volte dillo, e di' in che ordine andrebbe fatta
+- consigliare cosa mettere in un buco fra due tappe: posti veri, vicini a dove ci si trova in quel momento, che stiano in quel buco
+- spiegare come spostarsi fra due punti: mezzo, linea, quanto ci vuole. Su questo puoi cercare sul web
+- dire cosa toglieresti o aggiungeresti, e perche'
+
+Regole:
+- non inventare orari di apertura: usa quelli scritti come APERTO, e dove non ci sono dillo invece di tirare a indovinare
+- quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (massimo 5, nomi precisi cercabili su mappa, con la citta'). Niente riga LUOGHI se non consigli posti specifici
+- se ti viene chiesto di CAMBIARE il programma - spostare, accorciare, togliere, aggiungere una tappa, sistemare gli orari, alleggerire una giornata - non rispondere a parole e non spiegare: scrivi soltanto [MODIFICA] e nient'altro, ci pensa l'app${dove}
+
+${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:1500,system:sys,
+      tools:[{type:"web_search_20250305",name:"web_search"}],
+      messages:aiMemoria(t).slice(-14)
+    })});
     const data=await res.json();
-    let reply=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
-    if(!reply)throw new Error('empty');
+    attesa.remove();
+    if(data&&data.error){ui.msg('ai','\u26a0\ufe0f '+motivoAI(data.error.message));return;}
+    let reply=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    if(!reply){ui.msg('ai','Non ho capito, prova a dirlo in altre parole.');return;}
     /* Rete di sicurezza: se la frase era un ordine che il riconoscitore non ha
-       colto, è il modello a dirlo, e si passa al motore delle mosse. */
+       colto, lo dice il modello, e si passa al motore delle mosse. */
     if(t&&/\[MODIFICA\]/i.test(reply)){
-      typing.remove();
-      chatHistory.pop();
-      addMsg('ai','Guardo il programma e ti dico come lo cambierei.');
-      chiediMosse(text,(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0,'Come lo cambierei');
+      ui.msg('ai','Guardo il programma e ti dico come lo cambierei.');
+      chiediMosse(text,ui.giorno,'Come lo cambierei');
       return;
     }
-    chatHistory.push({role:'assistant',content:reply});
     let places=[];const m=reply.match(/LUOGHI:\s*(.+)$/im);
-    if(m){places=m[1].split('|').map(s=>s.trim()).filter(Boolean);reply=reply.replace(/LUOGHI:.*$/im,'').trim();}
-    typing.remove();const msgEl=addMsg('ai',reply);
-    if(places.length){const wrap=document.createElement('div');wrap.className='chat-suggest';wrap.innerHTML=places.map(p=>`<div class="chat-place"><span class="chat-place-n">📍 ${esc(p)}</span><button class="chip brown" onclick='aiAddPlace(${JSON.stringify(p).replace(/'/g,"&apos;")})'>+ Aggiungi</button></div>`).join('');msgEl.after(wrap);document.getElementById('chatMsgs').scrollTop=document.getElementById('chatMsgs').scrollHeight;}
-  }catch(e){typing.remove();addMsg('ai','⚠️ L\'assistente AI non è raggiungibile qui. Funziona nell\'anteprima dentro Claude; una volta pubblicata online serve collegare una chiave AI con una piccola funzione server. Intanto usa la scheda "Cerca" per trovare e salvare posti.');}
+    if(m){places=m[1].split('|').map(x=>x.trim()).filter(Boolean);reply=reply.replace(/LUOGHI:.*$/im,'').trim();}
+    if(!reply)reply='Ecco cosa ti direi.';
+    aiRicorda(t,'assistant',reply);
+    const el=ui.msg('ai',reply);
+    if(places.length&&el){
+      const wrap=document.createElement('div');wrap.className='chat-suggest';
+      wrap.innerHTML=places.map(x=>`<div class="chat-place"><span class="chat-place-n">\ud83d\udccd ${esc(x)}</span><button class="chip brown" onclick='aiAddPlace(${JSON.stringify(x).replace(/'/g,"&apos;")})'>+ Aggiungi</button></div>`).join('');
+      el.after(wrap);
+      if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;
+    }
+  }catch(e){attesa.remove();ui.msg('ai','\u26a0\ufe0f L\'assistente non e\' raggiungibile. Controlla il ponte (GUIDA-AI.md).');}
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
+  chatSvuota();addMsg('me',text);
+  await assistenteChiedi(text,{
+    msg:addMsg,
+    box:document.getElementById('chatMsgs'),
+    giorno:(typeof ttDay==='number'&&T()&&T().days[ttDay])?ttDay:0
+  });
+  misuraChat();
 }
 async function aiAddPlace(name){
   toast('🔍 Cerco '+name);
@@ -4022,7 +4087,7 @@ function openDetail(id){
     <div style="display:flex;gap:.5rem;margin-top:1.3rem"><button class="btn btn-grad" style="flex:1" onclick="openTripFromDetail(${t.id})">↗️ Apri</button>${t.status==='closed'?`<button class="btn btn-soft" onclick="reopenFromDetail(${t.id})">✅ Riapri</button>`:`<button class="btn btn-soft" onclick="closeFromDetail(${t.id})">🏁 Concludi</button>`}<button class="btn btn-danger" onclick="askDeleteTrip(${t.id})">🗑️</button></div>`;
   openSheet('mDetail');
 }
-function openTripFromDetail(id){app.currentTripId=id;const t=app.trips.find(x=>x.id===id);if(t&&t.status==='closed')t.status='open';chatHistory=[];const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();closeSheet('mDetail');go('plan');}
+function openTripFromDetail(id){app.currentTripId=id;const t=app.trips.find(x=>x.id===id);if(t&&t.status==='closed')t.status='open';const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();closeSheet('mDetail');go('plan');}
 function reopenFromDetail(id){const t=app.trips.find(x=>x.id===id);t.status='open';app.currentTripId=id;save();renderAll();closeSheet('mDetail');toast('✅ Riaperto');}
 function closeFromDetail(id){const t=app.trips.find(x=>x.id===id);t.status='closed';if(app.currentTripId===id){const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:id;}save();renderAll();closeSheet('mDetail');toast('🏁 Concluso');}
 function askDeleteTrip(id){
@@ -6605,7 +6670,7 @@ async function applicaItinerario(dove,stato){
    orari di apertura che conosciamo e i minuti di strada fra ogni coppia.
    Le domande hanno risposta a parole; le richieste di modifica vanno al
    motore delle mosse, che le fa confermare una per una. */
-let adqStoria=[],adqBusy=false;
+let adqBusy=false;
 
 function adqMsg(who,text){
   const box=document.getElementById('adqMsgs'),d=document.createElement('div');
@@ -6628,9 +6693,12 @@ function openAssistenteGiorno(){
   ].map(s=>`<button class="starter" onclick='adqChiedi(${jesc(s)})'>${s}</button>`).join('');
   /* La conversazione è legata alla giornata: cambiando giorno si riparte, se
      no si continuerebbe a parlare di tappe che non si stanno più guardando. */
+  /* La conversazione e' quella del viaggio, la stessa della scheda Assistente:
+     si riscrive ogni volta, cosi' da qualunque parte si entri si ritrova quello
+     che ci si era detto. Il messaggio di apertura solo se non c'e' nulla. */
   const box=document.getElementById('adqMsgs');
-  if(box.dataset.day!==String(d.id)){
-    box.dataset.day=String(d.id);box.innerHTML='';adqStoria=[];
+  box.innerHTML='';
+  if(!aiRiscrivi(t,box,10)){
     const n=(d.activities||[]).length;
     adqMsg('ai',n?`Sto guardando ${et}: ${n} ${n===1?'tappa':'tappe'}. Chiedimi del giro, di cosa manca, o di come spostarti fra due punti.`
                 :`${et} è ancora vuota. Dimmi cosa ti piacerebbe fare e ti propongo come riempirla.`);
@@ -6640,47 +6708,15 @@ function openAssistenteGiorno(){
 
 async function adqInvia(){
   const el=document.getElementById('adqInput'),text=(el.value||'').trim();
-  if(!text||adqBusy)return;
+  if(!text)return;
   const t=T();if(!t||!t.days[ttDay])return;
   el.value='';el.style.height='';
   adqMsg('me',text);
-
-  if(sembraUnComando(text)){
-    adqMsg('ai','Guardo la giornata e ti dico come la cambierei.');
-    chiediMosse(text,ttDay,'Come lo cambierei');
-    return;
-  }
-
-  adqBusy=true;
-  const attesa=adqMsg('ai typing','✦ Sto guardando...');
-  try{
-    adqStoria.push({role:'user',content:text});
-    const sys=`Sei l'assistente di GeppGo e stai guardando UNA giornata precisa del viaggio, quella segnata con <<< QUESTO. Rispondi sempre in italiano, breve e concreto: due o tre frasi, niente elenchi lunghi.
-
-Cosa sai fare qui:
-- dire se il giro ha senso, guardando i minuti di strada che ti do: se si attraversa la città due volte dillo, e di' in che ordine andrebbero fatte
-- consigliare cosa mettere in un buco fra due tappe, con posti veri che stiano in quel buco e siano vicini a dove ci si trova in quel momento
-- spiegare come spostarsi fra due tappe: mezzo, linea, quanto ci vuole
-- dire cosa toglieresti o aggiungeresti, e perché
-
-Se ti viene chiesto di cambiare davvero il programma, rispondi in una riga che basta chiederlo ("dimmi 'sposta il museo alle 15' e te lo propongo"): a spostare le cose ci pensa l'app, non tu.
-Non inventare orari di apertura: usa quelli scritti come APERTO, e se non ci sono dillo.
-
-${mosseContesto(t,ttDay)}`;
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:900,system:sys,
-      tools:[{type:"web_search_20250305",name:"web_search"}],
-      messages:adqStoria.slice(-8)
-    })});
-    const data=await res.json();
-    attesa.remove();
-    if(data&&data.error){adqMsg('ai','⚠️ '+motivoAI(data.error.message));return;}
-    const r=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
-    if(!r){adqMsg('ai','Non ho capito, prova a dirlo in altre parole.');return;}
-    adqStoria.push({role:'assistant',content:r});
-    adqMsg('ai',r);
-  }catch(e){attesa.remove();adqMsg('ai','⚠️ L\'assistente non è raggiungibile.');}
-  finally{adqBusy=false;}
+  await assistenteChiedi(text,{
+    msg:adqMsg,
+    box:document.getElementById('adqMsgs'),
+    giorno:ttDay
+  });
 }
 
 /* Le porte d'ingresso. */
