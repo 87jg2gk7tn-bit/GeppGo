@@ -1529,6 +1529,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad" style="flex:1" onclick="applicaMosse()">Applica</button>
   </div>
 </div></div>
+<div class="modal" id="mBagno"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🚻 Bagno più vicino</div><button class="x x-close" onclick="closeSheet('mBagno')">✕</button></div>
+  <div id="bagnoBody"></div>
+</div></div>
 <div class="modal" id="mAiDay"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="adqTitle">Assistente</div><button class="x x-close" onclick="closeSheet('mAiDay')">✕</button></div>
@@ -2180,6 +2185,7 @@ function renderHomeHero(){
     <button class="hh-act" onclick="toggleStatus()">${esc(tripPhase(t))}</button>
     <button class="hh-act" onclick="renameTrip(${t.id})">✎ Rinomina</button>
     <button class="hh-act" onclick="openTripDates()">📅 Giorni</button>
+    <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
     <button class="hh-act" onclick="openShare()">Condividi</button>
     <button class="hh-act" onclick="openPeople()">Persone</button>
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
@@ -2752,7 +2758,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", e "Bagagli" - la lista bagagli sta li'.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'.
 - Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
@@ -4669,6 +4675,106 @@ async function initNativeNotifs(){
 
 /* ===== NAVIGATORE ===== */
 let routeLine=null;
+/* ===== IL BAGNO PIÙ VICINO =====
+   Non passa dall'IA: è una domanda con una risposta secca, e OpenStreetMap i
+   bagni pubblici li ha mappati. Overpass è il servizio giusto per "cosa c'è
+   entro N metri da qui" - Nominatim cerca stringhe, non dintorni - ed è
+   gratuito e senza chiave come il resto delle mappe che usiamo.
+   Si allarga il raggio a scalini invece di partire larghi: in centro città il
+   primo giro trova già tutto, e chiedere 2 km quando bastano 300 metri vuol
+   dire scaricare mezza città per buttarla via. */
+const BAGNO_RAGGI=[400,1200,3000];
+let bagnoBusy=false;
+
+function cercaBagno(){
+  if(bagnoBusy)return;
+  const body=document.getElementById('bagnoBody');
+  body.innerHTML='<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">📍 Cerco dove sei...</div>';
+  openSheet('mBagno');
+  /* Se il GPS è già acceso e la posizione è fresca si parte da lì, senza
+     chiedere di nuovo: sono secondi di attesa in meno proprio nel momento in
+     cui uno ha fretta. */
+  if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return bagniIntorno(myPos.lat,myPos.lng);
+  if(NATIVE&&nPlug('Geolocation')){
+    const G=nPlug('Geolocation');
+    G.getCurrentPosition({enableHighAccuracy:true})
+      .then(pos=>bagniIntorno(pos.coords.latitude,pos.coords.longitude))
+      .catch(()=>bagnoNienteGps());
+    return;
+  }
+  if(!navigator.geolocation)return bagnoNienteGps();
+  navigator.geolocation.getCurrentPosition(
+    pos=>{myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};myPosAt=Date.now();
+          bagniIntorno(pos.coords.latitude,pos.coords.longitude);},
+    ()=>bagnoNienteGps(),
+    {enableHighAccuracy:true,timeout:12000,maximumAge:30000}
+  );
+}
+function bagnoNienteGps(){
+  document.getElementById('bagnoBody').innerHTML=
+    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare il bagno più vicino mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
+     <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
+}
+
+async function bagniIntorno(lat,lng){
+  const body=document.getElementById('bagnoBody');
+  bagnoBusy=true;
+  try{
+    let trovati=[];
+    for(const r of BAGNO_RAGGI){
+      body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">🚻 Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
+      trovati=await bagniOverpass(lat,lng,r);
+      if(trovati.length)break;
+    }
+    if(!trovati.length){
+      body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.</div>
+        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
+      return;
+    }
+    trovati.forEach(b=>{b.dist=Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}));});
+    trovati.sort((a,b)=>a.dist-b.dist);
+    body.innerHTML=trovati.slice(0,6).map((b,i)=>{
+      const min=Math.max(1,Math.round(b.dist/TRAVEL_SPEED_KMH.walk/1000*60));
+      const extra=[b.aperto,b.pagamento,b.accessibile,b.fasciatoio].filter(Boolean).join(' · ');
+      return `<div class="ms-row" style="cursor:default;align-items:center">
+        <div style="flex:1;min-width:0">
+          <div class="ms-t">${i===0?'⭐ ':''}${esc(b.nome)}</div>
+          <div class="ms-w">${b.dist<1000?b.dist+' m':(b.dist/1000).toFixed(1)+' km'} · ${min} min a piedi${extra?' · '+esc(extra):''}</div>
+        </div>
+        <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
+      </div>`;
+    }).join('')+
+    `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>`;
+  }catch(e){
+    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Non riesco a raggiungere la mappa dei bagni. Controlla la connessione e riprova.</div>
+      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
+  }finally{bagnoBusy=false;}
+}
+
+/* Overpass restituisce sia nodi (un punto) sia aree (un edificio): le aree
+   hanno il centro in "center", i nodi le coordinate addosso. */
+async function bagniOverpass(lat,lng,raggio){
+  const q=`[out:json][timeout:20];(node["amenity"="toilets"](around:${raggio},${lat},${lng});way["amenity"="toilets"](around:${raggio},${lat},${lng}););out center 30;`;
+  const res=await fetch('https://overpass-api.de/api/interpreter',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)
+  });
+  if(!res.ok)throw new Error('overpass');
+  const d=await res.json();
+  return (d.elements||[]).map(e=>{
+    const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);
+    if(la==null||lo==null)return null;
+    const t=e.tags||{};
+    return {
+      lat:la,lng:lo,
+      nome:t.name||t.operator||'Bagno pubblico',
+      aperto:t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      pagamento:t.fee==='yes'?(t.charge?'a pagamento ('+t.charge+')':'a pagamento'):(t.fee==='no'?'gratuito':''),
+      accessibile:t.wheelchair==='yes'?'accessibile':'',
+      fasciatoio:t.changing_table==='yes'?'fasciatoio':''
+    };
+  }).filter(Boolean);
+}
+
 function openNav(lat,lng,name){
   const pref=app.settings.nav||'ask';
   if(pref==='internal')return internalNav(lat,lng,name);
