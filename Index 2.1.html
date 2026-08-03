@@ -1206,10 +1206,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="packList"></div>
   <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
   <div class="card" style="margin-top:.9rem">
-    <div class="card-h" style="margin-bottom:.3rem;font-size:.85rem">🤖 Importa da testo</div>
-    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco (anche generato da un'AI, una voce per riga): sostituisce del tutto la lista attuale, con spunta, modifica ed eliminazione come sempre.</p>
-    <textarea id="packImportText" placeholder="Costume da bagno&#10;Crema solare&#10;Passaporto" style="min-height:80px"></textarea>
-    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="importPackingText()">Sostituisci lista con questo testo</button>
+    <div class="card-h" style="margin-bottom:.3rem;font-size:.85rem">✦ Importa una lista</div>
+    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco, una voce per riga: le <b>aggiungo</b> a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.</p>
+    <textarea id="packImportText" placeholder="crema solare&#10;caricatore del telefono&#10;passaporto&#10;infradito" style="min-height:80px"></textarea>
+    <button class="btn btn-grad btn-block" style="margin-top:.5rem" onclick="importPackingText()">✦ Aggiungi e ordina per categoria</button>
+    <div id="packImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
   </div>
 </div></div>
 <div class="modal" id="mRestore"><div class="sheet">
@@ -2360,18 +2361,97 @@ function editPackItem(id){
   p.label=v;savePacking(t,list);renderPacking();
 }
 function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filter(x=>x.id!==id);savePacking(t,list);renderPacking();}
-function importPackingText(){
-  const t=T();if(!t)return;
+/* ===== IMPORTARE UNA LISTA BAGAGLI =====
+   Prima l'importazione buttava tutto in una categoria chiamata "Importato" e
+   cancellava quello che c'era: due cose sbagliate insieme. Una lista di venti
+   voci senza categorie e' un muro da rileggere ogni volta, e chi incolla
+   qualcosa non si aspetta di perdere il resto.
+   Adesso le voci si aggiungono, e in che categoria vanno lo decide l'IA
+   leggendo il nome - "crema solare" e' igiene, "caricatore" e' elettronica,
+   "infradito" e' abbigliamento - che e' esattamente il tipo di giudizio per cui
+   un modello serve e un elenco di parole chiave no. */
+const PACK_CAT=['Documenti','Elettronica','Igiene','Abbigliamento','Extra'];
+
+/* Ripiego per quando l'IA non c'e': quota finita, niente rete. Indovina male
+   piu' spesso, ma una categoria sbagliata si corregge in un tocco, mentre venti
+   voci ammucchiate sotto "Importato" non le sistema piu' nessuno. */
+const PACK_PAROLE=[
+  [/passaport|carta d.identit|patente|visto|bigliett|assicuraz|voucher|prenotaz|contant|valuta|carta di credito|bancomat|tessera sanitaria|codice fiscale/i,'Documenti'],
+  [/caric|cavo|power ?bank|batteri|adattator|presa|cuffi|auricolar|telefon|tablet|portatile|macchina fotografica|fotocamer|drone|\bsim\b|kindle|ebook|hard disk|chiavett/i,'Elettronica'],
+  [/spazzolin|dentifric|shampoo|balsamo|bagnoschiuma|sapone|deodorant|rasoi|schiuma da barba|crema|solare|doposole|salviett|assorbent|profum|trucc|struccant|filo interdental|cerott|medicin|farmac|antidolorif|termometr|repellent|zanzar/i,'Igiene'],
+  [/maglion|magliett|t-?shirt|camici|pantalon|jeans|shorts|vestit|gonna|giacc|piumin|k-?way|impermeabil|felp|intim|mutand|calz|pigiam|costume|scarp|sandal|infradit|stival|cappell|sciarp|guant|occhial|cintur|accappato/i,'Abbigliamento'],
+];
+function categoriaLocale(nome){
+  for(const [re,cat] of PACK_PAROLE)if(re.test(nome))return cat;
+  return 'Extra';
+}
+
+async function categorizzaBagagli(voci){
+  try{
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:1500,
+      messages:[{role:"user",content:`Metti ognuna di queste cose da mettere in valigia nella sua categoria.
+
+${voci.map((v,i)=>`${i}. ${v}`).join('\n')}
+
+Le categorie possibili sono solo queste, nessun'altra: ${PACK_CAT.join(', ')}.
+
+Rispondi SOLO con JSON, senza backtick:
+{"voci":[{"i":0,"cat":"Igiene"}]}
+
+- "i" e' il numero della riga qui sopra: mettilo sempre e non saltare nessuna riga
+- "Documenti" per passaporto, biglietti, assicurazione, contanti e carte
+- "Elettronica" per caricatori, cavi, adattatori, cuffie, macchine fotografiche
+- "Igiene" per lavarsi, creme, trucco e medicinali
+- "Abbigliamento" per tutto quello che si indossa, scarpe comprese
+- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`}]
+    })});
+    const data=await res.json();
+    if(!data||data.error)return null;
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    const out=[];
+    (r.voci||[]).forEach(v=>{
+      const i=parseInt(v.i,10);
+      if(i>=0&&i<voci.length&&PACK_CAT.indexOf(v.cat)>=0)out[i]=v.cat;
+    });
+    return out.filter(Boolean).length?out:null;
+  }catch(e){return null;}
+}
+
+let packImportBusy=false;
+async function importPackingText(){
+  const t=T();if(!t||packImportBusy)return;
+  const st=document.getElementById('packImportStatus');
   const raw=document.getElementById('packImportText').value;
   const items=raw.split('\n').map(l=>l.replace(/^[-*•\d.)\s]+/,'').trim()).filter(Boolean);
   if(!items.length){toast('Incolla prima un elenco di voci');return;}
-  confirmDo('Sostituire la lista bagagli?',`La lista attuale verrà cancellata e sostituita con le ${items.length} voci incollate.`,()=>{
-    const list=items.map(label=>({id:uid(),cat:'Importato',label,checked:false,custom:true}));
+  packImportBusy=true;
+  st.textContent='✦ Guardo in che categoria va ognuna...';
+  try{
+    const cats=await categorizzaBagagli(items);
+    const list=getPacking(t);
+    /* Chi incolla una lista trovata online la incolla spesso due volte, o sopra
+       i suggerimenti che l'app aveva gia' messo: senza questo controllo si
+       ritroverebbe "spazzolino" tre volte. */
+    const gia=new Set(list.map(x=>String(x.label||'').toLowerCase().trim()));
+    let messe=0,doppi=0;
+    items.forEach((label,i)=>{
+      const k=label.toLowerCase().trim();
+      if(gia.has(k)){doppi++;return;}
+      gia.add(k);
+      list.push({id:uid(),cat:(cats&&cats[i])||categoriaLocale(label),label,checked:false,custom:true});
+      messe++;
+    });
     savePacking(t,list);
     document.getElementById('packImportText').value='';
     renderPacking();
-    toast(`Lista sostituita: ${list.length} voci`);
-  });
+    const parti=[`${messe} ${messe===1?'voce aggiunta':'voci aggiunte'}`];
+    if(doppi)parti.push(`${doppi} ${doppi===1?"c'era già":"c'erano già"}`);
+    if(!cats)parti.push('categorie indovinate senza IA: controllale');
+    st.textContent='✅ '+parti.join(' · ');
+  }finally{packImportBusy=false;}
 }
 
 function setDiscover(m){
@@ -2758,7 +2838,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li', e dentro si puo' anche incollare un elenco che viene diviso per categoria.
 - Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
