@@ -77,6 +77,23 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--p
 .pack-cat b{font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
 .pack-cat i{font-style:normal;font-size:.68rem;font-weight:700;color:var(--ink-soft);background:var(--line-soft);border:1px solid var(--line);border-radius:999px;padding:.08rem .45rem;margin-left:auto}
 .pack-cat.done b{color:var(--ink-soft)}
+/* "Importa una lista" stava in fondo, dopo tutta la valigia: per arrivarci
+   bisognava scorrere venti voci, e chi apriva i bagagli per svuotarci dentro
+   un elenco non sapeva nemmeno che ci fosse. Ora e' un tasto in cima, e
+   quello che serve per importare - riquadro da incollare e allega PDF -
+   scende da li' quando lo si tocca, invece di stare sempre aperto a occupare
+   mezzo schermo. */
+.imp-t{display:flex;align-items:center;justify-content:center;gap:.45rem;margin-bottom:.7rem}
+.imp-chev{font-size:.75rem;opacity:.65;transition:transform .25s var(--ease)}
+.imp-t.on .imp-chev{transform:rotate(180deg)}
+/* 0fr → 1fr: si apre fino a quanto e' alto il contenuto, senza doverne
+   indovinare l'altezza a mano. */
+.imp-box{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s var(--ease),margin-bottom .28s var(--ease)}
+.imp-box.on{grid-template-rows:1fr;margin-bottom:.85rem}
+/* Il riquadro che taglia non ha ne' bordi ne' imbottitura, cosi' da chiuso
+   e' alto zero davvero: la cornice sta sul foglio dentro. */
+.imp-in{overflow:hidden;min-height:0}
+.imp-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:1.15rem}
 #map{height:260px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:.95rem;box-shadow:var(--sh-sm)}
 .mini-map{height:130px;border-radius:var(--r-md);overflow:hidden;margin:.7rem 0}
 .leaflet-container{font-family:inherit}
@@ -1208,6 +1225,19 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">🎒 Lista bagagli</div><button class="x x-close" onclick="closeSheet('mPacking')">✕</button></div>
   <div class="card-sub" style="margin:-.4rem 0 .8rem">Generata da durata, meteo e attività del viaggio. Spunta, modifica o aggiungi voci: resta tua.</div>
+  <button class="btn btn-soft btn-block imp-t" id="packImportBtn" aria-expanded="false" onclick="togglePackImport()">✦ Importa una lista<span class="imp-chev">▾</span></button>
+  <div class="imp-box" id="packImportBox">
+    <div class="imp-in"><div class="imp-card">
+      <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco, una voce per riga, oppure allega un <b>PDF</b>: le <b>aggiungo</b> a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.</p>
+      <textarea id="packImportText" placeholder="crema solare&#10;caricatore del telefono&#10;passaporto&#10;infradito" style="min-height:80px"></textarea>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button class="btn btn-grad" style="flex:1" onclick="importPackingText()">✦ Aggiungi e ordina</button>
+        <button class="btn btn-soft" style="flex:0 0 auto" onclick="document.getElementById('packPdf').click()">📄 Da un PDF</button>
+      </div>
+      <input type="file" id="packPdf" accept="application/pdf,.pdf" style="display:none" onchange="importPackingPDF(this)">
+      <div id="packImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
+    </div></div>
+  </div>
   <div style="display:flex;gap:.5rem;margin-bottom:.8rem">
     <select id="packAddCat" style="flex:0 0 auto;max-width:38%"><option>Documenti</option><option>Elettronica</option><option>Igiene</option><option>Abbigliamento</option><option selected>Extra</option></select>
     <input id="packAddInp" placeholder="Aggiungi una voce..." style="flex:1" onkeydown="if(event.key==='Enter')addPackItem()">
@@ -1215,17 +1245,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   </div>
   <div id="packList"></div>
   <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
-  <div class="card" style="margin-top:.9rem">
-    <div class="card-h" style="margin-bottom:.3rem;font-size:.85rem">✦ Importa una lista</div>
-    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco, una voce per riga, oppure allega un <b>PDF</b>: le <b>aggiungo</b> a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.</p>
-    <textarea id="packImportText" placeholder="crema solare&#10;caricatore del telefono&#10;passaporto&#10;infradito" style="min-height:80px"></textarea>
-    <div style="display:flex;gap:.5rem;margin-top:.5rem">
-      <button class="btn btn-grad" style="flex:1" onclick="importPackingText()">✦ Aggiungi e ordina</button>
-      <button class="btn btn-soft" style="flex:0 0 auto" onclick="document.getElementById('packPdf').click()">📄 Da un PDF</button>
-    </div>
-    <input type="file" id="packPdf" accept="application/pdf,.pdf" style="display:none" onchange="importPackingPDF(this)">
-    <div id="packImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
-  </div>
 </div></div>
 <div class="modal" id="mRestore"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2336,10 +2355,23 @@ function mergePackingSuggestions(t){
   genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){list.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false});existing.add(it.label.toLowerCase());}});
   savePacking(t,list);
 }
+/* Chiusa di suo: la valigia si apre per spuntare quello che c'e', non per
+   importare. Chi deve importare tocca il tasto. */
+function togglePackImport(apri){
+  const b=document.getElementById('packImportBtn'),box=document.getElementById('packImportBox');
+  if(!b||!box)return;
+  const on=(apri==null)?!box.classList.contains('on'):!!apri;
+  box.classList.toggle('on',on);b.classList.toggle('on',on);
+  b.setAttribute('aria-expanded',on?'true':'false');
+  if(on)setTimeout(()=>{try{box.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(e){}},140);
+}
 function openPacking(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
   if(!getPacking(t).length)mergePackingSuggestions(t);
-  renderPacking();openSheet('mPacking');
+  renderPacking();
+  togglePackImport(false);
+  const st=document.getElementById('packImportStatus');if(st)st.textContent='';
+  openSheet('mPacking');
 }
 function regenPacking(){
   const t=T();if(!t)return;
@@ -3015,7 +3047,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li', e dentro si puo' anche incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
