@@ -1912,7 +1912,19 @@ function homeDayIndex(t){
 }
 /* Toccare un giorno del calendario in home lo seleziona soltanto: la
    time-table si apre solo toccando il nome del viaggio, non da qui. */
-function selHomeDay(i){homeDaySel=i;renderHomeHero();}
+/* Le pillole dei giorni in home cambiano la giornata mostrata qui sotto. Per
+   entrarci davvero - orari, mappa, tutto - toccarne una due volte apre la
+   time-table su quel giorno: e' il gesto che si fa comunque per sbaglio
+   quando si vuole "andare dentro", e prima non portava da nessuna parte.
+   Il primo tocco continua a fare quello che ha sempre fatto, quindi chi non
+   conosce la scorciatoia non se ne accorge. */
+let _tapHome=null,_tapHomeQuando=0;
+function selHomeDay(i){
+  const ora=Date.now(),doppio=(_tapHome===i&&ora-_tapHomeQuando<450);
+  _tapHome=i;_tapHomeQuando=ora;
+  homeDaySel=i;renderHomeHero();
+  if(doppio)openDay(i);
+}
 /* Cambio viaggio dalla home. Azzera il giorno scelto a mano, così il viaggio
    nuovo riparte dal suo giorno di oggi invece che da un indice rimasto lì. */
 function homeSwitchTrip(id){
@@ -2274,7 +2286,7 @@ function renderHomeHero(){
   <div class="hh-days">${t.days.map((d,j)=>{
     const dt=new Date(d.date);
     const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
-    return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})">${esc(lb)}</button>`;
+    return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})" title="Un tocco per vedere la giornata, due per aprire la time-table">${esc(lb)}</button>`;
   }).join('')}</div>
   <div class="hh-sec">
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
@@ -3046,7 +3058,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
