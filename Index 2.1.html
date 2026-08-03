@@ -3047,7 +3047,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno, due tocchi sullo stesso giorno portano dritti alla griglia degli orari. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
@@ -5853,25 +5853,6 @@ function openTimetable(){
   const idx=t.days.findIndex(x=>x.date===todayStr);
   openDay(idx>=0?idx:0);
 }
-/* Sopra la griglia oraria c'e' parecchia roba - mappa, meteo, avvisi pioggia,
-   la fila dei tasti, le foto - e su un telefono la giornata vera comincia
-   sotto il bordo dello schermo: cambiato giorno, tocca sempre scorrere.
-   Toccando due volte lo stesso giorno si va dritti agli orari. Il primo tocco
-   fa quello che ha sempre fatto, cambiare giorno: chi non lo sa non se ne
-   accorge nemmeno. */
-let _tapGiorno=null,_tapQuando=0;
-function tapGiorno(j){
-  const ora=Date.now(),doppio=(_tapGiorno===j&&ora-_tapQuando<450);
-  _tapGiorno=j;_tapQuando=ora;
-  if(j!==ttDay)openDay(j);
-  if(doppio)vaiAgliOrari();
-}
-function vaiAgliOrari(){
-  const el=document.getElementById('ttBody');if(!el)return;
-  /* Dopo il re-render il posto giusto lo si sa solo al giro dopo. */
-  setTimeout(()=>{try{el.scrollIntoView({behavior:'smooth',block:'start'});}
-                  catch(e){el.scrollIntoView();}},60);
-}
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
@@ -5881,7 +5862,7 @@ function openDay(i){
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
     const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString('it-IT',{weekday:'short'});
     const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
-    return `<button class="tt-day ${j===i?'on':''}" onclick="tapGiorno(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
+    return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
   }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   clearDragUndo();
   renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
