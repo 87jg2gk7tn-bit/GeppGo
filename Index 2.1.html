@@ -3052,7 +3052,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
-- Meteo: le previsioni giorno per giorno. Identifica: si fotografa un posto e l'app dice cos'e'.
+- Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' da dire dove si e', lo capisce da solo. In time-table il tasto "Auto" mostra il posto scelto, e accanto ci sono le citta' del viaggio per forzarlo a mano. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -3754,16 +3754,6 @@ function saveActNote(){
   save();renderAll();closeSheet('mActNote');
   toast(cambiata?(testo?'📝 Nota salvata':'Nota svuotata'):'Nota invariata');
 }
-function dayLoc(t,day){
-  if(day.city){const cc=(t.cities||[]).find(c=>c.name===day.city&&c.lat);if(cc)return{lat:cc.lat,lng:cc.lng};}
-  const pts=(day.activities||[]).filter(a=>a.lat);
-  if(pts.length){let la=0,ln=0;pts.forEach(x=>{la+=x.lat;ln+=x.lng;});return{lat:la/pts.length,lng:ln/pts.length};}
-  const pp=t.pois.filter(x=>x.assignedDay===day.date);
-  if(pp.length)return{lat:pp[0].lat,lng:pp[0].lng};
-  const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&day.date>=h.checkIn&&day.date<h.checkOut)||(t.hotels||[]).find(h=>h.lat);
-  if(hh)return{lat:hh.lat,lng:hh.lng};
-  return null;
-}
 async function ensureDestLoc(t){
   if(t.destLoc||!t.destination)return;
   const q=(t.multiCity&&t.cities&&t.cities.length)?t.cities[0].name:t.destination;
@@ -3974,11 +3964,12 @@ async function refreshWeather(){
   save();renderWeather();
   toast(ok?`Meteo aggiornato: ${ok} giorni, ognuno sul suo luogo`:(tried?'Meteo non raggiungibile, riprova':'Aggiungi destinazione o luoghi'));
 }
+/* Il posto della giornata: quello dove sta il grosso del programma. */
 function dayLoc(t,day){
-  const pts=(day.activities||[]).filter(a=>a.lat);
-  if(pts.length){let la=0,ln=0;pts.forEach(x=>{la+=x.lat;ln+=x.lng;});return{lat:la/pts.length,lng:ln/pts.length};}
-  const pp=t.pois.filter(x=>x.assignedDay===day.date);
-  if(pp.length)return{lat:pp[0].lat,lng:pp[0].lng};
+  const gr=luoghiDelGiorno(t,day);
+  if(gr.length)return{lat:gr[0].lat,lng:gr[0].lng};
+  const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&day.date>=h.checkIn&&day.date<h.checkOut)||(t.hotels||[]).find(h=>h.lat);
+  if(hh)return{lat:hh.lat,lng:hh.lng};
   return null;
 }
 function renderWeather(){
@@ -3995,7 +3986,10 @@ function renderWeather(){
       return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
     }
     const rain=w.precipitation>5,sun=w.precipitation<1&&w.tempMax>20,cls=rain?'rain':(sun?'sun':'cloud'),out=(day.activities||[]).filter(a=>a.type==='outdoor').length;
-    return `<div class="wcard ${cls}"><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">${wxDesc(w.code)}${rain&&out>0?` · ⚠️ ${out} outdoor a rischio`:''}</div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
+    /* Su quale posto e' la previsione: senza, un "22° e pioggia" non dice se
+       parla di dove passi la giornata o della citta' scritta nel viaggio. */
+    const dove=(w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):(day.city||w.luogo||'');
+    return `<div class="wcard ${cls}"><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">${dove?`<b>${esc(dove)}</b> · `:''}${wxDesc(w.code)}${rain&&out>0?` · ⚠️ ${out} outdoor a rischio`:''}</div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
   }).join('');
   c.innerHTML=rows||`<div class="empty"><div class="empty-t">Nessun giorno</div></div>`;
 }
@@ -5873,6 +5867,8 @@ function openDay(i){
   }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   clearDragUndo();
   renderDayCity(t,d);renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
+  /* Se le tappe si sono spostate di citta', il meteo si rifa' da solo. */
+  meteoSeguiLeTappe(t,d);
   buildTT();buildDayMap();
   go('mDay');initTTFab();
 }
@@ -8442,6 +8438,71 @@ function wxEmo(w){
   if(w.precipitation<1&&w.tempMax>20)return'☀️';
   return'⛅';
 }
+/* ===== DOVE SEI, DEDOTTO DA QUELLO CHE HAI IN PROGRAMMA =====
+   Prima il meteo del giorno andava detto a mano, toccando la citta' fra i
+   tasti in time-table, oppure - se non si toccava niente - si prendeva la
+   MEDIA delle coordinate di tutte le tappe. La media e' la cosa sbagliata da
+   fare: una giornata a Tokyo con una gita a Hakone finisce con un puntino in
+   mezzo al nulla fra le due, dove non piove e non splende per nessuno.
+
+   Qui invece le tappe si raggruppano per vicinanza: quelle entro venticinque
+   chilometri sono "lo stesso posto", e il posto della giornata e' il gruppo
+   con piu' tappe dentro. Tre cose a Tokyo e una a mezz'ora da Tokyo fanno
+   Tokyo, che e' quello che si intende quando si chiede "che tempo fa".
+   Se pero' un secondo gruppo tiene almeno due tappe, la giornata e' davvero
+   in due posti e il meteo si mostra per tutti e due: una tappa isolata no,
+   quella e' un fuori programma, non un trasferimento. */
+const WX_STESSO_POSTO_KM=25;
+function gruppiDelGiorno(t,day){
+  if(!t||!day)return[];
+  let pts=(day.activities||[]).map(a=>({nome:a.name,loc:actLoc(t,a)})).filter(x=>x.loc);
+  /* Se in giornata non c'e' ancora niente con una posizione, valgono i luoghi
+     salvati che sono stati assegnati a quel giorno: sono comunque una
+     dichiarazione di dove si vuole essere. */
+  if(!pts.length)pts=(t.pois||[]).filter(p=>p.assignedDay===day.date&&p.lat!=null)
+    .map(p=>({nome:p.name,loc:{lat:p.lat,lng:p.lng}}));
+  const gr=[];
+  pts.forEach(x=>{
+    const g=gr.find(g=>hav(g,x.loc)<=WX_STESSO_POSTO_KM*1000);
+    if(g){g.n++;g._la+=x.loc.lat;g._ln+=x.loc.lng;g.lat=g._la/g.n;g.lng=g._ln/g.n;g.tappe.push(x.nome);}
+    else gr.push({lat:x.loc.lat,lng:x.loc.lng,_la:x.loc.lat,_ln:x.loc.lng,n:1,tappe:[x.nome]});
+  });
+  return gr.sort((a,b)=>b.n-a.n);
+}
+function luoghiDelGiorno(t,day){
+  const gr=gruppiDelGiorno(t,day);
+  return gr.filter((g,i)=>i===0||g.n>=2).slice(0,3);
+}
+/* La firma serve a capire da sola quando il programma si e' spostato: se i
+   posti della giornata non sono piu' quelli, il meteo salvato e' di un'altra
+   citta' e va rifatto, senza che nessuno debba premere niente. */
+function firmaLuoghi(gr){return gr.map(g=>g.lat.toFixed(2)+','+g.lng.toFixed(2)).join(';');}
+/* Il nome da mostrare - "Tokyo", non "35.68, 139.76". Si chiede una volta
+   sola per zona e si tiene da parte: e' la stessa informazione per tutti i
+   giorni che passi li'. */
+let _revUltima=0;
+async function nomeLuogo(t,g){
+  t.wxNomi=t.wxNomi||{};
+  /* Una casella da un decimo di grado, una decina di chilometri: il centro
+     delle tappe balla di qualche isolato da un giorno all'altro, e con una
+     casella piu' fine si finirebbe a richiedere lo stesso "Tokyo" ogni volta.
+     La firma che fa scattare l'aggiornamento resta invece fine, perche' li'
+     conta accorgersi che ci si e' spostati davvero. */
+  const k=g.lat.toFixed(1)+','+g.lng.toFixed(1);
+  if(t.wxNomi[k]!=null)return t.wxNomi[k];
+  try{
+    /* Nominatim chiede di non martellare: una richiesta al secondo. */
+    const attesa=1100-(Date.now()-_revUltima);
+    if(attesa>0)await new Promise(r=>setTimeout(r,attesa));
+    _revUltima=Date.now();
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=it&lat=${g.lat}&lon=${g.lng}`,{headers:{'Accept-Language':'it,en'}});
+    const d=await r.json(),ad=(d&&d.address)||{};
+    const nome=ad.city||ad.town||ad.village||ad.municipality||ad.county||ad.state||(d&&d.name)||'';
+    t.wxNomi[k]=nome;save();
+    return nome;
+  }catch(e){return '';}
+}
+
 async function fetchDayWx(t,day){
   const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunset';
   const one=async loc=>{
@@ -8451,6 +8512,8 @@ async function fetchDayWx(t,day){
     return null;
   };
   try{
+    /* 1. Le citta' scelte a mano vincono sempre: chi le ha toccate ha detto
+          lui dov'e', e non gli si contraddice. */
     const sel=Array.isArray(day.cities)?day.cities:(day.city?[day.city]:[]);
     if(sel.length&&(t.cities||[]).length){
       const multi={};
@@ -8461,22 +8524,78 @@ async function fetchDayWx(t,day){
         if(w)multi[nm]=w;
       }
       const ks=Object.keys(multi);
-      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi});save();return true;}
+      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
       return false;
     }
-    const loc=(t.multiCity===false)?(t.destLoc||dayLoc(t,day)):(dayLoc(t,day)||t.destLoc);
+    /* 2. Altrimenti lo si deduce da dove sono le tappe. */
+    const gr=luoghiDelGiorno(t,day);
+    if(gr.length){
+      const multi={};let ordine=0;
+      for(const g of gr){
+        const w=await one(g);if(!w)continue;
+        const nome=(await nomeLuogo(t,g))||`Posto ${++ordine}`;
+        if(!multi[nome])multi[nome]=w;
+      }
+      const ks=Object.keys(multi);
+      if(ks.length){
+        t.weather[day.date]=Object.assign({},multi[ks[0]],
+          ks.length>1?{multi}:{},{luogo:ks[0],dedotto:true,sig:firmaLuoghi(gr)});
+        save();return true;
+      }
+    }
+    /* 3. E se in giornata non c'e' ancora niente: l'hotel di quella notte, e
+          in mancanza anche di quello la destinazione del viaggio. */
+    const loc=dayLoc(t,day)||t.destLoc;
     if(!loc)return false;
     const w=await one(loc);
-    if(w){t.weather[day.date]=w;save();return true;}
+    if(w){
+      const nome=(await nomeLuogo(t,loc))||(t.destination||'').split(',')[0].trim();
+      t.weather[day.date]=Object.assign({},w,{luogo:nome});save();return true;
+    }
     return false;
   }catch(e){return false;}
+}
+/* Il controllo che toglie il lavoro di mano: si apre una giornata, e se i suoi
+   posti non sono piu' quelli su cui era stato preso il meteo, lo si rifa'.
+   Non tocca le giornate con la citta' scelta a mano, ne' quelle fuori dalla
+   portata delle previsioni. */
+let wxAutoBusy=false;
+function meteoSeguiLeTappe(t,day){
+  if(!t||!day||wxAutoBusy)return;
+  const sel=Array.isArray(day.cities)?day.cities:(day.city?[day.city]:[]);
+  if(sel.length)return;
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(day.date)-oggi)/864e5);
+  if(da<0||da>16)return;
+  const gr=luoghiDelGiorno(t,day);if(!gr.length)return;
+  const w=t.weather[day.date];
+  if(w&&w.sig===firmaLuoghi(gr))return;
+  wxAutoBusy=true;
+  fetchDayWx(t,day)
+    .then(ok=>{wxAutoBusy=false;if(ok){renderDayWx();renderWeather();}})
+    .catch(()=>{wxAutoBusy=false;});
 }
 function renderDayCity(t,d){
   const box=document.getElementById('dayCityChips');if(!box)return;
   if(!(t.multiCity&&(t.cities||[]).length)){box.style.display='none';return;}
   const sel=Array.isArray(d.cities)?d.cities:(d.city?[d.city]:[]);
   box.style.display='flex';
-  box.innerHTML='<span style="font-size:.74rem;font-weight:800;color:var(--ink-faint);align-self:center">Città:</span>'+t.cities.map(c=>`<button class="tchip ${sel.includes(c.name)?'on':''}" onclick="toggleDayCity(${jesc(c.name)})">${esc(c.name)}</button>`).join('');
+  /* Il primo tasto e' "Auto", ed e' acceso finche' non se ne tocca un altro:
+     serve a far vedere che la citta' non e' una cosa da dichiarare ogni volta
+     - la deduce l'app da dove sono le tappe - e a tornare indietro con un
+     tocco dopo averla forzata. */
+  const dedotto=(t.weather[d.date]||{}).luogo;
+  const auto=`<button class="tchip ${sel.length?'':'on'}" onclick="autoDayCity()">✨ Auto${(!sel.length&&dedotto)?' · '+esc(dedotto):''}</button>`;
+  box.innerHTML='<span style="font-size:.74rem;font-weight:800;color:var(--ink-faint);align-self:center">Meteo su:</span>'+auto+
+    t.cities.map(c=>`<button class="tchip ${sel.includes(c.name)?'on':''}" onclick="toggleDayCity(${jesc(c.name)})">${esc(c.name)}</button>`).join('');
+}
+function autoDayCity(){
+  const t=T(),d=t.days[ttDay];if(!d)return;
+  if(!d.cities&&!d.city){toast('Il meteo segue già le tappe di questa giornata');return;}
+  delete d.cities;delete d.city;
+  const w=t.weather[d.date];if(w)delete w.sig;
+  save();
+  fetchDayWx(t,d).then(()=>{renderWeather();openDay(ttDay);});
 }
 function toggleDayCity(name){
   const t=T(),d=t.days[ttDay];if(!d)return;
@@ -8494,7 +8613,8 @@ function renderDayWx(){
   if(w.multi&&Object.keys(w.multi).length>1){
     el.innerHTML=Object.entries(w.multi).map(pr=>`${esc(pr[0])} ${wxEmo(pr[1])}${Math.round(pr[1].tempMax)}°${pr[1].precipitation>0?' '+pr[1].precipitation+'mm':''}`).join(' · ');
   }else{
-    el.innerHTML=`${wxEmo(w)} ${Math.round(w.tempMin)}–${Math.round(w.tempMax)}° · ${w.precipitation>0?w.precipitation+' mm di pioggia':'asciutto'}${d.city?' · '+esc(d.city):''}`;
+    const dove=d.city||w.luogo||'';
+    el.innerHTML=`${wxEmo(w)} ${Math.round(w.tempMin)}–${Math.round(w.tempMax)}° · ${w.precipitation>0?w.precipitation+' mm di pioggia':'asciutto'}${dove?` · ${esc(dove)}`:''}`;
   }
 }
 let rainHide={};
@@ -8595,7 +8715,7 @@ function renderCityEditor(){
   const box=document.getElementById('cityEditor');if(!box)return;const t=T();
   if(!t||!t.multiCity){box.innerHTML='';return;}
   const val=(t.cities||[]).map(c=>c.name).join(', ');
-  box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.6rem">Città del viaggio</div><div style="display:flex;gap:.5rem"><input id="cityInp" value="${esc(val)}" placeholder="es. Tokyo, Kyoto, Osaka" style="flex:1" autocomplete="off" oninput="cityAuto(this,'citySug')"><button class="btn btn-blue" onclick="saveCities()">Salva</button></div><div id="citySug"></div><p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Poi apri un giorno dalla Home e scegli in quale città sei: il meteo segue.</p></div>`;
+  box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.6rem">Città del viaggio</div><div style="display:flex;gap:.5rem"><input id="cityInp" value="${esc(val)}" placeholder="es. Tokyo, Kyoto, Osaka" style="flex:1" autocomplete="off" oninput="cityAuto(this,'citySug')"><button class="btn btn-blue" onclick="saveCities()">Salva</button></div><div id="citySug"></div><p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Il meteo di ogni giornata lo prendo dove sono le sue tappe: non c'è da dirmelo. Queste città servono solo per forzarlo a mano, aprendo un giorno dalla Home.</p></div>`;
 }
 function saveCities(){
   const t=T();if(!t)return;
