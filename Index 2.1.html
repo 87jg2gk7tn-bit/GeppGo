@@ -5400,10 +5400,26 @@ function wireBottomSheetSelect(sel){
   sel.dataset.bsWired='1';
   const cs=getComputedStyle(sel);
   const wrap=document.createElement('span');
-  wrap.style.cssText=`position:relative;display:block;width:${cs.width};flex:${cs.flexGrow} ${cs.flexShrink} ${cs.flexBasis};margin:${cs.marginTop} ${cs.marginRight} ${cs.marginBottom} ${cs.marginLeft}`;
+  /* Il contenitore prendeva sempre la larghezza scritta nel CSS del <select>,
+     che e' width:100%. In colonna va bene, ma dentro una riga affiancata -
+     "categoria | scrivi la voce | +" della lista bagagli - il contenitore si
+     prendeva il 100% della riga e spingeva fuori dallo schermo il campo e il
+     tasto: la pagina scorreva di lato e si vedeva tutto tagliato a sinistra.
+     Dentro una riga si copiano invece le regole di flex del <select>, che
+     sono quelle che dicono davvero quanto spazio deve occupare. */
+  const inRiga=/flex/.test(getComputedStyle(sel.parentNode).display);
+  wrap.style.cssText=`position:relative;display:block;`+
+    (inRiga?`flex:${cs.flexGrow} ${cs.flexShrink} ${cs.flexBasis};min-width:${cs.minWidth};max-width:${cs.maxWidth};`
+           :`width:${cs.width};`)+
+    `margin:${cs.marginTop} ${cs.marginRight} ${cs.marginBottom} ${cs.marginLeft}`;
   sel.parentNode.insertBefore(wrap,sel);
   wrap.appendChild(sel);
   sel.style.margin='0';
+  /* Le misure ora le tiene il contenitore: se restassero anche sul <select>
+     verrebbero calcolate una seconda volta, ma stavolta sul contenitore invece
+     che sulla riga - "largo al massimo il 38%" diventava il 38% di un pezzo
+     gia' stretto, e della tendina si vedeva solo la prima lettera. */
+  if(inRiga){sel.style.flex='';sel.style.minWidth='0';sel.style.maxWidth='none';sel.style.width='100%';}
   const overlay=document.createElement('div');
   overlay.style.cssText='position:absolute;inset:0;cursor:pointer;z-index:2';
   overlay.addEventListener('click',e=>{e.preventDefault();openSelectPicker(sel);});
