@@ -6539,9 +6539,28 @@ const MOSSE_DIVIETI={
   durata:'cambiare la durata',
   sposta_ora:'cambiare gli orari'
 };
-function mosseRegole(permesse){
+/* Una tappa prenotata a un'ora precisa non e' una preferenza da ottimizzare:
+   e' un impegno preso con qualcun altro. Il ristorante alle 20:00, il museo con
+   il biglietto a fascia oraria, il treno: spostarli non "sistema il giro",
+   fa perdere la prenotazione. Il modello, che vede solo una griglia di orari
+   da mettere in fila, non ha modo di saperlo se non glielo si dice - e anche
+   detto resta un invito, per questo la stessa regola vale due volte: nel testo
+   che gli si manda e nel filtro sulla sua risposta.
+   Serve l'orario: una tappa prenotata ma senza ora non e' inchiodata a un
+   momento, quindi puo' ancora essere sistemata. */
+function tappaPrenotata(a){return !!(a&&a.booking&&a.booking.done&&a.time);}
+const MOSSE_SU_PRENOTATA=['sposta_ora','sposta_giorno','togli'];
+function tappePrenotate(t){
+  const out=[];
+  (t.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{if(tappaPrenotata(a))out.push(a);}));
+  return out;
+}
+function mosseRegole(permesse,bloccate){
   const ok=Object.keys(MOSSE_AZIONI).filter(k=>!permesse||permesse.indexOf(k)>=0);
   const no=Object.keys(MOSSE_AZIONI).filter(k=>permesse&&permesse.indexOf(k)<0);
+  const fisse=(bloccate&&bloccate.length)
+    ? `- le tappe segnate PRENOTATA hanno un orario gia' fissato con qualcun altro (${bloccate.map(a=>`${a.name} alle ${a.time}`).join(', ')}): non spostarle di ora, non spostarle di giorno e non toglierle. Sono i paletti della giornata: sistema le altre INTORNO a loro, lasciando il tempo di strada per arrivarci in orario\n`
+    : '';
   return `Rispondi SOLO con JSON, senza backtick e senza altro testo:
 {"commento":"una frase in italiano su cosa hai deciso","mosse":[...]}
 
@@ -6550,7 +6569,7 @@ ${ok.map(k=>MOSSE_AZIONI[k]).join('\n')}
 
 Regole ferree:
 - usa SOLO gli ID che trovi qui sotto: non inventarne
-${no.length?`- non puoi ${no.map(k=>MOSSE_DIVIETI[k]).join(', n\u00e9 ')}: qualsiasi mossa di quel genere verr\u00e0 buttata via\n`:''}- gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00... mai :09, :15, :20
+${fisse}${no.length?`- non puoi ${no.map(k=>MOSSE_DIVIETI[k]).join(', n\u00e9 ')}: qualsiasi mossa di quel genere verr\u00e0 buttata via\n`:''}- gli orari vanno di mezz'ora in mezz'ora: 09:00, 09:30, 10:00... mai :09, :15, :20
 - non proporre mosse che non cambiano niente: se una tappa \u00e8 gi\u00e0 alle 11:00 non dire di spostarla alle 11:00
 - dove c'\u00e8 scritto APERTO, quello \u00e8 l'orario in cui il posto \u00e8 visitabile: non far cominciare una tappa prima che apra n\u00e9 finire dopo che ha chiuso
 - dove APERTO non c'\u00e8, l'orario di apertura non si sa: non inventarlo e non darlo per scontato
@@ -6570,7 +6589,7 @@ function mosseContesto(t,oggi){
     }).map(a=>{
       const pri=a.priority==='essential'?'essenziale':(a.priority==='skippable'?'saltabile':'non detto');
       const loc=actLoc(t,a),ore=orariDi(t,a);
-      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${ore?` | APERTO ${ore}`:''}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
+      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${tappaPrenotata(a)?' | PRENOTATA: ora fissa, non si tocca':''}${ore?` | APERTO ${ore}`:''}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
     });
     return `  giorno ${i}${i===oggi?'  <<< QUESTO':''} — ${d.date}${meteo}\n${voci.join('\n')||'    (nessuna tappa)'}`;
   });
@@ -6684,6 +6703,9 @@ function tappeStorte(t,oggi,gia){
   const toccate=new Set((gia||[]).filter(m=>m.tappa!=null).map(m=>String(m.tappa)));
   return (d.activities||[]).filter(a=>{
     if(toccate.has(String(a.id)))return false;
+    /* Anche l'arrotondamento che si propone da solo: un tavolo prenotato alle
+       19:45 e' alle 19:45, non "quasi le 20:00". */
+    if(tappaPrenotata(a))return false;
     const st=tMin(a.time);if(st==null)return false;
     const r=actRange(a);
     return st%PASSO_ORARIO!==0||(r&&(r[1]-r[0])%PASSO_ORARIO!==0);
@@ -6704,9 +6726,10 @@ async function chiediMosse(istruzione,oggi,titolo,permesse){
   if(oggi==null||!t.days[oggi])oggi=(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0;
   mosseBusy=true;toast('✦ Ci sto pensando...');
   try{
+    const bloccate=tappePrenotate(t);
     const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       model:"claude-sonnet-4-6",max_tokens:1500,
-      messages:[{role:"user",content:`${istruzione}\n\n${mosseRegole(permesse)}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`}]
+      messages:[{role:"user",content:`${istruzione}\n\n${mosseRegole(permesse,bloccate)}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`}]
     })});
     const data=await res.json();
     if(data&&data.error){toast(motivoAI(data.error.message));return;}
@@ -6717,17 +6740,27 @@ async function chiediMosse(istruzione,oggi,titolo,permesse){
     const mosse=grezze.filter(x=>mossaValida(t,x,permesse)).slice(0,8);
     const finisci=mossaArrotonda(t,oggi,istruzione,mosse);
     if(finisci)mosse.push(finisci);
+    /* Se ha provato lo stesso a muovere una prenotazione, la mossa e' gia'
+       sparita nel filtro: dirlo e' meglio che lasciar credere che il giro sia
+       stato sistemato tenendo conto anche di quella. */
+    const rifiutate=[...new Set(grezze.filter(x=>x.tappa!=null&&MOSSE_SU_PRENOTATA.indexOf(x.azione)>=0)
+      .map(x=>trovaTappa(t,x.tappa)).filter(f=>f&&tappaPrenotata(f.a)).map(f=>f.a.name))];
+    let commento=r.commento||'';
+    if(rifiutate.length)commento=(commento?commento+' ':'')+
+      `Non ho toccato ${rifiutate.join(' e ')}: ${rifiutate.length===1?'è prenotata':'sono prenotate'} a un'ora fissa.`;
     if(!mosse.length){
       /* Distinzione che conta: "non c'è niente da cambiare" e "ha proposto
          cose inapplicabili" sono due esiti opposti, e mostrare il commento del
          modello in tutti e due i casi farebbe leggere "ho spostato tutto"
          proprio mentre non è stato spostato niente. */
-      toast(grezze.length
+      toast(rifiutate.length
+        ? `L'unica cosa che voleva spostare è ${rifiutate.join(' e ')}, che ${rifiutate.length===1?'è prenotata':'sono prenotate'} a un'ora fissa: lascio tutto com'è.`
+        : grezze.length
         ? 'Ci ho provato ma non è venuto fuori niente di applicabile. Riprova dicendolo in altre parole.'
         : (r.commento||'Per me va bene così'));
       return;
     }
-    apriMosse(t,oggi,mosse,titolo||'Proposte',r.commento||'');
+    apriMosse(t,oggi,mosse,titolo||'Proposte',commento);
   }catch(e){toast('⚠️ L\'IA non è raggiungibile');}
   finally{mosseBusy=false;}
 }
@@ -6751,6 +6784,9 @@ function mossaValida(t,m,permesse){
   if(permesse&&permesse.indexOf(m.azione)<0)return false;
   if(m.azione==='aggiungi')return !!(m.nome&&m.giorno!=null&&t.days[m.giorno]);
   const f=trovaTappa(t,m.tappa);if(!f)return false;
+  /* Il paletto vero: quello che e' prenotato a un'ora resta dov'e', qualunque
+     cosa abbia risposto il modello. */
+  if(tappaPrenotata(f.a)&&MOSSE_SU_PRENOTATA.indexOf(m.azione)>=0)return false;
   if(m.azione==='sposta_giorno')return !!t.days[m.giorno]&&m.giorno!==f.di;
   /* Una mossa che lascia le cose come stanno - "dalle 11:00 alle 11:00" - non
      è una proposta, è rumore: fa sembrare che l'app stia lavorando quando non
