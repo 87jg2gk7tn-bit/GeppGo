@@ -1300,6 +1300,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Nome</label><input id="personName" placeholder="Marco"></div>
   <button class="btn btn-blue btn-block" onclick="addPerson()">Aggiungi</button>
 </div></div>
+<div class="modal" id="mPareggia"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">✓ Chi ha pareggiato</div><button class="x x-close" onclick="closeSheet('mPareggia')">✕</button></div>
+  <div class="card-sub" id="pareggiaSub" style="margin:-.4rem 0 .8rem"></div>
+  <div id="pareggiaList"></div>
+</div></div>
 <div class="modal" id="mSaldoExp"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">✓ Chi ha già dato</div><button class="x x-close" onclick="closeSheet('mSaldoExp')">✕</button></div>
@@ -1590,7 +1596,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 </div></div>
 <div class="modal" id="mBagno"><div class="sheet">
   <div class="sheet-grip"></div>
-  <div class="sheet-head"><div class="sheet-t">🚻 Bagno più vicino</div><button class="x x-close" onclick="closeSheet('mBagno')">✕</button></div>
+  <div class="sheet-head"><div class="sheet-t" id="bagnoTitle">🚻 Bagno più vicino</div><button class="x x-close" onclick="closeSheet('mBagno')">✕</button></div>
   <div id="bagnoBody"></div>
 </div></div>
 <div class="modal" id="mAiDay"><div class="sheet">
@@ -2262,6 +2268,7 @@ function renderHomeHero(){
     <button class="hh-act" onclick="renameTrip(${t.id})">✎ Rinomina</button>
     <button class="hh-act" onclick="openTripDates()">📅 Giorni</button>
     <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
+    <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
     <button class="hh-act" onclick="openShare()">Condividi</button>
     <button class="hh-act" onclick="openPeople()">Persone</button>
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
@@ -3089,10 +3096,10 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
-- Spese: chi ha pagato cosa e i conti del gruppo. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
+- Spese: chi ha pagato cosa e i conti del gruppo. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
@@ -3132,6 +3139,9 @@ function aiRiscrivi(t,box,quante){
 function sembraCercaBagno(s){
   return /\b(bagn[oi]|bagnetto|toilette?s?|toilet|wc|gabinett\w*|servizi igienici|cesso)\b/i.test(s||'');
 }
+function sembraCercaFumo(s){
+  return /\b(fumare|fumatori?|fumo|sigarett\w*|posacener\w*|smoking area)\b/i.test(s||'');
+}
 
 async function assistenteChiedi(text,ui){
   const t=T();
@@ -3140,6 +3150,13 @@ async function assistenteChiedi(text,ui){
     aiRicorda(t,'user',text);
     aiRicorda(t,'assistant','Ho aperto la ricerca dei bagni pubblici vicini.');
     cercaBagno();
+    return;
+  }
+  if(sembraCercaFumo(text)){
+    ui.msg('ai','Guardo le aree fumatori intorno a te.');
+    aiRicorda(t,'user',text);
+    aiRicorda(t,'assistant','Ho aperto la ricerca delle aree fumatori vicine.');
+    cercaFumo();
     return;
   }
   if(t&&sembraUnIncollato(text)&&!ui.saltaIncollato){
@@ -4119,8 +4136,8 @@ function renderTricount(){
       }).join('');
     }
   } else {
-    body=`<div class="section-label">Saldi</div><div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${Math.abs(b)<0.01?'in pari':(b>0?'deve ricevere':'deve dare')}</div></div></div><div class="bal ${b>=0?'pos':'neg'}">${Math.abs(b)<0.01?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
-      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span>${(me&&me.id===x.to)?`<button class="chip green" style="margin-left:.4rem" onclick="markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">Pagato</button>`:''}</div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
+    body=`<div class="section-label">Saldi</div><div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;const inPari=Math.abs(b)<0.01;const quanti=txns.filter(x=>x.from===p.id||x.to===p.id).length;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${inPari?'in pari':(b>0?'deve ricevere':'deve dare')}${(!inPari&&quanti)?` · ${quanti===1?'1 persona':quanti+' persone'}`:''}</div></div></div><div style="display:flex;align-items:center;gap:.5rem"><div class="bal ${b>=0?'pos':'neg'}">${inPari?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div>${inPari?'<span class="tic-ic on">✓</span>':`<button class="tic-ic" title="Segna chi ha pareggiato" onclick="event.stopPropagation();openPareggia(${p.id})">✓</button>`}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
+      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span><button class="tic-ic" style="margin-left:.4rem" title="Segna come pagato" onclick="event.stopPropagation();markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">✓</button></div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
@@ -4146,6 +4163,34 @@ function quoteSpesa(t,e){
 function nomeDi(t,id){
   const p=(t.participants||[]).find(x=>x.id===id)||(t.guests||[]).find(x=>x.id===id);
   return p?p.name:'?';
+}
+/* Lo stesso tic, ma sul saldo di una persona: qui non si spunta la quota di
+   una spesa, si registra che due si sono pareggiati fra loro. Il tasto sta su
+   tutte le righe e non solo su quelle che riguardano me: in un gruppo capita
+   di essere quello che tiene i conti anche per scambi fra altri due. */
+let pareggiaId=null;
+function openPareggia(pid){
+  const t=T();if(!t)return;
+  pareggiaId=pid;renderPareggia();openSheet('mPareggia');
+}
+function renderPareggia(){
+  const t=T();if(!t)return;
+  const box=document.getElementById('pareggiaList');if(!box)return;
+  const cur=t.currency||'EUR',{txns}=computeSettle(t);
+  const miei=txns.filter(x=>x.from===pareggiaId||x.to===pareggiaId);
+  document.getElementById('pareggiaSub').innerHTML=miei.length
+    ? `<b>${esc(nomeDi(t,pareggiaId))}</b> · tocca chi ha già pareggiato con ${esc(nomeDi(t,pareggiaId))}: registro il rimborso e sparisce dai conti.`
+    : `<b>${esc(nomeDi(t,pareggiaId))}</b> è in pari con tutti.`;
+  box.innerHTML=miei.length?`<div class="card" style="padding:.35rem .5rem">${miei.map(x=>{
+    const daMe=x.from===pareggiaId,altro=daMe?x.to:x.from;
+    return `<div class="person" style="cursor:pointer" onclick="pareggiaCon(${x.from},${x.to},${Math.round(x.amount*100)/100})"><div class="person-l"><div class="avatar">${esc(String(nomeDi(t,altro)).charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(nomeDi(t,altro))}</div><div class="person-tag">${daMe?'deve ricevere da':'deve dare a'} ${esc(nomeDi(t,pareggiaId))}</div></div></div><div style="display:flex;align-items:center;gap:.5rem"><span style="font-weight:800;font-size:.9rem">${fmtVista(x.amount,cur)}</span><span class="tic-ic">✓</span></div></div>`;
+  }).join('')}</div>
+  <div style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Registro un rimborso vero, che resta nell'elenco delle spese: se sbagli lo tocchi da lì e lo annulli.</div>`
+  :`<div class="empty" style="padding:1.4rem 1rem"><div class="empty-t">Non deve niente a nessuno 🎉</div></div>`;
+}
+function pareggiaCon(from,to,amount){
+  closeSheet('mPareggia');
+  markPaid(from,to,amount);
 }
 let saldoExpId=null;
 function openSaldoSpesa(id){
@@ -5151,67 +5196,102 @@ async function initNativeNotifs(){
 
 /* ===== NAVIGATORE ===== */
 let routeLine=null;
-/* ===== IL BAGNO PIÙ VICINO =====
-   Non passa dall'IA: è una domanda con una risposta secca, e OpenStreetMap i
-   bagni pubblici li ha mappati. Overpass è il servizio giusto per "cosa c'è
+/* ===== COSA C'È QUI INTORNO =====
+   Non passa dall'IA: sono domande con una risposta secca, e OpenStreetMap
+   queste cose le ha mappate. Overpass è il servizio giusto per "cosa c'è
    entro N metri da qui" - Nominatim cerca stringhe, non dintorni - ed è
    gratuito e senza chiave come il resto delle mappe che usiamo.
    Si allarga il raggio a scalini invece di partire larghi: in centro città il
    primo giro trova già tutto, e chiedere 2 km quando bastano 300 metri vuol
-   dire scaricare mezza città per buttarla via. */
-const BAGNO_RAGGI=[400,1200,3000];
-let bagnoBusy=false;
+   dire scaricare mezza città per buttarla via.
+   Bagni e aree fumatori sono la stessa ricerca con un'etichetta diversa:
+   cambia la domanda a Overpass e come si racconta quello che torna. */
+const VICINI_RAGGI=[400,1200,3000];
+const VICINI={
+  bagno:{
+    ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico',
+    q:(r,lat,lng)=>`node["amenity"="toilets"](around:${r},${lat},${lng});way["amenity"="toilets"](around:${r},${lat},${lng});`,
+    nome:t=>t.name||t.operator||'Bagno pubblico',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      t.fee==='yes'?(t.charge?'a pagamento ('+t.charge+')':'a pagamento'):(t.fee==='no'?'gratuito':''),
+      t.wheelchair==='yes'?'accessibile':'',
+      t.changing_table==='yes'?'fasciatoio':''
+    ],
+    vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.'
+  },
+  fumo:{
+    ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori',
+    /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
+       mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
+    q:(r,lat,lng)=>`node["amenity"="smoking_area"](around:${r},${lat},${lng});way["amenity"="smoking_area"](around:${r},${lat},${lng});node["smoking"="designated"](around:${r},${lat},${lng});`,
+    nome:t=>t.name||t.operator||'Area fumatori',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:''),
+      t.covered==='yes'?'al coperto':(t.indoor==='yes'?'al chiuso':''),
+      t.shelter==='yes'?'con tettoia':'',
+      t.access==='customers'?'per i clienti':''
+    ],
+    vuoto:'Nel raggio di 3 km non risulta nessuna area fumatori sulla mappa.<br><br>Non vuol dire che non ce ne siano: sono mappate a macchia di leopardo. Vicino alle stazioni e ai konbini di solito ce n\'è una.'
+  }
+};
+let vicinoBusy=false,vicinoKind='bagno';
 
-function cercaBagno(){
-  if(bagnoBusy)return;
-  const body=document.getElementById('bagnoBody');
+function cercaBagno(){cercaVicino('bagno');}
+function cercaFumo(){cercaVicino('fumo');}
+function cercaVicino(kind){
+  if(vicinoBusy)return;
+  vicinoKind=VICINI[kind]?kind:'bagno';
+  const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
+  document.getElementById('bagnoTitle').textContent=v.ic+' '+v.titolo;
   body.innerHTML='<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">📍 Cerco dove sei...</div>';
   openSheet('mBagno');
   /* Se il GPS è già acceso e la posizione è fresca si parte da lì, senza
      chiedere di nuovo: sono secondi di attesa in meno proprio nel momento in
      cui uno ha fretta. */
-  if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return bagniIntorno(myPos.lat,myPos.lng);
+  if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return viciniIntorno(myPos.lat,myPos.lng);
   if(NATIVE&&nPlug('Geolocation')){
     const G=nPlug('Geolocation');
     G.getCurrentPosition({enableHighAccuracy:true})
-      .then(pos=>bagniIntorno(pos.coords.latitude,pos.coords.longitude))
-      .catch(()=>bagnoNienteGps());
+      .then(pos=>viciniIntorno(pos.coords.latitude,pos.coords.longitude))
+      .catch(()=>vicinoNienteGps());
     return;
   }
-  if(!navigator.geolocation)return bagnoNienteGps();
+  if(!navigator.geolocation)return vicinoNienteGps();
   navigator.geolocation.getCurrentPosition(
     pos=>{myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};myPosAt=Date.now();
-          bagniIntorno(pos.coords.latitude,pos.coords.longitude);},
-    ()=>bagnoNienteGps(),
+          viciniIntorno(pos.coords.latitude,pos.coords.longitude);},
+    ()=>vicinoNienteGps(),
     {enableHighAccuracy:true,timeout:12000,maximumAge:30000}
   );
 }
-function bagnoNienteGps(){
+function vicinoNienteGps(){
+  const v=VICINI[vicinoKind];
   document.getElementById('bagnoBody').innerHTML=
-    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare il bagno più vicino mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
-     <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
+    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare ${v.cosa==='bagno pubblico'?'il bagno più vicino':'l\'area fumatori più vicina'} mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
+     <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
 }
 
-async function bagniIntorno(lat,lng){
-  const body=document.getElementById('bagnoBody');
-  bagnoBusy=true;
+async function viciniIntorno(lat,lng){
+  const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
+  vicinoBusy=true;
   try{
     let trovati=[];
-    for(const r of BAGNO_RAGGI){
-      body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">🚻 Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
-      trovati=await bagniOverpass(lat,lng,r);
+    for(const r of VICINI_RAGGI){
+      body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
+      trovati=await viciniOverpass(vicinoKind,lat,lng,r);
       if(trovati.length)break;
     }
     if(!trovati.length){
-      body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.</div>
-        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
+      body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${v.vuoto}</div>
+        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
       return;
     }
     trovati.forEach(b=>{b.dist=Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}));});
     trovati.sort((a,b)=>a.dist-b.dist);
     body.innerHTML=trovati.slice(0,6).map((b,i)=>{
       const min=Math.max(1,Math.round(b.dist/TRAVEL_SPEED_KMH.walk/1000*60));
-      const extra=[b.aperto,b.pagamento,b.accessibile,b.fasciatoio].filter(Boolean).join(' · ');
+      const extra=(b.extra||[]).filter(Boolean).join(' · ');
       return `<div class="ms-row" style="cursor:default;align-items:center">
         <div style="flex:1;min-width:0">
           <div class="ms-t">${i===0?'⭐ ':''}${esc(b.nome)}</div>
@@ -5222,15 +5302,16 @@ async function bagniIntorno(lat,lng){
     }).join('')+
     `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>`;
   }catch(e){
-    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Non riesco a raggiungere la mappa dei bagni. Controlla la connessione e riprova.</div>
-      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaBagno()">Riprova</button>`;
-  }finally{bagnoBusy=false;}
+    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Non riesco a raggiungere la mappa. Controlla la connessione e riprova.</div>
+      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
+  }finally{vicinoBusy=false;}
 }
 
 /* Overpass restituisce sia nodi (un punto) sia aree (un edificio): le aree
    hanno il centro in "center", i nodi le coordinate addosso. */
-async function bagniOverpass(lat,lng,raggio){
-  const q=`[out:json][timeout:20];(node["amenity"="toilets"](around:${raggio},${lat},${lng});way["amenity"="toilets"](around:${raggio},${lat},${lng}););out center 30;`;
+async function viciniOverpass(kind,lat,lng,raggio){
+  const v=VICINI[kind];
+  const q=`[out:json][timeout:20];(${v.q(raggio,lat,lng)});out center 30;`;
   const res=await fetch('https://overpass-api.de/api/interpreter',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)
   });
@@ -5240,14 +5321,7 @@ async function bagniOverpass(lat,lng,raggio){
     const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);
     if(la==null||lo==null)return null;
     const t=e.tags||{};
-    return {
-      lat:la,lng:lo,
-      nome:t.name||t.operator||'Bagno pubblico',
-      aperto:t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
-      pagamento:t.fee==='yes'?(t.charge?'a pagamento ('+t.charge+')':'a pagamento'):(t.fee==='no'?'gratuito':''),
-      accessibile:t.wheelchair==='yes'?'accessibile':'',
-      fasciatoio:t.changing_table==='yes'?'fasciatoio':''
-    };
+    return {lat:la,lng:lo,nome:v.nome(t),extra:v.extra(t)};
   }).filter(Boolean);
 }
 
