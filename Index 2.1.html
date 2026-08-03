@@ -523,6 +523,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
+/* Sui telefoni stretti "🚆 16 min · 5.4 km 🚶🚆🚗 non necessario ✕" non ci sta,
+   e a essere tagliate contro il bordo erano proprio le iconcine del mezzo, che
+   sono l'unica cosa da toccare. Sotto i 430px la scritta lunga si accorcia
+   nella sola crocetta: si perde una parola, non un comando. */
+@media (max-width:430px){.tt-travel-x .lungo{display:none}}
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
 .tt-travel-toggle{cursor:pointer;opacity:.6}
 .tt-travel-toggle:active{opacity:1}
@@ -6021,13 +6026,35 @@ function buildTTDayInner(t,di){
      di fianco all'orario. La targhetta bassa a meta' strada faceva sembrare
      quel tratto diverso dagli altri senza motivo. */
   const SPAZIO_STRISCIA=24;
+  /* Lo spazio fra due tappe non e' sempre vuoto. Una tappa senza posizione
+     sulla mappa - un ristorante aggiunto a mano, per dire - il calcolo del
+     tratto la salta, perche' senza coordinate non si sa quanto disti: il
+     tratto viene misurato fra le due tappe che ce l'hanno, cioe' quella
+     prima e quella dopo di lei. Ma il buco fra quelle due lei lo occupa
+     eccome, e la striscia le finiva addosso coprendone l'orario.
+     Qui si guarda cosa c'e' davvero in mezzo e si tiene il pezzo di spazio
+     piu' grande che resta libero; se non ne resta abbastanza, il tratto va
+     scritto di fianco all'orario invece che disegnato. */
+  const bandaLibera=(cur,nxt)=>{
+    let y0=cur.top+cur.hei,y1=nxt.top;
+    tops.forEach(o=>{
+      if(o===cur||o===nxt)return;
+      /* Se stanno in colonne diverse non si toccano nemmeno. */
+      if(nxt.cols>1&&o.cols>1&&o.col!==nxt.col)return;
+      const a=o.top,b=o.top+o.hei;
+      if(b<=y0||a>=y1)return;
+      if(a-y0>=y1-b)y1=Math.min(y1,a);else y0=Math.max(y0,b);
+    });
+    return {y0,y1,h:y1-y0};
+  };
   const tratti=[];
   tops.forEach(nxt=>{
     if(!nxt.loc)return;
     const cur=tappaDaCuiSiArriva(tops,nxt);
     if(!cur||!cur.loc)return;   // niente prima: e' un ramo che parte dall'hotel
-    const spazio=nxt.top-(cur.top+cur.hei);
-    const tr={cur,nxt,spazio,gapStart:cur.r[1],gapEnd:nxt.r[0]};
+    const banda=bandaLibera(cur,nxt);
+    const spazio=banda.h;
+    const tr={cur,nxt,spazio,banda,gapStart:cur.r[1],gapEnd:nxt.r[0]};
     /* Quando non c'è spazio nemmeno per la targhetta bassa, la targhetta
        finiva sopra il riquadro di prima e ne copriva l'orario: si vedeva la
        distanza ma non si sapeva più a che ora fosse quella tappa. In quel
@@ -6053,15 +6080,15 @@ function buildTTDayInner(t,di){
   });
   const dm=d.travelMode||'walk';
   tratti.forEach(tr=>{
-    const {cur,nxt,spazio,gapStart,gapEnd}=tr;
+    const {cur,nxt,spazio,banda,gapStart,gapEnd}=tr;
     if(spazio<SPAZIO_STRISCIA)return;   // sta nella riga dell'orario, gia' scritta
     const lc=cur.loc,ln=nxt.loc;
     /* Il tratto è "di chi arriva", non "di chi parte": partendo dallo stesso
        posto in due direzioni diverse, ogni ramo si spegne e si cambia mezzo
        per conto suo. */
     const state=nxt.a.travelState;
-    // la striscia sta nel buco fra i due riquadri, senza coprire nessuno dei due
-    const gTop=cur.top+cur.hei+2,gH=Math.max(16,spazio-4);
+    // la striscia sta nello spazio libero, senza coprire nessun riquadro
+    const gTop=banda.y0+2,gH=Math.max(16,banda.h-4);
     /* Con i rami affiancati due strisce cadrebbero nello stesso punto e si
        coprirebbero: ciascuna sta nella colonna della tappa a cui porta. Con
        una colonna sola - il caso di tutti i giorni - e' tutta larghezza. */
@@ -6077,7 +6104,14 @@ function buildTTDayInner(t,di){
     }else{
       const segMode=nxt.a.segTravelMode,est=travelEstimate(d,hav(lc,ln),segMode,dwx&&dwx.precipitation>5);
       const modeBtn=(m,ic)=>`<span class="tt-travel-mode ${(segMode||dm)===m?'on':''}" onclick="event.stopPropagation();setSegTravelMode(${di},${nxt.a.id},'${m}')">${ic}</span>`;
-      html+=`<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})">non necessario ✕</span></div>`;
+      const quanto=`${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min · ${est.km} km${est.cost!=null?' · ~'+fmtMoney(est.cost,t.currency||'EUR'):''}`;
+      /* In mezza colonna - le giornate in cui il gruppo si divide - i tre
+         tasti del mezzo non ci stanno e finivano tagliati a meta' contro il
+         bordo. Li' resta quanto ci vuole e la crocetta per spegnere il
+         tratto; il mezzo si cambia dalla giornata, non da qui. */
+      html+=aCol
+        ? `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${quanto}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})">✕</span></div>`
+        : `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span>${quanto}</span><span class="tt-travel-modes">${modeBtn('walk','🚶')}${modeBtn('train','🚆')}${modeBtn('car','🚗')}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})"><span class="lungo">non necessario </span>✕</span></div>`;
     }
   });
   const pd=t.days[di-1];
