@@ -265,7 +265,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    appiattita. Adesso e' un textarea che parte alto come prima e cresce
    scrivendo, fino a un tetto oltre il quale scorre. */
 .chat-in-row textarea{flex:1;resize:none;min-height:46px;max-height:140px;overflow-y:auto}
-.chat-in-row button{flex-shrink:0;width:48px;padding:0;font-size:1.1rem}
+/* min-height come il campo di scrittura: senza, i tasti venivano alti 21px,
+   che con un dito si sbaglia. */
+.chat-in-row button{flex-shrink:0;width:48px;min-height:46px;padding:0;font-size:1.1rem}
+.chat-in-row button.clip{width:44px;font-size:1.05rem}
 /* Le proposte dell'IA: una riga per mossa, spuntabile una per una. */
 .ms-row{display:flex;gap:.7rem;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.7rem .8rem;margin-bottom:.5rem;cursor:pointer}
 .ms-row input{flex-shrink:0;width:20px;height:20px;margin-top:.1rem;accent-color:var(--green)}
@@ -991,7 +994,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <div class="chip-row" id="aiStarters"></div>
         <div class="chat-wrap">
           <div class="chat-msgs" id="chatMsgs"></div>
-          <div class="chat-in-row"><textarea id="chatInput" rows="1" placeholder="Chiedi, oppure incolla qui un itinerario..." onkeydown="chatTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="sendChat()">➤</button></div>
+          <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('chatPdf').click()" title="Allega un PDF">📎</button><input type="file" id="chatPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'chat')"><textarea id="chatInput" rows="1" placeholder="Chiedi, incolla un itinerario o allega un PDF..." onkeydown="chatTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="sendChat()">➤</button></div>
         </div>
       </div>
       <div id="impMode" style="display:none">
@@ -1214,9 +1217,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="regenPacking()">🔄 Aggiorna suggerimenti</button>
   <div class="card" style="margin-top:.9rem">
     <div class="card-h" style="margin-bottom:.3rem;font-size:.85rem">✦ Importa una lista</div>
-    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco, una voce per riga: le <b>aggiungo</b> a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.</p>
+    <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem">Incolla un elenco, una voce per riga, oppure allega un <b>PDF</b>: le <b>aggiungo</b> a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.</p>
     <textarea id="packImportText" placeholder="crema solare&#10;caricatore del telefono&#10;passaporto&#10;infradito" style="min-height:80px"></textarea>
-    <button class="btn btn-grad btn-block" style="margin-top:.5rem" onclick="importPackingText()">✦ Aggiungi e ordina per categoria</button>
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <button class="btn btn-grad" style="flex:1" onclick="importPackingText()">✦ Aggiungi e ordina</button>
+      <button class="btn btn-soft" style="flex:0 0 auto" onclick="document.getElementById('packPdf').click()">📄 Da un PDF</button>
+    </div>
+    <input type="file" id="packPdf" accept="application/pdf,.pdf" style="display:none" onchange="importPackingPDF(this)">
     <div id="packImportStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
   </div>
 </div></div>
@@ -1547,7 +1554,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="adqTitle">Assistente</div><button class="x x-close" onclick="closeSheet('mAiDay')">✕</button></div>
   <div class="chip-row" id="adqStarters" style="margin-bottom:.6rem"></div>
   <div class="chat-msgs" id="adqMsgs" style="min-height:110px;max-height:38dvh"></div>
-  <div class="chat-in-row"><textarea id="adqInput" rows="1" placeholder="Chiedi qualcosa su questa giornata..." onkeydown="adqTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="adqInvia()">➤</button></div>
+  <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('adqPdf').click()" title="Allega un PDF">📎</button><input type="file" id="adqPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'adq')"><textarea id="adqInput" rows="1" placeholder="Chiedi qualcosa o allega un PDF..." onkeydown="adqTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="adqInvia()">➤</button></div>
 </div></div>
 <div class="modal" id="mConfirm"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2381,6 +2388,84 @@ function editPackItem(id){
   p.label=v;savePacking(t,list);renderPacking();
 }
 function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filter(x=>x.id!==id);savePacking(t,list);renderPacking();}
+/* ===== LEGGERE UN PDF =====
+   Un itinerario scritto da qualcun altro, o la lista di cosa portarsi, quasi
+   sempre arriva in PDF: una pagina salvata, l'allegato di un'agenzia, quello
+   che ha sputato fuori un'altra IA. Costringere a riaprirlo, selezionare il
+   testo e incollarlo a mano e' proprio la fatica che l'app dovrebbe togliere.
+
+   Il testo si tira fuori qui nel telefono con pdf.js e poi si manda al modello
+   come se fosse stato incollato: cosi' non cambia niente nel ponte verso
+   Gemini, non si spediscono megabyte di file, e tutto quello che era gia'
+   collaudato - il riconoscimento dei posti, l'anteprima con le spunte, il
+   tasto Annulla - continua a valere.
+
+   Due cose il PDF non le puo' dare, e vanno dette invece che nascoste: se e'
+   una scansione (pagine che sono fotografie) dentro non c'e' nessun testo da
+   leggere, e se e' lunghissimo se ne prende solo l'inizio. */
+const PDF_CDN='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/';
+const PDF_MAX_PAGINE=40,PDF_MAX_CARATTERI=24000;
+let pdfLibPronta=null;
+/* Si scarica solo quando serve davvero: chi non allega mai un PDF non paga
+   mezzo megabyte di libreria a ogni apertura dell'app. */
+function caricaPdfLib(){
+  if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);
+  if(pdfLibPronta)return pdfLibPronta;
+  pdfLibPronta=new Promise((ok,no)=>{
+    const s=document.createElement('script');
+    s.src=PDF_CDN+'pdf.min.js';
+    s.onload=()=>{
+      if(!window.pdfjsLib){pdfLibPronta=null;return no(new Error('lettore-pdf'));}
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDF_CDN+'pdf.worker.min.js';
+      ok(window.pdfjsLib);
+    };
+    s.onerror=()=>{pdfLibPronta=null;no(new Error('lettore-pdf'));};
+    document.head.appendChild(s);
+  });
+  return pdfLibPronta;
+}
+/* pdf.js non restituisce righe ma pezzetti di testo con la loro posizione:
+   messi in fila senza guardare dove stanno, un elenco di venti voci diventa
+   una riga sola lunga un chilometro. Si va a capo quando cambia l'altezza. */
+function righeDaPdf(items){
+  const righe=[];let y=null,cur=[];
+  const chiudi=()=>{const r=cur.join('').trim();if(r)righe.push(r);cur=[];};
+  items.forEach(it=>{
+    const ny=it.transform?Math.round(it.transform[5]):y;
+    if(y!==null&&Math.abs(ny-y)>2)chiudi();
+    y=ny;cur.push(it.str||'');
+    if(it.hasEOL){chiudi();y=null;}
+  });
+  chiudi();
+  return righe.join('\n');
+}
+async function leggiPDF(file){
+  const lib=await caricaPdfLib();
+  const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const lette=Math.min(doc.numPages,PDF_MAX_PAGINE);
+  const pezzi=[];let quante=0;
+  for(let p=1;p<=lette;p++){
+    const tc=await (await doc.getPage(p)).getTextContent();
+    pezzi.push(righeDaPdf(tc.items));quante=p;
+    if(pezzi.join('\n').length>PDF_MAX_CARATTERI)break;
+  }
+  let testo=pezzi.join('\n').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  const tagliato=testo.length>PDF_MAX_CARATTERI||quante<doc.numPages;
+  if(testo.length>PDF_MAX_CARATTERI)testo=testo.slice(0,PDF_MAX_CARATTERI);
+  return {testo,pagine:doc.numPages,lette:quante,tagliato,
+          vuoto:testo.replace(/\s/g,'').length<40};
+}
+function motivoPDF(e){
+  const m=String((e&&e.message)||e||'');
+  if(/lettore-pdf/.test(m))return 'Non riesco a scaricare il lettore di PDF: la prima volta serve la rete.';
+  if(/[Pp]assword/.test(m))return 'Questo PDF è protetto da password: toglila e riprova.';
+  if(/[Ii]nvalid ?PDF|Unexpected/.test(m))return 'Questo file non sembra un PDF valido.';
+  return 'Non sono riuscito ad aprire il PDF.';
+}
+function pdfLetto(r){
+  return `Letto ${r.lette} ${r.lette===1?'pagina':'pagine'}${r.tagliato?` su ${r.pagine}: il resto era troppo lungo`:''}.`;
+}
+
 /* ===== IMPORTARE UNA LISTA BAGAGLI =====
    Prima l'importazione buttava tutto in una categoria chiamata "Importato" e
    cancellava quello che c'era: due cose sbagliate insieme. Una lista di venti
@@ -2440,6 +2525,76 @@ Rispondi SOLO con JSON, senza backtick:
   }catch(e){return null;}
 }
 
+/* Un PDF non e' un elenco pulito: dentro ci sono titoli, numeri di pagina,
+   intestazioni, frasi di contorno. Dividerlo per righe come si fa con il testo
+   incollato riempirebbe la valigia di "Pagina 3 di 7". Qui si chiede al
+   modello di fare le due cose insieme - trovare le voci vere e metterle in
+   categoria - perche' sono lo stesso giudizio. */
+async function bagagliDaTesto(testo,gia){
+  try{
+    /* Il controllo dei doppioni qui sotto confronta i nomi esatti, quindi
+       "magliette (5)" del PDF e "Magliette (4)" del suggerimento passavano
+       tutti e due. Chi legge il testo puo' vedere che sono la stessa cosa:
+       basta fargli sapere cosa c'e' gia' in valigia. */
+    const dentro=(gia&&gia.length)?`
+
+In valigia ci sono già queste, non ripeterle nemmeno scritte in modo diverso:
+${gia.join(', ')}`:'';
+    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:2000,
+      messages:[{role:"user",content:`Questo è il testo di un PDF. Tirane fuori solo le cose da mettere in valigia, e per ognuna la sua categoria.
+
+--- TESTO ---
+${testo}
+--- FINE ---${dentro}
+
+Le categorie possibili sono solo queste, nessun'altra: ${PACK_CAT.join(', ')}.
+
+Rispondi SOLO con JSON, senza backtick:
+{"voci":[{"nome":"crema solare","cat":"Igiene"}]}
+
+- il "nome" deve essere la cosa da portare, corta e in minuscolo: "caricatore del telefono", non "ricordati di portare il caricatore del telefono"
+- se accanto c'è una quantità tienila: "magliette (5)"
+- butta via tutto quello che non è un oggetto da mettere in valigia: titoli, numeri di pagina, intestazioni, date, prezzi, consigli, frasi di riempimento
+- se la stessa cosa compare più volte scritta in modi diversi, mettila una volta sola
+- "Documenti" per passaporto, biglietti, assicurazione, contanti e carte
+- "Elettronica" per caricatori, cavi, adattatori, cuffie, macchine fotografiche
+- "Igiene" per lavarsi, creme, trucco e medicinali
+- "Abbigliamento" per tutto quello che si indossa, scarpe comprese
+- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`}]
+    })});
+    const data=await res.json();
+    if(data&&data.error)return null;
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    const r=JSON.parse(m?m[0]:txt);
+    return (r.voci||[]).map(v=>({label:String(v.nome||'').trim(),cat:v.cat})).filter(v=>v.label);
+  }catch(e){return null;}
+}
+
+/* Inserire e' uguale da qualunque parte arrivino le voci - incollate, da un
+   PDF - quindi sta in un posto solo. */
+function aggiungiVociBagagli(t,voci){
+  const list=getPacking(t);
+  /* Chi incolla una lista trovata online la incolla spesso due volte, o sopra
+     i suggerimenti che l'app aveva gia' messo: senza questo controllo si
+     ritroverebbe "spazzolino" tre volte. */
+  const gia=new Set(list.map(x=>String(x.label||'').toLowerCase().trim()));
+  let messe=0,doppi=0;
+  voci.forEach(v=>{
+    const label=String(v.label||'').trim();if(!label)return;
+    const k=label.toLowerCase();
+    if(gia.has(k)){doppi++;return;}
+    gia.add(k);
+    list.push({id:uid(),cat:PACK_CAT.includes(v.cat)?v.cat:categoriaLocale(label),label,checked:false,custom:true});
+    messe++;
+  });
+  savePacking(t,list);renderPacking();
+  const parti=[`${messe} ${messe===1?'voce aggiunta':'voci aggiunte'}`];
+  if(doppi)parti.push(`${doppi} ${doppi===1?"c'era già":"c'erano già"}`);
+  return parti;
+}
+
 let packImportBusy=false;
 async function importPackingText(){
   const t=T();if(!t||packImportBusy)return;
@@ -2451,26 +2606,28 @@ async function importPackingText(){
   st.textContent='✦ Guardo in che categoria va ognuna...';
   try{
     const cats=await categorizzaBagagli(items);
-    const list=getPacking(t);
-    /* Chi incolla una lista trovata online la incolla spesso due volte, o sopra
-       i suggerimenti che l'app aveva gia' messo: senza questo controllo si
-       ritroverebbe "spazzolino" tre volte. */
-    const gia=new Set(list.map(x=>String(x.label||'').toLowerCase().trim()));
-    let messe=0,doppi=0;
-    items.forEach((label,i)=>{
-      const k=label.toLowerCase().trim();
-      if(gia.has(k)){doppi++;return;}
-      gia.add(k);
-      list.push({id:uid(),cat:(cats&&cats[i])||categoriaLocale(label),label,checked:false,custom:true});
-      messe++;
-    });
-    savePacking(t,list);
+    const parti=aggiungiVociBagagli(t,items.map((label,i)=>({label,cat:cats&&cats[i]})));
     document.getElementById('packImportText').value='';
-    renderPacking();
-    const parti=[`${messe} ${messe===1?'voce aggiunta':'voci aggiunte'}`];
-    if(doppi)parti.push(`${doppi} ${doppi===1?"c'era già":"c'erano già"}`);
     if(!cats)parti.push('categorie indovinate senza IA: controllale');
     st.textContent='✅ '+parti.join(' · ');
+  }finally{packImportBusy=false;}
+}
+async function importPackingPDF(inp){
+  const f=(inp.files||[])[0];inp.value='';
+  const t=T();if(!f||!t||packImportBusy)return;
+  const st=document.getElementById('packImportStatus');
+  packImportBusy=true;
+  try{
+    st.textContent='✦ Apro il PDF e leggo...';
+    let r;
+    try{r=await leggiPDF(f);}
+    catch(e){st.textContent='⚠️ '+motivoPDF(e);return;}
+    if(r.vuoto){st.textContent='⚠️ Questo PDF non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c\'è niente da leggere.';return;}
+    st.textContent=`✦ ${pdfLetto(r)} Cerco le cose da mettere in valigia...`;
+    const voci=await bagagliDaTesto(r.testo,getPacking(t).map(x=>x.label));
+    if(!voci){st.textContent='⚠️ L\'IA non è raggiungibile: copia l\'elenco qui sopra e usa l\'altro tasto.';return;}
+    if(!voci.length){st.textContent='Non ho trovato cose da mettere in valigia in questo PDF.';return;}
+    st.textContent='✅ '+[`da ${f.name}`].concat(aggiungiVociBagagli(t,voci)).join(' · ');
   }finally{packImportBusy=false;}
 }
 
@@ -2858,9 +3015,9 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li', e dentro si puo' anche incollare un elenco che viene diviso per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li', e dentro si puo' anche incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
-- Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
+- Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno. Identifica: si fotografa un posto e l'app dice cos'e'.
@@ -2986,6 +3143,44 @@ async function sendChat(){
     giorno:(typeof ttDay==='number'&&T()&&T().days[ttDay])?ttDay:0
   });
   misuraChat();
+}
+/* La graffetta accanto alla riga di scrittura, in tutte e due le chat.
+   Quello che c'e' gia' scritto nel campo non si butta: "mettili nel giorno 3"
+   e' l'unica cosa che dice al lettore dove infilare quello che trova, e chi
+   allega un PDF lo scrive li'. */
+let allegatoBusy=false;
+async function allegaPDF(inp,quale){
+  const files=[...(inp.files||[])];inp.value='';
+  if(!files.length||allegatoBusy)return;
+  const adq=quale==='adq';
+  const msg=adq?adqMsg:addMsg;
+  const box=document.getElementById(adq?'adqMsgs':'chatMsgs');
+  const campo=document.getElementById(adq?'adqInput':'chatInput');
+  const t=T();
+  if(!t||!t.days.length){msg('ai','Crea prima un viaggio con dei giorni: è lì che devo mettere quello che leggo.');return;}
+  allegatoBusy=true;
+  const nota=(campo.value||'').trim();
+  try{
+    const pezzi=[];
+    for(const f of files){
+      msg('me','📄 '+f.name);
+      const attesa=msg('ai typing','✦ Apro il PDF e leggo...');
+      try{
+        const r=await leggiPDF(f);
+        attesa.remove();
+        if(r.vuoto){msg('ai',`"${f.name}" non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c'è niente da leggere. Se puoi, riesporta il PDF dal programma che l'ha fatto.`);continue;}
+        msg('ai',pdfLetto(r));
+        pezzi.push(files.length>1?`--- ${f.name} ---\n${r.testo}`:r.testo);
+      }catch(e){attesa.remove();msg('ai','⚠️ '+motivoPDF(e));}
+    }
+    if(!pezzi.length)return;
+    campo.value='';campo.style.height='';
+    msg('ai','Leggo il viaggio, ti dico cosa metterei in programma e cosa lascio fuori.');
+    await pianificaDaTesto((nota?nota+'\n\n':'')+pezzi.join('\n\n'),
+      {msg,box,giorno:adq?ttDay:((typeof ttDay==='number'&&T()&&T().days[ttDay])?ttDay:0)},
+      {daPdf:true});
+    if(!adq)misuraChat();
+  }finally{allegatoBusy=false;}
 }
 async function aiAddPlace(name){
   toast('🔍 Cerco '+name);
@@ -6780,7 +6975,7 @@ function sembraUnIncollato(s){
 }
 
 let itinContatore=0;
-async function pianificaDaTesto(testo,ui){
+async function pianificaDaTesto(testo,ui,opt){
   const t=T();
   if(!t||!t.days.length){addMsg('ai','Crea prima un viaggio con dei giorni: è lì che devo metterli.');return;}
   if(itinBusy)return;
@@ -6811,6 +7006,20 @@ async function pianificaDaTesto(testo,ui){
       const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time} ${a.name}`).join('; ');
       return `giorno ${i} — ${d.date}${gs?` (${gs})`:''}${gia?` — c'è già: ${gia}`:' — libero'}`;
     }).join('\n');
+    /* Un PDF non e' un testo scritto per essere letto da un programma: dentro
+       ci finiscono intestazioni, numeri di pagina, prezzi, codici di
+       prenotazione, voli e hotel. Prendere tutto per buono riempirebbe la
+       giornata di roba che non si visita, quindi qui si chiede esplicitamente
+       di scremare e - la parte che conta - di dire cosa ha buttato via e
+       perche', invece di farlo sparire in silenzio. */
+    const daPdf=(opt&&opt.daPdf)?`
+
+Questo testo arriva da un PDF, quindi guardalo con occhio critico:
+- tieni solo i posti che si visitano davvero
+- butta via voli, treni, hotel, prezzi, codici di prenotazione, numeri di pagina, intestazioni e frasi di riempimento
+- se lo stesso posto compare più volte scritto in modi diversi, mettilo una volta sola
+- se una giornata risulta troppo carica, o ha posti lontanissimi fra loro, lascia fuori quello che non ci sta invece di ammucchiare tutto
+- nel "commento" scrivi anche cosa hai lasciato fuori e perché`:'';
     const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       model:"claude-sonnet-4-6",max_tokens:4000,
       messages:[{role:"user",content:`Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
@@ -6822,7 +7031,7 @@ ${testo}
 I giorni del viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}:
 ${giorni}
 
-Metti i posti nel giorno che ti ho chiesto. Se non ho detto quale, usa il giorno ${(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0}. Se ho indicato più giorni, dividili come ho detto io.
+Metti i posti nel giorno che ti ho chiesto. Se non ho detto quale, usa il giorno ${(ui&&t.days[ui.giorno])?ui.giorno:((typeof ttDay==='number'&&t.days[ttDay])?ttDay:0)}. Se ho indicato più giorni, dividili come ho detto io.
 
 Rispondi SOLO con JSON, senza backtick:
 {"commento":"una o due frasi: quali posti hai riconosciuto, dove li hai messi e con che criterio li hai ordinati","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve","cerca":"nome esatto + città, per la mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor","perche":"una riga"}]}]}
@@ -6835,7 +7044,7 @@ Regole ferree:
 - se un posto ha un orario di apertura noto (i negozi aprono tardi, i musei chiudono presto, molti musei sono chiusi il lunedì) tienine conto
 - pranzo e cena vanno alla loro ora
 - non sovrapporti a quello che nel giorno c'è già
-- in "perche" usa il commento che c'era di fianco al posto nel testo, se c'era: è il motivo per cui chi ha scritto l'ha messo lì`}]
+- in "perche" usa il commento che c'era di fianco al posto nel testo, se c'era: è il motivo per cui chi ha scritto l'ha messo lì${daPdf}`}]
     })});
     const data=await res.json();
     if(data&&data.error){fallito('⚠️ '+motivoAI(data.error.message));return;}
@@ -6849,8 +7058,11 @@ Regole ferree:
          davanti a un messaggio di errore per una cosa che non aveva chiesto:
          si risponde come si sarebbe risposto normalmente. */
       stato.textContent='';
-      if(ui)assistenteChiedi(testo,Object.assign({},ui,{saltaIncollato:true}));
-      else fallito('Non ci ho trovato posti da mettere in programma.');
+      /* Con un PDF invece si sa gia' che era un allegato e non una domanda:
+         rimandarlo in chiacchierata vorrebbe dire spedire venti pagine al
+         modello per farsi rispondere a vuoto. */
+      if(ui&&!(opt&&opt.daPdf))assistenteChiedi(testo,Object.assign({},ui,{saltaIncollato:true}));
+      else fallito((opt&&opt.daPdf)?'In questo PDF non ho trovato posti da mettere in programma: forse è un documento di altro tipo.':'Non ci ho trovato posti da mettere in programma.');
       return;
     }
     itinProposta={giorni:giorniOk,commento:r.commento||''};

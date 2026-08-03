@@ -75,9 +75,18 @@ Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
 | `verificaOrari` | 5975 | Cerca sul web a che ora aprono e chiudono le tappe |
 | `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
 | `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
-| `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA e lo mette in un giorno |
+| `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA — incollato o allegato in PDF — e lo mette in un giorno |
+| `categorizzaBagagli` | 2470 | Mette in categoria le voci di una lista bagagli incollata |
+| `bagagliDaTesto` | 2500 | Tira fuori le voci da mettere in valigia dal testo di un PDF, già in categoria |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
+
+**I PDF non passano dal ponte.** Il testo si tira fuori qui nel telefono con
+`pdf.js` (scaricato da jsDelivr la prima volta che si allega un PDF), e poi si
+manda al modello come se fosse stato incollato a mano. Quindi non c'è niente da
+cambiare nel Worker, e il file non esce mai dal telefono. L'unica cosa che il
+PDF non può dare è il testo di una scansione: se le pagine sono fotografie,
+dentro non c'è nessun testo da leggere, e l'app lo dice invece di far finta.
 
 **Un punto da tenere aggiornato a mano:** dentro `Index 2.1.html` c'è una
 costante `MAPPA_APP` che descrive all'assistente com'è fatta l'app — quali voci
