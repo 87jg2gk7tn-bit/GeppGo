@@ -554,6 +554,16 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-mode.on{opacity:1}
 
 .edit-ic{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
+/* Il tic per segnare chi ha gia' dato la sua parte: verde pieno quando non
+   manca piu' nessuno, contornato finche' qualcuno deve ancora dare. */
+.exp-btns{display:flex;flex-direction:column;gap:.3rem;flex-shrink:0}
+.tic-ic{width:30px;height:30px;border-radius:9px;border:1px solid #9CBF6E;background:#F0F6E6;color:#4E7A22;font-size:.9rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
+.tic-ic.on{background:#4E7A22;border-color:#4E7A22;color:#fff}
+.exp-manca{font-size:.7rem;font-weight:700;color:var(--clay-deep);margin-top:.1rem;white-space:nowrap}
+.exp-manca.ok{color:#4E7A22}
+body.dark .tic-ic{background:#25301A;border-color:#4E7A22;color:#A8CF7A}
+body.dark .tic-ic.on{background:#4E7A22;color:#fff}
+body.dark .exp-manca.ok{color:#A8CF7A}
 .edit-ic:active{transform:scale(.92)}
 input[type="date"],input[type="time"]{-webkit-appearance:none;appearance:none;min-height:48px;width:100%;display:block;line-height:1.3}
 
@@ -1289,6 +1299,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t">Aggiungi persona</div><button class="x x-close" onclick="closeSheet('mPerson')">✕</button></div>
   <div class="fg"><label>Nome</label><input id="personName" placeholder="Marco"></div>
   <button class="btn btn-blue btn-block" onclick="addPerson()">Aggiungi</button>
+</div></div>
+<div class="modal" id="mSaldoExp"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">✓ Chi ha già dato</div><button class="x x-close" onclick="closeSheet('mSaldoExp')">✕</button></div>
+  <div class="card-sub" id="saldoExpSub" style="margin:-.4rem 0 .8rem"></div>
+  <div id="saldoExpList"></div>
 </div></div>
 <div class="modal" id="mExpense"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3076,7 +3092,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
-- Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
+- Spese: chi ha pagato cosa e i conti del gruppo. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
@@ -4090,7 +4106,15 @@ function renderTricount(){
           const payer=t.participants.find(p=>p.id===e.payerId),ic=(CATS.find(x=>x.k===e.category)||{i:'🧾'}).i;
           const uamong=[...new Set(e.splitAmong||[])];const mine=me&&uamong.includes(me.id)?e.amount/uamong.length:0;
           const orig=(e.origCurrency&&e.origCurrency!==cur)?`<span class="exp-orig">${fmtMoney(e.origAmount,e.origCurrency)}</span> · `:'';
-          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong></div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtVista(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}</div><button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div>`;
+          const q=quoteSpesa(t,e);
+          /* Quanti devono ancora dare la loro parte. Sul "tutti a posto" si
+             scrive, perche' e' l'informazione che si cerca guardando la riga:
+             di questa spesa non devo piu' rincorrere nessuno. */
+          const manca=q.debitori.length?(q.mancanti.length
+            ?`<div class="exp-manca">${q.mancanti.length===1?'1 persona mancante':q.mancanti.length+' persone mancanti'}</div>`
+            :`<div class="exp-manca ok">tutti a posto</div>`):'';
+          const tic=q.debitori.length?`<button class="tic-ic ${q.mancanti.length?'':'on'}" title="Chi ha già dato la sua parte" onclick="event.stopPropagation();openSaldoSpesa(${e.id})">✓</button>`:'';
+          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong></div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtVista(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
         }).join('')}</div>`;
       }).join('');
     }
@@ -4106,10 +4130,58 @@ function renderTricount(){
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
     ${body}<div style="display:flex;justify-content:center;margin:1.1rem 0 .5rem"><button class="btn btn-grad" style="padding:.95rem 2.4rem" onclick="openExpense()">Aggiungi spesa</button></div>`;
 }
+/* ===== CHI HA GIA' DATO LA SUA PARTE, SPESA PER SPESA =====
+   Il saldo del gruppo dice quanto deve ognuno in totale, ma quando qualcuno
+   ti allunga i soldi lo fa per una cosa precisa: "ecco la mia parte del
+   volo". Segnarlo sulla spesa - una spuntata sul nome - e' il gesto che si
+   fa davvero, e da li' il conto si aggiusta da solo. */
+function quoteSpesa(t,e){
+  const among=[...new Set((e.splitAmong&&e.splitAmong.length)?e.splitAmong:t.participants.map(p=>p.id))];
+  const share=among.length?e.amount/among.length:0;
+  /* Chi ha pagato non deve niente a se stesso. */
+  const debitori=among.filter(id=>id!==e.payerId);
+  const saldati=(e.settled||[]).filter(id=>debitori.includes(id));
+  return {among,share,debitori,saldati,mancanti:debitori.filter(id=>!saldati.includes(id))};
+}
+function nomeDi(t,id){
+  const p=(t.participants||[]).find(x=>x.id===id)||(t.guests||[]).find(x=>x.id===id);
+  return p?p.name:'?';
+}
+let saldoExpId=null;
+function openSaldoSpesa(id){
+  const t=T();if(!t)return;
+  saldoExpId=id;renderSaldoSpesa();openSheet('mSaldoExp');
+}
+function renderSaldoSpesa(){
+  const t=T(),e=t&&(t.expenses||[]).find(x=>x.id===saldoExpId);
+  const box=document.getElementById('saldoExpList');if(!box)return;
+  if(!e){closeSheet('mSaldoExp');return;}
+  const cur=t.currency||'EUR',q=quoteSpesa(t,e);
+  document.getElementById('saldoExpSub').innerHTML=
+    `<b>${esc(e.desc)}</b> · ${fmtVista(e.amount,cur)} anticipati da <b>${esc(nomeDi(t,e.payerId))}</b>. `+
+    `Tocca chi ti ha già dato la sua parte di ${fmtVista(q.share,cur)}.`;
+  box.innerHTML=`<div class="card" style="padding:.35rem .5rem">${q.debitori.map(id=>{
+    const fatto=q.saldati.includes(id);
+    return `<div class="person" style="cursor:pointer" onclick="toggleSaldoQuota(${id})"><div class="person-l"><div class="avatar ${fatto?'me':''}">${esc(String(nomeDi(t,id)).charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(nomeDi(t,id))}</div><div class="person-tag">${fatto?'ha dato la sua parte':'deve ancora dare'}</div></div></div><div style="display:flex;align-items:center;gap:.5rem"><span style="font-weight:800;font-size:.9rem;${fatto?'opacity:.45;text-decoration:line-through':''}">${fmtVista(q.share,cur)}</span><span class="tic-ic ${fatto?'on':''}">${fatto?'✓':''}</span></div></div>`;
+  }).join('')}</div>
+  <div style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">${q.mancanti.length?`Mancano ancora <b>${q.mancanti.length===1?'1 persona':q.mancanti.length+' persone'}</b>: ${esc(q.mancanti.map(id=>nomeDi(t,id)).join(', '))}.`:'Tutti hanno dato la loro parte per questa spesa.'} Tocca di nuovo un nome per tornare indietro.</div>`;
+}
+function toggleSaldoQuota(pid){
+  const t=T(),e=t&&(t.expenses||[]).find(x=>x.id===saldoExpId);if(!e)return;
+  const s=new Set(e.settled||[]);
+  if(s.has(pid))s.delete(pid);else s.add(pid);
+  e.settled=[...s];
+  save();renderSaldoSpesa();renderTricount();renderBudget();
+  toast(s.has(pid)?`${nomeDi(t,pid)} ha dato la sua parte`:`${nomeDi(t,pid)} torna in debito`);
+}
 function computeSettle(t){
   const bal={};t.participants.forEach(p=>bal[p.id]=0);
   (t.guests||[]).forEach(g=>{if(bal[g.id]==null)bal[g.id]=0;});
-  t.expenses.forEach(e=>{if(e.paid===false)return;const among=[...new Set((e.splitAmong&&e.splitAmong.length)?e.splitAmong:t.participants.map(p=>p.id))];const share=e.amount/among.length;bal[e.payerId]=(bal[e.payerId]||0)+e.amount;among.forEach(id=>bal[id]=(bal[id]||0)-share);});
+  t.expenses.forEach(e=>{if(e.paid===false)return;const among=[...new Set((e.splitAmong&&e.splitAmong.length)?e.splitAmong:t.participants.map(p=>p.id))];const share=e.amount/among.length;bal[e.payerId]=(bal[e.payerId]||0)+e.amount;among.forEach(id=>bal[id]=(bal[id]||0)-share);
+    /* Chi ha gia' dato la sua parte per questa spesa e' pari: la sua quota
+       torna a lui e va via da chi aveva anticipato. */
+    if(e.type!=='transfer')quoteSpesa(t,e).saldati.forEach(id=>{bal[id]=(bal[id]||0)+share;bal[e.payerId]=(bal[e.payerId]||0)-share;});
+  });
   const cred=[],deb=[];
   Object.entries(bal).forEach(([id,v])=>{if(v>0.01)cred.push({id:parseInt(id),v});else if(v<-0.01)deb.push({id:parseInt(id),v:-v});});
   cred.sort((a,b)=>b.v-a.v);deb.sort((a,b)=>b.v-a.v);
