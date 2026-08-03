@@ -522,6 +522,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-child:active{transform:scale(.98)}
 .tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
+/* La cifra nella seconda valuta: piccola e smorzata, perche' e' un'idea di
+   quanto sia, non il numero che si paga. */
+.cur-alt{display:block;font-size:.72rem;font-weight:700;color:var(--ink-faint);white-space:nowrap;margin-top:.05rem}
+.mh-lbl .cur-alt,.mh-me .cur-alt,.bal+.cur-alt{display:inline;margin:0}
+/* Dentro il riquadro colorato il grigio non si legge: si prende il colore
+   di li' e si smorza. */
+.money-hero .cur-alt,.budget-hero .cur-alt{color:inherit;opacity:.72;margin-left:.3rem}
+.mh-cur{margin-top:.35rem}
+.cur-alt-sel{width:auto;min-width:0;padding:.15rem 1.4rem .15rem .5rem;font-size:.74rem;font-weight:700;height:auto;min-height:0;background-position:right .35rem center}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 /* Sui telefoni stretti "🚆 16 min · 5.4 km 🚶🚆🚗 non necessario ✕" non ci sta,
    e a essere tagliate contro il bordo erano proprio le iconcine del mezzo, che
@@ -1644,7 +1653,12 @@ const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
+/* I cambi si tengono anche fra un'apertura e l'altra: in viaggio la rete c'e'
+   a tratti, e senza questo la seconda valuta sparirebbe proprio quando serve.
+   Restano validi sei ore, poi si riprovano. */
 let rateCache={};
+try{const g=JSON.parse(localStorage.getItem('geppgo2_cambi')||'{}');if(g&&typeof g==='object')rateCache=g;}catch(e){}
+function salvaCambi(){try{localStorage.setItem('geppgo2_cambi',JSON.stringify(rateCache));}catch(e){}}
 let scanTarget=null;
 let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},syncT=null;
 /* lastPush deve sopravvivere ai riavvii dell'app: altrimenti, ad ogni riapertura,
@@ -3066,7 +3080,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
-- Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
+- Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, accanto a ogni cifra si legge anche una seconda valuta (in un viaggio non in euro compare l'euro da sola): si cambia o si spegne dal tastino "JPY e EUR" in cima.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
@@ -4015,8 +4029,53 @@ function fillCurrencySelect(sel){sel.innerHTML=CURR.map(c=>`<option value="${c.c
 async function getRate(from,to){
   if(from===to)return 1;const key=from,now=Date.now();
   if(rateCache[key]&&(now-rateCache[key].t)<6*3600*1000&&rateCache[key].rates[to])return rateCache[key].rates[to];
-  try{const r=await fetch(`https://open.er-api.com/v6/latest/${from}`);const d=await r.json();if(d&&d.rates){rateCache[key]={t:now,rates:d.rates};return d.rates[to]||1;}}catch(e){}
+  try{const r=await fetch(`https://open.er-api.com/v6/latest/${from}`);const d=await r.json();if(d&&d.rates){rateCache[key]={t:now,rates:d.rates};salvaCambi();return d.rates[to]||1;}}catch(e){}
   return 1;
+}
+
+/* ===== LA SECONDA VALUTA =====
+   Un viaggio in Giappone ha i conti in yen, ed e' giusto: le spese si fanno
+   in yen. Ma "12.400" non dice niente a chi ragiona in euro, e per capire se
+   una cena e' cara tocca aprire la calcolatrice. Qui accanto a ogni cifra ne
+   compare una seconda, piccola, nella valuta che si sceglie: quella vera
+   resta la prima, la seconda e' solo per farsi un'idea.
+   Il cambio si prende una volta e vale per tutte le cifre della pagina. */
+function valutaAlt(cur){
+  /* Se non si e' mai scelto niente e il viaggio non e' in euro, l'euro si
+     mette da solo: e' il caso di chi apre l'app e si chiede "ma quanto e'?". */
+  const v=(app.curAlt==null)?(cur==='EUR'?'':'EUR'):app.curAlt;
+  return (v&&v!==cur)?v:'';
+}
+function tassoPronto(from,to){
+  if(from===to)return 1;
+  const c=rateCache[from];
+  if(c&&(Date.now()-c.t)<6*3600*1000&&c.rates&&c.rates[to])return c.rates[to];
+  return null;
+}
+let _tassoInCorso='';
+function assicuraTasso(from,to,poi){
+  if(!to||from===to||tassoPronto(from,to)!=null||_tassoInCorso===from+to)return;
+  _tassoInCorso=from+to;
+  getRate(from,to).finally(()=>{_tassoInCorso='';if(poi)poi();});
+}
+/* La cifra piccola di fianco. Vuota se la seconda valuta non c'e' o se il
+   cambio non e' ancora arrivato: meglio niente che un numero inventato. */
+function alt(a,cur){
+  /* Sullo zero non c'e' niente da convertire: "≈ €0,00" sotto ogni categoria
+     vuota e' solo rumore. */
+  if(!a)return'';
+  const v=valutaAlt(cur);if(!v)return'';
+  const r=tassoPronto(cur,v);if(r==null)return'';
+  return `<span class="cur-alt">≈ ${fmtMoney(a*r,v)}</span>`;
+}
+function setCurAlt(v){app.curAlt=v||'';save();renderTricount();renderBudget();}
+function curAltSel(cur){
+  const v=valutaAlt(cur);
+  const lista=[cur].concat(CURR.map(c=>c.c).filter(c=>c!==cur));
+  return `<select class="cur-alt-sel" onchange="setCurAlt(this.value===${jesc(cur)}?'':this.value)" aria-label="Seconda valuta">`+
+    `<option value="${cur}" ${v?'':'selected'}>solo ${cur}</option>`+
+    lista.filter(c=>c!==cur).map(c=>`<option value="${c}" ${c===v?'selected':''}>${cur} e ${c}</option>`).join('')+
+    `</select>`;
 }
 let moneySeg='list';
 function setMoney(m){moneySeg=m;renderTricount();}
@@ -4024,6 +4083,9 @@ function renderTricount(){
   const t=T(),c=document.getElementById('tricountBody');
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">💸</div><div class="empty-t">Crea un viaggio per dividere le spese</div><button class="btn btn-grad" onclick="openNewTrip()">Nuovo viaggio</button></div>`;return;}
   const cur=t.currency||'EUR',{bal,txns}=computeSettle(t),total=t.expenses.reduce((s,e)=>s+((e.type==='transfer'||e.paid===false)?0:e.amount),0),planned=t.expenses.reduce((s,e)=>s+((e.type!=='transfer'&&e.paid===false)?e.amount:0),0);
+  /* Il cambio arriva dopo: quando c'e', si ridisegna e le cifre piccole
+     compaiono. Finche' non c'e', si legge solo la valuta del viaggio. */
+  assicuraTasso(cur,valutaAlt(cur),()=>{renderTricount();renderBudget();});
   const meT=t.participants.find(pp=>pp.isMe);
   const plannedMine=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid!==false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((meT&&u.includes(meT.id))?e.amount/u.length:0);},0);
   const me=t.participants.find(p=>p.isMe),myBal=me?(bal[me.id]||0):0;
@@ -4036,23 +4098,23 @@ function renderTricount(){
       body=Object.keys(byDay).map(d=>{
         const lbl=d?new Date(d).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}):'Senza data';
         return `<div class="section-label">${lbl}</div><div class="card" style="padding:.35rem .5rem">${byDay[d].map(e=>{
-          if(e.type==='transfer'){const f2=t.participants.find(p=>p.id===e.payerId),g2=t.participants.find(p=>p.id===e.splitAmong[0]);return `<div class="exp-row" onclick="delExpense(${e.id})"><div class="cat-ic">↔</div><div class="exp-info"><div class="exp-d">Rimborso</div><div class="exp-meta">${esc(f2?.name||'?')} → ${esc(g2?.name||'?')} · tocca per annullare</div></div><div class="exp-amt" style="color:var(--green-deep)">${fmtMoney(e.amount,cur)}</div></div>`;}
+          if(e.type==='transfer'){const f2=t.participants.find(p=>p.id===e.payerId),g2=t.participants.find(p=>p.id===e.splitAmong[0]);return `<div class="exp-row" onclick="delExpense(${e.id})"><div class="cat-ic">↔</div><div class="exp-info"><div class="exp-d">Rimborso</div><div class="exp-meta">${esc(f2?.name||'?')} → ${esc(g2?.name||'?')} · tocca per annullare</div></div><div style="text-align:right"><div class="exp-amt" style="color:var(--green-deep)">${fmtMoney(e.amount,cur)}</div>${alt(e.amount,cur)}</div></div>`;}
           const payer=t.participants.find(p=>p.id===e.payerId),ic=(CATS.find(x=>x.k===e.category)||{i:'🧾'}).i;
           const uamong=[...new Set(e.splitAmong||[])];const mine=me&&uamong.includes(me.id)?e.amount/uamong.length:0;
           const orig=(e.origCurrency&&e.origCurrency!==cur)?`<span class="exp-orig">${fmtMoney(e.origAmount,e.origCurrency)}</span> · `:'';
-          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong></div></div><div style="text-align:right"><div class="exp-amt">${fmtMoney(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtMoney(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}</div><button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div>`;
+          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong></div></div><div style="text-align:right"><div class="exp-amt">${fmtMoney(e.amount,cur)}</div>${alt(e.amount,cur)}${mine?`<div class="exp-mine">tu ${fmtMoney(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}</div><button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div>`;
         }).join('')}</div>`;
       }).join('');
     }
   } else {
-    body=`<div class="section-label">Saldi</div><div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${Math.abs(b)<0.01?'in pari':(b>0?'deve ricevere':'deve dare')}</div></div></div><div class="bal ${b>=0?'pos':'neg'}">${Math.abs(b)<0.01?'—':(b>0?'+':'−')+fmtMoney(Math.abs(b),cur)}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
-      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span>${(me&&me.id===x.to)?`<button class="chip green" style="margin-left:.4rem" onclick="markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">Pagato</button>`:''}</div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
+    body=`<div class="section-label">Saldi</div><div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${Math.abs(b)<0.01?'in pari':(b>0?'deve ricevere':'deve dare')}</div></div></div><div style="text-align:right"><div class="bal ${b>=0?'pos':'neg'}">${Math.abs(b)<0.01?'—':(b>0?'+':'−')+fmtMoney(Math.abs(b),cur)}</div>${Math.abs(b)<0.01?'':alt(Math.abs(b),cur)}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
+      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep);text-align:right">${fmtMoney(x.amount,cur)}${alt(x.amount,cur)}</span>${(me&&me.id===x.to)?`<button class="chip green" style="margin-left:.4rem" onclick="markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">Pagato</button>`:''}</div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
-  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone · ${cur}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi">🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
-    <div class="mh-tot">${fmtMoney(total,cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtMoney(planned,cur)} previste dal gruppo · tua parte ${fmtMoney(plannedMine,cur)}</div>`:``}
-    <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?`Ti devono ${fmtMoney(myBal,cur)}`:`Devi ${fmtMoney(Math.abs(myBal),cur)}`)}</div></div>
+  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone</div><div class="mh-cur">${curAltSel(cur)}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi">🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
+    <div class="mh-tot">${fmtMoney(total,cur)}</div><div class="mh-lbl">spesa totale del viaggio${alt(total,cur)?' · '+alt(total,cur):''}</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtMoney(planned,cur)}${alt(planned,cur)} previste dal gruppo · tua parte ${fmtMoney(plannedMine,cur)}${alt(plannedMine,cur)}</div>`:``}
+    <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?`Ti devono ${fmtMoney(myBal,cur)}${alt(myBal,cur)}`:`Devi ${fmtMoney(Math.abs(myBal),cur)}${alt(Math.abs(myBal),cur)}`)}</div></div>
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
     ${body}<div style="display:flex;justify-content:center;margin:1.1rem 0 .5rem"><button class="btn btn-grad" style="padding:.95rem 2.4rem" onclick="openExpense()">Aggiungi spesa</button></div>`;
 }
@@ -4379,14 +4441,15 @@ function renderBudget(){
   const minePlan=t.expenses.reduce((s2,e)=>{const u=[...new Set(e.splitAmong||[])];return s2+((e.paid===false&&e.type!=='transfer'&&u.includes(pid))?e.amount/u.length:0);},0);
   const totGroup=t.expenses.reduce((s2,e)=>s2+(e.type==='transfer'?0:e.amount),0);
   const mineCnt=t.expenses.filter(e=>e.type!=='transfer'&&(e.splitAmong||[]).includes(pid)).length;
-  document.getElementById('bAmt').textContent=fmtMoney(mine,cur);
-  document.getElementById('bCurLabel').textContent=`Spesa di ${who?who.name:'—'} · valuta ${cur}${minePlan>0?' · di cui previste '+fmtMoney(minePlan,cur):''}`;
-  document.getElementById('bPer').textContent=fmtMoney(totGroup,cur);
+  assicuraTasso(cur,valutaAlt(cur),()=>{renderTricount();renderBudget();});
+  document.getElementById('bAmt').innerHTML=fmtMoney(mine,cur)+alt(mine,cur);
+  document.getElementById('bCurLabel').innerHTML=`Spesa di ${esc(who?who.name:'—')}${minePlan>0?' · di cui previste '+fmtMoney(minePlan,cur)+alt(minePlan,cur):''}<div class="mh-cur">${curAltSel(cur)}</div>`;
+  document.getElementById('bPer').innerHTML=fmtMoney(totGroup,cur)+alt(totGroup,cur);
   document.getElementById('bPpl').textContent=t.participants.length;
   document.getElementById('bCnt').textContent=mineCnt;
   const catSum=c=>t.expenses.filter(e=>e.category===c).reduce((s2,e)=>s2+share(e),0);
   const max=Math.max(...cats.map(catSum),1);
-  document.getElementById('catList').innerHTML=cats.map(c=>{const s3=catSum(c);return `<div class="cat" style="cursor:pointer" onclick="openCatExp('${c}')"><div class="cat-l"><div class="cat-ic">${ic[c]}</div><div><div class="cat-n">${c}</div><div class="cat-bar"><div class="cat-bar-fill" style="width:${(s3/max*100).toFixed(0)}%"></div></div></div></div><div class="cat-amt">${fmtMoney(s3,cur)}</div></div>`;}).join('');
+  document.getElementById('catList').innerHTML=cats.map(c=>{const s3=catSum(c);return `<div class="cat" style="cursor:pointer" onclick="openCatExp('${c}')"><div class="cat-l"><div class="cat-ic">${ic[c]}</div><div><div class="cat-n">${c}</div><div class="cat-bar"><div class="cat-bar-fill" style="width:${(s3/max*100).toFixed(0)}%"></div></div></div></div><div style="text-align:right"><div class="cat-amt">${fmtMoney(s3,cur)}</div>${alt(s3,cur)}</div></div>`;}).join('');
 }
 async function openShare(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
