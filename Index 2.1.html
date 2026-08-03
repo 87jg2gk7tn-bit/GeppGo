@@ -559,6 +559,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .exp-btns{display:flex;flex-direction:column;gap:.3rem;flex-shrink:0}
 .tic-ic{width:30px;height:30px;border-radius:9px;border:1px solid #9CBF6E;background:#F0F6E6;color:#4E7A22;font-size:.9rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
 .tic-ic.on{background:#4E7A22;border-color:#4E7A22;color:#fff}
+.exp-tappa{font-weight:700;color:var(--green-deep)}
 .exp-manca{font-size:.7rem;font-weight:700;color:var(--clay-deep);margin-top:.1rem;white-space:nowrap}
 .exp-manca.ok{color:#4E7A22}
 body.dark .tic-ic{background:#25301A;border-color:#4E7A22;color:#A8CF7A}
@@ -1324,6 +1325,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Categoria</label><div class="cat-chips" id="expCatChips"></div></div>
   <div class="fg"><label>Pagato da</label><select id="expPayer"></select></div>
   <div class="fg"><label>Quando?</label><input type="date" id="expDate"></div>
+  <div class="fg"><label>Agganciala a una tappa</label><select id="expAct" onchange="expActScelta()"></select><p id="expActHint" style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin:.35rem 0 0"></p></div>
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="expPaid" checked onchange="document.getElementById('expPaidHint').style.display=this.checked?'none':'block'"><span>Spesa già pagata (togli la spunta se è una previsione)</span></label></div>
   <p id="expPaidHint" style="display:none;font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin:-.4rem 0 .9rem">La previsione non pesa su chi la pagherà: nei budget conta già <b>divisa</b> tra i selezionati. Entrerà nei saldi solo quando la segnerai pagata.</p>
   <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem"><label style="margin:0">Diviso tra</label><div style="display:flex;gap:.4rem"><button class="chip" onclick="splitAll(true)">Tutti</button><button class="chip" onclick="splitAll(false)">Nessuno</button></div></div><div class="split-list" id="expSplit"></div><div id="expShare" class="split-share"></div></div>
@@ -3099,7 +3101,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
-- Spese: chi ha pagato cosa e i conti del gruppo. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
+- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una tappa del viaggio, dalla tendina "Agganciala a una tappa": comparira' anche dentro quella tappa in time-table. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
@@ -4131,7 +4133,7 @@ function renderTricount(){
             ?`<div class="exp-manca">${q.mancanti.length===1?'1 persona mancante':q.mancanti.length+' persone mancanti'}</div>`
             :`<div class="exp-manca ok">tutti a posto</div>`):'';
           const tic=q.debitori.length?`<button class="tic-ic ${q.mancanti.length?'':'on'}" title="Chi ha già dato la sua parte" onclick="event.stopPropagation();openSaldoSpesa(${e.id})">✓</button>`:'';
-          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong></div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtVista(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
+          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong>${tappaDiSpesa(t,e)}</div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtVista(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
         }).join('')}</div>`;
       }).join('');
     }
@@ -4458,10 +4460,54 @@ function openExpense(id){
   document.getElementById('expDate').value=e?String(e.date||'').split('T')[0]:new Date().toISOString().split('T')[0];
   document.getElementById('expPaid').checked=e?(e.paid!==false):true;
   document.getElementById('expPaidHint').style.display=(e&&e.paid===false)?'block':'none';
+  renderExpAct(e?e.actId:null);
   document.getElementById('expConv').textContent='';updateShare();
   document.getElementById('expDel').style.display=e?'block':'none';
   openSheet('mExpense');
   setTimeout(()=>document.getElementById('expAmt').focus(),350);
+}
+/* ===== AGGANCIARE UNA SPESA A UNA TAPPA =====
+   Il collegamento c'era gia', ma si poteva fare solo dall'altra parte:
+   aprendo la tappa e pescando la spesa da un elenco. Chi segna la cena
+   appena pagata sta nelle spese, non in time-table, e da li' non aveva
+   modo di dire a cosa si riferiva. Stesso dato di prima - actId sulla
+   spesa - solo raggiungibile anche da qui. */
+function elencoTappe(t){
+  const out=[];
+  (t.days||[]).forEach((d,i)=>{
+    const dt=new Date(d.date);
+    const gg=isNaN(dt.getTime())?`Giorno ${i+1}`:dt.toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+    (d.activities||[]).slice().sort((a,b)=>(a.time||'zz').localeCompare(b.time||'zz'))
+      .forEach(a=>out.push({id:a.id,di:i,d,a,etichetta:`G${i+1} · ${gg}${a.time?' · '+a.time:''} · ${a.name}`}));
+  });
+  return out;
+}
+function renderExpAct(sel){
+  const t=T(),el=document.getElementById('expAct');if(!t||!el)return;
+  const tappe=elencoTappe(t);
+  el.innerHTML='<option value="">Nessuna tappa</option>'+
+    tappe.map(x=>`<option value="${x.id}" ${String(x.id)===String(sel)?'selected':''}>${esc(x.etichetta)}</option>`).join('');
+  el.disabled=!tappe.length;
+  document.getElementById('expActHint').textContent=tappe.length
+    ? 'La spesa comparirà anche dentro quella tappa, in time-table.'
+    : 'Non ci sono ancora tappe in programma a cui agganciarla.';
+}
+/* Scegliendo la tappa si riempiono i campi che si ricavano da lei: il nome,
+   se non si e' scritto niente, e il giorno. Solo su una spesa nuova: su una
+   gia' salvata sarebbe una sovrascrittura non chiesta. */
+function expActScelta(){
+  const t=T(),el=document.getElementById('expAct');if(!t||!el||!el.value)return;
+  const x=elencoTappe(t).find(y=>String(y.id)===el.value);if(!x)return;
+  if(expEditId)return;
+  const desc=document.getElementById('expDesc');
+  if(!desc.value.trim())desc.value=x.a.name;
+  if(x.d.date)document.getElementById('expDate').value=x.d.date;
+}
+/* Nella riga della spesa: a quale tappa e' agganciata. */
+function tappaDiSpesa(t,e){
+  if(e.actId==null)return'';
+  const x=elencoTappe(t).find(y=>y.id===e.actId);
+  return x?` · <span class="exp-tappa">🕒 ${esc(x.a.name)}</span>`:'';
 }
 function renderCatChips(){document.getElementById('expCatChips').innerHTML=CATS.map(c=>`<button class="cat-chip ${expCat===c.k?'on':''}" onclick="expCat='${c.k}';renderCatChips()">${c.i} ${c.k}</button>`).join('');}
 function splitAll(on){document.querySelectorAll('#expSplit input').forEach(c=>{c.checked=on;c.closest('.split-item').classList.toggle('on',on);});updateShare();}
@@ -4523,7 +4569,9 @@ async function addExpense(){
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value;
   let rate=1;if(from!==cur)rate=await getRate(from,cur);
   const dv=document.getElementById('expDate').value;
-  const data={desc,amount:amt*rate,origAmount:amt,origCurrency:from,rate,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked};
+  const actSel=document.getElementById('expAct');
+  const actId=(actSel&&actSel.value)?parseInt(actSel.value):null;
+  const data={desc,amount:amt*rate,origAmount:amt,origCurrency:from,rate,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked,actId};
   if(expEditId){const e=t.expenses.find(x=>x.id===expEditId);Object.assign(e,data);toast('✅ Spesa aggiornata');}
   else{t.expenses.push({id:uid(),...data});toast('✅ Spesa aggiunta');}
   expEditId=null;save();renderAll();closeSheet('mExpense');
