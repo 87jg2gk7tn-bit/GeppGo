@@ -560,6 +560,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tic-ic{width:30px;height:30px;border-radius:9px;border:1px solid #9CBF6E;background:#F0F6E6;color:#4E7A22;font-size:.9rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
 .tic-ic.on{background:#4E7A22;border-color:#4E7A22;color:#fff}
 .exp-tappa{font-weight:700;color:var(--green-deep)}
+.tap-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.45rem}
+.tap-chips:empty{display:none}
+.tap-chip{display:inline-flex;align-items:center;gap:.3rem;background:var(--green-tint);border:1px solid var(--green-soft);color:var(--green-deep);border-radius:999px;padding:.25rem .3rem .25rem .6rem;font-size:.76rem;font-weight:700}
+.tap-chip button{border:0;background:rgba(0,0,0,.08);color:inherit;width:18px;height:18px;border-radius:50%;font-size:.6rem;cursor:pointer;font-family:inherit;line-height:1}
 .exp-manca{font-size:.7rem;font-weight:700;color:var(--clay-deep);margin-top:.1rem;white-space:nowrap}
 .exp-manca.ok{color:#4E7A22}
 body.dark .tic-ic{background:#25301A;border-color:#4E7A22;color:#A8CF7A}
@@ -1325,7 +1329,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Categoria</label><div class="cat-chips" id="expCatChips"></div></div>
   <div class="fg"><label>Pagato da</label><select id="expPayer"></select></div>
   <div class="fg"><label>Quando?</label><input type="date" id="expDate"></div>
-  <div class="fg"><label>Agganciala a una tappa</label><select id="expAct" onchange="expActScelta()"></select><p id="expActHint" style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin:.35rem 0 0"></p></div>
+  <div class="fg"><label>Agganciala alle tappe <span style="font-weight:500;color:var(--ink-faint)">(anche più di una)</span></label>
+    <div id="expActChips" class="tap-chips"></div>
+    <select id="expAct" onchange="expActAggiungi()"></select>
+    <p id="expActHint" style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin:.35rem 0 0"></p></div>
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="expPaid" checked onchange="document.getElementById('expPaidHint').style.display=this.checked?'none':'block'"><span>Spesa già pagata (togli la spunta se è una previsione)</span></label></div>
   <p id="expPaidHint" style="display:none;font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin:-.4rem 0 .9rem">La previsione non pesa su chi la pagherà: nei budget conta già <b>divisa</b> tra i selezionati. Entrerà nei saldi solo quando la segnerai pagata.</p>
   <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem"><label style="margin:0">Diviso tra</label><div style="display:flex;gap:.4rem"><button class="chip" onclick="splitAll(true)">Tutti</button><button class="chip" onclick="splitAll(false)">Nessuno</button></div></div><div class="split-list" id="expSplit"></div><div id="expShare" class="split-share"></div></div>
@@ -1445,7 +1452,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <input type="file" id="adTkImgInp" accept="image/*" multiple style="display:none" onchange="actTicketFromImages(this)">
     <p style="font-size:.72rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Ogni biglietto aggiunto qui si collega subito a questa attività: puoi aggiungerne quanti ne servono (es. uno a persona).</p>
   </div>
-  <div class="fg"><label>Collega una spesa già inserita <span style="font-weight:500;color:var(--ink-faint)">(es. l'hai già pagata e registrata in Spese)</span></label>
+  <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.4rem"><label style="margin:0">Collega una spesa già inserita <span style="font-weight:500;color:var(--ink-faint)">(es. l'hai già pagata e registrata in Spese)</span></label><span id="adExpCur"></span></div>
     <div id="adExpListWrap"></div>
     <div style="display:flex;gap:.5rem"><select id="adExpPick" style="flex:1"><option value="">Nessuna spesa da collegare</option></select><button class="chip" style="white-space:nowrap" onclick="linkAdExpense()">Collega</button></div>
   </div>
@@ -3101,7 +3108,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
-- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una tappa del viaggio, dalla tendina "Agganciala a una tappa": comparira' anche dentro quella tappa in time-table. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
+- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
@@ -4093,7 +4100,15 @@ function fmtVista(a,cur){
   const v=curVista(cur);
   return v===cur?fmtMoney(a,cur):fmtMoney((a||0)*tassoPronto(cur,v),v);
 }
-function setCurVista(v){app.curVista=(v||'');save();renderTricount();renderBudget();}
+/* Le cifre in valuta stanno in tre posti: spese, budget e le spese collegate
+   dentro una tappa. Il cambio arriva dopo la prima richiesta, quindi vanno
+   ridisegnati tutti e tre, sia quando si sceglie sia quando il cambio atterra. */
+function ridisegnaSoldi(){
+  renderTricount();renderBudget();
+  const m=document.getElementById('mActDetail');
+  if(m&&m.classList.contains('active')){renderAdExpList();renderAdExpPick();}
+}
+function setCurVista(v){app.curVista=(v||'');save();ridisegnaSoldi();}
 function vistaSel(cur){
   const v=curVista(cur);
   const lista=[cur].concat(CURR.map(c=>c.c).filter(c=>c!==cur));
@@ -4108,7 +4123,7 @@ function renderTricount(){
   const cur=t.currency||'EUR',{bal,txns}=computeSettle(t),total=t.expenses.reduce((s,e)=>s+((e.type==='transfer'||e.paid===false)?0:e.amount),0),planned=t.expenses.reduce((s,e)=>s+((e.type!=='transfer'&&e.paid===false)?e.amount:0),0);
   /* Il cambio arriva dopo: quando c'e', si ridisegna e le cifre piccole
      compaiono. Finche' non c'e', si legge solo la valuta del viaggio. */
-  assicuraTasso(cur,app.curVista||'',()=>{renderTricount();renderBudget();});
+  assicuraTasso(cur,app.curVista||'',ridisegnaSoldi);
   const meT=t.participants.find(pp=>pp.isMe);
   const plannedMine=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid!==false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((meT&&u.includes(meT.id))?e.amount/u.length:0);},0);
   const me=t.participants.find(p=>p.isMe),myBal=me?(bal[me.id]||0):0;
@@ -4460,18 +4475,28 @@ function openExpense(id){
   document.getElementById('expDate').value=e?String(e.date||'').split('T')[0]:new Date().toISOString().split('T')[0];
   document.getElementById('expPaid').checked=e?(e.paid!==false):true;
   document.getElementById('expPaidHint').style.display=(e&&e.paid===false)?'block':'none';
-  renderExpAct(e?e.actId:null);
+  expActSel=e?spesaTappe(e).slice():[];renderExpAct();
   document.getElementById('expConv').textContent='';updateShare();
   document.getElementById('expDel').style.display=e?'block':'none';
   openSheet('mExpense');
   setTimeout(()=>document.getElementById('expAmt').focus(),350);
 }
-/* ===== AGGANCIARE UNA SPESA A UNA TAPPA =====
-   Il collegamento c'era gia', ma si poteva fare solo dall'altra parte:
-   aprendo la tappa e pescando la spesa da un elenco. Chi segna la cena
-   appena pagata sta nelle spese, non in time-table, e da li' non aveva
-   modo di dire a cosa si riferiva. Stesso dato di prima - actId sulla
-   spesa - solo raggiungibile anche da qui. */
+/* ===== AGGANCIARE UNA SPESA A UNA O PIU' TAPPE =====
+   Il collegamento c'era gia', ma si poteva fare solo dall'altra parte -
+   aprendo la tappa e pescando la spesa da un elenco - e una spesa poteva
+   stare attaccata a una tappa sola. Sei biglietti comprati insieme pero'
+   possono servire a due tappe diverse: quattro persone che vanno a una cosa
+   e due che vanno all'altra. La spesa e' una, le tappe sono due.
+   Quindi le tappe agganciate sono una lista. actId resta scritto - e' la
+   prima della lista - perche' fuori di qui qualcuno lo legge ancora. */
+function spesaTappe(e){
+  if(Array.isArray(e.actIds))return e.actIds;
+  return e.actId!=null?[e.actId]:[];
+}
+function setSpesaTappe(e,ids){
+  const u=[...new Set((ids||[]).filter(x=>x!=null))];
+  e.actIds=u;e.actId=u.length?u[0]:null;
+}
 function elencoTappe(t){
   const out=[];
   (t.days||[]).forEach((d,i)=>{
@@ -4482,32 +4507,48 @@ function elencoTappe(t){
   });
   return out;
 }
-function renderExpAct(sel){
+let expActSel=[];
+function renderExpAct(){
   const t=T(),el=document.getElementById('expAct');if(!t||!el)return;
   const tappe=elencoTappe(t);
-  el.innerHTML='<option value="">Nessuna tappa</option>'+
-    tappe.map(x=>`<option value="${x.id}" ${String(x.id)===String(sel)?'selected':''}>${esc(x.etichetta)}</option>`).join('');
-  el.disabled=!tappe.length;
-  document.getElementById('expActHint').textContent=tappe.length
-    ? 'La spesa comparirà anche dentro quella tappa, in time-table.'
-    : 'Non ci sono ancora tappe in programma a cui agganciarla.';
+  const liberi=tappe.filter(x=>!expActSel.includes(x.id));
+  document.getElementById('expActChips').innerHTML=expActSel.map(id=>{
+    const x=tappe.find(y=>y.id===id);
+    return `<span class="tap-chip">🕒 ${esc(x?x.a.name:'tappa')}<button onclick="expActTogli(${id})" aria-label="Togli">✕</button></span>`;
+  }).join('');
+  el.innerHTML=`<option value="">${expActSel.length?'+ Aggiungi un\'altra tappa':'Nessuna tappa'}</option>`+
+    liberi.map(x=>`<option value="${x.id}">${esc(x.etichetta)}</option>`).join('');
+  el.value='';
+  el.disabled=!liberi.length;
+  document.getElementById('expActHint').textContent=!tappe.length
+    ? 'Non ci sono ancora tappe in programma a cui agganciarla.'
+    : (expActSel.length
+      ? 'La stessa spesa può servire a più tappe: la vedi in tutte, e resta una spesa sola nei conti.'
+      : 'La spesa comparirà anche dentro quella tappa, in time-table.');
 }
-/* Scegliendo la tappa si riempiono i campi che si ricavano da lei: il nome,
-   se non si e' scritto niente, e il giorno. Solo su una spesa nuova: su una
-   gia' salvata sarebbe una sovrascrittura non chiesta. */
-function expActScelta(){
+/* Scegliendo la prima tappa si riempiono i campi che si ricavano da lei: il
+   nome, se non si e' scritto niente, e il giorno. Solo su una spesa nuova:
+   su una gia' salvata sarebbe una sovrascrittura non chiesta. */
+function expActAggiungi(){
   const t=T(),el=document.getElementById('expAct');if(!t||!el||!el.value)return;
-  const x=elencoTappe(t).find(y=>String(y.id)===el.value);if(!x)return;
-  if(expEditId)return;
-  const desc=document.getElementById('expDesc');
-  if(!desc.value.trim())desc.value=x.a.name;
-  if(x.d.date)document.getElementById('expDate').value=x.d.date;
+  const id=parseInt(el.value),x=elencoTappe(t).find(y=>y.id===id);if(!x)return;
+  const prima=!expActSel.length;
+  expActSel.push(id);
+  if(prima&&!expEditId){
+    const desc=document.getElementById('expDesc');
+    if(!desc.value.trim())desc.value=x.a.name;
+    if(x.d.date)document.getElementById('expDate').value=x.d.date;
+  }
+  renderExpAct();
 }
-/* Nella riga della spesa: a quale tappa e' agganciata. */
+function expActTogli(id){expActSel=expActSel.filter(x=>x!==id);renderExpAct();}
+/* Nella riga della spesa: a quali tappe e' agganciata. */
 function tappaDiSpesa(t,e){
-  if(e.actId==null)return'';
-  const x=elencoTappe(t).find(y=>y.id===e.actId);
-  return x?` · <span class="exp-tappa">🕒 ${esc(x.a.name)}</span>`:'';
+  const ids=spesaTappe(e);if(!ids.length)return'';
+  const tappe=elencoTappe(t);
+  const nomi=ids.map(id=>{const x=tappe.find(y=>y.id===id);return x?x.a.name:null;}).filter(Boolean);
+  if(!nomi.length)return'';
+  return ` · <span class="exp-tappa">🕒 ${esc(nomi.join(' + '))}</span>`;
 }
 function renderCatChips(){document.getElementById('expCatChips').innerHTML=CATS.map(c=>`<button class="cat-chip ${expCat===c.k?'on':''}" onclick="expCat='${c.k}';renderCatChips()">${c.i} ${c.k}</button>`).join('');}
 function splitAll(on){document.querySelectorAll('#expSplit input').forEach(c=>{c.checked=on;c.closest('.split-item').classList.toggle('on',on);});updateShare();}
@@ -4569,11 +4610,9 @@ async function addExpense(){
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value;
   let rate=1;if(from!==cur)rate=await getRate(from,cur);
   const dv=document.getElementById('expDate').value;
-  const actSel=document.getElementById('expAct');
-  const actId=(actSel&&actSel.value)?parseInt(actSel.value):null;
-  const data={desc,amount:amt*rate,origAmount:amt,origCurrency:from,rate,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked,actId};
-  if(expEditId){const e=t.expenses.find(x=>x.id===expEditId);Object.assign(e,data);toast('✅ Spesa aggiornata');}
-  else{t.expenses.push({id:uid(),...data});toast('✅ Spesa aggiunta');}
+  const data={desc,amount:amt*rate,origAmount:amt,origCurrency:from,rate,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked};
+  if(expEditId){const e=t.expenses.find(x=>x.id===expEditId);Object.assign(e,data);setSpesaTappe(e,expActSel);toast('✅ Spesa aggiornata');}
+  else{const e={id:uid(),...data};setSpesaTappe(e,expActSel);t.expenses.push(e);toast('✅ Spesa aggiunta');}
   expEditId=null;save();renderAll();closeSheet('mExpense');
 }
 function delExpense(id){const t=T();confirmDo('Eliminare la spesa?','L\'operazione non si può annullare.',()=>{t.expenses=t.expenses.filter(e=>e.id!==id);t._delExp=t._delExp||{};t._delExp[id]=Date.now();expEditId=null;save();renderAll();closeSheet('mExpense');});}
@@ -4594,7 +4633,7 @@ function renderBudget(){
   const minePlan=t.expenses.reduce((s2,e)=>{const u=[...new Set(e.splitAmong||[])];return s2+((e.paid===false&&e.type!=='transfer'&&u.includes(pid))?e.amount/u.length:0);},0);
   const totGroup=t.expenses.reduce((s2,e)=>s2+(e.type==='transfer'?0:e.amount),0);
   const mineCnt=t.expenses.filter(e=>e.type!=='transfer'&&(e.splitAmong||[]).includes(pid)).length;
-  assicuraTasso(cur,app.curVista||'',()=>{renderTricount();renderBudget();});
+  assicuraTasso(cur,app.curVista||'',ridisegnaSoldi);
   document.getElementById('bAmt').innerHTML=`<span>${fmtVista(mine,cur)}</span>${vistaSel(cur)}`;
   document.getElementById('bCurLabel').innerHTML=`Spesa di ${esc(who?who.name:'—')}${minePlan>0?' · di cui previste '+fmtVista(minePlan,cur):''}`;
   document.getElementById('bPer').innerHTML=fmtVista(totGroup,cur);
@@ -4952,30 +4991,49 @@ function removeAdTicket(id){
 }
 function renderAdExpList(){
   const t=T(),wrap=document.getElementById('adExpListWrap');if(!t||!wrap)return;
-  const actId=curActId();
-  const list=actId==null?[]:t.expenses.filter(e=>e.actId===actId);
+  const cur=t.currency||'EUR',actId=curActId();
+  const list=actId==null?[]:t.expenses.filter(e=>spesaTappe(e).includes(actId));
+  const box=document.getElementById('adExpCur');
+  if(box)box.innerHTML=list.length?vistaSel(cur):'';
+  assicuraTasso(cur,app.curVista||'',ridisegnaSoldi);
   if(!list.length){wrap.innerHTML='';return;}
-  wrap.innerHTML=list.map(e=>`<div class="tk-mini" style="text-align:left;padding:.6rem .8rem"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="unlinkAdExpense(${e.id})">✕</button><div style="font-weight:700;font-size:.85rem;padding-right:1.8rem">${esc(e.desc)}</div><div style="font-size:.76rem;color:var(--ink-faint);margin-top:.15rem">${fmtMoney(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</div></div>`).join('');
+  wrap.innerHTML=list.map(e=>{
+    /* Fra quante persone e' divisa, e se e' agganciata anche altrove: sono le
+       due cose che uno si chiede guardandola da dentro una tappa. */
+    const n=[...new Set(e.splitAmong||[])].length;
+    const altre=spesaTappe(e).filter(x=>x!==actId).length;
+    return `<div class="tk-mini" style="text-align:left;padding:.6rem .8rem"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="unlinkAdExpense(${e.id})">✕</button><div style="font-weight:700;font-size:.85rem;padding-right:1.8rem">${esc(e.desc)}</div><div style="font-size:.76rem;color:var(--ink-faint);margin-top:.15rem">${fmtVista(e.amount,cur)} · divisa fra ${n} ${n===1?'persona':'persone'} · ${String(e.date||'').split('T')[0]}${altre?` · anche su ${altre===1?'un\'altra tappa':altre+' altre tappe'}`:''}</div></div>`;
+  }).join('');
 }
 function renderAdExpPick(){
   const t=T(),sel=document.getElementById('adExpPick');if(!t||!sel)return;
   const actId=curActId();
-  const opts=t.expenses.filter(e=>e.type!=='transfer'&&e.actId==null).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  sel.innerHTML='<option value="">Nessuna spesa da collegare</option>'+opts.map(e=>`<option value="${e.id}">${esc(e.desc)} · ${fmtMoney(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</option>`).join('');
+  /* Si offrono anche le spese gia' agganciate altrove: la stessa spesa puo'
+     servire a piu' tappe. Si escludono solo quelle gia' su questa. */
+  const opts=t.expenses.filter(e=>e.type!=='transfer'&&!spesaTappe(e).includes(actId)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  sel.innerHTML='<option value="">Nessuna spesa da collegare</option>'+opts.map(e=>`<option value="${e.id}">${esc(e.desc)} · ${fmtVista(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</option>`).join('');
 }
 function linkAdExpense(){
   const t=T(),sel=document.getElementById('adExpPick');if(!t||!sel)return;
   const id=sel.value?parseInt(sel.value):null;if(!id)return;
   const exp=t.expenses.find(x=>x.id===id);if(!exp)return;
-  exp.actId=curActId();
-  const who=[...document.querySelectorAll('#adWho input:checked')].map(c=>parseInt(c.value));
-  if(who.length)exp.splitAmong=who;
+  const actId=curActId();if(actId==null)return;
+  /* Qui prima si riscriveva anche fra chi era divisa la spesa, prendendo le
+     persone dell'attivita': collegare sei biglietti a una tappa fatta da
+     quattro li faceva diventare divisi per quattro, e saldi e pareggi
+     cambiavano da soli. Come e' divisa una spesa lo decide chi la scrive, e
+     un collegamento non e' il posto per cambiarlo. */
+  setSpesaTappe(exp,spesaTappe(exp).concat([actId]));
   save();renderAdExpList();renderAdExpPick();
   toast('💸 Spesa collegata a questa attività');
 }
 function unlinkAdExpense(id){
   const t=T();const exp=t.expenses.find(x=>x.id===id);if(!exp)return;
-  confirmDo('Scollegare la spesa?','Resta comunque salvata nella sezione Spese.',()=>{exp.actId=null;save();renderAdExpList();renderAdExpPick();toast('Spesa scollegata (resta in Spese)');},'🔗','Scollega','btn-blue');
+  const actId=curActId();
+  confirmDo('Scollegare la spesa?','Resta comunque salvata nella sezione Spese, e sulle altre tappe a cui è agganciata.',()=>{
+    setSpesaTappe(exp,spesaTappe(exp).filter(x=>x!==actId));
+    save();renderAdExpList();renderAdExpPick();toast('Spesa scollegata (resta in Spese)');
+  },'🔗','Scollega','btn-blue');
 }
 function tkLinkLabel(t,tk){
   if(tk.actId==null)return 'Collega ad attività';
