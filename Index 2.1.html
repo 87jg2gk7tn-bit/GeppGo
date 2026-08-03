@@ -1139,7 +1139,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="x" onclick="ttNav(1)">›</button>
   </div>
   <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
-  <div id="dayCityChips" class="chiprow-x" style="display:none;margin-bottom:.5rem"></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
@@ -3048,11 +3047,11 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" (cerca i bagni pubblici intorno a dove sei, col GPS) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno, due tocchi sullo stesso giorno portano dritti alla griglia degli orari. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Budget: quanto si sta spendendo rispetto al previsto.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
-- Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' da dire dove si e', lo capisce da solo. In time-table il tasto "Auto" mostra il posto scelto, e accanto ci sono le citta' del viaggio per forzarlo a mano. Identifica: si fotografa un posto e l'app dice cos'e'.
+- Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -5854,6 +5853,25 @@ function openTimetable(){
   const idx=t.days.findIndex(x=>x.date===todayStr);
   openDay(idx>=0?idx:0);
 }
+/* Sopra la griglia oraria c'e' parecchia roba - mappa, meteo, avvisi pioggia,
+   la fila dei tasti, le foto - e su un telefono la giornata vera comincia
+   sotto il bordo dello schermo: cambiato giorno, tocca sempre scorrere.
+   Toccando due volte lo stesso giorno si va dritti agli orari. Il primo tocco
+   fa quello che ha sempre fatto, cambiare giorno: chi non lo sa non se ne
+   accorge nemmeno. */
+let _tapGiorno=null,_tapQuando=0;
+function tapGiorno(j){
+  const ora=Date.now(),doppio=(_tapGiorno===j&&ora-_tapQuando<450);
+  _tapGiorno=j;_tapQuando=ora;
+  if(j!==ttDay)openDay(j);
+  if(doppio)vaiAgliOrari();
+}
+function vaiAgliOrari(){
+  const el=document.getElementById('ttBody');if(!el)return;
+  /* Dopo il re-render il posto giusto lo si sa solo al giro dopo. */
+  setTimeout(()=>{try{el.scrollIntoView({behavior:'smooth',block:'start'});}
+                  catch(e){el.scrollIntoView();}},60);
+}
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
@@ -5863,10 +5881,10 @@ function openDay(i){
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
     const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString('it-IT',{weekday:'short'});
     const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
-    return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
+    return `<button class="tt-day ${j===i?'on':''}" onclick="tapGiorno(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
   }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   clearDragUndo();
-  renderDayCity(t,d);renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
+  renderDayWx();renderRainTip();renderDayPhotos();initDaySwipe();
   /* Se le tappe si sono spostate di citta', il meteo si rifa' da solo. */
   meteoSeguiLeTappe(t,d);
   buildTT();buildDayMap();
@@ -8512,22 +8530,8 @@ async function fetchDayWx(t,day){
     return null;
   };
   try{
-    /* 1. Le citta' scelte a mano vincono sempre: chi le ha toccate ha detto
-          lui dov'e', e non gli si contraddice. */
-    const sel=Array.isArray(day.cities)?day.cities:(day.city?[day.city]:[]);
-    if(sel.length&&(t.cities||[]).length){
-      const multi={};
-      for(const nm of sel){
-        const cc=(t.cities||[]).find(c=>c.name===nm&&c.lat);
-        if(!cc)continue;
-        const w=await one({lat:cc.lat,lng:cc.lng});
-        if(w)multi[nm]=w;
-      }
-      const ks=Object.keys(multi);
-      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
-      return false;
-    }
-    /* 2. Altrimenti lo si deduce da dove sono le tappe. */
+    /* 1. Prima di tutto le tappe: sono la cosa piu' vera che ci sia su dove
+          passi la giornata, e non c'e' da dichiararlo. */
     const gr=luoghiDelGiorno(t,day);
     if(gr.length){
       const multi={};let ordine=0;
@@ -8543,8 +8547,22 @@ async function fetchDayWx(t,day){
         save();return true;
       }
     }
-    /* 3. E se in giornata non c'e' ancora niente: l'hotel di quella notte, e
-          in mancanza anche di quello la destinazione del viaggio. */
+    /* 2. Giornata ancora vuota: se in passato per quel giorno era stata scelta
+          una citta' a mano, quella resta un'indicazione valida. */
+    const sel=Array.isArray(day.cities)?day.cities:(day.city?[day.city]:[]);
+    if(sel.length&&(t.cities||[]).length){
+      const multi={};
+      for(const nm of sel){
+        const cc=(t.cities||[]).find(c=>c.name===nm&&c.lat);
+        if(!cc)continue;
+        const w=await one({lat:cc.lat,lng:cc.lng});
+        if(w)multi[nm]=w;
+      }
+      const ks=Object.keys(multi);
+      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
+    }
+    /* 3. E se non c'e' neanche quella: l'hotel di quella notte, e in mancanza
+          anche di quello la destinazione del viaggio. */
     const loc=dayLoc(t,day)||t.destLoc;
     if(!loc)return false;
     const w=await one(loc);
@@ -8557,13 +8575,10 @@ async function fetchDayWx(t,day){
 }
 /* Il controllo che toglie il lavoro di mano: si apre una giornata, e se i suoi
    posti non sono piu' quelli su cui era stato preso il meteo, lo si rifa'.
-   Non tocca le giornate con la citta' scelta a mano, ne' quelle fuori dalla
-   portata delle previsioni. */
+   Restano fuori solo le giornate oltre la portata delle previsioni. */
 let wxAutoBusy=false;
 function meteoSeguiLeTappe(t,day){
   if(!t||!day||wxAutoBusy)return;
-  const sel=Array.isArray(day.cities)?day.cities:(day.city?[day.city]:[]);
-  if(sel.length)return;
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(day.date)-oggi)/864e5);
   if(da<0||da>16)return;
@@ -8574,36 +8589,6 @@ function meteoSeguiLeTappe(t,day){
   fetchDayWx(t,day)
     .then(ok=>{wxAutoBusy=false;if(ok){renderDayWx();renderWeather();}})
     .catch(()=>{wxAutoBusy=false;});
-}
-function renderDayCity(t,d){
-  const box=document.getElementById('dayCityChips');if(!box)return;
-  if(!(t.multiCity&&(t.cities||[]).length)){box.style.display='none';return;}
-  const sel=Array.isArray(d.cities)?d.cities:(d.city?[d.city]:[]);
-  box.style.display='flex';
-  /* Il primo tasto e' "Auto", ed e' acceso finche' non se ne tocca un altro:
-     serve a far vedere che la citta' non e' una cosa da dichiarare ogni volta
-     - la deduce l'app da dove sono le tappe - e a tornare indietro con un
-     tocco dopo averla forzata. */
-  const dedotto=(t.weather[d.date]||{}).luogo;
-  const auto=`<button class="tchip ${sel.length?'':'on'}" onclick="autoDayCity()">✨ Auto${(!sel.length&&dedotto)?' · '+esc(dedotto):''}</button>`;
-  box.innerHTML='<span style="font-size:.74rem;font-weight:800;color:var(--ink-faint);align-self:center">Meteo su:</span>'+auto+
-    t.cities.map(c=>`<button class="tchip ${sel.includes(c.name)?'on':''}" onclick="toggleDayCity(${jesc(c.name)})">${esc(c.name)}</button>`).join('');
-}
-function autoDayCity(){
-  const t=T(),d=t.days[ttDay];if(!d)return;
-  if(!d.cities&&!d.city){toast('Il meteo segue già le tappe di questa giornata');return;}
-  delete d.cities;delete d.city;
-  const w=t.weather[d.date];if(w)delete w.sig;
-  save();
-  fetchDayWx(t,d).then(()=>{renderWeather();openDay(ttDay);});
-}
-function toggleDayCity(name){
-  const t=T(),d=t.days[ttDay];if(!d)return;
-  let sel=Array.isArray(d.cities)?d.cities.slice():(d.city?[d.city]:[]);
-  if(sel.includes(name))sel=sel.filter(x=>x!==name);else sel.push(name);
-  if(sel.length){d.cities=sel;d.city=sel[0];}else{delete d.cities;delete d.city;}
-  save();
-  fetchDayWx(t,d).then(()=>{renderWeather();openDay(ttDay);});
 }
 function renderDayWx(){
   const t=T(),d=t.days[ttDay],el=document.getElementById('dayWx');if(!el)return;
@@ -8715,7 +8700,7 @@ function renderCityEditor(){
   const box=document.getElementById('cityEditor');if(!box)return;const t=T();
   if(!t||!t.multiCity){box.innerHTML='';return;}
   const val=(t.cities||[]).map(c=>c.name).join(', ');
-  box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.6rem">Città del viaggio</div><div style="display:flex;gap:.5rem"><input id="cityInp" value="${esc(val)}" placeholder="es. Tokyo, Kyoto, Osaka" style="flex:1" autocomplete="off" oninput="cityAuto(this,'citySug')"><button class="btn btn-blue" onclick="saveCities()">Salva</button></div><div id="citySug"></div><p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Il meteo di ogni giornata lo prendo dove sono le sue tappe: non c'è da dirmelo. Queste città servono solo per forzarlo a mano, aprendo un giorno dalla Home.</p></div>`;
+  box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.6rem">Città del viaggio</div><div style="display:flex;gap:.5rem"><input id="cityInp" value="${esc(val)}" placeholder="es. Tokyo, Kyoto, Osaka" style="flex:1" autocomplete="off" oninput="cityAuto(this,'citySug')"><button class="btn btn-blue" onclick="saveCities()">Salva</button></div><div id="citySug"></div><p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Il meteo di ogni giornata lo prendo dove sono le sue tappe: non c'è da dirmelo. Queste città mi servono per il resto — ricerche, suggerimenti — e per le giornate ancora vuote.</p></div>`;
 }
 function saveCities(){
   const t=T();if(!t)return;
@@ -9521,7 +9506,7 @@ function initDaySwipe(){
     if(!tg)return;const t0=tg;tg=null;
     const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
     if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.4)return;
-    if(t0.closest&&t0.closest('#dayMap,#dayPhotos,#dayChips,#dayCityChips,.tgrip,.tszr,input,select,textarea'))return;
+    if(t0.closest&&t0.closest('#dayMap,#dayPhotos,#dayChips,.tgrip,.tszr,input,select,textarea'))return;
     ttNav(dx<0?1:-1);
   },{passive:true});
   /* Il suggerimento riguarda solo la time-table: se nel frattempo l'utente è già
