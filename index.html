@@ -3,9 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0; url=./Index%202.1.html">
 <title>GeppGo</title>
-<script>location.replace('Index%202.1.html');</script>
+<script>
+/* Il link d'invito porta il codice dopo il cancelletto (#join2=...). Un
+   location.replace secco lo buttava via, e chi apriva l'invito si ritrovava
+   l'app vuota senza capire perche'. Qui si riattacca tutto - ricerca e
+   cancelletto - prima di mandare avanti. Il refresh di riserva sta nel
+   noscript, perche' con lo script attivo partirebbe comunque e perderebbe
+   di nuovo il codice. */
+location.replace('Index%202.1.html'+location.search+location.hash);
+</script>
+<noscript><meta http-equiv="refresh" content="0; url=./Index%202.1.html"></noscript>
 </head>
 <body>
 <p>Apri <a href="Index%202.1.html">GeppGo</a> se non vieni reindirizzato automaticamente.</p>
