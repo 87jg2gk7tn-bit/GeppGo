@@ -1573,7 +1573,14 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mCloud"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Configura cloud</div><button class="x x-close" onclick="closeSheet('mCloud')">✕</button></div>
-  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">I due valori li trovi nel tuo progetto Supabase: <strong>Project Settings > API</strong>. Servono una volta sola su questo telefono.</p>
+  <div class="card" style="background:var(--green-tint);border-color:var(--green-soft);margin-bottom:1rem">
+    <div style="font-weight:800;font-size:.88rem;margin-bottom:.3rem">Ti hanno mandato un link?</div>
+    <p style="font-size:.8rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.6rem">Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.</p>
+    <textarea id="cfgInvito" style="min-height:64px;font-size:.75rem" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
+    <div id="cfgInvMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin:.35rem 0;line-height:1.4"></div>
+    <button class="btn btn-grad btn-block" onclick="usaInvito()">Usa questo link</button>
+  </div>
+  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Oppure a mano, se il progetto Supabase è tuo: i due valori sono in <strong>Project Settings > API</strong>. Servono una volta sola su questo telefono.</p>
   <div class="fg"><label>Project URL</label><input id="cfgUrl" placeholder="https://xxxxx.supabase.co" autocapitalize="off" autocorrect="off"></div>
   <div class="fg"><label>Chiave anon public</label><textarea id="cfgKey" style="min-height:80px;font-size:.75rem" placeholder="Incolla qui la chiave lunga" autocapitalize="off" autocorrect="off"></textarea></div>
   <div id="cfgMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
@@ -1663,15 +1670,38 @@ try{
     }
   }
 }catch(e){}
-/* 2) config salvata su questo telefono */
+/* 2) config gia' nell'indirizzo (#c=...): e' quello che salva chi si mette
+      l'app sulla schermata iniziale. Su iPhone l'app aggiunta alla Home ha una
+      memoria tutta sua, separata da quella di Safari: quello che era stato
+      salvato nel browser li' dentro non c'e', e senza configurazione non si
+      puo' nemmeno entrare nel proprio account. Tenendola nell'indirizzo, la
+      scorciatoia se la porta dietro e ogni avvio la ritrova. */
+try{
+  if(location.hash.indexOf('#c=')===0){
+    const c=atob(decodeURIComponent(location.hash.slice(3))).split('|');
+    if(c[0]&&c[1]){window.GEPPGO_SUPA_URL=c[0];window.GEPPGO_SUPA_KEY=c[1];
+      localStorage.setItem('geppgo_cfg',JSON.stringify({url:c[0],key:c[1]}));}
+  }
+}catch(e){}
+/* 3) config salvata su questo telefono */
 try{
   const c=JSON.parse(localStorage.getItem('geppgo_cfg')||'null');
   if(c){if(!window.GEPPGO_SUPA_URL&&c.url)window.GEPPGO_SUPA_URL=c.url;
         if(!window.GEPPGO_SUPA_KEY&&c.key)window.GEPPGO_SUPA_KEY=c.key;}
 }catch(e){}
-/* 3) indirizzo pubblico: lo deduce da solo se sei online */
+/* L'indirizzo si riscrive cosi': via l'invito, che vale una volta sola, e
+   dentro la configurazione, che deve valere sempre. */
+window.GEPPGO_SISTEMA_HASH=function(){
+  try{
+    const h=(window.GEPPGO_SUPA_URL&&window.GEPPGO_SUPA_KEY)
+      ?'#c='+btoa(window.GEPPGO_SUPA_URL+'|'+window.GEPPGO_SUPA_KEY):'';
+    history.replaceState(null,'',location.pathname+location.search+h);
+  }catch(e){}
+};
+/* 4) indirizzo pubblico: lo deduce da solo se sei online */
 if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
   window.GEPPGO_PUBLIC_URL=location.origin+location.pathname;
+if(location.hash.indexOf('#join')!==0)window.GEPPGO_SISTEMA_HASH();
 </script>
 <script>
 /* Il ponte su Cloudflare che tiene la chiave al sicuro e traduce verso Gemini.
@@ -1762,7 +1792,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(app.premium===undefined)app.premium=false;
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
-  if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;history.replaceState(null,'',location.pathname);}
+  if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
   else if(location.hash.startsWith('#join=')){try{handleJoin(location.hash.slice(6));}catch(e){}}
   if(!T() && app.trips.length){app.currentTripId=app.trips.filter(t=>t.status!=='closed')[0]?.id||app.trips[0].id;}
   try{initMap();}catch(e){}
@@ -3119,7 +3149,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
-- Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza.
+- Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -8780,7 +8810,61 @@ async function authUp(){
 }
 function authSkip(){app.skipAuth=true;save();const g=document.getElementById('authGate');if(g)g.style.display='none';updateAccountCard();}
 async function authOut(){try{await sb.auth.signOut();}catch(e){}app.skipAuth=false;save();toast('Sei uscito dall\'account');}
-function showGate(){app.skipAuth=false;save();if(!sb){toast('Cloud non raggiungibile: controlla connessione e Passo 9');return;}afterAuth();}
+/* Prima, senza configurazione del cloud, questo tasto non faceva niente:
+   afterAuth usciva subito e chi lo premeva restava a guardare. Succede a chi
+   si e' messo l'app sulla schermata iniziale partendo da un link d'invito e
+   si ritrova la memoria vuota. Adesso porta dove si rimedia. */
+function accediOra(){
+  app.skipAuth=false;save();
+  /* Tre motivi diversi per cui non si entra, e tre risposte diverse: prima
+     c'era il silenzio per tutti e tre. */
+  if(!window.GEPPGO_SUPA_URL||!window.GEPPGO_SUPA_KEY){apriRecupero();return;}
+  if(!sb){
+    if(typeof supabase==='undefined'){
+      toast('Non riesco a caricare il collegamento al cloud: serve la rete. Riprova quando sei online.');return;
+    }
+    toast('Mi collego al cloud...');
+    supaBoot().then(()=>{if(sb)afterAuth();else toast('Cloud non raggiungibile: riprova fra poco.');});
+    return;
+  }
+  afterAuth();
+}
+function showGate(){accediOra();}
+/* La via di ritorno per chi e' arrivato da un invito: si incolla il link (o
+   il codice) che gli hanno mandato, e da li' si ricava la configurazione del
+   cloud e, se c'e', anche l'invito al viaggio. Nessuno deve andare a cercare
+   URL e chiavi di Supabase: quelli sono roba di chi ha creato il progetto. */
+function apriRecupero(){
+  openCloudCfg();
+  setTimeout(()=>{const i=document.getElementById('cfgInvito');if(i)i.focus();},350);
+}
+function usaInvito(){
+  const raw=(document.getElementById('cfgInvito').value||'').trim();
+  const m=document.getElementById('cfgInvMsg');
+  m.style.color='var(--red)';
+  if(!raw){m.textContent='Incolla il link o il codice che ti hanno mandato.';return;}
+  /* Si accetta tutto quello che puo' arrivare: il link intero, il pezzo dopo
+     il cancelletto, o il codice nudo. */
+  let p=raw;
+  const h=raw.indexOf('#');
+  if(h>=0)p=raw.slice(h+1);
+  p=p.replace(/^join2=/,'').replace(/^c=/,'');
+  try{p=decodeURIComponent(p);}catch(e){}
+  const ix=p.indexOf('~');
+  const cfgB64=ix>0?p.slice(ix+1):(raw.indexOf('#c=')>=0||/^c=/.test(raw)?p:'');
+  const invito=ix>0?p.slice(0,ix):(p.indexOf(':')>0&&!cfgB64?p:'');
+  let url='',key='';
+  try{const c=atob(cfgB64).split('|');if(c[0]&&c[1]){url=c[0];key=c[1];}}catch(e){}
+  if(!url&&!invito){m.textContent='Non ci ho trovato né un link né un codice validi.';return;}
+  if(url&&key)localStorage.setItem('geppgo_cfg',JSON.stringify({url,key}));
+  m.style.color='var(--green-deep)';
+  m.textContent=url?'Trovato. Riavvio l\'app...':'Codice preso. Riavvio l\'app...';
+  /* Si riscrive l'indirizzo e si riavvia: cambiare solo la parte dopo il
+     cancelletto non ricarica niente da solo, e la configurazione va letta
+     all'avvio. */
+  const dest=location.pathname+(invito?'#join2='+encodeURIComponent(p):(url?'#c='+cfgB64:''));
+  setTimeout(()=>{try{history.replaceState(null,'',dest);}catch(e){}location.reload();},700);
+}
 function openCloudCfg(){
   document.getElementById('cfgUrl').value=window.GEPPGO_SUPA_URL||'';
   document.getElementById('cfgKey').value=window.GEPPGO_SUPA_KEY||'';
@@ -8805,8 +8889,9 @@ function updateAccountCard(){
   if(!sub||!btns)return;
   const configured=!!(window.GEPPGO_SUPA_URL&&window.GEPPGO_SUPA_KEY);
   if(!configured){
-    sub.textContent='Modalità locale: i dati vivono solo su questo telefono. Collega il cloud per account, salvataggi online e condivisione in tempo reale.';
-    btns.innerHTML='<button class="btn btn-grad btn-block" onclick="openCloudCfg()">Configura cloud</button>';
+    sub.textContent='Modalità locale: i dati vivono solo su questo telefono. Se qualcuno ti ha mandato un link d\'invito, incollalo qui e torni dentro al tuo viaggio.';
+    btns.innerHTML='<button class="btn btn-grad btn-block" onclick="apriRecupero()">Ho un link d\'invito</button>'+
+      '<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openCloudCfg()">Configura il cloud a mano</button>';
     return;
   }
   if(session){
@@ -9156,7 +9241,7 @@ function renderCloudWarn(){
     return;
   }
   if(cfg&&sb&&!session&&app.trips.length){
-    box.innerHTML=`<div class="card" style="background:var(--clay-tint);border-color:#EDD2C3"><div style="font-weight:800;font-size:.88rem;color:var(--clay-deep);margin-bottom:.25rem">⚠️ Viaggi solo su questo telefono</div><div style="font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.6rem">Non sei connesso all'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.</div><button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi ora</button></div>`;
+    box.innerHTML=`<div class="card" style="background:var(--clay-tint);border-color:#EDD2C3"><div style="font-weight:800;font-size:.88rem;color:var(--clay-deep);margin-bottom:.25rem">⚠️ Viaggi solo su questo telefono</div><div style="font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.6rem">Non sei connesso all'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.</div><button class="btn btn-grad btn-block" onclick="accediOra()">Accedi ora</button></div>`;
   } else box.innerHTML='';
 }
 function renderHotels(){
@@ -9414,7 +9499,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r90</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="app.skipAuth=false;save();afterAuth()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r90</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
