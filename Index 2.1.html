@@ -1118,6 +1118,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-green" style="flex:1;min-width:31%" onclick="openScanner()">Scansiona</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="document.getElementById('tkImgInp').click()">Foto o PDF</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="openTicketSheet()">A mano</button></div>
         <input type="file" id="tkImgInp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="ticketsFromImages(this)">
         <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.<br><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p></div>
+      <div id="tkWhoBar"></div>
       <div id="ticketsList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
@@ -1353,7 +1354,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Nome</label><input id="tkName" type="text" autocomplete="off" placeholder="es. Museo, treno, concerto"></div>
   <div class="fg"><label>Codice / URL</label><input id="tkCode" placeholder="PNR, numero del codice a barre o link"></div>
   <div class="fg"><label>Come si legge il codice</label><select id="tkFmt"></select><div style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin-top:.35rem">Lo ridisegno con questa forma: se sul biglietto vero c'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.</div></div>
-  <div class="fg"><label>Tipo</label><select id="tkType"><option value="attraction">Attrazione</option><option value="flight">Volo</option><option value="other">Altro</option></select></div>
+  <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Tipo</label><select id="tkType"><option value="attraction">Attrazione</option><option value="flight">Volo</option><option value="other">Altro</option></select></div><div class="fg" style="flex:1"><label>Di chi è</label><select id="tkChi"></select></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.4"><label>Giorno <span style="font-weight:500;color:var(--ink-faint)">(lo metto in time-table)</span></label><select id="tkDay"><option value="">Nessuno</option></select></div><div class="fg" style="flex:1"><label>Ora</label><input type="time" id="tkTime"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label>Costo (opz.)</label><input id="tkCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="tkCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="tkPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div>
   <button class="btn btn-blue btn-block" onclick="addTicketManual()">Aggiungi</button>
@@ -1997,20 +1998,72 @@ function homeDayIndex(t){
   if(!isNaN(f.getTime())){f.setHours(0,0,0,0);if(today<f)return 0;}
   return t.days.length-1;
 }
+/* Il titolone della home diceva la destinazione del viaggio - cioe' l'elenco
+   di tutte le citta' che tocca - anche quando sotto avevi scelto un giorno
+   solo. Su un Giappone di quindici giorni usciva "Tokyo, Fujiyoshida, Hakone,
+   Kyoto, Osaka" mentre stavi guardando il 18. Qui si dice dove sei QUEL
+   giorno, prendendolo da quello che l'app gia' sa: la citta' scritta a mano,
+   i nomi che il meteo ha ricavato dalle tappe, o i nomi gia' chiesti una
+   volta per quella zona. Nessuna richiesta in piu' mentre si disegna. */
+function nomeInCache(t,g){
+  if(!g)return '';
+  return ((t.wxNomi||{})[g.lat.toFixed(1)+','+g.lng.toFixed(1)])||'';
+}
+function cittaDelGiorno(t,day){
+  if(!t||!day)return '';
+  if(day.city)return day.city;
+  if(Array.isArray(day.cities)&&day.cities.length)return day.cities.slice(0,2).join(' e ');
+  const w=(t.weather||{})[day.date];
+  if(w){
+    const multi=w.multi?Object.keys(w.multi).filter(Boolean):[];
+    if(multi.length)return multi.slice(0,2).join(' e ');
+    if(w.luogo)return w.luogo;
+  }
+  const nomi=[...new Set(luoghiDelGiorno(t,day).map(g=>nomeInCache(t,g)).filter(Boolean))];
+  if(nomi.length)return nomi.slice(0,2).join(' e ');
+  const h=(t.hotels||[]).find(x=>x.lat&&x.checkIn&&x.checkOut&&day.date>=x.checkIn&&day.date<x.checkOut);
+  const nh=h?nomeInCache(t,{lat:h.lat,lng:h.lng}):'';
+  if(nh)return nh;
+  return t.destination||t.name||'';
+}
+/* Se il nome di quella zona non l'abbiamo ancora chiesto, lo si chiede una
+   volta sola e si ridisegna: al secondo giro e' in cache e non costa niente.
+   Vale anche per i giorni lontani, dove il meteo non arriva. */
+let _cittaInCorso=false;
+function assicuraCittaDelGiorno(t,day){
+  if(!t||!day||_cittaInCorso||day.city)return;
+  const gr=luoghiDelGiorno(t,day);
+  let g=gr[0]||null;
+  if(!g){
+    const h=(t.hotels||[]).find(x=>x.lat&&x.checkIn&&x.checkOut&&day.date>=x.checkIn&&day.date<x.checkOut);
+    if(h)g={lat:h.lat,lng:h.lng};
+  }
+  if(!g)return;
+  /* Si chiede SOLO se quel nome non ce l'abbiamo ancora. Il controllo "il
+     titolo è ancora la destinazione del viaggio" sembrava equivalente e non
+     lo era: in un viaggio a Fujiyoshida il nome del giorno È "Fujiyoshida",
+     quindi ridisegnava, richiedeva, ridisegnava - la home in un giro
+     infinito. */
+  if(((t.wxNomi||{})[g.lat.toFixed(1)+','+g.lng.toFixed(1)])!=null)return;
+  _cittaInCorso=true;
+  nomeLuogo(t,g).then(n=>{_cittaInCorso=false;if(n)renderHomeHero();})
+    .catch(()=>{_cittaInCorso=false;});
+}
 /* Toccare un giorno del calendario in home lo seleziona soltanto: la
    time-table si apre solo toccando il nome del viaggio, non da qui. */
-/* Le pillole dei giorni in home cambiano la giornata mostrata qui sotto. Per
-   entrarci davvero - orari, mappa, tutto - toccarne una due volte apre la
-   time-table su quel giorno: e' il gesto che si fa comunque per sbaglio
-   quando si vuole "andare dentro", e prima non portava da nessuna parte.
-   Il primo tocco continua a fare quello che ha sempre fatto, quindi chi non
-   conosce la scorciatoia non se ne accorge. */
-let _tapHome=null,_tapHomeQuando=0;
+/* Le pillole dei giorni in home cambiano la giornata mostrata qui sotto, e
+   toccando due volte si apre la time-table su quel giorno.
+   Il doppio tocco era a tempo - due click entro 450ms - e non funzionava:
+   il primo tocco ridisegna tutta la home, quindi il secondo cade su un
+   bottone appena nato, e la striscia nel frattempo si e' anche riallineata
+   per centrare il giorno scelto. Meta' delle volte il secondo tocco finiva
+   nel vuoto o su un altro giorno.
+   Adesso non c'e' nessun cronometro: toccare il giorno GIA' SCELTO apre la
+   time-table. Due tocchi di fila fanno esattamente quello, veloci o lenti che
+   siano, e non c'e' modo di sbagliare il tempo. */
 function selHomeDay(i){
-  const ora=Date.now(),doppio=(_tapHome===i&&ora-_tapHomeQuando<450);
-  _tapHome=i;_tapHomeQuando=ora;
+  if(i===homeDayIndex(T())){openDay(i);return;}
   homeDaySel=i;renderHomeHero();
-  if(doppio)openDay(i);
 }
 /* Cambio viaggio dalla home. Azzera il giorno scelto a mano, così il viaggio
    nuovo riparte dal suo giorno di oggi invece che da un indice rimasto lì. */
@@ -2063,7 +2116,7 @@ function homeSoonFill(idx){
   if(!a||!t)return;
   const ms=actWhen(homeSoonDay,a),mins=ms!=null?Math.round((ms-Date.now())/60000):null;
   const loc=actLoc(t,a);
-  const quando=mins!=null?soonWhen(mins,a):(a.time?('alle '+a.time):'senza orario');
+  const quando=mins!=null?soonWhen(mins,a,ms):(a.time?('alle '+a.time):'senza orario');
   box.dataset.base=[quando,String(a.notes||'')].filter(Boolean).join(' · ');
   if(loc){box.dataset.lat=loc.lat;box.dataset.lng=loc.lng;}
   else{delete box.dataset.lat;delete box.dataset.lng;}
@@ -2071,10 +2124,10 @@ function homeSoonFill(idx){
   const ring=box.querySelector('.hh-ring');
   if(ring){
     ring.style.setProperty('--p',mins!=null?soonRing(mins):0);
-    const sp=ring.querySelector('span');if(sp)sp.textContent=mins!=null?soonRingText(mins):'·';
+    const sp=ring.querySelector('span');if(sp)sp.textContent=mins!=null?soonRingText(mins,ms):'·';
   }
   const lab=box.querySelector('.hh-soon-l');
-  if(lab)lab.textContent=mins!=null?soonLabel(mins):'IN PROGRAMMA';
+  if(lab)lab.textContent=mins!=null?soonLabel(mins,ms):'IN PROGRAMMA';
   const nome=box.querySelector('.hh-soon-n');
   if(nome)nome.textContent=a.name||'';
   updateSoonWalk();
@@ -2225,31 +2278,49 @@ function homeNext(t,day){
 /* "Fra poco" solo se manca davvero poco; altrimenti si dice quando. Il riquadro
    ora segue la tappa che si sta guardando in mappa, che può anche essere già
    passata: allora lo dice, invece di scrivere "adesso" su una cosa finita. */
-function soonLabel(m){
+/* "Domani" è una questione di calendario, non di ore. Un volo venerdì alle
+   13:55, guardato mercoledì alle 15:55, dista 46 ore: con la vecchia regola
+   delle 48 ore diventava "domani" mentre l'anello accanto diceva già 2g. Si
+   contano i giorni da mezzanotte a mezzanotte, che è come li conta chi
+   guarda il calendario. */
+function giorniDiCalendario(ms){
+  if(ms==null)return null;
+  const a=new Date();a.setHours(0,0,0,0);
+  const b=new Date(ms);if(isNaN(b.getTime()))return null;
+  b.setHours(0,0,0,0);
+  return Math.round((b-a)/864e5);
+}
+function soonLabel(m,ms){
   if(m<-60)return'GIÀ PASSATA';
   if(m<=0)return'ADESSO';
   if(m<90)return'FRA POCO';
-  if(m<1440)return'PIÙ TARDI';
-  if(m<2880)return'DOMANI';
-  return 'FRA '+Math.round(m/1440)+' GIORNI';
+  const g=giorniDiCalendario(ms);
+  if(g==null)return m<1440?'PIÙ TARDI':('FRA '+Math.round(m/1440)+' GIORNI');
+  if(g<=0)return'PIÙ TARDI';
+  if(g===1)return'DOMANI';
+  if(g===2)return'DOPODOMANI';
+  return 'FRA '+g+' GIORNI';
 }
 /* Dentro l'anello ci sta poco: forma compatta. */
-function soonRingText(m){
+function soonRingText(m,ms){
   if(m<-60)return'✓';
   if(m<=0)return'ora';
   if(m<60)return m+'′';
   if(m<1440)return Math.floor(m/60)+'h';
-  return Math.round(m/1440)+'g';
+  const g=giorniDiCalendario(ms);
+  return (g!=null?g:Math.round(m/1440))+'g';
 }
 /* Quanto manca, per esteso, sotto il nome. */
-function soonWhen(m,a){
+function soonWhen(m,a,ms){
   const ora=(a&&a.time)?a.time:'';
   if(m<-60)return ora?('era alle '+ora):'già passata';
   if(m<=0)return'adesso';
   if(m<60)return'fra '+m+(m===1?' minuto':' minuti');
-  if(m<1440){const h=Math.floor(m/60),r=m%60;return'fra '+h+'h'+(r?' '+r+'′':'')+(ora?' · alle '+ora:'');}
-  if(m<2880)return'domani'+(ora?' alle '+ora:'');
-  return 'fra '+Math.round(m/1440)+' giorni'+(ora?' · alle '+ora:'');
+  const g=giorniDiCalendario(ms);
+  if(g==null||g<=0){const h=Math.floor(m/60),r=m%60;return'fra '+h+'h'+(r?' '+r+'′':'')+(ora?' · alle '+ora:'');}
+  if(g===1)return'domani'+(ora?' alle '+ora:'');
+  if(g===2)return'dopodomani'+(ora?' alle '+ora:'');
+  return 'fra '+g+' giorni'+(ora?' · alle '+ora:'');
 }
 /* L'anello si riempie avvicinandosi: quasi vuoto a due ore, pieno all'ora. */
 function soonRing(m){
@@ -2337,7 +2408,7 @@ function renderHomeHero(){
   const i=homeDayIndex(t),day=t.days[i];
   if(!day){box.innerHTML='';return;}
   const w=(t.weather||{})[day.date];
-  const city=day.city||(day.cities&&day.cities[0])||t.destination||t.name||'';
+  const city=cittaDelGiorno(t,day);
   const mood=w?homeMood(w.code):'';
   const bits=[];
   if(w)bits.push(`${Math.round(w.tempMax)}° ${wxShort(w.code)}`);
@@ -2360,13 +2431,13 @@ function renderHomeHero(){
     if(!a0)return'';
     const ms=actWhen(day,a0),mins=ms!=null?Math.round((ms-Date.now())/60000):null;
     const loc=actLoc(t,a0);
-    const quando=mins!=null?soonWhen(mins,a0):(a0.time?('alle '+a0.time):'senza orario');
+    const quando=mins!=null?soonWhen(mins,a0,ms):(a0.time?('alle '+a0.time):'senza orario');
     const base=[quando,String(a0.notes||'')].filter(Boolean).join(' · ');
     const walk=loc?walkText(loc.lat,loc.lng):'';
     return `<div class="hh-soon" onclick="tapAct(${i},${a0.id})" data-base="${esc(base)}"${loc?` data-lat="${loc.lat}" data-lng="${loc.lng}"`:''}>
-    <div class="hh-ring" style="--p:${mins!=null?soonRing(mins):0}"><span>${esc(mins!=null?soonRingText(mins):'·')}</span></div>
+    <div class="hh-ring" style="--p:${mins!=null?soonRing(mins):0}"><span>${esc(mins!=null?soonRingText(mins,ms):'·')}</span></div>
     <div style="min-width:0;flex:1">
-      <div class="hh-soon-l">${esc(mins!=null?soonLabel(mins):'IN PROGRAMMA')}</div>
+      <div class="hh-soon-l">${esc(mins!=null?soonLabel(mins,ms):'IN PROGRAMMA')}</div>
       <div class="hh-soon-n">${esc(a0.name||'')}</div>
       <div class="hh-soon-s">${esc([base,walk].filter(Boolean).join(' · '))}</div>
     </div>
@@ -2374,7 +2445,7 @@ function renderHomeHero(){
   <div class="hh-days">${t.days.map((d,j)=>{
     const dt=new Date(d.date);
     const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
-    return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})" title="Un tocco per vedere la giornata, due per aprire la time-table">${esc(lb)}</button>`;
+    return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})" title="Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table">${esc(lb)}</button>`;
   }).join('')}</div>
   <div class="hh-sec">
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
@@ -2395,6 +2466,7 @@ function renderHomeHero(){
     </div>`;
   }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
   homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
+  assicuraCittaDelGiorno(t,day);
   backfillActPhotos(t);
   buildHomeMap(t,day,acts);
 }
@@ -3150,7 +3222,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
-- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
+- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
@@ -4845,7 +4917,9 @@ function addTicketManual(keep){
   const type=document.getElementById('tkType').value;
   const gia=bigliettoConCodice(t,c);
   if(gia){toast('⚠️ Questo codice ce l\'hai già: è "'+gia.name+'"');return;}
+  const chi=document.getElementById('tkChi').value;
   const tk={id:uid(),name:n,code:c,fmt:document.getElementById('tkFmt').value||'qrcode',type};
+  if(chi)tk.personId=parseInt(chi,10);
   t.tickets.push(tk);
   const dv=document.getElementById('tkDay').value;
   let linkedByDay=false;
@@ -5289,9 +5363,17 @@ async function ticketsFromImages(inp){
   const files=[...(inp.files||[])];inp.value='';
   if(!files.length)return;
   toast(avvioLettura(files));
+  const chi=personaFiltrata(t);
   const r=await importTicketImages(t,files,null,toast);
+  /* Stai guardando i biglietti di una persona: quelli che aggiungi adesso
+     sono suoi, se non c'era gia' un nome scritto sul PDF. Se no sparirebbero
+     dalla vista appena letti. */
+  let miei=0;
+  if(chi!=null)r.ids.forEach(id=>{const tk=t.tickets.find(x=>x.id===id);
+    if(tk&&tk.personId==null&&!eVoucher(tk)){tk.personId=chi;miei++;}});
   save();renderAll();
-  toast(riassuntoLettura(r)||'Nessun codice trovato');
+  const nomeChi=chi!=null?((t.participants||[]).find(p=>p.id===chi)||{}).name:'';
+  toast((riassuntoLettura(r)||'Nessun codice trovato')+(miei&&nomeChi?' · intestati a '+nomeChi:''));
   if(r.ids.length)setTimeout(()=>openTkLink(r.ids.slice()),350);
 }
 function curActId(){return adRef?(adRef.id!=null?adRef.id:adRef.pendingId):null;}
@@ -5627,15 +5709,56 @@ function switchTicketBig(actId,curId,val){
   const sel=document.getElementById('tkBigPerson'),cur=t.tickets.find(x=>x.id===curId);
   if(sel&&cur)sel.value=cur.personId||'';
 }
+/* In sei, la pagina Biglietti diventa un muro di QR di tutti quanti, e il
+   proprio - quello che serve al varco, di corsa - sta in mezzo. Con la
+   tendina in cima si guardano i biglietti di una persona alla volta: si parte
+   dai propri, che e' quello che si cerca nove volte su dieci. Il voucher si
+   vede sempre, perche' non e' di nessuno in particolare. */
+function tkWhoVal(t){
+  if(app.tkWho!=null)return String(app.tkWho);
+  const me=(t.participants||[]).find(p=>p.isMe);
+  return (me&&(t.participants||[]).length>1)?String(me.id):'tutti';
+}
+function setTkWho(v){app.tkWho=String(v);save();renderTickets();}
+function personaFiltrata(t){
+  if(!t||(t.participants||[]).length<2)return null;
+  const v=tkWhoVal(t);
+  if(v==='tutti'||v==='senza')return null;
+  const p=(t.participants||[]).find(x=>String(x.id)===v);
+  return p?p.id:null;
+}
+function tkFiltro(t,tk){
+  const v=tkWhoVal(t);
+  if(v==='tutti')return true;
+  if(eVoucher(tk))return true;
+  if(v==='senza')return tk.personId==null;
+  return String(tk.personId)===v;
+}
+function renderTkWho(t){
+  const bar=document.getElementById('tkWhoBar');if(!bar)return;
+  if(!t||!t.tickets.length||(t.participants||[]).length<2){bar.innerHTML='';return;}
+  const v=tkWhoVal(t);
+  const conta=pid=>t.tickets.filter(tk=>String(tk.personId)===String(pid)).length;
+  const senza=t.tickets.filter(tk=>tk.personId==null&&!eVoucher(tk)).length;
+  bar.innerHTML=`<div class="fg" style="margin-bottom:${(v!=='tutti'&&senza)?'.35rem':'0'}"><label>Di chi vuoi vedere i biglietti</label><select onchange="setTkWho(this.value)"><option value="tutti" ${v==='tutti'?'selected':''}>Tutti · ${t.tickets.length}</option>${(t.participants||[]).map(p=>`<option value="${p.id}" ${v===String(p.id)?'selected':''}>${esc(p.name)}${p.isMe?' (tu)':''} · ${conta(p.id)}</option>`).join('')}${senza?`<option value="senza" ${v==='senza'?'selected':''}>Senza nome · ${senza}</option>`:''}</select></div>`
+    +((v!=='tutti'&&v!=='senza'&&senza)?`<div style="font-size:.74rem;color:var(--ink-faint);line-height:1.4">${senza} ${senza===1?'biglietto non è di nessuno':'biglietti non sono di nessuno'} · <a href="javascript:void 0" onclick="setTkWho('senza')" style="color:var(--blue);font-weight:700">guardali</a></div>`:'');
+}
 function renderTickets(){
   const t=T(),c=document.getElementById('ticketsList');
+  renderTkWho(t);
   if(!t||!t.tickets.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🎫</div><div class="empty-t">Nessun biglietto</div></div>`;return;}
+  const mostrati=t.tickets.filter(tk=>tkFiltro(t,tk));
+  if(!mostrati.length){
+    const chi=(t.participants||[]).find(p=>String(p.id)===tkWhoVal(t));
+    c.innerHTML=`<div class="empty"><div class="empty-ic">🎫</div><div class="empty-t">${chi?'Nessun biglietto intestato a '+esc(chi.name):'Nessun biglietto senza nome'}</div><button class="btn btn-soft" style="margin-top:.7rem" onclick="setTkWho('tutti')">Vedi tutti i biglietti</button></div>`;
+    return;
+  }
   const groups=[],seen=new Set();
   t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{
-    const list=t.tickets.filter(tk=>tk.actId===a.id);
+    const list=mostrati.filter(tk=>tk.actId===a.id);
     if(list.length){groups.push({act:a,tickets:list});list.forEach(tk=>seen.add(tk.id));}
   });});
-  const loose=t.tickets.filter(tk=>!seen.has(tk.id));
+  const loose=mostrati.filter(tk=>!seen.has(tk.id));
   let html='';
   groups.forEach(g=>{
     const nb=g.tickets.filter(tk=>!eVoucher(tk)).length,nv=g.tickets.length-nb;
@@ -5646,7 +5769,7 @@ function renderTickets(){
   });
   loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
   c.innerHTML=html;
-  t.tickets.forEach(tk=>drawTicketCode(tk));
+  mostrati.forEach(tk=>drawTicketCode(tk));
   hydrateTicketImgs();
 }
 function openTkImg(iid){
@@ -10114,6 +10237,12 @@ function openTicketSheet(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
   document.getElementById('tkName').value='';document.getElementById('tkCode').value='';
   document.getElementById('tkFmt').innerHTML=opzFormato('qrcode');
+  /* Parte gia' sulla persona di cui stai guardando i biglietti: se hai
+     filtrato "i miei", la carta d'imbarco che aggiungi e' tua senza doverlo
+     ridire. */
+  const chiOra=personaFiltrata(t);
+  document.getElementById('tkChi').innerHTML='<option value="">Di nessuno</option>'
+    +(t.participants||[]).map(p=>`<option value="${p.id}" ${chiOra===p.id?'selected':''}>${esc(p.name)}${p.isMe?' (tu)':''}</option>`).join('');
   document.getElementById('tkType').value='attraction';document.getElementById('tkTime').value='';
   document.getElementById('tkCost').value='';document.getElementById('tkPaid').value='paid';
   document.getElementById('tkCur').innerHTML=curOpts(t.currency||'EUR');
