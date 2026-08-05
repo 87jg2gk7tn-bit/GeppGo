@@ -1117,7 +1117,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <div class="card"><div class="card-head"><div class="card-h">Aggiungi biglietto</div></div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-green" style="flex:1;min-width:31%" onclick="openScanner()">Scansiona</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="document.getElementById('tkImgInp').click()">Foto o PDF</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="openTicketSheet()">A mano</button></div>
         <input type="file" id="tkImgInp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="ticketsFromImages(this)">
-        <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Tranquillo: la scansione qui è una semplice lettura locale del codice, non "timbra" niente. Un biglietto risulta usato solo quando lo leggono i tornelli dell'ente. Unica accortezza: non mostrare i codici a estranei.</p></div>
+        <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.<br><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p></div>
       <div id="ticketsList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
@@ -1351,7 +1351,8 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Aggiungi biglietto</div><button class="x x-close" onclick="closeSheet('mTicket')">✕</button></div>
   <div class="fg"><label>Nome</label><input id="tkName" type="text" autocomplete="off" placeholder="es. Museo, treno, concerto"></div>
-  <div class="fg"><label>Codice / URL</label><input id="tkCode" placeholder="PNR o link"></div>
+  <div class="fg"><label>Codice / URL</label><input id="tkCode" placeholder="PNR, numero del codice a barre o link"></div>
+  <div class="fg"><label>Come si legge il codice</label><select id="tkFmt"></select><div style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin-top:.35rem">Lo ridisegno con questa forma: se sul biglietto vero c'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.</div></div>
   <div class="fg"><label>Tipo</label><select id="tkType"><option value="attraction">Attrazione</option><option value="flight">Volo</option><option value="other">Altro</option></select></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.4"><label>Giorno <span style="font-weight:500;color:var(--ink-faint)">(lo metto in time-table)</span></label><select id="tkDay"><option value="">Nessuno</option></select></div><div class="fg" style="flex:1"><label>Ora</label><input type="time" id="tkTime"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label>Costo (opz.)</label><input id="tkCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="tkCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="tkPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div>
@@ -1360,9 +1361,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 </div></div>
 <div class="modal" id="mScanner"><div class="sheet">
   <div class="sheet-grip"></div>
-  <div class="sheet-head"><div class="sheet-t">Scansiona QR</div><button class="x x-close" onclick="closeScanner()">✕</button></div>
+  <div class="sheet-head"><div class="sheet-t">Scansiona il codice</div><button class="x x-close" onclick="closeScanner()">✕</button></div>
   <div class="scan-area"><video id="scanVid" autoplay playsinline></video><div class="scan-ov"><div class="scan-frame"><div class="scan-line"></div></div></div></div>
-  <p style="font-size:.85rem;color:var(--ink-faint);text-align:center;margin-bottom:.95rem">Inquadra il QR del biglietto</p>
+  <p style="font-size:.85rem;color:var(--ink-faint);text-align:center;margin-bottom:.4rem">Inquadra il QR o il codice a barre del biglietto</p>
+  <p style="font-size:.75rem;color:var(--ink-faint);text-align:center;line-height:1.5;margin-bottom:.95rem">Qui il codice viene solo <b>copiato</b>: la lettura resta dentro il telefono, non passa da nessun ente e non "timbra" niente. Il biglietto resta valido esattamente com'era.</p>
   <div id="scanResult"></div>
 </div></div>
 <div class="modal" id="mShare"><div class="sheet">
@@ -3148,7 +3150,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
-- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono scansionando il QR, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
+- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
@@ -4843,7 +4845,7 @@ function addTicketManual(keep){
   const type=document.getElementById('tkType').value;
   const gia=bigliettoConCodice(t,c);
   if(gia){toast('⚠️ Questo codice ce l\'hai già: è "'+gia.name+'"');return;}
-  const tk={id:uid(),name:n,code:c,type};
+  const tk={id:uid(),name:n,code:c,fmt:document.getElementById('tkFmt').value||'qrcode',type};
   t.tickets.push(tk);
   const dv=document.getElementById('tkDay').value;
   let linkedByDay=false;
@@ -4888,17 +4890,14 @@ async function zxDecode(url){
     if(r&&r.getText&&r.getText()){
       let fmt='QR_CODE';
       try{fmt=ZXing.BarcodeFormat[r.getBarcodeFormat()]||'QR_CODE';}catch(e2){}
-      return {code:r.getText(),fmt:zx2bcid(fmt)};
+      /* Dove stava il codice nell'immagine: serve per cancellarlo e cercare
+         il successivo, come si fa con i QR. */
+      let punti=[];
+      try{punti=(r.getResultPoints()||[]).filter(Boolean).map(p=>({x:p.getX(),y:p.getY()}));}catch(e3){}
+      return {code:r.getText(),fmt:zx2bcid(fmt),punti};
     }
   }catch(e){}
   return null;
-}
-function rotateDataUrl(url){
-  return new Promise((res,rej)=>{
-    const im=new Image();
-    im.onload=()=>{const cv=document.createElement('canvas');cv.width=im.height;cv.height=im.width;const cx=cv.getContext('2d');cx.translate(cv.width/2,cv.height/2);cx.rotate(Math.PI/2);cx.drawImage(im,-im.width/2,-im.height/2);res(cv.toDataURL('image/jpeg',.85));};
-    im.onerror=rej;im.src=url;
-  });
 }
 async function extractAllQR(cv){
   const out=[];
@@ -4937,24 +4936,14 @@ function loadImageFile(f){
 function canvasAtScale(im,scale){
   const cv=document.createElement('canvas');
   cv.width=Math.max(1,Math.round(im.width*scale));cv.height=Math.max(1,Math.round(im.height*scale));
-  cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+  const cx=cv.getContext('2d');
+  /* Il fondo bianco non è un vezzo: un PNG con lo sfondo trasparente - come
+     quelli generati dai siti dei biglietti - su tela resta nero, e un codice
+     bianco su nero non lo legge nessuno. Ci si perdeva ogni codice a barre
+     scaricato invece che fotografato. */
+  cx.fillStyle='#ffffff';cx.fillRect(0,0,cv.width,cv.height);
+  cx.drawImage(im,0,0,cv.width,cv.height);
   return cv;
-}
-async function tiledQR(im){
-  const out=[];
-  const cols=3,rows=3,overlap=.15,tw=im.width/cols,th=im.height/rows;
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const x0=Math.max(0,Math.floor(c*tw-tw*overlap)),y0=Math.max(0,Math.floor(r*th-th*overlap));
-      const x1=Math.min(im.width,Math.ceil((c+1)*tw+tw*overlap)),y1=Math.min(im.height,Math.ceil((r+1)*th+th*overlap));
-      const w=x1-x0,h=y1-y0;
-      if(w<20||h<20)continue;
-      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
-      cv.getContext('2d').drawImage(im,x0,y0,w,h,0,0,w,h);
-      (await extractAllQR(cv)).forEach(c2=>{if(!out.includes(c2))out.push(c2);});
-    }
-  }
-  return out;
 }
 /* Uno stesso QR letto due volte diventa un biglietto in più che non esiste:
    al tornello si presentano in sei con sette codici, uno è il doppione, e
@@ -4997,17 +4986,65 @@ function tegole(cv,righe,cols,sovr){
   }
   return out;
 }
-async function codiciSuTela(cv){
+function ruotaTela(cv){
+  const o=document.createElement('canvas');o.width=cv.height;o.height=cv.width;
+  const cx=o.getContext('2d');
+  cx.fillStyle='#ffffff';cx.fillRect(0,0,o.width,o.height);
+  cx.translate(o.width/2,o.height/2);cx.rotate(Math.PI/2);
+  cx.drawImage(cv,-cv.width/2,-cv.height/2);
+  return o;
+}
+/* jsQR conosce solo i QR. I biglietti veri sono pieni di codici a barre: la
+   riga lunga sotto il biglietto del treno, il PDF417 delle carte d'imbarco,
+   l'Aztec. Quelli li legge ZXing, che però ne trova uno per immagine: anche
+   qui si va a fette, così una pagina con tre codici a barre non ne dà uno
+   solo. Del codice si tiene anche il TIPO, perché un biglietto ridisegnato
+   con la codifica sbagliata al varco non lo legge nessuno. */
+/* ZXing legge un codice per immagine e non sa dirti "e adesso l'altro". Come
+   per i QR: si legge, si cancella dall'immagine il pezzo dove stava, si
+   rilegge. Di un codice a righe restituisce solo i due capi della riga
+   letta - il simbolo sta tutto lì intorno - quindi si cancella una fascia
+   larga quanto il codice e alta abbastanza da coprirlo. */
+async function zxSuTela(cv,metti,giri){
+  const ctx=cv.getContext('2d');
+  for(let i=0;i<(giri||6);i++){
+    let h=null;
+    try{h=await zxDecode(cv.toDataURL('image/jpeg',.92));}catch(e){}
+    if(!h)return;
+    metti([h]);
+    const p=h.punti||[];
+    if(p.length<2)return;
+    const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
+    let x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
+    let y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+    const larg=Math.max(20,x1-x0),alt=Math.max(y1-y0,larg*.45),cy=(y0+y1)/2;
+    x0-=larg*.12;x1+=larg*.12;y0=cy-alt/2-larg*.12;y1=cy+alt/2+larg*.12;
+    x0=Math.max(0,x0);y0=Math.max(0,y0);
+    const w=Math.min(cv.width,x1)-x0,hh=Math.min(cv.height,y1)-y0;
+    if(w<=0||hh<=0)return;
+    ctx.fillStyle='#ffffff';ctx.fillRect(x0,y0,w,hh);
+  }
+}
+async function codiciSuTela(cv,opz){
+  opz=opz||{};
   const out=[],visti=new Set();
-  const metti=arr=>(arr||[]).forEach(c=>{const k=normCode(c);if(k&&!visti.has(k)){visti.add(k);out.push(c);}});
+  const metti=(arr,fmt)=>(arr||[]).forEach(c=>{
+    const cod=(c&&c.code!=null)?c.code:c;
+    const k=normCode(cod);if(!k||visti.has(k))return;
+    visti.add(k);out.push({code:cod,fmt:(c&&c.fmt)||fmt||'qrcode'});
+  });
   /* Il primo giro cancella dall'immagine i codici che trova: i giri dopo
      lavorano su una pagina più pulita e si confondono di meno. */
-  try{metti(await extractAllQR(cv));}catch(e){}
+  try{metti(await extractAllQR(cv),'qrcode');}catch(e){}
   for(const g of GRIGLIE_QR){
     for(const t of tegole(cv,g[0],g[1],.5)){
-      try{metti(await extractAllQR(t));}catch(e){}
+      try{metti(await extractAllQR(t),'qrcode');}catch(e){}
     }
   }
+  if(out.length||opz.zx===false)return out;
+  await zxSuTela(cv,metti);
+  /* Una foto storta: il codice a barre girato di lato non lo legge nessuno. */
+  if(!out.length&&opz.ruota)await zxSuTela(ruotaTela(cv),metti,3);
   return out;
 }
 /* Una pagina di PDF disegnata su una tela, per poterci cercare sopra i
@@ -5029,7 +5066,10 @@ async function codiciDaPdf(file,dillo){
   const lib=await caricaPdfLib();
   const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   const out=[],visti=new Set();
-  const metti=arr=>(arr||[]).forEach(c=>{const k=normCode(c.code||c);if(k&&!visti.has(k)){visti.add(k);out.push(c.code?c:{code:c,fmt:'qrcode'});}});
+  const metti=arr=>(arr||[]).forEach(c=>{
+    const cod=(c&&c.code!=null)?c.code:c,k=normCode(cod);
+    if(k&&!visti.has(k)){visti.add(k);out.push({code:cod,fmt:(c&&c.fmt)||'qrcode'});}
+  });
   const pagine=Math.min(doc.numPages,PDF_TK_PAGINE);
   for(let p=1;p<=pagine;p++){
     /* Setacciare una pagina a fette dura qualche secondo: senza un segno di
@@ -5037,16 +5077,11 @@ async function codiciDaPdf(file,dillo){
     if(dillo)dillo(pagine>1?`Leggo il PDF… pagina ${p} di ${pagine}`:'Leggo il PDF…');
     const page=await doc.getPage(p);
     const prima=out.length;
-    metti(await codiciSuTela(await pdfPaginaSuTela(page,1700)));
-    /* Niente? Forse è stampato piccolo: si rifà la pagina più grande. */
-    if(out.length===prima)metti(await codiciSuTela(await pdfPaginaSuTela(page,2800)));
-    /* I biglietti scaricati dalla posta a volte hanno un codice a barre
-       lungo (PDF417, Aztec) invece del QR: quello lo legge ZXing. */
-    if(out.length===prima){
-      const url=(await pdfPaginaSuTela(page,1700)).toDataURL('image/jpeg',.92);
-      const single=await zxDecode(url);
-      if(single)metti([single]);
-    }
+    metti(await codiciSuTela(await pdfPaginaSuTela(page,1700),{zx:true}));
+    /* Niente? Forse è stampato piccolo: si rifà la pagina più grande, ma solo
+       a caccia di QR: i codici a barre li ha già cercati il giro di prima, e
+       ripeterli raddoppierebbe l'attesa senza aggiungere niente. */
+    if(out.length===prima)metti(await codiciSuTela(await pdfPaginaSuTela(page,2800),{zx:false}));
   }
   return {codici:out,pagine:doc.numPages,lette:pagine};
 }
@@ -5073,20 +5108,10 @@ async function importTicketImages(t,files,firstName,dillo){
     try{
       const im=await loadImageFile(f);
       const maxDim=Math.max(im.width,im.height);
-      let codes=[];
-      try{codes=await codiciSuTela(canvasAtScale(im,Math.min(1,1600/maxDim)));}catch(e2){}
-      if(!codes.length&&maxDim>1600){
-        try{codes=await codiciSuTela(canvasAtScale(im,Math.min(1,3000/maxDim)));}catch(e3){}
-      }
-      if(!codes.length){
-        try{codes=await tiledQR(im);}catch(e4){}
-      }
-      let hits=codes.map(c=>({code:c,fmt:'qrcode'}));
-      if(!hits.length){
-        const url=canvasAtScale(im,Math.min(1,1600/maxDim)).toDataURL('image/jpeg',.9);
-        let single=await zxDecode(url);
-        if(!single){try{single=await zxDecode(await rotateDataUrl(url));}catch(e5){}}
-        if(single)hits=[single];
+      let hits=[];
+      try{hits=await codiciSuTela(canvasAtScale(im,Math.min(1,1600/maxDim)),{zx:true,ruota:true});}catch(e2){}
+      if(!hits.length&&maxDim>1600){
+        try{hits=await codiciSuTela(canvasAtScale(im,Math.min(1,3000/maxDim)),{zx:false});}catch(e3){}
       }
       if(hits.length)hits.forEach((hit,hi)=>salva((fi===0&&hi===0&&firstName)?firstName:(base+(hits.length>1?' '+(hi+1):'')),hit));
       else ko++;
@@ -5287,6 +5312,31 @@ function saveTkLink(){
   save();renderAll();closeSheet('mTkLink');
   toast(aid?'Biglietto collegato: lo trovi aprendo l\'attività':'Ok, resta senza attività collegata');
 }
+/* I formati che l'app sa ridisegnare uguali all'originale. Il nome accanto è
+   quello che uno riconosce guardando il biglietto, non la sigla tecnica. */
+const FORMATI_CODICE=[
+  ['qrcode','QR code (il quadrato)'],
+  ['code128','Codice a barre — Code 128'],
+  ['code39','Codice a barre — Code 39'],
+  ['ean13','Codice a barre — EAN-13 (13 cifre)'],
+  ['ean8','Codice a barre — EAN-8 (8 cifre)'],
+  ['upca','Codice a barre — UPC-A (12 cifre)'],
+  ['interleaved2of5','Codice a barre — ITF (solo cifre)'],
+  ['pdf417','PDF417 (carte d\'imbarco)'],
+  ['azteccode','Aztec (biglietti dei treni)'],
+  ['datamatrix','Data Matrix'],
+];
+const CODICI_A_RIGHE=['code128','code39','ean13','ean8','upca','interleaved2of5'];
+function opzFormato(sel){
+  return FORMATI_CODICE.map(f=>`<option value="${f[0]}" ${sel===f[0]?'selected':''}>${f[1]}</option>`).join('');
+}
+function nomeFormato(f){const x=FORMATI_CODICE.find(y=>y[0]===f);return x?x[1]:'QR code (il quadrato)';}
+function cambiaFormato(id,val){
+  const t=T();if(!t)return;
+  const tk=t.tickets.find(x=>x.id===id);if(!tk)return;
+  tk.fmt=val||'qrcode';save();
+  openTicketBig(id);renderTickets();renderAdTkList();
+}
 function drawTicketCode(tk,elId,size){
   if(tk.img)return;
   const el=document.getElementById(elId||('qr-'+tk.id));if(!el)return;
@@ -5296,13 +5346,26 @@ function drawTicketCode(tk,elId,size){
   if(bc&&typeof bwipjs!=='undefined'){
     try{
       const cv=document.createElement('canvas');
-      const opt={bcid:bc,text:tk.code,scale:2,includetext:false,paddingwidth:8,paddingheight:8};
-      if(bc==='pdf417')opt.height=10;
+      const righe=CODICI_A_RIGHE.indexOf(bc)>=0;
+      const opt={bcid:bc,text:tk.code,scale:Math.max(2,Math.round(size/70)),
+        includetext:righe,textxalign:'center',paddingwidth:8,paddingheight:8};
+      /* L'altezza di bwip è in millimetri, non in pixel: 12 mm è quanto è
+         alta la riga su un biglietto vero - abbastanza da poterci passare
+         sopra il raggio del lettore, senza diventare un francobollo. */
+      if(righe)opt.height=12;
+      else if(bc==='pdf417')opt.height=10;
       bwipjs.toCanvas(cv,opt);
       cv.style.maxWidth='100%';cv.style.background='#fff';cv.style.borderRadius='8px';
       el.appendChild(cv);
       return;
-    }catch(e){}
+    }catch(e){
+      /* Se non riesco a disegnarlo in quel formato NON ripiego sul QR: un
+         codice ridisegnato con la codifica sbagliata al varco non lo legge
+         nessuno, e tu te ne accorgeresti solo lì. Meglio il numero in
+         chiaro, che l'addetto può battere a mano. */
+      el.innerHTML=`<div style="background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:.7rem;text-align:center"><div style="font-size:.72rem;color:var(--clay-deep);font-weight:700;margin-bottom:.35rem">⚠️ Non riesco a ridisegnarlo come ${esc(nomeFormato(bc).toLowerCase())}</div><div style="font-family:ui-monospace,monospace;font-size:.95rem;font-weight:800;word-break:break-all">${esc(tk.code)}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.3rem">Mostra il biglietto originale, o fai battere questo numero</div></div>`;
+      return;
+    }
   }
   if(typeof QRCode!=='undefined'&&QRCode.toCanvas){
     try{
@@ -5347,6 +5410,9 @@ function openTicketBig(id){
     html+=`<img data-tkimg="${tk.img}" style="width:100%;max-width:360px;border-radius:14px;display:block;margin:0 auto;background:var(--paper)" alt="biglietto">`;
   }else{
     html+=`<div class="qr-box" id="qr-big-${tk.id}" style="display:inline-block"></div><div class="ticket-c" style="margin-top:.6rem">${esc(tk.code||'')}</div>`;
+    /* Il codice è copiato tale e quale: se al varco serve un codice a barre e
+       qui compare un quadrato, si cambia da qui e torna com'era. */
+    html+=`<div class="fg" style="text-align:left;margin-top:1rem"><label>Come si legge</label><select onchange="cambiaFormato(${tk.id},this.value)">${opzFormato(tk.fmt||'qrcode')}</select><div style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin-top:.35rem">È il tuo codice, copiato uguale all'originale: leggerlo qui non lo consuma e non lo convalida. Se al varco lo rifiutano, cambia formato — deve avere la stessa forma che ha sul biglietto vero.</div></div>`;
   }
   let who=null;
   if(adRef&&document.getElementById('mActDetail').classList.contains('active')&&curActId()===tk.actId){
@@ -5457,28 +5523,29 @@ function scanLoop(){
   if(!scanOn)return;const v=document.getElementById('scanVid');
   if(v.readyState===v.HAVE_ENOUGH_DATA){
     const cv=document.createElement('canvas');cv.width=v.videoWidth;cv.height=v.videoHeight;const ctx=cv.getContext('2d');ctx.drawImage(v,0,0,cv.width,cv.height);
-    try{const img=ctx.getImageData(0,0,cv.width,cv.height);const code=jsQR(img.data,img.width,img.height);if(code){onScan(code.data);return;}}catch(e){}
-    /* jsQR legge solo QR: le carte d'imbarco usano il formato PDF417, un'altra
-       codifica a barre 2D che jsQR non sa decodificare. Ogni ~400ms proviamo
-       anche con ZXing (più lento ma copre PDF417 e altri formati), senza
-       rallentare il loop veloce di jsQR sui QR normali. */
+    try{const img=ctx.getImageData(0,0,cv.width,cv.height);const code=jsQR(img.data,img.width,img.height);if(code){onScan(code.data,'qrcode');return;}}catch(e){}
+    /* jsQR legge solo QR: i biglietti veri hanno anche codici a barre - la
+       riga lunga sotto il biglietto del treno, il PDF417 delle carte
+       d'imbarco, l'Aztec. Ogni ~400ms proviamo anche con ZXing (più lento ma
+       li copre tutti), senza rallentare il loop veloce sui QR normali. Il
+       tipo di codice si porta dietro: serve per ridisegnarlo uguale. */
     const now=Date.now();
     if(now-scanZxLast>400){
       scanZxLast=now;
       const myGen=scanGen;
-      zxDecode(cv.toDataURL('image/jpeg',.85)).then(hit=>{if(hit&&scanOn&&myGen===scanGen)onScan(hit.code);}).catch(()=>{});
+      zxDecode(cv.toDataURL('image/jpeg',.85)).then(hit=>{if(hit&&scanOn&&myGen===scanGen)onScan(hit.code,hit.fmt);}).catch(()=>{});
     }
   }
   requestAnimationFrame(scanLoop);
 }
-function onScan(data){
+function onScan(data,fmt){
   if(scanTarget==='actTk'){
     scanOn=false;if(navigator.vibrate)navigator.vibrate(200);
     const t=T();scanTarget=null;closeScanner();
     if(!t){return;}
     const nm=document.getElementById('adName').value.trim()||'Biglietto';
     const isFlight=document.getElementById('adType').value==='flight';
-    const r=aggiungiBiglietto(t,{name:nm,code:data,type:isFlight?'flight':'attraction',actId:curActId()});
+    const r=aggiungiBiglietto(t,{name:nm,code:data,fmt:fmt||'qrcode',type:isFlight?'flight':'attraction',actId:curActId()});
     document.getElementById('adTkChk').checked=true;document.getElementById('adTkFields').style.display='block';
     /* Il doppio scan dello stesso QR è l'errore che costa caro: te lo dico
        forte, invece di aggiungere un biglietto che al tornello non esiste. */
@@ -5491,7 +5558,8 @@ function onScan(data){
   closeScanner();
   openTicketSheet();
   const c=document.getElementById('tkCode');if(c)c.value=data;
-  toast('Codice letto: dagli un nome e, se vuoi, un giorno');
+  const ff=document.getElementById('tkFmt');if(ff)ff.value=fmt||'qrcode';
+  toast('Codice copiato: dagli un nome e, se vuoi, un giorno');
 }
 function scanInto(tg){scanTarget=tg;const m=document.getElementById('mScanner');if(m)m.style.zIndex=10050;openScanner();}
 function closeScanner(){scanTarget=null;scanGen++;const _m=document.getElementById('mScanner');if(_m)_m.style.zIndex='';scanOn=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}closeSheet('mScanner');}
@@ -9874,6 +9942,7 @@ function openCatExp(cat){
 function openTicketSheet(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
   document.getElementById('tkName').value='';document.getElementById('tkCode').value='';
+  document.getElementById('tkFmt').innerHTML=opzFormato('qrcode');
   document.getElementById('tkType').value='attraction';document.getElementById('tkTime').value='';
   document.getElementById('tkCost').value='';document.getElementById('tkPaid').value='paid';
   document.getElementById('tkCur').innerHTML=curOpts(t.currency||'EUR');
