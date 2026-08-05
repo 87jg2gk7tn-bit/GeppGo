@@ -1106,9 +1106,9 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
     <div class="page" id="hotels">
       <div class="card"><div class="card-h" style="margin-bottom:.6rem">Cerca il tuo hotel</div>
-        <input id="hotSearch" placeholder="Nome hotel o indirizzo" autocomplete="off" oninput="onHotelSearch()">
+        <input id="hotSearch" placeholder="Nome, indirizzo o link di Google Maps" autocomplete="off" oninput="onHotelSearch()">
         <div id="hotResults" style="margin-top:.6rem"></div>
-        <p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).</p>
+        <p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).<br>Se il nome dell'albergo non basta, incolla l'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.</p>
       </div>
       <div id="hotelList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -1549,6 +1549,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Date dell'alloggio</div><button class="x x-close" onclick="closeSheet('mHotelAdd')">✕</button></div>
   <div class="fg"><label>Nome</label><input id="haName" type="text" autocomplete="off"></div>
+  <div class="fg"><label>Posizione sulla mappa</label><input id="haPos" type="text" autocomplete="off" placeholder="Link Google Maps o 45.4642, 9.1900"><div id="haPosNota" style="font-size:.74rem;color:var(--ink-faint);line-height:1.4;margin-top:.3rem"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-in</label><input type="date" id="haIn"></div><div class="fg" style="flex:1"><label>Check-out</label><input type="date" id="haOut"></div></div>
   <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label>Costo totale (opz.)</label><input id="haCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="haCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="haPaid"><option value="plan">Prevista</option><option value="paid">Già pagata</option><option value="no">Non aggiungere</option></select></div></div>
   <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.8rem">In time-table metto il check-in alle 15:00 e il check-out alle 10:00: poi li sposti come qualsiasi attività. Il costo finisce da solo in Soldi e Budget.</p>
@@ -3147,7 +3148,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
-- Hotel: gli alloggi. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
+- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
@@ -6098,13 +6099,18 @@ function confirmBookingImport(){
   if(p.type==='hotel'){
     const ci=document.getElementById('bpDateStart').value,co=document.getElementById('bpDateEnd').value;
     if(!ci||!co||co<=ci){toast('Metti check-in e check-out, in quest\'ordine');return;}
-    geoSearch(name+(t.destination?', '+t.destination:'')).then(res=>{
+    /* Zero-zero è in mezzo all'oceano: se il posto non si trova è meglio
+       nessuna posizione, così il foglio la chiede invece di inventarla. */
+    cercaAlloggio(name,t.destination).then(res=>{
       const r=res&&res[0];
-      pendingHotel={name,lat:r?parseFloat(r.lat):(t.destLoc?t.destLoc.lat:0),lng:r?parseFloat(r.lon):(t.destLoc?t.destLoc.lng:0),address:r?(r.display_name||''):'',editId:null};
+      pendingHotel={name,lat:r?parseFloat(r.lat):null,lng:r?parseFloat(r.lon):null,
+        address:r?(r.display_name||''):'',editId:null,approx:!r||r._liv==='circa'};
       document.getElementById('haName').value=name;
+      document.getElementById('haPos').value='';
       document.getElementById('haIn').value=ci;document.getElementById('haOut').value=co;
       document.getElementById('haCost').value='';document.getElementById('haPaid').value='plan';
       document.getElementById('haCur').innerHTML=curOpts(t.currency||'EUR');
+      notaPosizione();
       openSheet('mHotelAdd');
       toast(code?`Codice prenotazione ${code}: aggiungilo alle note se vuoi`:'Controlla i dati e salva');
     });
@@ -7664,9 +7670,9 @@ function registraHotelDaLista(t,a,giornoIdx,dataFine){
   t.hotels=t.hotels||[];
   let h=t.hotels.find(x=>String(x.name||'').toLowerCase()===nome.toLowerCase());
   const nuovo=!h;
-  if(!h){h={id:uid(),name:nome,lat:a.lat,lng:a.lng,address:a.indirizzo||'',checkIn:ci,checkOut:co};t.hotels.push(h);}
+  if(!h){h={id:uid(),name:nome,lat:a.lat!=null?a.lat:null,lng:a.lng!=null?a.lng:null,address:a.indirizzo||'',checkIn:ci,checkOut:co,approx:!!a.approx};t.hotels.push(h);}
   else{
-    if(a.lat!=null){h.lat=a.lat;h.lng=a.lng;}
+    if(a.lat!=null){h.lat=a.lat;h.lng=a.lng;h.approx=!!a.approx;}
     if(!h.checkIn)h.checkIn=ci;
     if(!h.checkOut||h.checkOut<co)h.checkOut=co;
     /* Le vecchie tappe si rifanno, se no si sommano a quelle nuove. */
@@ -7709,6 +7715,14 @@ async function applicaItinerario(dove,stato){
         if(gd.length){lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);}
       }catch(e){}
       if(sembraUnHotel(a)){
+        /* Un albergo cercato per nome secco spesso non salta fuori: qui vale
+           la pena insistere con la scaletta buona, tanto sono pochi. */
+        if(lat==null){
+          st.textContent=`Cerco l'hotel sulla mappa... ${fatte}/${tot}`;
+          try{const rr=await cercaAlloggio(a.cerca||a.nome,t.destination);
+            if(rr.length){lat=parseFloat(rr[0].lat);lng=parseFloat(rr[0].lon);a.approx=rr[0]._liv==='circa';}
+          }catch(e){}
+        }
         a.lat=lat;a.lng=lng;
         if(registraHotelDaLista(t,a,g.giorno,prossimoAlloggio(prop,g,a)))alberghi++;
         await new Promise(r=>setTimeout(r,1100));
@@ -9329,41 +9343,259 @@ function renderHotels(){
   if(!t){c.innerHTML='';return;}
   const hs=(t.hotels||[]).slice().sort((a,b)=>String(a.checkIn).localeCompare(String(b.checkIn)));
   if(!hs.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🏨</div><div class="empty-t">Nessun hotel: cercalo qui sopra</div></div>`;return;}
-  c.innerHTML=hs.map(h=>`<div class="card"><div class="card-head"><div style="min-width:0"><div class="card-h">${esc(h.name)}</div><div class="card-sub">${fmtRange(h.checkIn,h.checkOut)}${h.address?' · '+esc(String(h.address).split(',').slice(0,2).join(',')):''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="editHotel(${h.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="delHotel(${h.id})">🗑️</button></div></div><button class="btn btn-grad btn-block" onclick="openNav(${h.lat},${h.lng},${jesc(h.name)})">Portami qui</button></div>`).join('');
+  c.innerHTML=hs.map(h=>{
+    /* Senza posizione "Portami qui" aprirebbe la mappa nel nulla: meglio
+       dire com'è messa e mandare dritti dove si sistema. */
+    const senza=h.lat==null||h.lng==null;
+    const fondo=senza
+      ?`<button class="btn btn-soft btn-block" onclick="editHotel(${h.id})">📍 Manca la posizione: mettila</button>`
+      :`<button class="btn btn-grad btn-block" onclick="openNav(${h.lat},${h.lng},${jesc(h.name)})">Portami qui</button>`;
+    const nota=(!senza&&h.approx)?'<div style="font-size:.74rem;color:var(--clay-deep);margin:.35rem 0 .55rem">⚠️ Posizione approssimativa: apri ✎ e incolla il link di Google Maps</div>':'';
+    return `<div class="card"><div class="card-head"><div style="min-width:0"><div class="card-h">${esc(h.name)}</div><div class="card-sub">${fmtRange(h.checkIn,h.checkOut)}${h.address?' · '+esc(String(h.address).split(',').slice(0,2).join(',')):''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="editHotel(${h.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="delHotel(${h.id})">🗑️</button></div></div>${nota}${fondo}</div>`;
+  }).join('');
 }
+/* ===== TROVARE UN HOTEL =====
+   Nominatim non è Booking: è un archivio di indirizzi, e il nome commerciale
+   di un albergo spesso lì dentro non c'è. In più l'indirizzo copiato da
+   Google Maps arriva con dentro roba che una ricerca a testo libero non
+   digerisce - il Plus Code, la sigla della provincia, a volte il link
+   intero - e cercato tutto insieme non trova niente: l'hotel sembra non
+   esistere anche quando esiste eccome. Qui si scende di precisione un
+   gradino alla volta (testo ripulito, indirizzo smontato nei suoi pezzi,
+   la via senza il civico, il solo nome, la città) e se proprio non lo si
+   trova si lascia comunque il modo di metterlo a mano: meglio un hotel
+   messo a mano che un vicolo cieco. */
+let nomiUltima=0;
+async function nomiAttendi(){
+  const d=1100-(Date.now()-nomiUltima);
+  if(d>0)await new Promise(r=>setTimeout(r,d));
+  nomiUltima=Date.now();
+}
+/* Le coordinate dentro un link di Google Maps: !3d!4d è il posto vero,
+   la @ è solo il centro dello schermo, quindi si guarda prima la coppia. */
+function coordDaTesto(s){
+  s=String(s||'');
+  const m=s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)
+       ||s.match(/[?&](?:q|ll|daddr|center|sll)=(-?\d+\.\d+)\s*(?:,|%2C)\s*(-?\d+\.\d+)/i)
+       ||s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+       ||s.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,;]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
+  if(!m)return null;
+  const lat=parseFloat(m[1]),lng=parseFloat(m[2]);
+  if(!isFinite(lat)||!isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
+  if(!lat&&!lng)return null;
+  return {lat,lng};
+}
+/* I link "condividi" di Google sono accorciati: dentro non c'è nessuna
+   coordinata e aprirli da qui non si può (il browser lo vieta). Meglio
+   dirlo che far girare a vuoto una ricerca. */
+function linkAccorciato(s){return /(maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(String(s||''));}
+function pulisciIndirizzo(q){
+  return String(q||'')
+    .replace(/https?:\/\/\S+/gi,' ')
+    .replace(/\b[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}\b/gi,' ')
+    .replace(/[·•|]+/g,', ')
+    .replace(/\s+/g,' ')
+    .replace(/\s*,\s*/g,', ')
+    .replace(/(?:^[\s,]+|[\s,]+$)/g,'')
+    .trim();
+}
+/* "Via Giuseppe Verdi, 12, 20121 Milano MI, Italia" smontato nei pezzi che
+   Nominatim accetta uno per uno: così il CAP e la sigla della provincia
+   smettono di essere rumore e diventano un aiuto. */
+const RE_VIA=/^(?:\d+[a-z]?\s+\S|via|viale|vicolo|corso|piazza|piazzale|largo|strada|borgo|salita|lungo|calle|carrer|avenida|avinguda|rua|rue|boulevard|stra(?:ss|ß)e|platz|allee|[\w'.-]+\s+(?:street|st\.|road|rd\.|avenue|ave\.|lane|ln\.|drive|dr\.|dori|dōri))\b/i;
+function pezziIndirizzo(q){
+  const parti=pulisciIndirizzo(q).split(',').map(x=>x.trim()).filter(Boolean);
+  if(parti.length<2)return null;
+  const out={};
+  if(parti.length>2&&/^[a-zà-ÿ'. -]{3,}$/i.test(parti[parti.length-1]))out.country=parti.pop();
+  for(let i=parti.length-1;i>=0;i--){
+    const m=parti[i].match(/^(\d{4,6})\s+(.+)$/)||parti[i].match(/^(.+?)\s+(\d{4,6})$/);
+    if(!m)continue;
+    const capPrima=/^\d/.test(parti[i]);
+    out.postalcode=capPrima?m[1]:m[2];
+    out.city=(capPrima?m[2]:m[1]).replace(/\s+[A-Z]{2}$/,'').trim();
+    parti.splice(i,1);break;
+  }
+  if(!out.city&&parti.length>1)out.city=parti.pop().replace(/\s+[A-Z]{2}$/,'').trim();
+  /* Quello che resta non è tutto strada: davanti ci sono spesso il nome
+     dell'albergo e il resto del Plus Code ("9FC9+3M Milano MI"). Si tiene
+     il pezzo che ha l'aria di una via, e il numero civico che lo segue. */
+  if(parti.length){
+    let via=parti;
+    if(out.city){const c=out.city.toLowerCase();via=via.filter(x=>x.replace(/\s+[A-Z]{2}$/,'').trim().toLowerCase()!==c);}
+    const i=via.findIndex(x=>RE_VIA.test(x));
+    if(i>=0)via=via.slice(i);else if(via.length>1)via=via.slice(-1);
+    out.street=via.slice(0,2).join(' ').replace(/\s+/g,' ').trim();
+  }
+  return (out.street||out.city)?out:null;
+}
+async function nominatimQ(par){
+  try{
+    await nomiAttendi();
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?${par}&format=json&accept-language=it&limit=8&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    return (await r.json())||[];
+  }catch(e){return [];}
+}
+async function reverseNome(lat,lng){
+  try{
+    await nomiAttendi();
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=it&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    return ((await r.json())||{}).display_name||'';
+  }catch(e){return '';}
+}
+/* Photon è l'altro indice sugli stessi dati OSM, ma tollera i nomi scritti
+   a orecchio: quando Nominatim non trova il nome dell'albergo, spesso lui sì. */
+async function geoAlloggio(s){
+  const r=await nominatimQ('q='+encodeURIComponent(s));
+  if(r.length)return r;
+  try{
+    const p=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(s)}&lang=it&limit=8`);
+    const d=await p.json();
+    return (d.features||[]).map(f=>{
+      const pr=f.properties||{},g=(f.geometry||{}).coordinates||[];
+      if(g.length<2)return null;
+      return {display_name:[pr.name,[pr.street,pr.housenumber].filter(Boolean).join(' '),pr.postcode,pr.city||pr.district,pr.country].filter(Boolean).join(', '),
+        lat:String(g[1]),lon:String(g[0]),class:pr.osm_key||'',type:pr.osm_value||''};
+    }).filter(Boolean);
+  }catch(e){return [];}
+}
+async function cercaAlloggio(q,dest,dillo){
+  const parla=s=>{try{if(dillo)dillo(s);}catch(e){}};
+  const out=[],visti=new Set();
+  const add=(arr,liv,come)=>{
+    (arr||[]).forEach(r=>{
+      if(!r||r.lat==null||isNaN(parseFloat(r.lat)))return;
+      const k=Math.round(parseFloat(r.lat)*3000)+'|'+Math.round(parseFloat(r.lon)*3000);
+      if(visti.has(k))return;visti.add(k);
+      r._liv=liv;r._come=come||'';out.push(r);
+    });
+  };
+  const c=coordDaTesto(q);
+  if(c){
+    parla('Leggo le coordinate…');
+    const nome=await reverseNome(c.lat,c.lng);
+    return [{display_name:nome||(c.lat.toFixed(5)+', '+c.lng.toFixed(5)),lat:String(c.lat),lon:String(c.lng),
+      _liv:'esatto',_come:'preso dalle coordinate che hai incollato'}];
+  }
+  const pulito=pulisciIndirizzo(q);
+  if(!pulito)return [];
+  const citta=String(dest||'').split(',')[0].trim();
+  parla('Cerco…');
+  add(await geoAlloggio(pulito),'esatto','');
+  if(!out.length&&citta&&pulito.toLowerCase().indexOf(citta.toLowerCase())<0){
+    parla('Cerco a '+citta+'…');
+    add(await geoAlloggio(pulito+', '+citta),'esatto','cercato a '+citta);
+  }
+  const p=pezziIndirizzo(pulito);
+  if(!out.length&&p){
+    parla('Provo l\'indirizzo pezzo per pezzo…');
+    const par=[];
+    if(p.street)par.push('street='+encodeURIComponent(p.street));
+    if(p.city)par.push('city='+encodeURIComponent(p.city));
+    if(p.postalcode)par.push('postalcode='+encodeURIComponent(p.postalcode));
+    if(p.country)par.push('country='+encodeURIComponent(p.country));
+    if(par.length)add(await nominatimQ(par.join('&')),'esatto','trovato dall\'indirizzo');
+    if(!out.length&&p.street){
+      const via=p.street.replace(/\s*\d+[a-zA-Z]?\s*$/,'').replace(/^\s*\d+[a-zA-Z]?\s+/,'').trim();
+      if(via&&via!==p.street){
+        parla('Provo la via senza il numero civico…');
+        const par2=['street='+encodeURIComponent(via)];
+        if(p.city)par2.push('city='+encodeURIComponent(p.city));
+        if(p.country)par2.push('country='+encodeURIComponent(p.country));
+        add(await nominatimQ(par2.join('&')),'vicino','la via, senza il numero civico');
+      }
+    }
+  }
+  if(!out.length){
+    const nome=pulito.split(',')[0].trim(),dove=(p&&p.city)||citta;
+    if(nome&&dove&&nome.toLowerCase()!==dove.toLowerCase()){
+      parla('Provo con il solo nome…');
+      add(await geoAlloggio(nome+', '+dove),'vicino','trovato dal nome, non dall\'indirizzo');
+    }
+  }
+  if(!out.length&&p&&p.city){
+    parla('Almeno la città…');
+    add(await geoAlloggio(p.city+(p.country?', '+p.country:'')),'circa','solo la città: la posizione è da sistemare');
+  }
+  /* Un albergo prima di una strada qualsiasi, a parità di livello. */
+  const peso=r=>(r._liv==='esatto'?0:r._liv==='vicino'?100:200)-(/hotel|hostel|guest_house|motel|apartment|chalet|resort/.test(String(r.type||''))?10:0)-(String(r.class||'')==='tourism'?5:0);
+  return out.sort((a,b)=>peso(a)-peso(b));
+}
+const HOT_LIV={esatto:'',vicino:'⚠️ posizione vicina',circa:'⚠️ posizione approssimativa'};
 function onHotelSearch(){
   clearTimeout(hotSearchT);
   const q=document.getElementById('hotSearch').value.trim(),box=document.getElementById('hotResults');
   if(q.length<2){box.innerHTML='';return;}
-  box.innerHTML='<div style="color:var(--ink-faint);font-size:.85rem">Cerco...</div>';
+  const attuale=()=>document.getElementById('hotSearch').value.trim()===q;
+  const dillo=s=>{if(attuale())box.innerHTML=`<div style="color:var(--ink-faint);font-size:.85rem">${esc(s)}</div>`;};
+  if(linkAccorciato(q)){
+    box.innerHTML=`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5">Quello è un link accorciato di Google: da qui dentro non riesco ad aprirlo. Aprilo tu sul telefono e incolla l'indirizzo che vedi, oppure le coordinate.</div>${tastoAMano()}`;
+    return;
+  }
+  dillo('Cerco…');
   hotSearchT=setTimeout(async()=>{
     const t=T();
-    lastHotRes=await geoSearch(q);
-    if(!lastHotRes.length&&t&&t.destination)lastHotRes=await geoSearch(q+', '+t.destination);
-    if(!lastHotRes.length){box.innerHTML='<div style="color:var(--ink-faint);font-size:.85rem">Niente: prova con l\'indirizzo completo</div>';return;}
-    box.innerHTML=lastHotRes.slice(0,8).map((r,i)=>{const parts=String(r.display_name||'').split(',');return `<div class="exp-row" onclick="openHotelAdd(${i})"><div class="cat-ic">🏨</div><div class="exp-info"><div class="exp-d">${esc(parts[0]||'')}</div><div class="exp-meta">${esc(parts.slice(1,3).join(','))}</div></div><button class="chip">Scegli</button></div>`;}).join('');
-  },450);
+    let res=[];
+    try{res=await cercaAlloggio(q,t&&t.destination,dillo);}catch(e){}
+    if(!attuale())return;
+    lastHotRes=res;
+    if(!res.length){
+      box.innerHTML=`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5">Non lo trovo in nessun modo: la mappa libera che uso non ha tutti gli alberghi. Incolla l'indirizzo per esteso o il link di Google Maps con dentro le coordinate — oppure mettilo a mano, ci pensi dopo alla posizione.</div>${tastoAMano()}`;
+      return;
+    }
+    box.innerHTML=res.slice(0,8).map((r,i)=>{
+      const parts=String(r.display_name||'').split(','),nota=[HOT_LIV[r._liv]||'',r._come].filter(Boolean).join(' · ');
+      return `<div class="exp-row" onclick="openHotelAdd(${i})"><div class="cat-ic">🏨</div><div class="exp-info"><div class="exp-d">${esc(parts[0]||'')}</div><div class="exp-meta">${esc(parts.slice(1,3).join(','))}${nota?'<br>'+esc(nota):''}</div></div><button class="chip">Scegli</button></div>`;
+    }).join('')+tastoAMano('Non è nessuno di questi?');
+  },500);
 }
-function openHotelAdd(i){
-  const t=T(),r=lastHotRes[i];if(!t||!r)return;
-  pendingHotel={name:String(r.display_name||'').split(',')[0].trim(),lat:parseFloat(r.lat),lng:parseFloat(r.lon),address:r.display_name||'',editId:null};
+function tastoAMano(titolo){
+  return `<div style="margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--line-soft)">${titolo?`<div style="font-size:.8rem;color:var(--ink-faint);margin-bottom:.4rem">${esc(titolo)}</div>`:''}<button class="chip" onclick="hotelAMano()">✍️ Aggiungilo a mano</button></div>`;
+}
+/* L'ultima spiaggia: l'hotel entra lo stesso, con il nome che hai scritto.
+   La posizione si incolla nel foglio, adesso o quando ce l'hai. */
+function hotelAMano(){
+  const t=T();if(!t)return;
+  const q=(document.getElementById('hotSearch').value||'').trim();
+  const testo=pulisciIndirizzo(q);
+  pendingHotel={name:(testo.split(',')[0]||'').trim()||'Hotel',lat:null,lng:null,address:testo,editId:null,approx:true};
+  apriFoglioHotel(t,'');
+}
+function apriFoglioHotel(t,pos){
   document.getElementById('haName').value=pendingHotel.name;
+  document.getElementById('haPos').value=pos||'';
   document.getElementById('haIn').value=t.start||'';
   document.getElementById('haOut').value=t.end||'';
   document.getElementById('haCost').value='';document.getElementById('haPaid').value='plan';
   document.getElementById('haCur').innerHTML=curOpts(t.currency||'EUR');
+  notaPosizione();
   openSheet('mHotelAdd');
+}
+function notaPosizione(){
+  const n=document.getElementById('haPosNota');if(!n||!pendingHotel)return;
+  n.textContent=pendingHotel.lat==null
+    ?'Nessuna posizione: senza non posso portartici. Incolla qui il link di Google Maps dell\'hotel.'
+    :(pendingHotel.approx?'Posizione approssimativa: incolla il link di Google Maps per metterla giusta.'
+                         :'Posizione a posto. Incolla un link solo se vuoi cambiarla.');
+}
+function openHotelAdd(i){
+  const t=T(),r=lastHotRes[i];if(!t||!r)return;
+  pendingHotel={name:String(r.display_name||'').split(',')[0].trim(),lat:parseFloat(r.lat),lng:parseFloat(r.lon),
+    address:r.display_name||'',editId:null,approx:r._liv==='circa'};
+  apriFoglioHotel(t,'');
 }
 function editHotel(id){
   const t=T(),h=(t.hotels||[]).find(x=>x.id===id);if(!h)return;
-  pendingHotel={name:h.name,lat:h.lat,lng:h.lng,address:h.address,editId:id};
+  pendingHotel={name:h.name,lat:h.lat!=null?h.lat:null,lng:h.lng!=null?h.lng:null,address:h.address,editId:id,approx:!!h.approx};
   document.getElementById('haName').value=h.name;
+  document.getElementById('haPos').value='';
   document.getElementById('haIn').value=h.checkIn||'';
   document.getElementById('haOut').value=h.checkOut||'';
   const exh=t.expenses.find(x=>x.hotelId===id);
   document.getElementById('haCost').value=exh?exh.origAmount:'';
   document.getElementById('haCur').innerHTML=curOpts(exh?exh.origCurrency:(t.currency||'EUR'));
   document.getElementById('haPaid').value=exh?(exh.paid===false?'plan':'paid'):'plan';
+  notaPosizione();
   openSheet('mHotelAdd');
 }
 function saveHotelAdd(){
@@ -9371,15 +9603,26 @@ function saveHotelAdd(){
   const name=document.getElementById('haName').value.trim()||pendingHotel.name;
   const ci=document.getElementById('haIn').value,co=document.getElementById('haOut').value;
   if(!ci||!co||co<=ci){toast('Metti check-in e check-out, in quest\'ordine');return;}
+  /* La posizione incollata a mano vince su quella trovata cercando: se sei
+     arrivato a copiare il link di Google Maps, è perché quella è giusta. */
+  const pos=(document.getElementById('haPos').value||'').trim();
+  if(pos){
+    if(linkAccorciato(pos)){toast('Link accorciato: aprilo e incolla quello lungo, o le coordinate');return;}
+    const c=coordDaTesto(pos);
+    if(!c){toast('Non riesco a leggere quella posizione: incolla il link di Google Maps o "45.4642, 9.1900"');return;}
+    pendingHotel.lat=c.lat;pendingHotel.lng=c.lng;pendingHotel.approx=false;
+  }
   t.hotels=t.hotels||[];
   if(pendingHotel.editId){
     const h=t.hotels.find(x=>x.id===pendingHotel.editId);if(!h)return;
     t._delAct=t._delAct||{};
     t.days.forEach(d=>{d.activities.forEach(a=>{if(a.hotelId===h.id)t._delAct[a.id]=Date.now();});d.activities=d.activities.filter(a=>a.hotelId!==h.id);});
     h.name=name;h.checkIn=ci;h.checkOut=co;
+    if(pendingHotel.lat!=null){h.lat=pendingHotel.lat;h.lng=pendingHotel.lng;}
+    h.approx=!!pendingHotel.approx;
     addHotelActs(t,h);
   }else{
-    const h={id:uid(),name,lat:pendingHotel.lat,lng:pendingHotel.lng,address:pendingHotel.address,checkIn:ci,checkOut:co};
+    const h={id:uid(),name,lat:pendingHotel.lat,lng:pendingHotel.lng,address:pendingHotel.address,checkIn:ci,checkOut:co,approx:!!pendingHotel.approx};
     t.hotels.push(h);addHotelActs(t,h);
   }
   pendingHotel=null;
