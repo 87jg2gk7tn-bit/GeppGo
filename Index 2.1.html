@@ -3147,7 +3147,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
-- Hotel: gli alloggi. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
+- Hotel: gli alloggi. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati, si aggiungono da foto o QR.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
@@ -7549,7 +7549,7 @@ ${giorni}
 Metti i posti nel giorno che ti ho chiesto. Se non ho detto quale, usa il giorno ${(ui&&t.days[ui.giorno])?ui.giorno:((typeof ttDay==='number'&&t.days[ttDay])?ttDay:0)}. Se ho indicato più giorni, dividili come ho detto io.
 
 Rispondi SOLO con JSON, senza backtick:
-{"commento":"una o due frasi: quali posti hai riconosciuto, dove li hai messi e con che criterio li hai ordinati","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve","cerca":"nome esatto + città, per la mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor","perche":"una riga"}]}]}
+{"commento":"una o due frasi: quali posti hai riconosciuto, dove li hai messi e con che criterio li hai ordinati","giorni":[{"giorno":0,"attivita":[{"nome":"nome breve","cerca":"nome esatto + città, per la mappa","ora":"HH:MM","durata":90,"tipo":"outdoor oppure indoor oppure hotel","perche":"una riga","checkin":"AAAA-MM-GG","checkout":"AAAA-MM-GG"}]}]}
 
 Regole ferree:
 - prendi i posti VERI e visitabili: sia quelli dell'elenco sia quelli nominati solo nella descrizione. Non inventarne di nuovi che non sono scritti da nessuna parte
@@ -7559,7 +7559,13 @@ Regole ferree:
 - se un posto ha un orario di apertura noto (i negozi aprono tardi, i musei chiudono presto, molti musei sono chiusi il lunedì) tienine conto
 - pranzo e cena vanno alla loro ora
 - non sovrapporti a quello che nel giorno c'è già
-- in "perche" usa il commento che c'era di fianco al posto nel testo, se c'era: è il motivo per cui chi ha scritto l'ha messo lì${daPdf}`}]
+- in "perche" usa il commento che c'era di fianco al posto nel testo, se c'era: è il motivo per cui chi ha scritto l'ha messo lì
+
+Gli alloggi sono un'altra cosa:
+- un hotel, ryokan, ostello, B&B, guesthouse o appartamento va segnato con "tipo":"hotel"
+- su un hotel non mettere "ora" né "durata", e NON aggiungere una tappa "check-in" o "check-out" separata: le fa l'app da sola
+- se dal testo si capisce da che giorno a che giorno ci si dorme, scrivilo in "checkin" e "checkout" (AAAA-MM-GG). Se non si capisce, lasciali fuori e ci pensa l'app
+- un hotel va messo nel giorno in cui ci si arriva${daPdf}`}]
     })});
     const data=await res.json();
     if(data&&data.error){fallito('⚠️ '+motivoAI(data.error.message));return;}
@@ -7603,12 +7609,74 @@ function mostraItinerario(t,p,dove,stato){
        const d=t.days[g.giorno],ds=new Date(d.date);
        const et=isNaN(ds.getTime())?`Giorno ${g.giorno+1}`:ds.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
        return `<div style="margin-bottom:.9rem"><div class="card-h" style="font-size:.95rem;margin-bottom:.4rem">${esc(et)}</div>
-         ${g.attivita.map(a=>`<div class="ms-row" style="cursor:default"><div><div class="ms-t">${esc(a.ora||'')} · ${esc(a.nome)}</div>${a.perche?`<div class="ms-w">${esc(a.perche)}</div>`:''}</div></div>`).join('')}</div>`;
+         ${g.attivita.map(a=>{
+         if(eUnCheckInScritto(a))
+           return `<div class="ms-row" style="cursor:default;opacity:.5"><div><div class="ms-t">${esc(a.nome)}</div><div class="ms-w">la salto: check-in e check-out li metto io con l'hotel</div></div></div>`;
+         if(sembraUnHotel(a))
+           return `<div class="ms-row" style="cursor:default"><div><div class="ms-t">🏨 ${esc(a.nome)}</div><div class="ms-w">va in sezione Hotel · in time-table solo check-in e check-out${a.checkin?` (${esc(a.checkin)}${a.checkout?' → '+esc(a.checkout):''})`:''}</div></div></div>`;
+         return `<div class="ms-row" style="cursor:default"><div><div class="ms-t">${esc(a.ora||'')} · ${esc(a.nome)}</div>${a.perche?`<div class="ms-w">${esc(a.perche)}</div>`:''}</div></div>`;
+       }).join('')}</div>`;
      }).join('')}
      <button class="btn btn-grad btn-block" onclick="applicaItinerario('${dove}','${stato}')">Mettilo nel viaggio · ${n} tappe</button>
      ${dove==='itinResult'?'<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="creaItinerarioIA()">Rifammelo diverso</button>':''}</div>`;
 }
 
+/* ===== GLI ALLOGGI DENTRO UNA LISTA INCOLLATA =====
+   Un hotel in mezzo a un elenco di posti non e' una tappa come le altre:
+   non ci si "passa un'ora", ci si dorme. Prima finiva in time-table come
+   attivita' normale, e siccome le liste scritte da un'altra IA di solito
+   contengono anche le righe "check-in" e "check-out", lo stesso albergo
+   compariva due o tre volte e nella sezione Hotel non c'era.
+   Adesso: l'albergo va fra gli hotel, in time-table restano solo il check-in
+   e il check-out, e la spesa non la tocca nessuno - il costo lo mette chi
+   vuole, aprendo l'hotel, con la divisione che decide lui. */
+function sembraUnHotel(a){
+  if(eUnCheckInScritto(a))return false;
+  if(a&&a.tipo==='hotel')return true;
+  return /\b(hotel|ryokan|hostel|ostell\w*|guest ?house|b&b|bed (and|&) breakfast|albergo|locanda|pensione|apa hotel|toyoko inn|dormy inn|airbnb)\b/i.test((a&&a.nome)||'');
+}
+/* Le righe "check-in al tal hotel" dell'elenco: le tappe le crea l'app
+   quando registra l'albergo, quindi queste sono doppioni annunciati.
+   Questo controllo viene PRIMA di quello sull'hotel, non dopo: "Check-in APA
+   Hotel" contiene la parola hotel, e guardando prima l'una si finiva a
+   registrare un albergo che si chiama "Check-in APA Hotel". */
+function eUnCheckInScritto(a){
+  return /^\s*check[\s\-]?(in|out)\b/i.test((a&&a.nome)||'');
+}
+function dataDelGiorno(t,i){const d=t.days[i];return d?d.date:'';}
+/* Il check-out di un albergo e' il giorno in cui se ne prende un altro. */
+function prossimoAlloggio(prop,gCorr,aCorr){
+  const t=T();let visto=false;
+  for(const g of prop.giorni){
+    for(const a of g.attivita){
+      if(a===aCorr){visto=true;continue;}
+      if(visto&&sembraUnHotel(a))return a.checkin||dataDelGiorno(t,g.giorno);
+    }
+  }
+  return '';
+}
+/* Registra l'albergo e le sue due tappe. Se c'e' gia' un hotel con lo stesso
+   nome non se ne fa un secondo: si aggiorna quello. */
+function registraHotelDaLista(t,a,giornoIdx,dataFine){
+  const nome=String(a.nome||'').replace(/^\s*(hotel|albergo)\s*[:\-–]\s*/i,'').trim()||'Hotel';
+  const ci=a.checkin||dataDelGiorno(t,giornoIdx);
+  const co=a.checkout||dataFine||dataDelGiorno(t,t.days.length-1);
+  t.hotels=t.hotels||[];
+  let h=t.hotels.find(x=>String(x.name||'').toLowerCase()===nome.toLowerCase());
+  const nuovo=!h;
+  if(!h){h={id:uid(),name:nome,lat:a.lat,lng:a.lng,address:a.indirizzo||'',checkIn:ci,checkOut:co};t.hotels.push(h);}
+  else{
+    if(a.lat!=null){h.lat=a.lat;h.lng=a.lng;}
+    if(!h.checkIn)h.checkIn=ci;
+    if(!h.checkOut||h.checkOut<co)h.checkOut=co;
+    /* Le vecchie tappe si rifanno, se no si sommano a quelle nuove. */
+    t._delAct=t._delAct||{};
+    t.days.forEach(d=>{d.activities.forEach(x=>{if(x.hotelId===h.id)t._delAct[x.id]=Date.now();});
+      d.activities=d.activities.filter(x=>x.hotelId!==h.id);});
+  }
+  creaTappeHotel(t,h);
+  return nuovo;
+}
 async function applicaItinerario(dove,stato){
   const t=T();if(!t||!itinProposta||applicaBusy)return;
   /* La proposta si prende e si azzera subito, prima di qualsiasi attesa.
@@ -7625,18 +7693,27 @@ async function applicaItinerario(dove,stato){
   /* Stessa rete di sicurezza delle mosse: qui ancora di più, perché le tappe
      sono molte e le si accetta in blocco. */
   mosseUndo=JSON.parse(JSON.stringify(t.days));
-  let messe=0,senzaPosto=0,tot=prop.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
+  let messe=0,senzaPosto=0,alberghi=0,scartate=0,tot=prop.giorni.reduce((s,g)=>s+g.attivita.length,0),fatte=0;
   try{
   for(const g of prop.giorni){
     const d=t.days[g.giorno];if(!d)continue;
     for(const a of g.attivita){
       fatte++;st.textContent=`Cerco i posti sulla mappa... ${fatte}/${tot}`;
+      /* Le righe "check-in / check-out" scritte nell'elenco si buttano: quelle
+         vere le crea l'app quando registra l'albergo. */
+      if(eUnCheckInScritto(a)){scartate++;continue;}
       let lat=null,lng=null;
       try{
         const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a.cerca||a.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
         const gd=await r.json();
         if(gd.length){lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);}
       }catch(e){}
+      if(sembraUnHotel(a)){
+        a.lat=lat;a.lng=lng;
+        if(registraHotelDaLista(t,a,g.giorno,prossimoAlloggio(prop,g,a)))alberghi++;
+        await new Promise(r=>setTimeout(r,1100));
+        continue;
+      }
       if(lat==null)senzaPosto++;
       const st2=tMin(a.ora),dur=durataTonda(a.durata||60);
       const act={id:uid(),name:a.nome,time:'',timeEnd:'',lat,lng,
@@ -7652,7 +7729,10 @@ async function applicaItinerario(dove,stato){
   }
   }finally{applicaBusy=false;}
   save();renderAll();
-  if(st)st.textContent=`✅ ${messe} tappe messe nel viaggio`+(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprila e correggi il nome`:'');
+  if(st)st.textContent=`✅ ${messe} tappe messe nel viaggio`
+    +(alberghi?` · ${alberghi} ${alberghi===1?'hotel':'hotel'} in sezione Hotel, con check-in e check-out`:'')
+    +(scartate?` · ${scartate} righe di check-in già scritte le ho saltate`:'')
+    +(senzaPosto?` · ${senzaPosto} senza posizione sulla mappa: aprila e correggi il nome`:'');
   itinQualeViaggio();
   mostraAnnulla(messe);
 }
@@ -9306,7 +9386,10 @@ function saveHotelAdd(){
   document.getElementById('hotSearch').value='';document.getElementById('hotResults').innerHTML='';
   save();renderAll();closeSheet('mHotelAdd');toast('Hotel salvato: check-in e check-out sono in time-table');
 }
-function addHotelActs(t,h){
+/* Le due tappe che un hotel si porta dietro, e nient'altro. Erano dentro
+   addHotelActs insieme alla spesa, che legge i campi del foglio: da un elenco
+   incollato quei campi non ci sono, e la spesa la mette chi vuole, dopo. */
+function creaTappeHotel(t,h){
   const whoAll=t.participants.map(p=>p.id);
   [[h.checkIn,'Check-in · ','15:00'],[h.checkOut,'Check-out · ','10:00']].forEach(pair=>{
     const d=t.days.find(x=>x.date===pair[0]);if(!d)return;
@@ -9314,6 +9397,9 @@ function addHotelActs(t,h){
     {const cfh=findConflict(t,d,{time,timeEnd:'',who:whoAll},null);if(cfh)toast('⚠️ '+pair[1]+h.name+' si sovrappone a "'+cfh.act.name+'"');}
     d.activities.push({id:uid(),name:pair[1]+h.name,time,timeEnd:'',type:'any',notes:h.address||'',who:whoAll,completed:false,booking:{needed:false,done:false},hotelId:h.id,lat:h.lat,lng:h.lng});
   });
+}
+function addHotelActs(t,h){
+  creaTappeHotel(t,h);
   const hc=num(document.getElementById('haCost').value)||0;let hp=document.getElementById('haPaid').value;
   if(hc>0&&hp==='no')hp='plan';
   const hcur=document.getElementById('haCur').value||t.currency||'EUR';
