@@ -1106,6 +1106,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
     <div class="page" id="hotels">
       <div class="card"><div class="card-h" style="margin-bottom:.6rem">Cerca il tuo hotel</div>
+        <button class="btn btn-soft btn-block" style="margin-bottom:.6rem" onclick="apriMailHotel()">📩 Ho la mail di conferma: leggila tu</button>
         <input id="hotSearch" placeholder="Nome, indirizzo o link di Google Maps" autocomplete="off" oninput="onHotelSearch()">
         <div id="hotResults" style="margin-top:.6rem"></div>
         <p style="font-size:.76rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.4">Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).<br>Se il nome dell'albergo non basta, incolla l'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.</p>
@@ -1548,6 +1549,19 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <button class="btn btn-danger btn-block" onclick="delPhoto()">Elimina questa foto</button>
 </div></div>
 <div id="diaryPrint" style="display:none"></div>
+<div class="modal" id="mMailHotel"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">La mail dell'hotel</div><button class="x x-close" onclick="closeSheet('mMailHotel')">✕</button></div>
+  <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.7rem">Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e <b>ti faccio controllare tutto prima di salvare</b>.</p>
+  <div class="fg"><label>Testo della mail</label><textarea id="mhText" placeholder="Incolla qui la mail di conferma…" style="min-height:130px"></textarea></div>
+  <div style="display:flex;gap:.5rem;margin-bottom:.7rem">
+    <button class="btn btn-soft" style="flex:1" onclick="document.getElementById('mhPdf').click()">📄 Carica il PDF</button>
+    <button class="btn btn-grad" style="flex:1.2" onclick="leggiMailAlloggio()">🔎 Leggi la prenotazione</button>
+  </div>
+  <input type="file" id="mhPdf" accept="application/pdf,.pdf" style="display:none" onchange="mailHotelDaPdf(this)">
+  <div id="mhStato" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem"></div>
+  <div id="mhResult"></div>
+</div></div>
 <div class="modal" id="mHotelAdd"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Date dell'alloggio</div><button class="x x-close" onclick="closeSheet('mHotelAdd')">✕</button></div>
@@ -3222,7 +3236,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
-- Hotel: gli alloggi. In cima si cerca per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
+- Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Profilo: i viaggi, quelli conclusi, gli inviti al gruppo. Impostazioni: notifiche, valuta, copie di sicurezza, e l'Account. Se l'app dice di essere in modalita' locale e non fa entrare in nessun account, in Account c'e' "Ho un link d'invito": si incolla li' il link ricevuto e si torna dentro.
 
@@ -6519,7 +6533,10 @@ function bookAllDates(text){
   return [...text.matchAll(rx)].map(m=>bookParseDate(m[0])).filter(Boolean);
 }
 function bookParseCode(text){
-  const m=text.match(/(?:PNR|codice(?:\s+di)?\s+prenotazione|localizzatore|booking\s*(?:number|code|id)|confirmation\s*(?:number|code)|numero\s+di\s+conferma)\s*[:\-]?\s*([A-Z0-9]{4,10})\b/i);
+  /* "Numero di prenotazione" e' come lo scrive Booking in italiano, ed era
+     l'unica dicitura che mancava: il codice restava vuoto proprio sulle mail
+     piu' comuni. */
+  const m=text.match(/(?:PNR|(?:codice|numero|n\.?)(?:\s+di)?\s+(?:prenotazione|conferma)|localizzatore|booking\s*(?:number|code|id|ref(?:erence)?)|reservation\s*(?:number|id|code)|confirmation\s*(?:number|code))\s*[:\-]?\s*([A-Z0-9]{4,12})\b/i);
   return m?m[1].toUpperCase():'';
 }
 function detectBookingType(text){
@@ -10022,6 +10039,250 @@ async function cercaAlloggio(q,dest,dillo){
   return out.sort((a,b)=>peso(a)-peso(b));
 }
 const HOT_LIV={esatto:'',vicino:'⚠️ posizione vicina',circa:'⚠️ posizione approssimativa'};
+/* ===== LA MAIL DI CONFERMA DELL'HOTEL =====
+   GeppGo sta nel browser e la posta non la puo' ricevere: il canale e'
+   incollare il testo della mail (o caricare il PDF del voucher, che il testo
+   ce l'ha dentro). Da li' si tirano fuori nome, indirizzo, date e orari, si
+   cerca la posizione sulla mappa, e si mette tutto davanti PRIMA di salvare -
+   perche' una data sbagliata su un albergo la si scopre alla reception.
+   L'IA legge; se non risponde, legge il lettore a regole che c'era gia'.
+   Nessuno dei due inventa: quello che non c'e' resta vuoto. */
+let mailAlloggio=null;
+function apriMailHotel(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  document.getElementById('mhText').value='';
+  document.getElementById('mhStato').textContent='';
+  document.getElementById('mhResult').innerHTML='';
+  mailAlloggio=null;
+  openSheet('mMailHotel');
+}
+async function mailHotelDaPdf(inp){
+  const f=(inp.files||[])[0];inp.value='';
+  if(!f)return;
+  const st=document.getElementById('mhStato');
+  st.textContent='Leggo il PDF…';
+  try{
+    const r=await leggiPDF(f);
+    if(r.vuoto){st.textContent='⚠️ Quel PDF non ha testo dentro: è una scansione o un\'immagine. Copia e incolla il testo della mail.';return;}
+    document.getElementById('mhText').value=r.testo;
+    st.textContent='PDF letto ('+r.lette+(r.lette===1?' pagina':' pagine')+(r.tagliato?', troncato':'')+'). Ora leggo la prenotazione…';
+    leggiMailAlloggio();
+  }catch(e){st.textContent='⚠️ Non riesco ad aprire quel PDF ('+motivoPDF(e)+'). Copia e incolla il testo della mail.';}
+}
+/* Le date scritte senza anno ("check-in 12 marzo") prendono l'anno del
+   viaggio, non quello di oggi: a dicembre si prenota per marzo. */
+function annoDelViaggio(t){
+  const d=new Date((t&&t.start)||'');
+  return isNaN(d.getTime())?new Date().getFullYear():d.getFullYear();
+}
+function isoValida(s){return /^\d{4}-\d{2}-\d{2}$/.test(String(s||''))&&!isNaN(new Date(s).getTime());}
+function oraValida(s){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(s||''));}
+/* Il lettore a regole: seconda linea, per quando l'IA non c'e'. Cerca le date
+   accanto alle parole che le qualificano, non la prima che passa. */
+function alloggioDaRegole(testo,t){
+  const p={struttura:'',indirizzo:'',checkin:'',checkout:'',oraCheckin:'',oraCheckout:'',codice:'',costo:0,valuta:''};
+  const vicino=(rx,quante)=>{
+    const m=testo.match(rx);
+    if(!m)return '';
+    return bookParseDate(testo.slice(m.index,m.index+(quante||120)))||'';
+  };
+  p.checkin =vicino(/check[\s\-]?in|arrivo/i);
+  p.checkout=vicino(/check[\s\-]?out|partenza|fino al/i);
+  if(!p.checkin||!p.checkout){
+    const tutte=[...new Set(bookAllDates(testo))].sort();
+    if(!p.checkin&&tutte.length)p.checkin=tutte[0];
+    if(!p.checkout&&tutte.length>1)p.checkout=tutte[tutte.length-1];
+  }
+  const oi=testo.match(/check[\s\-]?in[^\n]{0,60}?\b([01]?\d|2[0-3]):([0-5]\d)/i);
+  if(oi)p.oraCheckin=String(oi[1]).padStart(2,'0')+':'+oi[2];
+  const oo=testo.match(/check[\s\-]?out[^\n]{0,60}?\b([01]?\d|2[0-3]):([0-5]\d)/i);
+  if(oo)p.oraCheckout=String(oo[1]).padStart(2,'0')+':'+oo[2];
+  p.codice=bookParseCode(testo);
+  const nm=testo.match(/(?:hotel|struttura|alloggio|property|accommodation)\s*[:\-]\s*([^\n]{3,60})/i);
+  if(nm)p.struttura=nm[1].trim();
+  else{
+    const riga=(testo.split('\n').map(x=>x.trim())
+      .find(x=>/\b(hotel|ryokan|hostel|ostell|guest ?house|b&b|albergo|locanda|pensione|apartment|apartments|residence|inn)\b/i.test(x)&&x.length<70));
+    if(riga)p.struttura=riga;
+  }
+  const ind=testo.match(/(?:indirizzo|address)\s*[:\-]\s*([^\n]{6,90})/i)
+         ||testo.match(/^\s*((?:via|viale|piazza|corso|strada|calle|carrer|rue|street|str\.)[^\n]{4,80})$/im);
+  if(ind)p.indirizzo=String(ind[1]).trim();
+  const co=testo.match(/(?:totale|total|importo|prezzo|amount)[^\n]{0,30}?([€$£¥]|EUR|USD|GBP|JPY|CHF)?\s*([\d.]{1,9}(?:,\d{2})?)/i);
+  if(co){
+    p.costo=num(String(co[2]).replace(/\.(?=\d{3}\b)/g,'').replace(',','.'))||0;
+    const sim={'€':'EUR','$':'USD','£':'GBP','¥':'JPY'};
+    p.valuta=sim[co[1]]||String(co[1]||'').toUpperCase()||'';
+  }
+  return p;
+}
+async function alloggioDaIA(testo,t){
+  const oggi=new Date().toISOString().split('T')[0];
+  const domanda=[
+    'Questa e\' una mail (o un voucher) di conferma di un alloggio. Estrai i dati.',
+    '',
+    'Oggi e\' '+oggi+'. Il viaggio va dal '+(t.start||'?')+' al '+(t.end||'?')+(t.destination?', destinazione '+t.destination:'')+'.',
+    '',
+    'Rispondi SOLO con JSON, senza backtick:',
+    '{"struttura":"","indirizzo":"","citta":"","paese":"","checkin":"AAAA-MM-GG","checkout":"AAAA-MM-GG","oraCheckin":"","oraCheckout":"","codice":"","costo":0,"valuta":"","ospiti":0,"camera":"","telefono":""}',
+    '',
+    'Regole, in ordine di importanza:',
+    '- NON inventare niente. Un campo che nella mail non c\'e\' va lasciato vuoto (o 0). Una data sbagliata su un albergo la si scopre alla reception: meglio vuota.',
+    '- "indirizzo": copialo come sta scritto nella mail, per esteso, con il numero civico e il CAP. Non abbreviare e non tradurre.',
+    '- "struttura": solo il nome dell\'albergo, senza "Conferma di prenotazione" e senza il nome del sito che l\'ha venduto.',
+    '- le date in AAAA-MM-GG. Se l\'anno non e\' scritto, usa quello coerente col viaggio qui sopra.',
+    '- gli orari in HH:MM su 24 ore, solo se la mail li dice (spesso e\' "check-in dalle 15:00").',
+    '- "costo": il totale, solo il numero. "valuta": la sigla a tre lettere (EUR, JPY, USD...).',
+    '- "codice": il numero di prenotazione, se c\'e\'.',
+    '',
+    'Mail fra i marcatori:',
+    '<<<MAIL',
+    String(testo).slice(0,12000),
+    'MAIL>>>'
+  ].join('\n');
+  const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    model:"claude-sonnet-4-6",max_tokens:900,messages:[{role:"user",content:domanda}]
+  })});
+  const data=await res.json();
+  if(!data||data.error)throw new Error('ai');
+  const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+  const m=txt.match(/\{[\s\S]*\}/);
+  return JSON.parse(m?m[0]:txt);
+}
+async function leggiMailAlloggio(){
+  const t=T();if(!t)return;
+  const testo=document.getElementById('mhText').value.trim();
+  const st=document.getElementById('mhStato'),box=document.getElementById('mhResult');
+  if(testo.length<30){st.textContent='⚠️ Incolla il testo della mail (o carica il PDF): così com\'è non c\'è abbastanza da leggere.';return;}
+  box.innerHTML='';
+  st.textContent='Leggo la prenotazione…';
+  let p=null,daIA=false;
+  try{p=await alloggioDaIA(testo,t);daIA=true;}catch(e){}
+  if(!p||!(p.struttura||p.checkin)){p=alloggioDaRegole(testo,t);daIA=false;}
+  /* Quello che il modello scrive non entra mai cosi' com'e': date e orari
+     passano da un controllo, e se non reggono restano vuoti. */
+  const anno=annoDelViaggio(t);
+  const sistema=d=>{
+    d=String(d||'').trim();
+    if(isoValida(d))return d;
+    const g=bookParseDate(d);if(isoValida(g))return g;
+    const m2=d.match(/^(\d{1,2})[\/\-.](\d{1,2})$/);
+    if(m2)return anno+'-'+String(m2[2]).padStart(2,'0')+'-'+String(m2[1]).padStart(2,'0');
+    return '';
+  };
+  mailAlloggio={
+    struttura:String(p.struttura||'').trim().slice(0,70),
+    indirizzo:[String(p.indirizzo||'').trim(),String(p.citta||'').trim(),String(p.paese||'').trim()].filter(Boolean).join(', '),
+    checkin:sistema(p.checkin),checkout:sistema(p.checkout),
+    oraCheckin:oraValida(p.oraCheckin)?p.oraCheckin:'',
+    oraCheckout:oraValida(p.oraCheckout)?p.oraCheckout:'',
+    codice:String(p.codice||'').trim().slice(0,30),
+    costo:num(p.costo)||0,
+    valuta:/^[A-Z]{3}$/.test(String(p.valuta||'').toUpperCase())?String(p.valuta).toUpperCase():(t.currency||'EUR'),
+    ospiti:parseInt(p.ospiti,10)||0,camera:String(p.camera||'').trim().slice(0,50),
+    lat:null,lng:null,approx:false,daIA
+  };
+  st.textContent='Cerco l\'indirizzo sulla mappa…';
+  const dove=mailAlloggio.indirizzo||mailAlloggio.struttura;
+  if(dove){
+    try{
+      const r=await cercaAlloggio(dove,t.destination,s=>{st.textContent=s;});
+      if(r.length){
+        mailAlloggio.lat=parseFloat(r[0].lat);mailAlloggio.lng=parseFloat(r[0].lon);
+        mailAlloggio.approx=r[0]._liv==='circa';
+        if(!mailAlloggio.indirizzo)mailAlloggio.indirizzo=r[0].display_name||'';
+      }
+    }catch(e){}
+  }
+  st.textContent=daIA?'Controlla e correggi quello che serve, poi salva.'
+                     :'⚠️ L\'IA non ha risposto: ho letto quello che ho potuto da solo. Controlla tutto.';
+  mostraAnteprimaAlloggio();
+}
+function fuoriDalViaggio(t,d){
+  if(!isoValida(d))return false;
+  return !(t.days||[]).some(x=>x.date===d);
+}
+function mostraAnteprimaAlloggio(){
+  const t=T(),p=mailAlloggio,box=document.getElementById('mhResult');
+  if(!t||!p)return;
+  const pos=p.lat==null?'<span style="color:var(--clay-deep)">⚠️ posizione non trovata</span>'
+    :(p.approx?'<span style="color:var(--clay-deep)">⚠️ posizione approssimativa</span>'
+              :'<span style="color:var(--green-deep)">📍 posizione trovata</span>');
+  const avvisi=[];
+  if(!p.struttura)avvisi.push('Manca il nome della struttura.');
+  if(!p.checkin||!p.checkout)avvisi.push('Mancano le date: senza non posso metterlo in time-table.');
+  else if(p.checkout<=p.checkin)avvisi.push('Il check-out non è dopo il check-in.');
+  else{
+    if(fuoriDalViaggio(t,p.checkin))avvisi.push('Il check-in ('+p.checkin+') non è un giorno del viaggio: l\'hotel lo salvo comunque, ma in time-table quel giorno non c\'è.');
+    if(fuoriDalViaggio(t,p.checkout))avvisi.push('Il check-out ('+p.checkout+') non è un giorno del viaggio: stessa cosa.');
+  }
+  box.innerHTML='<div class="card">'
+    +'<div class="card-h" style="margin-bottom:.5rem">🏨 Quello che ho capito</div>'
+    +'<div class="fg"><label>Struttura</label><input id="mhNome" value="'+esc(p.struttura)+'" oninput="mailAlloggio.struttura=this.value"></div>'
+    +'<div class="fg"><label>Indirizzo <span style="font-weight:500;color:var(--ink-faint)">· '+pos+'</span></label><input id="mhInd" value="'+esc(p.indirizzo)+'" oninput="mailAlloggio.indirizzo=this.value"><div style="margin-top:.4rem"><button class="chip" onclick="ricercaPosizioneAlloggio()">📍 Cerca di nuovo la posizione</button></div></div>'
+    +'<div class="fg"><label>Posizione a mano <span style="font-weight:500;color:var(--ink-faint)">(link Google Maps o coordinate)</span></label><input id="mhPos" placeholder="https://maps.google.com/… oppure 45.4642, 9.1900" oninput="posizioneAMano(this.value)"></div>'
+    +'<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-in</label><input type="date" value="'+esc(p.checkin)+'" oninput="mailAlloggio.checkin=this.value;mostraAnteprimaAlloggio()"></div><div class="fg" style="flex:.8"><label>Ora</label><input type="time" value="'+esc(p.oraCheckin)+'" oninput="mailAlloggio.oraCheckin=this.value"></div></div>'
+    +'<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-out</label><input type="date" value="'+esc(p.checkout)+'" oninput="mailAlloggio.checkout=this.value;mostraAnteprimaAlloggio()"></div><div class="fg" style="flex:.8"><label>Ora</label><input type="time" value="'+esc(p.oraCheckout)+'" oninput="mailAlloggio.oraCheckout=this.value"></div></div>'
+    +'<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1.2"><label>Costo totale</label><input type="number" inputmode="decimal" value="'+(p.costo||'')+'" placeholder="0" oninput="mailAlloggio.costo=num(this.value)||0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="mhCur" onchange="mailAlloggio.valuta=this.value">'+curOpts(p.valuta)+'</select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="mhSpesa"><option value="plan"'+(p.costo?' selected':'')+'>Prevista</option><option value="paid">Già pagata</option><option value="no"'+(p.costo?'':' selected')+'>Non aggiungere</option></select></div></div>'
+    +'<div class="fg"><label>Codice prenotazione</label><input value="'+esc(p.codice)+'" oninput="mailAlloggio.codice=this.value"></div>'
+    +((p.camera||p.ospiti)?'<div style="font-size:.76rem;color:var(--ink-faint);margin-bottom:.6rem">'+esc([p.camera,p.ospiti?p.ospiti+' ospiti':''].filter(Boolean).join(' · '))+'</div>':'')
+    +(avvisi.length?'<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:10px;padding:.6rem .7rem;font-size:.78rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.7rem">'+avvisi.map(a=>'⚠️ '+esc(a)).join('<br>')+'</div>':'')
+    +'<button class="btn btn-grad btn-block" onclick="salvaAlloggioDaMail()">✓ Salva in Hotel e time-table</button>'
+    +'<p style="font-size:.72rem;color:var(--ink-faint);line-height:1.45;margin-top:.6rem">In time-table finiscono solo il check-in e il check-out, con gli orari qui sopra. Il resto della giornata resta tuo.</p>'
+    +'</div>';
+}
+async function ricercaPosizioneAlloggio(){
+  const t=T(),p=mailAlloggio;if(!t||!p)return;
+  const st=document.getElementById('mhStato');
+  st.textContent='Cerco la posizione…';
+  try{
+    const r=await cercaAlloggio(p.indirizzo||p.struttura,t.destination,s=>{st.textContent=s;});
+    if(r.length){p.lat=parseFloat(r[0].lat);p.lng=parseFloat(r[0].lon);p.approx=r[0]._liv==='circa';st.textContent='Trovata.';}
+    else{p.lat=null;p.lng=null;st.textContent='Non l\'ho trovata: incolla il link di Google Maps qui sotto.';}
+  }catch(e){st.textContent='Non l\'ho trovata.';}
+  mostraAnteprimaAlloggio();
+}
+function posizioneAMano(v){
+  const p=mailAlloggio;if(!p)return;
+  const c=coordDaTesto(v);
+  if(!c)return;
+  p.lat=c.lat;p.lng=c.lng;p.approx=false;
+  document.getElementById('mhStato').textContent='Posizione presa dal link che hai incollato.';
+  mostraAnteprimaAlloggio();
+}
+function salvaAlloggioDaMail(){
+  const t=T(),p=mailAlloggio;if(!t||!p)return;
+  const nome=(p.struttura||'').trim();
+  if(!nome){toast('Dai un nome alla struttura');return;}
+  if(!isoValida(p.checkin)||!isoValida(p.checkout)||p.checkout<=p.checkin){toast('Metti check-in e check-out, in quest\'ordine');return;}
+  t.hotels=t.hotels||[];
+  /* Stesso nome, stesso albergo: si aggiorna quello invece di farne un
+     secondo. Capita di incollare due volte la stessa mail. */
+  let h=t.hotels.find(x=>String(x.name||'').toLowerCase()===nome.toLowerCase());
+  const nuovo=!h;
+  if(!h){h={id:uid(),name:nome};t.hotels.push(h);}
+  else{
+    t._delAct=t._delAct||{};
+    t.days.forEach(d=>{d.activities.forEach(x=>{if(x.hotelId===h.id)t._delAct[x.id]=Date.now();});
+      d.activities=d.activities.filter(x=>x.hotelId!==h.id);});
+  }
+  h.lat=p.lat;h.lng=p.lng;h.address=p.indirizzo||'';h.approx=!!p.approx;
+  h.checkIn=p.checkin;h.checkOut=p.checkout;
+  h.oraCheckIn=p.oraCheckin||'';h.oraCheckOut=p.oraCheckout||'';
+  if(p.codice)h.code=p.codice;
+  creaTappeHotel(t,h);
+  const modo=(document.getElementById('mhSpesa')||{}).value||'no';
+  const costo=num(p.costo)||0;
+  if(costo>0&&modo!=='no'){
+    t.expenses=t.expenses.filter(e=>e.hotelId!==h.id);
+    pushAutoExp(t,'Hotel · '+nome,costo,modo==='paid','Hotel','hotelId',h.id,p.valuta||t.currency||'EUR');
+  }
+  save();renderAll();closeSheet('mMailHotel');
+  const fuori=[fuoriDalViaggio(t,p.checkin)?'check-in':'',fuoriDalViaggio(t,p.checkout)?'check-out':''].filter(Boolean);
+  toast((nuovo?'🏨 Hotel salvato':'🏨 Hotel aggiornato')
+    +(fuori.length?' · '+fuori.join(' e ')+' fuori dai giorni del viaggio':' · check-in e check-out in time-table')
+    +(p.lat==null?' · manca la posizione':''));
+}
 function onHotelSearch(){
   clearTimeout(hotSearchT);
   const q=document.getElementById('hotSearch').value.trim(),box=document.getElementById('hotResults');
@@ -10134,7 +10395,10 @@ function saveHotelAdd(){
    incollato quei campi non ci sono, e la spesa la mette chi vuole, dopo. */
 function creaTappeHotel(t,h){
   const whoAll=t.participants.map(p=>p.id);
-  [[h.checkIn,'Check-in · ','15:00'],[h.checkOut,'Check-out · ','10:00']].forEach(pair=>{
+  /* Gli orari veri, quando la conferma li dice: "check-in dalle 14:00" è
+     un'informazione che uno usa per decidere se passare prima o dopo pranzo,
+     e sostituirla con il 15:00 di default sarebbe inventare. */
+  [[h.checkIn,'Check-in · ',h.oraCheckIn||'15:00'],[h.checkOut,'Check-out · ',h.oraCheckOut||'10:00']].forEach(pair=>{
     const d=t.days.find(x=>x.date===pair[0]);if(!d)return;
     let time=pair[2];
     {const cfh=findConflict(t,d,{time,timeEnd:'',who:whoAll},null);if(cfh)toast('⚠️ '+pair[1]+h.name+' si sovrappone a "'+cfh.act.name+'"');}
