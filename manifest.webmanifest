@@ -1,0 +1,24 @@
+{
+  "name": "GeppGo",
+  "short_name": "GeppGo",
+  "description": "Il viaggio, dalla prima idea all'ultimo scontrino.",
+  "lang": "it",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6EEDD",
+  "theme_color": "#8C6229",
+  "icons": [
+    { "src": "./icona.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icona.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "titolo",
+      "text": "testo",
+      "url": "collegamento"
+    }
+  }
+}
