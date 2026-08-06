@@ -733,8 +733,9 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
    dosso il vestito da foglio e il "+" sale sopra la barra in basso. */
 .tt-sheet{background:transparent;padding:0;border-radius:0;box-shadow:none;max-width:none;width:auto;overflow:visible;transform:none}
 #mDay .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
-/* Un trascinamento sbagliato si annulla da qui: sta dall'altra parte rispetto
-   al "+", cosi' non si tocca per sbaglio quello mentre si cerca questo. */
+/* Un trascinamento o un allungamento sbagliato si annulla da qui: sta
+   dall'altra parte rispetto al "+", cosi' non si tocca per sbaglio quello
+   mentre si cerca questo. */
 .tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;transition:var(--ease)}
 .tt-undo:active{transform:scale(.92)}
 
@@ -1186,7 +1187,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
-<button class="tt-undo" id="ttUndo" style="display:none" onclick="undoDrag()" title="Annulla lo spostamento" aria-label="Annulla lo spostamento">↩</button>
+<button class="tt-undo" id="ttUndo" style="display:none" onclick="undoDrag()" title="Annulla l'ultima modifica" aria-label="Annulla l'ultima modifica">↩</button>
 <button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
@@ -3278,7 +3279,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" in basso a sinistra rimette gli orari com'erano: compare solo dopo aver mosso qualcosa, e vale per l'ultima modifica fatta.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
@@ -7125,14 +7126,22 @@ window.addEventListener('resize',()=>{
    stretta perche' e' la piu' specifica (il pranzo sta nel giro del pomeriggio,
    non nell'intera giornata). Si escludono se stessa e le proprie dipendenti,
    per non creare un anello. */
-/* L'ultimo spostamento fatto col dito, per poterlo disfare: un trascinamento
-   e' facile da sbagliare e senza questo l'orario di prima era perso. Si tiene
-   solo l'ultimo, che e' quello che si vuole annullare subito dopo averlo
-   sbagliato. */
+/* L'ultima modifica fatta col dito sugli orari, per poterla disfare. Col dito
+   si sbaglia facile in tutti e due i modi: trascinando il riquadro, e tirandone
+   il bordo per allungarlo o accorciarlo. Senza questo gli orari di prima erano
+   persi, e per rimetterli bisognava ricordarseli. Si tiene solo l'ultima, che
+   e' quella che si vuole annullare subito dopo averla sbagliata.
+   Il tipo serve solo a dire la cosa giusta dopo: quello che si rimette a posto
+   e' lo stesso in tutti e due i casi. */
 let lastDrag=null;
-function markDrag(a,prev){
-  lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId};
-  const b=document.getElementById('ttUndo');if(b)b.style.display='grid';
+function markDrag(a,prev,tipo){
+  lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId,tipo:tipo||'sposta'};
+  const b=document.getElementById('ttUndo');
+  if(b){
+    b.style.display='grid';
+    const q=lastDrag.tipo==='durata'?'Annulla l\'allungamento':'Annulla lo spostamento';
+    b.title=q;b.setAttribute('aria-label',q);
+  }
 }
 function clearDragUndo(){
   lastDrag=null;
@@ -7143,10 +7152,11 @@ function undoDrag(){
   const t=T(),d=t&&t.days[lastDrag.di];
   const a=d&&(d.activities||[]).find(x=>x.id===lastDrag.id);
   if(!a){clearDragUndo();return;}
+  const tipo=lastDrag.tipo;
   a.time=lastDrag.time;a.timeEnd=lastDrag.timeEnd;a.parentId=lastDrag.parentId;
   clearDragUndo();
   save();buildTT();
-  toast('↩ Spostamento annullato');
+  toast(tipo==='durata'?'↩ Durata di prima':'↩ Spostamento annullato');
 }
 /* Dopo uno spostamento l'attivita' entra o esce da quella che la contiene. */
 function reparentAfterDrag(d,act){
@@ -7233,7 +7243,13 @@ function bindBlockDrag(el,act,t,d){
       const cand2={time:act.time,timeEnd:fmtT(nend),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,id:act.id};
       const c2=findConflict(t,d,cand2,act.id);
       if(c2)toast(`⚠️ Si sovrappone a "${c2.act.name}" per ${c2.names}`);
-      act.timeEnd=fmtT(nend);save();buildTT();
+      /* Va preso prima di scrivere: se la tappa non aveva un orario di fine,
+         tirando il bordo gliene abbiamo appena dato uno, e annullare vuol dire
+         toglierlo di nuovo. */
+      const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
+      act.timeEnd=fmtT(nend);
+      markDrag(act,prev,'durata');
+      save();buildTT();
     };
     rz.addEventListener('pointerup',rfin);rz.addEventListener('pointercancel',rfin);
   }
@@ -7256,7 +7272,10 @@ function bindBlockDrag(el,act,t,d){
     const cand3={time:act.time,timeEnd:fmtT(ps0+pnd),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,id:act.id};
     const c3=findConflict(t,d,cand3,act.id);
     if(c3)toast(`⚠️ Si sovrappone a "${c3.act.name}" per ${c3.names}`);
-    act.timeEnd=fmtT(ps0+pnd);save();buildTT();
+    const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
+    act.timeEnd=fmtT(ps0+pnd);
+    markDrag(act,prev,'durata');
+    save();buildTT();
   });
 }
 function bindChildDrag(el,act,t,d){
