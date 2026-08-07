@@ -9092,19 +9092,34 @@ function cleanTrip(t){
    hotel, biglietti, POI) non sovrascriviamo più l'array intero: lo uniamo per id.
    Un elemento sparisce SOLO se è stato esplicitamente cancellato (registrato in una
    "lapide" _del*), mai per una semplice race di salvataggio. */
-function mergeArr(arrA,arrB,tombA,tombB){
+/* Chi ha ragione quando lo STESSO elemento (stesso id) esiste da tutte e due le
+   parti, con dentro cose diverse:
+   - 'locale': qui ci sono modifiche non ancora arrivate al cloud, e non vanno
+     perse - la versione remota è più vecchia della nostra.
+   - 'remoto': qui siamo allineati col cloud, quindi quella di là è la versione
+     di chi ha modificato per ultimo, e va presa.
+   Prima vinceva sempre il locale, in tutti e due i casi. Le AGGIUNTE degli altri
+   arrivavano lo stesso (id nuovo, nessuno da sovrascrivere), ma le loro MODIFICHE
+   a qualcosa che avevamo già non arrivavano mai: un biglietto rinominato dal
+   compagno di viaggio restava col nome vecchio per sempre, su questo telefono, e
+   nessun aggiornamento successivo poteva rimediare.
+   In ogni caso, chi perde il confronto non sparisce: gli elementi che stanno da
+   una parte sola restano tutti. */
+function mergeArr(arrA,arrB,tombA,tombB,vince){
   const tomb={};
   Object.keys(tombB||{}).forEach(id=>{tomb[id]=tombB[id];});
   Object.keys(tombA||{}).forEach(id=>{tomb[id]=Math.max(tomb[id]||0,tombA[id]);});
   const map=new Map();
-  (arrB||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
-  (arrA||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  /* si mette per primo quello che perde: chi arriva dopo, sullo stesso id, resta */
+  const perde=vince==='remoto'?arrA:arrB,resta=vince==='remoto'?arrB:arrA;
+  (perde||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  (resta||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
   return{merged:Array.from(map.values()).filter(x=>!(x.id in tomb)),tomb};
 }
-function mergedRecordFields(localT,remoteT){
+function mergedRecordFields(localT,remoteT,vince){
   const out={};
   [['expenses','_delExp'],['pois','_delPoi'],['hotels','_delHotel'],['tickets','_delTicket']].forEach(([key,tk])=>{
-    const{merged,tomb}=mergeArr(localT[key],remoteT[key],localT[tk],remoteT[tk]);
+    const{merged,tomb}=mergeArr(localT[key],remoteT[key],localT[tk],remoteT[tk],vince);
     out[key]=merged;out[tk]=tomb;
   });
   const tombAct={};
@@ -9114,8 +9129,12 @@ function mergedRecordFields(localT,remoteT){
   out.days=remoteDays.map(rd=>{
     const ld=localDays.find(x=>x.id===rd.id);
     const map=new Map();
-    (rd.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
-    if(ld)(ld.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    /* stessa regola delle altre liste: una tappa spostata o rinominata da un
+       altro deve poter arrivare fin qui, non solo le tappe nuove */
+    const perde=vince==='remoto'?(ld&&ld.activities):rd.activities;
+    const resta=vince==='remoto'?rd.activities:(ld&&ld.activities);
+    (perde||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    (resta||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
     const acts=Array.from(map.values()).filter(a=>!(a.id in tombAct));
     return Object.assign({},rd,{activities:acts});
   });
@@ -9253,11 +9272,15 @@ async function pullCloud(){
              che sarebbe più vecchia. Recupero però dal cloud eventuali spese/attività
              aggiunte da un altro dispositivo che qui non ho ancora, così non si perdono
              a vicenda. Il resto lo proteggo e lo rimando appena possibile. */
-          Object.assign(localT,mergedRecordFields(localT,remote));
+          Object.assign(localT,mergedRecordFields(localT,remote,'locale'));
           snapNow(true);needsResync=true;
           return;
         }
-        Object.assign(remote,mergedRecordFields(localT,remote));
+        /* Qui invece siamo allineati col cloud (lastPush combacia con quello che
+           abbiamo in mano): quello che arriva è più recente, comprese le modifiche
+           degli altri a roba che abbiamo già. Se non risulta nessun push nostro non
+           possiamo saperlo, e allora restiamo prudenti tenendo la nostra. */
+        Object.assign(remote,mergedRecordFields(localT,remote,lastPush[r.id]?'remoto':'locale'));
         app.trips[i]=remote;
       }
       else{
@@ -9301,7 +9324,7 @@ function handleRealtimeChange(payload){
        due perde le proprie aggiunte. Il resto lo metto al sicuro con un punto di ripristino
        e do priorità al salvarlo io per primo. */
     const remoteData=r.data||{};
-    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData));
+    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData,'locale'));
     snapNow(true);scheduleSync();
     toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
     return;
@@ -9312,7 +9335,9 @@ function handleRealtimeChange(payload){
   const i2=app.trips.findIndex(x=>x.cid===r.id);
   const rawHash=JSON.stringify(cleanTrip(remote));
   if(i2>=0){
-    Object.assign(remote,mergedRecordFields(app.trips[i2],remote));
+    /* come nel pull: qui non abbiamo modifiche in sospeso, quindi l'aggiornamento
+       che arriva in tempo reale è quello buono anche dentro le liste */
+    Object.assign(remote,mergedRecordFields(app.trips[i2],remote,lastPush[r.id]?'remoto':'locale'));
     app.trips[i2]=remote;
   }else app.trips.push(remote);
   lastPush[r.id]=rawHash;persistLastPush();
