@@ -735,8 +735,14 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 #mDay .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
 /* Un trascinamento o un allungamento sbagliato si annulla da qui: sta
    dall'altra parte rispetto al "+", cosi' non si tocca per sbaglio quello
-   mentre si cerca questo. */
-.tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;transition:var(--ease)}
+   mentre si cerca questo.
+   Sta sempre al suo posto, anche quando non c'e' niente da annullare: prima
+   compariva solo dopo aver mosso qualcosa, e chi la cercava non la trovava -
+   un tasto che si materializza dal nulla proprio nel momento in cui serve non
+   lo si impara mai. Da spenta e' tenue e non fa rumore; quando c'e' qualcosa
+   da rimettere a posto diventa piena e scura, che si vede a colpo d'occhio. */
+.tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;opacity:.55;transition:var(--ease)}
+.tt-undo.on{opacity:1;background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:var(--sh-lg)}
 .tt-undo:active{transform:scale(.92)}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
@@ -1187,7 +1193,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
-<button class="tt-undo" id="ttUndo" style="display:none" onclick="undoDrag()" title="Annulla l'ultima modifica" aria-label="Annulla l'ultima modifica">↩</button>
+<button class="tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare">↩</button>
 <button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
@@ -3279,7 +3285,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" in basso a sinistra rimette gli orari com'erano: compare solo dopo aver mosso qualcosa, e vale per l'ultima modifica fatta.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
@@ -7138,20 +7144,27 @@ function markDrag(a,prev,tipo){
   lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId,tipo:tipo||'sposta'};
   const b=document.getElementById('ttUndo');
   if(b){
-    b.style.display='grid';
+    b.classList.add('on');
     const q=lastDrag.tipo==='durata'?'Annulla l\'allungamento':'Annulla lo spostamento';
     b.title=q;b.setAttribute('aria-label',q);
   }
 }
+/* Spegne il tasto, non lo toglie: il posto resta quello anche a mani vuote. */
 function clearDragUndo(){
   lastDrag=null;
-  const b=document.getElementById('ttUndo');if(b)b.style.display='none';
+  const b=document.getElementById('ttUndo');
+  if(b){b.classList.remove('on');b.title='Niente da annullare';b.setAttribute('aria-label','Niente da annullare');}
 }
 function undoDrag(){
-  if(!lastDrag){clearDragUndo();return;}
+  /* Da spento risponde lo stesso, invece di fare finta di niente: chi lo tocca
+     ha appena cercato di disfare qualcosa e merita di sapere perche' non
+     succede nulla. */
+  if(!lastDrag){clearDragUndo();toast('Non c\'è niente da annullare');return;}
   const t=T(),d=t&&t.days[lastDrag.di];
   const a=d&&(d.activities||[]).find(x=>x.id===lastDrag.id);
-  if(!a){clearDragUndo();return;}
+  /* la tappa non c'e' piu': cancellata dopo averla mossa, non c'e' piu' niente
+     su cui rimettere gli orari */
+  if(!a){clearDragUndo();toast('La tappa non c\'è più');return;}
   const tipo=lastDrag.tipo;
   a.time=lastDrag.time;a.timeEnd=lastDrag.timeEnd;a.parentId=lastDrag.parentId;
   clearDragUndo();
