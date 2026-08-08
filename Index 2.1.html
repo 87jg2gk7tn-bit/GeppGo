@@ -2456,12 +2456,12 @@ function renderHomeHero(){
     <button class="hh-act" onclick="openTripDates()">📅 Giorni</button>
     <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
     <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
-    <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
     <button class="hh-act" onclick="openShare()">Condividi</button>
     <button class="hh-act" onclick="openPeople()">Persone</button>
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
     <button class="hh-act" onclick="openPacking()">🎒 Bagagli</button>
     <button class="hh-act" onclick="openRestore()">✓ ${esc(lastSnapLabel())}</button>
+    <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
   </div>`;
   if(!t.days||!t.days.length){
     paint(`<div class="hh">${tripsBar}
