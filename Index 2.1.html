@@ -2456,6 +2456,7 @@ function renderHomeHero(){
     <button class="hh-act" onclick="openTripDates()">📅 Giorni</button>
     <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
     <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
+    <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
     <button class="hh-act" onclick="openShare()">Condividi</button>
     <button class="hh-act" onclick="openPeople()">Persone</button>
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
@@ -3284,7 +3285,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
@@ -3331,6 +3332,13 @@ function sembraCercaBagno(s){
 function sembraCercaFumo(s){
   return /\b(fumare|fumatori?|fumo|sigarett\w*|posacener\w*|smoking area)\b/i.test(s||'');
 }
+/* Qui si sta stretti apposta: "contanti" e "soldi" da soli compaiono in un
+   sacco di domande che con il prelevare non c'entrano niente ("quanto abbiamo
+   speso in contanti?"), e aprire la mappa al posto di rispondere sarebbe peggio
+   che mandarla al modello. */
+function sembraCercaAtm(s){
+  return /\b(bancomat|atm|prelev\w*|sportello automatico|cash machine|cashpoint)\b/i.test(s||'');
+}
 
 async function assistenteChiedi(text,ui){
   const t=T();
@@ -3346,6 +3354,13 @@ async function assistenteChiedi(text,ui){
     aiRicorda(t,'user',text);
     aiRicorda(t,'assistant','Ho aperto la ricerca delle aree fumatori vicine.');
     cercaFumo();
+    return;
+  }
+  if(sembraCercaAtm(text)){
+    ui.msg('ai','Guardo i bancomat intorno a te.');
+    aiRicorda(t,'user',text);
+    aiRicorda(t,'assistant','Ho aperto la ricerca dei bancomat vicini.');
+    cercaAtm();
     return;
   }
   if(t&&sembraUnIncollato(text)&&!ui.saltaIncollato){
@@ -5965,12 +5980,13 @@ let routeLine=null;
    Si allarga il raggio a scalini invece di partire larghi: in centro città il
    primo giro trova già tutto, e chiedere 2 km quando bastano 300 metri vuol
    dire scaricare mezza città per buttarla via.
-   Bagni e aree fumatori sono la stessa ricerca con un'etichetta diversa:
-   cambia la domanda a Overpass e come si racconta quello che torna. */
+   Bagni, aree fumatori e bancomat sono la stessa ricerca con un'etichetta
+   diversa: cambia la domanda a Overpass e come si racconta quello che torna.
+   Per aggiungerne un'altra basta una voce qui sotto. */
 const VICINI_RAGGI=[400,1200,3000];
 const VICINI={
   bagno:{
-    ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico',
+    ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
     q:(r,lat,lng)=>`node["amenity"="toilets"](around:${r},${lat},${lng});way["amenity"="toilets"](around:${r},${lat},${lng});`,
     nome:t=>t.name||t.operator||'Bagno pubblico',
     extra:t=>[
@@ -5982,7 +5998,7 @@ const VICINI={
     vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.'
   },
   fumo:{
-    ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori',
+    ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
     q:(r,lat,lng)=>`node["amenity"="smoking_area"](around:${r},${lat},${lng});way["amenity"="smoking_area"](around:${r},${lat},${lng});node["smoking"="designated"](around:${r},${lat},${lng});`,
@@ -5994,12 +6010,32 @@ const VICINI={
       t.access==='customers'?'per i clienti':''
     ],
     vuoto:'Nel raggio di 3 km non risulta nessuna area fumatori sulla mappa.<br><br>Non vuol dire che non ce ne siano: sono mappate a macchia di leopardo. Vicino alle stazioni e ai konbini di solito ce n\'è una.'
+  },
+  atm:{
+    ic:'🏧', titolo:'Bancomat più vicino', cosa:'bancomat', manca:'il bancomat più vicino',
+    /* Due etichette per la stessa cosa: amenity=atm è lo sportello a sé stante,
+       atm=yes è la banca o il negozio che ne ha uno dentro. Dove i bancomat
+       stanno quasi tutti dentro i minimarket - il Giappone è il caso classico -
+       cercare solo la prima lascia fuori proprio quelli che si usano davvero. */
+    q:(r,lat,lng)=>`node["amenity"="atm"](around:${r},${lat},${lng});way["amenity"="atm"](around:${r},${lat},${lng});node["atm"="yes"](around:${r},${lat},${lng});way["atm"="yes"](around:${r},${lat},${lng});`,
+    nome:t=>t.name||t.operator||t.brand||'Bancomat',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      /* dove sta: uno sportello per strada e uno dentro un negozio chiuso di
+         notte sono due cose diverse, e a chi ha bisogno di contanti interessa */
+      t.amenity==='atm'?'':(t.amenity==='bank'?'dentro la banca':(t.shop==='convenience'?'dentro un minimarket':(t.shop?'dentro un negozio':''))),
+      t.fee==='yes'?'con commissione':(t.fee==='no'?'senza commissione':''),
+      t.cash_in==='yes'?'accetta contanti':'',
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 3 km non risulta nessun bancomat sulla mappa.<br><br>Non vuol dire che non ce ne siano: spesso stanno dentro banche e minimarket e non vengono mappati a parte. I minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
   }
 };
 let vicinoBusy=false,vicinoKind='bagno';
 
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
+function cercaAtm(){cercaVicino('atm');}
 function cercaVicino(kind){
   if(vicinoBusy)return;
   vicinoKind=VICINI[kind]?kind:'bagno';
@@ -6029,7 +6065,7 @@ function cercaVicino(kind){
 function vicinoNienteGps(){
   const v=VICINI[vicinoKind];
   document.getElementById('bagnoBody').innerHTML=
-    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare ${v.cosa==='bagno pubblico'?'il bagno più vicino':'l\'area fumatori più vicina'} mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
+    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare ${v.manca} mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
 }
 
