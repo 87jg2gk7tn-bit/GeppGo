@@ -952,6 +952,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
    ancora quella in mano. Meglio dirlo. */
 .hh-map-note{position:absolute;left:.5rem;right:.5rem;bottom:.5rem;background:var(--ink);color:var(--paper);font-size:.72rem;font-weight:700;padding:.4rem .6rem;border-radius:10px;text-align:center;z-index:500;pointer-events:none}
 .hh-map-wrap{position:relative}
+/* Nella mini-mappa della home il tasto della posizione sta in alto: in basso ci
+   passa la striscia che avvisa quando una tappa non ha un posto, e finirebbero
+   uno sopra l'altro. Ed e' un filo piu' piccolo, perche' la mappa e' alta 180px. */
+.hh-map-wrap .locate-fab{top:.5rem;bottom:auto;right:.5rem;width:34px;height:34px;font-size:.9rem}
 .hh-map-wrap #homeMap{height:180px;width:100%;background:var(--sand-tint)}
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2171,6 +2175,9 @@ let homeSoonActs=[],homeSoonDay=null,homeSoonDi=0;
 function destroyHomeMap(){
   if(homeMapObj){try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
+  /* se ne vanno con la mappa: tenerne il riferimento vorrebbe dire provare a
+     toglierli da una mappa che non esiste piu' */
+  homeMeMarker=null;homeMeHalo=null;
 }
 /* Il riquadro col conto alla rovescia diceva sempre e solo la prossima tappa,
    anche mentre in mappa se ne stava guardando un'altra: due cose diverse una
@@ -2221,6 +2228,8 @@ function buildHomeMap(t,day,acts){
     mk.on('click',()=>homeScrollToCard(x.i));
     homeMapMarks.push(mk);
   });
+  /* la mappa e' appena rinata: se sappiamo dove siamo, il pallino torna subito */
+  homeMePlace();
   // fitBounds da solo può zoomare troppo indietro se una tappa (es. l'aeroporto
   // del volo di ritorno) è lontana dalle altre: non scende mai sotto una vista
   // di quartiere, anche se questo lascia fuori dall'inquadratura i punti più lontani.
@@ -2518,7 +2527,7 @@ function renderHomeHero(){
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div>
   </div>
-  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div></div>
+  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione">🧭</button><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div></div>
   <div class="hh-cards">${acts.map(a=>{
     const av=avOf(a);
     // La foto del luogo collegato: si riconosce la tappa senza leggerne il nome.
@@ -6194,7 +6203,7 @@ async function startGPSNative(){
     const pos=await G.getCurrentPosition({enableHighAccuracy:true});
     placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);
     gpsId=await G.watchPosition({enableHighAccuracy:true},(pos,err)=>{if(err||!pos)return;placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);});
-    gpsNative=true;document.getElementById('gpsPill').classList.add('on');document.getElementById('locateFab').classList.add('on');document.getElementById('locateFabDay').classList.add('on');
+    gpsNative=true;gpsFabsOn(true);
     const BG=nPlug('BackgroundGeolocation');
     if(BG){try{
       await BG.addWatcher({backgroundMessage:'GeppGo ti avvisa quando sei vicino a una tappa',backgroundTitle:'GeppGo · GPS attivo',requestPermissions:true,stale:false,distanceFilter:40},
@@ -6209,10 +6218,12 @@ function beginWatch(){
     err=>{gpsError(err);},
     {enableHighAccuracy:true,maximumAge:5000,timeout:20000}
   );
-  document.getElementById('gpsPill').classList.add('on');document.getElementById('locateFab').classList.add('on');document.getElementById('locateFabDay').classList.add('on');
+  gpsFabsOn(true);
 }
 let meHalo=null,meCentered=false,dayMeMarker=null,dayMeHalo=null,myHeading=null,headingOn=false;
+let homeMeMarker=null,homeMeHalo=null;
 let myPos=null; /* ultima posizione nota, per il "a piedi" della card "fra poco" */
+let myPosAcc=0;  /* quanto e' precisa: e' il raggio dell'alone intorno al pallino */
 /* Quando e' stata letta. Per il "a piedi" una posizione di dieci minuti fa va
    benissimo; per dire quando partire no: col GPS spento resterebbe ferma dove
    eri, e ti direbbe che sei gia' sul posto mentre sei dall'altra parte. */
@@ -6229,6 +6240,15 @@ function updateMeIcon(){
   const icon=meDivIcon(myHeading);
   if(meMarker)meMarker.setIcon(icon);
   if(dayMeMarker)dayMeMarker.setIcon(icon);
+  if(homeMeMarker)homeMeMarker.setIcon(icon);
+}
+/* I tasti della posizione si accendono insieme. Quello della home esiste solo
+   quando la mini-mappa e' a schermo - se la giornata non ha tappe con un posto
+   la mappa non c'e' proprio - quindi si guarda sempre se c'e' prima di toccarlo. */
+function gpsFabsOn(on){
+  ['gpsPill','locateFab','locateFabDay','locateFabHome'].forEach(id=>{
+    const b=document.getElementById(id);if(b)b.classList.toggle('on',!!on);
+  });
 }
 function onHeadingEvent(e){
   let h=null;
@@ -6252,9 +6272,39 @@ function stopHeading(){
   window.removeEventListener('deviceorientation',onHeadingEvent,true);
   window.removeEventListener('deviceorientationabsolute',onHeadingEvent,true);
 }
+/* Il pallino anche nella mini-mappa della home. Sta a parte dalle altre due
+   perche' quella mappa viene buttata e rifatta ogni volta che la home si
+   ridisegna, e il pallino se ne andrebbe con lei: non basta metterlo quando
+   arriva una posizione nuova, va rimesso anche dopo ogni ricostruzione.
+   Si usa l'ultima posizione nota purche' non piu' vecchia di un quarto d'ora -
+   la stessa soglia con cui l'app decide se fidarsene altrove - cosi' si vede
+   anche quando la posizione e' stata presa poco fa da una delle ricerche
+   vicine, senza il GPS acceso di continuo. L'inquadratura non si tocca: e'
+   pensata sulle tappe del giorno, e allargarla per far entrare uno che sta
+   dall'altra parte della citta' le farebbe perdere il senso. Per andarci c'e'
+   il tasto. */
+function homeMePlace(){
+  if(!homeMapObj||typeof L==='undefined')return;
+  const b=document.getElementById('locateFabHome');
+  if(b)b.classList.toggle('on',gpsId!==null);
+  if(homeMeMarker){try{homeMapObj.removeLayer(homeMeMarker);}catch(e){}homeMeMarker=null;}
+  if(homeMeHalo){try{homeMapObj.removeLayer(homeMeHalo);}catch(e){}homeMeHalo=null;}
+  if(!myPos||Date.now()-myPosAt>POS_FRESCA_MS)return;
+  homeMeHalo=L.circle([myPos.lat,myPos.lng],{radius:Math.min(myPosAcc||30,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(homeMapObj);
+  homeMeMarker=L.marker([myPos.lat,myPos.lng],{icon:meDivIcon(myHeading)}).addTo(homeMapObj);
+  homeMeMarker.bindPopup('📍 Sei qui');
+}
+function locateFabHome(){
+  if(gpsId===null){toggleGPS();return;}
+  if(homeMeMarker&&homeMapObj)homeMapObj.setView(homeMeMarker.getLatLng(),16);
+  else toast('Sto ancora cercando la tua posizione...');
+}
 function placeMe(pos){
   if(!map||typeof L==='undefined')return;
   const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy||30;
+  /* Segnata qui e non solo in checkProx: cosi' chi disegna il pallino trova
+     sempre la posizione appena arrivata, non quella del giro prima. */
+  myPos={lat:lat,lng:lng};myPosAt=Date.now();myPosAcc=acc;
   if(meMarker)map.removeLayer(meMarker);
   if(meHalo)map.removeLayer(meHalo);
   meHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(map);
@@ -6266,6 +6316,7 @@ function placeMe(pos){
     dayMeHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(dayMapObj);
     dayMeMarker=L.marker([lat,lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
   }
+  homeMePlace();
   const t=T();
   if(t&&t.pois.length){
     let near=null,nd=1e9;
@@ -6278,7 +6329,9 @@ function centerMe(){if(meMarker){map.setView(meMarker.getLatLng(),16);}else toas
 function locateFab(){if(gpsId===null){toggleGPS();return;}centerMe();}
 function locateFabDay(){if(gpsId===null){toggleGPS();return;}if(dayMeMarker&&dayMapObj)dayMapObj.setView(dayMeMarker.getLatLng(),16);else toast('Sto ancora cercando la tua posizione...');}
 function gpsError(err){
-  document.getElementById('gpsPill').classList.remove('on');
+  /* si spengono anche i tasti sulle mappe: restavano accesi dopo un errore, e
+     sembrava che il GPS stesse funzionando */
+  gpsFabsOn(false);
   if(gpsId){navigator.geolocation.clearWatch(gpsId);gpsId=null;}
   let msg='⚠️ GPS non disponibile';
   if(err&&err.code===1)msg='⚠️ Permesso negato. Abilita la posizione per questo sito.';
@@ -6296,9 +6349,11 @@ function stopGPS(){
   if(meHalo){map.removeLayer(meHalo);meHalo=null;}
   if(dayMapObj&&dayMeMarker){try{dayMapObj.removeLayer(dayMeMarker);}catch(e){}}
   if(dayMapObj&&dayMeHalo){try{dayMapObj.removeLayer(dayMeHalo);}catch(e){}}
-  dayMeMarker=null;dayMeHalo=null;meCentered=false;
+  if(homeMapObj&&homeMeMarker){try{homeMapObj.removeLayer(homeMeMarker);}catch(e){}}
+  if(homeMapObj&&homeMeHalo){try{homeMapObj.removeLayer(homeMeHalo);}catch(e){}}
+  dayMeMarker=null;dayMeHalo=null;homeMeMarker=null;homeMeHalo=null;meCentered=false;
   stopHeading();
-  document.getElementById('gpsPill').classList.remove('on');document.getElementById('locateFab').classList.remove('on');document.getElementById('locateFabDay').classList.remove('on');
+  gpsFabsOn(false);
   notified.clear();toast('GPS disattivato');
 }
 function calcDist(la1,lo1,la2,lo2){const R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
