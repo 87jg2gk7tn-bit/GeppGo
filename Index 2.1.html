@@ -733,9 +733,16 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
    dosso il vestito da foglio e il "+" sale sopra la barra in basso. */
 .tt-sheet{background:transparent;padding:0;border-radius:0;box-shadow:none;max-width:none;width:auto;overflow:visible;transform:none}
 #mDay .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
-/* Un trascinamento sbagliato si annulla da qui: sta dall'altra parte rispetto
-   al "+", cosi' non si tocca per sbaglio quello mentre si cerca questo. */
-.tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;transition:var(--ease)}
+/* Un trascinamento o un allungamento sbagliato si annulla da qui: sta
+   dall'altra parte rispetto al "+", cosi' non si tocca per sbaglio quello
+   mentre si cerca questo.
+   Sta sempre al suo posto, anche quando non c'e' niente da annullare: prima
+   compariva solo dopo aver mosso qualcosa, e chi la cercava non la trovava -
+   un tasto che si materializza dal nulla proprio nel momento in cui serve non
+   lo si impara mai. Da spenta e' tenue e non fa rumore; quando c'e' qualcosa
+   da rimettere a posto diventa piena e scura, che si vede a colpo d'occhio. */
+.tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;opacity:.55;transition:var(--ease)}
+.tt-undo.on{opacity:1;background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:var(--sh-lg)}
 .tt-undo:active{transform:scale(.92)}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
@@ -1186,7 +1193,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
-<button class="tt-undo" id="ttUndo" style="display:none" onclick="undoDrag()" title="Annulla lo spostamento" aria-label="Annulla lo spostamento">↩</button>
+<button class="tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare">↩</button>
 <button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
@@ -2454,6 +2461,7 @@ function renderHomeHero(){
     <button class="hh-act${t.suggestOn?' on':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button>
     <button class="hh-act" onclick="openPacking()">🎒 Bagagli</button>
     <button class="hh-act" onclick="openRestore()">✓ ${esc(lastSnapLabel())}</button>
+    <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
   </div>`;
   if(!t.days||!t.days.length){
     paint(`<div class="hh">${tripsBar}
@@ -3277,8 +3285,8 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino" e "Area fumatori" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
@@ -3324,6 +3332,13 @@ function sembraCercaBagno(s){
 function sembraCercaFumo(s){
   return /\b(fumare|fumatori?|fumo|sigarett\w*|posacener\w*|smoking area)\b/i.test(s||'');
 }
+/* Qui si sta stretti apposta: "contanti" e "soldi" da soli compaiono in un
+   sacco di domande che con il prelevare non c'entrano niente ("quanto abbiamo
+   speso in contanti?"), e aprire la mappa al posto di rispondere sarebbe peggio
+   che mandarla al modello. */
+function sembraCercaAtm(s){
+  return /\b(bancomat|atm|prelev\w*|sportello automatico|cash machine|cashpoint)\b/i.test(s||'');
+}
 
 async function assistenteChiedi(text,ui){
   const t=T();
@@ -3339,6 +3354,13 @@ async function assistenteChiedi(text,ui){
     aiRicorda(t,'user',text);
     aiRicorda(t,'assistant','Ho aperto la ricerca delle aree fumatori vicine.');
     cercaFumo();
+    return;
+  }
+  if(sembraCercaAtm(text)){
+    ui.msg('ai','Guardo i bancomat intorno a te.');
+    aiRicorda(t,'user',text);
+    aiRicorda(t,'assistant','Ho aperto la ricerca dei bancomat vicini.');
+    cercaAtm();
     return;
   }
   if(t&&sembraUnIncollato(text)&&!ui.saltaIncollato){
@@ -5958,12 +5980,13 @@ let routeLine=null;
    Si allarga il raggio a scalini invece di partire larghi: in centro città il
    primo giro trova già tutto, e chiedere 2 km quando bastano 300 metri vuol
    dire scaricare mezza città per buttarla via.
-   Bagni e aree fumatori sono la stessa ricerca con un'etichetta diversa:
-   cambia la domanda a Overpass e come si racconta quello che torna. */
+   Bagni, aree fumatori e bancomat sono la stessa ricerca con un'etichetta
+   diversa: cambia la domanda a Overpass e come si racconta quello che torna.
+   Per aggiungerne un'altra basta una voce qui sotto. */
 const VICINI_RAGGI=[400,1200,3000];
 const VICINI={
   bagno:{
-    ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico',
+    ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
     q:(r,lat,lng)=>`node["amenity"="toilets"](around:${r},${lat},${lng});way["amenity"="toilets"](around:${r},${lat},${lng});`,
     nome:t=>t.name||t.operator||'Bagno pubblico',
     extra:t=>[
@@ -5975,7 +5998,7 @@ const VICINI={
     vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.'
   },
   fumo:{
-    ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori',
+    ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
     q:(r,lat,lng)=>`node["amenity"="smoking_area"](around:${r},${lat},${lng});way["amenity"="smoking_area"](around:${r},${lat},${lng});node["smoking"="designated"](around:${r},${lat},${lng});`,
@@ -5987,12 +6010,32 @@ const VICINI={
       t.access==='customers'?'per i clienti':''
     ],
     vuoto:'Nel raggio di 3 km non risulta nessuna area fumatori sulla mappa.<br><br>Non vuol dire che non ce ne siano: sono mappate a macchia di leopardo. Vicino alle stazioni e ai konbini di solito ce n\'è una.'
+  },
+  atm:{
+    ic:'🏧', titolo:'Bancomat più vicino', cosa:'bancomat', manca:'il bancomat più vicino',
+    /* Due etichette per la stessa cosa: amenity=atm è lo sportello a sé stante,
+       atm=yes è la banca o il negozio che ne ha uno dentro. Dove i bancomat
+       stanno quasi tutti dentro i minimarket - il Giappone è il caso classico -
+       cercare solo la prima lascia fuori proprio quelli che si usano davvero. */
+    q:(r,lat,lng)=>`node["amenity"="atm"](around:${r},${lat},${lng});way["amenity"="atm"](around:${r},${lat},${lng});node["atm"="yes"](around:${r},${lat},${lng});way["atm"="yes"](around:${r},${lat},${lng});`,
+    nome:t=>t.name||t.operator||t.brand||'Bancomat',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      /* dove sta: uno sportello per strada e uno dentro un negozio chiuso di
+         notte sono due cose diverse, e a chi ha bisogno di contanti interessa */
+      t.amenity==='atm'?'':(t.amenity==='bank'?'dentro la banca':(t.shop==='convenience'?'dentro un minimarket':(t.shop?'dentro un negozio':''))),
+      t.fee==='yes'?'con commissione':(t.fee==='no'?'senza commissione':''),
+      t.cash_in==='yes'?'accetta contanti':'',
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 3 km non risulta nessun bancomat sulla mappa.<br><br>Non vuol dire che non ce ne siano: spesso stanno dentro banche e minimarket e non vengono mappati a parte. I minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
   }
 };
 let vicinoBusy=false,vicinoKind='bagno';
 
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
+function cercaAtm(){cercaVicino('atm');}
 function cercaVicino(kind){
   if(vicinoBusy)return;
   vicinoKind=VICINI[kind]?kind:'bagno';
@@ -6022,7 +6065,7 @@ function cercaVicino(kind){
 function vicinoNienteGps(){
   const v=VICINI[vicinoKind];
   document.getElementById('bagnoBody').innerHTML=
-    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare ${v.cosa==='bagno pubblico'?'il bagno più vicino':'l\'area fumatori più vicina'} mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
+    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Per trovare ${v.manca} mi serve sapere dove sei, e il GPS non risponde.<br><br>Controlla che la posizione sia attiva per GeppGo nelle impostazioni del telefono, poi riprova.</div>
      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
 }
 
@@ -7125,28 +7168,44 @@ window.addEventListener('resize',()=>{
    stretta perche' e' la piu' specifica (il pranzo sta nel giro del pomeriggio,
    non nell'intera giornata). Si escludono se stessa e le proprie dipendenti,
    per non creare un anello. */
-/* L'ultimo spostamento fatto col dito, per poterlo disfare: un trascinamento
-   e' facile da sbagliare e senza questo l'orario di prima era perso. Si tiene
-   solo l'ultimo, che e' quello che si vuole annullare subito dopo averlo
-   sbagliato. */
+/* L'ultima modifica fatta col dito sugli orari, per poterla disfare. Col dito
+   si sbaglia facile in tutti e due i modi: trascinando il riquadro, e tirandone
+   il bordo per allungarlo o accorciarlo. Senza questo gli orari di prima erano
+   persi, e per rimetterli bisognava ricordarseli. Si tiene solo l'ultima, che
+   e' quella che si vuole annullare subito dopo averla sbagliata.
+   Il tipo serve solo a dire la cosa giusta dopo: quello che si rimette a posto
+   e' lo stesso in tutti e due i casi. */
 let lastDrag=null;
-function markDrag(a,prev){
-  lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId};
-  const b=document.getElementById('ttUndo');if(b)b.style.display='grid';
+function markDrag(a,prev,tipo){
+  lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId,tipo:tipo||'sposta'};
+  const b=document.getElementById('ttUndo');
+  if(b){
+    b.classList.add('on');
+    const q=lastDrag.tipo==='durata'?'Annulla l\'allungamento':'Annulla lo spostamento';
+    b.title=q;b.setAttribute('aria-label',q);
+  }
 }
+/* Spegne il tasto, non lo toglie: il posto resta quello anche a mani vuote. */
 function clearDragUndo(){
   lastDrag=null;
-  const b=document.getElementById('ttUndo');if(b)b.style.display='none';
+  const b=document.getElementById('ttUndo');
+  if(b){b.classList.remove('on');b.title='Niente da annullare';b.setAttribute('aria-label','Niente da annullare');}
 }
 function undoDrag(){
-  if(!lastDrag){clearDragUndo();return;}
+  /* Da spento risponde lo stesso, invece di fare finta di niente: chi lo tocca
+     ha appena cercato di disfare qualcosa e merita di sapere perche' non
+     succede nulla. */
+  if(!lastDrag){clearDragUndo();toast('Non c\'è niente da annullare');return;}
   const t=T(),d=t&&t.days[lastDrag.di];
   const a=d&&(d.activities||[]).find(x=>x.id===lastDrag.id);
-  if(!a){clearDragUndo();return;}
+  /* la tappa non c'e' piu': cancellata dopo averla mossa, non c'e' piu' niente
+     su cui rimettere gli orari */
+  if(!a){clearDragUndo();toast('La tappa non c\'è più');return;}
+  const tipo=lastDrag.tipo;
   a.time=lastDrag.time;a.timeEnd=lastDrag.timeEnd;a.parentId=lastDrag.parentId;
   clearDragUndo();
   save();buildTT();
-  toast('↩ Spostamento annullato');
+  toast(tipo==='durata'?'↩ Durata di prima':'↩ Spostamento annullato');
 }
 /* Dopo uno spostamento l'attivita' entra o esce da quella che la contiene. */
 function reparentAfterDrag(d,act){
@@ -7233,7 +7292,13 @@ function bindBlockDrag(el,act,t,d){
       const cand2={time:act.time,timeEnd:fmtT(nend),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,id:act.id};
       const c2=findConflict(t,d,cand2,act.id);
       if(c2)toast(`⚠️ Si sovrappone a "${c2.act.name}" per ${c2.names}`);
-      act.timeEnd=fmtT(nend);save();buildTT();
+      /* Va preso prima di scrivere: se la tappa non aveva un orario di fine,
+         tirando il bordo gliene abbiamo appena dato uno, e annullare vuol dire
+         toglierlo di nuovo. */
+      const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
+      act.timeEnd=fmtT(nend);
+      markDrag(act,prev,'durata');
+      save();buildTT();
     };
     rz.addEventListener('pointerup',rfin);rz.addEventListener('pointercancel',rfin);
   }
@@ -7256,7 +7321,10 @@ function bindBlockDrag(el,act,t,d){
     const cand3={time:act.time,timeEnd:fmtT(ps0+pnd),who:act.who,lat:act.lat,lng:act.lng,poiId:act.poiId,parentId:act.parentId,id:act.id};
     const c3=findConflict(t,d,cand3,act.id);
     if(c3)toast(`⚠️ Si sovrappone a "${c3.act.name}" per ${c3.names}`);
-    act.timeEnd=fmtT(ps0+pnd);save();buildTT();
+    const prev={time:act.time,timeEnd:act.timeEnd,parentId:act.parentId||null};
+    act.timeEnd=fmtT(ps0+pnd);
+    markDrag(act,prev,'durata');
+    save();buildTT();
   });
 }
 function bindChildDrag(el,act,t,d){
@@ -9060,19 +9128,34 @@ function cleanTrip(t){
    hotel, biglietti, POI) non sovrascriviamo più l'array intero: lo uniamo per id.
    Un elemento sparisce SOLO se è stato esplicitamente cancellato (registrato in una
    "lapide" _del*), mai per una semplice race di salvataggio. */
-function mergeArr(arrA,arrB,tombA,tombB){
+/* Chi ha ragione quando lo STESSO elemento (stesso id) esiste da tutte e due le
+   parti, con dentro cose diverse:
+   - 'locale': qui ci sono modifiche non ancora arrivate al cloud, e non vanno
+     perse - la versione remota è più vecchia della nostra.
+   - 'remoto': qui siamo allineati col cloud, quindi quella di là è la versione
+     di chi ha modificato per ultimo, e va presa.
+   Prima vinceva sempre il locale, in tutti e due i casi. Le AGGIUNTE degli altri
+   arrivavano lo stesso (id nuovo, nessuno da sovrascrivere), ma le loro MODIFICHE
+   a qualcosa che avevamo già non arrivavano mai: un biglietto rinominato dal
+   compagno di viaggio restava col nome vecchio per sempre, su questo telefono, e
+   nessun aggiornamento successivo poteva rimediare.
+   In ogni caso, chi perde il confronto non sparisce: gli elementi che stanno da
+   una parte sola restano tutti. */
+function mergeArr(arrA,arrB,tombA,tombB,vince){
   const tomb={};
   Object.keys(tombB||{}).forEach(id=>{tomb[id]=tombB[id];});
   Object.keys(tombA||{}).forEach(id=>{tomb[id]=Math.max(tomb[id]||0,tombA[id]);});
   const map=new Map();
-  (arrB||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
-  (arrA||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  /* si mette per primo quello che perde: chi arriva dopo, sullo stesso id, resta */
+  const perde=vince==='remoto'?arrA:arrB,resta=vince==='remoto'?arrB:arrA;
+  (perde||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
+  (resta||[]).forEach(x=>{if(x&&x.id!=null)map.set(x.id,x);});
   return{merged:Array.from(map.values()).filter(x=>!(x.id in tomb)),tomb};
 }
-function mergedRecordFields(localT,remoteT){
+function mergedRecordFields(localT,remoteT,vince){
   const out={};
   [['expenses','_delExp'],['pois','_delPoi'],['hotels','_delHotel'],['tickets','_delTicket']].forEach(([key,tk])=>{
-    const{merged,tomb}=mergeArr(localT[key],remoteT[key],localT[tk],remoteT[tk]);
+    const{merged,tomb}=mergeArr(localT[key],remoteT[key],localT[tk],remoteT[tk],vince);
     out[key]=merged;out[tk]=tomb;
   });
   const tombAct={};
@@ -9082,8 +9165,12 @@ function mergedRecordFields(localT,remoteT){
   out.days=remoteDays.map(rd=>{
     const ld=localDays.find(x=>x.id===rd.id);
     const map=new Map();
-    (rd.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
-    if(ld)(ld.activities||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    /* stessa regola delle altre liste: una tappa spostata o rinominata da un
+       altro deve poter arrivare fin qui, non solo le tappe nuove */
+    const perde=vince==='remoto'?(ld&&ld.activities):rd.activities;
+    const resta=vince==='remoto'?rd.activities:(ld&&ld.activities);
+    (perde||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
+    (resta||[]).forEach(a=>{if(a&&a.id!=null)map.set(a.id,a);});
     const acts=Array.from(map.values()).filter(a=>!(a.id in tombAct));
     return Object.assign({},rd,{activities:acts});
   });
@@ -9221,11 +9308,15 @@ async function pullCloud(){
              che sarebbe più vecchia. Recupero però dal cloud eventuali spese/attività
              aggiunte da un altro dispositivo che qui non ho ancora, così non si perdono
              a vicenda. Il resto lo proteggo e lo rimando appena possibile. */
-          Object.assign(localT,mergedRecordFields(localT,remote));
+          Object.assign(localT,mergedRecordFields(localT,remote,'locale'));
           snapNow(true);needsResync=true;
           return;
         }
-        Object.assign(remote,mergedRecordFields(localT,remote));
+        /* Qui invece siamo allineati col cloud (lastPush combacia con quello che
+           abbiamo in mano): quello che arriva è più recente, comprese le modifiche
+           degli altri a roba che abbiamo già. Se non risulta nessun push nostro non
+           possiamo saperlo, e allora restiamo prudenti tenendo la nostra. */
+        Object.assign(remote,mergedRecordFields(localT,remote,lastPush[r.id]?'remoto':'locale'));
         app.trips[i]=remote;
       }
       else{
@@ -9269,7 +9360,7 @@ function handleRealtimeChange(payload){
        due perde le proprie aggiunte. Il resto lo metto al sicuro con un punto di ripristino
        e do priorità al salvarlo io per primo. */
     const remoteData=r.data||{};
-    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData));
+    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData,'locale'));
     snapNow(true);scheduleSync();
     toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
     return;
@@ -9280,7 +9371,9 @@ function handleRealtimeChange(payload){
   const i2=app.trips.findIndex(x=>x.cid===r.id);
   const rawHash=JSON.stringify(cleanTrip(remote));
   if(i2>=0){
-    Object.assign(remote,mergedRecordFields(app.trips[i2],remote));
+    /* come nel pull: qui non abbiamo modifiche in sospeso, quindi l'aggiornamento
+       che arriva in tempo reale è quello buono anche dentro le liste */
+    Object.assign(remote,mergedRecordFields(app.trips[i2],remote,lastPush[r.id]?'remoto':'locale'));
     app.trips[i2]=remote;
   }else app.trips.push(remote);
   lastPush[r.id]=rawHash;persistLastPush();
