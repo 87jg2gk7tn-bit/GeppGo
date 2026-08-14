@@ -6187,9 +6187,21 @@ function navigaGiornata(di){
   }
   if(pezzi.length===1)return navGiroApriPezzo(pezzi[0]);
   navGiroPezzi=pezzi;
+  /* Il giro intero resta a portata di mano: spezzarlo serve ad avere il mezzo
+     giusto tratta per tratta, ma chi vuole vedere tutta la giornata in una volta
+     deve poterlo fare senza aprire tre cose di fila. Il mezzo, in quel caso, e'
+     uno solo per forza: si prende quello che copre piu' tratte, che e' il modo
+     in cui la giornata si fa davvero. */
+  navGiroTutte=giro;
+  const conta={};
+  pezzi.forEach(p=>{conta[p.mode]=(conta[p.mode]||0)+p.tappe.length-1;});
+  navGiroMezzo=Object.keys(conta).sort((a,b)=>conta[b]-conta[a])[0]||dm;
   navGiroMostra();
 }
-let navGiroPezzi=[];
+let navGiroPezzi=[],navGiroTutte=[],navGiroMezzo='walk';
+function navGiroTutto(){
+  if(navGiroTutte.length>1)navGiroApriPezzo({mode:navGiroMezzo,tappe:navGiroTutte});
+}
 function navGiroApri(n){const p=navGiroPezzi[n];if(p)navGiroApriPezzo(p);}
 function navGiroApriPezzo(p){
   let uso=p.tappe,tagliate=0;
@@ -6204,7 +6216,10 @@ function navGiroApriPezzo(p){
 }
 function navGiroMostra(){
   const b=document.getElementById('navGiroBody');if(!b)return;
-  b.innerHTML=`<div style="font-size:.85rem;line-height:1.55;color:var(--ink-soft);margin-bottom:.9rem">Oggi non si va sempre con lo stesso mezzo, e i navigatori accettano un mezzo solo per percorso. Il giro è diviso dove cambia: si apre un pezzo per volta, ognuno col suo. Ogni pezzo riparte da dove finisce quello prima.</div>`
+  b.innerHTML=`<div style="font-size:.85rem;line-height:1.55;color:var(--ink-soft);margin-bottom:.9rem">Oggi non si va sempre con lo stesso mezzo, e i navigatori accettano un mezzo solo per percorso. Puoi aprire tutta la giornata in una volta — con un mezzo unico — oppure un pezzo per volta, ognuno col mezzo giusto.</div>
+     <button class="btn btn-block" onclick="navGiroTutto()">🧭 Tutta la giornata insieme · ${navGiroTutte.length} tappe ${esc(modeNome(navGiroMezzo))}</button>
+     <div style="font-size:.75rem;color:var(--ink-faint);margin:.5rem 0 .9rem;line-height:1.45">Ci sono tutte le tappe dalla prima all'ultima, ma il navigatore le farà fare tutte ${esc(modeNome(navGiroMezzo))}.</div>
+     <div style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.5rem">Oppure pezzo per pezzo, col mezzo giusto</div>`
    +navGiroPezzi.map((p,n)=>{
       const nomi=p.tappe.map(x=>x.a.name||'senza nome'),inMezzo=nomi.length-2;
       return `<div class="ms-row" style="cursor:default;align-items:center">
