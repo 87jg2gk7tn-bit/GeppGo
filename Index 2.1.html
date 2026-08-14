@@ -1663,6 +1663,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad" style="flex:1" onclick="applicaMosse()">Applica</button>
   </div>
 </div></div>
+<div class="modal" id="mNavGiro"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🧭 Il giro di oggi</div><button class="x x-close" onclick="closeSheet('mNavGiro')">✕</button></div>
+  <div id="navGiroBody"></div>
+</div></div>
 <div class="modal" id="mBagno"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="bagnoTitle">🚻 Bagno più vicino</div><button class="x x-close" onclick="closeSheet('mBagno')">✕</button></div>
@@ -6164,16 +6169,54 @@ function navigaGiornata(di){
      ci farebbe passare due volte dallo stesso portone */
   const giro=tappe.filter((x,n)=>n===0||calcDist(x.loc.lat,x.loc.lng,tappe[n-1].loc.lat,tappe[n-1].loc.lng)>30);
   if(giro.length<2){toast('Le tappe di oggi sono tutte nello stesso posto');return;}
-  let tagliate=0,uso=giro;
-  if(giro.length>NAV_TAPPE_MAX+2){uso=giro.slice(0,NAV_TAPPE_MAX+2);tagliate=giro.length-uso.length;}
+  /* Il mezzo puo' cambiare da una tratta all'altra - un pezzo a piedi, uno in
+     metro - e l'app lo sa gia': ogni tappa si porta dietro come ci si arriva
+     (segTravelMode), o quello del giorno se non e' stato deciso.
+     Nessun navigatore accetta un percorso con mezzi diversi tratta per tratta:
+     nell'indirizzo il mezzo e' uno solo per tutto il giro. Allora il giro si
+     spezza dove cambia il mezzo, e ogni pezzo si apre col suo. Ogni pezzo
+     riparte da dove finisce il precedente, cosi' non si perde niente per
+     strada. */
+  const dm=d.travelMode||'walk';
+  const pezzi=[];
+  for(let n=1;n<giro.length;n++){
+    const m=giro[n].a.segTravelMode||dm;
+    const ultimo=pezzi[pezzi.length-1];
+    if(ultimo&&ultimo.mode===m)ultimo.tappe.push(giro[n]);
+    else pezzi.push({mode:m,tappe:[giro[n-1],giro[n]]});
+  }
+  if(pezzi.length===1)return navGiroApriPezzo(pezzi[0]);
+  navGiroPezzi=pezzi;
+  navGiroMostra();
+}
+let navGiroPezzi=[];
+function navGiroApri(n){const p=navGiroPezzi[n];if(p)navGiroApriPezzo(p);}
+function navGiroApriPezzo(p){
+  let uso=p.tappe,tagliate=0;
+  if(uso.length>NAV_TAPPE_MAX+2){tagliate=uso.length-(NAV_TAPPE_MAX+2);uso=uso.slice(0,NAV_TAPPE_MAX+2);}
   const co=x=>`${x.loc.lat},${x.loc.lng}`;
-  const mezzo=navModeGoogle(d.travelMode||'walk');
   const url=`https://www.google.com/maps/dir/?api=1&origin=${co(uso[0])}&destination=${co(uso[uso.length-1])}`
     +(uso.length>2?`&waypoints=${uso.slice(1,-1).map(co).join('|')}`:'')
-    +`&travelmode=${mezzo}`;
-  if((app.settings.nav||'ask')==='apple')toast('Il giro completo lo apro su Google Maps: Apple Maps prende una fermata sola');
-  else toast(`🧭 ${uso.length} tappe${tagliate?` (le ultime ${tagliate} non ci stanno)`:''}`);
+    +`&travelmode=${navModeGoogle(p.mode)}`;
+  if((app.settings.nav||'ask')==='apple')toast('Il giro lo apro su Google Maps: Apple Maps prende una fermata sola');
+  else toast(`${modeEmo(p.mode)} ${uso.length} tappe ${modeNome(p.mode)}${tagliate?` (le ultime ${tagliate} non ci stanno)`:''}`);
   window.open(url,'_blank','noopener');
+}
+function navGiroMostra(){
+  const b=document.getElementById('navGiroBody');if(!b)return;
+  b.innerHTML=`<div style="font-size:.85rem;line-height:1.55;color:var(--ink-soft);margin-bottom:.9rem">Oggi non si va sempre con lo stesso mezzo, e i navigatori accettano un mezzo solo per percorso. Il giro è diviso dove cambia: si apre un pezzo per volta, ognuno col suo. Ogni pezzo riparte da dove finisce quello prima.</div>`
+   +navGiroPezzi.map((p,n)=>{
+      const nomi=p.tappe.map(x=>x.a.name||'senza nome'),inMezzo=nomi.length-2;
+      return `<div class="ms-row" style="cursor:default;align-items:center">
+        <div style="flex:1;min-width:0">
+          <div class="ms-t">${modeEmo(p.mode)} ${esc(nomi[0])} → ${esc(nomi[nomi.length-1])}</div>
+          <div class="ms-w">${esc(modeNome(p.mode))}${inMezzo>0?` · ${inMezzo} ${inMezzo===1?'sosta':'soste'} in mezzo`:''}</div>
+        </div>
+        <button class="chip green" style="flex-shrink:0" onclick="navGiroApri(${n})">Apri</button>
+      </div>`;
+    }).join('')
+   +`<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.6rem;line-height:1.45">Il mezzo di ogni tratta si cambia dalla time-table: si tocca la tappa e si sceglie 🚶 🚆 🚗 sotto "Spostamento verso".</div>`;
+  openSheet('mNavGiro');
 }
 function openNav(lat,lng,name){
   const pref=app.settings.nav||'ask';
