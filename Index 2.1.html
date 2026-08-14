@@ -1191,7 +1191,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip green" onclick="navigaGiornata()">🧭 Naviga la giornata</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -2471,6 +2471,7 @@ function renderHomeHero(){
     <button class="hh-act" onclick="openPacking()">🎒 Bagagli</button>
     <button class="hh-act" onclick="openRestore()">✓ ${esc(lastSnapLabel())}</button>
     <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
+    <button class="hh-act" onclick="navigaGiornata(homeSoonDi)">🧭 Naviga la giornata</button>
   </div>`;
   if(!t.days||!t.days.length){
     paint(`<div class="hh">${tripsBar}
@@ -3295,7 +3296,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese, Profilo, Meteo, Budget, Hotel, Biglietti, Identifica, Impostazioni.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi: "Rinomina", "Giorni", "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa) e "Bagagli" - la lista bagagli sta li'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; c'e' anche fra i tasti rapidi in home), "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
@@ -6131,6 +6132,49 @@ async function viciniOverpass(kind,lat,lng,raggio){
   }).filter(Boolean);
 }
 
+/* Il giro di tutta la giornata in una volta sola, dalla prima tappa all'ultima,
+   con quelle in mezzo come soste.
+   Perché sempre Google Maps e non il navigatore scelto nelle impostazioni: è
+   l'unico che accetta più fermate dentro un indirizzo. Apple Maps da link ne
+   prende una sola, quindi passando di là il giro si perderebbe e resterebbe
+   solo l'ultima tappa - meglio dirlo e aprire quello che funziona. Sul telefono
+   il link apre comunque l'app di Google Maps, se c'è.
+   Le fermate intermedie che stanno in un indirizzo sono nove: oltre, si va fino
+   alla nona e lo si dice, invece di far partire un percorso che il navigatore
+   taglierebbe da solo senza avvisare. */
+const NAV_TAPPE_MAX=9;
+function navModeGoogle(m){
+  return m==='car'?'driving':m==='train'?'transit':m==='bike'?'bicycling':'walking';
+}
+function navigaGiornata(di){
+  const t=T();if(!t)return;
+  const d=t.days[di!=null?di:ttDay];
+  if(!d){toast('Nessuna giornata da navigare');return;}
+  /* in ordine di orario: è il giro come è stato pensato, non come è stato
+     scritto. Quelle senza orario vanno in fondo, nell'ordine in cui stanno. */
+  const tappe=(d.activities||[])
+    .map((a,i)=>({a,i,loc:actLoc(t,a),min:tMin(a.time)}))
+    .filter(x=>x.loc)
+    .sort((x,y)=>(x.min==null)-(y.min==null)||(x.min-y.min)||(x.i-y.i));
+  if(tappe.length<2){
+    toast(tappe.length?'Serve almeno una seconda tappa con un posto':'Nessuna tappa con un posto in questa giornata');
+    return;
+  }
+  /* due tappe di fila nello stesso punto sono una fermata sola: il navigatore
+     ci farebbe passare due volte dallo stesso portone */
+  const giro=tappe.filter((x,n)=>n===0||calcDist(x.loc.lat,x.loc.lng,tappe[n-1].loc.lat,tappe[n-1].loc.lng)>30);
+  if(giro.length<2){toast('Le tappe di oggi sono tutte nello stesso posto');return;}
+  let tagliate=0,uso=giro;
+  if(giro.length>NAV_TAPPE_MAX+2){uso=giro.slice(0,NAV_TAPPE_MAX+2);tagliate=giro.length-uso.length;}
+  const co=x=>`${x.loc.lat},${x.loc.lng}`;
+  const mezzo=navModeGoogle(d.travelMode||'walk');
+  const url=`https://www.google.com/maps/dir/?api=1&origin=${co(uso[0])}&destination=${co(uso[uso.length-1])}`
+    +(uso.length>2?`&waypoints=${uso.slice(1,-1).map(co).join('|')}`:'')
+    +`&travelmode=${mezzo}`;
+  if((app.settings.nav||'ask')==='apple')toast('Il giro completo lo apro su Google Maps: Apple Maps prende una fermata sola');
+  else toast(`🧭 ${uso.length} tappe${tagliate?` (le ultime ${tagliate} non ci stanno)`:''}`);
+  window.open(url,'_blank','noopener');
+}
 function openNav(lat,lng,name){
   const pref=app.settings.nav||'ask';
   if(pref==='internal')return internalNav(lat,lng,name);
