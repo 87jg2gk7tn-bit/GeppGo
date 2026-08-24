@@ -765,6 +765,23 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 
 :root{--cielo-a:#AEB9C6;--cielo-b:#F6EEDD}
 body.dark{--cielo-a:#1B2333;--cielo-b:#0E0C09}
+/* Il cielo su tutte le schermate, non solo in home. La sfumatura in alto è
+   quello che dà all'app la sua faccia: cambiare pagina non deve sembrare
+   entrare in un'altra app. Sta dietro al contenuto, quindi nessuna pagina va
+   toccata per averlo.
+   La home è esclusa perché ce l'ha già dentro la sua intestazione (.hh), che
+   esce dai margini e si porta dietro anche il cerchio chiaro: due sfumature
+   una sopra l'altra farebbero uno scalino proprio dove finisce la prima.
+   L'altezza è fissa e non in percentuale: dev'essere la stessa ovunque, mentre
+   le pagine sono lunghe una diversa dall'altra - a percentuale, una pagina
+   corta avrebbe un cielo schiacciato e una lunga un cielo lunghissimo.
+   I numeri non sono a occhio: 440px e' quanto misura l'intestazione della home,
+   e l'82% e' il suo stesso punto di chiusura, cosi' il cielo finisce sul beige
+   alla stessa altezza in tutte e due. */
+.page:not(#plan){
+  background:linear-gradient(180deg,var(--cielo-a) 0%,var(--cielo-b) 82%) no-repeat;
+  background-size:100% 440px;
+}
 
 /* ── intestazione del giorno ───────────────────────────────────── */
 .hh{
