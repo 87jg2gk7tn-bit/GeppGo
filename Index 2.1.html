@@ -6056,9 +6056,12 @@ function ovNome(parole){return `[~"^(name|brand|operator|name:en)$"~"${parole}",
    solo di qui viene mostrato come "da controllare", quindi una parola di troppo
    costa una riga in più da leggere, mentre una che manca costa un posto che
    non si trova: nel dubbio si tiene. */
-const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τράπεζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito';
-const PAROLE_BAGNO='bagn|toilet|tualet|туалет|wc|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
-const PAROLE_FUMO='smoking|fumat|fumoir|fumador|raucher|喫煙|吸烟|흡연|rökning|palenie';
+const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τρ[άα]π[έε]ζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito';
+const PAROLE_BAGNO='bagn|toilet|tualet|туалет|τουαλ|wc|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
+/* "smoke" da solo non c'è: prenderebbe tutte le "Smokehouse", che sono
+   ristoranti. "fumo" da solo nemmeno, che sta dentro "profumeria". Si tengono le
+   forme che nelle varie lingue vogliono dire solo quello. */
+const PAROLE_FUMO='smoking|fumat|fumeur|fumoir|fumador|fumante|raucher|rook|rök|røyk|rygning|tupakoin|palarni|palenie|dohányz|sigara|курени|курилк|καπν|喫煙|吸烟|抽烟|흡연|บุหรี่|تدخين|עישון|धूम्रपान';
 const VICINI={
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
@@ -6087,8 +6090,12 @@ const VICINI={
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
     q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]','["smoking"="separated"]',ovNome(PAROLE_FUMO)],r,lat,lng),
-    nome:t=>t.name||t.operator||'Area fumatori',
+    nome:t=>t.name||t.operator||t.brand||'Area fumatori',
     extra:t=>[
+      /* come per le altre due: quello che salta fuori solo dal nome non si sa
+         cosa sia davvero, e va detto invece di spacciarlo per area attrezzata */
+      (t.amenity!=='smoking_area'&&!/^(designated|isolated|separated)$/.test(t.smoking||''))
+        ?'trovato dal nome · da controllare':'',
       t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:''),
       t.covered==='yes'?'al coperto':(t.indoor==='yes'?'al chiuso':''),
       t.shelter==='yes'?'con tettoia':'',
