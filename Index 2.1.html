@@ -6017,12 +6017,36 @@ let routeLine=null;
    diversa: cambia la domanda a Overpass e come si racconta quello che torna.
    Per aggiungerne un'altra basta una voce qui sotto. */
 const VICINI_RAGGI=[400,1200,3000];
+/* Sotto quante ne trova vale la pena allargare il giro invece di accontentarsi.
+   Trovarne una sola e fermarsi lì è comodo finché quella è davvero la più
+   vicina, ma se è l'unica mappata nel raggio stretto si finisce per non sapere
+   che a due strade c'è di meglio. */
+const VICINI_POCHI=3;
+/* La stessa identica cosa sta sulla mappa in modi diversi, e cercarne uno solo
+   vuol dire non trovarla. Un bancomat può essere lo sportello a sé
+   (amenity=atm), il negozio che ne ha uno dentro (atm=yes), o la banca che non
+   si è presa la briga di dichiararlo - e chi mappa una banca quasi mai aggiunge
+   atm=yes, per cui la banca sotto casa sfuggiva sempre. Per i bagni è uguale:
+   c'è il bagno mappato a sé (amenity=toilets) e c'è il parco o il bar che li ha
+   e li dichiara con toilets=yes, senza disegnare la casetta.
+   E si chiede in tutte e tre le forme in cui una cosa può stare sulla mappa: un
+   punto (node), un contorno disegnato (way) e un insieme di contorni
+   (relation). Lo stesso bagno è un punto in un paese e un edificio in un altro:
+   chiedendo solo i punti, in mezzo mondo non lo si vede. */
+function ovAttorno(filtri,r,lat,lng){
+  return filtri.map(f=>['node','way','relation'].map(tp=>`${tp}${f}(around:${r},${lat},${lng});`).join('')).join('');
+}
 const VICINI={
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
-    q:(r,lat,lng)=>`node["amenity"="toilets"](around:${r},${lat},${lng});way["amenity"="toilets"](around:${r},${lat},${lng});`,
-    nome:t=>t.name||t.operator||'Bagno pubblico',
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]'],r,lat,lng),
+    /* un parco che dichiara i bagni non si chiama "bagno": si dice di chi sono,
+       che è quello che serve per trovarli una volta arrivati */
+    nome:t=>(t.amenity==='toilets'||t.building==='toilets')
+      ?(t.name||t.operator||'Bagno pubblico')
+      :(t.name?'Bagni · '+t.name:'Bagni'),
     extra:t=>[
+      (t.amenity!=='toilets'&&t.building!=='toilets')?'dentro, non una casetta a sé':'',
       t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
       t.fee==='yes'?(t.charge?'a pagamento ('+t.charge+')':'a pagamento'):(t.fee==='no'?'gratuito':''),
       t.wheelchair==='yes'?'accessibile':'',
@@ -6034,7 +6058,7 @@ const VICINI={
     ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
-    q:(r,lat,lng)=>`node["amenity"="smoking_area"](around:${r},${lat},${lng});way["amenity"="smoking_area"](around:${r},${lat},${lng});node["smoking"="designated"](around:${r},${lat},${lng});`,
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]'],r,lat,lng),
     nome:t=>t.name||t.operator||'Area fumatori',
     extra:t=>[
       t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:''),
@@ -6050,13 +6074,17 @@ const VICINI={
        atm=yes è la banca o il negozio che ne ha uno dentro. Dove i bancomat
        stanno quasi tutti dentro i minimarket - il Giappone è il caso classico -
        cercare solo la prima lascia fuori proprio quelli che si usano davvero. */
-    q:(r,lat,lng)=>`node["amenity"="atm"](around:${r},${lat},${lng});way["amenity"="atm"](around:${r},${lat},${lng});node["atm"="yes"](around:${r},${lat},${lng});way["atm"="yes"](around:${r},${lat},${lng});`,
-    nome:t=>t.name||t.operator||t.brand||'Bancomat',
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]'],r,lat,lng),
+    nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
+      /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
+         "quasi" non è "sicuro": si mostra lo stesso - se no la banca sotto casa
+         non compare - e si dice com'è, invece di prometterlo. */
+      (t.amenity==='bank'&&t.atm!=='yes')?'banca · bancomat molto probabile':'',
       t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
       /* dove sta: uno sportello per strada e uno dentro un negozio chiuso di
          notte sono due cose diverse, e a chi ha bisogno di contanti interessa */
-      t.amenity==='atm'?'':(t.amenity==='bank'?'dentro la banca':(t.shop==='convenience'?'dentro un minimarket':(t.shop?'dentro un negozio':''))),
+      t.amenity==='atm'?'':(t.amenity==='bank'?(t.atm==='yes'?'dentro la banca':''):(t.shop==='convenience'?'dentro un minimarket':(t.shop?'dentro un negozio':''))),
       t.fee==='yes'?'con commissione':(t.fee==='no'?'senza commissione':''),
       t.cash_in==='yes'?'accetta contanti':'',
       t.wheelchair==='yes'?'accessibile':''
@@ -6110,7 +6138,11 @@ async function viciniIntorno(lat,lng){
     for(const r of VICINI_RAGGI){
       body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
       trovati=await viciniOverpass(vicinoKind,lat,lng,r);
-      if(trovati.length)break;
+      /* Non ci si ferma alla prima che salta fuori: se nel raggio stretto ce
+         n'è una soltanto, si allarga per vedere se poco più in là ce ne sono di
+         meglio. Il giro più largo contiene comunque quelle di prima, quindi
+         niente va perso, e l'ordine per distanza mette davanti la più vicina. */
+      if(trovati.length>=VICINI_POCHI)break;
     }
     if(!trovati.length){
       body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${v.vuoto}</div>
@@ -6139,20 +6171,49 @@ async function viciniIntorno(lat,lng){
 
 /* Overpass restituisce sia nodi (un punto) sia aree (un edificio): le aree
    hanno il centro in "center", i nodi le coordinate addosso. */
+/* Overpass è gratuito e senza chiave, ma il server principale è spesso sotto
+   carico e risponde "troppe richieste" o niente. Con un indirizzo solo, quando
+   quello arranca la ricerca non trova niente - e sembra che non ci sia niente,
+   che è la bugia peggiore. Se ne provano altri in fila, e il primo che risponde
+   resta in memoria per le volte dopo. */
+const OVERPASS=[
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+let overpassBuono=null;
 async function viciniOverpass(kind,lat,lng,raggio){
   const v=VICINI[kind];
-  const q=`[out:json][timeout:20];(${v.q(raggio,lat,lng)});out center 30;`;
-  const res=await fetch('https://overpass-api.de/api/interpreter',{
-    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)
-  });
-  if(!res.ok)throw new Error('overpass');
-  const d=await res.json();
-  return (d.elements||[]).map(e=>{
+  /* 150 e non 30: il tetto taglia i risultati PRIMA che li si ordini per
+     distanza, quindi in centro città un tetto basso può buttare via proprio
+     quello sotto casa e lasciare dentro uno dall'altra parte del quartiere. */
+  const q=`[out:json][timeout:25];(${v.q(raggio,lat,lng)});out center 150;`;
+  const lista=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS;
+  let d=null,ultimo=null;
+  for(const url of lista){
+    try{
+      const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)});
+      if(!res.ok){ultimo=new Error('overpass '+res.status);continue;}
+      d=await res.json();overpassBuono=url;break;
+    }catch(e){ultimo=e;}
+  }
+  if(!d)throw ultimo||new Error('overpass');
+  const out=[];
+  (d.elements||[]).forEach(e=>{
     const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);
-    if(la==null||lo==null)return null;
-    const t=e.tags||{};
-    return {lat:la,lng:lo,nome:v.nome(t),extra:v.extra(t)};
-  }).filter(Boolean);
+    if(la==null||lo==null)return;
+    const t=e.tags||{},nome=v.nome(t);
+    /* Cercando in più modi la stessa cosa torna più volte: la banca esce come
+       punto "bancomat" e come edificio "banca". Due righe per lo stesso posto
+       fanno solo perdere tempo a chi legge. Stesso nome e a due passi, oppure
+       praticamente sovrapposte: è la stessa. */
+    if(out.some(o=>{
+      const dist=calcDist(la,lo,o.lat,o.lng);
+      return dist<15||(dist<45&&o.nome===nome);
+    }))return;
+    out.push({lat:la,lng:lo,nome:nome,extra:v.extra(t)});
+  });
+  return out;
 }
 
 /* Il giro di tutta la giornata in una volta sola, dalla prima tappa all'ultima,
