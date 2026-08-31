@@ -6016,7 +6016,13 @@ let routeLine=null;
    Bagni, aree fumatori e bancomat sono la stessa ricerca con un'etichetta
    diversa: cambia la domanda a Overpass e come si racconta quello che torna.
    Per aggiungerne un'altra basta una voce qui sotto. */
-const VICINI_RAGGI=[400,1200,3000];
+/* L'ultimo giro è largo il doppio degli altri messi insieme e si fa solo se si
+   è rimasti a mani vuote: in mezzo mondo - periferie americane, campagna, paesi
+   grandi - il bagno o il bancomat più vicino sta a cinque chilometri, e fermarsi
+   a tre vuol dire dire "non c'è niente" quando invece c'è. Quando qualcosa si è
+   già trovato non si fa: sarebbe tempo speso per risultati troppo lontani per
+   essere utili. */
+const VICINI_RAGGI=[400,1200,3000,8000];
 /* Sotto quante ne trova vale la pena allargare il giro invece di accontentarsi.
    Trovarne una sola e fermarsi lì è comodo finché quella è davvero la più
    vicina, ma se è l'unica mappata nel raggio stretto si finisce per non sapere
@@ -6036,17 +6042,34 @@ const VICINI_POCHI=3;
 function ovAttorno(filtri,r,lat,lng){
   return filtri.map(f=>['node','way','relation'].map(tp=>`${tp}${f}(around:${r},${lat},${lng});`).join('')).join('');
 }
+/* Il nome di un posto non sta solo in "name": c'è "brand" (la catena) e
+   "operator" (chi lo gestisce), e in mezzo mondo la filiale ha addosso solo il
+   marchio. Overpass sa cercare per espressione regolare anche sul NOME del tag,
+   non solo sul valore: così con un filtro solo si guardano tutti e quattro. */
+function ovNome(parole){return `[~"^(name|brand|operator|name:en)$"~"${parole}",i]`;}
+/* Le parole con cui una cosa si chiama nel mondo. Non è un elenco di marchi -
+   quelli sono infiniti, cambiano e sarebbero sempre incompleti - ma la parola
+   comune nelle lingue e negli alfabeti più diffusi, più le pochissime insegne
+   che quella parola non ce l'hanno e sono troppo grandi per ignorarle.
+   "ban[ckq]" da solo copre banca, banco, bank, banque, banka, bankas: è la
+   stessa parola con la coda diversa in mezza Europa. Quello che salta fuori
+   solo di qui viene mostrato come "da controllare", quindi una parola di troppo
+   costa una riga in più da leggere, mentre una che manca costa un posto che
+   non si trova: nel dubbio si tiene. */
+const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τράπεζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito';
+const PAROLE_BAGNO='bagn|toilet|tualet|туалет|wc|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
+const PAROLE_FUMO='smoking|fumat|fumoir|fumador|raucher|喫煙|吸烟|흡연|rökning|palenie';
 const VICINI={
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]','["name"~"(bagn|toilet|wc|restroom|トイレ|お手洗)",i]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]',ovNome(PAROLE_BAGNO)],r,lat,lng),
     /* un parco che dichiara i bagni non si chiama "bagno": si dice di chi sono,
        che è quello che serve per trovarli una volta arrivati */
     nome:t=>{
       if(t.amenity==='toilets'||t.building==='toilets')return t.name||t.operator||'Bagno pubblico';
       /* se si chiama già "bagni qualcosa", il nome basta da solo: rimetterci
          davanti "Bagni ·" verrebbe "Bagni · Bagni pubblici del parco" */
-      if(/(bagn|toilet|wc|restroom|トイレ|お手洗)/i.test(t.name||''))return t.name;
+      if(new RegExp(PAROLE_BAGNO,'i').test(t.name||''))return t.name;
       return t.name?'Bagni · '+t.name:'Bagni';
     },
     extra:t=>[
@@ -6057,13 +6080,13 @@ const VICINI={
       t.wheelchair==='yes'?'accessibile':'',
       t.changing_table==='yes'?'fasciatoio':''
     ],
-    vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse: in molti posti i bagni non sono ancora mappati lì. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i bar, i centri commerciali e le stazioni restano la via più veloce.'
+    vuoto:'Nel raggio di 8 km non risulta nessun bagno pubblico sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse: in molti posti i bagni non sono ancora mappati lì. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i bar, i centri commerciali e le stazioni restano la via più veloce.'
   },
   fumo:{
     ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]','["smoking"="separated"]',ovNome(PAROLE_FUMO)],r,lat,lng),
     nome:t=>t.name||t.operator||'Area fumatori',
     extra:t=>[
       t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:''),
@@ -6071,7 +6094,7 @@ const VICINI={
       t.shelter==='yes'?'con tettoia':'',
       t.access==='customers'?'per i clienti':''
     ],
-    vuoto:'Nel raggio di 3 km non risulta nessuna area fumatori sulla mappa.<br><br>Non vuol dire che non ce ne siano: sono mappate a macchia di leopardo. Vicino alle stazioni e ai konbini di solito ce n\'è una.'
+    vuoto:'Nel raggio di 8 km non risulta nessuna area fumatori sulla mappa.<br><br>Non vuol dire che non ce ne siano: sono mappate a macchia di leopardo. Vicino alle stazioni e ai konbini di solito ce n\'è una.'
   },
   atm:{
     ic:'🏧', titolo:'Bancomat più vicino', cosa:'bancomat', manca:'il bancomat più vicino',
@@ -6086,7 +6109,7 @@ const VICINI={
        allora nessuna ricerca "per tipo" la trova, mentre il nome ce l'ha
        scritto in faccia. Vale anche fuori dall'Italia: 銀行 è "banca" in
        giapponese, e lì i bancomat delle filiali sono quelli che si usano. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]','["office"="financial"]','["name"~"(banc|bank|銀行)",i]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]','["office"="financial"]',ovNome(PAROLE_BANCA)],r,lat,lng),
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
@@ -6102,7 +6125,7 @@ const VICINI={
       t.cash_in==='yes'?'accetta contanti':'',
       t.wheelchair==='yes'?'accessibile':''
     ],
-    vuoto:'Nel raggio di 3 km non risulta nessun bancomat sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse fatte da persone diverse: un posto che su Google c\'è, qui può non esserci ancora. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
+    vuoto:'Nel raggio di 8 km non risulta nessun bancomat sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse fatte da persone diverse: un posto che su Google c\'è, qui può non esserci ancora. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
   }
 };
 let vicinoBusy=false,vicinoKind='bagno';
@@ -6149,6 +6172,9 @@ async function viciniIntorno(lat,lng){
   try{
     let trovati=[];
     for(const r of VICINI_RAGGI){
+      /* il giro largo si fa solo se finora non è saltato fuori niente: se
+         qualcosa c'è, roba a otto chilometri non serve a chi la cerca a piedi */
+      if(r>3000&&trovati.length)break;
       body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
       trovati=await viciniOverpass(vicinoKind,lat,lng,r);
       /* Non ci si ferma alla prima che salta fuori: se nel raggio stretto ce
