@@ -6046,7 +6046,18 @@ function ovAttorno(filtri,r,lat,lng){
    "operator" (chi lo gestisce), e in mezzo mondo la filiale ha addosso solo il
    marchio. Overpass sa cercare per espressione regolare anche sul NOME del tag,
    non solo sul valore: così con un filtro solo si guardano tutti e quattro. */
-function ovNome(parole){return `[~"^(name|brand|operator|name:en)$"~"${parole}",i]`;}
+/* Dove può stare scritto il nome vero. "name" spesso è la sigla o un codice di
+   filiale, mentre il nome per esteso sta in official_name, e la catena in brand
+   o operator: se si guarda solo "name" si perde proprio l'insegna che tutti
+   riconoscono. */
+function ovNome(parole){return `[~"^(name|brand|operator|short_name|official_name|alt_name|name:en|brand:en)$"~"${parole}",i]`;}
+/* Le sigle. Un elenco di marchi è per sua natura incompleto, ma senza queste si
+   perdono banche enormi: "BPM", "MPS", "HSBC" non contengono né "banca" né
+   "bank", quindi nessuna regola generale le prende - ed è esattamente la
+   filiale sotto casa che continuava a sfuggire.
+   Vanno cercate come parola intera: "ing" dentro "Parking" o "Building" farebbe
+   comparire mezza città. */
+const SIGLE_BANCA='(^|[^a-z])(bpm|bnl|mps|ubi|bper|bcc|hsbc|bbva|icbc|smbc|mufg|ubs|bnp|kbc|pko|otp|dbs|uob|ocbc|rbc|cibc|nab|anz|sbi|hdfc|icici|abn|amro|lcl|cic|natwest|santander|unicredit|intesa|postbank|poste)([^a-z]|$)';
 /* Le parole con cui una cosa si chiama nel mondo. Non è un elenco di marchi -
    quelli sono infiniti, cambiano e sarebbero sempre incompleti - ma la parola
    comune nelle lingue e negli alfabeti più diffusi, più le pochissime insegne
@@ -6056,7 +6067,7 @@ function ovNome(parole){return `[~"^(name|brand|operator|name:en)$"~"${parole}",
    solo di qui viene mostrato come "da controllare", quindi una parola di troppo
    costa una riga in più da leggere, mentre una che manca costa un posto che
    non si trova: nel dubbio si tiene. */
-const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τρ[άα]π[έε]ζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito';
+const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τρ[άα]π[έε]ζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito|'+SIGLE_BANCA;
 const PAROLE_BAGNO='bagn|toilet|tualet|туалет|τουαλ|wc|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
 /* "smoke" da solo non c'è: prenderebbe tutte le "Smokehouse", che sono
    ristoranti. "fumo" da solo nemmeno, che sta dentro "profumeria". Si tengono le
@@ -6116,7 +6127,7 @@ const VICINI={
        allora nessuna ricerca "per tipo" la trova, mentre il nome ce l'ha
        scritto in faccia. Vale anche fuori dall'Italia: 銀行 è "banca" in
        giapponese, e lì i bancomat delle filiali sono quelli che si usano. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]','["office"="financial"]',ovNome(PAROLE_BANCA)],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"]','["amenity"="bank"]','["office"="financial"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]',ovNome(PAROLE_BANCA)],r,lat,lng),
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
@@ -6137,6 +6148,13 @@ const VICINI={
 };
 let vicinoBusy=false,vicinoKind='bagno';
 
+/* openstreetmap.org sulle coordinate di adesso: si vede subito se il posto che
+   manca è assente dalla mappa o solo etichettato male, e nel primo caso lo si
+   aggiunge. Sono gli stessi dati che legge la ricerca, quindi quello che si
+   aggiunge là si trova qui il giorno dopo. */
+function apriOsmQui(lat,lng){
+  window.open(`https://www.openstreetmap.org/#map=18/${lat.toFixed(5)}/${lng.toFixed(5)}`,'_blank','noopener');
+}
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
 function cercaAtm(){cercaVicino('atm');}
@@ -6208,7 +6226,13 @@ async function viciniIntorno(lat,lng){
         <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
       </div>`;
     }).join('')+
-    `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>`;
+    /* Il tasto per guardare la zona sulla mappa vera. Quando manca un posto che
+       si sa esistere, è l'unico modo per capire in cinque secondi da che parte
+       sta il problema: se là non c'è, non c'è per nessuno - e da lì lo si
+       aggiunge, comparendo poi anche qui e per chiunque altro. Senza questo
+       resta il dubbio che sia l'app a sbagliare, e il dubbio non si risolve. */
+    `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>
+     <button class="btn btn-soft btn-block" style="margin-top:.6rem;font-size:.82rem" onclick="apriOsmQui(${lat},${lng})">Manca qualcosa? Guarda questa zona sulla mappa</button>`;
   }catch(e){
     body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Non riesco a raggiungere la mappa. Controlla la connessione e riprova.</div>
       <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
