@@ -1240,7 +1240,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
-  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r90</div>
+  <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r91</div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -6039,20 +6039,25 @@ function ovAttorno(filtri,r,lat,lng){
 const VICINI={
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]','["name"~"(bagn|toilet|wc|restroom|トイレ|お手洗)",i]'],r,lat,lng),
     /* un parco che dichiara i bagni non si chiama "bagno": si dice di chi sono,
        che è quello che serve per trovarli una volta arrivati */
-    nome:t=>(t.amenity==='toilets'||t.building==='toilets')
-      ?(t.name||t.operator||'Bagno pubblico')
-      :(t.name?'Bagni · '+t.name:'Bagni'),
+    nome:t=>{
+      if(t.amenity==='toilets'||t.building==='toilets')return t.name||t.operator||'Bagno pubblico';
+      /* se si chiama già "bagni qualcosa", il nome basta da solo: rimetterci
+         davanti "Bagni ·" verrebbe "Bagni · Bagni pubblici del parco" */
+      if(/(bagn|toilet|wc|restroom|トイレ|お手洗)/i.test(t.name||''))return t.name;
+      return t.name?'Bagni · '+t.name:'Bagni';
+    },
     extra:t=>[
-      (t.amenity!=='toilets'&&t.building!=='toilets')?'dentro, non una casetta a sé':'',
+      (t.amenity!=='toilets'&&t.building!=='toilets')
+        ?(t.toilets==='yes'?'dentro, non una casetta a sé':'trovato dal nome · da controllare'):'',
       t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
       t.fee==='yes'?(t.charge?'a pagamento ('+t.charge+')':'a pagamento'):(t.fee==='no'?'gratuito':''),
       t.wheelchair==='yes'?'accessibile':'',
       t.changing_table==='yes'?'fasciatoio':''
     ],
-    vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br>Non vuol dire che non ce ne siano: in molti posti i bagni non sono mappati. I bar, i centri commerciali e le stazioni restano la via più veloce.'
+    vuoto:'Nel raggio di 3 km non risulta nessun bagno pubblico sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse: in molti posti i bagni non sono ancora mappati lì. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i bar, i centri commerciali e le stazioni restano la via più veloce.'
   },
   fumo:{
     ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
@@ -6074,13 +6079,21 @@ const VICINI={
        atm=yes è la banca o il negozio che ne ha uno dentro. Dove i bancomat
        stanno quasi tutti dentro i minimarket - il Giappone è il caso classico -
        cercare solo la prima lascia fuori proprio quelli che si usano davvero. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]'],r,lat,lng),
+    /* L'ultimo filtro è la rete di sicurezza: prende qualunque cosa si CHIAMI
+       come una banca, comunque sia stata etichettata. Serve perché una filiale
+       può stare sulla mappa senza nessuna delle etichette giuste - solo
+       office=financial, o solo il contorno dell'edificio col nome sopra - e
+       allora nessuna ricerca "per tipo" la trova, mentre il nome ce l'ha
+       scritto in faccia. Vale anche fuori dall'Italia: 銀行 è "banca" in
+       giapponese, e lì i bancomat delle filiali sono quelli che si usano. */
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"="yes"]','["amenity"="bank"]','["office"="financial"]','["name"~"(banc|bank|銀行)",i]'],r,lat,lng),
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
          "quasi" non è "sicuro": si mostra lo stesso - se no la banca sotto casa
          non compare - e si dice com'è, invece di prometterlo. */
-      (t.amenity==='bank'&&t.atm!=='yes')?'banca · bancomat molto probabile':'',
+      (t.amenity==='bank'&&t.atm!=='yes')?'banca · bancomat molto probabile':
+        ((t.amenity!=='atm'&&t.atm!=='yes')?'trovato dal nome · da controllare':''),
       t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
       /* dove sta: uno sportello per strada e uno dentro un negozio chiuso di
          notte sono due cose diverse, e a chi ha bisogno di contanti interessa */
@@ -6089,7 +6102,7 @@ const VICINI={
       t.cash_in==='yes'?'accetta contanti':'',
       t.wheelchair==='yes'?'accessibile':''
     ],
-    vuoto:'Nel raggio di 3 km non risulta nessun bancomat sulla mappa.<br><br>Non vuol dire che non ce ne siano: spesso stanno dentro banche e minimarket e non vengono mappati a parte. I minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
+    vuoto:'Nel raggio di 3 km non risulta nessun bancomat sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse fatte da persone diverse: un posto che su Google c\'è, qui può non esserci ancora. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
   }
 };
 let vicinoBusy=false,vicinoKind='bagno';
@@ -11050,7 +11063,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r90</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){
