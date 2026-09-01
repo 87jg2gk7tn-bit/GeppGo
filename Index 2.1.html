@@ -1685,6 +1685,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t">🧭 Il giro di oggi</div><button class="x x-close" onclick="closeSheet('mNavGiro')">✕</button></div>
   <div id="navGiroBody"></div>
 </div></div>
+<div class="modal" id="mOsmAiuto"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🗺️ Manca un posto?</div><button class="x x-close" onclick="closeSheet('mOsmAiuto')">✕</button></div>
+  <div id="osmAiutoBody"></div>
+</div></div>
 <div class="modal" id="mBagno"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="bagnoTitle">🚻 Bagno più vicino</div><button class="x x-close" onclick="closeSheet('mBagno')">✕</button></div>
@@ -6167,8 +6172,37 @@ let vicinoBusy=false,vicinoKind='bagno';
    manca è assente dalla mappa o solo etichettato male, e nel primo caso lo si
    aggiunge. Sono gli stessi dati che legge la ricerca, quindi quello che si
    aggiunge là si trova qui il giorno dopo. */
+/* Restare gratis vuol dire una cosa sola: OpenStreetMap è l'unico elenco di
+   posti che non si paga, quindi quando manca qualcosa la strada non è cambiare
+   fonte, è aggiungerlo lì. Non è un ripiego - è la stessa mappa che leggono
+   decine di app, quindi il posto aggiunto una volta resta per sempre e lo vedono
+   tutti, non solo chi l'ha messo.
+   Qui si spiega in due righe e si danno i due modi: guardare (per capire se il
+   problema è la mappa o l'app) e aggiungere. */
+let osmAiutoPos=null;
 function apriOsmQui(lat,lng){
-  window.open(`https://www.openstreetmap.org/#map=18/${lat.toFixed(5)}/${lng.toFixed(5)}`,'_blank','noopener');
+  osmAiutoPos={lat:lat,lng:lng};
+  const b=document.getElementById('osmAiutoBody');
+  if(b)b.innerHTML=`<div style="font-size:.88rem;line-height:1.6;color:var(--ink-soft)">
+      GeppGo legge <b>OpenStreetMap</b>, la mappa libera fatta dalle persone. Non è quella di Google: un posto che c'è là può non esserci ancora qui.<br><br>
+      Se ne manca uno che sai esistere, aggiungerlo prende un minuto e <b>vale per sempre e per tutti</b> — lo vedrai tu la prossima volta, e lo vedrà chiunque usi una delle tante app che leggono questa mappa.
+    </div>
+    <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="osmVai('')">Guarda la zona com'è adesso</button>
+    <button class="btn btn-green btn-block" style="margin-top:.5rem" onclick="osmVai('edit')">Aggiungi il posto che manca</button>
+    <div style="font-size:.75rem;color:var(--ink-faint);margin-top:.8rem;line-height:1.5">
+      Dal telefono la via più corta è l'app gratuita <b>Every Door</b>: si apre, si tocca il punto sulla mappa, si sceglie "bancomat" o "bagni" e si salva. Serve un account OpenStreetMap, che è gratuito.
+    </div>`;
+  openSheet('mOsmAiuto');
+}
+function osmVai(cosa){
+  if(!osmAiutoPos)return;
+  const {lat,lng}=osmAiutoPos;
+  /* lo zoom 19 è quello a cui l'editor fa lavorare: più largo non lascia
+     mettere un punto con precisione */
+  const u=cosa==='edit'
+    ? `https://www.openstreetmap.org/edit#map=19/${lat.toFixed(5)}/${lng.toFixed(5)}`
+    : `https://www.openstreetmap.org/#map=18/${lat.toFixed(5)}/${lng.toFixed(5)}`;
+  window.open(u,'_blank','noopener');
 }
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
