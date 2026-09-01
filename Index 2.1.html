@@ -1240,7 +1240,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayRainSwaps"></div>
   <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip green" onclick="navigaGiornata()">🧭 Naviga la giornata</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
-  <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
+  <input type="file" id="phInput" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
   <div style="height:74px"></div>
 </div>
@@ -12137,15 +12137,25 @@ function scegliQualita(k){
   const f=fqRisolvi;fqRisolvi=null;
   if(f)f(k);
 }
-function chiediQualita(bytesOriginale){
+/* Quante foto per volta. Non e' un capriccio: ognuna passa da un canvas e
+   da un caricamento suo, e a decine il telefono si pianta e la rete si
+   ingolfa. Quindici e' un blocco che si fa in pochi secondi. */
+const FOTO_MAX_BLOCCO=15;
+function chiediQualita(bytesOriginale,quante){
   const ultima=(app.settings&&app.settings.fotoQualita)||'alta';
   const peso=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
   /* Le stime vengono da una misura vera su una foto 4032x3024 da 5,6 MB.
      Per "Originale" non si stima niente: si sa quanto pesa, e' quel file li'. */
   const stima={leggera:145*1024,media:448*1024,alta:1536*1024};
+  const n=quante||1;
+  document.querySelector('#mFotoQual .sheet-t').textContent=
+    n>1?('Come salvo queste '+n+' foto?'):'Come la salvo?';
+  document.querySelector('#mFotoQual .sheet p').textContent=
+    n>1?'Chi è nel viaggio le vedrà esattamente così: scaricandole non si perde altro.'
+       :'Chi è nel viaggio la vedrà esattamente così: scaricandola non si perde altro.';
   document.getElementById('fqLista').innerHTML=Object.keys(FOTO_QUALITA).map(k=>{
     const L=FOTO_QUALITA[k];
-    const q=k==='originale'?peso(bytesOriginale):'circa '+peso(stima[k]);
+    const q=k==='originale'?peso(bytesOriginale):'circa '+peso(stima[k]*n);
     return `<button class="btn ${k===ultima?'btn-grad':'btn-soft'} btn-block" style="margin-bottom:.5rem;text-align:left;padding:.7rem .9rem" onclick="scegliQualita('${k}')">
       <div style="font-weight:800">${L.nome}${k===ultima?' ·':''}</div>
       <div style="font-size:.78rem;font-weight:600;opacity:.75;margin-top:.15rem">${k==='originale'?'la foto intatta':L.lato+' pixel'} — ${q}</div></button>`;
@@ -12154,56 +12164,85 @@ function chiediQualita(bytesOriginale){
   return new Promise(res=>{fqRisolvi=res;});
 }
 
+/* Prepara una foto: la riduce al livello scelto, oppure la lascia intatta.
+   "Originale" vuol dire davvero originale: il file si spedisce com'e', senza
+   passare dal canvas. Ricomprimere un JPEG gia' compresso non aggiunge un
+   dettaglio e costa piu' dell'originale stesso - misurato: il 114% del peso
+   di partenza. L'unico modo perche' la foto che arriva sia identica a quella
+   che parte e' non toccarla.
+   Se pero' non e' un JPEG (certi telefoni danno HEIC o PNG) o sfora il limite
+   del magazzino, si ripiega su una riduzione fedele: meglio una foto quasi
+   identica che una foto respinta. */
+function preparaFoto(f,L0){
+  const intatta=L0.lato===0&&f.type==='image/jpeg'&&f.size<=11*1024*1024;
+  if(intatta)return new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(f);});
+  return new Promise((res,rej)=>{
+    const rd=new FileReader();
+    rd.onload=()=>{const im=new Image();im.onload=()=>{
+      const L=L0.lato?L0:{lato:4096,q:0.92};
+      /* Non si ingrandisce mai: se la foto e' gia' piu' piccola del limite
+         resta com'e'. Allargarla peserebbe di piu' senza aggiungere un solo
+         dettaglio. */
+      const sc=Math.min(1,L.lato/Math.max(im.width,im.height));
+      const cv=document.createElement('canvas');
+      cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+      const cx=cv.getContext('2d');
+      cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+      cx.drawImage(im,0,0,cv.width,cv.height);
+      res(cv.toDataURL('image/jpeg',L.q));};im.onerror=rej;im.src=rd.result;};
+    rd.onerror=rej;rd.readAsDataURL(f);
+  });
+}
+
 async function addPhoto(inp){
-  const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
+  const scelte=[...((inp.files)||[])];inp.value='';
+  if(!scelte.length)return;
   const t=T(),d=t.days[ttDay];if(!t||!d)return;
-  const scelta=await chiediQualita(f.size);
+
+  /* Oltre il blocco non si va: ognuna passa da un canvas e da un caricamento
+     suo, e a decine il telefono si pianta. Le altre non si perdono - si
+     riprendono al giro dopo - ma va detto, non lasciato indovinare. */
+  const troppe=scelte.length>FOTO_MAX_BLOCCO;
+  const files=troppe?scelte.slice(0,FOTO_MAX_BLOCCO):scelte;
+
+  const scelta=await chiediQualita(files.reduce((n,f)=>n+f.size,0),files.length);
   /* Chiudere il foglio senza scegliere annulla: non e' un guasto, e' una
      persona che ci ha ripensato. */
   if(!scelta)return;
   app.settings=app.settings||{};app.settings.fotoQualita=scelta;save();
-  toast('Sistemo la foto...');
-  try{
-    const L0=FOTO_QUALITA[scelta]||FOTO_QUALITA.alta;
-    /* "Originale" vuol dire davvero originale: il file si spedisce com'e',
-       senza passare dal canvas. Ricomprimere un JPEG gia' compresso non
-       aggiunge un dettaglio e costa di piu' dell'originale stesso - misurato:
-       il 114% del peso di partenza. L'unico modo perche' la foto che arriva
-       sia identica a quella che parte e' non toccarla.
-       Se pero' non e' un JPEG (certi telefoni danno HEIC o PNG) o sfora il
-       limite del magazzino, si ripiega su una riduzione fedele: meglio una
-       foto quasi identica che una foto respinta. */
-    const originaleVaBene=L0.lato===0&&f.type==='image/jpeg'&&f.size<=11*1024*1024;
-    const url=originaleVaBene
-      ? await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(f);})
-      : await new Promise((res,rej)=>{
-      const rd=new FileReader();
-      rd.onload=()=>{const im=new Image();im.onload=()=>{
-        const L=L0.lato?L0:{lato:4096,q:0.92};
-        /* Non si ingrandisce mai: se la foto e' gia' piu' piccola del limite
-           resta com'e'. Allargarla peserebbe di piu' senza aggiungere un
-           solo dettaglio. */
-        const sc=Math.min(1,L.lato/Math.max(im.width,im.height));
-        const cv=document.createElement('canvas');
-        cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
-        const cx=cv.getContext('2d');
-        cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
-        cx.drawImage(im,0,0,cv.width,cv.height);
-        res(cv.toDataURL('image/jpeg',L.q));};im.onerror=rej;im.src=rd.result;};
-      rd.onerror=rej;rd.readAsDataURL(f);
-    });
-    const db=await idbP();
-    const rec={id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:d.date,data:url,ts:Date.now(),chi:myUid||null};
-    await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
-    renderDayPhotos();toast('Foto nel diario di questo giorno');
-    /* Il salvataggio nel cloud viene dopo e non fa aspettare nessuno: se
-       fallisce, la foto e' comunque al sicuro sul telefono e riparte da
-       fotoDaSpedire() alla prossima occasione. */
-    fotoSuCloud(rec).then(ok=>{
+
+  const L0=FOTO_QUALITA[scelta]||FOTO_QUALITA.alta;
+  const db=await idbP();
+  const messe=[];let saltate=0;
+  for(let i=0;i<files.length;i++){
+    toast(files.length>1?('Sistemo le foto... '+(i+1)+' di '+files.length):'Sistemo la foto...');
+    try{
+      const url=await preparaFoto(files[i],L0);
+      const rec={id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:d.date,data:url,ts:Date.now()+i,chi:myUid||null};
+      await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
+      messe.push(rec);
+      /* Si ridisegna man mano: chi guarda vede la striscia riempirsi invece
+         di restare fermo fino alla fine. */
       renderDayPhotos();
-      if(!ok&&fotoPerche)toast('Sul telefono e\' al sicuro, nel cloud no. '+fotoPerche);
-    });
-  }catch(e){toast('Non riesco a leggere questa foto');}
+    }catch(e){saltate++;}
+  }
+
+  if(!messe.length){toast('Non riesco a leggere queste foto');return;}
+  toast(messe.length>1
+    ?(messe.length+' foto nel diario di questo giorno'+(saltate?' ('+saltate+' non leggibili)':''))
+    :'Foto nel diario di questo giorno');
+  if(troppe)setTimeout(()=>toast('Ne carico al massimo '+FOTO_MAX_BLOCCO+' per volta: le altre '+(scelte.length-FOTO_MAX_BLOCCO)+' rifalle in un secondo giro.'),2600);
+
+  /* Il salvataggio nel cloud viene dopo e non fa aspettare nessuno: se
+     fallisce, le foto sono comunque al sicuro sul telefono e ripartono da
+     fotoDaSpedire() alla prossima occasione. Una per volta, non tutte
+     insieme: quindici caricamenti in parallelo affogano una rete da viaggio. */
+  (async()=>{
+    let male=0;
+    for(const rec of messe){if(!await fotoSuCloud(rec))male++;}
+    renderDayPhotos();
+    if(male&&fotoPerche)toast((male>1?male+' foto sono':'La foto e\'')+' al sicuro sul telefono, nel cloud no. '+fotoPerche);
+  })();
 }
 async function renderDayPhotos(){
   const el=document.getElementById('dayPhotos');if(!el)return;const t=T(),d=t.days[ttDay];if(!t||!d){el.innerHTML='';return;}
