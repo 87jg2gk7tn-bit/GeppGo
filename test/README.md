@@ -85,3 +85,34 @@ secondo admin» — e poi un `DELETE` diretto portava via il viaggio lo stesso.
 Gli ultimi tre controlli della prova esistono per questo: verificano che dopo
 lo schema i permessi siano **esattamente** sette, con i nomi giusti e nessun
 `DELETE` sui viaggi.
+
+## Le foto
+
+```sh
+psql -f test/supabase-prova-foto.sql   # 29 controlli sui permessi delle foto
+node test/prova-foto.js                # 28 controlli sul comportamento dell'app
+```
+
+Le foto sono la cosa più delicata che GeppGo custodisca, e la parte che le
+riguarda è fatta più di limiti che di funzioni. Quello che le prove
+verificano, in sostanza:
+
+- una foto la vedono **solo** le persone di quel viaggio — un estraneo non la
+  raggiunge nemmeno conoscendone l'indirizzo esatto, né la riga nel registro
+  né il file;
+- non si carica a nome di un altro, né dentro il viaggio di altri;
+- il magazzino accetta **solo JPEG fino a 4 MB**: qualunque altra cosa viene
+  respinta prima ancora che i permessi entrino in gioco;
+- gli indirizzi con cui si scaricano sono firmati e **scadono in un'ora**:
+  non sono link che si possano girare;
+- chi è nel viaggio può **segnalare**, e la segnalazione non si cancella
+  dall'app né si scrive a nome di un altro; chi viene segnalato non lo scopre;
+- una foto **bloccata** sparisce dalla vista di tutti ma resta nel registro, e
+  la segnalazione ricorda di quale file parlava anche dopo che la foto non c'è
+  più;
+- l'**admin del viaggio** può togliere la foto di chiunque, e togliere una
+  persona dal viaggio.
+
+Sono i meccanismi che il DSA (Reg. UE 2022/2065, art. 16) chiede a chi ospita
+contenuti altrui e che l'App Store pretende alla linea guida 1.2: poter essere
+avvisati, poter rimuovere, poter allontanare, ed essere raggiungibili.

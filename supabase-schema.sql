@@ -139,7 +139,8 @@ begin
             where n.nspname='public'
               and p.proname in ('join_trip','is_trip_member','is_trip_owner',
                                 'is_trip_admin','elimina_viaggio',
-                                'conferma_eliminazione','annulla_eliminazione')
+                                'conferma_eliminazione','annulla_eliminazione',
+                                'togli_dal_viaggio')
   loop
     execute format('drop function if exists %s', f.firma);
   end loop;
@@ -587,6 +588,215 @@ drop trigger if exists membri_ultimo_admin_trg on public.trip_members;
 create trigger membri_ultimo_admin_trg
   before delete on public.trip_members
   for each row execute function public.membri_ultimo_admin_non_esce();
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+--  LE FOTO DEL DIARIO
+-- ════════════════════════════════════════════════════════════════════════════
+--  Le foto stavano solo dentro il telefono: cambi telefono e le perdi. Da qui
+--  vanno anche nel cloud — ma le foto sono la cosa piu' delicata che un'app
+--  possa custodire, quindi la parte che segue e' fatta piu' di limiti che di
+--  funzioni.
+--
+--  Il principio che regge tutto: GeppGo non e' un posto dove si pubblica.
+--  Una foto vive dentro un viaggio e la vedono soltanto le persone di quel
+--  viaggio. Non esiste una bacheca, non esiste una ricerca, non esiste un
+--  indirizzo pubblico. Un gruppo chiuso di sei amici che si conoscono non e'
+--  un canale di distribuzione, ed e' questa la difesa piu' solida che ci sia:
+--  vale piu' di qualsiasi controllo messo dopo.
+--
+--  Il resto sono i meccanismi che la legge chiede a chi ospita contenuti
+--  altrui (DSA, Reg. UE 2022/2065, art. 16) e che l'App Store pretende alla
+--  linea guida 1.2: poter essere avvisati, poter rimuovere, sapere chi ha
+--  caricato cosa.
+
+--  Il magazzino delle foto. Non e' pubblico: senza permesso non si legge
+--  niente, nemmeno conoscendo l'indirizzo esatto.
+--
+--  Due limiti che valgono piu' di molto codice: accetta SOLO immagini JPEG e
+--  SOLO fino a 4 MB. L'app le ridimensiona a 1000 pixel prima di spedirle, per
+--  cui restano ben sotto: chi provasse a caricare altro - un video, un
+--  archivio, un file qualsiasi travestito - viene respinto qui, prima ancora
+--  che i permessi entrino in gioco.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('foto-viaggi', 'foto-viaggi', false, 4194304, array['image/jpeg'])
+on conflict (id) do update
+  set public             = false,
+      file_size_limit    = 4194304,
+      allowed_mime_types = array['image/jpeg'];
+
+--  Il registro: chi ha caricato cosa, quando e in quale viaggio. Serve a
+--  rispondere a una segnalazione e, se mai servisse, a un'autorita'. Senza
+--  questo, una foto nel magazzino e' un file senza storia.
+create table if not exists public.foto (
+  id          uuid        primary key default gen_random_uuid(),
+  trip_id     uuid        not null references public.trips(id) on delete cascade,
+  caricata_da uuid        not null references auth.users(id)   on delete cascade,
+  giorno      date,
+  percorso    text        not null unique,
+  creata_il   timestamptz not null default now(),
+  -- Una foto bloccata sparisce dalla vista di tutti restando nel registro:
+  -- si toglie l'accesso senza cancellare la traccia di cosa e' successo.
+  bloccata    boolean     not null default false,
+  bloccata_il timestamptz
+);
+create index if not exists foto_trip_idx on public.foto(trip_id);
+create index if not exists foto_chi_idx  on public.foto(caricata_da);
+
+--  Le segnalazioni. E' il canale con cui si viene a sapere: chi ospita non
+--  risponde di quello che non sa, ma risponde di quello che sa e lascia li'.
+--  Averlo, e tenerlo funzionante, e' meta' della tutela.
+--
+--  percorso_copia tiene l'indirizzo del file anche dopo che la foto e' stata
+--  cancellata: una segnalazione che perde l'oggetto di cui parla non serve a
+--  niente ne' a chi indaga ne' a chi deve difendersi.
+create table if not exists public.segnalazioni (
+  id             uuid        primary key default gen_random_uuid(),
+  foto_id        uuid        references public.foto(id) on delete set null,
+  trip_id        uuid,
+  percorso_copia text,
+  segnalata_da   uuid        not null references auth.users(id) on delete cascade,
+  motivo         text        not null
+                 check (motivo in ('minori','illegale','violenza','privacy','altro')),
+  nota           text,
+  creata_il      timestamptz not null default now(),
+  stato          text        not null default 'aperta'
+                 check (stato in ('aperta','chiusa'))
+);
+create index if not exists segn_stato_idx on public.segnalazioni(stato, creata_il);
+
+alter table public.foto         enable row level security;
+alter table public.segnalazioni enable row level security;
+revoke all on public.foto         from anon;
+revoke all on public.segnalazioni from anon;
+grant select, insert, delete on public.foto         to authenticated;
+grant select, insert         on public.segnalazioni to authenticated;
+
+-- Chi e' del viaggio vede le foto del viaggio. Le bloccate non le vede
+-- nessuno, nemmeno chi le aveva caricate.
+drop policy if exists foto_select on public.foto;
+create policy foto_select on public.foto
+  for select to authenticated
+  using (public.is_trip_member(trip_id) and not bloccata);
+
+-- Si carica solo a nome proprio e solo nei viaggi di cui si fa parte.
+drop policy if exists foto_insert on public.foto;
+create policy foto_insert on public.foto
+  for insert to authenticated
+  with check (caricata_da = auth.uid() and public.is_trip_member(trip_id));
+
+-- Si cancella la propria, oppure - se sei admin del viaggio - quella di
+-- chiunque: e' il "poter rimuovere" che l'App Store pretende e che serve a
+-- dar seguito a una segnalazione senza aspettare nessuno.
+drop policy if exists foto_delete on public.foto;
+create policy foto_delete on public.foto
+  for delete to authenticated
+  using (caricata_da = auth.uid() or public.is_trip_admin(trip_id));
+
+-- Nessuno modifica una riga del registro dall'app: niente policy di UPDATE.
+-- Bloccare una foto e' un gesto di chi amministra il servizio, non un tasto
+-- che sta dentro l'app.
+drop policy if exists foto_update on public.foto;
+
+-- Segnalare puo' chiunque sia nel viaggio, a nome proprio.
+drop policy if exists segn_insert on public.segnalazioni;
+create policy segn_insert on public.segnalazioni
+  for insert to authenticated
+  with check (segnalata_da = auth.uid());
+
+-- Si rivedono solo le proprie: una segnalazione non e' un cartello appeso
+-- addosso a qualcuno, e chi viene segnalato non deve poterlo scoprire da qui.
+drop policy if exists segn_select on public.segnalazioni;
+create policy segn_select on public.segnalazioni
+  for select to authenticated
+  using (segnalata_da = auth.uid());
+
+
+-- ── i file veri, dentro il magazzino ────────────────────────────────────────
+--  Il percorso di ogni file e' "<id del viaggio>/<id della foto>.jpg". La
+--  prima cartella dice a quale viaggio appartiene, ed e' su quella che si
+--  decide chi puo' leggerlo.
+--
+--  Il confronto e' fatto fra testo e testo, non convertendo la cartella in
+--  uuid: un file con un nome storto farebbe fallire la conversione e, con
+--  essa, il permesso di tutti gli altri.
+drop policy if exists foto_file_select on storage.objects;
+create policy foto_file_select on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'foto-viaggi'
+    and exists (
+      select 1 from public.trip_members m
+      where m.user_id = auth.uid()
+        and m.trip_id::text = (storage.foldername(name))[1]
+    )
+  );
+
+drop policy if exists foto_file_insert on storage.objects;
+create policy foto_file_insert on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'foto-viaggi'
+    and owner = auth.uid()
+    and exists (
+      select 1 from public.trip_members m
+      where m.user_id = auth.uid()
+        and m.trip_id::text = (storage.foldername(name))[1]
+    )
+  );
+
+drop policy if exists foto_file_delete on storage.objects;
+create policy foto_file_delete on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'foto-viaggi'
+    and (
+      owner = auth.uid()
+      or exists (
+        select 1 from public.trip_members m
+        where m.user_id = auth.uid() and m.ruolo = 'admin'
+          and m.trip_id::text = (storage.foldername(name))[1]
+      )
+    )
+  );
+
+-- Un file caricato non si riscrive: si cancella e se ne mette un altro. Cosi'
+-- il registro non puo' raccontare una foto diversa da quella che c'e'.
+drop policy if exists foto_file_update on storage.objects;
+
+
+-- ── togliere qualcuno dal viaggio ───────────────────────────────────────────
+--  Un admin puo' rimuovere un compagno. Serve al viaggio (chi non parte piu')
+--  e serve alla tutela: e' il "poter bloccare chi si comporta male" che l'App
+--  Store chiede alla linea guida 1.2. Fuori dal viaggio, quella persona non
+--  vede piu' niente - ne' foto ne' altro.
+--
+--  Un admin non si puo' togliere da solo un altro admin: fra pari non si
+--  decide a maggioranza di uno. Prima gli si toglie il ruolo, e per farlo
+--  bisogna essere d'accordo di fatto.
+create or replace function public.togli_dal_viaggio(p_trip uuid, p_utente uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_trip_admin(p_trip) then
+    raise exception 'solo un admin puo togliere qualcuno dal viaggio';
+  end if;
+  if p_utente = auth.uid() then
+    raise exception 'per uscire tu usa il tasto per uscire dal viaggio';
+  end if;
+  if exists (select 1 from public.trip_members m
+             where m.trip_id = p_trip and m.user_id = p_utente and m.ruolo = 'admin') then
+    raise exception 'e'' un altro admin: prima togligli il ruolo';
+  end if;
+  delete from public.trip_members where trip_id = p_trip and user_id = p_utente;
+end;
+$$;
+
+revoke all on function public.togli_dal_viaggio(uuid, uuid) from public, anon;
+grant execute on function public.togli_dal_viaggio(uuid, uuid) to authenticated;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
