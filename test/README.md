@@ -25,7 +25,7 @@ psql -f supabase-schema.sql                 # lo schema vero, quello che va su S
 psql -f test/supabase-prova-permessi.sql    # le prove
 ```
 
-L'ultima stampa l'elenco dei controlli e in fondo `23/23 passati`. Se compare
+L'ultima stampa l'elenco dei controlli e in fondo `45/45 passati`. Se compare
 `CI SONO PROVE FALLITE`, c'è un buco: non si tocca il database vero finché non
 torna verde.
 
@@ -45,3 +45,19 @@ cui il prima e il dopo si vedono insieme.
 
 Rileggendo le policy quel buco non si notava: il commento che le accompagnava
 diceva, con sicurezza, l'esatto contrario di quello che facevano.
+
+Lo stesso inganno si ripresenta ovunque un permesso debba proteggere un
+*campo* invece di una riga — il ruolo di un membro, la richiesta di
+eliminazione — ed è per questo che quei campi hanno tutti un trigger che li
+custodisce, e una prova che ci spinge contro.
+
+## Prova sul lato app
+
+```sh
+node test/prova-ruoli.js
+```
+
+Ventisette controlli su come l'app legge i ruoli: chi conta per il limite del
+piano gratuito, chi vede il tasto per eliminare e chi quello per uscire, cosa
+compare quando un admin chiede di eliminare un viaggio. Serve `playwright-core`
+e il Chromium di sistema.

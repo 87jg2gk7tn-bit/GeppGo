@@ -343,6 +343,13 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .confirm-t{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;margin-bottom:.4rem}
 .confirm-msg{font-size:.9rem;color:var(--ink-soft);line-height:1.5;margin-bottom:1.3rem}
 .confirm-a{display:flex;gap:.6rem}
+/* L'avviso di un'eliminazione chiesta da un admin e non ancora confermata.
+   Deve pesare: e' l'unica cosa dell'app che non si puo' disfare. */
+.canc-avviso{background:#fff3f2;border:1px solid var(--red);border-radius:var(--r-md);padding:.9rem;margin-bottom:1.1rem}
+.canc-avviso .ca-t{font-weight:800;font-size:.92rem;color:var(--red);line-height:1.35}
+.canc-avviso .ca-s{font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin-top:.35rem}
+.canc-avviso .ca-b{display:flex;gap:.5rem;margin-top:.7rem}
+.canc-avviso .ca-b .btn{flex:1;padding:.55rem;font-size:.85rem}
 .detail-sec{margin-bottom:1.2rem}
 .detail-sec h4{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;margin-bottom:.5rem}
 .detail-day{background:var(--paper);border-radius:var(--r-md);padding:.75rem;margin-bottom:.5rem}
@@ -1814,7 +1821,7 @@ let rateCache={};
 try{const g=JSON.parse(localStorage.getItem('geppgo2_cambi')||'{}');if(g&&typeof g==='object')rateCache=g;}catch(e){}
 function salvaCambi(){try{localStorage.setItem('geppgo2_cambi',JSON.stringify(rateCache));}catch(e){}}
 let scanTarget=null;
-let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},syncT=null;
+let sb=null,session=null,myUid=null,rtChan=null,pendingJoin2=null,lastPush={},memByTrip={},membriPerViaggio={},syncT=null;
 /* lastPush deve sopravvivere ai riavvii dell'app: altrimenti, ad ogni riapertura,
    non c'è modo di sapere se lo stato locale contiene modifiche non ancora
    arrivate al cloud, e un pull all'avvio può sovrascriverle senza accorgersene. */
@@ -5010,8 +5017,12 @@ function handleJoin(code){
   openSheet('mJoin');
 }
 function pickJoin(el){document.querySelectorAll('#joinPick .rcard').forEach(r=>r.classList.remove('sel'));el.classList.add('sel');el.querySelector('input').checked=true;if(el.querySelector('input').value!=='__new__')document.getElementById('joinNewWrap').style.display='none';}
+/* Accettare un invito non passa piu' dal limite del piano gratuito. Prima
+   sbatteva contro il muro del Premium, quindi bastava essere gia' in due
+   viaggi altrui per non poter entrare in un terzo: si chiudeva la porta in
+   faccia proprio a chi l'app la sta scoprendo perche' un amico ce l'ha
+   portato. Il limite resta, ma sui viaggi che crei tu. */
 function confirmJoin(data){
-  if(!canCreateTrip()){closeSheet('mJoin');openPremium();return;}
   let me=document.querySelector('#joinPick [name="jp"]:checked').value;const names=[...data.p];
   if(me==='__new__'){me=document.getElementById('joinNewName').value.trim();if(!me){toast('Inserisci il tuo nome');return;}names.push(me);}
   if(!app.myName)app.myName=me;
@@ -5037,12 +5048,12 @@ function openDetail(id){
   const spent=t.expenses.reduce((s,e)=>s+(e.type==='transfer'?0:e.amount),0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
   document.getElementById('detailTitle').textContent=t.name;const {txns}=computeSettle(t);
-  document.getElementById('detailBody').innerHTML=`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1.2rem"><div style="font-size:.85rem;color:var(--ink-soft)">${dates||'Senza date'}${t.destination?' · '+esc(t.destination):''}</div><div style="display:flex;gap:1.2rem;margin-top:.6rem"><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.days.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Giorni</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.pois.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Luoghi</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${fmtMoney(spent,cur)}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Spesa</div></div></div></div>
+  document.getElementById('detailBody').innerHTML=avvisoEliminazione(t)+`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1.2rem"><div style="font-size:.85rem;color:var(--ink-soft)">${dates||'Senza date'}${t.destination?' · '+esc(t.destination):''}</div><div style="display:flex;gap:1.2rem;margin-top:.6rem"><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.days.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Giorni</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.pois.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Luoghi</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${fmtMoney(spent,cur)}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Spesa</div></div></div></div>
     <div class="detail-sec"><h4>📅 Itinerario</h4>${t.days.length?t.days.map((d,i)=>{const ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});return `<div class="detail-day"><div class="detail-day-t">G${i+1} · ${esc(d.title||ds)}</div>${(d.activities||[]).length?d.activities.map(a=>`<div class="detail-act"><span>${a.completed?'✅':'•'}</span><span>${a.time?'<strong>'+a.time+'</strong> ':''}${esc(a.name)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink-faint)">Nessuna attività</div>'}</div>`;}).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun giorno</div>'}</div>
     <div class="detail-sec"><h4>📍 Luoghi salvati</h4>${t.pois.length?t.pois.map(p=>`<div class="detail-act"><span>${p.priority==='essential'?'⭐':'🔵'}</span><span>${esc(p.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun luogo</div>'}</div>
     <div class="detail-sec"><h4>💸 Spese (${cur})</h4>${t.expenses.length?t.expenses.map(e=>{const p=t.participants.find(x=>x.id===e.payerId);return `<div class="exp-row" style="padding:.5rem 0"><div class="exp-info"><div class="exp-d" style="font-size:.85rem">${esc(e.desc)}</div><div class="exp-meta">${e.category} · ${esc(p?.name||'?')}</div></div><div class="exp-amt">${fmtMoney(e.amount,cur)}</div></div>`;}).join('')+(txns.length?'<div style="margin-top:.6rem">'+txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle" style="font-size:.82rem"><span><strong>${esc(f.name)}</strong> → <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span></div>`;}).join('')+'</div>':''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessuna spesa</div>'}</div>
     <div class="detail-sec"><h4>🎫 Biglietti</h4>${t.tickets.length?t.tickets.map(tk=>`<div class="detail-act"><span>🎫</span><span>${esc(tk.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun biglietto</div>'}</div>
-    <div style="display:flex;gap:.5rem;margin-top:1.3rem"><button class="btn btn-grad" style="flex:1" onclick="openTripFromDetail(${t.id})">↗️ Apri</button>${t.status==='closed'?`<button class="btn btn-soft" onclick="reopenFromDetail(${t.id})">✅ Riapri</button>`:`<button class="btn btn-soft" onclick="closeFromDetail(${t.id})">🏁 Concludi</button>`}<button class="btn btn-danger" onclick="askDeleteTrip(${t.id})">🗑️</button></div>`;
+    <div style="display:flex;gap:.5rem;margin-top:1.3rem"><button class="btn btn-grad" style="flex:1" onclick="openTripFromDetail(${t.id})">↗️ Apri</button>${t.status==='closed'?`<button class="btn btn-soft" onclick="reopenFromDetail(${t.id})">✅ Riapri</button>`:`<button class="btn btn-soft" onclick="closeFromDetail(${t.id})">🏁 Concludi</button>`}<button class="btn btn-danger" onclick="askDeleteTrip(${t.id})" title="${t.cid&&!t._admin?'Esci dal viaggio':'Elimina'}">${t.cid&&!t._admin?'🚪':'🗑️'}</button></div>`;
   openSheet('mDetail');
 }
 function openTripFromDetail(id){app.currentTripId=id;const t=app.trips.find(x=>x.id===id);if(t&&t.status==='closed')t.status='open';const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();closeSheet('mDetail');go('plan');}
@@ -5055,23 +5066,90 @@ function askDeleteTrip(id){
     if(app.currentTripId===id){const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:(app.trips[0]?app.trips[0].id:null);}
     save();renderAll();closeSheet('mDetail');closeSheet('mTripZoom');
   };
+  const scollega=()=>{delete lastPush[t.cid];persistLastPush();delete memByTrip[t.cid];delete membriPerViaggio[t.cid];};
+
   if(t.cid&&sb&&session){
-    if(t._owner){
-      confirmDo('Eliminare per tutti?','Sei il proprietario: il viaggio sparirà anche dai telefoni dei compagni. Definitivo.',async()=>{
-        try{await sb.from('trips').delete().eq('id',t.cid);}catch(e){}
-        delete lastPush[t.cid];persistLastPush();delete memByTrip[t.cid];
-        finishLocal();toast('Viaggio eliminato per tutti');
-      });
-    }else{
+    /* Chi non e' admin non cancella niente a nessuno: esce e basta. Questa
+       porta resta aperta sempre, anche a chi non ha il Premium - altrimenti
+       chi viene invitato resta incastrato per sempre con i viaggi altrui e
+       chiunque potrebbe intasarlo di inviti. */
+    if(!t._admin){
       confirmDo('Uscire dal viaggio?','Il viaggio resterà ai compagni: semplicemente tu non lo vedrai più.',async()=>{
         try{await sb.from('trip_members').delete().eq('trip_id',t.cid).eq('user_id',myUid);}catch(e){}
-        delete lastPush[t.cid];persistLastPush();delete memByTrip[t.cid];
-        finishLocal();toast('Sei uscito dal viaggio');
+        scollega();finishLocal();toast('Sei uscito dal viaggio');
       });
+      return;
     }
+    if(!app.premium){premiumNienteElimina(t);return;}
+
+    /* Con un altro admin in giro, eliminare non e' piu' una decisione sola:
+       parte una richiesta e il viaggio resta dov'e' finche' l'altro non
+       conferma. E' l'unica cosa dell'app che non si puo' disfare, quindi
+       vale la pena che ci siano due teste. */
+    if(quantiAdmin(t)>1){
+      confirmDo('Chiedere di eliminarlo per tutti?',`Ci sono altri admin: il viaggio sparirà solo quando uno di loro confermerà. Fino ad allora resta a tutti, e la richiesta si può annullare.`,async()=>{
+        const{error}=await sb.rpc('elimina_viaggio',{p_trip:t.cid});
+        if(error){toast('Non riesco: '+error.message);return;}
+        t.canc_chiesta_da=myUid;save();renderAll();closeSheet('mDetail');closeSheet('mTripZoom');
+        toast('Richiesta inviata: serve la conferma di un altro admin');
+      },'🗑️','Chiedi','btn-danger');
+      return;
+    }
+    confirmDo('Eliminare per tutti?','Sei l\'unico admin: il viaggio sparirà anche dai telefoni dei compagni. Definitivo.',async()=>{
+      const{error}=await sb.rpc('elimina_viaggio',{p_trip:t.cid});
+      if(error){toast('Non riesco: '+error.message);return;}
+      scollega();finishLocal();toast('Viaggio eliminato per tutti');
+    });
     return;
   }
+
+  if(!app.premium){premiumNienteElimina(t);return;}
   confirmDo(`Eliminare "${t.name}"?`,'Verranno cancellati giorni, spese e biglietti. Definitivo.',()=>{finishLocal();toast('Eliminato');});
+}
+/* Nel piano gratuito un viaggio non si elimina: si conclude. Resta tra i
+   viaggi conclusi, non occupa piu' uno dei due posti, e non si perde niente -
+   che e' anche il motivo per cui la scorciatoia qui sotto porta la' invece di
+   lasciare la persona davanti a un muro e basta. */
+function premiumNienteElimina(t){
+  confirmDo('Eliminare è del Premium','Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?',()=>{
+    if(t.status!=='closed'){
+      t.status='closed';
+      const n=app.trips.filter(x=>x.status!=='closed')[0];
+      if(app.currentTripId===t.id)app.currentTripId=n?n.id:t.id;
+      save();renderAll();closeSheet('mDetail');closeSheet('mTripZoom');toast('🏁 Viaggio concluso');
+    }else{closeSheet('mDetail');closeSheet('mTripZoom');openPremium();}
+  },'🏁','Concludi','btn-blue');
+}
+/* La richiesta di un altro admin: qui si conferma o si annulla. Chi ha chiesto
+   non vede il tasto di conferma - il database rifiuterebbe comunque, ma e'
+   meglio non offrire un tasto che non puo' funzionare. */
+async function confermaEliminazione(cid){
+  const t=app.trips.find(x=>x.cid===cid);if(!t)return;
+  confirmDo('Confermare l\'eliminazione?','Il viaggio sparirà dai telefoni di tutti i compagni. Definitivo.',async()=>{
+    const{error}=await sb.rpc('conferma_eliminazione',{p_trip:cid});
+    if(error){toast('Non riesco: '+error.message);return;}
+    app.trips=app.trips.filter(x=>x.cid!==cid);
+    delete lastPush[cid];persistLastPush();delete memByTrip[cid];delete membriPerViaggio[cid];
+    if(!T()&&app.trips.length)app.currentTripId=app.trips[0].id;
+    save();renderAll();closeSheet('mDetail');toast('Viaggio eliminato per tutti');
+  });
+}
+async function annullaEliminazione(cid){
+  const t=app.trips.find(x=>x.cid===cid);if(!t)return;
+  const{error}=await sb.rpc('annulla_eliminazione',{p_trip:cid});
+  if(error){toast('Non riesco: '+error.message);return;}
+  t.canc_chiesta_da=null;save();renderAll();toast('Richiesta annullata: il viaggio resta');
+}
+/* L'avviso da mettere in cima a un viaggio per cui qualcuno ha chiesto
+   l'eliminazione. Torna stringa vuota quando non c'e' niente in sospeso. */
+function avvisoEliminazione(t){
+  if(!t||!t.cid||!t.canc_chiesta_da||!t._admin)return '';
+  const mio=t.canc_chiesta_da===myUid;
+  const chi=(membriPerViaggio[t.cid]||[]).find(m=>m.user_id===t.canc_chiesta_da);
+  const nome=chi&&chi.member_name?esc(chi.member_name):'Un altro admin';
+  return `<div class="canc-avviso"><div class="ca-t">🗑️ ${mio?'Hai chiesto di eliminare questo viaggio':esc(nome)+' vuole eliminare questo viaggio'}</div>
+    <div class="ca-s">${mio?'Serve la conferma di un altro admin. Fino ad allora il viaggio resta a tutti.':'Se confermi, sparisce dai telefoni di tutti. Definitivo.'}</div>
+    <div class="ca-b">${mio?'':`<button class="btn btn-danger" onclick="confermaEliminazione('${t.cid}')">Conferma</button>`}<button class="btn btn-soft" onclick="annullaEliminazione('${t.cid}')">Annulla la richiesta</button></div></div>`;
 }
 function addTicketManual(keep){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
@@ -7181,11 +7259,30 @@ function searchFlights(){
 }
 
 /* ===== PIANO GRATIS / PREMIUM ===== */
-function canCreateTrip(){return app.premium?true:app.trips.filter(t=>t.status!=='closed').length<2;}
+/* Il limite del piano gratuito conta solo i viaggi CHE HAI CREATO TU, non
+   quelli in cui ti hanno invitato. Prima li contava tutti, e il risultato era
+   che due inviti ricevuti ti impedivano di creare il tuo viaggio e perfino di
+   accettarne un terzo: il pedaggio lo pagava chi porta gente nuova, cioe' il
+   contrario di quello che serve. Chi organizza incontra il limite - ed e'
+   quello a cui il Premium serve davvero - i compagni entrano liberi. */
+function viaggioMio(t){
+  /* _admin lo scrive decorateTrip, che gira dopo la sincronizzazione: appena
+     aperta l'app, o senza rete, non c'e' ancora. Percio' si ripiega su _owner
+     (che resta salvato da una sessione all'altra) e, se manca anche quello,
+     sul fatto che il viaggio non sia mai andato nel cloud - e allora e'
+     senz'altro tuo. Un viaggio con un cid e nessuna traccia di ruolo non si
+     conta: meglio concedere per un momento un viaggio in piu' che tenere
+     qualcuno fuori dal proprio, come succedeva prima. */
+  if(t._admin!==undefined)return !!t._admin;
+  if(t._owner!==undefined)return !!t._owner;
+  return !t.cid;
+}
+function viaggiMiei(){return app.trips.filter(t=>t.status!=='closed'&&viaggioMio(t));}
+function canCreateTrip(){return app.premium?true:viaggiMiei().length<2;}
 function openPremium(){
-  const n=app.trips.filter(t=>t.status!=='closed').length;
-  document.getElementById('premT').textContent=app.premium?'Sei Premium ✨':(n>=2?'Hai raggiunto 2 viaggi attivi':'Viaggi illimitati');
-  document.getElementById('premS').textContent=app.premium?'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Il piano gratuito include 2 viaggi in corso alla volta. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.';
+  const n=viaggiMiei().length;
+  document.getElementById('premT').textContent=app.premium?'Sei Premium ✨':(n>=2?'Hai raggiunto 2 viaggi tuoi attivi':'Viaggi illimitati');
+  document.getElementById('premS').textContent=app.premium?'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.';
   document.getElementById('premBtn').textContent=app.premium?'↩︎ Torna al piano Gratis (demo)':'✨ Attiva Premium (demo)';
   openSheet('mPremium');
 }
@@ -7194,10 +7291,10 @@ function renderAds(){
   document.querySelectorAll('.ad-slot').forEach(a=>a.style.display=app.premium?'none':'flex');
   const b=document.getElementById('planBadge'),s=document.getElementById('planSub'),btn=document.getElementById('planBtn');
   if(!b)return;
-  const n=app.trips.filter(t=>t.status!=='closed').length;
+  const n=viaggiMiei().length;
   b.textContent=app.premium?'✨ Premium':'Gratis';
   b.style.background=app.premium?'var(--brown)':'var(--ink-faint)';
-  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':`${n}/2 viaggi in corso · con pubblicità`;
+  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':`${n}/2 viaggi tuoi in corso · con pubblicità`;
   btn.textContent=app.premium?'Gestisci piano':'Scopri Premium';
 }
 
@@ -9418,12 +9515,53 @@ function gcalUrl(a,dateStr){
 
 /* ===== COMPAGNI DI VIAGGIO (aggiungi/rimuovi dopo la creazione) ===== */
 function openPeople(){const t=T();if(!t){toast('Crea prima un viaggio');return;}renderPeople();openSheet('mPeople');}
+/* L'iscrizione al cloud di questo partecipante, se ne ha una. Non tutti ce
+   l'hanno: si puo' aggiungere una persona scrivendone solo il nome, e quella
+   non ha un account. Il confronto passa da String() per lo stesso motivo di
+   decorateTrip: l'id nasce numero e puo' tornare indietro come testo. */
+function membroDi(t,pp){
+  const m=t&&t.cid?membriPerViaggio[t.cid]:null;
+  if(!m)return null;
+  return m.find(x=>x.participant_id!=null&&String(x.participant_id)===String(pp.id))||null;
+}
 function renderPeople(){
   const t=T(),box=document.getElementById('peopleList');
+  const ioAdmin=!!t._admin&&!!t.cid;
   box.innerHTML=t.participants.map(pp=>{
     const used=t.expenses.some(e=>e.payerId===pp.id||(e.splitAmong||[]).includes(pp.id));
-    return `<div class="person"><div class="person-l"><div class="avatar ${pp.isMe?'me':''}">${esc(pp.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(pp.name)}${pp.isMe?' (tu)':''}</div><div class="person-tag">${used?'ha spese collegate':'nessuna spesa'}</div></div></div>${pp.isMe?'':`<button class="ibtn" onclick="removeParticipant(${pp.id})">✕</button>`}</div>`;
+    const mem=membroDi(t,pp),eAdmin=mem&&mem.ruolo==='admin';
+    const tag=eAdmin?'admin del viaggio':(used?'ha spese collegate':'nessuna spesa');
+    /* Il tasto per promuovere compare solo a un admin, e solo su chi ha un
+       account: chi e' nel viaggio come semplice nome non ha niente da
+       promuovere. L'ultimo admin non puo' togliersi il ruolo - lascerebbe il
+       viaggio senza nessuno che possa eliminarlo - e infatti il tasto per
+       togliersi non gli viene nemmeno mostrato. */
+    let tastoRuolo='';
+    if(ioAdmin&&mem){
+      if(!eAdmin)tastoRuolo=`<button class="ibtn" title="Rendi admin" onclick="cambiaRuolo(${pp.id},'admin')">👑</button>`;
+      else if(quantiAdmin(t)>1)tastoRuolo=`<button class="ibtn" title="Togli admin" onclick="cambiaRuolo(${pp.id},'compagno')">👤</button>`;
+    }
+    return `<div class="person"><div class="person-l"><div class="avatar ${pp.isMe?'me':''}">${esc(pp.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${eAdmin?'👑 ':''}${esc(pp.name)}${pp.isMe?' (tu)':''}</div><div class="person-tag">${tag}</div></div></div>${tastoRuolo}${pp.isMe?'':`<button class="ibtn" onclick="removeParticipant(${pp.id})">✕</button>`}</div>`;
   }).join('');
+}
+/* Nominare o togliere un admin. Il database ricontrolla tutto - qui non si
+   decide niente, si chiede - quindi se qualcosa non torna il messaggio che
+   arriva e' il suo, non uno inventato dall'app. */
+async function cambiaRuolo(participantId,ruolo){
+  const t=T();if(!t||!t.cid||!sb||!session)return;
+  const pp=t.participants.find(x=>String(x.id)===String(participantId));
+  const mem=membroDi(t,pp);if(!pp||!mem)return;
+  const su=ruolo==='admin';
+  confirmDo(su?`Rendere ${pp.name} admin?`:`Togliere l'admin a ${pp.name}?`,
+    su?'Potrà eliminare il viaggio per tutti e nominare altri admin. Quando gli admin sono più di uno, per eliminare serve la conferma di un secondo.'
+      :'Resterà nel viaggio come compagno: potrà costruire la giornata, ma non eliminarlo.',
+    async()=>{
+      const{error}=await sb.from('trip_members').update({ruolo}).eq('trip_id',t.cid).eq('user_id',mem.user_id);
+      if(error){toast('Non riesco: '+error.message);return;}
+      mem.ruolo=ruolo;
+      if(mem.user_id===myUid)t._admin=(ruolo==='admin');
+      save();renderAll();renderPeople();toast(su?'👑 Ora è admin':'Non è più admin');
+    },su?'👑':'👤',su?'Rendi admin':'Togli',su?'btn-grad':'btn-soft');
 }
 function addPersonInline(){
   const t=T(),i=document.getElementById('peopleNew'),v=i.value.trim();if(!v)return;
@@ -9614,7 +9752,7 @@ function initSheetClose(){
 function scheduleSync(){if(!sb||!session)return;clearTimeout(syncT);syncT=setTimeout(syncPush,900);}
 function cleanTrip(t){
   const c=JSON.parse(JSON.stringify(t));
-  delete c.cid;delete c._invite;delete c._owner;delete c.packing;
+  delete c.cid;delete c._invite;delete c._owner;delete c._admin;delete c.canc_chiesta_da;delete c.packing;
   (c.participants||[]).forEach(pp=>{delete pp.isMe;});
   return c;
 }
@@ -9687,6 +9825,15 @@ function decorateTrip(t){
   const mem=memByTrip[t.cid];
   const mio=mem&&mem.participant_id!=null?String(mem.participant_id):null;
   (t.participants||[]).forEach(pp=>{pp.isMe=mio!==null&&String(pp.id)===mio;});
+  /* Admin del viaggio: chi l'ha creato, e chiunque lui abbia promosso. E' il
+     ruolo che decide chi puo' far sparire il viaggio dai telefoni di tutti.
+     Un viaggio che non e' mai andato nel cloud e' solo tuo, quindi lo sei. */
+  t._admin=t.cid?(mem?mem.ruolo==='admin':false):true;
+}
+/* Quanti admin ha questo viaggio: sopra a uno, eliminare richiede due teste. */
+function quantiAdmin(t){
+  const m=t&&t.cid?membriPerViaggio[t.cid]:null;
+  return m?m.filter(x=>x.ruolo==='admin').length:1;
 }
 let syncBusy=false;
 async function syncPush(){
@@ -9794,12 +9941,19 @@ async function pullCloud(){
   try{
     if(localStorage.getItem('geppgo2_fp'))return;
     const{data:rows}=await sb.from('trips').select('*');
-    const{data:mems}=await sb.from('trip_members').select('*').eq('user_id',myUid);
-    memByTrip={};(mems||[]).forEach(m=>{memByTrip[m.trip_id]=m;});
+    /* Si chiedono tutte le iscrizioni, non piu' solo le proprie: servono per
+       sapere chi e' admin nei viaggi dove siamo. Il database consegna solo
+       quelle dei viaggi a cui apparteniamo, degli altri non arriva niente. */
+    const{data:mems}=await sb.from('trip_members').select('*');
+    memByTrip={};membriPerViaggio={};
+    (mems||[]).forEach(m=>{
+      if(m.user_id===myUid)memByTrip[m.trip_id]=m;
+      (membriPerViaggio[m.trip_id]=membriPerViaggio[m.trip_id]||[]).push(m);
+    });
     const dupRows=[];let needsResync=false;
     (rows||[]).forEach(r=>{
       const remote=r.data||{};
-      remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
+      remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);remote.canc_chiesta_da=r.canc_chiesta_da||null;
       decorateTrip(remote);
       let i=app.trips.findIndex(x=>x.cid===r.id);
       if(i<0){const k=app.trips.findIndex(x=>!x.cid&&x.id===remote.id);if(k>=0)i=k;}
@@ -9833,7 +9987,11 @@ async function pullCloud(){
     persistLastPush();
     if(needsResync)scheduleSync();
     if(dupRows.length){
-      dupRows.forEach(r=>{if(r.owner===myUid){sb.from('trips').delete().eq('id',r.id).then(()=>{});}});
+      /* Anche la pulizia dei doppioni passa dalla funzione, non da un delete
+         diretto: quella porta e' chiusa a tutti, altrimenti si potrebbe
+         saltare la conferma del secondo admin. Su un doppione l'admin e' uno
+         solo, quindi la funzione lo toglie subito senza chiedere niente. */
+      dupRows.forEach(r=>{if(r.owner===myUid){sb.rpc('elimina_viaggio',{p_trip:r.id}).then(()=>{});}});
       toast('Ripuliti '+dupRows.length+' viaggi duplicati');
     }
     if(!T()&&app.trips.length)app.currentTripId=app.trips[0].id;
@@ -9871,7 +10029,7 @@ function handleRealtimeChange(payload){
     return;
   }
   const remote=r.data||{};
-  remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
+  remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);remote.canc_chiesta_da=r.canc_chiesta_da||null;
   decorateTrip(remote);
   const i2=app.trips.findIndex(x=>x.cid===r.id);
   const rawHash=JSON.stringify(cleanTrip(remote));
@@ -9957,7 +10115,7 @@ async function doJoin2(code){
     if(mems&&mems[0])memByTrip[cid]=mems[0];
     if(!rows||!rows[0]){toast('Viaggio non trovato');return;}
     const r=rows[0],remote=r.data||{};
-    remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);
+    remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);remote.canc_chiesta_da=r.canc_chiesta_da||null;
     decorateTrip(remote);
     const i=app.trips.findIndex(x=>x.cid===cid);
     if(i>=0)app.trips[i]=remote;else app.trips.push(remote);

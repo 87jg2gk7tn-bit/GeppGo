@@ -56,14 +56,42 @@ create table if not exists public.trips (
 --  questa colonna fosse text, il database restituirebbe "1756..." e il
 --  confronto con 1756... sarebbe sempre falso: dopo ogni sincronizzazione
 --  l'app non saprebbe più chi sei, e i conti delle spese ne risentirebbero.
+--
+--  ruolo dice cosa può fare questa persona dentro questo viaggio:
+--    'admin'    — chi l'ha creato, e chiunque lui abbia promosso. Può
+--                 eliminare il viaggio per tutti (con le cautele più sotto)
+--                 e nominare altri admin.
+--    'compagno' — costruisce la giornata insieme agli altri, ma non può
+--                 far sparire il viaggio dai telefoni di nessuno.
+--  Chi entra con un invito parte sempre come compagno.
 create table if not exists public.trip_members (
   trip_id        uuid        not null references public.trips(id) on delete cascade,
   user_id        uuid        not null references auth.users(id)   on delete cascade,
   participant_id bigint,
   member_name    text,
+  ruolo          text        not null default 'compagno'
+                             check (ruolo in ('admin','compagno')),
   joined_at      timestamptz not null default now(),
   primary key (trip_id, user_id)
 );
+
+-- Per i database nati prima che i ruoli e la richiesta di eliminazione
+-- esistessero: le colonne si aggiungono senza toccare quello che c'è già.
+alter table public.trip_members add column if not exists ruolo text not null default 'compagno';
+do $$ begin
+  alter table public.trip_members add constraint trip_members_ruolo_ck check (ruolo in ('admin','compagno'));
+exception when duplicate_object then null; end $$;
+
+-- Chi ha già creato dei viaggi era admin di fatto: lo diventa anche di nome.
+update public.trip_members m set ruolo = 'admin'
+  from public.trips t
+ where t.id = m.trip_id and t.owner = m.user_id and m.ruolo <> 'admin';
+
+--  Eliminare un viaggio per tutti, quando gli admin sono più di uno, non
+--  succede al primo tocco: resta in sospeso finché un secondo admin non
+--  conferma. Queste due colonne sono quella sospensione.
+alter table public.trips add column if not exists canc_chiesta_da uuid;
+alter table public.trips add column if not exists canc_chiesta_il timestamptz;
 
 -- Le due domande che l'app fa più spesso: "i membri di questo account" e
 -- "i viaggi di cui sono proprietario".
@@ -94,6 +122,19 @@ as $$
   select exists (
     select 1 from public.trip_members m
     where m.trip_id = p_trip and m.user_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_trip_admin(p_trip uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.trip_members m
+    where m.trip_id = p_trip and m.user_id = auth.uid() and m.ruolo = 'admin'
   );
 $$;
 
@@ -151,8 +192,102 @@ grant execute on function public.join_trip(uuid, text) to authenticated;
 
 revoke all on function public.is_trip_member(uuid) from public, anon;
 revoke all on function public.is_trip_owner(uuid)  from public, anon;
+revoke all on function public.is_trip_admin(uuid)  from public, anon;
 grant execute on function public.is_trip_member(uuid) to authenticated;
 grant execute on function public.is_trip_owner(uuid)  to authenticated;
+grant execute on function public.is_trip_admin(uuid)  to authenticated;
+
+
+-- ────────────────────────────────────────────────────────────────────────────
+--  ELIMINARE UN VIAGGIO — a quattro mani quando gli admin sono più di uno
+-- ────────────────────────────────────────────────────────────────────────────
+--  Non esiste un DELETE diretto sui viaggi: la regola più sotto non lo
+--  concede a nessuno. Si passa solo da qui, altrimenti basterebbe una
+--  chiamata fatta a mano per saltare la conferma del secondo admin.
+--
+--  Con un solo admin il viaggio se ne va subito (l'avviso serio lo fa
+--  l'app prima di arrivare qui). Con due o più resta in sospeso: chi ha
+--  chiesto viene segnato, e serve che un ALTRO admin confermi. Chi ha
+--  chiesto non può confermarsi da solo.
+
+create or replace function public.elimina_viaggio(p_trip uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare n_admin int;
+begin
+  if auth.uid() is null then
+    raise exception 'serve un account';
+  end if;
+  if not public.is_trip_admin(p_trip) then
+    raise exception 'solo un admin puo eliminare il viaggio per tutti';
+  end if;
+
+  select count(*) into n_admin
+    from public.trip_members where trip_id = p_trip and ruolo = 'admin';
+
+  if n_admin <= 1 then
+    delete from public.trips where id = p_trip;
+    return 'eliminato';
+  end if;
+
+  update public.trips
+     set canc_chiesta_da = auth.uid(), canc_chiesta_il = now()
+   where id = p_trip;
+  return 'in-attesa';
+end;
+$$;
+
+create or replace function public.conferma_eliminazione(p_trip uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare chi uuid;
+begin
+  if not public.is_trip_admin(p_trip) then
+    raise exception 'solo un admin puo confermare';
+  end if;
+
+  select canc_chiesta_da into chi from public.trips where id = p_trip;
+
+  if chi is null then
+    raise exception 'nessuna eliminazione in corso su questo viaggio';
+  end if;
+  -- Il senso di tutto il meccanismo: due teste, non una due volte.
+  if chi = auth.uid() then
+    raise exception 'la conferma deve venire da un altro admin';
+  end if;
+
+  delete from public.trips where id = p_trip;
+end;
+$$;
+
+create or replace function public.annulla_eliminazione(p_trip uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_trip_admin(p_trip) then
+    raise exception 'solo un admin puo annullare';
+  end if;
+  update public.trips
+     set canc_chiesta_da = null, canc_chiesta_il = null
+   where id = p_trip;
+end;
+$$;
+
+revoke all on function public.elimina_viaggio(uuid)       from public, anon;
+revoke all on function public.conferma_eliminazione(uuid) from public, anon;
+revoke all on function public.annulla_eliminazione(uuid)  from public, anon;
+grant execute on function public.elimina_viaggio(uuid)       to authenticated;
+grant execute on function public.conferma_eliminazione(uuid) to authenticated;
+grant execute on function public.annulla_eliminazione(uuid)  to authenticated;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -202,22 +337,23 @@ create policy trips_update on public.trips
   using      (owner = auth.uid() or public.is_trip_member(id))
   with check (owner = auth.uid() or public.is_trip_member(id));
 
--- CANCELLARE: solo chi l'ha creato. Un compagno che se ne va toglie la
--- propria riga da trip_members, non il viaggio a tutti.
+-- CANCELLARE: nessuno, direttamente. Nemmeno chi l'ha creato.
+-- Non è una svista: se il DELETE fosse concesso all'app, la conferma del
+-- secondo admin si salterebbe con una chiamata fatta a mano. Si passa da
+-- elimina_viaggio() / conferma_eliminazione(), che quella regola la fanno
+-- rispettare. Un compagno che vuole togliersi il viaggio non cancella
+-- niente: toglie la propria riga da trip_members ed esce.
 drop policy if exists trips_delete on public.trips;
-create policy trips_delete on public.trips
-  for delete to authenticated
-  using (owner = auth.uid());
 
 -- ── trip_members ────────────────────────────────────────────────────────────
 
--- LEGGERE: solo le proprie righe. L'app chiede sempre e solo le sue
--- (.eq('user_id', myUid)), quindi non serve di più — e tenerlo stretto
--- evita di far girare l'elenco di chi viaggia con chi.
+-- LEGGERE: le proprie righe, e quelle dei compagni dei viaggi in cui sei.
+-- Servono per mostrare chi è admin nella scheda delle persone. Fuori dai
+-- tuoi viaggi non vedi niente: l'elenco di chi viaggia con chi non gira.
 drop policy if exists members_select on public.trip_members;
 create policy members_select on public.trip_members
   for select to authenticated
-  using (user_id = auth.uid());
+  using (user_id = auth.uid() or public.is_trip_member(trip_id));
 
 -- ISCRIVERSI DA SÉ: solo al proprio viaggio, quello appena creato.
 -- Senza la seconda condizione basterebbe indovinare l'id di un viaggio per
@@ -228,13 +364,19 @@ create policy members_insert on public.trip_members
   for insert to authenticated
   with check (user_id = auth.uid() and public.is_trip_owner(trip_id));
 
--- MODIFICARE: si cambia solo la propria riga (serve a dire "nel viaggio io
--- sono questo partecipante qui").
+-- MODIFICARE: la propria riga (serve a dire "nel viaggio io sono questo
+-- partecipante qui"), e — se sei admin — anche quella dei compagni, che è
+-- il modo in cui si promuove qualcuno ad admin.
+--
+-- Da sola questa regola lascerebbe però a chiunque la possibilità di
+-- scriversi ruolo = 'admin' sulla PROPRIA riga: è lo stesso inganno del
+-- proprietario, che il with check non vede. Chi custodisce il ruolo è il
+-- guardiano membri_ruolo_custodito, più sotto.
 drop policy if exists members_update on public.trip_members;
 create policy members_update on public.trip_members
   for update to authenticated
-  using      (user_id = auth.uid())
-  with check (user_id = auth.uid());
+  using      (user_id = auth.uid() or public.is_trip_admin(trip_id))
+  with check (user_id = auth.uid() or public.is_trip_admin(trip_id));
 
 -- USCIRE: si toglie solo sé stessi.
 drop policy if exists members_delete on public.trip_members;
@@ -268,6 +410,18 @@ begin
     raise exception 'il proprietario di un viaggio non si cambia';
   end if;
 
+  -- La richiesta di eliminazione la muovono solo elimina_viaggio(),
+  -- conferma_eliminazione() e annulla_eliminazione(). Quelle girano con i
+  -- diritti di chi le ha create, quindi qui dentro current_user non è più
+  -- "authenticated": è così che si distingue una chiamata regolare da un
+  -- aggiornamento mandato a mano dall'app per cancellare la richiesta di
+  -- un altro admin.
+  if (new.canc_chiesta_da is distinct from old.canc_chiesta_da
+      or new.canc_chiesta_il is distinct from old.canc_chiesta_il)
+     and current_user in ('authenticated', 'anon') then
+    raise exception 'la richiesta di eliminazione si muove solo dalle sue funzioni';
+  end if;
+
   -- Il codice invito può rigenerarlo solo chi ha creato il viaggio: serve per
   -- chiudere fuori qualcuno a cui il codice vecchio è arrivato per sbaglio.
   -- Un compagno no, altrimenti potrebbe tagliare fuori gli altri.
@@ -283,6 +437,108 @@ drop trigger if exists trips_campi_bloccati_trg on public.trips;
 create trigger trips_campi_bloccati_trg
   before update on public.trips
   for each row execute function public.trips_campi_bloccati();
+
+
+-- ────────────────────────────────────────────────────────────────────────────
+--  IL GUARDIANO DEI RUOLI
+-- ────────────────────────────────────────────────────────────────────────────
+--  Chi entra: admin se sta creando il proprio viaggio, compagno in tutti gli
+--  altri casi. Il ruolo non lo sceglie chi arriva — nemmeno passando per
+--  join_trip con un codice valido.
+create or replace function public.membri_ruolo_all_ingresso()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if exists (select 1 from public.trips t where t.id = new.trip_id and t.owner = new.user_id) then
+    new.ruolo := 'admin';
+  else
+    new.ruolo := 'compagno';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists membri_ruolo_ingresso_trg on public.trip_members;
+create trigger membri_ruolo_ingresso_trg
+  before insert on public.trip_members
+  for each row execute function public.membri_ruolo_all_ingresso();
+
+--  E dopo: il ruolo lo cambia solo un admin di quel viaggio. Senza questo,
+--  la regola members_update lascerebbe a chiunque la possibilità di
+--  promuoversi da solo scrivendosi sulla propria riga — il with check vede
+--  la riga nuova, dove "sono admin" è già vero, e la lascia passare.
+--
+--  In più: l'ultimo admin non si può togliere il ruolo. Un viaggio senza
+--  nessun admin non lo potrebbe più eliminare nessuno, e resterebbe lì per
+--  sempre sui telefoni di tutti.
+create or replace function public.membri_ruolo_custodito()
+returns trigger
+language plpgsql
+as $$
+declare n_admin int;
+begin
+  if new.trip_id is distinct from old.trip_id or new.user_id is distinct from old.user_id then
+    raise exception 'una iscrizione non si sposta su un altro viaggio o un altro account';
+  end if;
+
+  if new.ruolo is distinct from old.ruolo then
+    if not public.is_trip_admin(old.trip_id) then
+      raise exception 'solo un admin del viaggio puo cambiare i ruoli';
+    end if;
+
+    if old.ruolo = 'admin' and new.ruolo <> 'admin' then
+      select count(*) into n_admin
+        from public.trip_members where trip_id = old.trip_id and ruolo = 'admin';
+      if n_admin <= 1 then
+        raise exception 'un viaggio deve restare con almeno un admin';
+      end if;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists membri_ruolo_custodito_trg on public.trip_members;
+create trigger membri_ruolo_custodito_trg
+  before update on public.trip_members
+  for each row execute function public.membri_ruolo_custodito();
+
+--  Uscire da un viaggio è sempre permesso — tranne all'ultimo admin, che
+--  lascerebbe il viaggio orfano sui telefoni degli altri, senza più nessuno
+--  in grado di eliminarlo. Prima promuove qualcuno, o lo elimina lui.
+create or replace function public.membri_ultimo_admin_non_esce()
+returns trigger
+language plpgsql
+as $$
+declare n_admin int;
+begin
+  -- Quando è il viaggio intero a sparire, le iscrizioni se ne vanno con lui
+  -- per forza: qui non c'è niente da difendere. A quel punto la riga in
+  -- trips è già stata tolta, ed è così che si riconosce il caso.
+  if not exists (select 1 from public.trips where id = old.trip_id) then
+    return old;
+  end if;
+
+  if old.ruolo = 'admin' then
+    select count(*) into n_admin
+      from public.trip_members where trip_id = old.trip_id and ruolo = 'admin';
+    if n_admin <= 1 then
+      raise exception 'sei l''unico admin: prima nomina un altro admin, oppure elimina il viaggio';
+    end if;
+  end if;
+
+  return old;
+end;
+$$;
+
+drop trigger if exists membri_ultimo_admin_trg on public.trip_members;
+create trigger membri_ultimo_admin_trg
+  before delete on public.trip_members
+  for each row execute function public.membri_ultimo_admin_non_esce();
 
 
 -- ────────────────────────────────────────────────────────────────────────────
