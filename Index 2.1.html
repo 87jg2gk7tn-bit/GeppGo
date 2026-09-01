@@ -1199,6 +1199,15 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
              porta di servizio per chi vuole far girare GeppGo sul proprio
              Supabase. Piccolo e in fondo, dove non da' fastidio. -->
         <div style="text-align:center;margin-top:.9rem"><button onclick="openCloudCfg()" style="background:none;border:none;font-family:inherit;font-size:.74rem;color:var(--ink-faint);cursor:pointer;text-decoration:underline">Usa un cloud tuo</button></div></div>
+      <!-- Il contatto pubblicato: chi ospita contenuti caricati dalle persone
+           deve avere un modo per essere raggiunto, ed e' anche una delle
+           quattro cose che l'App Store pretende alla linea guida 1.2 (le
+           altre tre - segnalare, rimuovere, allontanare - sono nell'app). -->
+      <div class="card"><div class="card-h" style="margin-bottom:.6rem">⚑ Segnalazioni e contatti</div>
+        <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6">Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.</p>
+        <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Se in un viaggio trovi una foto che non dovrebbe esserci, aprila e tocca <strong>Segnala</strong>. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.</p>
+        <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Per qualsiasi altra cosa: <a href="mailto:merati.giacomo94@gmail.com" style="color:var(--brown);font-weight:700">merati.giacomo94@gmail.com</a></p>
+        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.</p></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
 <div class="page" id="mDay"><div class="tt-sheet">
@@ -1588,7 +1597,31 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Foto</div><button class="x x-close" onclick="closeSheet('mPhoto')">✕</button></div>
   <img id="phBig" style="width:100%;border-radius:var(--r-md);margin-bottom:.8rem" alt="">
+  <div id="phChi" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.7rem"></div>
   <button class="btn btn-danger btn-block" onclick="delPhoto()">Elimina questa foto</button>
+  <!-- Il canale con cui veniamo a sapere. Chi ospita contenuti altrui non
+       risponde di quello che non sa, ma risponde di quello che sa e lascia
+       li': averlo, e tenerlo funzionante, e' meta' della tutela. Lo chiede
+       il DSA (art. 16) e lo pretende l'App Store (linea guida 1.2). -->
+  <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="apriSegnala()">⚑ Segnala questa foto</button>
+</div></div>
+<div class="modal" id="mSegnala"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Segnala questa foto</div><button class="x x-close" onclick="closeSheet('mSegnala')">✕</button></div>
+  <p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem">La segnalazione arriva a chi gestisce GeppGo. Se riguarda un minore o un reato, viene trattata con precedenza e, quando serve, riferita alle autorità.</p>
+  <div class="fg"><label>Di cosa si tratta</label>
+    <select id="sgMotivo">
+      <option value="minori">Riguarda un minore</option>
+      <option value="illegale">Contenuto illegale</option>
+      <option value="violenza">Violenza o odio</option>
+      <option value="privacy">Foto mia o di una persona che non ha acconsentito</option>
+      <option value="altro">Altro</option>
+    </select></div>
+  <div class="fg"><label>Vuoi aggiungere qualcosa? (facoltativo)</label>
+    <textarea id="sgNota" rows="3" placeholder="Scrivi qui se può aiutare a capire"></textarea></div>
+  <div id="sgMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
+  <button class="btn btn-danger btn-block" onclick="inviaSegnalazione()">Invia la segnalazione</button>
+  <p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">Se c'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.</p>
 </div></div>
 <div id="diaryPrint" style="display:none"></div>
 <div class="modal" id="mMailHotel"><div class="sheet">
@@ -3386,7 +3419,9 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
-- Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
+- Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
+- Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
+- Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -9596,10 +9631,29 @@ function addPersonInline(){
   if(t.participants.some(pp=>pp.name.toLowerCase()===v.toLowerCase())){toast('C\'è già');return;}
   t.participants.push({id:uid(),name:v,isMe:false});i.value='';save();renderAll();renderPeople();
 }
-function removeParticipant(id){
+/* Togliere qualcuno dal viaggio. Se e' solo un nome scritto a mano si toglie
+   dall'elenco e basta. Se invece ha un account collegato, va tolto anche dal
+   cloud: altrimenti resterebbe a vedere - e a modificare - il viaggio dal suo
+   telefono, che e' l'opposto di quello che si intendeva facendo. Questo e'
+   anche il "poter allontanare chi si comporta male" che l'App Store pretende
+   alla linea guida 1.2, accanto alla segnalazione. */
+async function removeParticipant(id){
   const t=T(),pp=t.participants.find(x=>x.id===id);if(!pp||pp.isMe)return;
   const used=t.expenses.some(e=>e.payerId===id||(e.splitAmong||[]).includes(id));
   if(used){toast('Ha spese collegate: modificale o eliminale prima');return;}
+  const mem=membroDi(t,pp);
+  if(mem&&t.cid){
+    if(!t._admin){toast('Ha un account nel viaggio: solo un admin può toglierlo');return;}
+    if(mem.ruolo==='admin'){toast('È un altro admin: prima togligli il ruolo');return;}
+    confirmDo(`Togliere ${pp.name} dal viaggio?`,'Non vedrà più il viaggio, né le foto, dal suo telefono. Potrai riammetterlo con un nuovo invito.',async()=>{
+      const{error}=await sb.rpc('togli_dal_viaggio',{p_trip:t.cid,p_utente:mem.user_id});
+      if(error){toast('Non riesco: '+error.message);return;}
+      membriPerViaggio[t.cid]=(membriPerViaggio[t.cid]||[]).filter(x=>x.user_id!==mem.user_id);
+      t.participants=t.participants.filter(x=>x.id!==id);
+      save();renderAll();renderPeople();toast(pp.name+' non è più nel viaggio');
+    },'🚪','Togli','btn-danger');
+    return;
+  }
   confirmDo(`Rimuovere ${pp.name}?`,'Potrai riaggiungerlo quando vuoi.',()=>{t.participants=t.participants.filter(x=>x.id!==id);save();renderAll();renderPeople();});
 }
 
@@ -9958,12 +10012,21 @@ async function cloudStart(){
   await pullCloud();
   subscribeRT();
   if(pendingJoin2){const c=pendingJoin2;pendingJoin2=null;doJoin2(c);}
+  /* Le foto vengono dopo i viaggi, e non fanno aspettare nessuno: sono
+     pesanti e non servono per far partire l'app. Prima si spedisce quello
+     che era rimasto indietro (le foto fatte senza rete), poi si scarica
+     quello che hanno messo i compagni. */
+  fotoDaSpedire().then(fotoDalCloud);
   /* Un push può fallire in silenzio (rete assente mentre si è in viaggio): senza
      un nuovo tentativo automatico, quella modifica resterebbe solo su questo
      telefono a tempo indefinito. Ci riprova da sola ogni 20s finché non va a segno
      (syncPush non fa nulla se non c'è nulla di nuovo da mandare). */
   clearInterval(window._syncRetryInt);
   window._syncRetryInt=setInterval(()=>{if(navigator.onLine!==false)syncPush();},20000);
+  /* Le foto ogni due minuti: cambiano molto meno spesso dei programmi e
+     pesano molto di piu', quindi non ha senso guardarle ogni venti secondi. */
+  clearInterval(window._fotoInt);
+  window._fotoInt=setInterval(()=>{if(navigator.onLine!==false)fotoDaSpedire().then(fotoDalCloud);},120000);
 }
 async function pullCloud(){
   try{
@@ -11878,6 +11941,103 @@ async function runGen(){
 let phDB=null,phCur=null;
 function idbP(){return new Promise((res,rej)=>{if(phDB)return res(phDB);const q=indexedDB.open('geppgo_ph',1);q.onupgradeneeded=e=>{e.target.result.createObjectStore('ph',{keyPath:'id'});};q.onsuccess=e=>{phDB=e.target.result;res(phDB);};q.onerror=()=>rej(new Error('no-idb'));});}
 function phAll(tripId,date){return idbP().then(db=>new Promise(res=>{const out=[];const c=db.transaction('ph').objectStore('ph').openCursor();c.onsuccess=e=>{const cur=e.target.result;if(cur){const v=cur.value;if(v.kind!=='ticket'&&v.tripId===tripId&&(!date||v.date===date))out.push(v);cur.continue();}else res(out.sort((a,b)=>a.ts-b.ts));};})).catch(()=>[]);}
+/* ===== LE FOTO E IL CLOUD =====
+   Le foto stavano solo dentro il telefono: cambiavi telefono e le perdevi.
+   Adesso vanno anche nel cloud, ma con dei limiti addosso, perche' le foto
+   sono la cosa piu' delicata che quest'app custodisca.
+
+   Il principio che regge tutto: GeppGo non e' un posto dove si pubblica.
+   Una foto vive dentro un viaggio e la vedono soltanto le persone di quel
+   viaggio - niente bacheca, niente ricerca, nessun indirizzo pubblico. Gli
+   indirizzi con cui si scaricano durano un'ora e non si indovinano.
+
+   Il magazzino accetta solo JPEG fino a 4 MB, e l'app le rimpicciolisce a
+   1000 pixel prima di spedirle: qualunque altra cosa viene respinta prima
+   ancora di arrivare ai permessi. */
+const FOTO_BUCKET='foto-viaggi';
+let fotoInCorso=false;
+
+/* Da dataURL a file vero da spedire. Il canvas ci da' una stringa, il
+   magazzino vuole dei byte con un tipo dichiarato. */
+function dataUrlABlob(u){
+  const virgola=u.indexOf(',');
+  const bin=atob(u.slice(virgola+1));
+  const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:'image/jpeg'});
+}
+
+/* Manda una foto nel cloud. Se la rete non c'e' non succede niente di grave:
+   la foto resta sul telefono con cloudId vuoto, e ci riprova la volta dopo. */
+async function fotoSuCloud(rec){
+  const t=app.trips.find(x=>x.id===rec.tripId);
+  if(!sb||!session||!t||!t.cid||rec.cloudId)return false;
+  try{
+    const idFoto=(crypto&&crypto.randomUUID)?crypto.randomUUID():uid()+'-'+Math.random().toString(16).slice(2);
+    const percorso=t.cid+'/'+idFoto+'.jpg';
+    const su=await sb.storage.from(FOTO_BUCKET).upload(percorso,dataUrlABlob(rec.data),{contentType:'image/jpeg',upsert:false});
+    if(su.error)return false;
+    const{error}=await sb.from('foto').insert({id:idFoto,trip_id:t.cid,caricata_da:myUid,giorno:rec.date||null,percorso});
+    if(error){try{await sb.storage.from(FOTO_BUCKET).remove([percorso]);}catch(e){}return false;}
+    const db=await idbP();
+    rec.cloudId=idFoto;rec.percorso=percorso;rec.chi=myUid;
+    await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
+    return true;
+  }catch(e){return false;}
+}
+
+/* Le foto che i compagni hanno messo e che su questo telefono non ci sono
+   ancora. Si scaricano dentro IndexedDB come le proprie, cosi' il diario
+   funziona anche senza rete e il resto del codice non deve sapere da dove
+   arrivano. */
+async function fotoDalCloud(){
+  if(!sb||!session||fotoInCorso)return;
+  fotoInCorso=true;
+  try{
+    const conCid=app.trips.filter(t=>t.cid);
+    if(!conCid.length)return;
+    const{data:righe,error}=await sb.from('foto').select('*');
+    if(error||!righe)return;
+    const db=await idbP();
+    const gia=new Set();
+    await new Promise(res=>{const c=db.transaction('ph').objectStore('ph').openCursor();
+      c.onsuccess=e=>{const cur=e.target.result;if(cur){if(cur.value.cloudId)gia.add(cur.value.cloudId);cur.continue();}else res();};});
+    for(const r of righe){
+      if(gia.has(r.id))continue;
+      const t=conCid.find(x=>x.cid===r.trip_id);
+      if(!t)continue;
+      /* L'indirizzo per scaricare dura un'ora e vale solo per chi lo chiede
+         avendone diritto: non e' un link che si possa girare a qualcuno. */
+      const{data:firmato}=await sb.storage.from(FOTO_BUCKET).createSignedUrl(r.percorso,3600);
+      if(!firmato||!firmato.signedUrl)continue;
+      try{
+        const risp=await fetch(firmato.signedUrl);
+        if(!risp.ok)continue;
+        const blob=await risp.blob();
+        const url=await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(blob);});
+        await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put({
+          id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:r.giorno||'',
+          data:url,ts:new Date(r.creata_il).getTime()||Date.now(),
+          cloudId:r.id,percorso:r.percorso,chi:r.caricata_da}).onsuccess=res;});
+      }catch(e){}
+    }
+    renderDayPhotos();
+  }catch(e){}finally{fotoInCorso=false;}
+}
+
+/* Le foto rimaste indietro perche' quando le hai fatte non c'era rete. */
+async function fotoDaSpedire(){
+  if(!sb||!session)return;
+  try{
+    const db=await idbP();
+    const attesa=[];
+    await new Promise(res=>{const c=db.transaction('ph').objectStore('ph').openCursor();
+      c.onsuccess=e=>{const cur=e.target.result;if(cur){const v=cur.value;
+        if(v.kind!=='ticket'&&!v.cloudId)attesa.push(v);cur.continue();}else res();};});
+    for(const rec of attesa)await fotoSuCloud(rec);
+  }catch(e){}
+}
+
 async function addPhoto(inp){
   const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
   const t=T(),d=t.days[ttDay];if(!t||!d)return;
@@ -11889,8 +12049,13 @@ async function addPhoto(inp){
       rd.onerror=rej;rd.readAsDataURL(f);
     });
     const db=await idbP();
-    await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put({id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:d.date,data:url,ts:Date.now()}).onsuccess=res;});
+    const rec={id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:d.date,data:url,ts:Date.now(),chi:myUid||null};
+    await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
     renderDayPhotos();toast('Foto nel diario di questo giorno');
+    /* Il salvataggio nel cloud viene dopo e non fa aspettare nessuno: se
+       fallisce, la foto e' comunque al sicuro sul telefono e riparte da
+       fotoDaSpedire() alla prossima occasione. */
+    fotoSuCloud(rec).then(ok=>{if(ok)renderDayPhotos();});
   }catch(e){toast('Non riesco a leggere questa foto');}
 }
 async function renderDayPhotos(){
@@ -11898,21 +12063,87 @@ async function renderDayPhotos(){
   const phs=await phAll(t.id,d.date);
   el.innerHTML=phs.map(pp=>`<img src="${pp.data}" style="height:62px;border-radius:10px;flex-shrink:0" onclick="openPhoto('${pp.id}')" alt="">`).join('');
 }
+/* Il nome di chi ha messo una foto, letto dalle iscrizioni del viaggio.
+   Se non lo si trova - un compagno uscito, o una foto vecchia di prima del
+   cloud - si dice "qualcuno del viaggio" invece di mostrare un codice. */
+function nomeDiChiHaCaricato(rec){
+  if(!rec||!rec.chi)return '';
+  if(rec.chi===myUid)return 'tu';
+  const t=app.trips.find(x=>x.id===rec.tripId);
+  const m=t&&t.cid?(membriPerViaggio[t.cid]||[]).find(x=>x.user_id===rec.chi):null;
+  return m&&m.member_name?m.member_name:'qualcuno del viaggio';
+}
+let phRec=null;
 async function openPhoto(id){
   window._phRO=false;
   const db=await idbP();
   db.transaction('ph').objectStore('ph').get(id).onsuccess=e=>{
     const v=e.target.result;if(!v)return;
-    phCur=id;document.getElementById('phBig').src=v.data;openSheet('mPhoto');
+    phCur=id;phRec=v;document.getElementById('phBig').src=v.data;
+    const chi=nomeDiChiHaCaricato(v);
+    const quando=v.ts?new Date(v.ts).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
+    const nuvola=v.cloudId?'salvata anche nel cloud':'ancora solo su questo telefono';
+    document.getElementById('phChi').textContent=
+      (chi?('Messa da '+chi+(quando?' il '+quando:'')+' · '):'')+nuvola;
+    openSheet('mPhoto');
   };
 }
 function delPhoto(){
   if(window._phRO){toast('È l\'immagine di un biglietto: si elimina dal biglietto');return;}
   if(!phCur)return;
-  confirmDo('Eliminare la foto?','',async()=>{
+  const rec=phRec;
+  const t=rec?app.trips.find(x=>x.id===rec.tripId):null;
+  const mia=!rec||!rec.chi||rec.chi===myUid;
+  const posso=mia||(t&&t._admin);
+  /* Nel cloud si tolgono solo le proprie, o - da admin del viaggio - quelle
+     di chiunque: e' cosi' che si da' seguito a una segnalazione senza dover
+     aspettare nessuno. Chi non puo' toglierla agli altri se la leva almeno
+     dal proprio telefono, e la vede sparire dal suo diario. */
+  const testo=posso
+    ?(mia?'Sparirà anche dai telefoni dei compagni.':'Sei admin del viaggio: sparirà per tutti.')
+    :'L\'ha messa un\'altra persona: sparisce dal tuo telefono, ma resta agli altri. Se il problema è il contenuto, usa "Segnala".';
+  confirmDo('Eliminare la foto?',testo,async()=>{
+    if(posso&&rec&&rec.cloudId&&sb&&session){
+      try{await sb.from('foto').delete().eq('id',rec.cloudId);}catch(e){}
+      try{await sb.storage.from(FOTO_BUCKET).remove([rec.percorso]);}catch(e){}
+    }
     const db=await idbP();
     db.transaction('ph','readwrite').objectStore('ph').delete(phCur).onsuccess=()=>{closeSheet('mPhoto');renderDayPhotos();};
   });
+}
+
+/* ===== SEGNALARE UNA FOTO =====
+   Il canale con cui chi gestisce GeppGo viene a sapere. Non e' un di piu':
+   chi ospita contenuti altrui non risponde di quello che non sa, ma risponde
+   di quello che sa e lascia dov'e'. Lo chiede il DSA (Reg. UE 2022/2065,
+   art. 16) e lo pretende l'App Store alla linea guida 1.2.
+
+   La segnalazione parte anche se la foto non e' mai arrivata nel cloud: in
+   quel caso si segna il viaggio, che e' comunque il posto da cui partire. */
+function apriSegnala(){
+  if(!phRec){toast('Apri prima una foto');return;}
+  if(!sb||!session){toast('Per segnalare serve essere connessi: accedi dal Profilo');return;}
+  document.getElementById('sgMotivo').value='minori';
+  document.getElementById('sgNota').value='';
+  document.getElementById('sgMsg').textContent='';
+  openSheet('mSegnala');
+}
+async function inviaSegnalazione(){
+  const msg=document.getElementById('sgMsg');
+  if(!phRec||!sb||!session){msg.textContent='Non riesco: prova a riaprire la foto.';return;}
+  const t=app.trips.find(x=>x.id===phRec.tripId);
+  msg.style.color='';msg.textContent='Invio...';
+  const{error}=await sb.from('segnalazioni').insert({
+    foto_id:phRec.cloudId||null,
+    trip_id:t&&t.cid?t.cid:null,
+    percorso_copia:phRec.percorso||null,
+    segnalata_da:myUid,
+    motivo:document.getElementById('sgMotivo').value,
+    nota:document.getElementById('sgNota').value.trim()||null
+  });
+  if(error){msg.textContent='Non riesco a inviare: '+error.message;return;}
+  closeSheet('mSegnala');closeSheet('mPhoto');
+  toast('Segnalazione inviata. Grazie: la guardiamo al più presto.');
 }
 async function openDiary(){
   const t=T();if(!t){toast('Apri prima un viaggio');return;}
