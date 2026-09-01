@@ -378,6 +378,34 @@ begin
   select public.elimina_viaggio(v_trip) into v_txt;
   perform pg_temp.torno_admin();
   perform pg_temp.prova('l''admin rimasto solo elimina senza conferme', v_txt = 'eliminato', v_txt);
+
+  -- ════════════════════════════════════════════════════════════════════════
+  --  NIENTE RESIDUI: i permessi sono ESATTAMENTE questi
+  -- ════════════════════════════════════════════════════════════════════════
+  --  Su un progetto vissuto i permessi si stratificano, e in Postgres si
+  --  sommano: ne basta uno vecchio e dimenticato per riaprire quello che qui
+  --  si e' chiuso. Nel progetto vero ce n'erano quindici, due generazioni
+  --  sovrapposte, e fra questi due DELETE sui viaggi che rendevano inutile
+  --  tutta la conferma del secondo admin. Non basta che le regole nuove
+  --  esistano: bisogna che le vecchie NON ci siano piu'.
+  perform pg_temp.torno_admin();
+
+  select count(*) into v_n from pg_policies
+   where schemaname='public' and tablename in ('trips','trip_members');
+  perform pg_temp.prova('non sono rimasti permessi di versioni precedenti', v_n = 7, v_n||' permessi (attesi 7)');
+
+  select count(*) into v_n from pg_policies
+   where schemaname='public' and tablename='trips' and cmd='DELETE';
+  perform pg_temp.prova('sui viaggi non esiste nessun permesso di DELETE', v_n = 0, v_n||' trovati');
+
+  select string_agg(tablename||'.'||policyname, ', ' order by tablename, policyname)
+    into v_txt from pg_policies
+   where schemaname='public' and tablename in ('trips','trip_members');
+  perform pg_temp.prova('e i nomi sono quelli di questo schema',
+    v_txt = 'trip_members.members_delete, trip_members.members_insert, '
+          ||'trip_members.members_select, trip_members.members_update, '
+          ||'trips.trips_insert, trips.trips_select, trips.trips_update', v_txt);
+
 end $$;
 
 reset role;

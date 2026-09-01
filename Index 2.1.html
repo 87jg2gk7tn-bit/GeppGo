@@ -1193,7 +1193,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="exportData()">Esporta dati</button>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="restoreBak()">Ripristina copia automatica</button>
         <label class="btn btn-soft btn-block" style="margin-bottom:.5rem;cursor:pointer">Importa dati<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
-        <button class="btn btn-danger btn-block" onclick="confirmReset()">Reset completo</button></div>
+        <button class="btn btn-danger btn-block" onclick="confirmReset()">Reset completo</button>
+        <!-- Il cloud ora e' gia' configurato in ogni copia dell'app, quindi
+             questo pannello non serve piu' a nessuno per entrare: resta come
+             porta di servizio per chi vuole far girare GeppGo sul proprio
+             Supabase. Piccolo e in fondo, dove non da' fastidio. -->
+        <div style="text-align:center;margin-top:.9rem"><button onclick="openCloudCfg()" style="background:none;border:none;font-family:inherit;font-size:.74rem;color:var(--ink-faint);cursor:pointer;text-decoration:underline">Usa un cloud tuo</button></div></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
 <div class="page" id="mDay"><div class="tt-sheet">
@@ -1737,8 +1742,11 @@ Minimum version required to store current data is: `+i+`.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ==== CONFIG CLOUD ====
-   Si può lasciare vuoto: la configurazione si fa DENTRO l'app
-   (Impostazioni > Account > Configura cloud), oppure arriva da un link d'invito. */
+   Il cloud di GeppGo e' gia' dentro l'app (in fondo a questo blocco): chi la
+   apre entra con la sola email, non deve configurare niente. Restano davanti
+   tre modi per puntare a un Supabase diverso - un link d'invito, l'indirizzo,
+   o la configurazione salvata su questo telefono - e vincono su quello di
+   serie, in quest'ordine. */
 window.GEPPGO_SUPA_URL="";
 window.GEPPGO_SUPA_KEY="";
 window.GEPPGO_PUBLIC_URL="";
@@ -1772,6 +1780,26 @@ try{
   if(c){if(!window.GEPPGO_SUPA_URL&&c.url)window.GEPPGO_SUPA_URL=c.url;
         if(!window.GEPPGO_SUPA_KEY&&c.key)window.GEPPGO_SUPA_KEY=c.key;}
 }catch(e){}
+/* 4) il cloud di GeppGo, se nessuno dei tre passaggi sopra ha detto altro.
+      E' l'ultimo della fila apposta: chi ha configurato un proprio progetto,
+      o e' arrivato da un invito che ne portava un altro, tiene il suo.
+
+      La chiave "anon" e' fatta per stare qui dentro, in chiaro, dentro ogni
+      copia dell'app: non e' un segreto e da sola non apre niente. Quello che
+      tiene separati i dati di una persona da quelli di tutte le altre sono i
+      permessi del database (supabase-schema.sql) - se quelli hanno un buco,
+      averla scritta qui lo rende pubblico. Per questo lo schema e le sue
+      prove vengono prima di questa riga, non dopo.
+
+      Prima di adesso queste due righe erano vuote e le chiedeva l'app: si
+      apriva GeppGo e la prima cosa che si vedeva era "incolla il Project URL
+      e la chiave anon public del tuo Supabase". Nessuno che non stia
+      costruendo l'app arriva in fondo a una richiesta del genere. */
+if(!window.GEPPGO_SUPA_URL||!window.GEPPGO_SUPA_KEY){
+  window.GEPPGO_SUPA_URL="https://cyolhqndurgwbivxcssf.supabase.co";
+  window.GEPPGO_SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5b2xocW5kdXJnd2Jpdnhjc3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzAxMzgsImV4cCI6MjA5OTg0NjEzOH0.RnPAhyE8-XND8XyrXehiPlacbLl_accdx9F9O2R8QEY";
+  window.GEPPGO_CFG_DI_SERIE=true;
+}
 /* Il testo condiviso arriva anche dopo il cancelletto (il Comando di iOS lo
    passa cosi', per non farlo finire nei registri del server). Va messo da
    parte QUI, prima che l'indirizzo venga riscritto poche righe piu' sotto:
@@ -10279,8 +10307,13 @@ function usaInvito(){
   setTimeout(()=>{try{history.replaceState(null,'',dest);}catch(e){}location.reload();},700);
 }
 function openCloudCfg(){
-  document.getElementById('cfgUrl').value=window.GEPPGO_SUPA_URL||'';
-  document.getElementById('cfgKey').value=window.GEPPGO_SUPA_KEY||'';
+  /* Se quello attivo e' il cloud di serie, i campi restano vuoti: mostrare
+     dentro le caselle l'indirizzo e la chiave di GeppGo farebbe credere di
+     doverli cancellare per scriverci i propri, e uno che li svuota e salva
+     si troverebbe un errore invece di un ritorno all'impostazione normale. */
+  const mio=!window.GEPPGO_CFG_DI_SERIE;
+  document.getElementById('cfgUrl').value=mio?(window.GEPPGO_SUPA_URL||''):'';
+  document.getElementById('cfgKey').value=mio?(window.GEPPGO_SUPA_KEY||''):'';
   document.getElementById('cfgMsg').textContent='';
   openSheet('mCloud');
 }
@@ -10292,9 +10325,16 @@ function saveCloudCfg(){
   m.style.color='var(--green-deep)';m.textContent='Salvato. Riavvio...';
   setTimeout(()=>location.reload(),700);
 }
+/* Togliere la propria configurazione non spegne piu' il cloud: si torna a
+   quello di serie, che c'e' sempre. Prima questo tasto lasciava il telefono
+   in modalita' locale, perche' senza configurazione non c'era altro. */
 function clearCloudCfg(){
-  confirmDo('Rimuovere la configurazione?','I viaggi restano online, ma questo telefono tornerà in modalità locale.',()=>{
-    localStorage.removeItem('geppgo_cfg');location.reload();
+  confirmDo('Tornare al cloud di GeppGo?','I viaggi che hai nel tuo Supabase restano dove sono, ma questo telefono smetterà di usarlo.',()=>{
+    localStorage.removeItem('geppgo_cfg');
+    /* Anche l'indirizzo puo' portarsi dietro una configurazione (#c=...): se
+       resta li', al riavvio si riprende quella e il tasto non fa niente. */
+    try{history.replaceState(null,'',location.pathname);}catch(e){}
+    location.reload();
   });
 }
 /* La scheda dell'account stava in due posti: qui, nella sezione Impostazioni, e

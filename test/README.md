@@ -61,3 +61,27 @@ Ventisette controlli su come l'app legge i ruoli: chi conta per il limite del
 piano gratuito, chi vede il tasto per eliminare e chi quello per uscire, cosa
 compare quando un admin chiede di eliminare un viaggio. Serve `playwright-core`
 e il Chromium di sistema.
+
+## Provare l'aggiornamento, non solo lo schema finito
+
+`supabase-com-era.sql` ricostruisce il progetto vero com'era prima di questo
+schema: stesse tabelle, stesse colonne, e soprattutto gli stessi permessi
+stratificati che ci si era accumulato sopra — quindici, di due generazioni
+diverse (`owner delete trips` accanto a `trips_delete_owner`, e così via).
+
+```sh
+psql -f test/supabase-ambiente-finto.sql
+psql -f test/supabase-com-era.sql        # il progetto com'era
+psql -f supabase-schema.sql              # ci si passa sopra
+psql -f test/supabase-prova-permessi.sql # 48/48
+```
+
+Serve perché uno schema può essere giusto e **posarsi male**. In Postgres i
+permessi si sommano: ne basta uno vecchio e dimenticato per riaprire quello
+che lo schema chiude. Nel progetto vero restavano due `DELETE` sui viaggi, e
+il risultato era che l'eliminazione rispondeva correttamente «in attesa del
+secondo admin» — e poi un `DELETE` diretto portava via il viaggio lo stesso.
+
+Gli ultimi tre controlli della prova esistono per questo: verificano che dopo
+lo schema i permessi siano **esattamente** sette, con i nomi giusti e nessun
+`DELETE` sui viaggi.
