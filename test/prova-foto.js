@@ -226,7 +226,7 @@ const stato = {
 
   const senzaSess = await page.evaluate(async () => {
     const v = session; session = null;
-    await fotoSuCloud({ id: 'q', tripId: 101, data: 'x' });
+    await fotoProvaCarico({ id: 'q', tripId: 101, data: 'x' });
     session = v; return fotoPerche;
   });
   ok('e se non sei connesso lo dice chiaro', /accedi dal Profilo/.test(senzaSess), senzaSess);
@@ -294,6 +294,68 @@ const stato = {
   ok('chiudendo senza scegliere non si carica niente',
      annulla.dopo === annulla.prima && annulla.suDopo === annulla.su,
      annulla.prima + '->' + annulla.dopo + ' foto');
+
+  // ── la qualità che scarico è quella che ho caricato ──────────────────────
+  const identica = await page.evaluate(async () => {
+    app.settings.fotoQualita = 'originale';
+    const byte = Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0));
+    const pr = addPhoto({ files: [new File([byte], 'i.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
+    await new Promise(r => setTimeout(r, 700));
+    const ultima = CLOUD.caricate[CLOUD.caricate.length - 1];
+    const caricata = ultima.bytes;
+
+    // quello che il telefono ha in mano: presa per identità, non per ordine
+    const idFoto = ultima.percorso.split('/')[1].replace('.jpg', '');
+    const rec = (await phAll(101)).find(x => x.cloudId === idFoto);
+    const inCasa = dataUrlABlob(rec.data).size;
+
+    // quello che esce dal tasto "Salva sul telefono"
+    let salvato = null;
+    navigator.canShare = () => true;
+    navigator.share = async (d) => { salvato = d.files[0].size; };
+    await openPhoto(rec.id); await new Promise(r => setTimeout(r, 150));
+    await salvaFoto();
+    return { partita: byte.length, caricata, inCasa, salvato };
+  });
+  ok('quello che carico e quello che tengo sono lo stesso file',
+     identica.caricata === identica.partita && identica.inCasa === identica.partita,
+     identica.partita + ' / ' + identica.caricata + ' / ' + identica.inCasa + ' byte');
+  ok('e scaricandola esce identica, senza ricomprimere',
+     identica.salvato === identica.partita, identica.salvato + ' byte');
+
+  // ── a blocchi ────────────────────────────────────────────────────────────
+  const blocco = await page.evaluate(async () => {
+    const fai = n => Array.from({ length: n }, (_, i) =>
+      new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'b' + i + '.jpg', { type: 'image/jpeg' }));
+    const prima = (await phAll(101)).length, su = CLOUD.caricate.length;
+    const pr = addPhoto({ files: fai(5), value: '' });
+    await new Promise(r => setTimeout(r, 200));
+    const titolo = document.querySelector('#mFotoQual .sheet-t').textContent;
+    scegliQualita('alta'); await pr;
+    await new Promise(r => setTimeout(r, 1500));
+    return { titolo, aggiunte: (await phAll(101)).length - prima, caricate: CLOUD.caricate.length - su };
+  });
+  ok('si caricano più foto in una volta', blocco.aggiunte === 5, blocco.aggiunte + ' aggiunte');
+  ok('e la qualità si sceglie una volta sola per tutte', /queste 5 foto/.test(blocco.titolo), blocco.titolo);
+  ok('vanno tutte anche nel cloud', blocco.caricate === 5, blocco.caricate + ' caricate');
+
+  const tetto = await page.evaluate(async () => {
+    const fai = n => Array.from({ length: n }, (_, i) =>
+      new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'c' + i + '.jpg', { type: 'image/jpeg' }));
+    const prima = (await phAll(101)).length;
+    const pr = addPhoto({ files: fai(20), value: '' });
+    await new Promise(r => setTimeout(r, 200));
+    const titolo = document.querySelector('#mFotoQual .sheet-t').textContent;
+    scegliQualita('leggera'); await pr;
+    await new Promise(r => setTimeout(r, 3000));
+    return { titolo, aggiunte: (await phAll(101)).length - prima, max: FOTO_MAX_BLOCCO };
+  });
+  ok('oltre il blocco si ferma a 15', tetto.aggiunte === 15, tetto.aggiunte + ' aggiunte su 20 scelte');
+  ok('e lo dice prima di partire', /queste 15 foto/.test(tetto.titolo), tetto.titolo);
+
+  const multi = await page.evaluate(() => document.getElementById('phInput').hasAttribute('multiple'));
+  ok('e il selettore del telefono ne fa scegliere più di una', multi === true);
 
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
