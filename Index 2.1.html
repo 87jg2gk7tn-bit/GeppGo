@@ -4962,7 +4962,7 @@ async function openShare(){
       openSheet('mShare');
       const res=await cloudCreate(t);
       if(t.cid){openShare();return;}
-      box.innerHTML=`<p style="font-size:.9rem;color:var(--red);line-height:1.6">Il cloud ha rifiutato il salvataggio${res&&res.error?': <b>'+esc(res.error)+'</b>':''}.</p>${/row-level security/i.test((res&&res.error)||'')?`<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem"><b>È il problema dei permessi del database:</b> incolla lo script di riparazione (supabase-fix-rls.sql) nel SQL Editor di Supabase, premi Run, poi riprova qui.</p>`:``}<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Controlla Impostazioni → Account di essere connesso, poi riprova. In alternativa:</p><button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openShareLocal()">Condividi versione locale</button>`;
+      box.innerHTML=`<p style="font-size:.9rem;color:var(--red);line-height:1.6">Il cloud ha rifiutato il salvataggio${res&&res.error?': <b>'+esc(res.error)+'</b>':''}.</p>${/row-level security/i.test((res&&res.error)||'')?`<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem"><b>È il problema dei permessi del database:</b> incolla lo schema (supabase-schema.sql, nella cartella dell'app) nel SQL Editor di Supabase, premi Run, poi riprova qui.</p>`:``}<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Controlla Impostazioni → Account di essere connesso, poi riprova. In alternativa:</p><button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openShareLocal()">Condividi versione locale</button>`;
       return;
     }
     const code=t.cid+':'+(t._invite||'');
@@ -9676,9 +9676,17 @@ function mergedRecordFields(localT,remoteT,vince){
   out._delAct=tombAct;
   return out;
 }
+/* Segna quale dei partecipanti del viaggio sono io, leggendolo dall'iscrizione
+   salvata nel cloud. Il confronto passa da String() e non da === diretto: gli id
+   dei partecipanti li fa uid(), che restituisce un numero, ma quello stesso id
+   torna indietro dal database come testo se la colonna participant_id non e'
+   numerica. Con === il confronto sarebbe sempre falso e dopo ogni sincronizzazione
+   l'app non saprebbe piu' chi sono io nel viaggio: salterebbero le spese "pagate
+   da me" e i saldi. Cosi' invece funziona comunque sia fatta la colonna. */
 function decorateTrip(t){
   const mem=memByTrip[t.cid];
-  (t.participants||[]).forEach(pp=>{pp.isMe=!!(mem&&mem.participant_id===pp.id);});
+  const mio=mem&&mem.participant_id!=null?String(mem.participant_id):null;
+  (t.participants||[]).forEach(pp=>{pp.isMe=mio!==null&&String(pp.id)===mio;});
 }
 let syncBusy=false;
 async function syncPush(){
