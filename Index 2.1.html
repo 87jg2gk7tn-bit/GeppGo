@@ -6042,6 +6042,21 @@ const VICINI_POCHI=3;
 function ovAttorno(filtri,r,lat,lng){
   return filtri.map(f=>['node','way','relation'].map(tp=>`${tp}${f}(around:${r},${lat},${lng});`).join('')).join('');
 }
+/* La ricerca per nome è la rete di sicurezza, ma costa: cercare una parola in
+   venti lingue dentro cinque campi obbliga Overpass a leggersi le etichette di
+   tutto quello che c'è nell'area, mentre cercare per tipo usa un indice e vola.
+   Su quattrocento metri non si sente; su otto chilometri di città il conto non
+   torna più e la richiesta scade, cioè non esce NIENTE - ed è il caso peggiore,
+   perché succede proprio alla ricerca che di risultati ne trova pochi (i bagni)
+   e che quindi arriva fino al giro più largo, mentre quella dei bancomat si
+   ferma prima e sembra funzionare meglio.
+   Quindi: nei giri stretti si cerca anche per nome, nei due larghi solo per
+   tipo. Là in fondo si sta già raschiando il fondo del barile, e vale più una
+   risposta che arriva di una perfetta che non arriva mai. */
+const VICINI_NOME_MAX=1200;
+function ovConNome(tag,parole,r,lat,lng){
+  return ovAttorno(r<=VICINI_NOME_MAX?tag.concat(ovNome(parole)):tag,r,lat,lng);
+}
 /* Il nome di un posto non sta solo in "name": c'è "brand" (la catena) e
    "operator" (chi lo gestisce), e in mezzo mondo la filiale ha addosso solo il
    marchio. Overpass sa cercare per espressione regolare anche sul NOME del tag,
@@ -6050,7 +6065,7 @@ function ovAttorno(filtri,r,lat,lng){
    filiale, mentre il nome per esteso sta in official_name, e la catena in brand
    o operator: se si guarda solo "name" si perde proprio l'insegna che tutti
    riconoscono. */
-function ovNome(parole){return `[~"^(name|brand|operator|short_name|official_name|alt_name|name:en|brand:en)$"~"${parole}",i]`;}
+function ovNome(parole){return `[~"^(name|brand|operator|official_name|short_name)$"~"${parole}",i]`;}
 /* Le sigle. Un elenco di marchi è per sua natura incompleto, ma senza queste si
    perdono banche enormi: "BPM", "MPS", "HSBC" non contengono né "banca" né
    "bank", quindi nessuna regola generale le prende - ed è esattamente la
@@ -6068,7 +6083,7 @@ const SIGLE_BANCA='(^|[^a-z])(bpm|bnl|mps|ubi|bper|bcc|hsbc|bbva|icbc|smbc|mufg|
    costa una riga in più da leggere, mentre una che manca costa un posto che
    non si trova: nel dubbio si tiene. */
 const PAROLE_BANCA='ban[ckq]|банк|銀行|银行|은행|ธนาคาร|بنك|مصرف|בנק|बैंक|τρ[άα]π[έε]ζ|atm|bancomat|geldautomat|cajero|caixa|sparkasse|raiffeisen|credit|crédit|credito|'+SIGLE_BANCA;
-const PAROLE_BAGNO='bagn|toilet|tualet|туалет|τουαλ|wc|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
+const PAROLE_BAGNO='bagn|toilet|tualet|туалет|τουαλ|(^|[^a-z])wc([^a-z]|$)|baño|bano|aseo|sanitair|banheiro|restroom|washroom|lavator|トイレ|お手洗|化粧室|洗手间|厕所|화장실|ห้องน้ำ|مرحاض|शौचालय';
 /* "smoke" da solo non c'è: prenderebbe tutte le "Smokehouse", che sono
    ristoranti. "fumo" da solo nemmeno, che sta dentro "profumeria". Si tengono le
    forme che nelle varie lingue vogliono dire solo quello. */
@@ -6076,7 +6091,7 @@ const PAROLE_FUMO='smoking|fumat|fumeur|fumoir|fumador|fumante|raucher|rook|rök
 const VICINI={
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]',ovNome(PAROLE_BAGNO)],r,lat,lng),
+    q:(r,lat,lng)=>ovConNome(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]'],PAROLE_BAGNO,r,lat,lng),
     /* un parco che dichiara i bagni non si chiama "bagno": si dice di chi sono,
        che è quello che serve per trovarli una volta arrivati */
     nome:t=>{
@@ -6100,7 +6115,7 @@ const VICINI={
     ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]','["smoking"="separated"]',ovNome(PAROLE_FUMO)],r,lat,lng),
+    q:(r,lat,lng)=>ovConNome(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]','["smoking"="separated"]'],PAROLE_FUMO,r,lat,lng),
     nome:t=>t.name||t.operator||t.brand||'Area fumatori',
     extra:t=>[
       /* come per le altre due: quello che salta fuori solo dal nome non si sa
@@ -6127,7 +6142,7 @@ const VICINI={
        allora nessuna ricerca "per tipo" la trova, mentre il nome ce l'ha
        scritto in faccia. Vale anche fuori dall'Italia: 銀行 è "banca" in
        giapponese, e lì i bancomat delle filiali sono quelli che si usano. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"]','["amenity"="bank"]','["office"="financial"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]',ovNome(PAROLE_BANCA)],r,lat,lng),
+    q:(r,lat,lng)=>ovConNome(['["amenity"="atm"]','["atm"]','["amenity"="bank"]','["office"="financial"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]'],PAROLE_BANCA,r,lat,lng),
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
@@ -6201,11 +6216,16 @@ async function viciniIntorno(lat,lng){
          qualcosa c'è, roba a otto chilometri non serve a chi la cerca a piedi */
       if(r>3000&&trovati.length)break;
       body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
-      trovati=await viciniOverpass(vicinoKind,lat,lng,r);
+      /* Si SOMMA a quello che si è già trovato, non lo si sostituisce: i giri
+         larghi cercano con meno criteri (niente ricerca per nome, che li farebbe
+         scadere), quindi possono tornare con meno roba di quelli stretti.
+         Sostituendo, un posto trovato a quattrocento metri spariva perché a tre
+         chilometri non lo si cercava più nello stesso modo. */
+      const nuovi=await viciniOverpass(vicinoKind,lat,lng,r);
+      nuovi.forEach(n=>{if(!vicinoDoppione(trovati,n.lat,n.lng,n.nome))trovati.push(n);});
       /* Non ci si ferma alla prima che salta fuori: se nel raggio stretto ce
          n'è una soltanto, si allarga per vedere se poco più in là ce ne sono di
-         meglio. Il giro più largo contiene comunque quelle di prima, quindi
-         niente va perso, e l'ordine per distanza mette davanti la più vicina. */
+         meglio. L'ordine per distanza rimette davanti la più vicina. */
       if(trovati.length>=VICINI_POCHI)break;
     }
     if(!trovati.length){
@@ -6252,6 +6272,16 @@ const OVERPASS=[
   'https://overpass.private.coffee/api/interpreter'
 ];
 let overpassBuono=null;
+/* Due righe sono lo stesso posto se stanno praticamente sopra, o se hanno lo
+   stesso nome a due passi. Serve dentro un singolo giro - la banca torna come
+   punto "bancomat" e come edificio "banca" - e serve fra un giro e l'altro,
+   perché i giri si sommano invece di sostituirsi. */
+function vicinoDoppione(lista,la,lo,nome){
+  return lista.some(o=>{
+    const d=calcDist(la,lo,o.lat,o.lng);
+    return d<15||(d<45&&o.nome===nome);
+  });
+}
 async function viciniOverpass(kind,lat,lng,raggio){
   const v=VICINI[kind];
   /* 150 e non 30: il tetto taglia i risultati PRIMA che li si ordini per
@@ -6277,10 +6307,7 @@ async function viciniOverpass(kind,lat,lng,raggio){
        punto "bancomat" e come edificio "banca". Due righe per lo stesso posto
        fanno solo perdere tempo a chi legge. Stesso nome e a due passi, oppure
        praticamente sovrapposte: è la stessa. */
-    if(out.some(o=>{
-      const dist=calcDist(la,lo,o.lat,o.lng);
-      return dist<15||(dist<45&&o.nome===nome);
-    }))return;
+    if(vicinoDoppione(out,la,lo,nome))return;
     out.push({lat:la,lng:lo,nome:nome,extra:v.extra(t)});
   });
   return out;
