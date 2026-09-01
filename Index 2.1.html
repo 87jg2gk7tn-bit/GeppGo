@@ -1207,7 +1207,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip green" onclick="navigaGiornata()">🧭 Naviga la giornata</button><button class="chip" onclick="addHotelStopAct()">🏨 Rientro in hotel</button><button class="chip" onclick="openImportDay()">📋 Importa lista</button><button class="chip" onclick="document.getElementById('phInput').click()">+ Foto</button></div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip green" onclick="navigaGiornata()">🧭 Naviga la giornata</button></div>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -1683,6 +1683,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">🧭 Il giro di oggi</div><button class="x x-close" onclick="closeSheet('mNavGiro')">✕</button></div>
   <div id="navGiroBody"></div>
+</div></div>
+<div class="modal" id="mAddScelta"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="addSceltaTitle">➕ Aggiungi alla giornata</div><button class="x x-close" onclick="closeSheet('mAddScelta')">✕</button></div>
+  <div id="addSceltaBody"></div>
 </div></div>
 <div class="modal" id="mOsmAiuto"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3340,7 +3345,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Meteo, Hotel, Biglietti, Identifica, Profilo. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi, in quest'ordine: "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa), poi "Bagagli" - la lista bagagli sta li' - e "Condividi". Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home), "Rientro in hotel", "Importa lista", "+ Foto". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
+- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home). Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
@@ -7821,7 +7826,76 @@ function buildDayMap(){
     setTimeout(()=>{if(dayMapObj)dayMapObj.invalidateSize();},120);
   },320);
 }
-function addFromDay(){fromDayFlag=true;openAddAct(ttDay);}
+/* Il "+" apriva dritto la scheda di una nuova attività, e le altre cose che si
+   possono aggiungere a una giornata stavano in fila sopra la griglia: due righe
+   di tasti tolte a tutti, anche a chi non le usa mai. Ora stanno tutte dietro il
+   "+", che è il posto dove uno le cerca quando vuole aggiungere qualcosa. */
+function addFromDay(){
+  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  addSceltaMenu();
+  openSheet('mAddScelta');
+}
+/* I luoghi salvati che non sono ancora finiti in nessuna giornata. Si guarda
+   tutto il viaggio, non solo il giorno aperto: un posto già messo in programma
+   martedì non va riproposto come se fosse da sistemare. */
+function poiLiberi(t){
+  const usati=new Set();
+  (t.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{if(a.poiId!=null)usati.add(String(a.poiId));}));
+  return (t.pois||[]).filter(p=>!usati.has(String(p.id)));
+}
+function addSceltaMenu(){
+  const t=T(),box=document.getElementById('addSceltaBody');if(!box||!t)return;
+  document.getElementById('addSceltaTitle').textContent='➕ Aggiungi alla giornata';
+  const n=poiLiberi(t).length;
+  const voce=(ic,tit,sub,click,spenta)=>`<div class="ms-row" style="align-items:center;${spenta?'opacity:.5':''}" onclick="${spenta?'':click}">
+      <div style="font-size:1.3rem;flex-shrink:0">${ic}</div>
+      <div style="flex:1;min-width:0"><div class="ms-t">${tit}</div><div class="ms-w">${sub}</div></div>
+      ${spenta?'':'<div style="color:var(--ink-faint)">›</div>'}
+    </div>`;
+  box.innerHTML=
+    voce('📝','Nuova attività','La scrivi tu, da zero','addSceltaNuova()')+
+    voce('📍','Attività salvata',n?`${n} ${n===1?'luogo salvato':'luoghi salvati'} non ancora in programma`:'Nessun luogo salvato da mettere','addSceltaSalvate()',!n)+
+    voce('🏨','Rientro in hotel','La tappa che chiude la giornata','addSceltaHotel()')+
+    voce('📷','Foto','Dalla galleria o dalla fotocamera','addSceltaFoto()')+
+    voce('📋','Importa lista','Un elenco incollato o un PDF','addSceltaImporta()');
+}
+function addSceltaNuova(){closeSheet('mAddScelta');fromDayFlag=true;setTimeout(()=>openAddAct(ttDay),150);}
+function addSceltaHotel(){closeSheet('mAddScelta');setTimeout(addHotelStopAct,150);}
+function addSceltaFoto(){closeSheet('mAddScelta');setTimeout(()=>document.getElementById('phInput').click(),150);}
+function addSceltaImporta(){closeSheet('mAddScelta');setTimeout(openImportDay,150);}
+/* L'elenco prende il posto del menu dentro lo stesso pannello, invece di aprirne
+   un secondo sopra: sono due passi della stessa scelta, e due fogli sovrapposti
+   si chiudono male. Gli essenziali stanno in cima, che sono quelli che non si
+   vuole lasciare indietro. */
+function addSceltaSalvate(){
+  const t=T();if(!t)return;
+  const box=document.getElementById('addSceltaBody');
+  document.getElementById('addSceltaTitle').textContent='📍 Luoghi salvati';
+  const liberi=poiLiberi(t).slice().sort((a,b)=>
+    ((b.priority==='essential')-(a.priority==='essential'))||String(a.name||'').localeCompare(String(b.name||'')));
+  box.innerHTML=`<button class="btn btn-soft btn-block" style="margin-bottom:.7rem" onclick="addSceltaMenu()">‹ Indietro</button>`
+   +(liberi.length?liberi.map(p=>`<div class="ms-row" style="align-items:center" onclick="aggiungiPoiAlGiorno('${p.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="ms-t">${p.priority==='essential'?'⭐ ':''}${esc(p.name||'')}</div>
+          <div class="ms-w">${p.priority==='essential'?'essenziale':'da vedere se si può'}${p.address?' · '+esc(String(p.address).split(',')[0]):''}</div>
+        </div>
+        <div style="color:var(--ink-faint)">＋</div>
+      </div>`).join('')
+    :`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Tutti i luoghi salvati sono già in programma. Quelli nuovi si salvano da "Scopri".</div>`);
+}
+function aggiungiPoiAlGiorno(poiId){
+  const t=T(),d=t&&t.days[ttDay];if(!t||!d)return;
+  const p=(t.pois||[]).find(x=>String(x.id)===String(poiId));if(!p)return;
+  /* Nasce senza orario, come una tappa scritta a mano: si apre subito la scheda
+     per metterlo, invece di piazzarla a un'ora inventata. */
+  const a={id:uid(),name:p.name,time:'',timeEnd:'',type:'outdoor',notes:p.notes||'',
+    who:t.participants.map(x=>x.id),completed:false,booking:{needed:false,done:false},
+    poiId:p.id,lat:p.lat,lng:p.lng};
+  d.activities.push(a);
+  save();renderAll();closeSheet('mAddScelta');
+  fromDayFlag=true;
+  setTimeout(()=>openActDetail(ttDay,a.id),150);
+}
 function addHotelStopAct(){
   const t=T();if(!t)return;const di=ttDay,d=t.days[di];if(!d)return;
   const h=hotelFor(t,d.date)||hotelMorningRef(t,d);
