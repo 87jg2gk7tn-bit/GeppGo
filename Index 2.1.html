@@ -1955,7 +1955,11 @@ function go(p){
 }
 
 function openNewTrip(){if(!canCreateTrip()){openPremium();return;}ntPeople=[];document.getElementById('ntMe').value=app.myName||'';document.getElementById('ntName').value='';document.getElementById('ntDest').value='';document.getElementById('ntStart').value='';document.getElementById('ntEnd').value='';document.getElementById('ntCurInfo').innerHTML='';document.getElementById('ntCurInfo').dataset.cur='';document.getElementById('ntSuggest').checked=false;document.getElementById('ntInterests').value='';renderNtPeople();openSheet('mNewTrip');}
-function addNtPerson(){const i=document.getElementById('ntPersonInput'),v=i.value.trim();if(!v)return;ntPeople.push(v);i.value='';renderNtPeople();i.focus();}
+/* Il "senzaFuoco" serve quando questa non è una mossa di chi scrive ma un
+   recupero fatto al volo mentre si crea il viaggio: rimettere il cursore nella
+   casella farebbe risalire la tastiera addosso a una schermata che sta per
+   chiudersi. */
+function addNtPerson(senzaFuoco){const i=document.getElementById('ntPersonInput'),v=i.value.trim();if(!v)return;ntPeople.push(v);i.value='';renderNtPeople();if(!senzaFuoco)i.focus();}
 function renderNtPeople(){document.getElementById('ntPeople').innerHTML=ntPeople.map((p,i)=>`<span class="pchip">${esc(p)}<button onclick="ntPeople.splice(${i},1);renderNtPeople()">✕</button></span>`).join('');}
 /* La destinazione è anche la fonte per capire se il viaggio tocca più
    città: se scritte separate da virgola (es. "Tokyo, Kyoto, Osaka") è
@@ -1979,6 +1983,13 @@ function createTrip(){
   if(!canCreateTrip()){closeSheet('mNewTrip');openPremium();return;}
   const start=document.getElementById('ntStart').value,end=document.getElementById('ntEnd').value,dest=document.getElementById('ntDest').value.trim();
   const cur=document.getElementById('ntCurInfo').dataset.cur||'EUR';
+  /* Il nome del compagno rimasto scritto nella casella conta come se fosse
+     stato confermato. Chi lo digita e poi schiaccia "Crea viaggio" - senza
+     premere prima Invio o il "+" - ha fatto una cosa sola nella sua testa:
+     aggiungere quella persona. Prima quel nome veniva buttato via e il viaggio
+     nasceva con dentro una persona sola, e il compagno spariva da spese, saldi,
+     bagagli e da tutto il resto senza che nessuno avesse detto niente. */
+  addNtPerson(true);
   const participants=[{id:uid(),name:app.myName||'Io',isMe:true}];
   ntPeople.forEach(n=>participants.push({id:uid(),name:n,isMe:false}));
   const destCities=parseDestCities(dest),isMulti=destCities.length>1;
