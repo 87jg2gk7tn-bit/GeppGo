@@ -100,6 +100,54 @@ create index if not exists trips_owner_idx       on public.trips(owner);
 
 
 -- ────────────────────────────────────────────────────────────────────────────
+--  PULIZIA: via i permessi delle versioni precedenti
+-- ────────────────────────────────────────────────────────────────────────────
+--  Su un progetto vissuto i permessi si stratificano: se ne aggiunge uno,
+--  poi lo si riscrive con un altro nome, e i vecchi restano sotto. Nel
+--  progetto vero di GeppGo ce n'erano quindici, due generazioni sovrapposte
+--  ("owner delete trips" accanto a "trips_delete_owner", e cosi' via).
+--
+--  Non e' una questione di ordine. In Postgres i permessi si SOMMANO: per
+--  fare una cosa basta che UNO solo la conceda. Quindi un permesso vecchio
+--  dimenticato riapre quello che qui sotto viene chiuso — e il caso peggiore
+--  e' proprio il DELETE sui viaggi, che questo schema toglie a tutti apposta
+--  per far rispettare la conferma del secondo admin. Lasciandolo li', la
+--  conferma si salta con un DELETE diretto.
+--
+--  Si toglie tutto e si rimette solo quello che c'e' scritto qui: cosi' il
+--  risultato dipende da questo file e non da cosa e' passato di li' prima.
+do $$
+declare p record;
+begin
+  for p in select policyname, tablename from pg_policies
+            where schemaname='public' and tablename in ('trips','trip_members')
+  loop
+    execute format('drop policy if exists %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end;
+$$;
+
+--  Stesso discorso per le funzioni: se una versione precedente ne ha lasciata
+--  una con gli stessi nomi ma parametri diversi, "create or replace" non la
+--  sostituirebbe, ne creerebbe una seconda accanto — e la chiamata dall'app
+--  diventerebbe ambigua. Si tolgono per nome, qualunque forma abbiano.
+do $$
+declare f record;
+begin
+  for f in select p.oid::regprocedure as firma
+             from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='public'
+              and p.proname in ('join_trip','is_trip_member','is_trip_owner',
+                                'is_trip_admin','elimina_viaggio',
+                                'conferma_eliminazione','annulla_eliminazione')
+  loop
+    execute format('drop function if exists %s', f.firma);
+  end loop;
+end;
+$$;
+
+
+-- ────────────────────────────────────────────────────────────────────────────
 --  DUE AIUTANTI, PER NON MORDERSI LA CODA
 -- ────────────────────────────────────────────────────────────────────────────
 --  Il permesso di leggere un viaggio dipende da trip_members; se il permesso
