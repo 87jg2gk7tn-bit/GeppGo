@@ -1598,6 +1598,8 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t">Foto</div><button class="x x-close" onclick="closeSheet('mPhoto')">✕</button></div>
   <img id="phBig" style="width:100%;border-radius:var(--r-md);margin-bottom:.8rem" alt="">
   <div id="phChi" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.7rem"></div>
+  <button class="btn btn-grad btn-block" style="margin-bottom:.5rem" onclick="salvaFoto()">⤓ Salva sul telefono</button>
+  <button class="btn btn-soft btn-block" id="phRiprova" style="display:none;margin-bottom:.5rem" onclick="riprovaFoto()">☁️ Riprova a salvarla nel cloud</button>
   <button class="btn btn-danger btn-block" onclick="delPhoto()">Elimina questa foto</button>
   <!-- Il canale con cui veniamo a sapere. Chi ospita contenuti altrui non
        risponde di quello che non sa, ma risponde di quello che sa e lascia
@@ -11969,21 +11971,62 @@ function dataUrlABlob(u){
 
 /* Manda una foto nel cloud. Se la rete non c'e' non succede niente di grave:
    la foto resta sul telefono con cloudId vuoto, e ci riprova la volta dopo. */
+/* Perche' l'ultima foto non e' arrivata nel cloud. Prima questa funzione
+   falliva e basta, e l'unica cosa che si vedeva era "ancora solo su questo
+   telefono": nessun modo di capire se mancava la rete, se non si era
+   connessi, o se il magazzino non era ancora stato preparato. Un guasto che
+   non si sa spiegare vale quanto un guasto non risolto. */
+let fotoPerche='';
+function fotoSpiega(e){
+  const m=((e&&(e.message||e.error||e))||'').toString();
+  if(/bucket.*not.*found|not.*found.*bucket/i.test(m))
+    return 'Il magazzino delle foto non c\'e\' ancora: va lanciato supabase-schema.sql sul progetto Supabase.';
+  if(/relation.*foto.*does not exist|PGRST205|schema cache/i.test(m))
+    return 'Nel database manca la tabella delle foto: va lanciato supabase-schema.sql sul progetto Supabase.';
+  if(/row-level security|permission denied|violates/i.test(m))
+    return 'Il database non mi lascia salvare la foto: controlla i permessi (supabase-schema.sql).';
+  if(/exceeded|too large|payload/i.test(m))
+    return 'La foto e\' troppo grande per il magazzino.';
+  if(/mime|content.?type/i.test(m))
+    return 'Il magazzino accetta solo immagini JPEG.';
+  if(/fetch|network|Failed to fetch|offline/i.test(m))
+    return 'Senza rete: riprovo da solo appena torna.';
+  return m?('Il cloud ha risposto: '+m):'Non sono riuscito a salvarla nel cloud.';
+}
+/* Attacca alla foto il motivo per cui non e' partita, cosi' riaprendola fra
+   un'ora si legge ancora quello giusto invece dell'ultimo capitato. */
 async function fotoSuCloud(rec){
+  const esito=await fotoProvaCarico(rec);
+  if(!esito&&!rec.cloudId&&fotoPerche!==rec.perche){
+    try{
+      rec.perche=fotoPerche;
+      const db=await idbP();
+      await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
+    }catch(e){}
+  }
+  return esito;
+}
+async function fotoProvaCarico(rec){
   const t=app.trips.find(x=>x.id===rec.tripId);
-  if(!sb||!session||!t||!t.cid||rec.cloudId)return false;
+  if(rec.cloudId)return false;
+  if(!sb||!session){fotoPerche='Non sei connesso: accedi dal Profilo e le foto si salvano da sole.';return false;}
+  if(!t){fotoPerche='';return false;}
+  if(!t.cid){fotoPerche='Questo viaggio non e\' ancora nel cloud: appena si sincronizza partono anche le foto.';return false;}
   try{
     const idFoto=(crypto&&crypto.randomUUID)?crypto.randomUUID():uid()+'-'+Math.random().toString(16).slice(2);
     const percorso=t.cid+'/'+idFoto+'.jpg';
     const su=await sb.storage.from(FOTO_BUCKET).upload(percorso,dataUrlABlob(rec.data),{contentType:'image/jpeg',upsert:false});
-    if(su.error)return false;
+    if(su.error){fotoPerche=fotoSpiega(su.error);return false;}
     const{error}=await sb.from('foto').insert({id:idFoto,trip_id:t.cid,caricata_da:myUid,giorno:rec.date||null,percorso});
-    if(error){try{await sb.storage.from(FOTO_BUCKET).remove([percorso]);}catch(e){}return false;}
+    /* Se il registro rifiuta, il file caricato un attimo fa va tolto: un file
+       senza la sua riga e' un file di cui nessuno sa piu' niente. */
+    if(error){try{await sb.storage.from(FOTO_BUCKET).remove([percorso]);}catch(e){}fotoPerche=fotoSpiega(error);return false;}
     const db=await idbP();
     rec.cloudId=idFoto;rec.percorso=percorso;rec.chi=myUid;
     await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
+    fotoPerche='';
     return true;
-  }catch(e){return false;}
+  }catch(e){fotoPerche=fotoSpiega(e);return false;}
 }
 
 /* Le foto che i compagni hanno messo e che su questo telefono non ci sono
@@ -12055,7 +12098,10 @@ async function addPhoto(inp){
     /* Il salvataggio nel cloud viene dopo e non fa aspettare nessuno: se
        fallisce, la foto e' comunque al sicuro sul telefono e riparte da
        fotoDaSpedire() alla prossima occasione. */
-    fotoSuCloud(rec).then(ok=>{if(ok)renderDayPhotos();});
+    fotoSuCloud(rec).then(ok=>{
+      renderDayPhotos();
+      if(!ok&&fotoPerche)toast('Sul telefono e\' al sicuro, nel cloud no. '+fotoPerche);
+    });
   }catch(e){toast('Non riesco a leggere questa foto');}
 }
 async function renderDayPhotos(){
@@ -12082,9 +12128,15 @@ async function openPhoto(id){
     phCur=id;phRec=v;document.getElementById('phBig').src=v.data;
     const chi=nomeDiChiHaCaricato(v);
     const quando=v.ts?new Date(v.ts).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
-    const nuvola=v.cloudId?'salvata anche nel cloud':'ancora solo su questo telefono';
+    const nuvola=v.cloudId
+      ?'salvata anche nel cloud: la vedono i compagni di viaggio'
+      :'ancora solo su questo telefono'+(v.perche?' — '+v.perche:'');
     document.getElementById('phChi').textContent=
       (chi?('Messa da '+chi+(quando?' il '+quando:'')+' · '):'')+nuvola;
+    /* Il tasto per riprovare compare solo quando serve: se la foto e' gia'
+       nel cloud non c'e' niente da rimandare. */
+    const rip=document.getElementById('phRiprova');
+    if(rip)rip.style.display=v.cloudId?'none':'block';
     openSheet('mPhoto');
   };
 }
@@ -12110,6 +12162,46 @@ function delPhoto(){
     const db=await idbP();
     db.transaction('ph','readwrite').objectStore('ph').delete(phCur).onsuccess=()=>{closeSheet('mPhoto');renderDayPhotos();};
   });
+}
+
+/* Salvare una foto nel rullino. Chi e' nel viaggio quella foto la sta gia'
+   vedendo: tenerne una copia e' un passo che farebbe comunque con uno
+   screenshot, e non cambia niente di quello che l'app promette - le foto
+   restano visibili solo dentro il viaggio.
+   Su iPhone il vecchio <a download> non salva niente per un'immagine dentro
+   l'app: si passa dal foglio di condivisione del telefono, che offre "Salva
+   immagine". Dove quello non c'e', si ripiega sul download normale. */
+async function salvaFoto(){
+  if(!phRec||!phRec.data){toast('Apri prima una foto');return;}
+  const nome='geppgo-'+(phRec.date||'foto')+'.jpg';
+  try{
+    const blob=dataUrlABlob(phRec.data);
+    const file=new File([blob],nome,{type:'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      return;
+    }
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download=nome;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Foto salvata');
+  }catch(e){
+    /* Se l'utente chiude il foglio di condivisione non e' un errore: e' una
+       scelta, e non merita un messaggio di guasto. */
+    if(e&&e.name==='AbortError')return;
+    toast('Non riesco a salvarla sul telefono');
+  }
+}
+
+/* Rimanda su una foto rimasta indietro, subito, senza aspettare il giro
+   automatico dei due minuti. */
+async function riprovaFoto(){
+  if(!phRec||phRec.cloudId)return;
+  toast('Ci riprovo...');
+  const ok=await fotoSuCloud(phRec);
+  if(ok){toast('Fatto: ora la vedono i compagni di viaggio');closeSheet('mPhoto');renderDayPhotos();}
+  else toast(fotoPerche||'Non ci sono riuscito');
 }
 
 /* ===== SEGNALARE UNA FOTO =====

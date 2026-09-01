@@ -182,6 +182,48 @@ const stato = {
      elimMia.tolte.some(x => /^foto:/.test(x)) && elimMia.tolte.some(x => /aaa-bbb-ccc\//.test(x)),
      JSON.stringify(elimMia.tolte));
 
+  // ── salvare la foto sul telefono ─────────────────────────────────────────
+  const salva = await page.evaluate(async () => {
+    const tutte = await phAll(101);
+    await openPhoto(tutte[0].id); await new Promise(r => setTimeout(r, 150));
+    const tastoC = !!document.querySelector('#mPhoto [onclick="salvaFoto()"]');
+    let condiviso = null;
+    navigator.canShare = () => true;
+    navigator.share = async (d) => { condiviso = { n: d.files.length, nome: d.files[0].name, tipo: d.files[0].type }; };
+    await salvaFoto();
+    return { tastoC, condiviso };
+  });
+  ok('c\'è il tasto per salvarla sul telefono', salva.tastoC === true);
+  ok('e passa dal foglio di condivisione del telefono', !!salva.condiviso, JSON.stringify(salva.condiviso));
+  ok('mandando un vero file JPEG', salva.condiviso && salva.condiviso.tipo === 'image/jpeg', String(salva.condiviso && salva.condiviso.tipo));
+  ok('con un nome riconoscibile', /^geppgo-/.test(salva.condiviso.nome), salva.condiviso.nome);
+
+  // ── quando non arriva nel cloud, si sa perché ────────────────────────────
+  const perche = await page.evaluate(async () => {
+    const vero = sb.storage;
+    sb.storage = { from: () => ({ upload: async () => ({ error: { message: 'Bucket not found' } }) }) };
+    const rec = { id: 'zz', tripId: 101, date: '2026-09-01', data: 'data:image/jpeg;base64,' + window.__JPEG, ts: Date.now() };
+    const db = await idbP();
+    await new Promise(r => { db.transaction('ph', 'readwrite').objectStore('ph').put(rec).onsuccess = r; });
+    await fotoSuCloud(rec);
+    const motivo = fotoPerche;
+    await openPhoto('zz'); await new Promise(r => setTimeout(r, 200));
+    const riga = document.getElementById('phChi').textContent;
+    const tasto = document.getElementById('phRiprova').style.display;
+    sb.storage = vero;
+    return { motivo, riga, tasto };
+  });
+  ok('un magazzino mancante viene spiegato, non subìto', /supabase-schema\.sql/.test(perche.motivo), perche.motivo);
+  ok('e la spiegazione si legge sotto la foto', /supabase-schema\.sql/.test(perche.riga), perche.riga.slice(0, 90));
+  ok('con il tasto per riprovare', perche.tasto === 'block', perche.tasto);
+
+  const senzaSess = await page.evaluate(async () => {
+    const v = session; session = null;
+    await fotoSuCloud({ id: 'q', tripId: 101, data: 'x' });
+    session = v; return fotoPerche;
+  });
+  ok('e se non sei connesso lo dice chiaro', /accedi dal Profilo/.test(senzaSess), senzaSess);
+
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);
