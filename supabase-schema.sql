@@ -614,15 +614,20 @@ create trigger membri_ultimo_admin_trg
 --  niente, nemmeno conoscendo l'indirizzo esatto.
 --
 --  Due limiti che valgono piu' di molto codice: accetta SOLO immagini JPEG e
---  SOLO fino a 4 MB. L'app le ridimensiona a 1000 pixel prima di spedirle, per
---  cui restano ben sotto: chi provasse a caricare altro - un video, un
---  archivio, un file qualsiasi travestito - viene respinto qui, prima ancora
---  che i permessi entrino in gioco.
+--  SOLO fino a 12 MB. Chi provasse a caricare altro - un video, un archivio,
+--  un file qualsiasi travestito - viene respinto qui, prima ancora che i
+--  permessi entrino in gioco.
+--
+--  Il tetto era 4 MB, e bastava finche' l'app rimpiccioliva tutto a 1000
+--  pixel. Ora la qualita' si sceglie, e al massimo (4096 pixel) una foto puo'
+--  arrivare a qualche megabyte: con 4 MB verrebbe respinta proprio la foto a
+--  cui si tiene di piu'. Dodici lasciano margine restando lontanissimi da
+--  qualunque cosa che non sia una fotografia.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('foto-viaggi', 'foto-viaggi', false, 4194304, array['image/jpeg'])
+values ('foto-viaggi', 'foto-viaggi', false, 12582912, array['image/jpeg'])
 on conflict (id) do update
   set public             = false,
-      file_size_limit    = 4194304,
+      file_size_limit    = 12582912,
       allowed_mime_types = array['image/jpeg'];
 
 --  Il registro: chi ha caricato cosa, quando e in quale viaggio. Serve a

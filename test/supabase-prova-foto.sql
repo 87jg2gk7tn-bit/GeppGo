@@ -120,8 +120,8 @@ begin
   perform pg_temp.torno_admin();
   select count(*) into v_n from storage.buckets
    where id='foto-viaggi' and public=false
-     and allowed_mime_types = array['image/jpeg'] and file_size_limit = 4194304;
-  perform pg_temp.prova('il magazzino e chiuso e accetta solo JPEG fino a 4 MB', v_n = 1);
+     and allowed_mime_types = array['image/jpeg'] and file_size_limit = 12582912;
+  perform pg_temp.prova('il magazzino e chiuso e accetta solo JPEG fino a 12 MB', v_n = 1);
 
   -- ── segnalare ────────────────────────────────────────────────────────────
   perform pg_temp.sono(dino);
