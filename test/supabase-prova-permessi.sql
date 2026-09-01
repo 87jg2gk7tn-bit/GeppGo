@@ -36,7 +36,7 @@ declare
   anna  uuid := '11111111-1111-1111-1111-111111111111';
   bruno uuid := '22222222-2222-2222-2222-222222222222';
   carla uuid := '33333333-3333-3333-3333-333333333333';
-  v_trip uuid; v_code text; v_n int; v_txt text; v_pid bigint;
+  v_trip uuid; v_code text; v_n int; v_txt text; v_pid bigint; v_uid uuid;
 begin
 
   -- ── Anna crea il suo viaggio in Giappone ─────────────────────────────────
@@ -183,16 +183,201 @@ begin
   perform pg_temp.torno_admin();
   perform pg_temp.prova('mentre ad Anna il viaggio resta', v_n = 1, v_n||' viaggi');
 
-  -- ── Anna cancella il suo viaggio ─────────────────────────────────────────
+  -- ── Anna elimina il suo viaggio ──────────────────────────────────────────
+  -- Non più con un delete diretto: quella porta è stata chiusa a tutti perché
+  -- saltava la conferma del secondo admin. Si passa da elimina_viaggio().
   perform pg_temp.sono(anna);
-  delete from public.trips where id = v_trip;
-  get diagnostics v_n = row_count;
+  select public.elimina_viaggio(v_trip) into v_txt;
   perform pg_temp.torno_admin();
-  perform pg_temp.prova('chi l''ha creato può cancellarlo', v_n = 1, v_n||' righe tolte');
+  perform pg_temp.prova('chi l''ha creato può eliminarlo', v_txt = 'eliminato', v_txt);
 
   select count(*) into v_n from public.trip_members where trip_id = v_trip;
   perform pg_temp.prova('e le iscrizioni se ne vanno con lui', v_n = 0, v_n||' righe rimaste');
 
+
+  -- ════════════════════════════════════════════════════════════════════════
+  --  RUOLI: chi comanda dentro un viaggio
+  -- ════════════════════════════════════════════════════════════════════════
+
+  -- si riparte pulito: Anna crea, Bruno entra col codice
+  perform pg_temp.torno_admin();
+  delete from public.trips;
+  perform pg_temp.sono(anna);
+  insert into public.trips(owner, data) values (anna, '{"name":"Giappone"}'::jsonb)
+    returning id, invite_code into v_trip, v_code;
+  insert into public.trip_members(trip_id,user_id,participant_id,member_name)
+    values (v_trip, anna, 1756000000001, 'Anna');
+  perform pg_temp.torno_admin();
+
+  select ruolo into v_txt from public.trip_members where trip_id=v_trip and user_id=anna;
+  perform pg_temp.prova('chi crea il viaggio nasce admin', v_txt = 'admin', v_txt);
+
+  perform pg_temp.sono(bruno);
+  perform public.join_trip(v_trip, v_code);
+  perform pg_temp.torno_admin();
+  select ruolo into v_txt from public.trip_members where trip_id=v_trip and user_id=bruno;
+  perform pg_temp.prova('chi entra con l''invito nasce compagno', v_txt = 'compagno', v_txt);
+
+  -- il compagno prova a promuoversi da solo
+  perform pg_temp.sono(bruno);
+  begin
+    update public.trip_members set ruolo='admin' where trip_id=v_trip and user_id=bruno;
+    v_txt := 'PROMOSSO DA SE';
+  exception when others then v_txt := 'respinto'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('un compagno non si promuove da solo', v_txt = 'respinto', v_txt);
+
+  -- il compagno non elimina per tutti
+  perform pg_temp.sono(bruno);
+  begin
+    perform public.elimina_viaggio(v_trip);
+    v_txt := 'ELIMINATO';
+  exception when others then v_txt := 'respinto'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('un compagno non elimina il viaggio per tutti', v_txt = 'respinto', v_txt);
+
+  -- ma uscire dal viaggio può sempre: è la porta che non va mai chiusa
+  perform pg_temp.sono(bruno);
+  begin
+    delete from public.trip_members where trip_id=v_trip and user_id=bruno;
+    v_txt := 'uscito';
+  exception when others then v_txt := 'BLOCCATO'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('un compagno può sempre uscire dal viaggio', v_txt = 'uscito', v_txt);
+  select count(*) into v_n from public.trips where id=v_trip;
+  perform pg_temp.prova('e il viaggio resta agli altri', v_n = 1, v_n||' viaggi');
+
+  -- nessuno passa dal DELETE diretto, nemmeno chi l'ha creato
+  perform pg_temp.sono(anna);
+  delete from public.trips where id = v_trip;
+  get diagnostics v_n = row_count;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('nemmeno l''admin cancella col DELETE diretto', v_n = 0, v_n||' righe tolte');
+
+  -- con un admin solo, il viaggio se ne va subito
+  perform pg_temp.sono(anna);
+  select public.elimina_viaggio(v_trip) into v_txt;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('con un solo admin il viaggio se ne va subito', v_txt = 'eliminato', v_txt);
+  select count(*) into v_n from public.trips where id=v_trip;
+  perform pg_temp.prova('e sparisce davvero', v_n = 0, v_n||' viaggi');
+
+  -- ════════════════════════════════════════════════════════════════════════
+  --  DUE ADMIN: per eliminare servono due teste
+  -- ════════════════════════════════════════════════════════════════════════
+  perform pg_temp.sono(anna);
+  insert into public.trips(owner, data) values (anna, '{"name":"Norvegia"}'::jsonb)
+    returning id, invite_code into v_trip, v_code;
+  insert into public.trip_members(trip_id,user_id,member_name) values (v_trip, anna, 'Anna');
+  perform pg_temp.torno_admin();
+  perform pg_temp.sono(bruno); perform public.join_trip(v_trip, v_code); perform pg_temp.torno_admin();
+
+  perform pg_temp.sono(anna);
+  update public.trip_members set ruolo='admin' where trip_id=v_trip and user_id=bruno;
+  perform pg_temp.torno_admin();
+  select ruolo into v_txt from public.trip_members where trip_id=v_trip and user_id=bruno;
+  perform pg_temp.prova('un admin può nominare un altro admin', v_txt = 'admin', v_txt);
+
+  perform pg_temp.sono(anna);
+  select public.elimina_viaggio(v_trip) into v_txt;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('con due admin l''eliminazione resta in sospeso', v_txt = 'in-attesa', v_txt);
+  select count(*) into v_n from public.trips where id=v_trip;
+  perform pg_temp.prova('e il viaggio è ancora lì', v_n = 1, v_n||' viaggi');
+
+  perform pg_temp.sono(anna);
+  begin
+    perform public.conferma_eliminazione(v_trip);
+    v_txt := 'CONFERMATA DA SOLA';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('chi chiede non può confermarsi da solo', v_txt = 'respinta', v_txt);
+
+  perform pg_temp.sono(carla);
+  begin
+    perform public.conferma_eliminazione(v_trip);
+    v_txt := 'CONFERMATA';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('un''estranea non conferma l''eliminazione', v_txt = 'respinta', v_txt);
+
+  -- e la richiesta non si spazza via con un aggiornamento normale
+  perform pg_temp.sono(bruno);
+  begin
+    update public.trips set canc_chiesta_da=null where id=v_trip;
+    get diagnostics v_n = row_count;
+    v_txt := case when v_n>0 then 'CANCELLATA A MANO' else 'respinta' end;
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('la richiesta non si cancella con un aggiornamento a mano', v_txt = 'respinta', v_txt);
+
+  perform pg_temp.sono(bruno);
+  perform public.conferma_eliminazione(v_trip);
+  perform pg_temp.torno_admin();
+  select count(*) into v_n from public.trips where id=v_trip;
+  perform pg_temp.prova('il secondo admin conferma e il viaggio sparisce', v_n = 0, v_n||' viaggi');
+
+  -- ── annullare la richiesta ───────────────────────────────────────────────
+  perform pg_temp.sono(anna);
+  insert into public.trips(owner, data) values (anna, '{"name":"Peru"}'::jsonb)
+    returning id, invite_code into v_trip, v_code;
+  insert into public.trip_members(trip_id,user_id,member_name) values (v_trip, anna, 'Anna');
+  perform pg_temp.torno_admin();
+  perform pg_temp.sono(bruno); perform public.join_trip(v_trip, v_code); perform pg_temp.torno_admin();
+  perform pg_temp.sono(anna);
+  update public.trip_members set ruolo='admin' where trip_id=v_trip and user_id=bruno;
+  perform public.elimina_viaggio(v_trip);
+  perform pg_temp.torno_admin();
+
+  perform pg_temp.sono(bruno);
+  perform public.annulla_eliminazione(v_trip);
+  perform pg_temp.torno_admin();
+  select canc_chiesta_da into v_uid from public.trips where id=v_trip;
+  perform pg_temp.prova('un admin può annullare la richiesta', v_uid is null, coalesce(v_uid::text,'(annullata)'));
+
+  perform pg_temp.sono(bruno);
+  begin
+    perform public.conferma_eliminazione(v_trip);
+    v_txt := 'ELIMINATO LO STESSO';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('e dopo l''annullamento non si conferma più niente', v_txt = 'respinta', v_txt);
+
+  -- ── l'ultimo admin non lascia il viaggio orfano ──────────────────────────
+  perform pg_temp.sono(anna);
+  update public.trip_members set ruolo='compagno' where trip_id=v_trip and user_id=bruno;
+  perform pg_temp.torno_admin();
+
+  perform pg_temp.sono(anna);
+  begin
+    update public.trip_members set ruolo='compagno' where trip_id=v_trip and user_id=anna;
+    v_txt := 'DECLASSATA';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('l''ultimo admin non si toglie il ruolo', v_txt = 'respinta', v_txt);
+
+  perform pg_temp.sono(anna);
+  begin
+    delete from public.trip_members where trip_id=v_trip and user_id=anna;
+    v_txt := 'USCITA';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('e non esce lasciando il viaggio senza nessuno', v_txt = 'respinta', v_txt);
+
+  -- ma con un successore nominato, se ne può andare
+  perform pg_temp.sono(anna);
+  update public.trip_members set ruolo='admin' where trip_id=v_trip and user_id=bruno;
+  begin
+    delete from public.trip_members where trip_id=v_trip and user_id=anna;
+    v_txt := 'uscita';
+  exception when others then v_txt := 'BLOCCATA'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('dopo aver nominato un successore, se ne va', v_txt = 'uscita', v_txt);
+
+  perform pg_temp.sono(bruno);
+  select public.elimina_viaggio(v_trip) into v_txt;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('l''admin rimasto solo elimina senza conferme', v_txt = 'eliminato', v_txt);
 end $$;
 
 reset role;
