@@ -1198,7 +1198,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
             <option value="originale">Originale — la foto intatta</option>
           </select></div>
         <p id="fotoQualNota" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5"></p>
-        <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">Vale per le foto che aggiungi da adesso in poi: quelle già fatte restano come sono. Chi le riceve le vede esattamente come le hai caricate — scaricandole non si perde altro.</p></div>
+        <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">È solo la proposta di partenza: ogni volta che aggiungi una foto l'app te lo richiede, così una foto importante e un cartello dell'autobus non pesano uguale.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">💾 Backup</div>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="exportData()">Esporta dati</button>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="restoreBak()">Ripristina copia automatica</button>
@@ -1616,6 +1616,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
        li': averlo, e tenerlo funzionante, e' meta' della tutela. Lo chiede
        il DSA (art. 16) e lo pretende l'App Store (linea guida 1.2). -->
   <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="apriSegnala()">⚑ Segnala questa foto</button>
+</div></div>
+<div class="modal" id="mFotoQual"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Come la salvo?</div><button class="x x-close" onclick="scegliQualita(null)">✕</button></div>
+  <p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem">Chi è nel viaggio la vedrà esattamente così: scaricandola non si perde altro.</p>
+  <div id="fqLista"></div>
 </div></div>
 <div class="modal" id="mSegnala"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -12121,12 +12127,44 @@ async function fotoDaSpedire(){
   }catch(e){}
 }
 
+/* La qualita' si sceglie foto per foto, non una volta per sempre: lo scatto
+   del tramonto e la foto del cartello dell'autobus non meritano lo stesso
+   peso, e chi carica lo sa in quel momento - non tre settimane prima dentro
+   le impostazioni. L'ultima scelta resta come proposta per la volta dopo. */
+let fqRisolvi=null;
+function scegliQualita(k){
+  closeSheet('mFotoQual');
+  const f=fqRisolvi;fqRisolvi=null;
+  if(f)f(k);
+}
+function chiediQualita(bytesOriginale){
+  const ultima=(app.settings&&app.settings.fotoQualita)||'alta';
+  const peso=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
+  /* Le stime vengono da una misura vera su una foto 4032x3024 da 5,6 MB.
+     Per "Originale" non si stima niente: si sa quanto pesa, e' quel file li'. */
+  const stima={leggera:145*1024,media:448*1024,alta:1536*1024};
+  document.getElementById('fqLista').innerHTML=Object.keys(FOTO_QUALITA).map(k=>{
+    const L=FOTO_QUALITA[k];
+    const q=k==='originale'?peso(bytesOriginale):'circa '+peso(stima[k]);
+    return `<button class="btn ${k===ultima?'btn-grad':'btn-soft'} btn-block" style="margin-bottom:.5rem;text-align:left;padding:.7rem .9rem" onclick="scegliQualita('${k}')">
+      <div style="font-weight:800">${L.nome}${k===ultima?' ·':''}</div>
+      <div style="font-size:.78rem;font-weight:600;opacity:.75;margin-top:.15rem">${k==='originale'?'la foto intatta':L.lato+' pixel'} — ${q}</div></button>`;
+  }).join('');
+  openSheet('mFotoQual');
+  return new Promise(res=>{fqRisolvi=res;});
+}
+
 async function addPhoto(inp){
   const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
   const t=T(),d=t.days[ttDay];if(!t||!d)return;
+  const scelta=await chiediQualita(f.size);
+  /* Chiudere il foglio senza scegliere annulla: non e' un guasto, e' una
+     persona che ci ha ripensato. */
+  if(!scelta)return;
+  app.settings=app.settings||{};app.settings.fotoQualita=scelta;save();
   toast('Sistemo la foto...');
   try{
-    const L0=fotoLivello();
+    const L0=FOTO_QUALITA[scelta]||FOTO_QUALITA.alta;
     /* "Originale" vuol dire davvero originale: il file si spedisce com'e',
        senza passare dal canvas. Ricomprimere un JPEG gia' compresso non
        aggiunge un dettaglio e costa di piu' dell'originale stesso - misurato:

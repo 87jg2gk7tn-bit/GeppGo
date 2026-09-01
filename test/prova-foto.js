@@ -72,6 +72,12 @@ const stato = {
 
   // ── mettere una foto ─────────────────────────────────────────────────────
   await page.setInputFiles('#phInput', { name: 'foto.jpg', mimeType: 'image/jpeg', buffer: JPEG_1x1 });
+  await page.waitForSelector('#mFotoQual.active', { timeout: 10000 });
+  const opzioni = await page.evaluate(() => [...document.querySelectorAll('#fqLista button')].map(b => b.textContent.replace(/\s+/g, ' ').trim()));
+  ok('la qualità viene chiesta al momento di caricare', opzioni.length === 4, opzioni.length + ' opzioni');
+  ok('con quanto peserà, scritto accanto', /KB|MB/.test(opzioni.join(' ')), opzioni[0]);
+  ok('e "Originale" dice il peso vero di quel file', /Originale/.test(opzioni[3]), opzioni[3]);
+  await page.evaluate(() => scegliQualita('alta'));
   await page.waitForFunction(() => CLOUD.caricate.length > 0, { timeout: 10000 });
   const su = await page.evaluate(() => ({ c: CLOUD.caricate[0], riga: CLOUD.righe[0] }));
 
@@ -91,7 +97,8 @@ const stato = {
   // ── senza rete non si perde niente ───────────────────────────────────────
   const offline = await page.evaluate(async () => {
     const vero = sb; sb = null;
-    await addPhoto({ files: [new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'b.jpg', { type: 'image/jpeg' })], value: '' });
+    const pr = addPhoto({ files: [new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'b.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 150)); scegliQualita('alta'); await pr;
     await new Promise(r => setTimeout(r, 400));
     const dopo = await phAll(101);
     sb = vero;
@@ -253,7 +260,8 @@ const stato = {
     app.settings.fotoQualita = 'originale';
     const byte = Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0));
     const prima = CLOUD.caricate.length;
-    await addPhoto({ files: [new File([byte], 'o.jpg', { type: 'image/jpeg' })], value: '' });
+    const pr = addPhoto({ files: [new File([byte], 'o.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
     await new Promise(r => setTimeout(r, 700));
     const c = CLOUD.caricate[CLOUD.caricate.length - 1];
     return { partito: byte.length, arrivato: c && c.bytes, nuove: CLOUD.caricate.length - prima };
@@ -266,13 +274,26 @@ const stato = {
     app.settings.fotoQualita = 'originale';
     const prima = CLOUD.caricate.length;
     const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='), c => c.charCodeAt(0));
-    await addPhoto({ files: [new File([png], 'x.png', { type: 'image/png' })], value: '' });
+    const pr = addPhoto({ files: [new File([png], 'x.png', { type: 'image/png' })], value: '' });
+    await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
     await new Promise(r => setTimeout(r, 700));
     const c = CLOUD.caricate[CLOUD.caricate.length - 1];
     return { nuove: CLOUD.caricate.length - prima, tipo: c && c.tipo };
   });
   ok('un PNG viene comunque accolto, convertito in JPEG', nonJpeg.nuove === 1 && nonJpeg.tipo === 'image/jpeg',
      JSON.stringify(nonJpeg));
+
+  const annulla = await page.evaluate(async () => {
+    const prima = (await phAll(101)).length, su = CLOUD.caricate.length;
+    const pr = addPhoto({ files: [new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'n.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 150));
+    scegliQualita(null);
+    await pr; await new Promise(r => setTimeout(r, 300));
+    return { prima, dopo: (await phAll(101)).length, su, suDopo: CLOUD.caricate.length };
+  });
+  ok('chiudendo senza scegliere non si carica niente',
+     annulla.dopo === annulla.prima && annulla.suDopo === annulla.su,
+     annulla.prima + '->' + annulla.dopo + ' foto');
 
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
