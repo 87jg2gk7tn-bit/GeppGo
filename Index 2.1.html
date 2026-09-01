@@ -1189,6 +1189,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">Navigatore</div>
         <div class="fg"><label>Quando accetti un avviso, apri con</label><select id="navPref" onchange="saveNav()"><option value="ask">Chiedimelo ogni volta</option><option value="apple">Mappe di Apple</option><option value="google">Google Maps</option><option value="internal">Navigatore di GeppGo</option></select></div>
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">iOS non permette di sapere quale navigatore preferisci: scegli qui una volta e lo uso sempre.</p></div>
+      <div class="card"><div class="card-h" style="margin-bottom:.9rem">📷 Qualità delle foto</div>
+        <div class="fg"><label>Come salvare le foto del diario</label>
+          <select id="fotoQual" onchange="saveFotoQual()">
+            <option value="leggera">Leggera — 1000 px</option>
+            <option value="media">Media — 1600 px</option>
+            <option value="alta">Alta — 2560 px (consigliata)</option>
+            <option value="originale">Originale — la foto intatta</option>
+          </select></div>
+        <p id="fotoQualNota" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5"></p>
+        <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">Vale per le foto che aggiungi da adesso in poi: quelle già fatte restano come sono. Chi le riceve le vede esattamente come le hai caricate — scaricandole non si perde altro.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">💾 Backup</div>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="exportData()">Esporta dati</button>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="restoreBak()">Ripristina copia automatica</button>
@@ -7352,6 +7362,18 @@ function openPremium(){
   openSheet('mPremium');
 }
 function togglePremium(){app.premium=!app.premium;save();renderAll();closeSheet('mPremium');toast(app.premium?'✨ Premium attivo':'Piano Gratis');}
+function saveFotoQual(){
+  const v=document.getElementById('fotoQual').value;
+  app.settings=app.settings||{};app.settings.fotoQualita=v;save();
+  mostraFotoQual();
+  toast('Le prossime foto: qualità '+fotoLivello().nome.toLowerCase());
+}
+function mostraFotoQual(){
+  const sel=document.getElementById('fotoQual'),nota=document.getElementById('fotoQualNota');
+  if(!sel)return;
+  sel.value=(app.settings&&app.settings.fotoQualita)||'alta';
+  if(nota)nota.textContent=fotoLivello().dice;
+}
 function renderAds(){
   document.querySelectorAll('.ad-slot').forEach(a=>a.style.display=app.premium?'none':'flex');
   const b=document.getElementById('planBadge'),s=document.getElementById('planSub'),btn=document.getElementById('planBtn');
@@ -10407,7 +10429,7 @@ function clearCloudCfg(){
    resta perché la chiamano da mezzo codice - dopo il login, dopo la creazione
    di un viaggio, all'avvio - e tutte quelle chiamate vogliono la stessa cosa:
    rinfrescare quello che si vede. */
-function updateAccountCard(){renderProfile();}
+function updateAccountCard(){renderProfile();mostraFotoQual();}
 function wxEmo(w){
   if(!w)return'';
   if(w.code!=null&&typeof wxEmoji==='function')return wxEmoji(w.code);
@@ -11957,6 +11979,24 @@ function phAll(tripId,date){return idbP().then(db=>new Promise(res=>{const out=[
    1000 pixel prima di spedirle: qualunque altra cosa viene respinta prima
    ancora di arrivare ai permessi. */
 const FOTO_BUCKET='foto-viaggi';
+/* Quanto grande e quanto fedele viene tenuta una foto. Prima era una sola
+   scelta scritta dentro il codice - 1000 pixel e qualita' 0,62 - e andava
+   bene finche' le foto restavano un diario personale sul telefono. Da quando
+   si condividono con i compagni non basta piu': da una foto di iPhone
+   (4032x3024) restava il 6% dei pixel, e per mandare qualcosa di guardabile
+   la gente sarebbe tornata a WhatsApp.
+   "Alta" e' il valore di partenza: su qualunque schermo di telefono e'
+   indistinguibile dall'originale, e pesa un decimo. */
+const FOTO_QUALITA={
+  leggera:  {lato:1000,q:0.65,nome:'Leggera',  dice:'la piu\' piccola: circa 150 KB a foto'},
+  media:    {lato:1600,q:0.80,nome:'Media',    dice:'circa 450 KB a foto'},
+  alta:     {lato:2560,q:0.87,nome:'Alta',     dice:'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto'},
+  originale:{lato:0,   q:0,   nome:'Originale',dice:'la foto esatta che hai scattato, senza toccarla: pesa quanto pesa (spesso 4-6 MB)'}
+};
+function fotoLivello(){
+  const k=(app.settings&&app.settings.fotoQualita)||'alta';
+  return FOTO_QUALITA[k]||FOTO_QUALITA.alta;
+}
 let fotoInCorso=false;
 
 /* Da dataURL a file vero da spedire. Il canvas ci da' una stringa, il
@@ -12086,9 +12126,32 @@ async function addPhoto(inp){
   const t=T(),d=t.days[ttDay];if(!t||!d)return;
   toast('Sistemo la foto...');
   try{
-    const url=await new Promise((res,rej)=>{
+    const L0=fotoLivello();
+    /* "Originale" vuol dire davvero originale: il file si spedisce com'e',
+       senza passare dal canvas. Ricomprimere un JPEG gia' compresso non
+       aggiunge un dettaglio e costa di piu' dell'originale stesso - misurato:
+       il 114% del peso di partenza. L'unico modo perche' la foto che arriva
+       sia identica a quella che parte e' non toccarla.
+       Se pero' non e' un JPEG (certi telefoni danno HEIC o PNG) o sfora il
+       limite del magazzino, si ripiega su una riduzione fedele: meglio una
+       foto quasi identica che una foto respinta. */
+    const originaleVaBene=L0.lato===0&&f.type==='image/jpeg'&&f.size<=11*1024*1024;
+    const url=originaleVaBene
+      ? await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(f);})
+      : await new Promise((res,rej)=>{
       const rd=new FileReader();
-      rd.onload=()=>{const im=new Image();im.onload=()=>{const M=1000,sc=Math.min(1,M/Math.max(im.width,im.height));const cv=document.createElement('canvas');cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',.62));};im.onerror=rej;im.src=rd.result;};
+      rd.onload=()=>{const im=new Image();im.onload=()=>{
+        const L=L0.lato?L0:{lato:4096,q:0.92};
+        /* Non si ingrandisce mai: se la foto e' gia' piu' piccola del limite
+           resta com'e'. Allargarla peserebbe di piu' senza aggiungere un
+           solo dettaglio. */
+        const sc=Math.min(1,L.lato/Math.max(im.width,im.height));
+        const cv=document.createElement('canvas');
+        cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+        const cx=cv.getContext('2d');
+        cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+        cx.drawImage(im,0,0,cv.width,cv.height);
+        res(cv.toDataURL('image/jpeg',L.q));};im.onerror=rej;im.src=rd.result;};
       rd.onerror=rej;rd.readAsDataURL(f);
     });
     const db=await idbP();
@@ -12329,7 +12392,7 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderProgramPlaces();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();renderAds();renderBookings();renderTripAddRow();}
+  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderProgramPlaces();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();mostraFotoQual();renderAds();renderBookings();renderTripAddRow();}
 
 </script>
 </body>

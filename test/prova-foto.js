@@ -224,6 +224,56 @@ const stato = {
   });
   ok('e se non sei connesso lo dice chiaro', /accedi dal Profilo/.test(senzaSess), senzaSess);
 
+  // ── la qualità: quanto si perde e quanto si può scegliere ────────────────
+  const qual = await page.evaluate(() => ({
+    livelli: Object.keys(FOTO_QUALITA),
+    diSerie: fotoLivello().nome,
+    originaleNonRiduce: FOTO_QUALITA.originale.lato === 0,
+    altaPixel: FOTO_QUALITA.alta.lato
+  }));
+  ok('si può scegliere fra quattro qualità', qual.livelli.length === 4, qual.livelli.join(','));
+  ok('di serie è Alta, non più la miniatura', qual.diSerie === 'Alta', qual.diSerie);
+  ok('"Alta" è 2560 px, non 1000', qual.altaPixel === 2560, String(qual.altaPixel));
+  ok('e "Originale" non ridimensiona affatto', qual.originaleNonRiduce === true);
+
+  // la scelta si salva e vale per le foto dopo
+  const scelta = await page.evaluate(() => {
+    app.settings = app.settings || {};
+    mostraFotoQual();
+    document.getElementById('fotoQual').value = 'leggera';
+    saveFotoQual();
+    return { salvata: app.settings.fotoQualita, usata: fotoLivello().lato, nota: document.getElementById('fotoQualNota').textContent };
+  });
+  ok('la scelta si salva', scelta.salvata === 'leggera', scelta.salvata);
+  ok('e viene usata per ridurre', scelta.usata === 1000, String(scelta.usata));
+  ok('con sotto scritto quanto pesa', /KB|MB/.test(scelta.nota), scelta.nota);
+
+  // con "Originale" il file arriva nel cloud intatto, byte per byte
+  const intatta = await page.evaluate(async () => {
+    app.settings.fotoQualita = 'originale';
+    const byte = Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0));
+    const prima = CLOUD.caricate.length;
+    await addPhoto({ files: [new File([byte], 'o.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 700));
+    const c = CLOUD.caricate[CLOUD.caricate.length - 1];
+    return { partito: byte.length, arrivato: c && c.bytes, nuove: CLOUD.caricate.length - prima };
+  });
+  ok('con "Originale" il file parte identico, byte per byte',
+     intatta.arrivato === intatta.partito, intatta.partito + ' -> ' + intatta.arrivato + ' byte');
+
+  // un file che non è JPEG non può restare "originale": si ripiega, non si perde
+  const nonJpeg = await page.evaluate(async () => {
+    app.settings.fotoQualita = 'originale';
+    const prima = CLOUD.caricate.length;
+    const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='), c => c.charCodeAt(0));
+    await addPhoto({ files: [new File([png], 'x.png', { type: 'image/png' })], value: '' });
+    await new Promise(r => setTimeout(r, 700));
+    const c = CLOUD.caricate[CLOUD.caricate.length - 1];
+    return { nuove: CLOUD.caricate.length - prima, tipo: c && c.tipo };
+  });
+  ok('un PNG viene comunque accolto, convertito in JPEG', nonJpeg.nuove === 1 && nonJpeg.tipo === 'image/jpeg',
+     JSON.stringify(nonJpeg));
+
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);
