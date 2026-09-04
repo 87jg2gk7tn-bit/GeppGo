@@ -1217,7 +1217,8 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6">Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.</p>
         <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Se in un viaggio trovi una foto che non dovrebbe esserci, aprila e tocca <strong>Segnala</strong>. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.</p>
         <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Per qualsiasi altra cosa: <a href="mailto:merati.giacomo94@gmail.com" style="color:var(--brown);font-weight:700">merati.giacomo94@gmail.com</a></p>
-        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.</p></div>
+        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.</p>
+        <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="apriPrivacy()">Come tratto i tuoi dati</button></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
 <div class="page" id="mDay"><div class="tt-sheet">
@@ -1262,6 +1263,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <button class="auth-link" style="margin-top:.2rem" onclick="authMagic()">Entra con un link via email (senza password)</button>
   <button class="auth-link" style="margin-top:.2rem" onclick="openRecPanel(false)">Ho un codice o un link di recupero ›</button>
   <button class="auth-link" onclick="authSkip()">Usa senza account (dati solo su questo telefono)</button>
+  <!-- Chi crea un account deve poter leggere PRIMA cosa succede ai suoi dati.
+       Il link e' vero e apre la pagina, non un testo scritto per finta: senza,
+       l'App Store non pubblica, e non sarebbe nemmeno corretto. -->
+  <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;text-align:center;margin-top:.9rem">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">privacy di GeppGo</a>.</p>
   </div>
   <div id="auRec" style="display:none">
     <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link "Reset password" → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
@@ -7378,6 +7383,16 @@ function openPremium(){
   openSheet('mPremium');
 }
 function togglePremium(){app.premium=!app.premium;save();renderAll();closeSheet('mPremium');toast(app.premium?'✨ Premium attivo':'Piano Gratis');}
+/* La privacy sta in una pagina a se', non dentro un riquadro dell'app: cosi'
+   ha un indirizzo suo da dare all'App Store, si puo' leggere prima di
+   registrarsi e si puo' mandare a qualcuno. Il file sta accanto all'HTML, e
+   dentro l'app nativa - dove i file sono impacchettati diversamente - si
+   ripiega sull'indirizzo pubblico. */
+const PRIVACY_URL='privacy.html';
+function apriPrivacy(){
+  try{window.open(PRIVACY_URL,'_blank','noopener');}
+  catch(e){location.href=PRIVACY_URL;}
+}
 function saveFotoQual(){
   const v=document.getElementById('fotoQual').value;
   app.settings=app.settings||{};app.settings.fotoQualita=v;save();

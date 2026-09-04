@@ -1,2 +1,8 @@
+# La privacy deve restare raggiungibile: senza queste righe la regola /*
+# qui sotto se la mangerebbe e servirebbe l'app al posto suo. Netlify prende
+# la prima regola che combacia, quindi vanno prima.
+/privacy        /privacy.html   200
+/privacy.html   /privacy.html   200
+
 /   /Index%202.1.html   200
 /*  /Index%202.1.html   200
