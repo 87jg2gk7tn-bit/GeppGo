@@ -82,6 +82,14 @@ do $$ begin
   alter table public.trip_members add constraint trip_members_ruolo_ck check (ruolo in ('admin','compagno'));
 exception when duplicate_object then null; end $$;
 
+-- joined_at serve a elimina_account() per scegliere a chi lasciare il viaggio
+-- (chi c'è da più tempo). Sulle tabelle già esistenti il "create table" non
+-- l'aggiunge: va chiesto a parte, come per ruolo. Senza, la cancellazione
+-- dell'account fallisce con "column m.joined_at does not exist" — ed è
+-- successo, provando lo schema sul database vero invece che su uno vuoto.
+alter table public.trip_members add column if not exists joined_at timestamptz not null default now();
+alter table public.trips        add column if not exists created_at timestamptz not null default now();
+
 -- Chi ha già creato dei viaggi era admin di fatto: lo diventa anche di nome.
 update public.trip_members m set ruolo = 'admin'
   from public.trips t
@@ -140,7 +148,7 @@ begin
               and p.proname in ('join_trip','is_trip_member','is_trip_owner',
                                 'is_trip_admin','elimina_viaggio',
                                 'conferma_eliminazione','annulla_eliminazione',
-                                'togli_dal_viaggio')
+                                'togli_dal_viaggio','elimina_account')
   loop
     execute format('drop function if exists %s', f.firma);
   end loop;
@@ -455,7 +463,12 @@ begin
     raise exception 'l''id di un viaggio non si cambia';
   end if;
 
-  if new.owner is distinct from old.owner then
+  -- Il proprietario non si cambia dall'app: e' il modo in cui un compagno
+  -- proverebbe a intestarsi il viaggio degli altri. L'unico posto che puo'
+  -- cambiarlo e' elimina_account(), quando passa il viaggio a chi resta invece
+  -- di portarselo via - e quella gira con i diritti pieni, quindi qui dentro
+  -- current_user non e' piu' 'authenticated'.
+  if new.owner is distinct from old.owner and current_user in ('authenticated', 'anon') then
     raise exception 'il proprietario di un viaggio non si cambia';
   end if;
 
@@ -660,7 +673,7 @@ create table if not exists public.segnalazioni (
   foto_id        uuid        references public.foto(id) on delete set null,
   trip_id        uuid,
   percorso_copia text,
-  segnalata_da   uuid        not null references auth.users(id) on delete cascade,
+  segnalata_da   uuid        references auth.users(id) on delete set null,
   motivo         text        not null
                  check (motivo in ('minori','illegale','violenza','privacy','altro')),
   nota           text,
@@ -669,6 +682,22 @@ create table if not exists public.segnalazioni (
                  check (stato in ('aperta','chiusa'))
 );
 create index if not exists segn_stato_idx on public.segnalazioni(stato, creata_il);
+
+-- Per i database in cui le segnalazioni sparivano insieme a chi le aveva
+-- fatte: adesso restano, senza piu' il nome di chi ha segnalato.
+--
+-- Non e' un dettaglio. Una persona che cancella il proprio account ha diritto
+-- che i suoi dati se ne vadano, ma una segnalazione su un contenuto grave non
+-- e' un suo dato: e' la traccia di una cosa successa, e serve a chi deve
+-- rispondere di quel contenuto. Sparendo insieme all'account, chiunque
+-- avrebbe potuto far pulizia segnalando e poi cancellandosi.
+do $$ begin
+  alter table public.segnalazioni alter column segnalata_da drop not null;
+  alter table public.segnalazioni drop constraint if exists segnalazioni_segnalata_da_fkey;
+  alter table public.segnalazioni
+    add constraint segnalazioni_segnalata_da_fkey
+    foreign key (segnalata_da) references auth.users(id) on delete set null;
+exception when others then null; end $$;
 
 alter table public.foto         enable row level security;
 alter table public.segnalazioni enable row level security;
@@ -802,6 +831,82 @@ $$;
 
 revoke all on function public.togli_dal_viaggio(uuid, uuid) from public, anon;
 grant execute on function public.togli_dal_viaggio(uuid, uuid) to authenticated;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+--  CANCELLARE IL PROPRIO ACCOUNT
+-- ════════════════════════════════════════════════════════════════════════════
+--  Apple lo pretende da ogni app in cui ci si registra: si deve poter
+--  cancellare l'account da dentro l'app, non scrivendo una mail. E' anche il
+--  diritto alla cancellazione che il GDPR riconosce a chiunque.
+--
+--  La parte difficile non e' cancellare: e' NON portarsi via i viaggi degli
+--  altri. Le tabelle hanno "on delete cascade" sul proprietario, quindi
+--  togliere l'utente e basta cancellerebbe i viaggi che ha creato - anche
+--  quelli dove altre cinque persone stanno ancora viaggiando. Sarebbe un modo
+--  perfetto per far sparire il viaggio a tutti per ripicca.
+--
+--  Quindi, viaggio per viaggio:
+--    - se non c'e' nessun altro dentro, il viaggio se ne va insieme a te;
+--    - se c'e' qualcun altro, il viaggio resta a loro. Se eri l'admin, il
+--      ruolo passa a chi c'era prima (a un altro admin, se c'e'); se eri il
+--      proprietario, passa la proprieta'.
+--
+--  Le tue foto se ne vanno anche dai telefoni dei compagni: sono roba tua, e
+--  cancellare l'account vuol dire cancellarle. L'app toglie i file dal
+--  magazzino prima di chiamare qui.
+--
+--  Le segnalazioni che hai fatto restano, senza piu' il tuo nome: vedi sopra.
+create or replace function public.elimina_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  io         uuid := auth.uid();
+  v_trip     uuid;
+  successore uuid;
+begin
+  if io is null then
+    raise exception 'serve un account';
+  end if;
+
+  for v_trip in
+      select id from public.trips where owner = io
+      union
+      select trip_id from public.trip_members where user_id = io
+  loop
+    -- Chi resta, e a chi tocca: prima un altro admin, se c'e'; altrimenti chi
+    -- e' nel viaggio da piu' tempo.
+    select m.user_id into successore
+      from public.trip_members m
+     where m.trip_id = v_trip and m.user_id <> io
+     order by (m.ruolo = 'admin') desc, m.joined_at asc
+     limit 1;
+
+    if successore is null then
+      delete from public.trips where id = v_trip;
+    else
+      if exists (select 1 from public.trip_members
+                  where trip_id = v_trip and user_id = io and ruolo = 'admin') then
+        update public.trip_members set ruolo = 'admin'
+         where trip_id = v_trip and user_id = successore;
+      end if;
+      if exists (select 1 from public.trips where id = v_trip and owner = io) then
+        update public.trips set owner = successore where id = v_trip;
+      end if;
+    end if;
+  end loop;
+
+  delete from public.foto        where caricata_da = io;
+  delete from public.trip_members where user_id    = io;
+  delete from auth.users         where id          = io;
+end;
+$$;
+
+revoke all on function public.elimina_account() from public, anon;
+grant execute on function public.elimina_account() to authenticated;
 
 
 -- ────────────────────────────────────────────────────────────────────────────

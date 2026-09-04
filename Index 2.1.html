@@ -1617,6 +1617,15 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
        il DSA (art. 16) e lo pretende l'App Store (linea guida 1.2). -->
   <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="apriSegnala()">⚑ Segnala questa foto</button>
 </div></div>
+<div class="modal" id="mElimAcc"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Eliminare il tuo account?</div><button class="x x-close" onclick="closeSheet('mElimAcc')">✕</button></div>
+  <div id="eaCosa" style="font-size:.86rem;color:var(--ink-soft);line-height:1.65;margin-bottom:1rem"></div>
+  <div class="fg"><label>Per esserne sicuri, scrivi ELIMINA</label><input id="eaConferma" placeholder="ELIMINA" autocapitalize="characters" autocorrect="off"></div>
+  <div id="eaMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
+  <button class="btn btn-danger btn-block" onclick="eliminaAccount()">Elimina definitivamente</button>
+  <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="closeSheet('mElimAcc')">Lascia stare</button>
+</div></div>
 <div class="modal" id="mFotoQual"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Come la salvo?</div><button class="x x-close" onclick="scegliQualita(null)">✕</button></div>
@@ -3439,6 +3448,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
+- Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -10344,6 +10354,62 @@ async function authUp(){
 }
 function authSkip(){app.skipAuth=true;save();const g=document.getElementById('authGate');if(g)g.style.display='none';updateAccountCard();}
 async function authOut(){try{await sb.auth.signOut();}catch(e){}app.skipAuth=false;save();toast('Sei uscito dall\'account');}
+/* ===== ELIMINARE IL PROPRIO ACCOUNT =====
+   Apple lo pretende da ogni app in cui ci si registra: si deve poter
+   cancellare l'account da dentro l'app, non scrivendo una mail. Ed e' il
+   diritto alla cancellazione che il GDPR riconosce a chiunque.
+
+   Prima di chiedere conferma si dice esattamente cosa succede, viaggio per
+   viaggio: e' l'unica cosa dell'app che non si puo' disfare, e chi la sceglie
+   deve sapere che i viaggi dove c'e' ancora qualcuno restano a loro e non
+   spariscono. La parola da scrivere non e' un vezzo: e' quello che separa un
+   tocco sbagliato da una decisione. */
+function apriEliminaAccount(){
+  if(!sb||!session){toast('Non sei connesso: non c\'e\' nessun account da eliminare');return;}
+  const miei=app.trips.filter(t=>t.cid);
+  const soli=miei.filter(t=>quantiMembri(t)<=1);
+  const conAltri=miei.filter(t=>quantiMembri(t)>1);
+  const righe=[];
+  righe.push('<b>Il tuo account sparisce</b>, con l\'email e l\'accesso. Non si torna indietro.');
+  if(soli.length)righe.push('I viaggi dove sei solo tu se ne vanno con te: <b>'+soli.map(t=>esc(t.name)).join(', ')+'</b>.');
+  if(conAltri.length)righe.push('I viaggi dove c\'è ancora qualcuno <b>restano a loro</b>: '+conAltri.map(t=>esc(t.name)).join(', ')+'. Se ne eri l\'admin, il ruolo passa a chi c\'era.');
+  righe.push('<b>Le foto che hai messo spariscono</b>, anche dai telefoni dei compagni.');
+  righe.push('Quello che hai sul telefono resta finché non fai un reset da Backup.');
+  document.getElementById('eaCosa').innerHTML=righe.map(r=>'<div style="margin-bottom:.5rem">• '+r+'</div>').join('');
+  document.getElementById('eaConferma').value='';
+  document.getElementById('eaMsg').textContent='';
+  openSheet('mElimAcc');
+}
+function quantiMembri(t){
+  const m=t&&t.cid?membriPerViaggio[t.cid]:null;
+  return m?m.length:1;
+}
+async function eliminaAccount(){
+  const msg=document.getElementById('eaMsg');
+  const scritto=(document.getElementById('eaConferma').value||'').trim().toUpperCase();
+  if(scritto!=='ELIMINA'){msg.textContent='Scrivi ELIMINA per confermare.';return;}
+  msg.style.color='';msg.textContent='Sto cancellando...';
+  /* Prima i file: il database porta via le righe delle foto, ma i file nel
+     magazzino no - resterebbero li' senza piu' nessuno che sappia di cosa
+     sono. Se qualcuno non si toglie non ci si ferma: meglio un file orfano
+     che un account che non si riesce a cancellare. */
+  try{
+    const{data:mie}=await sb.from('foto').select('percorso').eq('caricata_da',myUid);
+    if(mie&&mie.length)await sb.storage.from(FOTO_BUCKET).remove(mie.map(x=>x.percorso));
+  }catch(e){}
+  const{error}=await sb.rpc('elimina_account');
+  if(error){msg.textContent='Non riesco: '+error.message;return;}
+  try{await sb.auth.signOut();}catch(e){}
+  closeSheet('mElimAcc');
+  /* Restano i dati su questo telefono, e va detto: qualcuno vuole cancellare
+     l'account ma tenersi il diario. Chi vuole via tutto usa il reset. */
+  app.skipAuth=false;save();
+  confirmDo('Account eliminato','Sul telefono i viaggi ci sono ancora. Vuoi togliere anche quelli?',()=>{
+    confirmReset();
+  },'🗑️','Togli tutto','btn-danger');
+  renderAll();
+}
+
 /* Prima, senza configurazione del cloud, questo tasto non faceva niente:
    afterAuth usciva subito e chi lo premeva restava a guardare. Succede a chi
    si e' messo l'app sulla schermata iniziale partendo da un link d'invito e
@@ -11579,7 +11645,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
 }
 function restoreSnap(ts){

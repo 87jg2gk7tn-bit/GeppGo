@@ -116,3 +116,25 @@ verificano, in sostanza:
 Sono i meccanismi che il DSA (Reg. UE 2022/2065, art. 16) chiede a chi ospita
 contenuti altrui e che l'App Store pretende alla linea guida 1.2: poter essere
 avvisati, poter rimuovere, poter allontanare, ed essere raggiungibili.
+
+## La cancellazione dell'account
+
+```sh
+psql -f test/supabase-prova-account.sql   # 21 controlli sul database
+node test/prova-account.js                # 16 controlli sull'app
+```
+
+Apple la pretende da ogni app in cui ci si registra, e il GDPR la riconosce a
+chiunque. La parte difficile non è cancellare: è **non portarsi via i viaggi
+degli altri**. Le tabelle hanno `on delete cascade` sul proprietario, quindi
+togliere l'utente e basta cancellerebbe i viaggi che ha creato — anche quelli
+dove altre cinque persone stanno ancora viaggiando.
+
+Le prove verificano che chi si cancella si porti via solo le proprie cose: il
+viaggio dove era solo se ne va, quello con altri dentro **resta a loro** con
+ruolo e proprietà passati a chi c'era, le sue foto spariscono e quelle degli
+altri no, e la segnalazione che aveva fatto sopravvive senza più il suo nome.
+
+C'è un caso che sfugge facilmente ed è coperto: **l'unico admin che non è il
+proprietario**. Senza trattarlo, il guardiano che vieta all'ultimo admin di
+uscire bloccherebbe tutta la cancellazione.

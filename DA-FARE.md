@@ -10,14 +10,14 @@ dov'era rimasto, senza rifare ragionamenti già fatti.
 
 ## ⚠️ DA FARE SUBITO
 
-**Lanciare su Supabase la parte foto dello schema.** Finché non è fatto, le
-foto non arrivano nel cloud: l'app dice *"ancora solo su questo telefono — il
-magazzino delle foto non c'è ancora"*.
+**Lanciare su Supabase lo schema aggiornato** (`supabase-schema.sql`, tutto il
+file: è rilanciabile senza danni). Contiene la parte foto e la cancellazione
+dell'account. Finché non è fatto, le foto non arrivano nel cloud — l'app dice
+*"ancora solo su questo telefono — il magazzino delle foto non c'è ancora"* —
+e il tasto "Elimina il mio account" non funziona.
 
-Si prende da `supabase-schema.sql` (tutto il file, è rilanciabile senza
-danni): SQL Editor → incolla → Run. Poi in Profilo → Qualità delle foto, e si
-prova ad aggiungerne una: sotto deve leggersi *"salvata anche nel cloud: la
-vedono i compagni di viaggio"*.
+SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
+leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
 
 ---
 
@@ -49,9 +49,11 @@ combatte l'unico motore di crescita che c'è.
    con la sola email. Schema versionato in `supabase-schema.sql`, 48 prove sui
    permessi.
 2. ~~**Foto nel cloud**~~ ✅ fatto, con le tutele dentro (vedi sotto).
-3. **Cancellazione account dentro l'app** — Apple la pretende se c'è
-   registrazione. Deve cancellare tutto, anche a un utente gratis: la regola
-   "il gratuito non elimina" vale sui viaggi, non sull'account.
+3. ~~**Cancellazione account dentro l'app**~~ ✅ fatto. `elimina_account()`
+   nel database, tasto in Profilo. La parte delicata era non portarsi via i
+   viaggi degli altri: chi si cancella lascia a chi resta i viaggi con
+   qualcuno dentro, passando ruolo e proprietà. 21 prove sul database, 16
+   sull'app.
 4. **Privacy policy + scheda dati** — obbligatoria per pubblicare. Si
    raccolgono posizione, foto, nomi e spese di terze persone (i compagni, che
    non hanno accettato niente).
@@ -186,6 +188,11 @@ qualcuno che risponde".
   il canvas.
 - **`uid()` restituisce un numero**, non una stringa. I confronti con valori
   che tornano dal database passano da `String()`.
+- **`create table if not exists` non aggiunge colonne a una tabella che c'è
+  già.** Ogni colonna nuova vuole il suo `alter table ... add column if not
+  exists`, altrimenti sui database esistenti manca e le funzioni che la usano
+  falliscono a tempo di esecuzione. È successo con `joined_at`, e l'ha trovato
+  solo la prova che applica lo schema al database vero invece che a uno vuoto.
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.
