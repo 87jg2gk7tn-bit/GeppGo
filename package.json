@@ -1,0 +1,16 @@
+{
+  "name": "geppgo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App di viaggio per gruppi. Le prove stanno in test/, si lanciano con npm test.",
+  "scripts": {
+    "test": "node test/tutte.js",
+    "test:app": "node test/tutte.js --solo-app",
+    "test:db": "node test/tutte.js --solo-db"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.62.1",
+    "playwright": "^1.62.1",
+    "leaflet": "^1.9.4"
+  }
+}

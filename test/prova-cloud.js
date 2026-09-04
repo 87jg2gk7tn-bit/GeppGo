@@ -1,8 +1,7 @@
-const { chromium } = require('playwright-core');
-const APP = process.env.APP_URL || 'file:///home/user/GeppGo/Index%202.1.html';
+const { apriBrowser, APP, RADICE } = require('./browser');
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const browser = await apriBrowser();
   const r = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 

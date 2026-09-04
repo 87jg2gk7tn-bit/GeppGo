@@ -1,14 +1,6 @@
-const { chromium } = require('playwright-core');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const path = require('path');
-/* La cartella del progetto: normalmente quella sopra a questo file. Le prove
-   pero' girano anche da un'altra cartella (dove sta playwright), quindi se
-   accanto non si trova l'app si guarda dove dice GEPPGO_DIR. */
-const RADICE = fs.existsSync(path.resolve(__dirname, '..', 'Index 2.1.html'))
-  ? path.resolve(__dirname, '..')
-  : (process.env.GEPPGO_DIR || '/home/user/GeppGo');
-const APP = process.env.APP_URL || 'file://' + RADICE + '/Index%202.1.html';
-
 (async () => {
   const r = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
@@ -74,7 +66,7 @@ const APP = process.env.APP_URL || 'file://' + RADICE + '/Index%202.1.html';
      scordati.join(', ') || 'nessuno dimenticato');
 
   // ── e dentro l'app ci si arriva ──────────────────────────────────────────
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const browser = await apriBrowser();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
