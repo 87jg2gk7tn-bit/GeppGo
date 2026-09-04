@@ -1,0 +1,7 @@
+# Le librerie delle prove: si riprendono con "npm install".
+node_modules
+
+# Le schermate che alcune prove salvano mentre girano: servono a guardarle
+# con i propri occhi quando si sta lavorando, non a stare nel repo.
+*.png
+!icona.svg

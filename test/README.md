@@ -1,4 +1,31 @@
-# Prove sui permessi del cloud
+# Le prove di GeppGo
+
+```sh
+npm install       # la prima volta
+npm test          # tutte
+npm run test:app  # solo quelle sull'app
+npm run test:db   # solo quelle sul database
+```
+
+`npm test` le lancia tutte e in fondo dice come è andata. Girano anche da sole
+a ogni modifica: `.github/workflows/prove.yml`.
+
+Prima bisognava ricordarsi quali esistevano e lanciarle una per una. Funziona
+finché qualcuno se le ricorda — cioè finché non se le dimentica, che è
+esattamente il momento in cui servivano.
+
+## Cosa serve per lanciarle
+
+- **Node** e **Chromium**. Il browser si prende da `CHROMIUM_PATH` se c'è,
+  altrimenti da dove l'ha messo Playwright.
+- **Postgres**, solo per le prove sul database: si dice dove sta con le
+  variabili di sempre (`PGHOST`, `PGPORT`, `PGUSER`). Se non risponde, quelle
+  prove vengono **saltate e dichiarate tali** invece di far finta che sia
+  andato tutto bene.
+
+Le prove sul database ripartono sempre da un database vuoto: una prova che
+eredita lo stato di quella prima non dice niente di affidabile.
+
 
 Il cloud di GeppGo si regge su una riga sola. L'app chiede i viaggi così:
 

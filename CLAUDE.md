@@ -15,10 +15,10 @@ quel file è la memoria.
   poi force-with-lease), altrimenti le PR successive vanno in conflitto.
 - I commenti sono **in italiano** e spiegano *perché* una cosa è fatta così,
   non *cosa* fa. Si scrive come parla l'app: piano, senza gergo.
-- Le prove stanno in **`test/`** e si lanciano da lì (vedi `test/README.md`).
-  Prima di dire che una modifica funziona, la si prova — e quando si corregge
-  un guasto, la prova va fatta fallire sul codice vecchio, altrimenti non
-  dimostra niente.
+- Le prove si lanciano con **`npm test`** (vedi `test/README.md`), e girano da
+  sole a ogni push. Prima di dire che una modifica funziona, la si prova — e
+  quando si corregge un guasto, la prova va fatta fallire sul codice vecchio,
+  altrimenti non dimostra niente.
 - `supabase-schema.sql` è la verità sul database: si rilancia quante volte si
   vuole senza danni. Prima di modificare un progetto Supabase vero, si guarda
   com'è fatto (`test/guarda-il-database.sql`).

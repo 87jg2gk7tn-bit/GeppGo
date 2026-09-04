@@ -1,5 +1,4 @@
-const { chromium } = require('playwright-core');
-const APP = process.env.APP_URL || 'file:///home/user/GeppGo/Index%202.1.html';
+const { apriBrowser, APP, RADICE } = require('./browser');
 
 // Un JPEG piccolissimo ma vero: serve perché addPhoto lo passa da un <img>
 // e da un canvas, e un finto non verrebbe decodificato.
@@ -20,7 +19,7 @@ const stato = {
 };
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const browser = await apriBrowser();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));

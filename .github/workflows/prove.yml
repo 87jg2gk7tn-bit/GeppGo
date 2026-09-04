@@ -1,0 +1,70 @@
+# Le prove di GeppGo, a ogni modifica.
+#
+# Prima esistevano ma bisognava ricordarsi di lanciarle: funziona finché
+# qualcuno se le ricorda, cioè finché non se le dimentica — che è esattamente
+# il momento in cui servivano. Da qui in poi girano da sole, e una modifica che
+# rompe qualcosa si vede prima di arrivare sul telefono di qualcuno.
+#
+# Vale doppio con l'app negli store: sul link un errore si corregge in trenta
+# secondi, sullo store si aspetta la revisione mentre le recensioni scendono.
+
+name: Prove
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    # Un Postgres vero per le prove sui permessi: quelle non si possono
+    # simulare, perché è proprio il database a decidere chi vede cosa.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: prove
+          POSTGRES_DB: geppgo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: prove
+      PGDATABASE: geppgo
+      # Qui una prova saltata conta come una prova andata male: un Postgres
+      # configurato storto passerebbe verde senza che i permessi siano mai
+      # stati controllati, e non lo si verrebbe a sapere.
+      PROVE_TUTTE: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installa le dipendenze delle prove
+        run: npm install --no-audit --no-fund
+
+      # Il browser con cui si aprono davvero le schermate dell'app. --with-deps
+      # tira su anche le librerie di sistema che gli servono, che su una
+      # macchina appena creata non ci sono.
+      - name: Installa Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: psql, per le prove sul database
+        run: sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Le prove
+        run: npm test

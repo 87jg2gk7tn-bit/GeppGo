@@ -64,10 +64,13 @@ combatte l'unico motore di crescita che c'è.
    **Restano due cose che non sono codice:** dire in quale regione stanno i
    server Supabase, e far leggere il testo a un avvocato — vedi in fondo a
    `PRIVACY-STORE.md`.
-5. **Test e CI nel repo** — a metà: le prove esistono in `test/`, manca che
-   girino da sole a ogni modifica. Vale doppio con la nativa: sul link un
-   errore si corregge in trenta secondi, sullo store si aspetta la revisione
-   mentre le recensioni scendono.
+5. ~~**Test e CI nel repo**~~ ✅ fatto. `npm test` le lancia tutte;
+   `.github/workflows/prove.yml` le fa girare da sole a ogni push e a ogni PR,
+   con un Postgres vero per i permessi. Le prove che vivevano in una cartella
+   temporanea sono tutte nel repo.
+
+**I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
+pubblicare non è codice: la regione dei server, l'avvocato, la società.
 
 ### Poi, per crescere
 
@@ -200,6 +203,10 @@ qualcuno che risponde".
   exists`, altrimenti sui database esistenti manca e le funzioni che la usano
   falliscono a tempo di esecuzione. È successo con `joined_at`, e l'ha trovato
   solo la prova che applica lo schema al database vero invece che a uno vuoto.
+- **Un percorso costruito da `__dirname` si rompe appena il file si sposta.**
+  Portando le prove dentro `test/`, nove su diciassette hanno smesso di
+  funzionare per questo. Quello che serve si chiede a Node (`require.resolve`)
+  o si passa da un posto solo (`test/browser.js`).
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.
