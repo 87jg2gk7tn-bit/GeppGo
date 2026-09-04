@@ -24,6 +24,10 @@ quel file è la memoria.
   com'è fatto (`test/guarda-il-database.sql`).
 - `MAPPA_APP`, dentro l'HTML, è la mappa che l'assistente dell'app usa per
   rispondere all'utente: va aggiornata quando l'interfaccia cambia.
+- `privacy.html` deve restare **vera**: se l'app inizia a raccogliere un dato
+  nuovo o a parlare con un servizio nuovo, va aggiornata lì e in
+  `PRIVACY-STORE.md`. C'è una prova che confronta i servizi chiamati dal
+  codice con quelli dichiarati, e fallisce se ne compare uno non dichiarato.
 
 ## Due regole che non si toccano
 

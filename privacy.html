@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeppGo — Privacy</title>
+<!-- Niente font né fogli di stile presi da fuori: sarebbe curioso che la
+     pagina sulla privacy mandasse l'indirizzo IP di chi la legge a un altro
+     server solo per usare un carattere più bello. -->
+<style>
+  :root{color-scheme:light dark;--ink:#2a2622;--soft:#5d554c;--faint:#8b8074;
+        --bg:#faf7f2;--card:#fff;--bordo:#e8e0d5;--acc:#8a6a3d}
+  @media (prefers-color-scheme:dark){
+    :root{--ink:#ece7e0;--soft:#b6ada2;--faint:#8b8074;--bg:#1a1815;--card:#232019;--bordo:#3a352c;--acc:#c9a267}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       line-height:1.65;font-size:16px}
+  .w{max-width:44rem;margin:0 auto;padding:2rem 1.2rem 4rem}
+  h1{font-size:1.7rem;line-height:1.25;margin:0 0 .3rem}
+  h2{font-size:1.15rem;margin:2.2rem 0 .6rem;padding-top:1.2rem;border-top:1px solid var(--bordo)}
+  h3{font-size:.98rem;margin:1.4rem 0 .35rem}
+  p,li{color:var(--soft)}
+  li{margin-bottom:.45rem}
+  .data{color:var(--faint);font-size:.85rem;margin:0 0 1.6rem}
+  .box{background:var(--card);border:1px solid var(--bordo);border-radius:14px;padding:1rem 1.1rem;margin:1.2rem 0}
+  .box p:last-child,.box ul:last-child{margin-bottom:0}
+  .box p:first-child{margin-top:0}
+  a{color:var(--acc)}
+  table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.9rem;display:block;overflow-x:auto}
+  th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--bordo);vertical-align:top}
+  th{color:var(--ink);font-weight:700;white-space:nowrap}
+  td{color:var(--soft)}
+  code{font-size:.85em;background:var(--bordo);padding:.1rem .3rem;border-radius:4px}
+  .torna{display:inline-block;margin-top:2.5rem;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="w">
+
+<h1>Privacy di GeppGo</h1>
+<p class="data">In vigore dal 1 settembre 2026</p>
+
+<p>GeppGo serve a organizzare un viaggio in gruppo: la giornata, le spese, i
+biglietti, le foto. Per farlo tratta dei dati, e questa pagina dice quali,
+perché, dove finiscono e cosa puoi chiedere.</p>
+
+<div class="box">
+<p><strong>Le due cose che contano più di tutte</strong></p>
+<ul>
+<li><strong>Le foto si vedono solo dentro il viaggio</strong> in cui stanno.
+Non c'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a
+estranei: gli indirizzi con cui vengono scaricate durano un'ora e valgono solo
+per chi è di quel viaggio.</li>
+<li><strong>Quando aggiungi una persona a un viaggio, stai inserendo dati di
+qualcun altro.</strong> Il suo nome, quello che ha speso, dove è stato. Sei tu
+a doverla avvisare: è la parte che nessuna app può fare al posto tuo.</li>
+</ul>
+</div>
+
+<h2>Chi tratta i dati</h2>
+<p>Il titolare del trattamento è <strong>Giacomo Merati</strong>, che sviluppa
+e gestisce GeppGo come persona fisica.<br>
+Per qualsiasi cosa: <a href="mailto:merati.giacomo94@gmail.com">merati.giacomo94@gmail.com</a></p>
+
+<h2>Cosa raccoglie, e perché</h2>
+
+<h3>Per avere un account</h3>
+<p><strong>La tua email e una password.</strong> Servono a farti ritrovare i
+viaggi su un altro telefono e a farti entrare nei viaggi in cui ti invitano.
+Senza account GeppGo funziona lo stesso, ma tutto resta solo su quel telefono.</p>
+
+<h3>Quello che scrivi nel viaggio</h3>
+<p>Nomi dei compagni, tappe, orari, spese e come dividerle, hotel, biglietti,
+note. Serve a far funzionare il viaggio, ed è l'unico motivo per cui viene
+conservato.</p>
+<p>Alcune di queste informazioni <strong>riguardano altre persone</strong>: i
+compagni che aggiungi. Vedi il riquadro in cima.</p>
+
+<h3>Le foto</h3>
+<p>Restano sul tuo telefono e, se hai un account, vanno anche nel cloud perché
+non si perdano cambiando telefono e perché le vedano i compagni di quel
+viaggio — <strong>solo loro</strong>. Di ogni foto si conserva chi l'ha
+caricata, quando e in quale viaggio: serve a poter dare seguito a una
+segnalazione.</p>
+
+<h3>Dove sei</h3>
+<p>La posizione viene chiesta solo quando serve — cercare un bagno, un
+bancomat, un'area fumatori, sapere che tempo fa, avvisarti che sei vicino a
+una tappa — e <strong>non viene mai conservata</strong>: si usa lì per lì e
+finisce. Puoi rifiutarla: il resto dell'app funziona.</p>
+
+<h3>Quello che chiedi all'assistente</h3>
+<p>Il testo che scrivi all'assistente, e le immagini che gli fai leggere (per
+esempio la foto di un biglietto da cui ricavare i dati), vengono mandati a un
+servizio di intelligenza artificiale che li elabora e risponde. Attenzione:
+<strong>un biglietto contiene nome, codice di prenotazione e a volte altro</strong>
+— se preferisci non farlo passare di lì, i dati puoi scriverli a mano.</p>
+
+<h3>Segnalazioni</h3>
+<p>Se segnali una foto, teniamo la segnalazione, il motivo, cosa hai scritto e
+a quale foto si riferisce. Le segnalazioni restano anche se chi le ha fatte
+cancella il proprio account, ma <strong>senza più il suo nome</strong>: una
+segnalazione su un contenuto grave non è un dato di chi segnala, è la traccia
+di una cosa successa.</p>
+
+<h2>Cosa NON fa</h2>
+<ul>
+<li>Non vende i dati a nessuno.</li>
+<li>Non li usa per profilare né per pubblicità mirata.</li>
+<li>Non traccia da un sito all'altro, e non usa cookie di profilazione.</li>
+<li>Non tiene uno storico di dove sei stato.</li>
+</ul>
+
+<h2>Su quali basi</h2>
+<ul>
+<li><strong>Per darti il servizio</strong> (art. 6.1.b GDPR): account,
+contenuto dei viaggi, foto, sincronizzazione.</li>
+<li><strong>Con il tuo consenso</strong> (art. 6.1.a): la posizione e le
+notifiche, che il telefono ti chiede e che puoi togliere quando vuoi dalle
+impostazioni.</li>
+<li><strong>Per un interesse legittimo</strong> (art. 6.1.f): tenere il
+registro dei caricamenti e le segnalazioni, cioè poter rispondere se qualcuno
+mette qualcosa che non doveva.</li>
+</ul>
+
+<h2>Chi altro li vede</h2>
+<p>GeppGo si appoggia a dei servizi esterni. Ognuno riceve solo quello che gli
+serve per fare la sua parte.</p>
+
+<table>
+<tr><th>Servizio</th><th>Cosa riceve</th><th>Per fare cosa</th></tr>
+<tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto</td><td>Database e archivio: è il cloud dell'app</td></tr>
+<tr><td>Il ponte IA di GeppGo, e da lì il fornitore del modello</td><td>Quello che scrivi all'assistente e le immagini che gli mostri</td><td>Rispondere, leggere i biglietti, proporre tappe</td></tr>
+<tr><td>OpenStreetMap: Nominatim, Overpass, OSRM</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino, i percorsi</td></tr>
+<tr><td>Photon (Komoot)</td><td>Testo cercato e coordinate</td><td>Ricerca di indirizzi, quando l'altra non basta</td></tr>
+<tr><td>Open-Meteo</td><td>Coordinate</td><td>Il meteo dei giorni del viaggio</td></tr>
+<tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nome del luogo</td><td>Descrizione e foto dei posti</td></tr>
+<tr><td>MyMemory</td><td>Il testo cercato</td><td>Tradurre una ricerca quando in italiano non trova</td></tr>
+<tr><td>er-api</td><td>Solo le valute</td><td>I cambi</td></tr>
+<tr><td>jsDelivr, unpkg</td><td>Indirizzo IP</td><td>Scaricare le librerie dell'app</td></tr>
+<tr><td>Google Fonts</td><td>Indirizzo IP</td><td>I caratteri dell'app</td></tr>
+</table>
+
+<p>Google Maps, Google Calendar e i siti dei musei si aprono solo quando sei
+tu a toccare un tasto: da quel momento in poi valgono le loro regole, non le
+nostre.</p>
+
+<div class="box">
+<p><strong>Dove stanno i dati.</strong> I server di Supabase su cui gira
+GeppGo si trovano nella regione indicata nel pannello del progetto. Se quella
+regione è fuori dallo Spazio economico europeo, il trasferimento avviene sulla
+base delle clausole contrattuali standard approvate dalla Commissione
+europea.</p>
+</div>
+
+<h2>Per quanto tempo</h2>
+<ul>
+<li><strong>Finché li tieni tu.</strong> Un viaggio resta finché non lo
+elimini; una foto finché non la togli.</li>
+<li><strong>Cancellando l'account</strong> spariscono email, iscrizioni ai
+viaggi e le foto che hai caricato. I viaggi in cui c'è ancora qualcun altro
+restano a loro: non è giusto portarsi via il viaggio di cinque persone.</li>
+<li><strong>Le segnalazioni restano</strong>, senza il nome di chi le ha
+fatte, per il tempo necessario a gestirle e a dimostrare come sono state
+gestite.</li>
+<li><strong>Sul tuo telefono</strong> i dati restano finché non fai un reset
+da Profilo → Backup, anche dopo aver cancellato l'account.</li>
+</ul>
+
+<h2>Cosa puoi chiedere</h2>
+<p>Hai diritto di sapere quali dati abbiamo, di correggerli, di cancellarli,
+di limitarne l'uso, di opporti al trattamento e di riceverli in un formato
+leggibile.</p>
+<ul>
+<li><strong>Cancellare tutto:</strong> Profilo → <em>Elimina il mio
+account</em>. È dentro l'app, non serve chiedere il permesso a nessuno.</li>
+<li><strong>Portarti via i dati:</strong> Profilo → Backup → <em>Esporta
+dati</em>, che ti dà un file con tutto quello che c'è.</li>
+<li>Per qualsiasi altra cosa scrivi a
+<a href="mailto:merati.giacomo94@gmail.com">merati.giacomo94@gmail.com</a>.</li>
+</ul>
+<p>Se pensi che qualcosa non vada, puoi rivolgerti al
+<a href="https://www.garanteprivacy.it">Garante per la protezione dei dati
+personali</a>.</p>
+
+<h2>Se qualcosa non dovrebbe esserci</h2>
+<p>In ogni foto c'è <strong>Segnala</strong>. Le segnalazioni che riguardano
+minori o reati vengono guardate per prime e, quando serve, riferite alle
+autorità. Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>;
+in Italia il materiale che riguarda minori si segnala anche alla Polizia
+Postale, su <a href="https://www.commissariatodips.it">commissariatodips.it</a>.</p>
+
+<h2>Bambini e ragazzi</h2>
+<p>GeppGo non è pensata per chi ha meno di 14 anni e non va usata da loro
+senza il consenso di chi ne ha la responsabilità. Se ci accorgiamo che un
+account è di un minore di quell'età, lo chiudiamo.</p>
+
+<h2>Sicurezza</h2>
+<p>Il collegamento è cifrato. Chi non fa parte di un viaggio non può leggerne
+i dati né le foto: non è una promessa, è come è fatto il database — i permessi
+sono scritti in <code>supabase-schema.sql</code>, nel codice pubblico
+dell'app, e ci sono delle prove automatiche che lo verificano a ogni modifica.</p>
+
+<h2>Se questa pagina cambia</h2>
+<p>La data in cima dice da quando vale la versione che stai leggendo. Se
+cambia qualcosa di importante, lo diciamo dentro l'app prima che entri in
+vigore.</p>
+
+<a class="torna" href="./">← Torna a GeppGo</a>
+
+</div>
+</body>
+</html>

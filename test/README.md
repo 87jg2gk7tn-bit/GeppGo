@@ -138,3 +138,26 @@ altri no, e la segnalazione che aveva fatto sopravvive senza più il suo nome.
 C'è un caso che sfugge facilmente ed è coperto: **l'unico admin che non è il
 proprietario**. Senza trattarlo, il guardiano che vieta all'ultimo admin di
 uscire bloccherebbe tutta la cancellazione.
+
+## La privacy
+
+```sh
+node test/prova-privacy.js
+```
+
+Una privacy policy vale quanto è vera. Queste prove non giudicano il testo:
+controllano che **combaci con il codice**.
+
+Il controllo che conta più di tutti confronta l'elenco dei servizi esterni che
+l'app chiama davvero (cercando le `fetch` dentro l'HTML) con quelli dichiarati
+nella pagina: **se domani si aggiunge un fornitore e ci si dimentica di
+scriverlo, la prova fallisce.** È il modo per non ritrovarsi, fra sei mesi, con
+un documento che descrive un'app che non esiste più.
+
+Il resto verifica che ci siano le cose che devono esserci — titolare,
+contatto, basi giuridiche, tempi, diritti, come cancellare l'account, a chi
+reclamare, l'età minima — che la pagina non carichi niente da server esterni
+(sarebbe curioso che proprio lei mandasse l'IP di chi la legge a qualcun
+altro), che resti raggiungibile sotto `/privacy` prima della regola che
+reindirizza tutto, e che dall'app ci si arrivi: alla registrazione e dal
+Profilo.

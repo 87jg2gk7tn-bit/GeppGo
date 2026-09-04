@@ -19,6 +19,10 @@ e il tasto "Elimina il mio account" non funziona.
 SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
 leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
 
+**E guardare in quale regione sta il progetto Supabase** (Project Settings →
+General → Region): serve a completare una frase della privacy policy. Se è
+fuori dall'Europa va detto per nome. Cinque minuti.
+
 ---
 
 ## Dove si sta andando
@@ -54,9 +58,12 @@ combatte l'unico motore di crescita che c'è.
    viaggi degli altri: chi si cancella lascia a chi resta i viaggi con
    qualcuno dentro, passando ruolo e proprietà. 21 prove sul database, 16
    sull'app.
-4. **Privacy policy + scheda dati** — obbligatoria per pubblicare. Si
-   raccolgono posizione, foto, nomi e spese di terze persone (i compagni, che
-   non hanno accettato niente).
+4. ~~**Privacy policy + scheda dati**~~ ✅ fatto. `privacy.html` (raggiungibile
+   sotto `/privacy`), linkata alla registrazione e dal Profilo.
+   `PRIVACY-STORE.md` dice voce per voce cosa rispondere ad Apple e Google.
+   **Restano due cose che non sono codice:** dire in quale regione stanno i
+   server Supabase, e far leggere il testo a un avvocato — vedi in fondo a
+   `PRIVACY-STORE.md`.
 5. **Test e CI nel repo** — a metà: le prove esistono in `test/`, manca che
    girino da sole a ogni modifica. Vale doppio con la nativa: sul link un
    errore si corregge in trenta secondi, sullo store si aspetta la revisione
