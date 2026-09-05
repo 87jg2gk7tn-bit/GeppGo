@@ -26,6 +26,21 @@ esattamente il momento in cui servivano.
 Le prove sul database ripartono sempre da un database vuoto: una prova che
 eredita lo stato di quella prima non dice niente di affidabile.
 
+## Due trappole, imparate a caro prezzo
+
+**Il percorso del progetto non si scrive a mano.** Sei prove avevano dentro
+`file:///home/user/GeppGo/Index%202.1.html`: passavano su quella macchina e
+fallivano dovunque altro. Si usa `APP` di `browser.js`, e il lanciatore boccia
+chi se lo riscrive.
+
+**Nello stato di prova ci va `skipAuth: true`,** se la prova non riguarda
+l'account. Senza, l'app apre a tutto schermo il pannello "accedi o crea
+account", che si mangia i tocchi: un `page.click` va in scadenza dopo trenta
+secondi con un messaggio che non nomina il pannello. Il bello è che *dipende
+dalla rete* — dove la CDN di Supabase non si raggiunge il pannello non si apre
+e la prova passa, dove si raggiunge no. Una prova che dipende da cosa riesce a
+scaricare non è una prova.
+
 
 Il cloud di GeppGo si regge su una riga sola. L'app chiede i viaggi così:
 
@@ -215,3 +230,30 @@ metri.
 Le ultime due controllano il caso che conta di più: **con la memoria del
 telefono piena la cache si toglie di mezzo** invece di rubare spazio ai
 viaggi. Una ricerca lenta si rifà, un viaggio perso no.
+
+## Il ricordo del viaggio
+
+```sh
+node test/prova-ricordo.js
+```
+
+I numeri (giorni, tappe, persone, chilometri, spesa), la cartolina e il
+racconto da mandare. Il conto dei chilometri si guarda con attenzione: si
+sommano solo *dentro* la giornata, perché fra la sera e la mattina dopo si è
+dormito. Il viaggio di prova ha due giornate da un chilometro l'una: se la
+notte venisse contata i chilometri sarebbero quattro invece di due, e c'è una
+prova apposta che lo dice.
+
+Due controlli valgono più di tutti gli altri, e sono la stessa regola vista da
+due lati:
+
+- **aprire il ricordo non chiama nessun server.** Se un giorno diventasse una
+  pagina da caricare da qualche parte, quella prova diventerebbe rossa — ed è
+  esattamente il momento in cui bisogna fermarsi, perché è la tutela sulle
+  foto che regge tutto il resto;
+- **il racconto non contiene il codice d'invito.** Un racconto è fatto per
+  essere girato, un invito no.
+
+E le foto: nella cartolina **non ci finiscono di suo**. Vanno accese apposta,
+con scritto accanto che le foto sono di tutti quelli che erano lì. La prova
+guarda i punti rossi dentro l'immagine disegnata: zero prima, tanti dopo.
