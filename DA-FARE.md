@@ -110,8 +110,19 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    Due prove tengono ferma la regola — aprire il ricordo non chiama nessun
    server, e il racconto **non contiene il codice d'invito** (un racconto si
    gira, un invito no). Le foto ci vanno solo se uno le mette apposta.
-10. **Import prenotazioni dalle mail** — è il motivo per cui la gente usa
-    TripIt. C'è già mezzo OCR dei biglietti: siamo a metà strada.
+10. ~~**Import prenotazioni dalle mail**~~ ✅ fatto. Il lettore riconosce voli,
+    treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attività,
+    in **cinque lingue** (la mail arriva nella lingua del sito su cui hai
+    prenotato, non nella tua), e trova andata e ritorno come due prenotazioni
+    separate. Ne ricava luoghi, date, orari, codice, totale, e mette gate,
+    binario, carrozza e posto nelle note.
+    Quanto era messo male prima, misurato sulle stesse mail: la conferma
+    inglese perdeva la data e prendeva come ora di partenza le 09:00, che era
+    l'orario dell'assistenza clienti; spagnolo e francese erano «non
+    riconosciuti» e si chiamavano *Estimado cliente,* e *Bonjour,*.
+    ⚠️ **Gira tutto sul telefono**, e deve restare così: il testo di una
+    conferma ha il nome, il codice e a volte il documento. C'è una prova che
+    conta le chiamate di rete.
 11. **Mappe offline** — il momento in cui l'app serve di più è quello senza
     dati.
 

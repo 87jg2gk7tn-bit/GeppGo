@@ -257,3 +257,33 @@ due lati:
 E le foto: nella cartolina **non ci finiscono di suo**. Vanno accese apposta,
 con scritto accanto che le foto sono di tutti quelli che erano lì. La prova
 guarda i punti rossi dentro l'immagine disegnata: zero prima, tanti dopo.
+
+## Leggere la mail di conferma
+
+```sh
+node test/prova-prenotazioni.js
+```
+
+È il motivo per cui la gente usa TripIt, e il lettore che c'era funzionava solo
+in italiano. Le mail della prova sono scritte come arrivano davvero — con
+l'intestazione, il «Gentile cliente», il numero dell'assistenza in mezzo e gli
+orari sparsi — perché è su quelle che deve funzionare.
+
+Quanto contava, misurato sul lettore di prima con le stesse mail: la conferma
+inglese perdeva la data e prendeva come ora di partenza le **09:00**, che era
+l'orario di apertura dell'assistenza clienti; quelle spagnola e francese
+finivano «non riconosciute» e si chiamavano *Estimado cliente,* e *Bonjour,*.
+
+Tre controlli meritano di essere letti:
+
+- **andata e ritorno sono due prenotazioni.** Una mail di Trenitalia ne
+  contiene due; prima se ne leggeva una e il ritorno andava scritto a mano,
+  cioè non veniva scritto. Un soggiorno in albergo invece resta uno solo:
+  «arrivo» e «partenza» lì sono il check-in e il check-out.
+- **`03/15/2026` è marzo**, non il quindicesimo mese. Quando il primo numero
+  non può essere un giorno, l'ordine americano si riconosce da solo.
+- **leggere una prenotazione non manda niente a nessuno.** Il testo di una
+  conferma contiene il nome, il codice e a volte il documento: farselo leggere
+  da un servizio esterno sarebbe la cosa più facile e la più sbagliata, ed è il
+  contrario di quello che il pannello promette. La prova conta le chiamate di
+  rete e verifica anche che la promessa sia ancora scritta lì.

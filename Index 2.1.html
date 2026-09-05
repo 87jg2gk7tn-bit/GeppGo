@@ -1114,7 +1114,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
           <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.</p>
         </div>
         <div id="impBookingSub" style="display:none">
-          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">🎫 Incolla una conferma di prenotazione</div><div class="card-sub">Incolla il testo dell'email di conferma di un volo, treno o hotel: provo a riconoscere date, orari e luoghi. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.</div></div>
+          <div class="card" style="margin-bottom:.85rem"><div class="card-h" style="margin-bottom:.3rem">🎫 Incolla una conferma di prenotazione</div><div class="card-sub">Incolla il testo dell'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.</div></div>
           <div class="fg"><label>Testo della conferma</label><textarea id="bookText" placeholder="Incolla qui l'email o il testo della prenotazione..."></textarea></div>
           <button class="btn btn-grad btn-block" onclick="analyzeBooking()">🔎 Analizza prenotazione</button>
           <div id="bookResult" style="margin-top:.85rem"></div>
@@ -3458,6 +3458,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi, in quest'ordine: "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa), poi "Bagagli" - la lista bagagli sta li' - e "Condividi". Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home). Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
+- "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
@@ -7574,105 +7575,317 @@ function itinQualeViaggio(){
     (pieni?` · ${pieni} ${pieni===1?'ha':'hanno'} già qualcosa: ci lavoro attorno senza cancellare niente.`:' · tutti da riempire.');
 }
 
-/* ===== IMPORT PRENOTAZIONE DA TESTO (parser lato client, nessuna AI) ===== */
-const IT_MONTHS={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
-const IT_MONTHS_RX='gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre';
-function bookParseDate(str){
-  let m=str.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})\b/);
-  if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
-  m=str.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-  if(m)return `${m[1]}-${m[2]}-${m[3]}`;
-  const rx=new RegExp(`\\b(\\d{1,2})\\s+(${IT_MONTHS_RX})\\s+(\\d{4})\\b`,'i');
-  m=str.match(rx);
-  if(m)return `${m[3]}-${String(IT_MONTHS[m[2].toLowerCase()]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+/* ===== IMPORT PRENOTAZIONE DA TESTO (parser lato client, nessuna AI) =====
+   Questo pezzo legge la mail di conferma e ne tira fuori i dati. Gira tutto
+   qui dentro, sul telefono: il testo di una prenotazione ha il nome, il codice
+   e a volte il numero del documento, e mandarlo a un servizio per farselo
+   leggere sarebbe la cosa piu' facile e la piu' sbagliata. E' anche quello che
+   il pannello promette, quindi e' una promessa da mantenere.
+
+   Le parole chiave sono in cinque lingue. Non e' zelo: le mail di conferma
+   arrivano nella lingua del sito su cui hai prenotato, e chi prenota un hotel
+   a Lisbona o un treno a Siviglia riceve portoghese e spagnolo anche se ha
+   l'app in italiano. Prima ne riconosceva una sola, e su tutto il resto il
+   lettore restituiva "non riconosciuto". */
+const MESI_NOMI={
+  gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12,
+  january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,
+  enero:1,febrero:2,abril:4,mayo:5,junio:6,julio:7,septiembre:9,setiembre:9,octubre:10,noviembre:11,diciembre:12,
+  janvier:1,fevrier:2,'février':2,mars:3,avril:4,mai:5,juin:6,juillet:7,'août':8,aout:8,octobre:10,'décembre':12,decembre:12,
+  janeiro:1,fevereiro:2,'março':3,marco:3,maio:5,junho:6,julho:7,setembro:9,outubro:10,novembro:11,dezembro:12,
+  gen:1,feb:2,mar:3,apr:4,mag:5,giu:6,lug:7,ago:8,set:9,ott:10,nov:11,dic:12,
+  jan:1,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,dec:12,
+  ene:1,abr:4,fev:2,avr:4,juil:7,'déc':12
+};
+/* I piu' lunghi per primi: altrimenti "mar" mangerebbe l'inizio di "marzo" e
+   la data verrebbe letta storta. */
+const MESI_RX=Object.keys(MESI_NOMI).sort((a,b)=>b.length-a.length).join('|');
+function meseNumero(nome){return MESI_NOMI[String(nome||'').toLowerCase()]||0;}
+function bookParseDate(str,giornoPrima){
+  let m=str.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  /* "15 marzo 2026" e "March 15, 2026": la seconda forma e' quella inglese e
+     senza di lei meta' delle mail non aveva date. */
+  m=str.match(new RegExp(`\\b(\\d{1,2})(?:º|°|st|nd|rd|th)?\\s+(?:de\\s+)?(${MESI_RX})\\.?\\s*,?\\s*(?:de\\s+)?(\\d{4}|\\d{2})?\\b`,'i'));
+  if(m&&meseNumero(m[2]))return dataComposta(m[3],meseNumero(m[2]),m[1]);
+  m=str.match(new RegExp(`\\b(${MESI_RX})\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?\\s*,?\\s*(\\d{4}|\\d{2})?\\b`,'i'));
+  if(m&&meseNumero(m[1]))return dataComposta(m[3],meseNumero(m[1]),m[2]);
+  m=str.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})\b/);
+  if(m){
+    let g=+m[1],me=+m[2];
+    /* 03/15/2026 non puo' essere il quindicesimo mese: quando il primo numero
+       non puo' essere un giorno si e' capito da soli che e' all'americana.
+       Quando sono validi tutti e due (05/03) resta l'ordine europeo, che e'
+       quello in cui scrivono le mail che arrivano qui - e chi controlla il
+       campo prima di salvare se ne accorge comunque. */
+    if(me>12&&g<=12){const x=g;g=me;me=x;}
+    return dataComposta(m[3],me,g);
+  }
   return '';
 }
+function dataComposta(anno,mese,giorno){
+  let a=parseInt(anno,10);
+  /* Senza anno si prende quello del viaggio in corso, e se manca anche quello
+     l'anno corrente: una conferma di volo scrive spesso solo "15 marzo". */
+  if(!a){const t=T();a=(t&&t.start?parseInt(t.start.slice(0,4),10):0)||new Date().getFullYear();}
+  else if(a<100)a+=2000;
+  const g=parseInt(giorno,10),me=parseInt(mese,10);
+  if(!(g>=1&&g<=31&&me>=1&&me<=12))return '';
+  return `${a}-${String(me).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
+}
+const DATA_RX_TESTO=()=>new RegExp(
+  `\\b\\d{4}-\\d{1,2}-\\d{1,2}\\b`+
+  `|\\b\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.](?:\\d{4}|\\d{2})\\b`+
+  `|\\b\\d{1,2}(?:º|°|st|nd|rd|th)?\\s+(?:de\\s+)?(?:${MESI_RX})\\.?\\s*,?\\s*(?:de\\s+)?(?:\\d{4})?`+
+  `|\\b(?:${MESI_RX})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\s*,?\\s*(?:\\d{4})?`,'gi');
 function bookAllDates(text){
-  const rx=new RegExp(`\\b\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{4}\\b|\\b\\d{4}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}\\s+(?:${IT_MONTHS_RX})\\s+\\d{4}\\b`,'gi');
-  return [...text.matchAll(rx)].map(m=>bookParseDate(m[0])).filter(Boolean);
+  const viste=[];
+  [...text.matchAll(DATA_RX_TESTO())].forEach(m=>{
+    const d=bookParseDate(m[0]);
+    if(d&&!viste.includes(d))viste.push(d);
+  });
+  return viste;
 }
 function bookParseCode(text){
-  /* "Numero di prenotazione" e' come lo scrive Booking in italiano, ed era
-     l'unica dicitura che mancava: il codice restava vuoto proprio sulle mail
-     piu' comuni. */
-  const m=text.match(/(?:PNR|(?:codice|numero|n\.?)(?:\s+di)?\s+(?:prenotazione|conferma)|localizzatore|booking\s*(?:number|code|id|ref(?:erence)?)|reservation\s*(?:number|id|code)|confirmation\s*(?:number|code))\s*[:\-]?\s*([A-Z0-9]{4,12})\b/i);
+  /* Il codice va cercato per ULTIMO fra le cose che si somigliano: "codice
+     prenotazione" nelle cinque lingue, piu' il PNR dei voli. */
+  const eti='PNR|(?:codice|numero|n\\.?)(?:\\s+di)?\\s+(?:prenotazione|conferma)'+
+    '|booking\\s*(?:number|code|id|ref(?:erence)?)|reservation\\s*(?:number|id|code)|confirmation\\s*(?:number|code)'+
+    '|localizador|localizzatore|(?:c[oó]digo|n[uú]mero)\\s+de\\s+(?:reserva|confirmaci[oó]n|confirma[çc][aã]o)'+
+    '|(?:num[eé]ro|code)\\s+de\\s+(?:r[eé]servation|confirmation)|dossier';
+  const m=text.match(new RegExp(`(?:${eti})\\s*[:#\\-]?\\s*([A-Z0-9]{4,12})\\b`,'i'));
   return m?m[1].toUpperCase():'';
 }
+/* I tipi che si sanno riconoscere. L'ordine conta: si guarda prima quello che
+   ha le parole piu' specifiche, perche' una mail di un hotel dice quasi sempre
+   anche "arrivo" e "partenza" e verrebbe scambiata per un viaggio. */
+const PREN_TIPI=[
+  ['hotel',/check[\s\-]?in|check[\s\-]?out|booking\.com|airbnb|\bhotel\b|alloggio|pernottamento|soggiorno|\bostello\b|guest\s?house|\bb&b\b|accommodation|alojamiento|h[eé]bergement|aloja(?:mento)?|hospedagem|entrada\s+y\s+salida/i],
+  ['auto',/autonoleggio|noleggio\s+auto|car\s+hire|car\s+rental|rent\s+a\s+car|alquiler\s+de\s+coches|location\s+de\s+voiture|aluguel\s+de\s+carro|hertz|avis|europcar|sixt/i],
+  /* "puerta" da sola no: "Madrid Puerta de Atocha" e' una STAZIONE, e la mail
+     del treno spagnolo finiva schedata come volo. Vale solo se e' la porta
+     d'imbarco, cioe' se ha un numero dietro o dice "de embarque". */
+  ['volo',/\bvolo\b|\bflight\b|\bvuelo\b|\bvol\b|\bvoo\b|imbarco|boarding\s*pass|carta\s+d'imbarco|tarjeta\s+de\s+embarque|\bgate\b|puerta\s+de\s+embarque|puerta\s*\d|terminal\s*\d|ryanair|easyjet|vueling|wizz\s?air|ita\s+airways|lufthansa|air\s+france|\bairways\b|\biberia\b/i],
+  ['treno',/trenitalia|\bitalo\b|frecciarossa|frecciargento|frecciabianca|intercity|\btreno\b|\btrain\b|\btrem\b|binario|\bandén\b|\bvoie\b|platform\s*\d|carrozza|\bcoach\b|\bvag[oó]n\b|renfe|\bave\b|\bsncf\b|\btgv\b|eurostar|ouigo|\bcp\b\s+comboios/i],
+  ['traghetto',/traghetto|\bferry\b|\bnave\b|imbarcadero|grimaldi|tirrenia|moby|balearia|\bbarco\b/i],
+  ['bus',/\bautobus\b|\bpullman\b|flixbus|blablabus|\bbus\b|\bcoach\s+station\b|\bautocar\b|\bônibus\b|\bautob[uú]s\b/i],
+  ['ristorante',/ristorante|restaurant|restaurante|prenotazione\s+tavolo|table\s+for|mesa\s+para|thefork|opentable|\bcoperti\b/i],
+  ['attivita',/tour\b|escursione|excursi[oó]n|visita\s+guidata|guided\s+tour|biglietto\s+d'ingresso|entrance\s+ticket|getyourguide|tiqets|viator|museo|museum/i]
+];
 function detectBookingType(text){
-  const low=text.toLowerCase();
-  if(/check[\s\-]?in|check[\s\-]?out|booking\.com|airbnb|\bhotel\b|alloggio|pernottamento|soggiorno/.test(low))return 'hotel';
-  if(/trenitalia|\bitalo\b|frecciarossa|frecciargento|frecciabianca|intercity|\btreno\b|binario/.test(low))return 'train';
-  if(/\bvolo\b|\bflight\b|imbarco|\bgate\b|carta d'imbarco|boarding pass|ita airways|ryanair|easyjet|lufthansa|\bairways\b/.test(low))return 'flight';
-  return 'unknown';
+  const t=PREN_TIPI.find(([,rx])=>rx.test(text));
+  return t?t[0]:'sconosciuto';
 }
-function bookParseRoute(text){
-  let m=text.match(/\bda\s+([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)\s+a\s+([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
-  if(m)return {from:m[1].trim(),to:m[2].trim()};
-  m=text.match(/([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)\s*(?:→|->)\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/);
-  if(m)return {from:m[1].trim(),to:m[2].trim()};
-  const mf=text.match(/(?:partenza|da)\s*[:\-]\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
-  const mt=text.match(/(?:arrivo|a)\s*[:\-]\s*([A-ZÀ-Ù][\wà-ù'\s]{1,30}?)[.\n,]/i);
-  if(mf||mt)return {from:mf?mf[1].trim():'',to:mt?mt[1].trim():''};
-  return {from:'',to:''};
+/* I codici degli aeroporti e delle stazioni, che nelle mail dei voli sono
+   spesso l'unica cosa scritta: "FCO 10:35 → HND 06:20". Tre lettere maiuscole
+   da sole non bastano come indizio (in una mail ce ne sono a decine), quindi
+   valgono solo se stanno accanto a una freccia o dentro parentesi dopo il
+   nome della citta'. */
+function prenRotta(text){
+  let m=text.match(/\(([A-Z]{3})\)\s*(?:→|->|–>|—>|\bto\b|\ba\b|\bverso\b)\s*[^\n(]{0,40}\(([A-Z]{3})\)/);
+  if(m)return {da:m[1],a:m[2]};
+  m=text.match(/\b([A-Z]{3})\b\s*(?:→|->|–|—|>)\s*\b([A-Z]{3})\b/);
+  if(m)return {da:m[1],a:m[2]};
+  m=text.match(/([A-ZÀ-Ù][\wÀ-ÿ'.\- ]{1,34}?)\s*(?:→|->|–>|—>)\s*([A-ZÀ-Ù][\wÀ-ÿ'.\- ]{1,34}?)(?=[\n,.;]|$)/);
+  if(m)return {da:m[1].trim(),a:m[2].trim()};
+  const da=text.match(/(?:\bda\b|\bfrom\b|\bdesde\b|\bde\b|\bpartenza\b|\bdeparture\b|\bsalida\b|\bd[eé]part\b|\bpartida\b|\borigine?\b)\s*[:\-]\s*([^\n]{2,40})/i);
+  const a =text.match(/(?:\ba\b|\bto\b|\bhacia\b|\bvers\b|\barrivo\b|\barrival\b|\bllegada\b|\barriv[eé]e\b|\bchegada\b|\bdestinazione\b|\bdestination\b|\bdestino\b)\s*[:\-]\s*([^\n]{2,40})/i);
+  if(da||a)return {da:da?da[1].trim():'',a:a?a[1].trim():''};
+  m=text.match(/\bda\s+([A-ZÀ-Ù][\wÀ-ÿ' ]{1,30}?)\s+a\s+([A-ZÀ-Ù][\wÀ-ÿ' ]{1,30}?)(?=[\n,.;]|$)/i);
+  if(m)return {da:m[1].trim(),a:m[2].trim()};
+  return {da:'',a:''};
 }
-function bookParseName(text,type){
-  if(type==='hotel'){
-    const m=text.match(/(?:hotel|struttura|alloggio)\s*[:\-]?\s*([^\n]{3,60})/i);
-    if(m)return m[1].trim();
+/* Gli orari legati alla loro etichetta, non il primo che capita nel testo.
+   Prima si prendeva times[0]: in una mail di volo il primo orario e' quasi
+   sempre quello del check-in online o dell'assistenza clienti, e finiva
+   dentro l'attivita' al posto della partenza. */
+/* Un orario, e non un pezzo di data. "15.03.2026" contiene "15.03", che letto
+   come ora fa le tre e un quarto del quindici: i due guardiani intorno
+   servono a non farlo prendere per un orario. */
+const ORA_RX='(?<![\\d.\\/\\-])([01]?\\d|2[0-3])[:h.]([0-5]\\d)\\b(?![.\\/\\-]\\d)';
+function prenOrario(text,quale){
+  const eti=quale==='partenza'
+    ? 'partenza|departure|departs?|salida|d[eé]part|partida|check[\\s\\-]?in|imbarco|boarding'
+    : 'arrivo|arrival|arrives?|llegada|arriv[eé]e|chegada|check[\\s\\-]?out';
+  /* Fra l'etichetta e l'ora ci sta in mezzo la data ("Partenza: 15 marzo 2026
+     alle 21:50"), quindi i numeri vanno attraversati, non esclusi: escluderli
+     era il motivo per cui l'ora di arrivo restava vuota. */
+  const m=text.match(new RegExp(`(?:${eti})[^\\n]{0,40}?${ORA_RX}`,'i'));
+  if(m)return `${m[1].padStart(2,'0')}:${m[2]}`;
+  return '';
+}
+function prenPrezzo(text){
+  /* Il pezzo fra "Totale" e la cifra va preso al minimo: se e' avido si mangia
+     anche il simbolo della valuta, e restava "128.40" senza le sterline. */
+  const m=text.match(/(?:totale|total|importo|amount|precio|prix|pre[çc]o|valor)[^\n0-9]{0,20}?([€$£]|EUR|USD|GBP|CHF|JPY)?\s*([\d.,]{1,12})\s*([€$£]|EUR|USD|GBP|CHF|JPY)?/i)
+    ||text.match(/([€$£])\s*([\d.,]{2,12})/);
+  if(!m)return {prezzo:0,valuta:''};
+  const grezzo=(m[2]||'').replace(/\.(?=\d{3}\b)/g,'').replace(',','.');
+  const n=parseFloat(grezzo);
+  const sim=(m[1]||m[3]||'').toUpperCase();
+  const val={'€':'EUR','$':'USD','£':'GBP'}[sim]||sim||'';
+  return {prezzo:isNaN(n)?0:n,valuta:val};
+}
+/* Gate, terminal, binario, carrozza, posto: non entrano in nessun campo, ma
+   sono esattamente quello che si va a cercare col telefono in mano in
+   stazione. Finiscono nelle note, dove restano leggibili. */
+function prenDettagli(text){
+  const fuori=[];
+  const cerca=(rx,etichetta)=>{const m=text.match(rx);if(m)fuori.push(etichetta+' '+m[1]);};
+  cerca(/\b(?:gate|puerta|porte|porta[oõ]?)\s*[:\-]?\s*([A-Z]?\d{1,3}[A-Z]?)\b/i,'Gate');
+  cerca(/\bterminal\s*[:\-]?\s*([A-Z0-9]{1,3})\b/i,'Terminal');
+  cerca(/\b(?:binario|platform|and[eé]n|voie|plataforma)\s*[:\-]?\s*([A-Z0-9]{1,3})\b/i,'Binario');
+  cerca(/\b(?:carrozza|coach|coche|vag[oó]n|voiture|carruagem)\s*[:\-]?\s*(\d{1,2})\b/i,'Carrozza');
+  cerca(/\b(?:posto|seat|asiento|si[eè]ge|lugar)\s*[:\-]?\s*(\d{1,3}[A-Z]?)\b/i,'Posto');
+  return fuori.join(' · ');
+}
+function prenNome(text,tipo){
+  /* Prima la forma con i due punti, "Hotel: Pousada de Lisboa". Senza questa
+     precedenza si prendeva la prima frase che conteneva la parola - "la
+     prenotazione al ristorante e' confermata" - che non e' un nome. */
+  const conEtichetta=(rx)=>{
+    let m=text.match(new RegExp(`(?:${rx})\\s*[:\\-]\\s*([^\\n]{3,60})`,'i'));
+    if(m&&m[1].trim())return m[1].trim();
+    m=text.match(new RegExp(`(?:${rx})\\s+([A-Z0-9][^\\n]{2,59})`,'i'));
+    return m&&m[1].trim()?m[1].trim():'';
+  };
+  if(tipo==='hotel'){
+    const n=conEtichetta('hotel|struttura|alloggio|propriet[aà]|property|alojamiento|h[eé]bergement|hospedagem');
+    if(n)return n;
   }
-  if(type==='flight'){
-    const m=text.match(/\bvolo\s*[:\-]?\s*([A-Z]{2}\s?\d{2,4})/i)||text.match(/\b([A-Z]{2}\s?\d{2,4})\b/);
-    if(m)return 'Volo '+m[1].toUpperCase().replace(/\s+/,'');
+  if(tipo==='volo'){
+    const m=text.match(/(?:\bvolo\b|\bflight\b|\bvuelo\b|\bvol\b|\bvoo\b)\s*(?:n[°º.]?\s*)?[:\-]?\s*([A-Z]{2}\s?\d{2,4})\b/i)
+      ||text.match(/\b([A-Z]{2}\s?\d{3,4})\b/);
+    if(m)return 'Volo '+m[1].toUpperCase().replace(/\s+/g,'');
   }
-  if(type==='train'){
-    const m=text.match(/\b(frecciarossa|frecciargento|frecciabianca|italo|intercity|regionale)\s*(\d{1,4})?\b/i);
+  if(tipo==='treno'){
+    const m=text.match(/\b(frecciarossa|frecciargento|frecciabianca|italo|intercity|regionale|eurostar|ouigo|tgv|ave|inoui)\s*(\d{1,5})?\b/i);
     if(m)return m[1][0].toUpperCase()+m[1].slice(1).toLowerCase()+(m[2]?' '+m[2]:'');
+    const n=text.match(/(?:treno|train|tren|trem)\s*(?:n[°º.]?\s*)?[:\-]?\s*(\d{3,5})\b/i);
+    if(n)return 'Treno '+n[1];
   }
-  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
-  return lines[0]?lines[0].slice(0,60):'';
+  if(tipo==='auto'){
+    const m=text.match(/\b(hertz|avis|europcar|sixt|enterprise|budget|maggiore|goldcar)\b/i);
+    if(m)return 'Noleggio auto · '+m[1][0].toUpperCase()+m[1].slice(1).toLowerCase();
+  }
+  if(tipo==='ristorante'){
+    const n=conEtichetta('ristorante|restaurant|restaurante');
+    if(n)return n;
+  }
+  /* L'ultima spiaggia era "la prima riga del testo", che in una mail vera e'
+     "Gentile Giacomo," o l'intestazione del mittente. Si scarta quello che
+     sicuramente non e' un nome e si prende la prima riga che ha l'aria di
+     esserlo. */
+  const scarta=/^(?:gentile|caro|cara|ciao|buongiorno|dear|hola|estimad[oa]|bonjour|cher|prezad[oa]|ol[aá])\b|^(?:da|from|a|to|oggetto|subject|asunto|objet|assunto)\s*:/i;
+  const riga=text.split('\n').map(l=>l.trim())
+    .find(l=>l.length>3&&l.length<70&&!scarta.test(l)&&!/^[\d\W]+$/.test(l));
+  return riga?riga.slice(0,60):'';
 }
-function parseBookingText(text){
-  const type=detectBookingType(text);
-  const dates=bookAllDates(text);
-  const times=[...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(m=>`${m[1].padStart(2,'0')}:${m[2]}`);
-  const route=bookParseRoute(text);
+/* Una mail vera contiene spesso DUE prenotazioni: andata e ritorno. Prima se
+   ne leggeva una sola e l'altra andava scritta a mano - cioe' non veniva
+   scritta. Il testo si spezza dove ricomincia un blocco di viaggio. */
+function prenSpezza(text){
+  const tagli=[...text.matchAll(/^.{0,60}\b(?:andata|ritorno|outbound|inbound|return|ida|vuelta|aller|retour|volta|regresso|tratta|segmento|leg\s*\d)\b.{0,60}$/gim)]
+    .map(m=>m.index);
+  if(tagli.length<2)return [text];
+  const pezzi=[];
+  tagli.forEach((p,i)=>{
+    const fine=i+1<tagli.length?tagli[i+1]:text.length;
+    const pezzo=text.slice(p,fine).trim();
+    if(pezzo.length>20)pezzi.push(pezzo);
+  });
+  /* Quello che sta PRIMA del primo taglio (il codice, il nome, il totale) va
+     dato a tutti i pezzi: e' l'intestazione comune. */
+  const testa=text.slice(0,tagli[0]).trim();
+  return pezzi.length?pezzi.map(p=>testa?testa+'\n'+p:p):[text];
+}
+function prenLeggiUna(text,tipoForzato){
+  const tipo=tipoForzato||detectBookingType(text);
+  const date=bookAllDates(text);
+  const rotta=prenRotta(text);
+  const prezzo=prenPrezzo(text);
+  let oraDa=prenOrario(text,'partenza'),oraA=prenOrario(text,'arrivo');
+  if(!oraDa){
+    const tutti=[...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(m=>`${m[1].padStart(2,'0')}:${m[2]}`);
+    oraDa=tutti[0]||'';
+  }
   return {
-    type,name:bookParseName(text,type),code:bookParseCode(text),
-    from:route.from,to:route.to,
-    dateStart:dates[0]||'',dateEnd:dates[1]||dates[0]||'',
-    timeStart:times[0]||''
+    tipo,nome:prenNome(text,tipo),codice:bookParseCode(text),
+    da:rotta.da,a:rotta.a,
+    dataDa:date[0]||'',dataA:date[1]||date[0]||'',
+    oraDa,oraA,
+    prezzo:prezzo.prezzo,valuta:prezzo.valuta,
+    note:prenDettagli(text)
   };
 }
-let bookParsed=null;
+function prenotazioniNelTesto(text){
+  const pezzi=prenSpezza(text);
+  const tipoGenerale=detectBookingType(text);
+  /* Un hotel non si spezza in andata e ritorno: e' un soggiorno solo, e
+     "arrivo/partenza" nella sua mail sono il check-in e il check-out. */
+  if(tipoGenerale==='hotel'||pezzi.length<2)return [prenLeggiUna(text)];
+  const lette=pezzi.map(p=>prenLeggiUna(p,tipoGenerale)).filter(x=>x.dataDa||x.da||x.a);
+  return lette.length?lette:[prenLeggiUna(text)];
+}
+/* Il vecchio nome, con i vecchi campi: lo usano ancora il pannello dell'hotel
+   e la scorciatoia della condivisione. */
+function parseBookingText(text){
+  const p=prenLeggiUna(text);
+  const vecchioTipo={volo:'flight',treno:'train',hotel:'hotel'}[p.tipo]||'unknown';
+  return {type:vecchioTipo,name:p.nome,code:p.codice,from:p.da,to:p.a,
+    dateStart:p.dataDa,dateEnd:p.dataA,timeStart:p.oraDa};
+}
+let bookParsed=null,prenTrovate=[],prenScelta=0;
 function analyzeBooking(){
   const text=document.getElementById('bookText').value.trim();
   if(!text){toast('Incolla prima il testo della conferma');return;}
+  prenTrovate=prenotazioniNelTesto(text);
+  prenScelta=0;
   bookParsed=parseBookingText(text);
   renderBookingPreview();
 }
-function bookTypeLabel(t){return {flight:'✈️ Volo',train:'🚆 Treno',hotel:'🏨 Hotel',unknown:'❓ Non riconosciuto'}[t]||'';}
+const PREN_ETICHETTE={volo:'✈️ Volo',treno:'🚆 Treno',bus:'🚌 Autobus',traghetto:'⛴️ Traghetto',
+  hotel:'🏨 Alloggio',auto:'🚗 Noleggio auto',ristorante:'🍽️ Ristorante',attivita:'🎫 Attività',
+  sconosciuto:'❓ Non riconosciuto'};
+function bookTypeLabel(t){
+  /* Accetta anche i nomi vecchi, perche' il pannello dell'hotel li usa ancora. */
+  return PREN_ETICHETTE[{flight:'volo',train:'treno',unknown:'sconosciuto'}[t]||t]||'';
+}
+function prenScegli(i){prenScelta=i;renderBookingPreview();}
 function renderBookingPreview(){
-  const p=bookParsed,box=document.getElementById('bookResult'),t=T();
-  const dayOpts=t?t.days.map((d,i)=>`<option value="${i}" ${d.date===p.dateStart?'selected':''}>G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join(''):'';
+  const box=document.getElementById('bookResult'),t=T();
+  if(!prenTrovate.length){box.innerHTML='';return;}
+  const p=prenTrovate[Math.min(prenScelta,prenTrovate.length-1)];
+  const dayOpts=t?t.days.map((d,i)=>`<option value="${i}" ${d.date===p.dataDa?'selected':''}>G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join(''):'';
+  /* Se nella mail ce n'e' piu' d'una - andata e ritorno, quasi sempre - si
+     vedono tutte e si aggiungono una per una. Prima se ne leggeva una sola e
+     il ritorno andava scritto a mano, cioe' non veniva scritto. */
+  const scelta=prenTrovate.length>1
+    ? `<div style="font-size:.8rem;color:var(--ink-soft);margin-bottom:.5rem">Ne ho trovate ${prenTrovate.length}: aggiungile una per volta.</div>
+       <div class="chips" style="margin-bottom:.8rem">${prenTrovate.map((x,i)=>`<button class="chip ${i===prenScelta?'green':''}" onclick="prenScegli(${i})">${i+1}. ${esc(x.da||x.nome||'—')}${x.a?' → '+esc(x.a):''}</button>`).join('')}</div>`
+    : '';
+  const eHotel=p.tipo==='hotel';
   box.innerHTML=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem"><span class="tag top">${bookTypeLabel(p.type)}</span></div>
+    ${scelta}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem"><span class="tag top">${bookTypeLabel(p.tipo)}</span>${p.prezzo?`<span style="font-size:.8rem;font-weight:700;color:var(--green-deep)">${esc(String(p.prezzo))} ${esc(p.valuta)}</span>`:''}</div>
     ${!t?'<div style="font-size:.8rem;color:var(--red);margin-bottom:.6rem">Crea prima un viaggio per poter salvare</div>':''}
-    ${p.type==='unknown'?'<div style="font-size:.8rem;color:var(--ink-faint);margin-bottom:.6rem">Non ho riconosciuto automaticamente il tipo — controlla e completa i campi qui sotto prima di salvare.</div>':''}
-    <div class="fg"><label>Nome</label><input id="bpName" value="${esc(p.name)}"></div>
-    ${p.type==='hotel'?`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-in</label><input type="date" id="bpDateStart" value="${p.dateStart}"></div><div class="fg" style="flex:1"><label>Check-out</label><input type="date" id="bpDateEnd" value="${p.dateEnd}"></div></div>`
-    :`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Da</label><input id="bpFrom" value="${esc(p.from)}"></div><div class="fg" style="flex:1"><label>A</label><input id="bpTo" value="${esc(p.to)}"></div></div>
-    <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Giorno</label><select id="bpDay">${dayOpts}</select></div><div class="fg" style="flex:1"><label>Ora partenza</label><input type="time" id="bpTimeStart" value="${p.timeStart}"></div></div>`}
-    <div class="fg"><label>Codice prenotazione (opz.)</label><input id="bpCode" value="${esc(p.code)}"></div>
-    <button class="btn btn-grad btn-block" onclick="confirmBookingImport()" ${!t?'disabled':''}>✓ ${p.type==='hotel'?'Continua e salva hotel':'Continua e aggiungi attività'}</button>
+    ${p.tipo==='sconosciuto'?'<div style="font-size:.8rem;color:var(--ink-faint);margin-bottom:.6rem">Non ho riconosciuto automaticamente il tipo — controlla e completa i campi qui sotto prima di salvare.</div>':''}
+    <div class="fg"><label>Nome</label><input id="bpName" value="${esc(p.nome)}"></div>
+    ${eHotel?`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Check-in</label><input type="date" id="bpDateStart" value="${p.dataDa}"></div><div class="fg" style="flex:1"><label>Check-out</label><input type="date" id="bpDateEnd" value="${p.dataA}"></div></div>`
+    :`<div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Da</label><input id="bpFrom" value="${esc(p.da)}"></div><div class="fg" style="flex:1"><label>A</label><input id="bpTo" value="${esc(p.a)}"></div></div>
+    <div style="display:flex;gap:.6rem"><div class="fg" style="flex:1"><label>Giorno</label><select id="bpDay">${dayOpts}</select></div><div class="fg" style="flex:1"><label>Ora partenza</label><input type="time" id="bpTimeStart" value="${p.oraDa}"></div></div>`}
+    <div class="fg"><label>Codice prenotazione (opz.)</label><input id="bpCode" value="${esc(p.codice)}"></div>
+    ${p.note?`<div class="fg"><label>Dalla mail</label><div style="font-size:.85rem;color:var(--ink-soft)">${esc(p.note)}</div></div>`:''}
+    <button class="btn btn-grad btn-block" onclick="confirmBookingImport()" ${!t?'disabled':''}>✓ ${eHotel?'Continua e salva alloggio':'Continua e aggiungi attività'}</button>
   </div>`;
 }
 function confirmBookingImport(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
-  const p=bookParsed;if(!p)return;
+  const p=prenTrovate[Math.min(prenScelta,prenTrovate.length-1)];if(!p)return;
   const name=document.getElementById('bpName').value.trim();
   if(!name){toast('Dai un nome alla prenotazione');return;}
   const code=document.getElementById('bpCode').value.trim();
-  if(p.type==='hotel'){
+  if(p.tipo==='hotel'){
     const ci=document.getElementById('bpDateStart').value,co=document.getElementById('bpDateEnd').value;
     if(!ci||!co||co<=ci){toast('Metti check-in e check-out, in quest\'ordine');return;}
     /* Zero-zero è in mezzo all'oceano: se il posto non si trova è meglio
@@ -7699,15 +7912,19 @@ function confirmBookingImport(){
     openActDetail(di,null);
     document.getElementById('adName').value=name;
     if(time)document.getElementById('adTime').value=time;
-    if(p.type==='flight'){
+    if(p.tipo==='volo'){
       document.getElementById('adType').value='flight';window._routeMode='fly';
       document.getElementById('adFlyFrom').value=from;document.getElementById('adFlyTo').value=to;
-    }else if(p.type==='train'){
+    }else if(p.tipo==='treno'||p.tipo==='bus'||p.tipo==='traghetto'){
       window._routeMode='transit';
       document.getElementById('adFlyFrom').value=from;document.getElementById('adFlyTo').value=to;
     }
     window._flyHint=true;setRouteLabels();updFlyVis();
-    if(code){const nt=document.getElementById('adNotes');nt.value=(nt.value?nt.value+'\n':'')+'Codice prenotazione: '+code;}
+    /* Il codice e i dettagli (gate, binario, carrozza, posto) finiscono nelle
+       note: sono quello che si va a cercare col telefono in mano, e non hanno
+       un campo loro. */
+    const extra=[code?'Codice prenotazione: '+code:'',p.note||''].filter(Boolean).join('\n');
+    if(extra){const nt=document.getElementById('adNotes');nt.value=(nt.value?nt.value+'\n':'')+extra;}
     toast('Controlla i dati e premi Salva per aggiungere');
   }
 }
