@@ -123,8 +123,17 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
     ⚠️ **Gira tutto sul telefono**, e deve restare così: il testo di una
     conferma ha il nome, il codice e a volte il documento. C'è una prova che
     conta le chiamate di rete.
-11. **Mappe offline** — il momento in cui l'app serve di più è quello senza
-    dati.
+11. ~~**Mappe offline**~~ ✅ fatto. Le zone che guardi restano nel telefono e
+    si rivedono senza campo. Misurato: la stessa zona, guardata con la rete e
+    riaperta senza, prima mostrava **0 tessere su 9**, ora **9 su 9**. Dove la
+    mappa non c'è ancora resta un riquadro neutro, e sopra si vedono lo stesso
+    il giro e le tappe. In Profilo si legge quanto occupa e si libera.
+    ⚠️ **Non esiste "scarica tutta la città", ed è una scelta.** Scaricare
+    tessere in blocco dai server di OpenStreetMap è vietato dalle loro
+    condizioni: sono volontari, e ti bloccano — lo stesso ragionamento della
+    cache di Overpass. Tenere da parte quello che si è già guardato è invece
+    proprio quello che quelle condizioni chiedono di fare. Una prova controlla
+    che una schermata chieda una ventina di tessere e non centinaia.
 
 ---
 
@@ -269,6 +278,17 @@ qualcuno che risponde".
   si apriva perché la libreria di Supabase arriva da una CDN irraggiungibile
   da questa macchina. Il messaggio d'errore non nominava il pannello: si è
   visto solo facendo stampare al lanciatore quaranta righe invece di sei.
+- **Un'intercettazione che non combacia non si lamenta.** Nelle prove
+  `'**/tile.openstreetmap.org/**'` non intercettava niente: quel modello vuole
+  una barra prima di `tile`, e l'indirizzo vero è `a.tile.openstreetmap.org`.
+  Le richieste passavano e la prova le guardava senza vederle, dicendo «zero
+  chiamate». Quando una prova dice zero, va verificato che stesse davvero
+  guardando.
+- **Passare da `<img>` a `fetch` cambia chi ti dà il permesso.** Un'immagine da
+  un altro sito si carica sempre; con `fetch` serve che quel sito lo consenta,
+  e da una pagina aperta come `file://` non parte proprio. Per questo la copia
+  delle tessere è facoltativa: se non riesce, la mappa si carica lo stesso come
+  immagine. Si perde la copia, non la mappa.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a
