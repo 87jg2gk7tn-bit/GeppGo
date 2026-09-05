@@ -1739,7 +1739,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="prem-hero"><div class="prem-t" id="premT">Viaggi illimitati</div><div class="prem-s" id="premS">Il piano gratuito include 2 viaggi in corso alla volta. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.</div></div>
   <div class="prem-list">
     <div class="prem-i"><span>♾️</span><div><div class="rlbl">Viaggi illimitati</div><div class="rsub">Quanti ne vuoi, in parallelo</div></div></div>
-    <div class="prem-i"><span>🚫</span><div><div class="rlbl">Zero pubblicità</div><div class="rsub">Interfaccia pulita</div></div></div>
+    <!-- La voce sulla pubblicita' compare solo quando la pubblicita' esiste:
+         vendere la rimozione di una cosa che non c'e' non e' una promessa,
+         e' una presa in giro. La accende renderAds(). -->
+    <div class="prem-i" id="premNoAds" style="display:none"><span>🚫</span><div><div class="rlbl">Zero pubblicità</div><div class="rsub">Interfaccia pulita</div></div></div>
     <div class="prem-i"><span>📍</span><div><div class="rlbl">Avvisi GPS su tutti i viaggi</div><div class="rsub">Non solo sul viaggio attivo</div></div></div>
   </div>
   <button class="btn btn-grad btn-block" id="premBtn" onclick="togglePremium()">✨ Attiva Premium (demo)</button>
@@ -7405,14 +7408,26 @@ function mostraFotoQual(){
   sel.value=(app.settings&&app.settings.fotoQualita)||'alta';
   if(nota)nota.textContent=fotoLivello().dice;
 }
+/* Quando ci sara' pubblicita' vera si mette true, e insieme vanno rifatte le
+   schede privacy sugli store: la pubblicita' cambia le risposte su tracciamento
+   e identificatori (vedi PRIVACY-STORE.md). */
+const PUBBLICITA_ATTIVA=false;
 function renderAds(){
-  document.querySelectorAll('.ad-slot').forEach(a=>a.style.display=app.premium?'none':'flex');
+  /* Finche' non c'e' pubblicita' vera, gli spazi restano chiusi. Nove riquadri
+     tratteggiati con scritto "Spazio pubblicitario" e nessuna pubblicita'
+     dentro non fanno guadagnare niente e fanno sembrare l'app rotta: chi la
+     apre per la prima volta pensa che qualcosa non abbia caricato.
+     I riquadri restano dove sono, gia' al loro posto: il giorno che ci sara'
+     qualcosa da mostrare, basta cambiare questa riga. */
+  document.querySelectorAll('.ad-slot').forEach(a=>a.style.display=(PUBBLICITA_ATTIVA&&!app.premium)?'flex':'none');
+  const vNoAds=document.getElementById('premNoAds');
+  if(vNoAds)vNoAds.style.display=PUBBLICITA_ATTIVA?'flex':'none';
   const b=document.getElementById('planBadge'),s=document.getElementById('planSub'),btn=document.getElementById('planBtn');
   if(!b)return;
   const n=viaggiMiei().length;
   b.textContent=app.premium?'✨ Premium':'Gratis';
   b.style.background=app.premium?'var(--brown)':'var(--ink-faint)';
-  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':`${n}/2 viaggi tuoi in corso · con pubblicità`;
+  s.textContent=app.premium?'Viaggi illimitati':`${n}/2 viaggi tuoi in corso`;
   btn.textContent=app.premium?'Gestisci piano':'Scopri Premium';
 }
 
