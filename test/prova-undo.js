@@ -18,7 +18,14 @@ const stato = {
       ]
     }]
   }],
-  currentTripId: 't1', settings: { proxRadius: 200 }, myName: 'Gepp'
+  /* skipAuth serve, e il motivo non e' ovvio: senza, l'app apre il pannello
+     "accedi o crea account" a tutto schermo, e quel pannello si mangia i
+     tocchi sul tasto ↩. Qui non succedeva perche' la libreria di Supabase
+     arriva da una CDN irraggiungibile da questa macchina, quindi il pannello
+     non si apriva proprio; sul server delle prove, dove la rete c'e', si
+     apriva e la prova andava in scadenza dopo trenta secondi. Una prova che
+     dipende da cosa riesce a scaricare non e' una prova. */
+  currentTripId: 't1', settings: { proxRadius: 200 }, myName: 'Gepp', skipAuth: true
 };
 
 const err = [];
