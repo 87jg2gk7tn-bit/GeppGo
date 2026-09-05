@@ -119,11 +119,17 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    stata fatta entro 150 metri. Non a griglia: due punti a venti metri
    finivano in celle diverse ogni volta che in mezzo cadeva un confine — l'ha
    trovato una prova, non un ragionamento.
-8. ~~**Togliere gli slot pubblicitari vuoti**~~ ✅ fatto. I nove riquadri
-   restano nel codice, già al loro posto, ma chiusi: si riaprono cambiando
-   `PUBBLICITA_ATTIVA`. Quel giorno vanno rifatte anche le schede privacy
-   sugli store, perché la pubblicità cambia le risposte su tracciamento e
-   identificatori.
+8. ~~**Togliere gli slot pubblicitari vuoti**~~ ❌ **rimesso, ed è giusto così.**
+   I nove riquadri erano stati tolti perché sembravano vuoti e inutili. Non lo
+   erano: **fanno vedere la differenza fra il piano gratuito e il Premium.**
+   Senza, i due piani sono identici a schermo e non si capisce che cosa si
+   compra — e sono l'unico posto dell'app dove quella differenza si vede.
+   Ora `PUBBLICITA_ATTIVA` è acceso: li vede chi non è Premium, non li vede
+   chi lo è. Una prova tiene ferma proprio quella differenza, così non
+   spariscono di nuovo.
+   Il giorno che dentro ci finirà pubblicità vera vanno rifatte le schede
+   privacy sugli store, perché la pubblicità cambia le risposte su
+   tracciamento e identificatori.
 9. ~~**Il "dopo viaggio"**~~ ✅ fatto. Concludendo un viaggio si apre da solo
    (ed è l'unico momento in cui uno ha voglia di guardarlo); si riapre dalla
    scheda del viaggio. Dentro: i numeri, dove è andata di più la spesa, il
@@ -326,6 +332,14 @@ qualcuno che risponde".
   giro — ma prendeva l'ultimo, e dal secondo in poi la pagina è già tradotta.
   Vale solo il primo giro. Quando un numero sembra sbagliato, si guarda
   *quando* viene misurato.
+- **Prima di togliere una cosa che sembra inutile, si chiede a cosa serve.**
+  I nove riquadri pubblicitari vuoti sono stati tolti perché «non fanno
+  guadagnare niente e fanno sembrare l'app rotta». Il ragionamento guardava il
+  guadagno; quei riquadri invece servivano a **far vedere la differenza fra il
+  piano gratuito e il Premium**, che senza di loro sono identici a schermo.
+  Nessuno l'aveva scritto da nessuna parte — adesso sì, e c'è una prova che lo
+  tiene fermo. Vale in generale: quando una cosa sembra senza motivo, il
+  motivo può essere solo non scritto.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a

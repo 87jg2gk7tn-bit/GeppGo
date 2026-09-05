@@ -1753,9 +1753,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="prem-hero"><div class="prem-t" id="premT">Viaggi illimitati</div><div class="prem-s" id="premS">Il piano gratuito include 2 viaggi in corso alla volta. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.</div></div>
   <div class="prem-list">
     <div class="prem-i"><span>♾️</span><div><div class="rlbl">Viaggi illimitati</div><div class="rsub">Quanti ne vuoi, in parallelo</div></div></div>
-    <!-- La voce sulla pubblicita' compare solo quando la pubblicita' esiste:
-         vendere la rimozione di una cosa che non c'e' non e' una promessa,
-         e' una presa in giro. La accende renderAds(). -->
+    <!-- Si mostra insieme agli spazi pubblicitari: la accende renderAds(), e
+         il giorno che si spengono gli spazi sparisce anche questa. Promettere
+         di togliere una cosa che non si vede da nessuna parte sarebbe una
+         presa in giro. -->
     <div class="prem-i" id="premNoAds" style="display:none"><span>🚫</span><div><div class="rlbl">Zero pubblicità</div><div class="rsub">Interfaccia pulita</div></div></div>
     <div class="prem-i"><span>📍</span><div><div class="rlbl">Avvisi GPS su tutti i viaggi</div><div class="rsub">Non solo sul viaggio attivo</div></div></div>
   </div>
@@ -8621,17 +8622,22 @@ function mostraFotoQual(){
   sel.value=(app.settings&&app.settings.fotoQualita)||'alta';
   if(nota)nota.textContent=fotoLivello().dice;
 }
-/* Quando ci sara' pubblicita' vera si mette true, e insieme vanno rifatte le
-   schede privacy sugli store: la pubblicita' cambia le risposte su tracciamento
-   e identificatori (vedi PRIVACY-STORE.md). */
-const PUBBLICITA_ATTIVA=false;
+/* Gli spazi pubblicitari sono ACCESI, e ci sono per un motivo preciso: fanno
+   vedere la differenza fra il piano gratuito e il Premium. Senza, i due piani
+   sono identici a schermo e non si capisce che cosa si compra.
+
+   Erano stati tolti perche' sembravano nove riquadri vuoti buoni a niente:
+   quel ragionamento guardava il guadagno (zero, finche' la pubblicita' non
+   c'e' davvero) e non guardava a cosa servivano. Servivano a questo.
+
+   Il giorno che dentro ci finira' pubblicita' vera vanno rifatte le schede
+   privacy sugli store: la pubblicita' cambia le risposte su tracciamento e
+   identificatori (vedi PRIVACY-STORE.md). Questa riga resta il posto da cui
+   si spengono tutti in un colpo. */
+const PUBBLICITA_ATTIVA=true;
 function renderAds(){
-  /* Finche' non c'e' pubblicita' vera, gli spazi restano chiusi. Nove riquadri
-     tratteggiati con scritto "Spazio pubblicitario" e nessuna pubblicita'
-     dentro non fanno guadagnare niente e fanno sembrare l'app rotta: chi la
-     apre per la prima volta pensa che qualcosa non abbia caricato.
-     I riquadri restano dove sono, gia' al loro posto: il giorno che ci sara'
-     qualcosa da mostrare, basta cambiare questa riga. */
+  /* Li vede chi non e' Premium. Chi lo e' non li vede: e' esattamente la
+     differenza che il Premium vende, e va vista. */
   document.querySelectorAll('.ad-slot').forEach(a=>a.style.display=(PUBBLICITA_ATTIVA&&!app.premium)?'flex':'none');
   const vNoAds=document.getElementById('premNoAds');
   if(vNoAds)vNoAds.style.display=PUBBLICITA_ATTIVA?'flex':'none';
@@ -8640,7 +8646,7 @@ function renderAds(){
   const n=viaggiMiei().length;
   b.textContent=app.premium?'✨ Premium':'Gratis';
   b.style.background=app.premium?'var(--brown)':'var(--ink-faint)';
-  s.textContent=app.premium?'Viaggi illimitati':`${n}/2 viaggi tuoi in corso`;
+  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':`${n}/2 viaggi tuoi in corso · con pubblicità`;
   btn.textContent=app.premium?'Gestisci piano':'Scopri Premium';
 }
 
