@@ -318,3 +318,45 @@ Due cose imparate scrivendola, e valgono per tutte le prove:
   vuole una barra prima di `tile`, e l'indirizzo vero è
   `a.tile.openstreetmap.org`. Le richieste passavano e la prova le guardava
   senza vederle. Si usa un'espressione regolare.
+
+## Le lingue
+
+```sh
+node test/prova-lingue.js
+```
+
+La chiave del dizionario è **la frase italiana stessa**, non un codice. Su
+un'app di dodicimila righe scritta tutta in italiano è la scelta che rende la
+cosa fattibile — niente tremila nomi di chiavi da inventare, niente tremila
+punti del codice da toccare — e ha una conseguenza che vale più di tutto il
+resto: **quello che non è ancora tradotto resta in italiano**, invece di
+mostrare `menu.spese.aggiungi` a qualcuno che sta viaggiando.
+
+Metà dei controlli guardano proprio quello: una frase mai tradotta torna
+uguale, una frase vuota non fa saltare niente, e una lingua che non sappiamo
+dire (tedesco) torna all'italiano invece di lasciare l'interfaccia sfondata.
+
+Gli altri due che contano:
+
+- **resta tradotta dopo un ridisegno.** Le schermate si rifanno da capo con
+  `innerHTML` e si portano via la traduzione fatta all'avvio: senza ripassare
+  dopo `renderAll()`, l'app tornava in italiano al primo tocco.
+- **il Profilo dice quanto è tradotto davvero.** Una persona che vede metà app
+  in italiano deve sapere perché: la percentuale è vera, contata sulle frasi
+  che stanno nelle schermate.
+
+E il dizionario si controlla da sé: le quattro lingue devono avere le stesse
+frasi, nessuna traduzione vuota, e non devono essere l'italiano ricopiato per
+far salire il conto.
+
+Un controllo merita una riga a parte: **una lingua si accende da sola solo
+all'80% del dizionario**. Sotto quella soglia l'app resta tutta in italiano
+anche se il telefono è spagnolo — un'app mezza tradotta è peggio di una tutta
+in una lingua sola, chi la apre pensa che sia rotta. La prova verifica tutte e
+due le facce: che oggi (91 frasi su 656) non ci passi, e che riempiendo il
+dizionario la lingua si accenda da sola senza toccare una riga di codice.
+
+Questo guasto l'ha trovato la suite completa: le prove girano con la lingua di
+sistema inglese, e con la scelta automatica accesa l'intera app era passata
+all'inglese al 2%. Due prove che non c'entravano niente sono diventate rosse —
+ed era il prodotto a essere sbagliato, non loro.
