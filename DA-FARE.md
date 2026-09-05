@@ -92,10 +92,16 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    una volta sui nodi di testo della pagina (e su placeholder, title e
    aria-label) all'avvio e dopo ogni ridisegno.
 
-   **A che punto siamo davvero: 91 frasi su 656** — la barra in basso, i tasti
-   che si premono in continuazione, i nomi dei campi e le categorie. Il
+   **A che punto siamo davvero: 259 frasi su 656, cioè il 49% di quello che si
+   legge a schermo.** I due numeri sono diversi perché le parole comuni
+   tornano tante volte: «Salva» è una frase sola e compare dappertutto. Il
    Profilo dice la percentuale vera a chi sceglie una lingua, invece di far
    finta. Il resto va fatto a lotti.
+
+   Il metodo che funziona: **una frase per volta in tutte e quattro le lingue
+   insieme**, non una lingua alla volta. Il dizionario le tiene allineate (c'è
+   una prova che lo impone) e si passa sul testo una volta sola invece di
+   quattro.
 
    **Una lingua si accende da sola solo all'80% del dizionario.** Sotto quella
    soglia l'app resta tutta in italiano anche se il telefono è spagnolo,
@@ -313,6 +319,13 @@ qualcuno che risponde".
   dalla pagina, o su uno già preso da un'altra mappa, e l'errore
   (`_leaflet_pos`) usciva da tutt'altra parte. Solo sul server delle prove,
   che è più lento. Adesso il riquadro si ricontrolla adesso, non 120 ms fa.
+- **Un contatore che misura dopo aver cambiato le cose misura il risultato,
+  non il lavoro.** Il conto di quanto è tradotta l'app girava *dopo* la
+  traduzione, quando le frasi italiane non ci sono più: diceva l'1% con metà
+  app tradotta. Preso due volte, perché la seconda versione contava durante il
+  giro — ma prendeva l'ultimo, e dal secondo in poi la pagina è già tradotta.
+  Vale solo il primo giro. Quando un numero sembra sbagliato, si guarda
+  *quando* viene misurato.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a

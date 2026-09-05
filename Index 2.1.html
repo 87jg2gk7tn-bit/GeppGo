@@ -2108,6 +2108,271 @@ const DIZIONARIO={
     'Foto o PDF':'Foto ou PDF','💾 Backup':'💾 Cópia de segurança','Lingua':'Idioma'
   }
 };
+/* Secondo lotto: le schermate. Si aggiungono qui invece che riscrivere il
+   blocco di sopra - il dizionario e' uno solo, cambia solo dove si scrive.
+   Le frasi si traducono TUTTE E QUATTRO INSIEME, una riga per volta: e' il
+   modo piu' veloce, e soprattutto e' l'unico in cui le lingue non si
+   sfasano fra loro. */
+const DIZIONARIO_SCHERMATE={
+  en:{
+    'Impostazioni':'Settings','Esporta dati':'Export data','Importa dati':'Import data',
+    'Crea account':'Create account','Destinazione':'Destination','Crea viaggio':'Create trip',
+    'Nuovo viaggio':'New trip','Nuova spesa':'New expense','Posti famosi':'Famous places',
+    'Luoghi salvati':'Saved places','Reset completo':'Full reset','Nome del viaggio':'Trip name',
+    'Aggiungi persona':'Add person','Aggiungi giorno':'Add day','Aggiungi biglietto':'Add ticket',
+    'Aggiungi tutti':'Add everyone','Condividi viaggio':'Share trip','Entra nel viaggio':'Join the trip',
+    'Torna alla home':'Back to home','Codice invito':'Invite code','Nome compagno':'Travel mate’s name',
+    'Il tuo nome':'Your name','Come ti chiami':'What’s your name','Salva luogo':'Save place',
+    'Modifica luogo':'Edit place','Salva password':'Save password','Nuova password':'New password',
+    'Conferma password':'Confirm password','Codice di recupero':'Recovery code',
+    'Minimo 6 caratteri':'At least 6 characters','Tema scuro':'Dark theme','Tema chiaro':'Light theme',
+    'Calendario':'Calendar','Navigatore':'Navigation app','Autopilota':'Autopilot',
+    'Attrazione':'Attraction','Attrazioni':'Attractions','Abbigliamento':'Clothing',
+    'Elettronica':'Electronics','Lista bagagli':'Packing list','Durata del viaggio':'Trip length',
+    'Tappe al giorno':'Stops per day','Totale gruppo':'Group total','Per categoria':'By category',
+    'Diviso tra':'Split between','Già pagata':'Already paid','Costo (opz.)':'Cost (optional)',
+    'Costo volo (opz.)':'Flight cost (optional)','Link prenotazione':'Booking link',
+    'Serve prenotare':'Booking needed','Quale giorno?':'Which day?','A che ora?':'What time?',
+    'A quale viaggio?':'To which trip?','Non assegnare':'Leave unassigned','Non aggiungere':'Don’t add',
+    'Niente per ora':'Nothing for now','Non ancora':'Not yet','Non indicato':'Not given',
+    'Non è questo':'Not this one','Lascia stare':'Leave it','Indifferente':'No preference',
+    'Con bambini':'With children','Cosa ti piace':'What you enjoy','Cosa ti interessa?':'What are you into?',
+    'Di cosa si tratta':'What is it about','Di cosa si tratta?':'What is it about?',
+    'Riguarda un minore':'It involves a minor','Contenuto illegale':'Illegal content',
+    'Violenza o odio':'Violence or hate','Arte e storia':'Art and history','Cibo e mercati':'Food and markets',
+    'Natura e panorami':'Nature and views','Un po’ di tutto':'A bit of everything',
+    'Un po\' di tutto':'A bit of everything','Interfaccia pulita':'A cleaner screen',
+    'Viaggi illimitati':'Unlimited trips','Zero pubblicità':'No ads','Scopri Premium':'Discover Premium',
+    'Configura cloud':'Set up cloud','Usa un cloud tuo':'Use your own cloud','Usa questo link':'Use this link',
+    'Copia collegamento':'Copy link','Ti hanno invitato':'You’ve been invited',
+    'Cerca il tuo hotel':'Find your hotel','La mail dell’hotel':'The hotel’s email',
+    'La mail dell\'hotel':'The hotel’s email','Testo della mail':'Email text',
+    'Date dell’alloggio':'Stay dates','Date dell\'alloggio':'Stay dates',
+    'La mia posizione':'My location','Come ci vai':'How you get there','Come ci andiamo?':'How do we get there?',
+    'All’aperto':'Outdoors','All\'aperto':'Outdoors','Il ricordo':'The memory',
+    'Quanto ci tieni?':'How much does it matter?','Aggiorna i giorni':'Update the days',
+    'Riscrivila uguale':'Type it again','Che viaggio vuoi':'What kind of trip',
+    'Cosa notificarti':'What to notify you about','Consigli su misura':'Tailored suggestions',
+    'Bonus se c’è tempo':'Bonus if there’s time','Bonus se c\'è tempo':'Bonus if there’s time',
+    'Come la salvo?':'How do I save it?','Sue spese':'Their expenses','Nel programma':'In the plan',
+    'questo giorno':'this day','(opzionale)':'(optional)','(anche più di una)':'(more than one is fine)',
+    'Il giorno prima':'The day before','10 minuti prima':'10 minutes before',
+    '15 minuti prima':'15 minutes before','30 minuti prima':'30 minutes before',
+    '1 ora prima':'1 hour before','2 ore prima':'2 hours before','Avvisami il':'Remind me on',
+    'Mappe di Apple':'Apple Maps','Leggera — 1000 px':'Light — 1000 px','Media — 1600 px':'Medium — 1600 px',
+    'Importa viaggio':'Import trip','Codifica URL':'URL encode','Info comando':'About the shortcut',
+    'Lascia com’è':'Leave as is','Lascia com\'è':'Leave as is','senza aprirlo':'without opening it',
+    'tieni premuto':'press and hold','se lo chiedi.':'if you ask for it.','aggiungo':'I’ll add',
+    'Riempio':'I’ll fill it in','copiato':'copied','divisa':'split','Fatto?':'Done?',
+    'ELIMINA':'DELETE','Chiave anon public':'Anon public key','privacy di GeppGo':'GeppGo’s privacy policy',
+    'es. Vacanza estiva':'e.g. Summer holiday','Cena al ristorante':'Dinner out',
+    'Allega un PDF':'Attach a PDF','Codice / URL':'Code / URL','qualsiasi cosa':'anything',
+    '🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro',
+    '📷 Scansiona':'📷 Scan','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
+    '🖼️ Foto o PDF':'🖼️ Photo or PDF','🎫 Biglietto':'🎫 Ticket','🎫 Prenotazione':'🎫 Booking',
+    '🎒 Lista bagagli':'🎒 Packing list','🧭 Naviga':'🧭 Navigate','🧭 Autopilota':'🧭 Autopilot',
+    '🧭 Il giro di oggi':'🧭 Today’s route','📸 Che cos’è?':'📸 What is it?','📸 Che cos\'è?':'📸 What is it?',
+    '⭐ Essenziale':'⭐ Must-see','🔵 Saltabile':'🔵 Skippable','✦ Su misura':'✦ Tailored',
+    '✦ Identifica':'✦ Identify','✦ Trova i posti':'✦ Find the places','✦ Crea il viaggio':'✦ Create the trip',
+    '✓ Salva spesa':'✓ Save expense','✓ Chi ha già dato':'✓ Who has already paid',
+    '🗑️ Elimina spesa':'🗑️ Delete expense','📋 Incolla e leggi':'📋 Paste and read','🌍 Lingua':'🌍 Language',
+    'ℹ️ Info':'ℹ️ Info','📝 Note':'📝 Notes'
+  },
+  es:{
+    'Impostazioni':'Ajustes','Esporta dati':'Exportar datos','Importa dati':'Importar datos',
+    'Crea account':'Crear cuenta','Destinazione':'Destino','Crea viaggio':'Crear viaje',
+    'Nuovo viaggio':'Nuevo viaje','Nuova spesa':'Nuevo gasto','Posti famosi':'Lugares famosos',
+    'Luoghi salvati':'Lugares guardados','Reset completo':'Borrado total','Nome del viaggio':'Nombre del viaje',
+    'Aggiungi persona':'Añadir persona','Aggiungi giorno':'Añadir día','Aggiungi biglietto':'Añadir billete',
+    'Aggiungi tutti':'Añadir a todos','Condividi viaggio':'Compartir viaje','Entra nel viaggio':'Entrar en el viaje',
+    'Torna alla home':'Volver al inicio','Codice invito':'Código de invitación','Nome compagno':'Nombre del compañero',
+    'Il tuo nome':'Tu nombre','Come ti chiami':'¿Cómo te llamas?','Salva luogo':'Guardar lugar',
+    'Modifica luogo':'Editar lugar','Salva password':'Guardar contraseña','Nuova password':'Nueva contraseña',
+    'Conferma password':'Confirmar contraseña','Codice di recupero':'Código de recuperación',
+    'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema oscuro','Tema chiaro':'Tema claro',
+    'Calendario':'Calendario','Navigatore':'Navegador','Autopilota':'Piloto automático',
+    'Attrazione':'Atracción','Attrazioni':'Atracciones','Abbigliamento':'Ropa',
+    'Elettronica':'Electrónica','Lista bagagli':'Lista de equipaje','Durata del viaggio':'Duración del viaje',
+    'Tappe al giorno':'Paradas por día','Totale gruppo':'Total del grupo','Per categoria':'Por categoría',
+    'Diviso tra':'Dividido entre','Già pagata':'Ya pagado','Costo (opz.)':'Coste (opcional)',
+    'Costo volo (opz.)':'Coste del vuelo (opcional)','Link prenotazione':'Enlace de la reserva',
+    'Serve prenotare':'Hay que reservar','Quale giorno?':'¿Qué día?','A che ora?':'¿A qué hora?',
+    'A quale viaggio?':'¿A qué viaje?','Non assegnare':'Sin asignar','Non aggiungere':'No añadir',
+    'Niente per ora':'Nada por ahora','Non ancora':'Todavía no','Non indicato':'Sin indicar',
+    'Non è questo':'No es este','Lascia stare':'Déjalo','Indifferente':'Me da igual',
+    'Con bambini':'Con niños','Cosa ti piace':'Lo que te gusta','Cosa ti interessa?':'¿Qué te interesa?',
+    'Di cosa si tratta':'De qué se trata','Di cosa si tratta?':'¿De qué se trata?',
+    'Riguarda un minore':'Afecta a un menor','Contenuto illegale':'Contenido ilegal',
+    'Violenza o odio':'Violencia u odio','Arte e storia':'Arte e historia','Cibo e mercati':'Comida y mercados',
+    'Natura e panorami':'Naturaleza y paisajes','Un po’ di tutto':'Un poco de todo',
+    'Un po\' di tutto':'Un poco de todo','Interfaccia pulita':'Pantalla más limpia',
+    'Viaggi illimitati':'Viajes ilimitados','Zero pubblicità':'Sin publicidad','Scopri Premium':'Descubre Premium',
+    'Configura cloud':'Configurar la nube','Usa un cloud tuo':'Usa tu propia nube','Usa questo link':'Usa este enlace',
+    'Copia collegamento':'Copiar enlace','Ti hanno invitato':'Te han invitado',
+    'Cerca il tuo hotel':'Busca tu alojamiento','La mail dell’hotel':'El correo del alojamiento',
+    'La mail dell\'hotel':'El correo del alojamiento','Testo della mail':'Texto del correo',
+    'Date dell’alloggio':'Fechas de la estancia','Date dell\'alloggio':'Fechas de la estancia',
+    'La mia posizione':'Mi ubicación','Come ci vai':'Cómo llegas','Come ci andiamo?':'¿Cómo vamos?',
+    'All’aperto':'Al aire libre','All\'aperto':'Al aire libre','Il ricordo':'El recuerdo',
+    'Quanto ci tieni?':'¿Cuánto te importa?','Aggiorna i giorni':'Actualizar los días',
+    'Riscrivila uguale':'Escríbela otra vez','Che viaggio vuoi':'Qué viaje quieres',
+    'Cosa notificarti':'Qué avisarte','Consigli su misura':'Sugerencias a medida',
+    'Bonus se c’è tempo':'Extra si da tiempo','Bonus se c\'è tempo':'Extra si da tiempo',
+    'Come la salvo?':'¿Cómo la guardo?','Sue spese':'Sus gastos','Nel programma':'En el plan',
+    'questo giorno':'este día','(opzionale)':'(opcional)','(anche più di una)':'(puede ser más de una)',
+    'Il giorno prima':'El día antes','10 minuti prima':'10 minutos antes',
+    '15 minuti prima':'15 minutos antes','30 minuti prima':'30 minutos antes',
+    '1 ora prima':'1 hora antes','2 ore prima':'2 horas antes','Avvisami il':'Avísame el',
+    'Mappe di Apple':'Mapas de Apple','Leggera — 1000 px':'Ligera — 1000 px','Media — 1600 px':'Media — 1600 px',
+    'Importa viaggio':'Importar viaje','Codifica URL':'Codificar URL','Info comando':'Sobre el atajo',
+    'Lascia com’è':'Déjalo como está','Lascia com\'è':'Déjalo como está','senza aprirlo':'sin abrirlo',
+    'tieni premuto':'mantén pulsado','se lo chiedi.':'si lo pides.','aggiungo':'añado',
+    'Riempio':'Lo relleno','copiato':'copiado','divisa':'dividido','Fatto?':'¿Hecho?',
+    'ELIMINA':'ELIMINAR','Chiave anon public':'Clave anon public','privacy di GeppGo':'la privacidad de GeppGo',
+    'es. Vacanza estiva':'p. ej. Vacaciones de verano','Cena al ristorante':'Cena fuera',
+    'Allega un PDF':'Adjuntar un PDF','Codice / URL':'Código / URL','qualsiasi cosa':'cualquier cosa',
+    '🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro',
+    '📷 Scansiona':'📷 Escanear','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
+    '🖼️ Foto o PDF':'🖼️ Foto o PDF','🎫 Biglietto':'🎫 Billete','🎫 Prenotazione':'🎫 Reserva',
+    '🎒 Lista bagagli':'🎒 Lista de equipaje','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
+    '🧭 Il giro di oggi':'🧭 La ruta de hoy','📸 Che cos’è?':'📸 ¿Qué es?','📸 Che cos\'è?':'📸 ¿Qué es?',
+    '⭐ Essenziale':'⭐ Imprescindible','🔵 Saltabile':'🔵 Prescindible','✦ Su misura':'✦ A medida',
+    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares','✦ Crea il viaggio':'✦ Crear el viaje',
+    '✓ Salva spesa':'✓ Guardar gasto','✓ Chi ha già dato':'✓ Quién ya ha pagado',
+    '🗑️ Elimina spesa':'🗑️ Eliminar gasto','📋 Incolla e leggi':'📋 Pegar y leer','🌍 Lingua':'🌍 Idioma',
+    'ℹ️ Info':'ℹ️ Información','📝 Note':'📝 Notas'
+  },
+  fr:{
+    'Impostazioni':'Réglages','Esporta dati':'Exporter les données','Importa dati':'Importer des données',
+    'Crea account':'Créer un compte','Destinazione':'Destination','Crea viaggio':'Créer un voyage',
+    'Nuovo viaggio':'Nouveau voyage','Nuova spesa':'Nouvelle dépense','Posti famosi':'Lieux connus',
+    'Luoghi salvati':'Lieux enregistrés','Reset completo':'Tout effacer','Nome del viaggio':'Nom du voyage',
+    'Aggiungi persona':'Ajouter une personne','Aggiungi giorno':'Ajouter un jour','Aggiungi biglietto':'Ajouter un billet',
+    'Aggiungi tutti':'Ajouter tout le monde','Condividi viaggio':'Partager le voyage','Entra nel viaggio':'Rejoindre le voyage',
+    'Torna alla home':'Retour à l’accueil','Codice invito':'Code d’invitation','Nome compagno':'Nom du compagnon',
+    'Il tuo nome':'Ton nom','Come ti chiami':'Comment tu t’appelles','Salva luogo':'Enregistrer le lieu',
+    'Modifica luogo':'Modifier le lieu','Salva password':'Enregistrer le mot de passe','Nuova password':'Nouveau mot de passe',
+    'Conferma password':'Confirmer le mot de passe','Codice di recupero':'Code de récupération',
+    'Minimo 6 caratteri':'6 caractères minimum','Tema scuro':'Thème sombre','Tema chiaro':'Thème clair',
+    'Calendario':'Agenda','Navigatore':'Application GPS','Autopilota':'Pilote automatique',
+    'Attrazione':'Attraction','Attrazioni':'Attractions','Abbigliamento':'Vêtements',
+    'Elettronica':'Électronique','Lista bagagli':'Liste de bagages','Durata del viaggio':'Durée du voyage',
+    'Tappe al giorno':'Étapes par jour','Totale gruppo':'Total du groupe','Per categoria':'Par catégorie',
+    'Diviso tra':'Partagé entre','Già pagata':'Déjà payée','Costo (opz.)':'Coût (facultatif)',
+    'Costo volo (opz.)':'Coût du vol (facultatif)','Link prenotazione':'Lien de réservation',
+    'Serve prenotare':'Réservation nécessaire','Quale giorno?':'Quel jour ?','A che ora?':'À quelle heure ?',
+    'A quale viaggio?':'À quel voyage ?','Non assegnare':'Ne pas attribuer','Non aggiungere':'Ne pas ajouter',
+    'Niente per ora':'Rien pour l’instant','Non ancora':'Pas encore','Non indicato':'Non indiqué',
+    'Non è questo':'Ce n’est pas celui-là','Lascia stare':'Laisse tomber','Indifferente':'Peu importe',
+    'Con bambini':'Avec des enfants','Cosa ti piace':'Ce que tu aimes','Cosa ti interessa?':'Qu’est-ce qui t’intéresse ?',
+    'Di cosa si tratta':'De quoi il s’agit','Di cosa si tratta?':'De quoi s’agit-il ?',
+    'Riguarda un minore':'Cela concerne un mineur','Contenuto illegale':'Contenu illégal',
+    'Violenza o odio':'Violence ou haine','Arte e storia':'Art et histoire','Cibo e mercati':'Cuisine et marchés',
+    'Natura e panorami':'Nature et paysages','Un po’ di tutto':'Un peu de tout',
+    'Un po\' di tutto':'Un peu de tout','Interfaccia pulita':'Un écran plus net',
+    'Viaggi illimitati':'Voyages illimités','Zero pubblicità':'Sans publicité','Scopri Premium':'Découvrir Premium',
+    'Configura cloud':'Configurer le cloud','Usa un cloud tuo':'Utiliser ton propre cloud','Usa questo link':'Utilise ce lien',
+    'Copia collegamento':'Copier le lien','Ti hanno invitato':'On t’a invité',
+    'Cerca il tuo hotel':'Cherche ton hébergement','La mail dell’hotel':'L’e-mail de l’hébergement',
+    'La mail dell\'hotel':'L’e-mail de l’hébergement','Testo della mail':'Texte de l’e-mail',
+    'Date dell’alloggio':'Dates du séjour','Date dell\'alloggio':'Dates du séjour',
+    'La mia posizione':'Ma position','Come ci vai':'Comment tu y vas','Come ci andiamo?':'Comment on y va ?',
+    'All’aperto':'En plein air','All\'aperto':'En plein air','Il ricordo':'Le souvenir',
+    'Quanto ci tieni?':'À quel point ça compte ?','Aggiorna i giorni':'Mettre les jours à jour',
+    'Riscrivila uguale':'Réécris-le à l’identique','Che viaggio vuoi':'Quel voyage tu veux',
+    'Cosa notificarti':'Ce qu’on doit te signaler','Consigli su misura':'Suggestions sur mesure',
+    'Bonus se c’è tempo':'En prime s’il reste du temps','Bonus se c\'è tempo':'En prime s’il reste du temps',
+    'Come la salvo?':'Comment je l’enregistre ?','Sue spese':'Ses dépenses','Nel programma':'Dans le programme',
+    'questo giorno':'ce jour','(opzionale)':'(facultatif)','(anche più di una)':'(plusieurs possibles)',
+    'Il giorno prima':'La veille','10 minuti prima':'10 minutes avant',
+    '15 minuti prima':'15 minutes avant','30 minuti prima':'30 minutes avant',
+    '1 ora prima':'1 heure avant','2 ore prima':'2 heures avant','Avvisami il':'Préviens-moi le',
+    'Mappe di Apple':'Plans d’Apple','Leggera — 1000 px':'Légère — 1000 px','Media — 1600 px':'Moyenne — 1600 px',
+    'Importa viaggio':'Importer un voyage','Codifica URL':'Encoder l’URL','Info comando':'À propos du raccourci',
+    'Lascia com’è':'Laisse tel quel','Lascia com\'è':'Laisse tel quel','senza aprirlo':'sans l’ouvrir',
+    'tieni premuto':'appuie longuement','se lo chiedi.':'si tu le demandes.','aggiungo':'j’ajoute',
+    'Riempio':'Je remplis','copiato':'copié','divisa':'partagée','Fatto?':'C’est fait ?',
+    'ELIMINA':'SUPPRIMER','Chiave anon public':'Clé anon public','privacy di GeppGo':'la confidentialité de GeppGo',
+    'es. Vacanza estiva':'ex. Vacances d’été','Cena al ristorante':'Dîner au restaurant',
+    'Allega un PDF':'Joindre un PDF','Codice / URL':'Code / URL','qualsiasi cosa':'n’importe quoi',
+    '🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro',
+    '📷 Scansiona':'📷 Scanner','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
+    '🖼️ Foto o PDF':'🖼️ Photo ou PDF','🎫 Biglietto':'🎫 Billet','🎫 Prenotazione':'🎫 Réservation',
+    '🎒 Lista bagagli':'🎒 Liste de bagages','🧭 Naviga':'🧭 Guider','🧭 Autopilota':'🧭 Pilote automatique',
+    '🧭 Il giro di oggi':'🧭 Le tour du jour','📸 Che cos’è?':'📸 Qu’est-ce que c’est ?','📸 Che cos\'è?':'📸 Qu’est-ce que c’est ?',
+    '⭐ Essenziale':'⭐ Incontournable','🔵 Saltabile':'🔵 Facultatif','✦ Su misura':'✦ Sur mesure',
+    '✦ Identifica':'✦ Identifier','✦ Trova i posti':'✦ Trouver les lieux','✦ Crea il viaggio':'✦ Créer le voyage',
+    '✓ Salva spesa':'✓ Enregistrer la dépense','✓ Chi ha già dato':'✓ Qui a déjà payé',
+    '🗑️ Elimina spesa':'🗑️ Supprimer la dépense','📋 Incolla e leggi':'📋 Coller et lire','🌍 Lingua':'🌍 Langue',
+    'ℹ️ Info':'ℹ️ Infos','📝 Note':'📝 Notes'
+  },
+  pt:{
+    'Impostazioni':'Definições','Esporta dati':'Exportar dados','Importa dati':'Importar dados',
+    'Crea account':'Criar conta','Destinazione':'Destino','Crea viaggio':'Criar viagem',
+    'Nuovo viaggio':'Nova viagem','Nuova spesa':'Nova despesa','Posti famosi':'Lugares conhecidos',
+    'Luoghi salvati':'Lugares guardados','Reset completo':'Apagar tudo','Nome del viaggio':'Nome da viagem',
+    'Aggiungi persona':'Adicionar pessoa','Aggiungi giorno':'Adicionar dia','Aggiungi biglietto':'Adicionar bilhete',
+    'Aggiungi tutti':'Adicionar toda a gente','Condividi viaggio':'Partilhar a viagem','Entra nel viaggio':'Entrar na viagem',
+    'Torna alla home':'Voltar ao início','Codice invito':'Código de convite','Nome compagno':'Nome do companheiro',
+    'Il tuo nome':'O teu nome','Come ti chiami':'Como te chamas','Salva luogo':'Guardar lugar',
+    'Modifica luogo':'Editar lugar','Salva password':'Guardar palavra-passe','Nuova password':'Nova palavra-passe',
+    'Conferma password':'Confirmar palavra-passe','Codice di recupero':'Código de recuperação',
+    'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema escuro','Tema chiaro':'Tema claro',
+    'Calendario':'Calendário','Navigatore':'Aplicação de navegação','Autopilota':'Piloto automático',
+    'Attrazione':'Atração','Attrazioni':'Atrações','Abbigliamento':'Roupa',
+    'Elettronica':'Eletrónica','Lista bagagli':'Lista de bagagem','Durata del viaggio':'Duração da viagem',
+    'Tappe al giorno':'Paragens por dia','Totale gruppo':'Total do grupo','Per categoria':'Por categoria',
+    'Diviso tra':'Dividido entre','Già pagata':'Já paga','Costo (opz.)':'Custo (opcional)',
+    'Costo volo (opz.)':'Custo do voo (opcional)','Link prenotazione':'Ligação da reserva',
+    'Serve prenotare':'É preciso reservar','Quale giorno?':'Que dia?','A che ora?':'A que horas?',
+    'A quale viaggio?':'A que viagem?','Non assegnare':'Não atribuir','Non aggiungere':'Não adicionar',
+    'Niente per ora':'Nada por agora','Non ancora':'Ainda não','Non indicato':'Não indicado',
+    'Non è questo':'Não é este','Lascia stare':'Deixa estar','Indifferente':'Tanto faz',
+    'Con bambini':'Com crianças','Cosa ti piace':'Aquilo de que gostas','Cosa ti interessa?':'O que te interessa?',
+    'Di cosa si tratta':'Do que se trata','Di cosa si tratta?':'Do que se trata?',
+    'Riguarda un minore':'Envolve um menor','Contenuto illegale':'Conteúdo ilegal',
+    'Violenza o odio':'Violência ou ódio','Arte e storia':'Arte e história','Cibo e mercati':'Comida e mercados',
+    'Natura e panorami':'Natureza e paisagens','Un po’ di tutto':'Um pouco de tudo',
+    'Un po\' di tutto':'Um pouco de tudo','Interfaccia pulita':'Um ecrã mais limpo',
+    'Viaggi illimitati':'Viagens ilimitadas','Zero pubblicità':'Sem publicidade','Scopri Premium':'Descobrir o Premium',
+    'Configura cloud':'Configurar a nuvem','Usa un cloud tuo':'Usar a tua própria nuvem','Usa questo link':'Usa esta ligação',
+    'Copia collegamento':'Copiar ligação','Ti hanno invitato':'Convidaram-te',
+    'Cerca il tuo hotel':'Procura o teu alojamento','La mail dell’hotel':'O e-mail do alojamento',
+    'La mail dell\'hotel':'O e-mail do alojamento','Testo della mail':'Texto do e-mail',
+    'Date dell’alloggio':'Datas da estadia','Date dell\'alloggio':'Datas da estadia',
+    'La mia posizione':'A minha localização','Come ci vai':'Como vais','Come ci andiamo?':'Como vamos?',
+    'All’aperto':'Ao ar livre','All\'aperto':'Ao ar livre','Il ricordo':'A recordação',
+    'Quanto ci tieni?':'Quanto te importa?','Aggiorna i giorni':'Atualizar os dias',
+    'Riscrivila uguale':'Escreve outra vez','Che viaggio vuoi':'Que viagem queres',
+    'Cosa notificarti':'O que te avisar','Consigli su misura':'Sugestões à medida',
+    'Bonus se c’è tempo':'Extra se houver tempo','Bonus se c\'è tempo':'Extra se houver tempo',
+    'Come la salvo?':'Como a guardo?','Sue spese':'As despesas dele','Nel programma':'No programa',
+    'questo giorno':'este dia','(opzionale)':'(opcional)','(anche più di una)':'(pode ser mais do que uma)',
+    'Il giorno prima':'No dia anterior','10 minuti prima':'10 minutos antes',
+    '15 minuti prima':'15 minutos antes','30 minuti prima':'30 minutos antes',
+    '1 ora prima':'1 hora antes','2 ore prima':'2 horas antes','Avvisami il':'Avisa-me no dia',
+    'Mappe di Apple':'Mapas da Apple','Leggera — 1000 px':'Leve — 1000 px','Media — 1600 px':'Média — 1600 px',
+    'Importa viaggio':'Importar viagem','Codifica URL':'Codificar URL','Info comando':'Sobre o atalho',
+    'Lascia com’è':'Deixa como está','Lascia com\'è':'Deixa como está','senza aprirlo':'sem o abrir',
+    'tieni premuto':'mantém premido','se lo chiedi.':'se pedires.','aggiungo':'acrescento',
+    'Riempio':'Preencho','copiato':'copiado','divisa':'dividida','Fatto?':'Feito?',
+    'ELIMINA':'ELIMINAR','Chiave anon public':'Chave anon public','privacy di GeppGo':'a privacidade do GeppGo',
+    'es. Vacanza estiva':'p. ex. Férias de verão','Cena al ristorante':'Jantar fora',
+    'Allega un PDF':'Anexar um PDF','Codice / URL':'Código / URL','qualsiasi cosa':'qualquer coisa',
+    '🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro',
+    '📷 Scansiona':'📷 Digitalizar','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
+    '🖼️ Foto o PDF':'🖼️ Foto ou PDF','🎫 Biglietto':'🎫 Bilhete','🎫 Prenotazione':'🎫 Reserva',
+    '🎒 Lista bagagli':'🎒 Lista de bagagem','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
+    '🧭 Il giro di oggi':'🧭 O percurso de hoje','📸 Che cos’è?':'📸 O que é?','📸 Che cos\'è?':'📸 O que é?',
+    '⭐ Essenziale':'⭐ Imperdível','🔵 Saltabile':'🔵 Dispensável','✦ Su misura':'✦ À medida',
+    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares','✦ Crea il viaggio':'✦ Criar a viagem',
+    '✓ Salva spesa':'✓ Guardar despesa','✓ Chi ha già dato':'✓ Quem já pagou',
+    '🗑️ Elimina spesa':'🗑️ Eliminar despesa','📋 Incolla e leggi':'📋 Colar e ler','🌍 Lingua':'🌍 Idioma',
+    'ℹ️ Info':'ℹ️ Informações','📝 Note':'📝 Notas'
+  }
+};
+Object.keys(DIZIONARIO_SCHERMATE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_SCHERMATE[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
 const FRASI_IN_TUTTO=656;
@@ -2136,38 +2401,17 @@ function t(frase){
   const d=DIZIONARIO[l];
   return (d&&d[frase])||frase;
 }
-/* Quante frasi della pagina sappiamo dire in questa lingua: serve a sapere a
-   che punto siamo davvero, invece di dire "tradotta" e scoprirlo dagli
-   utenti. */
-function coperturaLingua(l){
-  const d=DIZIONARIO[l]||{};
-  const viste=new Set();let tradotte=0;
-  frasiDellaPagina(document.body).forEach(f=>{
-    if(viste.has(f))return;viste.add(f);
-    if(d[f])tradotte++;
-  });
-  return {tutte:viste.size,tradotte:tradotte};
-}
-/* Le frasi che stanno davvero scritte nella pagina: i nodi di testo e i tre
-   attributi che si leggono. Si saltano script e style, che testo non sono. */
-function frasiDellaPagina(radice){
-  const fuori=[];
-  if(!radice)return fuori;
-  const cam=document.createTreeWalker(radice,NodeFilter.SHOW_TEXT,{
-    acceptNode:n=>{
-      const p=n.parentNode&&n.parentNode.nodeName;
-      if(p==='SCRIPT'||p==='STYLE')return NodeFilter.FILTER_REJECT;
-      return n.nodeValue&&n.nodeValue.trim().length>1?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
-    }});
-  let n;while((n=cam.nextNode()))fuori.push(n.nodeValue.trim());
-  radice.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
-    ['placeholder','title','aria-label'].forEach(a=>{
-      const v=el.getAttribute(a);
-      if(v&&v.trim().length>1)fuori.push(v.trim());
-    });
-  });
-  return fuori;
-}
+/* A che punto siamo davvero. Il conto si fa MENTRE si traduce, non dopo:
+   dopo, la pagina e' gia' nella lingua nuova e le frasi italiane non ci sono
+   piu' da nessuna parte - contate cosi' dicevano l'uno per cento con meta'
+   app tradotta, e sarebbe stato un numero falso proprio nel punto in cui
+   serve dire la verita'.
+
+   Si contano i pezzi di testo, non le frasi diverse: se "Salva" compare dieci
+   volte pesa dieci, ed e' giusto - quello che conta e' quanto di cio' che si
+   vede a schermo si legge nella lingua giusta. */
+let ultimaCopertura={tutte:0,tradotte:0};
+function coperturaLingua(){return ultimaCopertura;}
 function traduciPagina(radice){
   const l=linguaScelta();
   if(l==='it')return;
@@ -2180,16 +2424,25 @@ function traduciPagina(radice){
       return n.nodeValue&&n.nodeValue.trim().length>1?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
     }});
   const nodi=[];let n;while((n=cam.nextNode()))nodi.push(n);
+  let quanti=0,fatti=0;
   nodi.forEach(nodo=>{
     const testo=nodo.nodeValue,pulito=testo.trim();
-    if(d[pulito])nodo.nodeValue=testo.replace(pulito,d[pulito]);
+    quanti++;
+    if(d[pulito]){fatti++;nodo.nodeValue=testo.replace(pulito,d[pulito]);}
   });
   dove.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
     ['placeholder','title','aria-label'].forEach(a=>{
       const v=el.getAttribute(a);
-      if(v&&d[v.trim()])el.setAttribute(a,d[v.trim()]);
+      if(!v||v.trim().length<2)return;
+      quanti++;
+      if(d[v.trim()]){fatti++;el.setAttribute(a,d[v.trim()]);}
     });
   });
+  /* Vale il PRIMO giro completo, e solo quello. Dal secondo in poi la pagina
+     e' gia' nella lingua nuova: le frasi italiane non ci sono piu' e il conto
+     direbbe due per cento anche a lavoro finito. E' lo stesso inganno di
+     prima, un piano piu' su - preso due volte. */
+  if(!radice&&!ultimaCopertura.tutte)ultimaCopertura={tutte:quanti,tradotte:fatti};
 }
 function cambiaLingua(l){
   if(!LINGUE[l])return;
@@ -12648,7 +12901,7 @@ function mostraLingua(){
   if(ora==='it'){nota.textContent='';return;}
   /* Si dice quanto e' tradotto davvero, invece di lasciar credere che sia
      tutto: una persona che vede meta' app in italiano deve sapere perche'. */
-  const c=coperturaLingua(ora);
+  const c=coperturaLingua();
   const q=c.tutte?Math.round(c.tradotte/c.tutte*100):0;
   nota.textContent=`Tradotto circa il ${q}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.`+
     (linguaPronta(ora)?'':' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.');
