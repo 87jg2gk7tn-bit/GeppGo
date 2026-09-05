@@ -38,13 +38,23 @@ il suo account). **Used for tracking**: **NO**.
 
 ### Location — la voce da guardare due volte
 
-La posizione **viene usata ma non conservata**: si prende quando serve
+La posizione **viene usata ma non conservata da noi**: si prende quando serve
 (cercare un bagno, un bancomat, il meteo, avvisare che sei vicino a una
-tappa), si manda ai servizi che rispondono, e finisce lì. Non c'è nessuno
-storico di dove sei stato.
+tappa), si manda ai servizi che rispondono, e finisce lì. Sui server di GeppGo
+non arriva e non resta niente: nessuno storico di dove sei stato.
 
-Apple prevede un'eccezione per i dati che escono dal telefono ma non vengono
-memorizzati oltre il tempo della richiesta. GeppGo ricade in quel caso.
+Una cosa resta **sul telefono e basta**: la cache delle ricerche vicine. Per
+non chiedere due volte alla stessa mappa cosa c'è intorno, l'app tiene per un
+giorno le ultime sessanta risposte con il punto da cui sono state chieste.
+Non esce dal dispositivo, si cancella da sola, e sparisce cancellando i dati
+dell'app. Nella lingua degli store questo **non è raccolta**: sia Apple sia
+Google contano come raccolti i dati che *escono* dal telefono. Va detto lo
+stesso nella privacy policy — ed è detto — perché la promessa "non viene mai
+conservata", scritta senza distinguere, sarebbe falsa.
+
+Apple prevede inoltre un'eccezione per i dati che escono dal telefono ma non
+vengono memorizzati oltre il tempo della richiesta. GeppGo ricade in quel
+caso.
 
 **Consiglio: dichiararla lo stesso** come *Precise Location → App
 Functionality, linked to the user, not used for tracking*. Dichiarare in più
@@ -75,7 +85,8 @@ Stessa sostanza, nomi diversi:
   sì, cancellabile dall'utente sì.
 - **Foto e video → Foto**: raccolte, cancellabili.
 - **File e documenti**: le foto dei biglietti che l'assistente legge.
-- **Posizione → Posizione precisa**: raccolta ma non conservata (vedi sopra).
+- **Posizione → Posizione precisa**: raccolta ma non conservata sui server
+  (vedi sopra; quello che resta nel telefono non conta come raccolta).
 - **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori

@@ -81,8 +81,12 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
     await page.waitForTimeout(300);
     return { page, chiamate };
   }
+  /* La cache delle ricerche si svuota prima di ogni caso: qui la pagina e' una
+     sola e si cerca sempre dallo stesso punto, quindi senza questo l'app
+     risponderebbe con quello che aveva trovato nel caso precedente invece di
+     chiedere di nuovo. Che la cache funzioni lo prova test/prova-cache.js. */
   const cerca = async (page, kind) => {
-    await page.evaluate(k => { myPos = null; myPosAt = 0; cercaVicino(k); }, kind);
+    await page.evaluate(k => { localStorage.removeItem('geppgo_vicini'); myPos = null; myPosAt = 0; cercaVicino(k); }, kind);
     await page.waitForFunction(() => !/Cerco/.test(document.getElementById('bagnoBody').innerText), { timeout: 15000 });
     await page.waitForTimeout(200);
     return page.evaluate(() => document.getElementById('bagnoBody').innerText);

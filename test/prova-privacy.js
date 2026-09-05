@@ -65,6 +65,20 @@ const path = require('path');
   ok('ogni servizio a cui l\'app parla è dichiarato', scordati.length === 0,
      scordati.join(', ') || 'nessuno dimenticato');
 
+  /* ── e anche quello che resta sul telefono ───────────────────────────────
+     La cache delle ricerche vicine tiene da parte per un giorno il punto da
+     cui hai cercato. Non esce dal dispositivo, ma "la posizione non viene mai
+     conservata", scritto senza distinguere, sarebbe falso. Finché quella
+     cache sta nel codice, la pagina deve dirlo — e dire per quanto. */
+  const cacheNelCodice = /VICINI_CACHE_CHIAVE/.test(html);
+  ok('se l\'app tiene le ricerche sul telefono, la pagina lo dice',
+     !cacheNelCodice || /non escono mai dal telefono/i.test(pag),
+     cacheNelCodice ? 'la cache c\'è' : 'nessuna cache nel codice');
+  ok('e dice per quanto tempo le tiene',
+     !cacheNelCodice || /tiene da parte per un giorno/i.test(pag));
+  ok('e non promette più che della posizione non resti niente',
+     !/non viene mai conservata/i.test(pag));
+
   // ── e dentro l'app ci si arriva ──────────────────────────────────────────
   const browser = await apriBrowser();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });

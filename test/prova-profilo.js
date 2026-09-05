@@ -8,7 +8,7 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   await p.route('**/leaflet@1.9.4/dist/leaflet.js', r=>r.fulfill({status:200,contentType:'application/javascript',body:fs.readFileSync(leafletJs(),'utf8')}));
   await p.route('**/tile.openstreetmap.org/**', r=>r.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
   await p.addInitScript(s=>localStorage.setItem('geppgo2',JSON.stringify(s)), stato);
-  await p.goto('file:///home/user/GeppGo/Index%202.1.html',{waitUntil:'domcontentloaded'});
+  await p.goto(APP,{waitUntil:'domcontentloaded'});
   await p.waitForFunction(()=>typeof window.go==='function',{timeout:15000});
   await p.waitForTimeout(1500);
 

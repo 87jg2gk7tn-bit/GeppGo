@@ -69,8 +69,13 @@ function proveApp() {
     else {
       const falliti = uscita.split('\n').filter(l => l.includes('FALLITO'));
       riga(nome, 'male', c ? `${c.passate}/${c.tutte}` : 'non è arrivata in fondo');
-      const dettaglio = falliti.length ? falliti : uscita.trim().split('\n').slice(-6);
-      dettaglio.slice(0, 8).forEach(l => console.log(`      ${G}${l.trim()}${Z}`));
+      /* Quando la prova non arriva in fondo si stampa molto di piu': sei
+         righe di coda mostravano il nome dell'errore e non che cosa lo aveva
+         causato, e da un guasto sul server delle prove - dove non si puo'
+         rilanciare a mano - quelle sei righe non bastavano a capire niente. */
+      const dettaglio = falliti.length ? falliti.slice(0, 10)
+                                       : uscita.trim().split('\n').slice(-40);
+      dettaglio.forEach(l => console.log(`      ${G}${l.replace(/\s+$/, '')}${Z}`));
     }
   }
 }
@@ -182,8 +187,24 @@ function proveSintassi() {
     rotti ? `${rotti} blocchi con errori` : `${blocchi.length} blocchi, nessun errore`);
 }
 
+/* ── e che nessuna prova sappia a memoria dov'è il progetto ────────────────
+   Sei prove avevano scritto dentro "file:///home/user/GeppGo/...": giravano
+   qui e fallivano sul server delle prove automatiche, dove il progetto sta
+   altrove. Nessuno se n'era accorto perché in locale passavano. Il percorso
+   si chiede a test/browser.js (APP, RADICE) e basta. */
+function proveNienteScorciatoie() {
+  const colpevoli = [];
+  fs.readdirSync(QUI).filter(f => /^prova-.*\.js$/.test(f)).forEach(f => {
+    const src = fs.readFileSync(path.join(QUI, f), 'utf8');
+    if (/file:\/\/\/|['"`]\/(home|Users)\//.test(src)) colpevoli.push(f);
+  });
+  riga('niente percorsi a mano', colpevoli.length ? 'male' : 'ok',
+    colpevoli.length ? colpevoli.join(', ') : 'tutte passano da browser.js');
+}
+
 // ── via ─────────────────────────────────────────────────────────────────────
 proveSintassi();
+proveNienteScorciatoie();
 if (!soloDb) proveApp();
 if (!soloApp) proveDb();
 
