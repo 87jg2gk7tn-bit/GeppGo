@@ -127,6 +127,17 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
   ok('e il tasto si spegne', s.tastoAcceso === false);
   ok('le tappe restano al loro posto', s.nelDom === marcatoriTappe, s.nelDom + ' marcatori');
 
+  /* E deve restare sparito. La home si ridisegna da sola in continuazione —
+     si cambia giornata, arriva qualcosa dal cloud — e il pallino tornava:
+     il disegno guardava solo se la posizione era fresca, non se il GPS era
+     acceso. Per un quarto d'ora si vedeva "sei qui" col tasto spento. */
+  await page.evaluate(() => renderAll());
+  await page.waitForTimeout(700);
+  s = await stato_();
+  ok('e non torna al primo ridisegno della home', !s.pallino && !s.alone, 'pallino=' + s.pallino);
+  ok('nemmeno come marcatore rimasto nella mappa', s.nelDom === marcatoriTappe, s.nelDom + ' marcatori');
+  ok('e il tasto resta spento', s.tastoAcceso === false);
+
   // ── le altre due mappe non si sono rotte ─────────────────────────────
   const altre = await page.evaluate(p => {
     if (typeof initMap === 'function' && (typeof map === 'undefined' || !map)) initMap();

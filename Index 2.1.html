@@ -6979,6 +6979,13 @@ function stopGPS(){
   if(homeMapObj&&homeMeMarker){try{homeMapObj.removeLayer(homeMeMarker);}catch(e){}}
   if(homeMapObj&&homeMeHalo){try{homeMapObj.removeLayer(homeMeHalo);}catch(e){}}
   dayMeMarker=null;dayMeHalo=null;homeMeMarker=null;homeMeHalo=null;meCentered=false;
+  /* Si dimentica anche DOVE eravamo, e non solo il pallino disegnato. Senza
+     questa riga il pallino spariva e poi tornava: la mappa della home lo
+     ridisegna a ogni ridisegno, e guardava solo se la posizione era fresca -
+     non se il GPS era acceso. Bastava cambiare giornata o ricevere qualcosa
+     dal cloud e per un quarto d'ora ricompariva, col tasto spento. Spegnere
+     il GPS vuol dire "smetti di seguirmi", non "nascondilo un attimo". */
+  myPosAt=0;
   stopHeading();
   gpsFabsOn(false);
   notified.clear();toast('GPS disattivato');
