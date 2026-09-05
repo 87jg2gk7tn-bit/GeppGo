@@ -1450,6 +1450,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-head"><div class="sheet-t" id="detailTitle">Viaggio</div><button class="x x-close" onclick="closeSheet('mDetail')">✕</button></div>
   <div id="detailBody"></div>
 </div></div>
+<div class="modal" id="mRicordo"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="ricordoTitolo">Il ricordo</div><button class="x x-close" onclick="closeSheet('mRicordo')">✕</button></div>
+  <div id="ricordoBody"></div>
+</div></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
@@ -2157,7 +2162,10 @@ function tripPhase(t){
 }
 function toggleStatus(){
   const t=T();if(!t)return;
-  if(t.status==='open'){confirmDo('Concludere il viaggio?','Lo sposti tra i viaggi conclusi. Potrai riaprirlo da "I tuoi viaggi".',()=>{t.status='closed';const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:t.id;save();renderAll();toast('🏁 Viaggio concluso');},'🏁','Concludi','btn-blue');}
+  /* Concludere un viaggio apre il ricordo: e' l'unico momento in cui uno ha
+     davvero voglia di guardare com'e' andata, e chiederglielo dopo vuol dire
+     non chiederglielo mai. */
+  if(t.status==='open'){confirmDo('Concludere il viaggio?','Lo sposti tra i viaggi conclusi. Potrai riaprirlo da "I tuoi viaggi".',()=>{const id=t.id;t.status='closed';const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:t.id;save();renderAll();toast('🏁 Viaggio concluso');apriRicordo(id);},'🏁','Concludi','btn-blue');}
   else{t.status='open';app.currentTripId=t.id;save();renderAll();toast('✅ Viaggio riaperto');}
 }
 function renderTripAddRow(){
@@ -3455,6 +3463,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
+- Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
@@ -5148,6 +5157,7 @@ function openDetail(id){
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
   document.getElementById('detailTitle').textContent=t.name;const {txns}=computeSettle(t);
   document.getElementById('detailBody').innerHTML=avvisoEliminazione(t)+`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1.2rem"><div style="font-size:.85rem;color:var(--ink-soft)">${dates||'Senza date'}${t.destination?' · '+esc(t.destination):''}</div><div style="display:flex;gap:1.2rem;margin-top:.6rem"><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.days.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Giorni</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.pois.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Luoghi</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${fmtMoney(spent,cur)}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Spesa</div></div></div></div>
+    <button class="btn btn-soft btn-block" style="margin-bottom:1.2rem" onclick="closeSheet('mDetail');apriRicordo(${t.id})">📖 Il ricordo del viaggio</button>
     <div class="detail-sec"><h4>📅 Itinerario</h4>${t.days.length?t.days.map((d,i)=>{const ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});return `<div class="detail-day"><div class="detail-day-t">G${i+1} · ${esc(d.title||ds)}</div>${(d.activities||[]).length?d.activities.map(a=>`<div class="detail-act"><span>${a.completed?'✅':'•'}</span><span>${a.time?'<strong>'+a.time+'</strong> ':''}${esc(a.name)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink-faint)">Nessuna attività</div>'}</div>`;}).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun giorno</div>'}</div>
     <div class="detail-sec"><h4>📍 Luoghi salvati</h4>${t.pois.length?t.pois.map(p=>`<div class="detail-act"><span>${p.priority==='essential'?'⭐':'🔵'}</span><span>${esc(p.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun luogo</div>'}</div>
     <div class="detail-sec"><h4>💸 Spese (${cur})</h4>${t.expenses.length?t.expenses.map(e=>{const p=t.participants.find(x=>x.id===e.payerId);return `<div class="exp-row" style="padding:.5rem 0"><div class="exp-info"><div class="exp-d" style="font-size:.85rem">${esc(e.desc)}</div><div class="exp-meta">${e.category} · ${esc(p?.name||'?')}</div></div><div class="exp-amt">${fmtMoney(e.amount,cur)}</div></div>`;}).join('')+(txns.length?'<div style="margin-top:.6rem">'+txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle" style="font-size:.82rem"><span><strong>${esc(f.name)}</strong> → <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span></div>`;}).join('')+'</div>':''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessuna spesa</div>'}</div>
@@ -5157,7 +5167,278 @@ function openDetail(id){
 }
 function openTripFromDetail(id){app.currentTripId=id;const t=app.trips.find(x=>x.id===id);if(t&&t.status==='closed')t.status='open';const cm=document.getElementById('chatMsgs');cm.dataset.init='';cm.innerHTML='';save();renderAll();closeSheet('mDetail');go('plan');}
 function reopenFromDetail(id){const t=app.trips.find(x=>x.id===id);t.status='open';app.currentTripId=id;save();renderAll();closeSheet('mDetail');toast('✅ Riaperto');}
-function closeFromDetail(id){const t=app.trips.find(x=>x.id===id);t.status='closed';if(app.currentTripId===id){const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:id;}save();renderAll();closeSheet('mDetail');toast('🏁 Concluso');}
+function closeFromDetail(id){const t=app.trips.find(x=>x.id===id);t.status='closed';if(app.currentTripId===id){const n=app.trips.filter(x=>x.status!=='closed')[0];app.currentTripId=n?n.id:id;}save();renderAll();closeSheet('mDetail');toast('🏁 Concluso');apriRicordo(id);}
+
+/* ===== IL RICORDO DEL VIAGGIO =====
+   Quando un viaggio finisce resta un mucchio di roba - giorni, tappe, spese,
+   foto - e nessun posto dove guardarla tutta insieme. Il ricordo e' quel
+   posto: i numeri, il filo di dove si e' andati, e una cartolina da mandare a
+   chi non c'era.
+
+   La regola che decide com'e' fatto: NON esiste una pagina pubblica del
+   viaggio, e non deve nascerne una da qui. La cartolina si disegna sul
+   telefono e la manda la persona col tasto Condividi del suo telefono, a chi
+   vuole lei. Niente indirizzo da girare, niente immagini appoggiate da
+   qualche parte: se ci fosse una pagina pubblica cadrebbe tutta la tutela su
+   cui regge il resto delle foto.
+
+   E il racconto NON si porta dietro il codice d'invito. Quel codice fa
+   entrare nel viaggio: un racconto e' fatto per essere girato, un invito no.
+   Si manda l'indirizzo nudo dell'app - che poi e' anche il motivo per cui
+   questa schermata esiste: chi la riceve vede da dove viene. */
+function ricordoRotta(t){
+  const p=[];
+  (t.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{const l=actLoc(t,a);if(l)p.push(l);}));
+  return p;
+}
+function ricordoNumeri(t){
+  const spese=(t.expenses||[]).filter(e=>e.type!=='transfer');
+  const spesa=spese.reduce((s,e)=>s+(e.amount||0),0);
+  const att=(t.days||[]).reduce((s,d)=>s.concat(d.activities||[]),[]);
+  /* I chilometri si contano dentro la giornata, da una tappa alla successiva.
+     La notte in mezzo non e' strada percorsa: sommare anche quella farebbe un
+     numero grosso che non racconta niente. */
+  let metri=0;
+  (t.days||[]).forEach(d=>{
+    const punti=(d.activities||[]).map(a=>actLoc(t,a)).filter(Boolean);
+    for(let i=1;i<punti.length;i++)metri+=calcDist(punti[i-1].lat,punti[i-1].lng,punti[i].lat,punti[i].lng);
+  });
+  const perCat={};
+  spese.forEach(e=>{const k=e.category||'Altro';perCat[k]=(perCat[k]||0)+(e.amount||0);});
+  const cat=Object.keys(perCat).sort((a,b)=>perCat[b]-perCat[a])[0]||'';
+  let pieno=null;
+  (t.days||[]).forEach(d=>{
+    const q=(d.activities||[]).length;
+    if(q&&(!pieno||q>(pieno.activities||[]).length))pieno=d;
+  });
+  const gente=(t.participants||[]).length||1;
+  return {giorni:(t.days||[]).length,tappe:att.length,fatte:att.filter(a=>a.completed).length,
+    luoghi:(t.pois||[]).length,persone:(t.participants||[]).length,
+    spesa:spesa,cur:t.currency||'EUR',aTesta:spesa/gente,km:Math.round(metri/1000),
+    cat:cat,catSpesa:perCat[cat]||0,pieno:pieno,rotta:ricordoRotta(t)};
+}
+/* Non si passa da phAll: quello carica in memoria OGNI foto del viaggio, e di
+   un viaggio vero sono centinaia di immagini piene. Qui servono un numero e
+   quattro immagini, e si prendono solo quelle. */
+function ricordoFotoPrime(tripId,quante){
+  return idbP().then(db=>new Promise(res=>{
+    let n=0;const prime=[];
+    const c=db.transaction('ph').objectStore('ph').openCursor();
+    c.onsuccess=e=>{
+      const cur=e.target.result;
+      if(!cur)return res({quante:n,prime:prime});
+      const v=cur.value;
+      if(v.kind!=='ticket'&&v.tripId===tripId){n++;if(prime.length<quante)prime.push(v.data);}
+      cur.continue();
+    };
+    c.onerror=()=>res({quante:n,prime:prime});
+  })).catch(()=>({quante:0,prime:[]}));
+}
+let ricordoT=null,ricordoConFoto=false,ricordoImg=[],ricordoQuanteFoto=0;
+function ricordoDate(t){
+  if(!t.start||!t.end)return '';
+  const o={day:'numeric',month:'long'};
+  return new Date(t.start).toLocaleDateString('it-IT',o)+' – '+
+         new Date(t.end).toLocaleDateString('it-IT',{...o,year:'numeric'});
+}
+async function apriRicordo(id){
+  const t=app.trips.find(x=>x.id===id);if(!t)return;
+  ricordoT=t;ricordoConFoto=false;ricordoImg=[];
+  const n=ricordoNumeri(t);
+  document.getElementById('ricordoTitolo').textContent=t.name||'Il ricordo';
+  const num=(v,e)=>`<div style="flex:1;min-width:74px"><div style="font-family:Fraunces,serif;font-size:1.3rem;font-weight:600">${v}</div><div style="font-size:.68rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">${e}</div></div>`;
+  const righe=[num(n.giorni,'Giorni'),num(n.tappe,'Tappe'),num(n.persone,'Persone')];
+  if(n.km)righe.push(num(n.km+' km','Tra le tappe'));
+  if(n.luoghi)righe.push(num(n.luoghi,'Luoghi'));
+  if(n.spesa)righe.push(num(fmtMoney(n.spesa,n.cur),'Spesa'));
+  if(n.spesa&&n.persone>1)righe.push(num(fmtMoney(n.aTesta,n.cur),'A testa'));
+  let extra='';
+  if(n.cat)extra+=`<div style="font-size:.85rem;color:var(--ink-soft);margin-top:.9rem">Dove è andata di più: <b>${esc(n.cat)}</b> · ${fmtMoney(n.catSpesa,n.cur)}</div>`;
+  if(n.pieno){
+    const ds=new Date(n.pieno.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    extra+=`<div style="font-size:.85rem;color:var(--ink-soft);margin-top:.3rem">Il giorno più pieno: <b>${esc(n.pieno.title||ds)}</b> · ${(n.pieno.activities||[]).length} tappe</div>`;
+  }
+  document.getElementById('ricordoBody').innerHTML=
+    `<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem">
+      <div style="font-size:.85rem;color:var(--ink-soft)">${esc(ricordoDate(t)||'Senza date')}${t.destination?' · '+esc(t.destination):''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.9rem 1.2rem;margin-top:.7rem">${righe.join('')}</div>
+      ${extra}
+    </div>
+    <canvas id="ricordoCv" width="1080" height="1350" style="width:100%;display:block;border-radius:var(--r-md);border:1px solid var(--line-soft)"></canvas>
+    <div id="ricordoFotoScelta" style="margin-top:.8rem"></div>
+    <button class="btn btn-grad btn-block" style="margin-top:.9rem" onclick="ricordoManda()">📤 Manda la cartolina</button>
+    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="ricordoCopia()">📋 Copia il racconto</button>
+    <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem">La cartolina si disegna qui, sul tuo telefono, e la mandi tu a chi vuoi: GeppGo non pubblica nessuna pagina del viaggio e non mette le foto in giro.</p>`;
+  openSheet('mRicordo');
+  await ricordoDisegna();
+  /* Le foto si contano dopo aver gia' disegnato: la cartolina si vede subito
+     e la scelta compare un attimo dopo, invece di far aspettare tutti quelli
+     che le foto non le hanno. */
+  const f=await ricordoFotoPrime(t.id,4);
+  ricordoQuanteFoto=f.quante;ricordoImg=f.prime;
+  const box=document.getElementById('ricordoFotoScelta');
+  if(box&&f.quante){
+    box.innerHTML=`<label class="rcard" style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer" onclick="ricordoConLeFoto(!ricordoConFoto)"><input type="checkbox" ${ricordoConFoto?'checked':''} style="margin-top:.2rem;pointer-events:none"><div><div class="rlbl">Metti quattro foto del viaggio</div><div class="rsub">Le foto sono di tutti quelli che erano lì: chiedi prima di mandarle in giro.</div></div></label>`;
+  }
+}
+function ricordoConLeFoto(on){
+  ricordoConFoto=!!on;
+  const c=document.querySelector('#ricordoFotoScelta input');
+  if(c)c.checked=ricordoConFoto;
+  ricordoDisegna();
+}
+/* Il filo del viaggio: le tappe nell'ordine in cui sono state fatte, senza
+   mappa sotto. Una mappa vera vorrebbe i riquadri di OpenStreetMap, che
+   hanno la loro attribuzione e vanno scaricati: un disegno dice la stessa
+   cosa, sta in una cartolina, e non deve niente a nessuno. */
+function ricordoFilo(g,rotta,x,y,w,h){
+  if(!rotta.length)return false;
+  const las=rotta.map(p=>p.lat),lns=rotta.map(p=>p.lng);
+  const la0=Math.min.apply(null,las),la1=Math.max.apply(null,las);
+  const ln0=Math.min.apply(null,lns),ln1=Math.max.apply(null,lns);
+  const cos=Math.cos((la0+la1)/2*Math.PI/180)||1;
+  const dw=(ln1-ln0)*cos,dh=la1-la0;
+  g.lineJoin='round';g.lineCap='round';
+  /* Tutte le tappe nello stesso punto (o una sola): non c'e' nessun filo da
+     disegnare, e allargare un rettangolo largo zero darebbe un pasticcio. */
+  if(dw<1e-7&&dh<1e-7){
+    g.fillStyle='#8C6229';g.beginPath();g.arc(x+w/2,y+h/2,14,0,7);g.fill();
+    return {y1:y+h/2+14};
+  }
+  const s=Math.min(dw>0?w/dw:Infinity,dh>0?h/dh:Infinity);
+  const ox=x+(w-dw*s)/2,oy=y+(h-dh*s)/2;
+  const px=p=>ox+(p.lng-ln0)*cos*s,py=p=>oy+(la1-p.lat)*s;
+  g.strokeStyle='#C9A96A';g.lineWidth=5;
+  g.beginPath();rotta.forEach((p,i)=>{i?g.lineTo(px(p),py(p)):g.moveTo(px(p),py(p));});g.stroke();
+  rotta.forEach((p,i)=>{
+    const ultimo=i===rotta.length-1;
+    g.fillStyle=(i===0||ultimo)?'#8C6229':'#B8863C';
+    g.beginPath();g.arc(px(p),py(p),(i===0||ultimo)?13:7,0,7);g.fill();
+  });
+  return {y1:oy+dh*s+13};
+}
+function ricordoCarica(src){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>res(im);im.onerror=()=>res(null);
+    im.src=src;
+  });
+}
+async function ricordoDisegna(){
+  const t=ricordoT,cv=document.getElementById('ricordoCv');
+  if(!t||!cv||!cv.getContext)return;
+  const g=cv.getContext('2d'),W=cv.width,H=cv.height,n=ricordoNumeri(t);
+  const sf=g.createLinearGradient(0,0,W,H);
+  sf.addColorStop(0,'#F4EDDF');sf.addColorStop(1,'#F8EBE4');
+  g.fillStyle=sf;g.fillRect(0,0,W,H);
+  g.strokeStyle='#E3CFA0';g.lineWidth=5;g.strokeRect(46,46,W-92,H-92);
+  g.textAlign='center';
+  g.fillStyle='#9B9184';g.font='700 30px "Plus Jakarta Sans",sans-serif';
+  g.fillText((ricordoDate(t)||'').toUpperCase(),W/2,168);
+  g.fillStyle='#1E1A12';g.font='600 88px Fraunces,Georgia,serif';
+  const titolo=t.destination||t.name||'Il viaggio';
+  g.fillText(titolo.length>22?titolo.slice(0,21)+'…':titolo,W/2,272);
+  if(t.destination&&t.name&&t.name!==t.destination){
+    g.fillStyle='#5C5346';g.font='600 34px "Plus Jakarta Sans",sans-serif';
+    g.fillText(t.name.length>34?t.name.slice(0,33)+'…':t.name,W/2,326);
+  }
+  const conFoto=ricordoConFoto&&ricordoImg.length;
+  /* Il disegno tiene le proporzioni vere: un viaggio lungo e stretto - Tokyo
+     e Kyoto, che stanno sulla stessa latitudine - riempie una fascia bassa e
+     lascia bianco sopra e sotto. Per questo la fascia e' bassa: allargarla
+     non fa crescere il disegno, aggiunge solo vuoto. */
+  const filoH=conFoto?300:430;
+  const disegnato=ricordoFilo(g,n.rotta,150,conFoto?380:420,W-300,filoH);
+  if(conFoto){
+    /* Quattro riquadri in fila, ritagliati al centro: una foto verticale e
+       una orizzontale devono stare nella stessa casella senza deformarsi. */
+    const q=Math.min(4,ricordoImg.length),lato=(W-300-30*(q-1))/q,y=730;
+    for(let i=0;i<q;i++){
+      const im=await ricordoCarica(ricordoImg[i]);
+      const x=150+i*(lato+30);
+      g.save();g.beginPath();g.rect(x,y,lato,lato);g.clip();
+      if(im){
+        const s=Math.max(lato/im.width,lato/im.height);
+        g.drawImage(im,x+(lato-im.width*s)/2,y+(lato-im.height*s)/2,im.width*s,im.height*s);
+      }else{g.fillStyle='#E3CFA0';g.fillRect(x,y,lato,lato);}
+      g.restore();
+    }
+  }
+  const celle=[[n.giorni,'giorni'],[n.tappe,'tappe'],[n.persone,'persone']];
+  /* "tra le tappe" e non "percorsi": i chilometri sono quelli fatti dentro le
+     giornate, non la lunghezza del filo disegnato sopra. Su un Tokyo-Kyoto la
+     riga attraversa mezzo Giappone e il numero dice venti: senza l'etichetta
+     giusta sembra sbagliato uno dei due. */
+  if(n.km)celle.push([n.km+' km','tra le tappe']);
+  /* I numeri si mettono sotto al disegno, non a un'altezza fissa: un viaggio
+     lungo e stretto occupa una fascia bassa, e lasciare il vuoto in mezzo
+     faceva sembrare la cartolina non finita. */
+  const y0=conFoto?1060:Math.min(1050,Math.max(780,(disegnato?disegnato.y1:640)+150));
+  const larg=(W-200)/celle.length;
+  celle.forEach((c,i)=>{
+    const x=100+larg*i+larg/2;
+    g.fillStyle='#1E1A12';g.font='600 62px Fraunces,Georgia,serif';
+    g.fillText(String(c[0]),x,y0);
+    g.fillStyle='#9B9184';g.font='700 26px "Plus Jakarta Sans",sans-serif';
+    g.fillText(c[1].toUpperCase(),x,y0+44);
+  });
+  g.fillStyle='#8C6229';g.font='700 30px "Plus Jakarta Sans",sans-serif';
+  g.fillText('GeppGo',W/2,H-120);
+  g.textAlign='left';
+}
+function ricordoTesto(t){
+  const n=ricordoNumeri(t);
+  const dove=t.destination||t.name||'Il viaggio';
+  /* Un viaggio appena creato non ha ancora niente da raccontare: meglio il
+     nome e basta che "0 giorni", che sembra un errore. */
+  let s=dove;
+  if(n.giorni)s+=': '+n.giorni+(n.giorni===1?' giorno':' giorni');
+  if(n.persone>1)s+=(n.giorni?', ':': ')+n.persone+' persone';
+  s+='.';
+  const d=[];
+  if(n.tappe)d.push(n.tappe+(n.tappe===1?' tappa':' tappe'));
+  if(n.km)d.push(n.km+' km');
+  if(n.spesa)d.push(fmtMoney(n.spesa,n.cur)+' spesi');
+  if(d.length)s+=' '+d.join(', ')+'.';
+  const link=baseApp();
+  s+=' Organizzato con GeppGo'+(link?' — '+link:'')+'.';
+  return s;
+}
+async function ricordoManda(){
+  const cv=document.getElementById('ricordoCv');
+  if(!cv||!ricordoT)return;
+  const blob=await new Promise(res=>{try{cv.toBlob(res,'image/jpeg',.92);}catch(e){res(null);}});
+  if(!blob){toast('Non sono riuscito a fare la cartolina');return;}
+  const nome='ricordo-'+((ricordoT.destination||ricordoT.name||'viaggio').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'viaggio')+'.jpg';
+  const testo=ricordoTesto(ricordoT);
+  try{
+    const file=new File([blob],nome,{type:'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:testo});
+      return;
+    }
+  }catch(e){
+    /* Chi chiude il pannello di condivisione non ha sbagliato niente: non gli
+       si scarica addosso un file che non ha chiesto. */
+    if(e&&e.name==='AbortError')return;
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=nome;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('📥 Cartolina salvata');
+}
+async function ricordoCopia(){
+  if(!ricordoT)return;
+  const s=ricordoTesto(ricordoT);
+  try{await navigator.clipboard.writeText(s);toast('📋 Racconto copiato');}
+  catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=s;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('📋 Racconto copiato');}catch(e2){toast('Non sono riuscito a copiarlo');}
+    ta.remove();
+  }
+}
 function askDeleteTrip(id){
   const t=app.trips.find(x=>x.id===id);if(!t)return;
   const finishLocal=()=>{

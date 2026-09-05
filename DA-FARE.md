@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 1 settembre 2026.
+Aggiornato: 5 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -68,6 +68,10 @@ combatte l'unico motore di crescita che c'è.
    `.github/workflows/prove.yml` le fa girare da sole a ogni push e a ogni PR,
    con un Postgres vero per i permessi. Le prove che vivevano in una cartella
    temporanea sono tutte nel repo.
+   **Il 5 settembre è diventata verde per la prima volta:** per dieci run era
+   rossa e nessuno l'aveva guardata. Appena ha funzionato ha fatto uscire due
+   difetti veri nel giro di mezz'ora — il pallino del GPS che tornava, e il
+   pannello dell'account che si mangia i tocchi.
 
 **I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
 pubblicare non è codice: la regione dei server, l'avvocato, la società.
@@ -96,10 +100,16 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    `PUBBLICITA_ATTIVA`. Quel giorno vanno rifatte anche le schede privacy
    sugli store, perché la pubblicità cambia le risposte su tracciamento e
    identificatori.
-9. **Il "dopo viaggio"** — il racconto da mandare agli amici. Foto, percorso e
-   spese ci sono già: è quasi gratis e porta utenti nuovi.
-   ⚠️ **Non deve diventare una pagina pubblica con le foto in chiaro**, o si
-   butta via tutto il ragionamento sulla tutela (vedi sotto).
+9. ~~**Il "dopo viaggio"**~~ ✅ fatto. Concludendo un viaggio si apre da solo
+   (ed è l'unico momento in cui uno ha voglia di guardarlo); si riapre dalla
+   scheda del viaggio. Dentro: i numeri, dove è andata di più la spesa, il
+   giorno più pieno, e una cartolina con il filo delle tappe disegnato, da
+   mandare col tasto Condividi del telefono.
+   ⚠️ **Non è diventata una pagina pubblica**, e non deve diventarlo: la
+   cartolina si disegna sul telefono e non viene appoggiata da nessuna parte.
+   Due prove tengono ferma la regola — aprire il ricordo non chiama nessun
+   server, e il racconto **non contiene il codice d'invito** (un racconto si
+   gira, un invito no). Le foto ci vanno solo se uno le mette apposta.
 10. **Import prenotazioni dalle mail** — è il motivo per cui la gente usa
     TripIt. C'è già mezzo OCR dei biglietti: siamo a metà strada.
 11. **Mappe offline** — il momento in cui l'app serve di più è quello senza
@@ -237,6 +247,27 @@ qualcuno che risponde".
   riusa una pagina sola e cerca sempre dallo stesso punto: appena è arrivata
   la cache, sessanta prove hanno cominciato a leggere la risposta del caso
   precedente. Non era un guasto dell'app — ma per un'ora è sembrato tale.
+- **Una prova verde in locale non è una prova verde.** Sei prove avevano
+  scritto dentro `file:///home/user/GeppGo/Index%202.1.html`: qui passavano,
+  sul server delle prove automatiche — dove il progetto sta altrove —
+  fallivano tutte. Adesso il percorso passa solo da `test/browser.js`, e il
+  lanciatore boccia qualunque prova che se lo scriva a mano.
+- **Una prova che dipende da cosa riesce a scaricare non è una prova.** `undo`
+  falliva solo sul server: senza `skipAuth` l'app apre il pannello "accedi o
+  crea account" a tutto schermo, e quel pannello si mangia i tocchi. Qui non
+  si apriva perché la libreria di Supabase arriva da una CDN irraggiungibile
+  da questa macchina. Il messaggio d'errore non nominava il pannello: si è
+  visto solo facendo stampare al lanciatore quaranta righe invece di sei.
+- **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
+  erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
+  stesso: il verde si dava per scontato. Prima di dire che una modifica è a
+  posto si guarda l'esito della CI, non solo `npm test` sulla propria
+  macchina.
+- **Un rimedio che non si riesce a far fallire non è un rimedio.** Il
+  messaggio a comparsa sembrava coprire il tasto "annulla": misurato a 320,
+  360 e 390 px, non lo copre mai. La correzione è stata tolta invece di
+  tenerla "per sicurezza": una modifica su un'ipotesi non verificata è solo
+  un'altra cosa che può rompersi.
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.
