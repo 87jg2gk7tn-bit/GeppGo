@@ -1199,6 +1199,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
           </select></div>
         <p id="fotoQualNota" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5"></p>
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">È solo la proposta di partenza: ogni volta che aggiungi una foto l'app te lo richiede, così una foto importante e un cartello dell'autobus non pesano uguale.</p></div>
+      <div class="card"><div class="card-h" style="margin-bottom:.3rem">🗺️ La mappa senza rete</div>
+        <div class="card-sub" style="margin-bottom:.7rem">Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l'hai lì.</div>
+        <div id="tessereStato" style="font-size:.85rem;color:var(--ink-soft);margin-bottom:.6rem">—</div>
+        <button class="btn btn-soft btn-block" onclick="tessereSvuota()">Libera lo spazio della mappa</button>
+        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">💾 Backup</div>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="exportData()">Esporta dati</button>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="restoreBak()">Ripristina copia automatica</button>
@@ -2025,7 +2030,150 @@ function hideBootSplash(){
   setTimeout(()=>{sp.classList.add('hide');setTimeout(()=>sp.remove(),380);},320);
 }
 
-function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);drawMarkers();}
+/* ===== LA MAPPA SENZA RETE =====
+   Il momento in cui quest'app serve di piu' e' quello in cui il telefono non
+   ha campo: sei in una via che non conosci e vuoi vedere dove sei. Tutto il
+   resto gia' funziona offline (i viaggi stanno nel telefono, la scorza
+   dell'app la tiene da parte la service worker): l'unica cosa che diventava
+   un rettangolo grigio era lo sfondo della mappa.
+
+   Le tessere che hai GIA' guardato si tengono da parte e si rivedono senza
+   rete. Quelle mai viste, offline, diventano un riquadro neutro invece di un
+   buco: sopra restano il tuo giro, le tappe e il pallino, che sono la roba
+   che serve davvero.
+
+   Quello che NON si fa, ed e' una scelta: non esiste "scarica la mappa di
+   Tokyo". Scaricare tessere in blocco dai server di OpenStreetMap e' vietato
+   dalle loro condizioni d'uso - sono volontari, e ti bloccano. E' lo stesso
+   ragionamento della cache di Overpass. Tenere da parte quello che si e' gia'
+   guardato, invece, e' proprio quello che quelle condizioni chiedono di
+   fare. */
+const TESSERE_MAX=1500;
+const TESSERE_URL='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+let tessereScritte=0;
+/* Un riquadro vuoto ma non bianco: cosi' si capisce che li' la mappa non c'e'
+   ancora, invece di sembrare rotta. */
+const TESSERA_VUOTA=(()=>{
+  try{
+    const c=document.createElement('canvas');c.width=c.height=256;
+    const g=c.getContext('2d');
+    g.fillStyle='#EFE7D8';g.fillRect(0,0,256,256);
+    g.fillStyle='#E0D5BE';
+    for(let y=8;y<256;y+=32)for(let x=8;x<256;x+=32)g.fillRect(x,y,2,2);
+    return c.toDataURL('image/png');
+  }catch(e){return '';}
+})();
+function tessereLeggi(k){
+  return idbP().then(db=>new Promise(res=>{
+    const q=db.transaction('tessere').objectStore('tessere').get(k);
+    q.onsuccess=e=>res(e.target.result?e.target.result.blob:null);
+    q.onerror=()=>res(null);
+  })).catch(()=>null);
+}
+function tessereScrivi(k,blob){
+  return idbP().then(async db=>{
+    await new Promise(res=>{
+      const t=db.transaction('tessere','readwrite');
+      t.objectStore('tessere').put({k:k,blob:blob,ts:Date.now()});
+      t.oncomplete=res;t.onerror=res;t.onabort=res;
+    });
+    /* Non si conta a ogni tessera: contarle tutte a ogni scrittura costerebbe
+       piu' della scrittura. Ogni duecento si fa il giro e si buttano le piu'
+       vecchie. */
+    if(++tessereScritte>=200){tessereScritte=0;await tessereSfoltisci();}
+  }).catch(()=>{});
+}
+async function tessereSfoltisci(){
+  try{
+    const db=await idbP();
+    const tutte=await new Promise(res=>{
+      const out=[];const c=db.transaction('tessere').objectStore('tessere').openCursor();
+      c.onsuccess=e=>{const cur=e.target.result;if(cur){out.push({k:cur.value.k,ts:cur.value.ts||0});cur.continue();}else res(out);};
+      c.onerror=()=>res(out);
+    });
+    if(tutte.length<=TESSERE_MAX)return;
+    tutte.sort((a,b)=>a.ts-b.ts);
+    const daButtare=tutte.slice(0,tutte.length-TESSERE_MAX);
+    await new Promise(res=>{
+      const t=db.transaction('tessere','readwrite'),s=t.objectStore('tessere');
+      daButtare.forEach(x=>s.delete(x.k));
+      t.oncomplete=res;t.onerror=res;t.onabort=res;
+    });
+  }catch(e){}
+}
+async function tessereQuante(){
+  try{
+    const db=await idbP();
+    return await new Promise(res=>{
+      let n=0,byte=0;
+      const c=db.transaction('tessere').objectStore('tessere').openCursor();
+      c.onsuccess=e=>{const cur=e.target.result;
+        if(cur){n++;byte+=(cur.value.blob&&cur.value.blob.size)||0;cur.continue();}
+        else res({quante:n,byte:byte});};
+      c.onerror=()=>res({quante:n,byte:byte});
+    });
+  }catch(e){return {quante:0,byte:0};}
+}
+async function tessereButta(){
+  try{
+    const db=await idbP();
+    await new Promise(res=>{
+      const t=db.transaction('tessere','readwrite');
+      t.objectStore('tessere').clear();
+      t.oncomplete=res;t.onerror=res;t.onabort=res;
+    });
+  }catch(e){}
+}
+/* Lo strato della mappa: prima guarda quello che ha gia' da parte, poi la
+   rete. Cosi' una zona gia' vista si riapre subito anche col campo pieno, e
+   senza campo si vede lo stesso. */
+function stratoMappa(opzioni){
+  if(typeof L==='undefined')return null;
+  if(!L.TileLayer.GeppGo){
+    L.TileLayer.GeppGo=L.TileLayer.extend({
+      createTile:function(coords,done){
+        const img=document.createElement('img');
+        img.alt='';
+        const chiave=coords.z+'/'+coords.x+'/'+coords.y;
+        const url=this.getTileUrl(coords);
+        /* L'ultima spiaggia, e vale la pena spiegarla. Tenere le tessere da
+           parte vuol dire prenderle con fetch, e fetch ha bisogno del permesso
+           del server che le ospita: dove quel permesso manca la mappa
+           resterebbe bianca. Percio' se il fetch non riesce si torna a
+           caricarla come una qualunque immagine, che funziona sempre. Si
+           perde la copia da parte, non la mappa. */
+        const comeImmagine=()=>{
+          img.onload=()=>{img.dataset.geppgo='rete';done(null,img);};
+          /* Si staccano tutti e due i ganci prima di mettere il riquadro
+             vuoto: quello che carica scatterebbe di nuovo sul riquadro stesso
+             e cancellerebbe il fatto che li' la mappa non c'era. */
+          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';done(null,img);};
+          img.src=url;
+        };
+        tessereLeggi(chiave).then(blob=>{
+          if(blob){img.src=URL.createObjectURL(blob);img.dataset.geppgo='memoria';done(null,img);return;}
+          if(navigator.onLine===false){img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';done(null,img);return;}
+          fetch(url).then(r=>r.ok?r.blob():null).then(b=>{
+            if(!b){comeImmagine();return;}
+            tessereScrivi(chiave,b);
+            img.src=URL.createObjectURL(b);img.dataset.geppgo='rete';done(null,img);
+          }).catch(()=>comeImmagine());
+        }).catch(()=>comeImmagine());
+        return img;
+      }
+    });
+  }
+  const s=new L.TileLayer.GeppGo(TESSERE_URL,Object.assign({attribution:'© OSM'},opzioni||{}));
+  /* Gli indirizzi temporanei delle immagini vanno rilasciati quando la
+     tessera esce di scena, altrimenti la memoria cresce mentre si trascina
+     la mappa. */
+  s.on('tileunload',e=>{
+    const src=e.tile&&e.tile.src;
+    if(src&&src.indexOf('blob:')===0){try{URL.revokeObjectURL(src);}catch(x){}}
+  });
+  return s;
+}
+function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);stratoMappa().addTo(map);drawMarkers();}
 function drawMarkers(){
   if(!map||typeof L==='undefined')return;
   markers.forEach(m=>map.removeLayer(m));markers=[];const t=T();if(!t)return;
@@ -2380,7 +2528,7 @@ function buildHomeMap(t,day,acts){
   wrap.style.display='block';
   homeMapPts=pts;
   homeMapObj=L.map('homeMap',{zoomControl:false,attributionControl:false}).setView([pts[0].loc.lat,pts[0].loc.lng],16);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(homeMapObj);
+  stratoMappa().addTo(homeMapObj);
   pts.forEach((x,n)=>{
     const mk=L.marker([x.loc.lat,x.loc.lng],{icon:homeMapIcon(n+1,false)}).addTo(homeMapObj);
     mk.bindPopup(`<strong>${esc(x.a.name||'')}</strong>${x.a.time?'<br>ore '+esc(x.a.time):''}`);
@@ -3159,7 +3307,7 @@ function renderResults(data,target){
     const pd=JSON.stringify({name,lat,lng,address:addr,type,hours,website,phone}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
     return `<div class="res" style="cursor:pointer" onclick='openPlaceInfo(${pd})'><div class="res-top"><div class="res-ic">${ic}</div><div class="res-body"><div class="res-name">${esc(name)}</div><div class="res-addr">${esc(addr)}</div><div class="tags">${p._top?'<span class="tag top">⭐ Top</span>':''}${type?`<span class="tag">${esc(type)}</span>`:''}${hours?`<span class="tag b">🕐 ${esc(hours.substring(0,22))}</span>`:''}</div></div></div><div class="mini-map" id="${target}-mini-${i}"></div><div class="chips"><button class="chip green" onclick='event.stopPropagation();openSavePOI(${pd})'>💾 Salva</button><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank">🗺️ Maps</a>${website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(website)}" target="_blank">🌐 Sito</a>`:''}${phone?`<a class="chip" onclick="event.stopPropagation()" href="tel:${esc(phone)}">📞</a>`:''}</div></div>`;
   }).join('')}</div>`;
-  data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
+  data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);stratoMappa().addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
 }
 let piMapObj=null;
 /* ===== FOTO DI UN LUOGO: ricerca profonda ==========================
@@ -3367,7 +3515,7 @@ function renderPlaceInfo(place,extra,opts){
     if(piMapObj){try{piMapObj.remove()}catch(e){}piMapObj=null;}
     if(typeof L==='undefined')return;
     piMapObj=L.map('piMap',{zoomControl:false,attributionControl:false}).setView([place.lat,place.lng],16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(piMapObj);
+    stratoMappa().addTo(piMapObj);
     L.marker([place.lat,place.lng]).addTo(piMapObj);
   },150);
 }
@@ -3466,6 +3614,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
+- La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 
@@ -8633,7 +8782,7 @@ function buildDayMap(){
   setTimeout(()=>{
     const c0=pts[0]||hh;
     dayMapObj=L.map('dayMap',{zoomControl:false}).setView([c0.lat,c0.lng],13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dayMapObj);
+    stratoMappa().addTo(dayMapObj);
     pts.forEach((a,i2)=>{
       const ic=L.divIcon({html:`<div style="background:${a.type==='outdoor'?'#B85C38':'#B8863C'};color:#fff;width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.3)">${i2+1}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
       L.marker([a.lat,a.lng],{icon:ic}).addTo(dayMapObj).bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>ore '+a.time:''}`);
@@ -12259,6 +12408,22 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
+  tessereMostraStato();
+}
+function tessereMostraStato(){
+  const box=document.getElementById('tessereStato');if(!box)return;
+  tessereQuante().then(({quante,byte})=>{
+    const b=document.getElementById('tessereStato');if(!b)return;
+    if(!quante){b.textContent='Ancora niente: la mappa si riempie da sola mentre la guardi.';return;}
+    const mb=byte?(byte/1048576):0;
+    b.textContent=`${quante} pezzi di mappa da parte`+(mb?` · ${mb.toFixed(1)} MB`:'');
+  });
+}
+function tessereSvuota(){
+  confirmDo('Liberare lo spazio della mappa?',
+    'Le zone che hai guardato non si vedranno più senza campo. Si riempie di nuovo da sola appena riapri la mappa con la rete.',
+    ()=>{tessereButta().then(()=>{tessereMostraStato();toast('🗺️ Spazio liberato');});},
+    '🗺️','Libera','btn-blue');
 }
 function restoreSnap(ts){
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}
@@ -12647,7 +12812,21 @@ async function runGen(){
 
 /* — foto (IndexedDB) — */
 let phDB=null,phCur=null;
-function idbP(){return new Promise((res,rej)=>{if(phDB)return res(phDB);const q=indexedDB.open('geppgo_ph',1);q.onupgradeneeded=e=>{e.target.result.createObjectStore('ph',{keyPath:'id'});};q.onsuccess=e=>{phDB=e.target.result;res(phDB);};q.onerror=()=>rej(new Error('no-idb'));});}
+/* Versione 2: si e' aggiunto il magazzino delle tessere della mappa. Chi ha
+   gia' l'app installata arriva qui con la versione 1 e il solo magazzino
+   delle foto, quindi si crea quello che manca invece di darlo per fatto - le
+   foto di chi c'era prima non si toccano. */
+function idbP(){return new Promise((res,rej)=>{
+  if(phDB)return res(phDB);
+  const q=indexedDB.open('geppgo_ph',2);
+  q.onupgradeneeded=e=>{
+    const db=e.target.result;
+    if(!db.objectStoreNames.contains('ph'))db.createObjectStore('ph',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('tessere'))db.createObjectStore('tessere',{keyPath:'k'});
+  };
+  q.onsuccess=e=>{phDB=e.target.result;res(phDB);};
+  q.onerror=()=>rej(new Error('no-idb'));
+});}
 function phAll(tripId,date){return idbP().then(db=>new Promise(res=>{const out=[];const c=db.transaction('ph').objectStore('ph').openCursor();c.onsuccess=e=>{const cur=e.target.result;if(cur){const v=cur.value;if(v.kind!=='ticket'&&v.tripId===tripId&&(!date||v.date===date))out.push(v);cur.continue();}else res(out.sort((a,b)=>a.ts-b.ts));};})).catch(()=>[]);}
 /* ===== LE FOTO E IL CLOUD =====
    Le foto stavano solo dentro il telefono: cambiavi telefono e le perdevi.

@@ -287,3 +287,34 @@ Tre controlli meritano di essere letti:
   da un servizio esterno sarebbe la cosa più facile e la più sbagliata, ed è il
   contrario di quello che il pannello promette. La prova conta le chiamate di
   rete e verifica anche che la promessa sia ancora scritta lì.
+
+## La mappa senza rete
+
+```sh
+node test/prova-mappa.js
+```
+
+Il momento in cui GeppGo serve di più è quello in cui il telefono non ha campo.
+Tutto il resto già funzionava offline: l'unica cosa che diventava un rettangolo
+grigio era lo sfondo della mappa. Misurato: la stessa zona, guardata con la
+rete e riaperta senza, **prima mostrava 0 tessere su 9; ora 9 su 9**.
+
+Il controllo che vale più di tutti è quello che tiene ferma una scelta:
+**non esiste uno «scarica tutta la città»**. Scaricare tessere in blocco dai
+server di OpenStreetMap è vietato dalle loro condizioni — sono volontari, e ti
+bloccano, esattamente come per Overpass. La prova guarda quello che l'app fa
+davvero (una schermata deve chiedere una ventina di tessere, non centinaia) e
+non cerca parole nel codice: un controllo sulle parole boccerebbe la frase che
+spiega la scelta.
+
+Due cose imparate scrivendola, e valgono per tutte le prove:
+
+- **l'app va servita da un indirizzo vero, non da `file://`.** Tenere le
+  tessere da parte vuol dire prenderle con `fetch`, e da una pagina aperta come
+  file il browser non lo lascia nemmeno partire: la prova direbbe «non le tiene
+  da parte» per un motivo che sul telefono non esiste. Quindici righe di server
+  valgono la differenza;
+- **`'**/tile.openstreetmap.org/**'` non intercetta niente.** Quel modello
+  vuole una barra prima di `tile`, e l'indirizzo vero è
+  `a.tile.openstreetmap.org`. Le richieste passavano e la prova le guardava
+  senza vederle. Si usa un'espressione regolare.
