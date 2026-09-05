@@ -1199,6 +1199,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
           </select></div>
         <p id="fotoQualNota" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5"></p>
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">È solo la proposta di partenza: ogni volta che aggiungi una foto l'app te lo richiede, così una foto importante e un cartello dell'autobus non pesano uguale.</p></div>
+      <div class="card"><div class="card-h" style="margin-bottom:.3rem">🌍 Lingua</div>
+        <div class="card-sub" style="margin-bottom:.7rem">Di suo GeppGo prende la lingua del telefono. Le parti non ancora tradotte restano in italiano.</div>
+        <select id="sceltaLingua" onchange="cambiaLingua(this.value)"></select>
+        <p id="linguaCopertura" style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem"></p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.3rem">🗺️ La mappa senza rete</div>
         <div class="card-sub" style="margin-bottom:.7rem">Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l'hai lì.</div>
         <div id="tessereStato" style="font-size:.85rem;color:var(--ink-soft);margin-bottom:.6rem">—</div>
@@ -1990,8 +1994,219 @@ if('serviceWorker' in navigator){
    offline, invece di aspettare il prossimo giro del retry periodico (20s). */
 window.addEventListener('online',()=>{if(sb&&session)syncPush();});
 
+/* ===== LE LINGUE =====
+   La chiave del dizionario e' la frase italiana stessa, non un codice. E'
+   la scelta che rende la cosa fattibile su un'app di dodicimila righe scritta
+   tutta in italiano: non c'e' da inventare tremila nomi di chiavi ne' da
+   toccare tremila punti del codice, e soprattutto quello che non e' ancora
+   tradotto resta in italiano invece di mostrare "menu.spese.aggiungi" a
+   qualcuno che sta viaggiando.
+
+   Le frasi ferme nella pagina non si toccano una per una: si passa una volta
+   sui nodi di testo e si sostituisce quello che si trova nel dizionario.
+   Vale anche per placeholder, title e aria-label, che sono testo pure loro.
+
+   Le frasi che nascono dal codice passano da t(). Si convertono un pezzo per
+   volta: finche' una non e' convertita si legge in italiano, che e' un
+   difetto piccolo e non un guasto.
+
+   La regola per chi scrive righe nuove: una frase intera per volta, mai
+   cucita da pezzi. "Mancano 3 giorni" si scrive come una frase con un buco,
+   perche' in un'altra lingua le parole vanno in un altro ordine. */
+const LINGUE={it:'Italiano',en:'English',es:'Español',fr:'Français',pt:'Português'};
+/* Si comincia dalla spina dorsale: la barra in basso, i tasti che si premono
+   in continuazione, i nomi dei campi e le categorie. Sono le parole che uno
+   incontra ogni volta che apre l'app. Il resto arriva a pezzi, e finche' non
+   arriva si legge in italiano. */
+const DIZIONARIO={
+  en:{
+    'Home':'Home','Time Table':'Timetable','Scopri':'Discover','Spese':'Expenses','Meteo':'Weather',
+    'Hotel':'Hotels','Biglietti':'Tickets','Identifica':'Identify','Profilo':'Profile',
+    'Salva':'Save','✓ Salva':'✓ Save','Annulla':'Cancel','↩ Annulla':'↩ Undo','Elimina':'Delete',
+    'Aggiungi':'Add','Conferma':'Confirm','Applica':'Apply','Cerca':'Search','Scegli':'Choose',
+    'Importa':'Import','Segnala':'Report','Collega':'Link','Incolla':'Paste','Accedi':'Sign in',
+    'Non ora':'Not now','A mano':'By hand','Apri URL':'Open URL','Scansiona':'Scan','Fine':'Done',
+    'Nome':'Name','Data':'Date','Tipo':'Type','Note':'Notes','Ora':'Time','Luogo':'Place',
+    'Titolo':'Title','Valuta':'Currency','Categoria':'Category','Password':'Password','Email':'Email',
+    'Priorità':'Priority','Testo':'Text','Inizio':'Start','Alle':'At','Quando?':'When?',
+    'Per cosa?':'What for?','Pagato da':'Paid by','Di chi è':'Whose is it','Prevista':'Planned',
+    'Cibo':'Food','Voli':'Flights','Trasporti':'Transport','Shopping':'Shopping','Altro':'Other',
+    'Documenti':'Documents','Igiene':'Toiletries','Extra':'Extras',
+    'In corso':'Ongoing','Conclusi':'Finished','Essenziali':'Must-see','Saltabile':'Skippable',
+    'Prenotato':'Booked','Al chiuso':'Indoors','Nessuno':'Nobody','Tutti':'Everyone','Gratis':'Free',
+    'Budget':'Budget','Piano':'Plan','Viaggio':'Trip','Persone':'People','Attività':'Activity',
+    'Biglietto':'Ticket','Check-in':'Check-in','Check-out':'Check-out','Previsioni':'Forecast',
+    'Proposte':'Suggestions','Assistente':'Assistant','Foto':'Photos','Ritmo':'Pace','Giorno':'Day',
+    'Spesa':'Expense','Volo':'Flight','Ritorno':'Return','Andata':'Outbound',
+    '100 metri':'100 metres','200 metri':'200 metres','300 metri':'300 metres','500 metri':'500 metres',
+    'Foto o PDF':'Photo or PDF','💾 Backup':'💾 Backup','Lingua':'Language'
+  },
+  es:{
+    'Home':'Inicio','Time Table':'Horario','Scopri':'Descubrir','Spese':'Gastos','Meteo':'Tiempo',
+    'Hotel':'Alojamiento','Biglietti':'Billetes','Identifica':'Identificar','Profilo':'Perfil',
+    'Salva':'Guardar','✓ Salva':'✓ Guardar','Annulla':'Cancelar','↩ Annulla':'↩ Deshacer','Elimina':'Eliminar',
+    'Aggiungi':'Añadir','Conferma':'Confirmar','Applica':'Aplicar','Cerca':'Buscar','Scegli':'Elegir',
+    'Importa':'Importar','Segnala':'Denunciar','Collega':'Vincular','Incolla':'Pegar','Accedi':'Entrar',
+    'Non ora':'Ahora no','A mano':'A mano','Apri URL':'Abrir URL','Scansiona':'Escanear','Fine':'Fin',
+    'Nome':'Nombre','Data':'Fecha','Tipo':'Tipo','Note':'Notas','Ora':'Hora','Luogo':'Lugar',
+    'Titolo':'Título','Valuta':'Moneda','Categoria':'Categoría','Password':'Contraseña','Email':'Correo',
+    'Priorità':'Prioridad','Testo':'Texto','Inizio':'Inicio','Alle':'A las','Quando?':'¿Cuándo?',
+    'Per cosa?':'¿Para qué?','Pagato da':'Pagado por','Di chi è':'¿De quién es?','Prevista':'Prevista',
+    'Cibo':'Comida','Voli':'Vuelos','Trasporti':'Transporte','Shopping':'Compras','Altro':'Otro',
+    'Documenti':'Documentos','Igiene':'Higiene','Extra':'Extras',
+    'In corso':'En curso','Conclusi':'Terminados','Essenziali':'Imprescindibles','Saltabile':'Prescindible',
+    'Prenotato':'Reservado','Al chiuso':'Bajo techo','Nessuno':'Nadie','Tutti':'Todos','Gratis':'Gratis',
+    'Budget':'Presupuesto','Piano':'Plan','Viaggio':'Viaje','Persone':'Personas','Attività':'Actividad',
+    'Biglietto':'Billete','Check-in':'Entrada','Check-out':'Salida','Previsioni':'Previsión',
+    'Proposte':'Propuestas','Assistente':'Asistente','Foto':'Fotos','Ritmo':'Ritmo','Giorno':'Día',
+    'Spesa':'Gasto','Volo':'Vuelo','Ritorno':'Vuelta','Andata':'Ida',
+    '100 metri':'100 metros','200 metri':'200 metros','300 metri':'300 metros','500 metri':'500 metros',
+    'Foto o PDF':'Foto o PDF','💾 Backup':'💾 Copia de seguridad','Lingua':'Idioma'
+  },
+  fr:{
+    'Home':'Accueil','Time Table':'Programme','Scopri':'Découvrir','Spese':'Dépenses','Meteo':'Météo',
+    'Hotel':'Hébergement','Biglietti':'Billets','Identifica':'Identifier','Profilo':'Profil',
+    'Salva':'Enregistrer','✓ Salva':'✓ Enregistrer','Annulla':'Annuler','↩ Annulla':'↩ Annuler','Elimina':'Supprimer',
+    'Aggiungi':'Ajouter','Conferma':'Confirmer','Applica':'Appliquer','Cerca':'Rechercher','Scegli':'Choisir',
+    'Importa':'Importer','Segnala':'Signaler','Collega':'Associer','Incolla':'Coller','Accedi':'Se connecter',
+    'Non ora':'Pas maintenant','A mano':'À la main','Apri URL':'Ouvrir l\'URL','Scansiona':'Scanner','Fine':'Fin',
+    'Nome':'Nom','Data':'Date','Tipo':'Type','Note':'Notes','Ora':'Heure','Luogo':'Lieu',
+    'Titolo':'Titre','Valuta':'Devise','Categoria':'Catégorie','Password':'Mot de passe','Email':'E-mail',
+    'Priorità':'Priorité','Testo':'Texte','Inizio':'Début','Alle':'À','Quando?':'Quand ?',
+    'Per cosa?':'Pour quoi ?','Pagato da':'Payé par','Di chi è':'À qui est-ce ?','Prevista':'Prévue',
+    'Cibo':'Nourriture','Voli':'Vols','Trasporti':'Transports','Shopping':'Achats','Altro':'Autre',
+    'Documenti':'Documents','Igiene':'Hygiène','Extra':'Extras',
+    'In corso':'En cours','Conclusi':'Terminés','Essenziali':'Incontournables','Saltabile':'Facultatif',
+    'Prenotato':'Réservé','Al chiuso':'À l\'intérieur','Nessuno':'Personne','Tutti':'Tout le monde','Gratis':'Gratuit',
+    'Budget':'Budget','Piano':'Forfait','Viaggio':'Voyage','Persone':'Personnes','Attività':'Activité',
+    'Biglietto':'Billet','Check-in':'Arrivée','Check-out':'Départ','Previsioni':'Prévisions',
+    'Proposte':'Suggestions','Assistente':'Assistant','Foto':'Photos','Ritmo':'Rythme','Giorno':'Jour',
+    'Spesa':'Dépense','Volo':'Vol','Ritorno':'Retour','Andata':'Aller',
+    '100 metri':'100 mètres','200 metri':'200 mètres','300 metri':'300 mètres','500 metri':'500 mètres',
+    'Foto o PDF':'Photo ou PDF','💾 Backup':'💾 Sauvegarde','Lingua':'Langue'
+  },
+  pt:{
+    'Home':'Início','Time Table':'Roteiro','Scopri':'Descobrir','Spese':'Despesas','Meteo':'Tempo',
+    'Hotel':'Alojamento','Biglietti':'Bilhetes','Identifica':'Identificar','Profilo':'Perfil',
+    'Salva':'Guardar','✓ Salva':'✓ Guardar','Annulla':'Cancelar','↩ Annulla':'↩ Desfazer','Elimina':'Eliminar',
+    'Aggiungi':'Adicionar','Conferma':'Confirmar','Applica':'Aplicar','Cerca':'Procurar','Scegli':'Escolher',
+    'Importa':'Importar','Segnala':'Denunciar','Collega':'Ligar','Incolla':'Colar','Accedi':'Entrar',
+    'Non ora':'Agora não','A mano':'À mão','Apri URL':'Abrir URL','Scansiona':'Digitalizar','Fine':'Fim',
+    'Nome':'Nome','Data':'Data','Tipo':'Tipo','Note':'Notas','Ora':'Hora','Luogo':'Local',
+    'Titolo':'Título','Valuta':'Moeda','Categoria':'Categoria','Password':'Palavra-passe','Email':'E-mail',
+    'Priorità':'Prioridade','Testo':'Texto','Inizio':'Início','Alle':'Às','Quando?':'Quando?',
+    'Per cosa?':'Para quê?','Pagato da':'Pago por','Di chi è':'De quem é?','Prevista':'Prevista',
+    'Cibo':'Comida','Voli':'Voos','Trasporti':'Transportes','Shopping':'Compras','Altro':'Outro',
+    'Documenti':'Documentos','Igiene':'Higiene','Extra':'Extras',
+    'In corso':'A decorrer','Conclusi':'Terminadas','Essenziali':'Imperdíveis','Saltabile':'Dispensável',
+    'Prenotato':'Reservado','Al chiuso':'Coberto','Nessuno':'Ninguém','Tutti':'Todos','Gratis':'Grátis',
+    'Budget':'Orçamento','Piano':'Plano','Viaggio':'Viagem','Persone':'Pessoas','Attività':'Atividade',
+    'Biglietto':'Bilhete','Check-in':'Entrada','Check-out':'Saída','Previsioni':'Previsão',
+    'Proposte':'Sugestões','Assistente':'Assistente','Foto':'Fotos','Ritmo':'Ritmo','Giorno':'Dia',
+    'Spesa':'Despesa','Volo':'Voo','Ritorno':'Volta','Andata':'Ida',
+    '100 metri':'100 metros','200 metri':'200 metros','300 metri':'300 metros','500 metri':'500 metros',
+    'Foto o PDF':'Foto ou PDF','💾 Backup':'💾 Cópia de segurança','Lingua':'Idioma'
+  }
+};
+/* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
+   messaggi. Serve a una cosa sola, ed e' importante. */
+const FRASI_IN_TUTTO=656;
+const LINGUA_PRONTA=0.8;
+/* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
+   soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
+   apre pensa che sia rotta, e non capisce perche' un pezzo si legge e uno no.
+   Il bello e' che si regola da se': man mano che il dizionario si riempie,
+   la lingua si accende senza toccare una riga di codice. Sceglierla a mano
+   dal Profilo invece si puo' sempre - li' uno sa cosa sta facendo, e glielo
+   diciamo pure. */
+function linguaPronta(l){
+  const d=DIZIONARIO[l];
+  return !!d&&Object.keys(d).length>=FRASI_IN_TUTTO*LINGUA_PRONTA;
+}
+function linguaScelta(){
+  const s=(app&&app.settings&&app.settings.lingua)||'';
+  if(s&&LINGUE[s])return s;
+  const n=(navigator.language||'it').slice(0,2).toLowerCase();
+  if(n==='it'||!LINGUE[n])return 'it';
+  return linguaPronta(n)?n:'it';
+}
+function t(frase){
+  const l=linguaScelta();
+  if(l==='it'||!frase)return frase;
+  const d=DIZIONARIO[l];
+  return (d&&d[frase])||frase;
+}
+/* Quante frasi della pagina sappiamo dire in questa lingua: serve a sapere a
+   che punto siamo davvero, invece di dire "tradotta" e scoprirlo dagli
+   utenti. */
+function coperturaLingua(l){
+  const d=DIZIONARIO[l]||{};
+  const viste=new Set();let tradotte=0;
+  frasiDellaPagina(document.body).forEach(f=>{
+    if(viste.has(f))return;viste.add(f);
+    if(d[f])tradotte++;
+  });
+  return {tutte:viste.size,tradotte:tradotte};
+}
+/* Le frasi che stanno davvero scritte nella pagina: i nodi di testo e i tre
+   attributi che si leggono. Si saltano script e style, che testo non sono. */
+function frasiDellaPagina(radice){
+  const fuori=[];
+  if(!radice)return fuori;
+  const cam=document.createTreeWalker(radice,NodeFilter.SHOW_TEXT,{
+    acceptNode:n=>{
+      const p=n.parentNode&&n.parentNode.nodeName;
+      if(p==='SCRIPT'||p==='STYLE')return NodeFilter.FILTER_REJECT;
+      return n.nodeValue&&n.nodeValue.trim().length>1?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+  let n;while((n=cam.nextNode()))fuori.push(n.nodeValue.trim());
+  radice.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+    ['placeholder','title','aria-label'].forEach(a=>{
+      const v=el.getAttribute(a);
+      if(v&&v.trim().length>1)fuori.push(v.trim());
+    });
+  });
+  return fuori;
+}
+function traduciPagina(radice){
+  const l=linguaScelta();
+  if(l==='it')return;
+  const d=DIZIONARIO[l];if(!d)return;
+  const dove=radice||document.body;
+  const cam=document.createTreeWalker(dove,NodeFilter.SHOW_TEXT,{
+    acceptNode:n=>{
+      const p=n.parentNode&&n.parentNode.nodeName;
+      if(p==='SCRIPT'||p==='STYLE')return NodeFilter.FILTER_REJECT;
+      return n.nodeValue&&n.nodeValue.trim().length>1?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+  const nodi=[];let n;while((n=cam.nextNode()))nodi.push(n);
+  nodi.forEach(nodo=>{
+    const testo=nodo.nodeValue,pulito=testo.trim();
+    if(d[pulito])nodo.nodeValue=testo.replace(pulito,d[pulito]);
+  });
+  dove.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+    ['placeholder','title','aria-label'].forEach(a=>{
+      const v=el.getAttribute(a);
+      if(v&&d[v.trim()])el.setAttribute(a,d[v.trim()]);
+    });
+  });
+}
+function cambiaLingua(l){
+  if(!LINGUE[l])return;
+  app.settings.lingua=l;save();
+  /* Si ricarica invece di ritradurre a mano meta' schermate: la pagina si
+     riapre gia' nella lingua nuova, e non restano pezzi della precedente in
+     giro. */
+  location.reload();
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   if(app.premium===undefined)app.premium=false;
+  /* La lingua si mette prima di tutto il resto: se si traduce dopo che le
+     schermate sono gia' state disegnate, restano in giro pezzi in italiano
+     mescolati a quelli tradotti. */
+  document.documentElement.lang=linguaScelta();
+  traduciPagina();
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
   if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
@@ -12409,6 +12624,20 @@ function renderProfile(){
   box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
   tessereMostraStato();
+  mostraLingua();
+}
+function mostraLingua(){
+  const s=document.getElementById('sceltaLingua');if(!s)return;
+  const ora=linguaScelta();
+  s.innerHTML=Object.keys(LINGUE).map(k=>`<option value="${k}" ${k===ora?'selected':''}>${LINGUE[k]}</option>`).join('');
+  const nota=document.getElementById('linguaCopertura');if(!nota)return;
+  if(ora==='it'){nota.textContent='';return;}
+  /* Si dice quanto e' tradotto davvero, invece di lasciar credere che sia
+     tutto: una persona che vede meta' app in italiano deve sapere perche'. */
+  const c=coperturaLingua(ora);
+  const q=c.tutte?Math.round(c.tradotte/c.tutte*100):0;
+  nota.textContent=`Tradotto circa il ${q}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.`+
+    (linguaPronta(ora)?'':' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.');
 }
 function tessereMostraStato(){
   const box=document.getElementById('tessereStato');if(!box)return;
@@ -13326,7 +13555,13 @@ function updFlyVis(){
   setRouteLabels();
 }
 function renderAll(){
-  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderProgramPlaces();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();mostraFotoQual();renderAds();renderBookings();renderTripAddRow();}
+  migrateData();renderTripPick();renderHomeHero();renderTripZoomBody();drawMarkers();renderTimeline();renderSaved();renderProgramPlaces();renderTricount();renderBudget();renderTickets();renderWeather();renderTripsList();renderHotels();renderCloudWarn();renderProfile();mostraFotoQual();renderAds();renderBookings();renderTripAddRow();
+  /* Le schermate si ridisegnano da capo con innerHTML, quindi la traduzione
+     fatta all'avvio se ne va con loro: si ripassa qui. Costa un giro sui nodi
+     di testo, e in cambio ogni frase che si aggiunge al dizionario arriva
+     dappertutto senza dover toccare i punti in cui viene scritta. In italiano
+     non fa niente ed esce subito. */
+  traduciPagina();}
 
 </script>
 </body>

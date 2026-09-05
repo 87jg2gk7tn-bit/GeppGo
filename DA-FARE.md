@@ -78,18 +78,36 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
 
 ### Poi, per crescere
 
-6. **Interfaccia in inglese** — ⏸ **rimandata di proposito, dopo la nativa.**
-   Decisione presa il 4 settembre. La *ricerca* dei posti è già mondiale;
-   l'interfaccia è italiano scritto a mano, 531 stringhe nella sola parte
-   statica più i messaggi e i blocchi costruiti al volo.
-   Il motivo del rinvio: tradurre adesso vuol dire mantenere due lingue per
-   tutto il rifacimento verso la nativa, quando ogni schermata cambierà
-   ancora — doppio lavoro, e nel mezzo un'app mezza bilingue, che è peggio di
-   una tutta in italiano. Si fa in un colpo solo quando le schermate hanno
-   smesso di muoversi.
-   Nel frattempo: ogni stringa nuova va scritta come se dovesse essere
-   tradotta (una frase intera, non pezzi cuciti insieme), così il giorno che
-   si fa non si deve riscrivere niente.
+6. **Cinque lingue** (italiano, inglese, spagnolo, francese, portoghese) —
+   🔄 **impianto fatto, traduzione da continuare.**
+   Decisione cambiata il 5 settembre: non solo inglese, ma le lingue in cui
+   arriva la gente. Per non rifare il lavoro a ogni schermata che cambia,
+   prima si è costruito l'impianto e le lingue si versano dentro.
+
+   **Come funziona, ed è la scelta che regge tutto:** la chiave del dizionario
+   è *la frase italiana stessa*, non un codice. Niente tremila nomi da
+   inventare, niente tremila punti del codice da toccare — e quello che non è
+   ancora tradotto **resta in italiano** invece di mostrare
+   `menu.spese.aggiungi` a qualcuno che sta viaggiando. La traduzione passa
+   una volta sui nodi di testo della pagina (e su placeholder, title e
+   aria-label) all'avvio e dopo ogni ridisegno.
+
+   **A che punto siamo davvero: 91 frasi su 656** — la barra in basso, i tasti
+   che si premono in continuazione, i nomi dei campi e le categorie. Il
+   Profilo dice la percentuale vera a chi sceglie una lingua, invece di far
+   finta. Il resto va fatto a lotti.
+
+   **Una lingua si accende da sola solo all'80% del dizionario.** Sotto quella
+   soglia l'app resta tutta in italiano anche se il telefono è spagnolo,
+   perché un'app mezza tradotta è peggio di una tutta in una lingua sola: chi
+   la apre pensa che sia rotta. Sceglierla a mano dal Profilo si può sempre.
+   La soglia si regola da sé: man mano che il dizionario si riempie, le lingue
+   si accendono senza toccare una riga di codice. **È il modo di finire il
+   lavoro senza mai lasciare l'app in mezzo al guado.**
+
+   La regola per chi scrive righe nuove: **una frase intera per volta, mai
+   cucita da pezzi.** «Mancano 3 giorni» si scrive come una frase con un buco,
+   perché in un'altra lingua le parole vanno in un altro ordine.
 7. ~~**Cache delle ricerche POI**~~ ✅ fatto. Le risposte si tengono un giorno
    (un'ora se non hanno trovato niente) e si riusano se la ricerca di prima è
    stata fatta entro 150 metri. Non a griglia: due punti a venti metri
