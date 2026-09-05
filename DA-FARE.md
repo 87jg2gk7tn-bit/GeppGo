@@ -307,6 +307,12 @@ qualcuno che risponde".
   e da una pagina aperta come `file://` non parte proprio. Per questo la copia
   delle tessere è facoltativa: se non riesce, la mappa si carica lo stesso come
   immagine. Si perde la copia, non la mappa.
+- **Quello che si disegna in ritardo va ricontrollato al momento in cui si
+  disegna.** Le mini-mappe dei risultati nascevano 120 ms dopo, e in mezzo la
+  schermata poteva essersi rifatta: Leaflet nasceva su un riquadro staccato
+  dalla pagina, o su uno già preso da un'altra mappa, e l'errore
+  (`_leaflet_pos`) usciva da tutt'altra parte. Solo sul server delle prove,
+  che è più lento. Adesso il riquadro si ricontrolla adesso, non 120 ms fa.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a

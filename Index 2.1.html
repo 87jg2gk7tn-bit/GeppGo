@@ -3522,7 +3522,21 @@ function renderResults(data,target){
     const pd=JSON.stringify({name,lat,lng,address:addr,type,hours,website,phone}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
     return `<div class="res" style="cursor:pointer" onclick='openPlaceInfo(${pd})'><div class="res-top"><div class="res-ic">${ic}</div><div class="res-body"><div class="res-name">${esc(name)}</div><div class="res-addr">${esc(addr)}</div><div class="tags">${p._top?'<span class="tag top">⭐ Top</span>':''}${type?`<span class="tag">${esc(type)}</span>`:''}${hours?`<span class="tag b">🕐 ${esc(hours.substring(0,22))}</span>`:''}</div></div></div><div class="mini-map" id="${target}-mini-${i}"></div><div class="chips"><button class="chip green" onclick='event.stopPropagation();openSavePOI(${pd})'>💾 Salva</button><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank">🗺️ Maps</a>${website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(website)}" target="_blank">🌐 Sito</a>`:''}${phone?`<a class="chip" onclick="event.stopPropagation()" href="tel:${esc(phone)}">📞</a>`:''}</div></div>`;
   }).join('')}</div>`;
-  data.forEach((p,i)=>setTimeout(()=>{const el=document.getElementById(`${target}-mini-${i}`);if(!el)return;const pm=L.map(`${target}-mini-${i}`,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);stratoMappa().addTo(pm);L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);miniMaps[`${target}-${i}`]=pm;},120));
+  /* Le mini-mappe nascono 120 ms dopo, e in mezzo la schermata puo' essersi
+     gia' rifatta da capo: il riquadro su cui stavano per nascere puo' essere
+     staccato dalla pagina, oppure essere gia' stato preso da un'altra mappa.
+     In tutti e due i casi Leaflet si rompe dentro, e l'errore arriva a
+     schermo da tutt'altra parte. Si ricontrolla adesso, non 120 ms fa. */
+  data.forEach((p,i)=>setTimeout(()=>{
+    const el=document.getElementById(`${target}-mini-${i}`);
+    if(!el||!el.isConnected||el._leaflet_id)return;
+    try{
+      const pm=L.map(el,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);
+      stratoMappa().addTo(pm);
+      L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);
+      miniMaps[`${target}-${i}`]=pm;
+    }catch(e){/* una mappina decorativa non deve mai rompere la pagina */}
+  },120));
 }
 let piMapObj=null;
 /* ===== FOTO DI UN LUOGO: ricerca profonda ==========================
