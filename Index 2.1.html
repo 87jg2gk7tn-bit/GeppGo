@@ -6562,7 +6562,83 @@ function vicinoDoppione(lista,la,lo,nome){
     return d<15||(d<45&&o.nome===nome);
   });
 }
+/* ===== LA CACHE DELLE RICERCHE VICINE =====
+   Overpass sono tre server tenuti su da volontari, gratis e senza garanzie.
+   Finche' a usarli e' una persona sola l'uso e' educato; con l'app in mano a
+   qualche centinaio diventa abuso, e il rischio non e' teorico - ti bloccano,
+   e la ricerca dei bagni smette di funzionare per tutti.
+
+   E poi c'e' il buon senso: un bancomat non si sposta. Chiedere due volte
+   nella stessa mattina "cosa c'e' qui intorno" e' tempo perso per chi aspetta
+   e traffico regalato a chi ospita.
+
+   Le risposte non si mettono in caselle di una griglia, si tengono con la
+   loro posizione vera e si riusano se sono state prese abbastanza vicino.
+   Con la griglia due ricerche a venti metri di distanza finivano in caselle
+   diverse ogni volta che in mezzo cadeva un confine, e la cache mancava il
+   colpo proprio nel caso piu' comune - la stessa persona ferma nello stesso
+   posto. L'ha fatto vedere una prova, non un ragionamento.
+
+   Le distanze restano giuste perche' vengono ricalcolate dalla posizione vera
+   ogni volta: quello che si tiene da parte sono i posti, non quanto distano.
+
+   Chi non trova niente si tiene da parte per meno tempo: "qui non c'e'
+   niente" e' una risposta che uno rifa' volentieri poco dopo, e tenerla per
+   un giorno intero sarebbe scortese. */
+const VICINI_CACHE_CHIAVE='geppgo_vicini';
+const VICINI_CACHE_ORE=24;
+const VICINI_CACHE_ORE_VUOTO=1;
+const VICINI_CACHE_MAX=60;
+const VICINI_CACHE_METRI=150;
+
+function viciniFamiglia(kind,raggio,soloNome){
+  return [kind,raggio,soloNome?'nome':'tipo'].join('|');
+}
+function viciniCacheTutta(){
+  try{return JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE)||'{}');}catch(e){return {};}
+}
+function viciniCacheScaduta(c){
+  const ore=c.lista&&c.lista.length?VICINI_CACHE_ORE:VICINI_CACHE_ORE_VUOTO;
+  return Date.now()-c.quando>ore*3600*1000;
+}
+function viciniCacheLeggi(kind,lat,lng,raggio,soloNome){
+  const fam=viciniFamiglia(kind,raggio,soloNome);
+  const tutta=viciniCacheTutta();
+  let miglior=null,minDist=Infinity;
+  Object.keys(tutta).forEach(k=>{
+    const c=tutta[k];
+    if(c.fam!==fam||viciniCacheScaduta(c))return;
+    const d=calcDist(lat,lng,c.lat,c.lng);
+    if(d<=VICINI_CACHE_METRI&&d<minDist){minDist=d;miglior=c;}
+  });
+  return miglior?miglior.lista:null;
+}
+function viciniCacheScrivi(kind,lat,lng,raggio,soloNome,lista){
+  try{
+    const tutta=viciniCacheTutta();
+    tutta[viciniFamiglia(kind,raggio,soloNome)+'@'+lat.toFixed(4)+','+lng.toFixed(4)]=
+      {fam:viciniFamiglia(kind,raggio,soloNome),lat:lat,lng:lng,quando:Date.now(),lista:lista};
+    /* Non si tiene tutto per sempre: oltre il tetto si buttano via le piu'
+       vecchie. Una cache che cresce senza fine finisce per rubare lo spazio
+       ai viaggi, che invece non si possono perdere. */
+    const chiavi=Object.keys(tutta);
+    if(chiavi.length>VICINI_CACHE_MAX){
+      chiavi.sort((a,b)=>tutta[a].quando-tutta[b].quando)
+            .slice(0,chiavi.length-VICINI_CACHE_MAX)
+            .forEach(k=>delete tutta[k]);
+    }
+    localStorage.setItem(VICINI_CACHE_CHIAVE,JSON.stringify(tutta));
+  }catch(e){
+    /* Se la memoria e' piena si butta via la cache e basta: e' roba che si
+       puo' sempre richiedere, mentre i viaggi no. Meglio una ricerca lenta
+       che un viaggio che non si salva. */
+    try{localStorage.removeItem(VICINI_CACHE_CHIAVE);}catch(e2){}
+  }
+}
+
 async function viciniOverpass(kind,lat,lng,raggio,soloNome){
+  const gia=viciniCacheLeggi(kind,lat,lng,raggio,soloNome);
+  if(gia)return gia;
   const v=VICINI[kind];
   /* 150 e non 30: il tetto taglia i risultati PRIMA che li si ordini per
      distanza, quindi in centro città un tetto basso può buttare via proprio
@@ -6582,6 +6658,7 @@ async function viciniOverpass(kind,lat,lng,raggio,soloNome){
     if(vicinoDoppione(out,la,lo,nome))return;
     out.push({lat:la,lng:lo,nome:nome,extra:v.extra(t)});
   });
+  viciniCacheScrivi(kind,lat,lng,raggio,soloNome,out);
   return out;
 }
 

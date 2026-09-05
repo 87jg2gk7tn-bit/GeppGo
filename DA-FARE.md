@@ -74,12 +74,23 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
 
 ### Poi, per crescere
 
-6. **Interfaccia in inglese** (e impianto per le altre lingue). La *ricerca*
-   dei posti è già mondiale; l'interfaccia è italiano scritto a mano. È il
-   lavoro più noioso e quello che moltiplica il pubblico.
-7. **Cache delle ricerche POI** — Overpass sono server di volontari senza
-   garanzie. Un bancomat non si sposta: la stessa zona non va richiesta due
-   volte in un giorno.
+6. **Interfaccia in inglese** — ⏸ **rimandata di proposito, dopo la nativa.**
+   Decisione presa il 4 settembre. La *ricerca* dei posti è già mondiale;
+   l'interfaccia è italiano scritto a mano, 531 stringhe nella sola parte
+   statica più i messaggi e i blocchi costruiti al volo.
+   Il motivo del rinvio: tradurre adesso vuol dire mantenere due lingue per
+   tutto il rifacimento verso la nativa, quando ogni schermata cambierà
+   ancora — doppio lavoro, e nel mezzo un'app mezza bilingue, che è peggio di
+   una tutta in italiano. Si fa in un colpo solo quando le schermate hanno
+   smesso di muoversi.
+   Nel frattempo: ogni stringa nuova va scritta come se dovesse essere
+   tradotta (una frase intera, non pezzi cuciti insieme), così il giorno che
+   si fa non si deve riscrivere niente.
+7. ~~**Cache delle ricerche POI**~~ ✅ fatto. Le risposte si tengono un giorno
+   (un'ora se non hanno trovato niente) e si riusano se la ricerca di prima è
+   stata fatta entro 150 metri. Non a griglia: due punti a venti metri
+   finivano in celle diverse ogni volta che in mezzo cadeva un confine — l'ha
+   trovato una prova, non un ragionamento.
 8. ~~**Togliere gli slot pubblicitari vuoti**~~ ✅ fatto. I nove riquadri
    restano nel codice, già al loro posto, ma chiusi: si riaprono cambiando
    `PUBBLICITA_ATTIVA`. Quel giorno vanno rifatte anche le schede privacy
@@ -210,6 +221,22 @@ qualcuno che risponde".
   Portando le prove dentro `test/`, nove su diciassette hanno smesso di
   funzionare per questo. Quello che serve si chiede a Node (`require.resolve`)
   o si passa da un posto solo (`test/browser.js`).
+- **Una cache a griglia sbaglia sui confini.** Arrotondare le coordinate mette
+  due punti vicinissimi in celle diverse se in mezzo cade un bordo, e la cache
+  manca il colpo proprio nel caso più comune: la stessa persona ferma nello
+  stesso posto. Meglio tenere la posizione vera e riusare quello che è stato
+  preso *abbastanza vicino*.
+- **Una cache che tiene la posizione tocca la privacy policy.** La pagina
+  prometteva che la posizione "non viene mai conservata": tenendo per un
+  giorno il punto da cui hai cercato, quella frase diventava falsa — anche se
+  resta tutto dentro il telefono. Riscritta distinguendo *noi* dal
+  *dispositivo*, e messa una prova che lega le due cose: finché nel codice
+  c'è `VICINI_CACHE_CHIAVE`, la pagina deve dirlo. Vale in generale: **prima
+  di tenere da parte un dato, si guarda cosa si era promesso.**
+- **Il banco di prova va svuotato fra un caso e l'altro.** `prova-vicini`
+  riusa una pagina sola e cerca sempre dallo stesso punto: appena è arrivata
+  la cache, sessanta prove hanno cominciato a leggere la risposta del caso
+  precedente. Non era un guasto dell'app — ma per un'ora è sembrato tale.
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.

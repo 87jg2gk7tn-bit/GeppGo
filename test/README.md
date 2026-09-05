@@ -188,3 +188,30 @@ reclamare, l'età minima — che la pagina non carichi niente da server esterni
 altro), che resti raggiungibile sotto `/privacy` prima della regola che
 reindirizza tutto, e che dall'app ci si arrivi: alla registrazione e dal
 Profilo.
+
+## La cache delle ricerche
+
+```sh
+node test/prova-cache.js
+```
+
+Overpass sono tre server tenuti su da volontari, gratis e senza garanzie: con
+l'app in mano a qualche centinaio di persone, chiedere ogni volta diventa
+abuso — e il rischio non è teorico, ti bloccano e la ricerca smette di
+funzionare per tutti.
+
+Le prove contano **quante volte l'app chiama davvero Overpass**, che è
+esattamente ciò che la cache deve ridurre: la stessa ricerca non si ripete,
+venti metri più in là nemmeno, un chilometro più in là sì, e un bagno non
+riusa la risposta dei bancomat.
+
+Qui una prova ha bocciato il primo disegno. La cache arrotondava le coordinate
+a griglia, e due ricerche a venti metri di distanza finivano in celle diverse
+ogni volta che in mezzo cadeva un confine: mancava il colpo proprio nel caso
+più comune, la stessa persona ferma nello stesso posto. Ora le risposte si
+tengono con la loro posizione vera e si riusano se sono state prese entro 150
+metri.
+
+Le ultime due controllano il caso che conta di più: **con la memoria del
+telefono piena la cache si toglie di mezzo** invece di rubare spazio ai
+viaggi. Una ricerca lenta si rifà, un viaggio perso no.
