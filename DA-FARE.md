@@ -80,8 +80,11 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
 7. **Cache delle ricerche POI** — Overpass sono server di volontari senza
    garanzie. Un bancomat non si sposta: la stessa zona non va richiesta due
    volte in un giorno.
-8. **Togliere gli slot pubblicitari vuoti** — dieci riquadri con scritto
-   "Spazio pubblicitario" fanno sembrare l'app rotta.
+8. ~~**Togliere gli slot pubblicitari vuoti**~~ ✅ fatto. I nove riquadri
+   restano nel codice, già al loro posto, ma chiusi: si riaprono cambiando
+   `PUBBLICITA_ATTIVA`. Quel giorno vanno rifatte anche le schede privacy
+   sugli store, perché la pubblicità cambia le risposte su tracciamento e
+   identificatori.
 9. **Il "dopo viaggio"** — il racconto da mandare agli amici. Foto, percorso e
    spese ci sono già: è quasi gratis e porta utenti nuovi.
    ⚠️ **Non deve diventare una pagina pubblica con le foto in chiaro**, o si
