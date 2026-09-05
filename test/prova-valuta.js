@@ -15,7 +15,7 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Tokyo',c
   // il cambio: 1 JPY = 0,0060 EUR (niente rete, si risponde noi)
   await p.route('**/v6/latest/**', r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rates:{EUR:0.006,JPY:1,USD:0.0067}})}));
   await p.addInitScript(s=>localStorage.setItem('geppgo2',JSON.stringify(s)), stato);
-  await p.goto('file:///home/user/GeppGo/Index%202.1.html',{waitUntil:'domcontentloaded'});
+  await p.goto(APP,{waitUntil:'domcontentloaded'});
   await p.waitForFunction(()=>typeof window.openTripZoom==='function',{timeout:15000});
   await p.waitForTimeout(1200);
 

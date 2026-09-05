@@ -19,10 +19,13 @@ const NOTI = [
 
 /* La cartella del progetto: di solito quella sopra a questo file. Le prove
    girano anche da altrove (dove sta playwright installato), quindi c'e' un
-   ripiego su GEPPGO_DIR. */
+   ripiego su GEPPGO_DIR. Il ripiego non e' mai il percorso di una macchina in
+   particolare: un percorso scritto a mano funziona finche' non si cambia
+   computer, e poi non funziona piu' - ed e' esattamente quello che e'
+   successo. */
 const RADICE = fs.existsSync(path.resolve(__dirname, '..', 'Index 2.1.html'))
   ? path.resolve(__dirname, '..')
-  : (process.env.GEPPGO_DIR || '/home/user/GeppGo');
+  : (process.env.GEPPGO_DIR || path.resolve(__dirname, '..'));
 
 const APP = process.env.APP_URL || 'file://' + RADICE + '/Index%202.1.html';
 

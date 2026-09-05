@@ -11,7 +11,7 @@ const fs = require('fs');
     await p.route('**/tile.openstreetmap.org/**', ro=>ro.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
     await p.route('**/api/interpreter', ro=>ro.fulfill({status:200,contentType:'application/json',body:'{"elements":[]}'}));
     await p.addInitScript(()=>localStorage.setItem('geppgo2', JSON.stringify({trips:[],currentTripId:null,settings:{proxRadius:200},myName:'Gepp',skipAuth:true})));
-    await p.goto('file:///home/user/GeppGo/Index%202.1.html',{waitUntil:'domcontentloaded'});
+    await p.goto(APP,{waitUntil:'domcontentloaded'});
     await p.waitForFunction(()=>typeof window.openNewTrip==='function',{timeout:15000});
     await p.waitForTimeout(1000);
     return p;
