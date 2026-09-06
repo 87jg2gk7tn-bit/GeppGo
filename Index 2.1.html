@@ -3192,6 +3192,15 @@ function stratoMappa(opzioni){
         img.alt='';
         const chiave=coords.z+'/'+coords.x+'/'+coords.y;
         const url=this.getTileUrl(coords);
+        /* Una tessera che arriva quando la mappa non c'e' piu' si butta via.
+           Prima le tessere si caricavano come immagini e basta: adesso passano
+           dalla memoria e dalla rete, quindi la risposta puo' arrivare molto
+           dopo - e in mezzo la schermata si e' ridisegnata e la mappa e' stata
+           tolta. Consegnarla lo stesso faceva rompere Leaflet dentro, con un
+           errore (_leaflet_pos) che usciva da tutt'altra parte e solo sulle
+           macchine lente, dove le tessere ci mettono davvero un po'. */
+        const strato=this;
+        const consegna=()=>{if(strato._map)done(null,img);};
         /* L'ultima spiaggia, e vale la pena spiegarla. Tenere le tessere da
            parte vuol dire prenderle con fetch, e fetch ha bisogno del permesso
            del server che le ospita: dove quel permesso manca la mappa
@@ -3199,20 +3208,20 @@ function stratoMappa(opzioni){
            caricarla come una qualunque immagine, che funziona sempre. Si
            perde la copia da parte, non la mappa. */
         const comeImmagine=()=>{
-          img.onload=()=>{img.dataset.geppgo='rete';done(null,img);};
+          img.onload=()=>{img.dataset.geppgo='rete';consegna();};
           /* Si staccano tutti e due i ganci prima di mettere il riquadro
              vuoto: quello che carica scatterebbe di nuovo sul riquadro stesso
              e cancellerebbe il fatto che li' la mappa non c'era. */
-          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';done(null,img);};
+          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';consegna();};
           img.src=url;
         };
         tessereLeggi(chiave).then(blob=>{
-          if(blob){img.src=URL.createObjectURL(blob);img.dataset.geppgo='memoria';done(null,img);return;}
-          if(navigator.onLine===false){img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';done(null,img);return;}
+          if(blob){img.src=URL.createObjectURL(blob);img.dataset.geppgo='memoria';consegna();return;}
+          if(navigator.onLine===false){img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';consegna();return;}
           fetch(url).then(r=>r.ok?r.blob():null).then(b=>{
             if(!b){comeImmagine();return;}
             tessereScrivi(chiave,b);
-            img.src=URL.createObjectURL(b);img.dataset.geppgo='rete';done(null,img);
+            img.src=URL.createObjectURL(b);img.dataset.geppgo='rete';consegna();
           }).catch(()=>comeImmagine());
         }).catch(()=>comeImmagine());
         return img;

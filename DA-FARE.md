@@ -349,6 +349,16 @@ qualcuno che risponde".
   Nessuno l'aveva scritto da nessuna parte — adesso sì, e c'è una prova che lo
   tiene fermo. Vale in generale: quando una cosa sembra senza motivo, il
   motivo può essere solo non scritto.
+- **Una risposta che arriva quando non serve più va buttata, non consegnata.**
+  Le tessere della mappa prima si caricavano come immagini e basta; da quando
+  passano dalla memoria e dalla rete, la risposta può arrivare molto dopo — e
+  in mezzo la schermata si è ridisegnata e la mappa è stata tolta.
+  Consegnarla lo stesso rompeva Leaflet dentro, con un errore (`_leaflet_pos`)
+  che usciva da tutt'altra parte e **solo sulle macchine lente**, dove le
+  tessere ci mettono davvero un po'. Qui non si riproduceva nemmeno
+  rallentando la CPU sei volte: la differenza vera era che qui il proxy
+  blocca le tessere e non arrivano affatto. Quando un guasto non si riproduce,
+  la domanda giusta è *cosa fa quella macchina che qui non succede*.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a
