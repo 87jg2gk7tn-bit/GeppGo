@@ -50,7 +50,12 @@ const stato = {
   const browser = await apriBrowser();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const err = [];
-  page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
+  /* Anche da dove viene, non solo come si chiama. Questo errore capita solo
+     sul server delle prove, dove non si può rilanciare a mano: senza la pila
+     delle chiamate si può soltanto tirare a indovinare — e tirare a indovinare
+     è già costato una correzione sbagliata. */
+  page.on('pageerror', e => err.push('PAGEERROR: ' + e.message + '\n' +
+    String(e.stack || '').split('\n').slice(1, 7).join('\n')));
 
   await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
     status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
