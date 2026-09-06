@@ -161,6 +161,34 @@ async function apri(browser, lingua, linguaTelefono) {
   })();
   ok('e resta tradotta anche dopo che l\'app si ridisegna', dopoRidisegno === 'Expenses', dopoRidisegno);
 
+  // ── quello che l'app DICE ────────────────────────────────────────────────
+  /* I messaggi a comparsa nell'app sono centottantadue: passano tutti da
+     toast(), che li traduce in un posto solo. Metterci t() a mano in
+     centottantadue punti sarebbe stato centottantadue occasioni di
+     dimenticarsene. */
+  const messaggi = await (async () => {
+    const p = await apri(browser, 'es');
+    p.on('pageerror', e => err.push('PAGEERROR(msg): ' + e.message));
+    const v = await p.evaluate(async () => {
+      toast('Foto salvata');
+      const uno = document.querySelector('.toast').textContent;
+      toast('Una frase che non ho mai tradotto');
+      const due = document.querySelector('.toast').textContent;
+      confirmDo('Concludere il viaggio?', 'Foto salvata', () => {}, '🏁', 'Salva');
+      const tre = { titolo: document.getElementById('cfTitle').textContent,
+                    tasto: document.getElementById('cfOk').textContent };
+      return { uno, due, tre };
+    });
+    await p.close();
+    return v;
+  })();
+  ok('i messaggi a comparsa si leggono nella lingua scelta',
+     messaggi.uno === 'Foto guardada', messaggi.uno);
+  ok('e uno mai tradotto resta in italiano, non sparisce',
+     messaggi.due === 'Una frase che non ho mai tradotto', messaggi.due);
+  ok('anche le domande prima di fare qualcosa di serio',
+     messaggi.tre.tasto === 'Guardar', messaggi.tre.titolo + ' / ' + messaggi.tre.tasto);
+
   // ── il dizionario è fatto bene ───────────────────────────────────────────
   const diz = await (async () => {
     const p = await apri(browser, 'it');

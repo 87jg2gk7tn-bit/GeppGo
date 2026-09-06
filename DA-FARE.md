@@ -92,11 +92,20 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    una volta sui nodi di testo della pagina (e su placeholder, title e
    aria-label) all'avvio e dopo ogni ridisegno.
 
-   **A che punto siamo davvero: 259 frasi su 656, cioè il 49% di quello che si
-   legge a schermo.** I due numeri sono diversi perché le parole comuni
-   tornano tante volte: «Salva» è una frase sola e compare dappertutto. Il
-   Profilo dice la percentuale vera a chi sceglie una lingua, invece di far
-   finta. Il resto va fatto a lotti.
+   **A che punto siamo davvero: 440 frasi, cioè il 58% di quello che si legge
+   a schermo** — più tutti e 141 i messaggi a comparsa. Il Profilo dice la
+   percentuale vera a chi sceglie una lingua, invece di far finta.
+
+   Due punti di passaggio obbligati, e sono il motivo per cui il lavoro è
+   fattibile: `toast()` e `confirmDo()` traducono **da soli**. I messaggi
+   nell'app sono 182 e le domande decine: metterci `t()` a mano sarebbe stato
+   altrettante occasioni di dimenticarsene.
+
+   **Quello che resta fuori apposta:** le frasi spezzate da un link in mezzo
+   («Creando un account accetti la» + il link). In un'altra lingua le parole
+   vanno in un altro ordine, e tradurre mezza frase la storpia invece di
+   renderla. Vanno prima ricucite nel codice — è un lavoro a sé, e va fatto
+   prima di arrivare all'80%.
 
    Il metodo che funziona: **una frase per volta in tutte e quattro le lingue
    insieme**, non una lingua alla volta. Il dizionario le tiene allineate (c'è
