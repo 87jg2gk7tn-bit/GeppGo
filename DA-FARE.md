@@ -92,11 +92,20 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    una volta sui nodi di testo della pagina (e su placeholder, title e
    aria-label) all'avvio e dopo ogni ridisegno.
 
-   **A che punto siamo davvero: 259 frasi su 656, cioè il 49% di quello che si
-   legge a schermo.** I due numeri sono diversi perché le parole comuni
-   tornano tante volte: «Salva» è una frase sola e compare dappertutto. Il
-   Profilo dice la percentuale vera a chi sceglie una lingua, invece di far
-   finta. Il resto va fatto a lotti.
+   **A che punto siamo davvero: 440 frasi, cioè il 58% di quello che si legge
+   a schermo** — più tutti e 141 i messaggi a comparsa. Il Profilo dice la
+   percentuale vera a chi sceglie una lingua, invece di far finta.
+
+   Due punti di passaggio obbligati, e sono il motivo per cui il lavoro è
+   fattibile: `toast()` e `confirmDo()` traducono **da soli**. I messaggi
+   nell'app sono 182 e le domande decine: metterci `t()` a mano sarebbe stato
+   altrettante occasioni di dimenticarsene.
+
+   **Quello che resta fuori apposta:** le frasi spezzate da un link in mezzo
+   («Creando un account accetti la» + il link). In un'altra lingua le parole
+   vanno in un altro ordine, e tradurre mezza frase la storpia invece di
+   renderla. Vanno prima ricucite nel codice — è un lavoro a sé, e va fatto
+   prima di arrivare all'80%.
 
    Il metodo che funziona: **una frase per volta in tutte e quattro le lingue
    insieme**, non una lingua alla volta. Il dizionario le tiene allineate (c'è
@@ -340,6 +349,16 @@ qualcuno che risponde".
   Nessuno l'aveva scritto da nessuna parte — adesso sì, e c'è una prova che lo
   tiene fermo. Vale in generale: quando una cosa sembra senza motivo, il
   motivo può essere solo non scritto.
+- **Una risposta che arriva quando non serve più va buttata, non consegnata.**
+  Le tessere della mappa prima si caricavano come immagini e basta; da quando
+  passano dalla memoria e dalla rete, la risposta può arrivare molto dopo — e
+  in mezzo la schermata si è ridisegnata e la mappa è stata tolta.
+  Consegnarla lo stesso rompeva Leaflet dentro, con un errore (`_leaflet_pos`)
+  che usciva da tutt'altra parte e **solo sulle macchine lente**, dove le
+  tessere ci mettono davvero un po'. Qui non si riproduceva nemmeno
+  rallentando la CPU sei volte: la differenza vera era che qui il proxy
+  blocca le tessere e non arrivano affatto. Quando un guasto non si riproduce,
+  la domanda giusta è *cosa fa quella macchina che qui non succede*.
 - **Una CI che nessuno guarda è peggio di nessuna CI.** Dieci run su dieci
   erano rossi dal giorno in cui è stata messa, e due PR sono state fuse lo
   stesso: il verde si dava per scontato. Prima di dire che una modifica è a
