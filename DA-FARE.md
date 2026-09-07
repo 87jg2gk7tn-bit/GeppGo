@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 5 settembre 2026.
+Aggiornato: 6 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -78,8 +78,13 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
 
 ### Poi, per crescere
 
-6. **Cinque lingue** (italiano, inglese, spagnolo, francese, portoghese) —
-   🔄 **impianto fatto, traduzione da continuare.**
+6. ~~**Cinque lingue**~~ ✅ **fatto** (italiano, inglese, spagnolo, francese,
+   portoghese). **567 frasi, l'81% di quello che si legge a schermo**, e tutti
+   e 141 i messaggi a comparsa. Superata la soglia dell'80%, **le lingue si
+   accendono da sole**: chi apre l'app con il telefono in spagnolo la trova in
+   spagnolo, senza che nessuno abbia toccato una riga di codice per
+   accenderla. Era il modo di finire il lavoro senza mai lasciare l'app in
+   mezzo al guado, e ha funzionato.
    Decisione cambiata il 5 settembre: non solo inglese, ma le lingue in cui
    arriva la gente. Per non rifare il lavoro a ogni schermata che cambia,
    prima si è costruito l'impianto e le lingue si versano dentro.
@@ -92,20 +97,21 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
    una volta sui nodi di testo della pagina (e su placeholder, title e
    aria-label) all'avvio e dopo ogni ridisegno.
 
-   **A che punto siamo davvero: 440 frasi, cioè il 58% di quello che si legge
-   a schermo** — più tutti e 141 i messaggi a comparsa. Il Profilo dice la
-   percentuale vera a chi sceglie una lingua, invece di far finta.
-
    Due punti di passaggio obbligati, e sono il motivo per cui il lavoro è
-   fattibile: `toast()` e `confirmDo()` traducono **da soli**. I messaggi
+   stato fattibile: `toast()` e `confirmDo()` traducono **da soli**. I messaggi
    nell'app sono 182 e le domande decine: metterci `t()` a mano sarebbe stato
    altrettante occasioni di dimenticarsene.
 
-   **Quello che resta fuori apposta:** le frasi spezzate da un link in mezzo
-   («Creando un account accetti la» + il link). In un'altra lingua le parole
-   vanno in un altro ordine, e tradurre mezza frase la storpia invece di
-   renderla. Vanno prima ricucite nel codice — è un lavoro a sé, e va fatto
-   prima di arrivare all'80%.
+   **Quello che resta in italiano, e perché.** Il 19% che manca sono i nomi
+   propri (GeppGo, Android, Google Maps), gli indirizzi, gli esempi che non si
+   traducono («es. MXP» è un codice di aeroporto) e le frasi generate dal
+   codice cucendo pezzi insieme. Quelle vanno prima riscritte come frasi
+   intere: **una frase per volta, mai cucita da pezzi**, perché in un'altra
+   lingua le parole vanno in un altro ordine.
+
+   Nelle prove le pagine nascono sempre in italiano (`test/browser.js`):
+   ereditare la lingua del computer su cui girano vorrebbe dire provare l'app
+   in inglese senza averlo deciso.
 
    Il metodo che funziona: **una frase per volta in tutte e quattro le lingue
    insieme**, non una lingua alla volta. Il dizionario le tiene allineate (c'è
