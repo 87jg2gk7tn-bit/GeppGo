@@ -83,30 +83,31 @@ async function apri(browser, lingua, linguaTelefono) {
     await p.close();
   }
 
-  // ── la lingua del telefono, ma solo quando è pronta ──────────────────────
-  /* Un'app mezza tradotta è PEGGIO di una tutta in italiano: chi la apre
-     pensa che sia rotta. Finché il dizionario non è quasi pieno, l'app non ci
-     passa da sola — sceglierla a mano dal Profilo invece si può sempre. */
+  // ── la lingua del telefono, adesso che il dizionario è pieno ─────────────
+  /* La soglia ha fatto il suo mestiere: con il dizionario oltre l'80% le
+     lingue si accendono DA SOLE, senza che nessuno abbia toccato una riga di
+     codice. Era il modo di finire il lavoro senza mai lasciare l'app in mezzo
+     al guado, e questa riga è il momento in cui è successo. */
   const auto = await apri(browser, null, 'es-ES');
   const barraAuto = await auto.evaluate(() => ({
     titolo: document.querySelector('.nav-item[data-p="money"]').getAttribute('title'),
     pronta: linguaPronta('es'),
     quante: Object.keys(DIZIONARIO.es).length
   }));
-  ok('finché una lingua non è pronta l\'app non ci passa da sola',
-     barraAuto.titolo === 'Spese' && barraAuto.pronta === false,
+  ok('col telefono in spagnolo l\'app si apre in spagnolo',
+     barraAuto.titolo === 'Gastos' && barraAuto.pronta === true,
      barraAuto.titolo + ', ' + barraAuto.quante + ' frasi su 656');
-  /* Ma la soglia non è finta: si controlla che riempiendo il dizionario la
-     lingua si accenda da sola, senza toccare una riga di codice. */
-  const quandoPronta = await auto.evaluate(() => {
-    const vero = Object.assign({}, DIZIONARIO.es);
-    for (let i = 0; i < 700; i++) DIZIONARIO.es['finta ' + i] = 'falsa ' + i;
+  /* E la soglia non è decorativa: se il dizionario tornasse mezzo vuoto,
+     l'app tornerebbe tutta in italiano invece di restare mezza tradotta. */
+  const seSiSvuota = await auto.evaluate(() => {
+    const vero = DIZIONARIO.es;
+    DIZIONARIO.es = { 'Spese': 'Gastos' };
     const esito = { pronta: linguaPronta('es'), scelta: linguaScelta() };
     DIZIONARIO.es = vero;
     return esito;
   });
-  ok('e quando il dizionario è pieno si accende da sola',
-     quandoPronta.pronta === true && quandoPronta.scelta === 'es', JSON.stringify(quandoPronta));
+  ok('e se una lingua fosse mezza vuota l\'app resterebbe in italiano',
+     seSiSvuota.pronta === false && seSiSvuota.scelta === 'it', JSON.stringify(seSiSvuota));
   await auto.close();
 
   // ── ma sceglierla a mano vale sempre ─────────────────────────────────────

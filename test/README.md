@@ -360,3 +360,11 @@ Questo guasto l'ha trovato la suite completa: le prove girano con la lingua di
 sistema inglese, e con la scelta automatica accesa l'intera app era passata
 all'inglese al 2%. Due prove che non c'entravano niente sono diventate rosse —
 ed era il prodotto a essere sbagliato, non loro.
+
+Da quando il dizionario ha passato l'80%, **le lingue si accendono da sole**:
+l'app segue la lingua del telefono. Per questo in `test/browser.js` le pagine
+nascono sempre in italiano — ereditare la lingua del computer su cui girano le
+prove significherebbe provare l'app in inglese senza averlo deciso, ed è già
+successo una volta: due prove che non c'entravano niente sono diventate rosse
+perché il server delle prove parla inglese. Chi vuole un'altra lingua la
+chiede, e la sua scelta vince.

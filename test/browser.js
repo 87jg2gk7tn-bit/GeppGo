@@ -31,11 +31,20 @@ const APP = process.env.APP_URL || 'file://' + RADICE + '/Index%202.1.html';
 
 async function apriBrowser(opzioni = {}) {
   const exe = NOTI.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
-  return chromium.launch(Object.assign(
+  const browser = await chromium.launch(Object.assign(
     { args: ['--no-sandbox'] },
     exe ? { executablePath: exe } : {},
     opzioni
   ));
+  /* Le pagine nascono in italiano, sempre. Da quando l'app segue la lingua
+     del telefono, ereditare quella del computer su cui girano le prove
+     significherebbe provare l'app in inglese senza averlo deciso - ed e' gia'
+     successo: due prove che non c'entravano niente sono diventate rosse
+     perche' il server delle prove parla inglese. Chi vuole un'altra lingua la
+     chiede, e la sua scelta vince. */
+  const nuovaPagina = browser.newPage.bind(browser);
+  browser.newPage = (opz = {}) => nuovaPagina(Object.assign({ locale: 'it-IT' }, opz));
+  return browser;
 }
 
 /* La mappa arriva da una CDN che qui non e' raggiungibile: le prove la
