@@ -172,6 +172,28 @@ due modi in cui questo poteva rompere le cose vecchie: una foto caricata prima
 che le miniature esistessero si scarica lo stesso, e un database su cui lo
 schema non è stato rilanciato accetta la foto comunque, senza la miniatura.
 
+## Come si muove l'app
+
+```sh
+node test/prova-movimento.js   # 16 controlli su animazioni e movimento ridotto
+```
+
+Questa prova nasce da una scoperta scomoda: **la salita dei fogli era scritta
+nel foglio di stile dal primo giorno, sembrava giusta a leggerla, e non era
+mai partita.** Una transizione non parte da `display:none` — il browser non ha
+un "prima" da cui muoversi e mette tutto subito al suo posto. In tutta l'app i
+fogli comparivano già arrivati, e chiudendoli sparivano.
+
+Leggendo il codice non si vedeva. Per questo la prova non controlla che
+*esista* un'animazione: **guarda dove sta il foglio fotogramma per
+fotogramma** e pretende che si muova. Sul codice di prima otto controlli su
+sedici diventano rossi, e il primo dice tutto: `0 px di 111`.
+
+Controlla anche che, mentre scende, il foglio **non si mangi i tocchi** — resta
+grande quanto lo schermo per un terzo di secondo — e che con «riduci il
+movimento» acceso le animazioni diventino **istantanee e non sparite**:
+togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
+
 ## A raccolta
 
 ```sh

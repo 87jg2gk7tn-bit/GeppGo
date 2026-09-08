@@ -232,12 +232,27 @@ va rifatto vedere.
 
 ### Quello che resta, in ordine
 
-14. **Rivedere il layout e i movimenti.** È la prossima cosa. L'app fa già
-    tutto quello che deve; quello che le manca è *sembrare* un'app vera —
-    transizioni fra le schermate, fogli che salgono invece di comparire,
-    attese che mostrino qualcosa invece del vuoto, tocchi che rispondono.
-    Non è vernice: è la differenza fra «funziona» e «è bella da usare», ed è
-    la prima cosa che una persona giudica, nei primi dieci secondi.
+14. **Rivedere il layout e i movimenti.** In corso.
+
+    **Fatto l'8 settembre — i fogli salgono davvero.** Era il difetto più
+    longevo del progetto: la salita era scritta nel CSS dal primo giorno,
+    sembrava giusta, e **non è mai partita**. Misurata fotogramma per
+    fotogramma, il foglio era già arrivato al primo frame — in *tutti* i fogli
+    dell'app, e sono decine. Chiudendoli, sparivano invece di scendere.
+    Ora salgono (111 → 88 → 68 → 51 → 36 → 23 → 13 px), scendono, non si
+    mangiano i tocchi mentre scendono, ed escono dal layout quando hanno
+    finito. Anche i tre punti che chiudevano «a mano» passano da `closeSheet`.
+
+    **Fatto — «riduci il movimento».** L'app non guardava l'interruttore che
+    iPhone e Android hanno apposta. Per chi soffre di vertigini o emicrania
+    non è un vezzo. Ora le animazioni non spariscono, **diventano istantanee**:
+    tutto arriva dov'era diretto, senza il viaggio — togliere le animazioni e
+    basta lascerebbe le cose a metà strada.
+
+    **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
+    a parole, che è onesto e leggibile — non serve metterci scheletri sopra
+    per forza), il passaggio fra una schermata e l'altra, e una passata
+    sull'aspetto delle schermate più viste.
 15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
     funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
     modifica costa una pubblicazione invece di un salvataggio. Quello che il
@@ -475,6 +490,20 @@ qualcuno che risponde".
   dura un anno, e la privacy policy avrebbe detto una cosa falsa. È diventata
   un `check` sulla tabella. Se una promessa è scritta nella policy, deve
   essere una regola del database — non una gentilezza dell'app.
+- **Una transizione non parte da `display:none`.** È il difetto più longevo
+  trovato finora: la salita dei fogli era scritta nel CSS dal primo giorno,
+  sembrava giusta a leggerla, e **non è mai partita**. Passando da `none` a
+  `flex` nello stesso momento in cui cambia la posizione, il browser non ha
+  nessun "prima" da cui muoversi e mette tutto subito al suo posto. In tutta
+  l'app i fogli comparivano già arrivati, e chiudendoli sparivano.
+  Non si vedeva leggendo il codice — si vedeva **misurando dove sta il foglio
+  fotogramma per fotogramma**, che è quello che fa `prova-movimento.js`.
+  La regola generale: *un'animazione che nessuno ha misurato è un'animazione
+  che forse non esiste.*
+- **Un foglio che scende è ancora grande quanto lo schermo.** Restando nel
+  layout per finire la discesa, senza `pointer-events:none` si mangia i tocchi
+  per un terzo di secondo dopo essere stato chiuso — e l'app sembra bloccata
+  proprio nel momento in cui uno riprende a toccarla.
 
 ---
 
