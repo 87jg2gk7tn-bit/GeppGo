@@ -23,6 +23,13 @@ esattamente il momento in cui servivano.
   prove vengono **saltate e dichiarate tali** invece di far finta che sia
   andato tutto bene.
 
+  Averlo è più facile di quanto sembri, e per mesi non lo si è saputo: su una
+  Ubuntu con `postgresql` installato bastano `pg_ctlcluster 16 main start`, un
+  ruolo superuser con lo stesso nome dell'utente e un database suo, e poi
+  `PGHOST=/var/run/postgresql npm run test:db`. Scrivere una prova sui
+  permessi senza poterla lanciare vuol dire scoprire in CI, dopo il push, che
+  aveva un errore di sintassi.
+
 Le prove sul database ripartono sempre da un database vuoto: una prova che
 eredita lo stato di quella prima non dice niente di affidabile.
 
@@ -131,8 +138,8 @@ lo schema i permessi siano **esattamente** sette, con i nomi giusti e nessun
 ## Le foto
 
 ```sh
-psql -f test/supabase-prova-foto.sql   # 29 controlli sui permessi delle foto
-node test/prova-foto.js                # 28 controlli sul comportamento dell'app
+psql -f test/supabase-prova-foto.sql   # 33 controlli sui permessi delle foto
+node test/prova-foto.js                # 76 controlli sul comportamento dell'app
 ```
 
 Le foto sono la cosa più delicata che GeppGo custodisca, e la parte che le
@@ -154,6 +161,43 @@ verificano, in sostanza:
   più;
 - l'**admin del viaggio** può togliere la foto di chiunque, e togliere una
   persona dal viaggio.
+
+E quanto si scarica, che qui è una misura e non un'impressione. Il finto
+magazzino tiene i byte veri dei file caricati e li ridà uguali, così la prova
+può dire il numero: sincronizzando un viaggio scendono **34 KB a foto invece
+di 1316** — la copia piccola, non l'intera. La foto vera arriva solo quando
+qualcuno la apre davvero, una volta sola, e da lì resta sul telefono; chi la
+salva nel rullino se la prende comunque intera. Le prove verificano anche i
+due modi in cui questo poteva rompere le cose vecchie: una foto caricata prima
+che le miniature esistessero si scarica lo stesso, e un database su cui lo
+schema non è stato rilanciato accetta la foto comunque, senza la miniatura.
+
+## A raccolta
+
+```sh
+psql -f test/supabase-prova-raccolta.sql   # 17 controlli sui permessi
+node test/prova-raccolta.js                # 39 controlli sul comportamento
+```
+
+È il tasto con cui chi organizza chiama gli altri, e **l'unico posto dell'app
+in cui una posizione esce dal telefono e arriva ad altre persone**. Quattro
+cose lo rendono accettabile, e sono tutte scritte nella privacy policy: queste
+prove esistono per non farle diventare false.
+
+- è la posizione di **chi chiama**, mai di chi riceve — e nessuno può firmarla
+  col nome di un altro;
+- è presa in quell'istante e **non si aggiorna mai**: una prova controlla che
+  sulla tabella non esista nessun permesso di `update`, perché con quello una
+  riga diventerebbe un puntino che segue qualcuno per due ore;
+- la può scrivere **solo un admin** del viaggio;
+- **scade in due ore**, e passate quelle non la vede più nessuno — nemmeno chi
+  l'ha fatta. Il limite è un `check` sulla tabella, non un valore di partenza:
+  una prova tenta di scrivere una chiamata che dura un anno e verifica che
+  venga respinta.
+
+Sul lato app si controlla anche che nella chiamata non finisca **niente oltre
+al minimo dichiarato**: viaggio, chi chiama, il suo nome, il punto e la nota.
+Se qualcuno un giorno ci aggiungesse un campo, la prova diventa rossa.
 
 Sono i meccanismi che il DSA (Reg. UE 2022/2065, art. 16) chiede a chi ospita
 contenuti altrui e che l'App Store pretende alla linea guida 1.2: poter essere

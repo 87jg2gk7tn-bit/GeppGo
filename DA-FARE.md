@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 6 settembre 2026.
+Aggiornato: 8 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -18,6 +18,15 @@ e il tasto "Elimina il mio account" non funziona.
 
 SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
 leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
+
+Da rilanciare **anche se lo hai già fatto una volta**, e adesso ci sono due
+motivi:
+- la colonna `percorso_mini`, che porta le miniature. Senza, l'app se ne
+  accorge e carica le foto come prima — non si rompe niente — ma ogni
+  telefono continua a scaricarsi ogni foto intera, che è quaranta volte il
+  traffico.
+- la tabella `raccolte`, che fa funzionare «A raccolta». Senza, il tasto c'è
+  ma dice *«nel database manca la tabella delle chiamate»*.
 
 **E guardare in quale regione sta il progetto Supabase** (Project Settings →
 General → Region): serve a completare una frase della privacy policy. Se è
@@ -75,6 +84,11 @@ combatte l'unico motore di crescita che c'è.
 
 **I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
 pubblicare non è codice: la regione dei server, l'avvocato, la società.
+
+⚠️ **Con «A raccolta» (punto 13) la privacy policy è cambiata**: adesso c'è un
+caso in cui una posizione viene conservata, ed è dichiarato in `privacy.html`
+e in `PRIVACY-STORE.md`. Se il testo è già passato da un avvocato, quel pezzo
+va rifatto vedere.
 
 ### Poi, per crescere
 
@@ -179,6 +193,57 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
     cache di Overpass. Tenere da parte quello che si è già guardato è invece
     proprio quello che quelle condizioni chiedono di fare. Una prova controlla
     che una schermata chieda una ventina di tessere e non centinaia.
+12. ~~**Le miniature delle foto**~~ ✅ fatto l'8 settembre. Era il difetto di
+    progetto scritto più sotto, fra i costi del cloud: ogni telefono si
+    scaricava ogni foto di ogni viaggio, intera, per sempre. Ora di ogni foto
+    parte anche una copia da 480 px nella stessa cartella del viaggio (quindi
+    con gli stessi permessi, senza regole nuove); è quella che scende
+    sincronizzando, e la foto vera arriva solo quando qualcuno la apre — una
+    volta, e poi resta sul telefono. **Misurato nella prova: 1316 KB a foto
+    prima, 34 KB adesso.** Chi la salva nel rullino se la prende comunque
+    intera, nella qualità con cui è stata caricata.
+13. ~~**A raccolta**~~ ✅ fatto l'8 settembre. Il tasto con cui chi organizza
+    chiama gli altri quando bisogna ripartire e non ci si trova: sui telefoni
+    dei compagni arriva un avviso col punto dove sta chi ha chiamato e il
+    tasto «Portami lì», che apre il navigatore (Apple, Google o quello di
+    GeppGo). Sta in home, in evidenza, e **lo vede solo un admin** di un
+    viaggio condiviso con altre persone.
+    ⚠️ **Qui una posizione esce dal telefono e arriva ad altre persone: è
+    l'unico posto dell'app dove succede.** Le quattro cose che lo rendono
+    accettabile sono strutturali, non buone intenzioni — 17 prove sul database
+    e 39 sull'app le tengono ferme:
+    - è la posizione di **chi chiama**, mai di chi riceve. Nessuno viene
+      localizzato: uno dice dove sta, gli altri decidono se andarci;
+    - è presa **in quell'istante** e **non si aggiorna mai**: non esiste
+      nessuna policy di `update`, quindi nessuna riga può diventare un puntino
+      che segue qualcuno per due ore;
+    - la può scrivere **solo un admin**, e solo a nome proprio;
+    - **scade in due ore**, e le due ore sono un `check` del database
+      (`scade_il <= creata_il + 2 ore`) più la regola di lettura. Non è l'app
+      a nascondere la riga: è il database a non consegnarla. Senza quel
+      vincolo si sarebbe potuta scrivere una chiamata che dura un anno, e la
+      privacy policy avrebbe detto una cosa falsa.
+
+    L'avviso **a telefono spento vuole l'app nativa** e non c'è ancora. Con
+    l'app aperta — anche in un'altra scheda — la chiamata arriva nell'istante
+    in cui parte; riaprendo l'app si trova comunque, finché non è scaduta.
+    Quando il telefono torna in mano l'app riattacca l'orecchio e ricontrolla,
+    perché è esattamente il momento in cui la chiamata deve saltare fuori.
+
+### Quello che resta, in ordine
+
+14. **Rivedere il layout e i movimenti.** È la prossima cosa. L'app fa già
+    tutto quello che deve; quello che le manca è *sembrare* un'app vera —
+    transizioni fra le schermate, fogli che salgono invece di comparire,
+    attese che mostrino qualcosa invece del vuoto, tocchi che rispondono.
+    Non è vernice: è la differenza fra «funziona» e «è bella da usare», ed è
+    la prima cosa che una persona giudica, nei primi dieci secondi.
+15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
+    funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
+    modifica costa una pubblicazione invece di un salvataggio. Quello che il
+    nativo sblocca e che oggi non si può avere: **gli avvisi a telefono
+    spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
+    acquisti dentro l'app per il Premium, e la presenza sugli store.
 
 ---
 
@@ -236,8 +301,15 @@ carica una volta e viene scaricata da ognuno degli altri: in un gruppo di sei,
 una foto conta ×5.
 
 Un viaggio come il Giappone (6 persone, 300 foto a qualità Alta, 1,5 MB):
-450 MB di spazio, **2,25 GB di traffico**. Il gratuito dà 1 GB di spazio e
-~5 GB di traffico: **un solo viaggio ne consuma metà**.
+450 MB di spazio e — **prima delle miniature** — 2,25 GB di traffico. Il
+gratuito dà 1 GB di spazio e ~5 GB di traffico: un solo viaggio ne consumava
+metà.
+
+**Con le miniature** (fatte l'8 settembre 2026) lo stesso viaggio scarica
+~10 MB in tutto invece di 2,25 GB, più le foto che qualcuno apre davvero.
+Misurato nella prova: **1316 KB a foto prima, 34 KB adesso — 38 volte meno.**
+Lo spazio sale invece del 2,5% (la copia piccola si paga in archivio, ma
+l'archivio costa quattro volte meno del traffico).
 
 Col Pro (100 GB spazio, ~250 GB traffico) ci stanno ~100 viaggi al mese.
 Oltre, si paga a consumo: ordini di grandezza ~0,02 $/GB al mese di spazio e
@@ -248,12 +320,14 @@ cambiano.**
 - La qualità scelta al caricamento è anche una manopola dei costi: Leggera
   (145 KB) contro Alta (1,5 MB) contro Originale (5,6 MB) sono dieci e
   quaranta volte tanto.
-- **C'è un difetto di progetto che si pagherà**: oggi l'app scarica *ogni foto
-  di ogni viaggio sul telefono di ognuno, per sempre*. La correzione, quando i
-  volumi cresceranno: miniatura leggera per la striscia del giorno, foto piena
-  solo quando qualcuno la apre davvero. Taglierebbe il traffico di circa dieci
-  volte. Non è stata fatta perché sarebbe stata ottimizzazione prematura, ma è
-  la prima cosa da fare il giorno che la bolletta sale.
+- ~~Il difetto di progetto che si sarebbe pagato: l'app scaricava *ogni foto
+  di ogni viaggio sul telefono di ognuno, per sempre*.~~ **Fatto.** Di ogni
+  foto parte anche una copia da 480 px (`<id>-mini.jpg`, stessa cartella,
+  stessi permessi, colonna `percorso_mini`): è quella che scende
+  sincronizzando, e la foto piena scende solo quando qualcuno la apre — e da
+  lì in poi resta sul telefono. Chi scarica la foto nel rullino se la prende
+  intera, sempre. Le foto caricate prima di questa modifica non hanno la
+  copia piccola: per quelle si continua a scaricare l'intera, e va bene così.
 
 ---
 
@@ -378,6 +452,29 @@ qualcuno che risponde".
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.
+- **Una colonna nuova nel database è un modo nuovo di rompersi.** Fra il
+  momento in cui l'app la usa e il momento in cui qualcuno rilancia lo schema
+  passa del tempo, e in quel tempo ogni riga che la nomina viene respinta.
+  Chi scrive: riprova senza. Chi legge: chiede `*`, non la colonna per nome.
+  Vale per `percorso_mini`, varrà per la prossima.
+- **Un finto cloud che risponde all'istante nasconde proprio quello che si
+  vuole dimostrare.** La prova "si vede subito la miniatura, e la foto vera
+  arriva dopo" passava anche senza miniature: il finto scaricamento finiva
+  prima di guardare. Ci vuole la lentezza di una rete vera, messa apposta.
+- **Il traffico si misura, non si stima.** Il finto magazzino tiene i byte
+  veri delle foto caricate e li ridà uguali: così la prova dice "1316 KB
+  prima, 34 KB adesso" invece di "adesso è più leggero".
+- **Le prove sul database si possono lanciare anche qui, non solo in CI.** Per
+  mesi sono state scritte alla cieca e provate solo dopo il push. Il Postgres
+  c'è già installato: `pg_ctlcluster 16 main start`, poi si crea un ruolo
+  `root` superuser con un database suo, e `PGHOST=/var/run/postgresql npm run
+  test:db` gira tutto — compreso il passaggio che conta, lo schema che si posa
+  su un database che esiste già.
+- **Un valore di partenza non è un limite.** La scadenza di due ore di una
+  chiamata a raccolta era un `default`: chi chiama poteva scriverne una che
+  dura un anno, e la privacy policy avrebbe detto una cosa falsa. È diventata
+  un `check` sulla tabella. Se una promessa è scritta nella policy, deve
+  essere una regola del database — non una gentilezza dell'app.
 
 ---
 

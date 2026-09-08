@@ -923,6 +923,14 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 .hh-act:active{transform:scale(.95)}
 .hh-act.on{border-color:var(--green);color:var(--green-deep)}
+/* "A raccolta" e' pieno, non contornato: sta in mezzo ad altri cinque tasti
+   uguali e va trovato senza leggerli. Lo vede solo chi organizza.
+   Il colore e' --green, che e' scritto sia nel tema chiaro sia in quello
+   scuro: --ink invece si ribalta, e sul telefono in notturna sarebbe stato
+   bianco su chiaro. */
+.hh-act-forte{
+  background:var(--green);color:#fff;border-color:var(--green);font-weight:800;
+}
 
 /* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
 .hh-tap{cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
@@ -1621,6 +1629,24 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="tkBigTitle">Biglietto</div><button class="x x-close" onclick="closeSheet('mTicketBig')">✕</button></div>
   <div id="tkBigBody" style="text-align:center"></div>
+</div></div>
+<!-- A raccolta: il tasto di chi organizza, e l'avviso di chi lo riceve.
+     Sono due fogli e non uno perche' sono due momenti diversi: da una parte
+     chi chiama e deve solo schiacciare, dall'altra chi riceve e deve capire
+     in due secondi chi lo chiama, dove, e da che parte incamminarsi. -->
+<div class="modal" id="mRaccolta"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Chiami tutti qui?</div><button class="x x-close" onclick="closeSheet('mRaccolta')">✕</button></div>
+  <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem">Ai compagni di viaggio arriva un avviso con <strong>il punto dove sei adesso</strong> e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.</p>
+  <div class="fg"><label>Due parole, se servono</label><input id="raccNota" maxlength="60" placeholder="Si parte"></div>
+  <div class="chips" id="raccVeloci" style="margin:.2rem 0 .9rem"></div>
+  <button class="btn btn-grad btn-block" onclick="mandaRaccolta()">📣 Chiama tutti qui</button>
+  <div id="raccMsg" style="font-size:.82rem;color:var(--ink-faint);line-height:1.5;margin-top:.7rem;text-align:center"></div>
+</div></div>
+<div class="modal" id="mRaccoltaIn"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="raccInT">A raccolta</div><button class="x x-close" onclick="closeSheet('mRaccoltaIn')">✕</button></div>
+  <div id="raccInBody"></div>
 </div></div>
 <div class="modal" id="mPhoto"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2424,6 +2450,8 @@ const DIZIONARIO_MESSAGGI={
     'Salvato — pronto per il prossimo':'Saved — ready for the next one',
     '✅ GPS attivo anche in background':'✅ GPS on in the background too',
     'Non riesco a leggere queste foto':'I can’t read these photos',
+    'Prendo la foto intera...':'Fetching the full photo…',
+    'Non riesco a prendere la foto: riprova quando c\'è rete':'I can’t fetch the photo: try again when you have a connection',
     'Biglietto salvato e in time-table':'Ticket saved and added to the timetable',
     'Spesa scollegata (resta in Spese)':'Expense unlinked (it stays in Expenses)',
     'Inserisci partenza e destinazione':'Enter where from and where to',
@@ -2507,6 +2535,8 @@ const DIZIONARIO_MESSAGGI={
     'Salvato — pronto per il prossimo':'Guardado — listo para el siguiente',
     '✅ GPS attivo anche in background':'✅ GPS activo también en segundo plano',
     'Non riesco a leggere queste foto':'No consigo leer estas fotos',
+    'Prendo la foto intera...':'Voy a por la foto entera…',
+    'Non riesco a prendere la foto: riprova quando c\'è rete':'No consigo traer la foto: inténtalo otra vez cuando haya conexión',
     'Biglietto salvato e in time-table':'Billete guardado y añadido al horario',
     'Spesa scollegata (resta in Spese)':'Gasto desvinculado (sigue en Gastos)',
     'Inserisci partenza e destinazione':'Escribe origen y destino',
@@ -2590,6 +2620,8 @@ const DIZIONARIO_MESSAGGI={
     'Salvato — pronto per il prossimo':'Enregistré — prêt pour le suivant',
     '✅ GPS attivo anche in background':'✅ GPS actif aussi en arrière-plan',
     'Non riesco a leggere queste foto':'Je n’arrive pas à lire ces photos',
+    'Prendo la foto intera...':'Je vais chercher la photo entière…',
+    'Non riesco a prendere la foto: riprova quando c\'è rete':'Je n’arrive pas à récupérer la photo : réessaie quand tu auras du réseau',
     'Biglietto salvato e in time-table':'Billet enregistré et ajouté au programme',
     'Spesa scollegata (resta in Spese)':'Dépense détachée (elle reste dans Dépenses)',
     'Inserisci partenza e destinazione':'Saisis le départ et la destination',
@@ -2673,6 +2705,8 @@ const DIZIONARIO_MESSAGGI={
     'Salvato — pronto per il prossimo':'Guardado — pronto para o próximo',
     '✅ GPS attivo anche in background':'✅ GPS ligado também em segundo plano',
     'Non riesco a leggere queste foto':'Não consigo ler estas fotos',
+    'Prendo la foto intera...':'Vou buscar a foto inteira…',
+    'Non riesco a prendere la foto: riprova quando c\'è rete':'Não consigo trazer a foto: tenta outra vez quando houver rede',
     'Biglietto salvato e in time-table':'Bilhete guardado e no roteiro',
     'Spesa scollegata (resta in Spese)':'Despesa desligada (fica em Despesas)',
     'Inserisci partenza e destinazione':'Escreve a partida e o destino',
@@ -3276,9 +3310,96 @@ const DIZIONARIO_RESTO={
 };
 Object.keys(DIZIONARIO_RESTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RESTO[l]));
 
+/* Le frasi di "A raccolta". Stanno in un blocco loro perche' sono
+   arrivate tutte insieme, con la funzione: chi le rilegge fra sei mesi
+   vede subito di cosa parlano. */
+const DIZIONARIO_RACCOLTA={
+  en:{
+    '📣 A raccolta':'📣 Gather round',
+    'A raccolta':'Gather round',
+    'Chiami tutti qui?':'Call everyone here?',
+    'Due parole, se servono':'A couple of words, if useful',
+    '📣 Chiama tutti qui':'📣 Call everyone here',
+    '🧭 Portami lì':'🧭 Take me there',
+    'Ho capito':'Got it',
+    'Si parte':'Time to go',
+    'Pausa qui':'Break here',
+    'Si mangia':'Time to eat',
+    'Ci vediamo qui':'Meet me here',
+    '📣 A raccolta: l\'avviso è partito':'📣 Gather round: the alert is on its way',
+    'Serve essere admin di un viaggio condiviso':'You need to be an admin of a shared trip',
+    'Guardo dove sei...':'Checking where you are…',
+    'Non ci sono riuscito. Riprova fra un momento.':'I couldn’t do it. Try again in a moment.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Without your location I can’t tell the others where you are. Check that the app is allowed to see it.',
+    'Ai compagni di viaggio arriva un avviso con':'Your travel companions get an alert with',
+    'il punto dove sei adesso':'the spot where you are right now'
+  },
+  es:{
+    '📣 A raccolta':'📣 Reunión',
+    'A raccolta':'Reunión',
+    'Chiami tutti qui?':'¿Llamas a todos aquí?',
+    'Due parole, se servono':'Dos palabras, si hacen falta',
+    '📣 Chiama tutti qui':'📣 Llama a todos aquí',
+    '🧭 Portami lì':'🧭 Llévame allí',
+    'Ho capito':'Entendido',
+    'Si parte':'Nos vamos',
+    'Pausa qui':'Pausa aquí',
+    'Si mangia':'A comer',
+    'Ci vediamo qui':'Nos vemos aquí',
+    '📣 A raccolta: l\'avviso è partito':'📣 Reunión: el aviso ha salido',
+    'Serve essere admin di un viaggio condiviso':'Hay que ser admin de un viaje compartido',
+    'Guardo dove sei...':'Miro dónde estás…',
+    'Non ci sono riuscito. Riprova fra un momento.':'No lo he conseguido. Inténtalo dentro de un momento.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sin la ubicación no puedo decir a los demás dónde estás. Comprueba que la app pueda verla.',
+    'Ai compagni di viaggio arriva un avviso con':'A tus compañeros de viaje les llega un aviso con',
+    'il punto dove sei adesso':'el punto donde estás ahora'
+  },
+  fr:{
+    '📣 A raccolta':'📣 On se retrouve',
+    'A raccolta':'On se retrouve',
+    'Chiami tutti qui?':'Tu appelles tout le monde ici ?',
+    'Due parole, se servono':'Deux mots, si besoin',
+    '📣 Chiama tutti qui':'📣 Appelle tout le monde ici',
+    '🧭 Portami lì':'🧭 Emmène-moi là-bas',
+    'Ho capito':'C’est compris',
+    'Si parte':'On y va',
+    'Pausa qui':'Pause ici',
+    'Si mangia':'On mange',
+    'Ci vediamo qui':'On se retrouve ici',
+    '📣 A raccolta: l\'avviso è partito':'📣 On se retrouve : l’alerte est partie',
+    'Serve essere admin di un viaggio condiviso':'Il faut être admin d’un voyage partagé',
+    'Guardo dove sei...':'Je regarde où tu es…',
+    'Non ci sono riuscito. Riprova fra un momento.':'Je n’y suis pas arrivé. Réessaie dans un instant.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sans ta position je ne peux pas dire aux autres où tu es. Vérifie que l’app a le droit de la voir.',
+    'Ai compagni di viaggio arriva un avviso con':'Tes compagnons de voyage reçoivent une alerte avec',
+    'il punto dove sei adesso':'l’endroit où tu es maintenant'
+  },
+  pt:{
+    '📣 A raccolta':'📣 Toca a reunir',
+    'A raccolta':'Toca a reunir',
+    'Chiami tutti qui?':'Chamas todos aqui?',
+    'Due parole, se servono':'Duas palavras, se ajudarem',
+    '📣 Chiama tutti qui':'📣 Chama todos aqui',
+    '🧭 Portami lì':'🧭 Leva-me lá',
+    'Ho capito':'Percebi',
+    'Si parte':'Vamos embora',
+    'Pausa qui':'Pausa aqui',
+    'Si mangia':'Vamos comer',
+    'Ci vediamo qui':'Encontramo-nos aqui',
+    '📣 A raccolta: l\'avviso è partito':'📣 Toca a reunir: o aviso saiu',
+    'Serve essere admin di un viaggio condiviso':'É preciso ser admin de uma viagem partilhada',
+    'Guardo dove sei...':'Vou ver onde estás…',
+    'Non ci sono riuscito. Riprova fra un momento.':'Não consegui. Tenta outra vez daqui a um momento.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sem a localização não consigo dizer aos outros onde estás. Vê se a app a pode ver.',
+    'Ai compagni di viaggio arriva un avviso con':'Aos teus companheiros de viagem chega um aviso com',
+    'il punto dove sei adesso':'o ponto onde estás agora'
+  }
+};
+Object.keys(DIZIONARIO_RACCOLTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RACCOLTA[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=656;
+const FRASI_IN_TUTTO=676;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4154,7 +4275,11 @@ function renderHomeHero(){
      il nome): niente e' diventato irraggiungibile.
      "Naviga la giornata" e' andato in time-table e basta, che e' il posto dove
      si guarda la giornata. */
+  /* "A raccolta" sta per primo, e solo per chi organizza un viaggio in
+     gruppo: e' l'unica cosa qui dentro che si usa mentre della gente ti sta
+     aspettando, e cercarla fra le altre sarebbe il momento sbagliato. */
   const actsBar=`<div class="hh-acts">
+    ${raccoltaPossibile(t)?'<button class="hh-act hh-act-forte" onclick="apriRaccolta()">📣 A raccolta</button>':''}
     <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
     <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
     <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
@@ -5005,8 +5130,9 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
-- Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
+- Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
+- A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple, Google o quello di GeppGo). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
@@ -6772,7 +6898,9 @@ function ricordoFotoPrime(tripId,quante){
       const cur=e.target.result;
       if(!cur)return res({quante:n,prime:prime});
       const v=cur.value;
-      if(v.kind!=='ticket'&&v.tripId===tripId){n++;if(prime.length<quante)prime.push(v.data);}
+      /* Sulla cartolina le foto stanno in un riquadro piccolo: la miniatura
+         basta, e non fa scaricare niente a chi la vuole fare. */
+      if(v.kind!=='ticket'&&v.tripId===tripId){n++;if(prime.length<quante)prime.push(v.data||v.mini);}
       cur.continue();
     };
     c.onerror=()=>res({quante:n,prime:prime});
@@ -12219,6 +12347,11 @@ function afterAuth(){
 async function cloudStart(){
   await pullCloud();
   subscribeRT();
+  /* L'orecchio per le chiamate a raccolta si mette subito, prima delle foto:
+     una chiamata che arriva in ritardo e' gente che aspetta in piazza. Poi si
+     guarda se ne era partita una mentre l'app era chiusa. */
+  raccoltaAscolta();
+  raccolteDalCloud();
   if(pendingJoin2){const c=pendingJoin2;pendingJoin2=null;doJoin2(c);}
   /* Le foto vengono dopo i viaggi, e non fanno aspettare nessuno: sono
      pesanti e non servono per far partire l'app. Prima si spedisce quello
@@ -12235,6 +12368,19 @@ async function cloudStart(){
      pesano molto di piu', quindi non ha senso guardarle ogni venti secondi. */
   clearInterval(window._fotoInt);
   window._fotoInt=setInterval(()=>{if(navigator.onLine!==false)fotoDaSpedire().then(fotoDalCloud);},120000);
+  /* Quando il telefono va in tasca il collegamento in tempo reale cade, e al
+     ritorno non arriva niente di quello che e' successo nel frattempo. Il
+     momento in cui uno riprende in mano il telefono e' esattamente quello in
+     cui deve trovare la chiamata: si riattacca l'orecchio e si guarda. */
+  if(!window._raccVis){
+    window._raccVis=1;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState!=='visible')return;
+      if(!sb||!session||navigator.onLine===false)return;
+      raccoltaAscolta();
+      raccolteDalCloud();
+    });
+  }
 }
 async function pullCloud(){
   try{
@@ -12562,8 +12708,19 @@ async function eliminaAccount(){
      sono. Se qualcuno non si toglie non ci si ferma: meglio un file orfano
      che un account che non si riesce a cancellare. */
   try{
-    const{data:mie}=await sb.from('foto').select('percorso').eq('caricata_da',myUid);
-    if(mie&&mie.length)await sb.storage.from(FOTO_BUCKET).remove(mie.map(x=>x.percorso));
+    /* Si chiede tutta la riga e non le due colonne per nome: su un database
+       dove lo schema non e' stato rilanciato la colonna della miniatura non
+       esiste, e chiederla per nome farebbe fallire la ricerca - lasciando in
+       giro tutti i file di chi voleva sparire. */
+    const{data:mie}=await sb.from('foto').select('*').eq('caricata_da',myUid);
+    /* Le miniature vanno via insieme alle foto: sono la stessa immagine, e
+       una cancellazione che ne lascia una copia piu' piccola non e' una
+       cancellazione. */
+    if(mie&&mie.length){
+      const file=[];
+      mie.forEach(x=>{if(x.percorso)file.push(x.percorso);if(x.percorso_mini)file.push(x.percorso_mini);});
+      if(file.length)await sb.storage.from(FOTO_BUCKET).remove(file);
+    }
   }catch(e){}
   const{error}=await sb.rpc('elimina_account');
   if(error){msg.textContent='Non riesco: '+error.message;return;}
@@ -14293,6 +14450,37 @@ function dataUrlABlob(u){
   return new Blob([arr],{type:'image/jpeg'});
 }
 
+/* La miniatura: la stessa foto larga 480 pixel e leggera, una quarantina di
+   kilobyte.
+   Serve perche' la striscia del giorno mostra immagini alte sessanta pixel,
+   e fin qui per disegnarle il telefono si scaricava la foto intera - a
+   qualita' "Alta" un megabyte e mezzo l'una, moltiplicato per ogni foto di
+   ogni viaggio di ogni compagno. Il conto lo pagava la connessione di chi
+   viaggia, che spesso e' quella che costa di piu'.
+   480 non e' un numero a caso: e' il doppio di quanto serve alla striscia su
+   uno schermo fitto, e basta a riempire la foto grande per l'attimo in cui
+   quella vera sta arrivando. */
+const MINI_LATO=480,MINI_Q=0.62;
+function fotoMini(dataUrl){
+  return new Promise((res,rej)=>{
+    const im=new Image();
+    im.onload=()=>{
+      /* Se la foto e' gia' piu' piccola della miniatura si tiene com'e':
+         ingrandirla peserebbe di piu' senza mostrare niente in piu'. */
+      const sc=Math.min(1,MINI_LATO/Math.max(im.width,im.height));
+      const cv=document.createElement('canvas');
+      cv.width=Math.max(1,Math.round(im.width*sc));
+      cv.height=Math.max(1,Math.round(im.height*sc));
+      const cx=cv.getContext('2d');
+      cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+      cx.drawImage(im,0,0,cv.width,cv.height);
+      res(cv.toDataURL('image/jpeg',MINI_Q));
+    };
+    im.onerror=rej;
+    im.src=dataUrl;
+  });
+}
+
 /* Manda una foto nel cloud. Se la rete non c'e' non succede niente di grave:
    la foto resta sul telefono con cloudId vuoto, e ci riprova la volta dopo. */
 /* Perche' l'ultima foto non e' arrivata nel cloud. Prima questa funzione
@@ -14341,22 +14529,65 @@ async function fotoProvaCarico(rec){
     const percorso=t.cid+'/'+idFoto+'.jpg';
     const su=await sb.storage.from(FOTO_BUCKET).upload(percorso,dataUrlABlob(rec.data),{contentType:'image/jpeg',upsert:false});
     if(su.error){fotoPerche=fotoSpiega(su.error);return false;}
-    const{error}=await sb.from('foto').insert({id:idFoto,trip_id:t.cid,caricata_da:myUid,giorno:rec.date||null,percorso});
-    /* Se il registro rifiuta, il file caricato un attimo fa va tolto: un file
-       senza la sua riga e' un file di cui nessuno sa piu' niente. */
-    if(error){try{await sb.storage.from(FOTO_BUCKET).remove([percorso]);}catch(e){}fotoPerche=fotoSpiega(error);return false;}
+    /* La miniatura viaggia insieme alla foto, e nella stessa cartella: e'
+       quella che i compagni si scaricano davvero.
+       Se non riesce a farla non si butta via il caricamento: la foto piena
+       e' gia' su, e senza miniatura l'app si comporta come prima. Meglio una
+       foto senza miniatura che una foto persa. */
+    let percorsoMini=null;
+    try{
+      const mini=await fotoMini(rec.data);
+      const sm=await sb.storage.from(FOTO_BUCKET).upload(t.cid+'/'+idFoto+'-mini.jpg',dataUrlABlob(mini),{contentType:'image/jpeg',upsert:false});
+      if(!sm.error)percorsoMini=t.cid+'/'+idFoto+'-mini.jpg';
+    }catch(e){}
+    const riga={id:idFoto,trip_id:t.cid,caricata_da:myUid,giorno:rec.date||null,percorso};
+    if(percorsoMini)riga.percorso_mini=percorsoMini;
+    let{error}=await sb.from('foto').insert(riga);
+    /* Su un database dove lo schema non e' stato rilanciato la colonna della
+       miniatura non c'e' ancora, e la riga verrebbe respinta: la foto
+       sparirebbe per colpa di un miglioramento. Allora si riprova senza, e
+       la foto arriva lo stesso - solo senza miniatura. */
+    if(error&&percorsoMini&&/percorso_mini/.test((error.message||'')+(error.details||''))){
+      delete riga.percorso_mini;
+      try{await sb.storage.from(FOTO_BUCKET).remove([percorsoMini]);}catch(e){}
+      percorsoMini=null;
+      error=(await sb.from('foto').insert(riga)).error;
+    }
+    /* Se il registro rifiuta, i file caricati un attimo fa vanno tolti: un
+       file senza la sua riga e' un file di cui nessuno sa piu' niente. */
+    if(error){try{await sb.storage.from(FOTO_BUCKET).remove(percorsoMini?[percorso,percorsoMini]:[percorso]);}catch(e){}fotoPerche=fotoSpiega(error);return false;}
     const db=await idbP();
-    rec.cloudId=idFoto;rec.percorso=percorso;rec.chi=myUid;
+    rec.cloudId=idFoto;rec.percorso=percorso;rec.percorsoMini=percorsoMini;rec.chi=myUid;
     await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
     fotoPerche='';
     return true;
   }catch(e){fotoPerche=fotoSpiega(e);return false;}
 }
 
+/* Scarica un file del magazzino e lo restituisce come dataURL, pronto da
+   mettere in IndexedDB e da dare a un <img>. L'indirizzo dura un'ora e vale
+   solo per chi lo chiede avendone diritto: non e' un link che si possa
+   girare a qualcuno. */
+async function fotoScarica(percorso){
+  const{data:firmato}=await sb.storage.from(FOTO_BUCKET).createSignedUrl(percorso,3600);
+  if(!firmato||!firmato.signedUrl)return null;
+  const risp=await fetch(firmato.signedUrl);
+  if(!risp.ok)return null;
+  const blob=await risp.blob();
+  return await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(blob);});
+}
+
 /* Le foto che i compagni hanno messo e che su questo telefono non ci sono
    ancora. Si scaricano dentro IndexedDB come le proprie, cosi' il diario
    funziona anche senza rete e il resto del codice non deve sapere da dove
-   arrivano. */
+   arrivano.
+   Di ognuna arriva la miniatura, non la foto piena: quella si scarica sola
+   quando qualcuno la apre davvero (vedi fotoPiena). Prima arrivava tutto
+   sempre, e bastava un viaggio con qualche centinaio di foto perche' ogni
+   telefono ne scaricasse centinaia di megabyte per mostrare una striscia di
+   immagini alta sessanta pixel.
+   Le foto caricate prima che esistessero le miniature non ce l'hanno: per
+   quelle si continua a prendere la foto piena, altrimenti sparirebbero. */
 async function fotoDalCloud(){
   if(!sb||!session||fotoInCorso)return;
   fotoInCorso=true;
@@ -14373,23 +14604,45 @@ async function fotoDalCloud(){
       if(gia.has(r.id))continue;
       const t=conCid.find(x=>x.cid===r.trip_id);
       if(!t)continue;
-      /* L'indirizzo per scaricare dura un'ora e vale solo per chi lo chiede
-         avendone diritto: non e' un link che si possa girare a qualcuno. */
-      const{data:firmato}=await sb.storage.from(FOTO_BUCKET).createSignedUrl(r.percorso,3600);
-      if(!firmato||!firmato.signedUrl)continue;
       try{
-        const risp=await fetch(firmato.signedUrl);
-        if(!risp.ok)continue;
-        const blob=await risp.blob();
-        const url=await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=rej;rd.readAsDataURL(blob);});
-        await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put({
+        const url=await fotoScarica(r.percorso_mini||r.percorso);
+        if(!url)continue;
+        const rec={
           id:uid()+'_'+Math.floor(Math.random()*9999),tripId:t.id,date:r.giorno||'',
-          data:url,ts:new Date(r.creata_il).getTime()||Date.now(),
-          cloudId:r.id,percorso:r.percorso,chi:r.caricata_da}).onsuccess=res;});
+          ts:new Date(r.creata_il).getTime()||Date.now(),
+          cloudId:r.id,percorso:r.percorso,percorsoMini:r.percorso_mini||null,chi:r.caricata_da};
+        /* Con la miniatura il posto della foto piena resta vuoto finche'
+           qualcuno non la apre. Senza, quella scaricata e' gia' la foto
+           piena e va messa dov'e' sempre stata. */
+        if(r.percorso_mini)rec.mini=url;else rec.data=url;
+        await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(rec).onsuccess=res;});
       }catch(e){}
     }
     renderDayPhotos();
   }catch(e){}finally{fotoInCorso=false;}
+}
+
+/* La foto piena di un ricordo che finora era solo una miniatura. Si scarica
+   quando qualcuno la apre, e da quel momento resta sul telefono: chi guarda
+   una foto due volte non la scarica due volte, e senza rete la rivede
+   comunque. Chi non l'apre mai non se la scarica mai - che e' il punto di
+   tutto questo.
+   Torna il record aggiornato, o quello di prima se non c'e' stato verso. */
+async function fotoPiena(rec){
+  if(!rec||rec.data||!rec.percorso)return rec;
+  if(!sb||!session)return rec;
+  try{
+    const url=await fotoScarica(rec.percorso);
+    if(!url)return rec;
+    rec.data=url;
+    const db=await idbP();
+    /* Si rilegge prima di scrivere: fra l'inizio dello scaricamento e adesso
+       la foto puo' essere stata cancellata, e riscriverla la farebbe
+       tornare. */
+    const viva=await new Promise(res=>{const q=db.transaction('ph').objectStore('ph').get(rec.id);q.onsuccess=e=>res(e.target.result);q.onerror=()=>res(null);});
+    if(viva)await new Promise(res=>{db.transaction('ph','readwrite').objectStore('ph').put(Object.assign(viva,{data:url})).onsuccess=res;});
+    return rec;
+  }catch(e){return rec;}
 }
 
 /* Le foto rimaste indietro perche' quando le hai fatte non c'era rete. */
@@ -14525,7 +14778,9 @@ async function addPhoto(inp){
 async function renderDayPhotos(){
   const el=document.getElementById('dayPhotos');if(!el)return;const t=T(),d=t.days[ttDay];if(!t||!d){el.innerHTML='';return;}
   const phs=await phAll(t.id,d.date);
-  el.innerHTML=phs.map(pp=>`<img src="${pp.data}" style="height:62px;border-radius:10px;flex-shrink:0" onclick="openPhoto('${pp.id}')" alt="">`).join('');
+  /* La striscia si disegna con la miniatura quando c'e': e' alta sessanta
+     pixel, la foto piena non le servirebbe a niente. */
+  el.innerHTML=phs.map(pp=>`<img src="${pp.mini||pp.data}" style="height:62px;border-radius:10px;flex-shrink:0" onclick="openPhoto('${pp.id}')" alt="">`).join('');
 }
 /* Il nome di chi ha messo una foto, letto dalle iscrizioni del viaggio.
    Se non lo si trova - un compagno uscito, o una foto vecchia di prima del
@@ -14543,7 +14798,20 @@ async function openPhoto(id){
   const db=await idbP();
   db.transaction('ph').objectStore('ph').get(id).onsuccess=e=>{
     const v=e.target.result;if(!v)return;
-    phCur=id;phRec=v;document.getElementById('phBig').src=v.data;
+    phCur=id;phRec=v;
+    /* Si parte da quello che c'e' gia' sul telefono: se e' solo la miniatura
+       si vede quella - un po' morbida ma subito - e la foto vera prende il
+       suo posto appena arriva, invece di lasciare un rettangolo bianco per
+       due secondi. */
+    document.getElementById('phBig').src=v.data||v.mini||'';
+    if(!v.data)fotoPiena(v).then(()=>{
+      /* Se nel frattempo si e' passati a un'altra foto, questa risposta e'
+         in ritardo e va buttata: mettere l'immagine adesso vorrebbe dire
+         mostrare la foto sbagliata. */
+      if(phCur!==id||!v.data)return;
+      const big=document.getElementById('phBig');
+      if(big)big.src=v.data;
+    });
     const chi=nomeDiChiHaCaricato(v);
     const quando=v.ts?new Date(v.ts).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
     const nuvola=v.cloudId
@@ -14575,7 +14843,9 @@ function delPhoto(){
   confirmDo('Eliminare la foto?',testo,async()=>{
     if(posso&&rec&&rec.cloudId&&sb&&session){
       try{await sb.from('foto').delete().eq('id',rec.cloudId);}catch(e){}
-      try{await sb.storage.from(FOTO_BUCKET).remove([rec.percorso]);}catch(e){}
+      /* Anche la miniatura: e' un file come un altro, e lasciarla vorrebbe
+         dire che di una foto cancellata resta comunque un'immagine. */
+      try{await sb.storage.from(FOTO_BUCKET).remove(rec.percorsoMini?[rec.percorso,rec.percorsoMini]:[rec.percorso]);}catch(e){}
     }
     const db=await idbP();
     db.transaction('ph','readwrite').objectStore('ph').delete(phCur).onsuccess=()=>{closeSheet('mPhoto');renderDayPhotos();};
@@ -14590,7 +14860,15 @@ function delPhoto(){
    l'app: si passa dal foglio di condivisione del telefono, che offre "Salva
    immagine". Dove quello non c'e', si ripiega sul download normale. */
 async function salvaFoto(){
-  if(!phRec||!phRec.data){toast('Apri prima una foto');return;}
+  if(!phRec){toast('Apri prima una foto');return;}
+  /* Nel rullino ci va la foto vera, mai la miniatura: chi la salva se la
+     tiene, e una copia da 480 pixel non e' la foto che gli hanno fatto
+     vedere. Se e' ancora nel cloud si aspetta che scenda. */
+  if(!phRec.data){
+    toast('Prendo la foto intera...');
+    await fotoPiena(phRec);
+  }
+  if(!phRec.data){toast('Non riesco a prendere la foto: riprova quando c\'è rete');return;}
   const nome='geppgo-'+(phRec.date||'foto')+'.jpg';
   try{
     const blob=dataUrlABlob(phRec.data);
@@ -14655,6 +14933,207 @@ async function inviaSegnalazione(){
   closeSheet('mSegnala');closeSheet('mPhoto');
   toast('Segnalazione inviata. Grazie: la guardiamo al più presto.');
 }
+
+/* ===== A RACCOLTA =====
+   Sei persone in una citta' che non conoscono, e bisogna ripartire. Fin qui
+   si faceva a voce - urlando - o con otto messaggi che nessuno legge. Chi
+   organizza schiaccia un tasto, e sugli altri telefoni compare "Marco chiama
+   a raccolta", col punto dove sta e la strada per arrivarci.
+
+   Qui viaggia una posizione, che e' la cosa piu' delicata che l'app tocchi.
+   Percio':
+   - e' la posizione di CHI CHIAMA, non di chi riceve: nessuno viene
+     localizzato, uno dice dove sta e gli altri decidono se andarci;
+   - si prende in QUELL'ISTANTE, quando si schiaccia il tasto. Non parte
+     niente che segua qualcuno nel tempo, e una chiamata non si aggiorna mai:
+     se il punto cambia se ne fa un'altra;
+   - la puo' fare solo un ADMIN del viaggio;
+   - dopo due ore il database non la mostra piu' a nessuno. Non e' l'app a
+     nasconderla: e' la regola di lettura, che vale anche se l'app sbaglia.
+
+   L'avviso a telefono spento vuole l'app nativa e non c'e' ancora. Con l'app
+   aperta - anche in un'altra scheda - la chiamata arriva nell'istante in cui
+   parte; riaprendo l'app si trova comunque, finche' non e' scaduta. */
+const RACCOLTA_ORE=2;
+const RACCOLTA_VISTE='geppgo_racc_viste';
+let raccChan=null,raccIn=null,raccInvio=false;
+
+/* Chi puo' chiamare. Un viaggio da soli non ha nessuno da chiamare, e un
+   viaggio che non e' nel cloud non ha modo di far arrivare niente a nessuno:
+   in tutti e due i casi il tasto non compare, invece di comparire e non
+   funzionare. */
+function raccoltaPossibile(t){
+  return !!(t&&t.cid&&t._admin&&sb&&session&&(t.participants||[]).length>1);
+}
+/* Le chiamate gia' viste, per non rimettere in faccia lo stesso avviso ogni
+   volta che l'app si sincronizza. Sta nel telefono e basta. */
+function raccolteViste(){
+  try{return JSON.parse(localStorage.getItem(RACCOLTA_VISTE)||'[]');}catch(e){return [];}
+}
+function raccoltaSegnaVista(id){
+  const l=raccolteViste();
+  if(l.includes(id))return;
+  l.push(id);
+  /* Non cresce all'infinito: le chiamate scadono in due ore, ricordarsene
+     cinquanta e' gia' piu' del necessario. */
+  try{localStorage.setItem(RACCOLTA_VISTE,JSON.stringify(l.slice(-50)));}catch(e){}
+}
+
+function apriRaccolta(){
+  const t=T();
+  if(!raccoltaPossibile(t)){toast('Serve essere admin di un viaggio condiviso');return;}
+  document.getElementById('raccNota').value='';
+  document.getElementById('raccMsg').textContent='';
+  /* Le frasi che si dicono davvero, pronte da toccare: in mezzo alla strada
+     nessuno scrive. */
+  document.getElementById('raccVeloci').innerHTML=
+    ['Si parte','Pausa qui','Si mangia','Ci vediamo qui']
+      .map(f=>`<button class="chip" onclick="raccoltaFrase(${jesc(f)})">${esc(f)}</button>`).join('');
+  openSheet('mRaccolta');
+}
+function raccoltaFrase(f){
+  const el=document.getElementById('raccNota');
+  el.value=f;
+}
+async function mandaRaccolta(){
+  const t=T();
+  if(!raccoltaPossibile(t)){toast('Serve essere admin di un viaggio condiviso');return;}
+  if(raccInvio)return;
+  const msg=document.getElementById('raccMsg');
+  raccInvio=true;
+  msg.textContent='Guardo dove sei...';
+  try{
+    const p=await raccoltaDoveSono();
+    if(!p){msg.textContent='Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.';return;}
+    const io=(t.participants||[]).find(x=>x.isMe);
+    const{error}=await sb.from('raccolte').insert({
+      trip_id:t.cid,chiamata_da:myUid,
+      nome:(io&&io.name)||app.myName||null,
+      lat:p.lat,lng:p.lng,
+      nota:(document.getElementById('raccNota').value||'').trim()||null
+    });
+    if(error){msg.textContent=raccoltaSpiega(error);return;}
+    /* Le proprie chiamate vecchie si portano via: una posizione che non
+       serve piu' a nessuno non ha motivo di restare li'. Se non riesce non
+       importa, il database smette comunque di mostrarla dopo due ore. */
+    try{await sb.from('raccolte').delete().eq('chiamata_da',myUid).eq('trip_id',t.cid)
+      .lt('creata_il',new Date(Date.now()-RACCOLTA_ORE*3600000).toISOString());}catch(e){}
+    closeSheet('mRaccolta');
+    toast('📣 A raccolta: l\'avviso è partito');
+  }catch(e){
+    msg.textContent='Non ci sono riuscito. Riprova fra un momento.';
+  }finally{raccInvio=false;}
+}
+function raccoltaSpiega(e){
+  const m=((e&&(e.message||e.error||e))||'').toString();
+  if(/relation.*raccolte.*does not exist|PGRST205|schema cache/i.test(m))
+    return 'Nel database manca la tabella delle chiamate: va lanciato supabase-schema.sql sul progetto Supabase.';
+  if(/row-level security|permission denied|violates/i.test(m))
+    return 'Il database non mi lascia mandare la chiamata: la può fare solo un admin del viaggio.';
+  if(/fetch|network|Failed to fetch|offline/i.test(m))
+    return 'Senza rete non posso avvisare nessuno.';
+  return m?('Il cloud ha risposto: '+m):'Non sono riuscito a mandare la chiamata.';
+}
+/* La posizione, una volta sola. Se il telefono ne ha una recente in mano si
+   prende quella - in mezzo ai palazzi il GPS puo' metterci venti secondi, e
+   qui si sta facendo aspettare della gente in piazza. */
+function raccoltaDoveSono(){
+  if(myPos&&myPosAt&&Date.now()-myPosAt<60000)return Promise.resolve({lat:myPos.lat,lng:myPos.lng});
+  return new Promise(res=>{
+    if(!navigator.geolocation)return res(null);
+    navigator.geolocation.getCurrentPosition(
+      p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>res(myPos?{lat:myPos.lat,lng:myPos.lng}:null),
+      {enableHighAccuracy:true,timeout:12000,maximumAge:30000});
+  });
+}
+
+/* Quando ne arriva una. Si mostra solo se e' di un viaggio che ho, se non
+   e' mia, se non e' scaduta e se non l'ho gia' vista. */
+function raccoltaArrivata(r){
+  if(!r||!r.trip_id)return;
+  if(r.chiamata_da===myUid)return;
+  const t=app.trips.find(x=>x.cid===r.trip_id);
+  if(!t)return;
+  if(r.scade_il&&new Date(r.scade_il).getTime()<Date.now())return;
+  if(raccolteViste().includes(r.id))return;
+  raccoltaSegnaVista(r.id);
+  raccIn=r;
+  mostraRaccolta(r,t);
+  raccoltaAvvisoDiSistema(r);
+}
+function mostraRaccolta(r,t){
+  const chi=r.nome||'Qualcuno del viaggio';
+  const quando=r.creata_il?new Date(r.creata_il):new Date();
+  const min=Math.max(0,Math.round((Date.now()-quando.getTime())/60000));
+  const dist=myPos?hav(myPos,{lat:r.lat,lng:r.lng}):null;
+  const quanto=dist==null?'':(dist<1000?Math.round(dist)+' m da te':(dist/1000).toFixed(1)+' km da te');
+  document.getElementById('raccInT').textContent=chi+' chiama a raccolta';
+  document.getElementById('raccInBody').innerHTML=
+    `<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem">
+      <div style="font-family:Fraunces,serif;font-size:1.35rem;font-weight:600;line-height:1.25">${esc(r.nota||'A raccolta')}</div>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.45rem">${esc(t.name||'')}${quanto?' · '+esc(quanto):''} · ${min<1?'adesso':(min+' min fa')}</div>
+    </div>
+    <button class="btn btn-grad btn-block" style="margin-bottom:.5rem" onclick="raccoltaPortami()">🧭 Portami lì</button>
+    <button class="btn btn-soft btn-block" onclick="closeSheet('mRaccoltaIn')">Ho capito</button>
+    <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem">È il punto in cui ${esc(chi)} stava quando ha chiamato, non dove si trova adesso: l'app non segue nessuno. Vale per ${RACCOLTA_ORE} ore.</p>`;
+  openSheet('mRaccoltaIn');
+}
+function raccoltaPortami(){
+  if(!raccIn)return;
+  closeSheet('mRaccoltaIn');
+  openNav(raccIn.lat,raccIn.lng,(raccIn.nome?raccIn.nome+' — ':'')+'a raccolta');
+}
+/* L'avviso vero del telefono, quello che si vede anche se l'app sta in
+   un'altra scheda. Non si chiede il permesso qui: si usa solo se e' gia'
+   stato dato. A telefono spento serve l'app nativa, che ancora non c'e'.
+
+   Servono tutti e due i sì: quello del telefono e quello dato dentro l'app
+   (app.consentNotif), come per gli altri avvisi. Il permesso del browser
+   resta acceso anche dopo che uno ha spento le notifiche dal Profilo, e
+   guardare solo quello vorrebbe dire suonare in faccia a chi ha detto di no.
+   Che la chiamata sia urgente non c'entra: chi ha detto di no la trova
+   comunque aperta quando riprende in mano il telefono. */
+function raccoltaAvvisoDiSistema(r){
+  try{
+    if(!app.consentNotif)return;
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    if(document.visibilityState==='visible')return;
+    new Notification((r.nome||'Qualcuno')+' chiama a raccolta',
+      {body:r.nota||'Tocca per vedere dove',tag:'geppgo-raccolta'});
+  }catch(e){}
+}
+
+/* L'orecchio: le chiamate arrivano nell'istante in cui partono. Realtime
+   rispetta i permessi del database, quindi qui non arriva niente dei viaggi
+   che non sono miei. */
+function raccoltaAscolta(){
+  if(!sb||!session)return;
+  if(raccChan){try{sb.removeChannel(raccChan);}catch(e){}raccChan=null;}
+  try{
+    raccChan=sb.channel('raccolte-rt')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'raccolte'},
+          e=>raccoltaArrivata(e&&e.new))
+      .subscribe();
+  }catch(e){}
+}
+/* E il ripescaggio, per chi riapre l'app dopo. Il database mostra solo quelle
+   ancora valide, quindi qui non serve filtrare le scadute: se torna, vale. */
+async function raccolteDalCloud(){
+  if(!sb||!session)return;
+  try{
+    const{data:righe}=await sb.from('raccolte').select('*').order('creata_il',{ascending:false});
+    if(!righe||!righe.length)return;
+    for(const r of righe){
+      if(r.chiamata_da===myUid)continue;
+      if(raccolteViste().includes(r.id))continue;
+      raccoltaArrivata(r);
+      /* Una sola alla volta: due fogli uno sull'altro non li legge nessuno.
+         Le altre restano da vedere al giro dopo. */
+      break;
+    }
+  }catch(e){}
+}
 async function openDiary(){
   const t=T();if(!t){toast('Apri prima un viaggio');return;}
   toast('Preparo il diario: poi tocca Condividi per salvarlo in PDF');
@@ -14669,7 +15148,10 @@ async function openDiary(){
       const acts=(d.activities||[]).slice().sort((a,b)=>String(a.time||'99').localeCompare(String(b.time||'99')));
       return `<h2>Giorno ${i+1} · ${ds} ${w?wxEmo(w)+' '+Math.round(w.tempMax)+'°':''}</h2>`+
         (acts.length?`<ul>${acts.map(a=>`<li>${a.time?'<b>'+a.time+'</b> ':''}${esc(a.name)}${a.notes?' — '+esc(a.notes):''}</li>`).join('')}</ul>`:'<div class="dsub">Giornata libera</div>')+
-        ((byDate[d.date]||[]).length?`<div class="phrow">${byDate[d.date].map(pp=>`<img src="${pp.data}">`).join('')}</div>`:'');
+        /* Nel diario da stampare va la foto piena se e' gia' qui, altrimenti
+           la miniatura: e' un riquadro di due centimetri, e non vale la pena
+           di far scaricare mezzo viaggio a chi vuole solo un PDF. */
+        ((byDate[d.date]||[]).length?`<div class="phrow">${byDate[d.date].map(pp=>`<img src="${pp.data||pp.mini}">`).join('')}</div>`:'');
     }).join('')+
     `<h2>Conto del viaggio</h2><div class="dsub">Speso: ${fmtMoney(paid,cur)} · ${t.expenses.filter(e=>e.type!=='transfer').length} spese</div>`+
     `<div class="dsub" style="margin-top:1.2rem">Creato con GeppGo</div>`;
