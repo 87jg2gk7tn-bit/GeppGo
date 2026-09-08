@@ -19,10 +19,14 @@ e il tasto "Elimina il mio account" non funziona.
 SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
 leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
 
-Da rilanciare **anche se lo hai già fatto una volta**: ora c'è la colonna
-`percorso_mini`, che porta le miniature. Senza, l'app se ne accorge e carica
-le foto come prima — non si rompe niente — ma ogni telefono continua a
-scaricarsi ogni foto intera, che è quaranta volte il traffico.
+Da rilanciare **anche se lo hai già fatto una volta**, e adesso ci sono due
+motivi:
+- la colonna `percorso_mini`, che porta le miniature. Senza, l'app se ne
+  accorge e carica le foto come prima — non si rompe niente — ma ogni
+  telefono continua a scaricarsi ogni foto intera, che è quaranta volte il
+  traffico.
+- la tabella `raccolte`, che fa funzionare «A raccolta». Senza, il tasto c'è
+  ma dice *«nel database manca la tabella delle chiamate»*.
 
 **E guardare in quale regione sta il progetto Supabase** (Project Settings →
 General → Region): serve a completare una frase della privacy policy. Se è
@@ -80,6 +84,11 @@ combatte l'unico motore di crescita che c'è.
 
 **I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
 pubblicare non è codice: la regione dei server, l'avvocato, la società.
+
+⚠️ **Con «A raccolta» (punto 13) la privacy policy è cambiata**: adesso c'è un
+caso in cui una posizione viene conservata, ed è dichiarato in `privacy.html`
+e in `PRIVACY-STORE.md`. Se il testo è già passato da un avvocato, quel pezzo
+va rifatto vedere.
 
 ### Poi, per crescere
 
@@ -184,6 +193,57 @@ pubblicare non è codice: la regione dei server, l'avvocato, la società.
     cache di Overpass. Tenere da parte quello che si è già guardato è invece
     proprio quello che quelle condizioni chiedono di fare. Una prova controlla
     che una schermata chieda una ventina di tessere e non centinaia.
+12. ~~**Le miniature delle foto**~~ ✅ fatto l'8 settembre. Era il difetto di
+    progetto scritto più sotto, fra i costi del cloud: ogni telefono si
+    scaricava ogni foto di ogni viaggio, intera, per sempre. Ora di ogni foto
+    parte anche una copia da 480 px nella stessa cartella del viaggio (quindi
+    con gli stessi permessi, senza regole nuove); è quella che scende
+    sincronizzando, e la foto vera arriva solo quando qualcuno la apre — una
+    volta, e poi resta sul telefono. **Misurato nella prova: 1316 KB a foto
+    prima, 34 KB adesso.** Chi la salva nel rullino se la prende comunque
+    intera, nella qualità con cui è stata caricata.
+13. ~~**A raccolta**~~ ✅ fatto l'8 settembre. Il tasto con cui chi organizza
+    chiama gli altri quando bisogna ripartire e non ci si trova: sui telefoni
+    dei compagni arriva un avviso col punto dove sta chi ha chiamato e il
+    tasto «Portami lì», che apre il navigatore (Apple, Google o quello di
+    GeppGo). Sta in home, in evidenza, e **lo vede solo un admin** di un
+    viaggio condiviso con altre persone.
+    ⚠️ **Qui una posizione esce dal telefono e arriva ad altre persone: è
+    l'unico posto dell'app dove succede.** Le quattro cose che lo rendono
+    accettabile sono strutturali, non buone intenzioni — 17 prove sul database
+    e 39 sull'app le tengono ferme:
+    - è la posizione di **chi chiama**, mai di chi riceve. Nessuno viene
+      localizzato: uno dice dove sta, gli altri decidono se andarci;
+    - è presa **in quell'istante** e **non si aggiorna mai**: non esiste
+      nessuna policy di `update`, quindi nessuna riga può diventare un puntino
+      che segue qualcuno per due ore;
+    - la può scrivere **solo un admin**, e solo a nome proprio;
+    - **scade in due ore**, e le due ore sono un `check` del database
+      (`scade_il <= creata_il + 2 ore`) più la regola di lettura. Non è l'app
+      a nascondere la riga: è il database a non consegnarla. Senza quel
+      vincolo si sarebbe potuta scrivere una chiamata che dura un anno, e la
+      privacy policy avrebbe detto una cosa falsa.
+
+    L'avviso **a telefono spento vuole l'app nativa** e non c'è ancora. Con
+    l'app aperta — anche in un'altra scheda — la chiamata arriva nell'istante
+    in cui parte; riaprendo l'app si trova comunque, finché non è scaduta.
+    Quando il telefono torna in mano l'app riattacca l'orecchio e ricontrolla,
+    perché è esattamente il momento in cui la chiamata deve saltare fuori.
+
+### Quello che resta, in ordine
+
+14. **Rivedere il layout e i movimenti.** È la prossima cosa. L'app fa già
+    tutto quello che deve; quello che le manca è *sembrare* un'app vera —
+    transizioni fra le schermate, fogli che salgono invece di comparire,
+    attese che mostrino qualcosa invece del vuoto, tocchi che rispondono.
+    Non è vernice: è la differenza fra «funziona» e «è bella da usare», ed è
+    la prima cosa che una persona giudica, nei primi dieci secondi.
+15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
+    funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
+    modifica costa una pubblicazione invece di un salvataggio. Quello che il
+    nativo sblocca e che oggi non si può avere: **gli avvisi a telefono
+    spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
+    acquisti dentro l'app per il Premium, e la presenza sugli store.
 
 ---
 
@@ -404,6 +464,17 @@ qualcuno che risponde".
 - **Il traffico si misura, non si stima.** Il finto magazzino tiene i byte
   veri delle foto caricate e li ridà uguali: così la prova dice "1316 KB
   prima, 34 KB adesso" invece di "adesso è più leggero".
+- **Le prove sul database si possono lanciare anche qui, non solo in CI.** Per
+  mesi sono state scritte alla cieca e provate solo dopo il push. Il Postgres
+  c'è già installato: `pg_ctlcluster 16 main start`, poi si crea un ruolo
+  `root` superuser con un database suo, e `PGHOST=/var/run/postgresql npm run
+  test:db` gira tutto — compreso il passaggio che conta, lo schema che si posa
+  su un database che esiste già.
+- **Un valore di partenza non è un limite.** La scadenza di due ore di una
+  chiamata a raccolta era un `default`: chi chiama poteva scriverne una che
+  dura un anno, e la privacy policy avrebbe detto una cosa falsa. È diventata
+  un `check` sulla tabella. Se una promessa è scritta nella policy, deve
+  essere una regola del database — non una gentilezza dell'app.
 
 ---
 

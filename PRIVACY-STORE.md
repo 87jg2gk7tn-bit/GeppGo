@@ -53,12 +53,26 @@ stesso nella privacy policy — ed è detto — perché la promessa "non viene m
 conservata", scritta senza distinguere, sarebbe falsa.
 
 Apple prevede inoltre un'eccezione per i dati che escono dal telefono ma non
-vengono memorizzati oltre il tempo della richiesta. GeppGo ricade in quel
-caso.
+vengono memorizzati oltre il tempo della richiesta. GeppGo ricadeva
+interamente in quel caso fino ad «A raccolta».
 
-**Consiglio: dichiararla lo stesso** come *Precise Location → App
-Functionality, linked to the user, not used for tracking*. Dichiarare in più
-non costa niente; dichiarare in meno è il motivo per cui le app vengono
+**«A raccolta» è l'unica posizione che GeppGo conserva**, e va dichiarata come
+tale: quando chi organizza il viaggio chiama gli altri, il punto in cui si
+trova *in quell'istante* finisce in una riga del database, visibile solo ai
+compagni di quel viaggio e **solo per due ore** — la scadenza è nella regola
+di lettura del database, non nel codice dell'app. È la posizione di chi
+chiama, mai di chi riceve; non si aggiorna mai (non esiste una policy di
+update, quindi nessuna riga può diventare un puntino che si muove); la può
+scrivere solo un admin; si può ritirare subito; e se ne va cancellando
+l'account.
+
+Non è tracking nel senso degli store — non segue nessuno, non profila, non
+esce dal gruppo di viaggio — ma **è memorizzazione**, quindi l'eccezione
+"solo per il tempo della richiesta" qui non vale.
+
+**Da dichiarare** come *Precise Location → App Functionality, linked to the
+user, not used for tracking*. Con «A raccolta» non è più un "in più
+prudenziale": è dovuto. Dichiarare in meno è il motivo per cui le app vengono
 rifiutate.
 
 ### Tracking: NO

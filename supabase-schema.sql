@@ -817,6 +817,108 @@ create policy foto_file_delete on storage.objects
 drop policy if exists foto_file_update on storage.objects;
 
 
+-- ────────────────────────────────────────────────────────────────────────────
+--  A RACCOLTA
+-- ────────────────────────────────────────────────────────────────────────────
+--  Sei persone in una citta' che non conoscono, e bisogna ripartire. Chi
+--  organizza schiaccia un tasto e sul telefono degli altri arriva "Marco
+--  chiama a raccolta", col punto dove sta e la strada per arrivarci. E' la
+--  cosa che in viaggio si fa venti volte al giorno a voce, urlando, o con
+--  otto messaggi che nessuno legge.
+--
+--  Qui dentro finisce una posizione, e le posizioni sono la cosa piu'
+--  delicata che ci sia. Percio' e' fatta cosi', e non altrimenti:
+--
+--  - e' la posizione di CHI CHIAMA, non di chi riceve. Nessuno viene
+--    localizzato: uno dice dove sta, gli altri decidono se andarci.
+--  - e' presa in QUELL'ISTANTE, quando si schiaccia il tasto. Non c'e' niente
+--    che segua nessuno nel tempo, e non c'e' nessuna riga che si aggiorni:
+--    una chiamata si fa, non si modifica (nessuna policy di update).
+--  - la puo' fare solo un ADMIN del viaggio. Non e' un tasto che chiunque usa
+--    per far correre gli altri.
+--  - SCADE. Dopo due ore il database non la mostra piu' a nessuno, ed e' la
+--    regola di lettura a dirlo - non la buona volonta' dell'app.
+create table if not exists public.raccolte (
+  id          uuid             primary key default gen_random_uuid(),
+  trip_id     uuid             not null references public.trips(id) on delete cascade,
+  chiamata_da uuid             not null references auth.users(id)   on delete cascade,
+  -- Il nome di chi chiama viaggia con la chiamata: chi la riceve deve poter
+  -- leggere "Marco chiama a raccolta" anche prima che l'elenco dei compagni
+  -- sia arrivato.
+  nome        text,
+  lat         double precision not null,
+  lng         double precision not null,
+  nota        text,
+  creata_il   timestamptz      not null default now(),
+  scade_il    timestamptz      not null default now() + interval '2 hours'
+);
+create index if not exists raccolte_trip_idx on public.raccolte(trip_id);
+
+--  Le due ore non sono un valore di partenza che si puo' riscrivere: sono un
+--  limite. Senza questo, chi chiama potrebbe mettere una scadenza fra un anno
+--  e lasciare in giro per un anno il posto dove si trovava - e la privacy
+--  policy direbbe una cosa falsa. Sta in un blocco a parte perche' su un
+--  database dove la tabella c'e' gia' il create non tornerebbe ad aggiungerlo.
+do $$
+begin
+  alter table public.raccolte
+    add constraint raccolte_scadenza check (scade_il <= creata_il + interval '2 hours');
+exception
+  when duplicate_object then null;  -- c'e' gia': va bene cosi'
+end;
+$$;
+
+alter table public.raccolte enable row level security;
+revoke all on public.raccolte from anon;
+grant select, insert, delete on public.raccolte to authenticated;
+
+-- La leggono i compagni di quel viaggio, e solo finche' non e' scaduta. La
+-- scadenza sta qui dentro apposta: se un giorno l'app si dimenticasse di
+-- controllarla, la posizione resterebbe comunque invisibile.
+drop policy if exists racc_select on public.raccolte;
+create policy racc_select on public.raccolte
+  for select to authenticated
+  using (
+    scade_il > now()
+    and exists (
+      select 1 from public.trip_members m
+      where m.trip_id = raccolte.trip_id and m.user_id = auth.uid()
+    )
+  );
+
+-- La fa un admin, a nome proprio. "A nome proprio" non e' un dettaglio:
+-- senza, chiunque potrebbe mandare in giro una chiamata firmata da un altro.
+drop policy if exists racc_insert on public.raccolte;
+create policy racc_insert on public.raccolte
+  for insert to authenticated
+  with check (
+    chiamata_da = auth.uid()
+    and exists (
+      select 1 from public.trip_members m
+      where m.trip_id = raccolte.trip_id and m.user_id = auth.uid()
+        and m.ruolo = 'admin'
+    )
+  );
+
+-- Si annulla: chi l'ha fatta, o un altro admin. Una chiamata partita per
+-- sbaglio deve potersi ritirare subito, senza aspettare due ore.
+drop policy if exists racc_delete on public.raccolte;
+create policy racc_delete on public.raccolte
+  for delete to authenticated
+  using (
+    chiamata_da = auth.uid()
+    or exists (
+      select 1 from public.trip_members m
+      where m.trip_id = raccolte.trip_id and m.user_id = auth.uid()
+        and m.ruolo = 'admin'
+    )
+  );
+
+-- Una chiamata non si riscrive: se il punto cambia, se ne fa un'altra. Cosi'
+-- nessuna riga puo' diventare un puntino che si muove.
+drop policy if exists racc_update on public.raccolte;
+
+
 -- ── togliere qualcuno dal viaggio ───────────────────────────────────────────
 --  Un admin puo' rimuovere un compagno. Serve al viaggio (chi non parte piu')
 --  e serve alla tutela: e' il "poter bloccare chi si comporta male" che l'App
@@ -918,6 +1020,9 @@ begin
   end loop;
 
   delete from public.foto        where caricata_da = io;
+  -- Anche le chiamate a raccolta fatte da te: dentro c'e' un posto in cui sei
+  -- stato, e cancellare l'account vuol dire cancellare anche quello.
+  delete from public.raccolte    where chiamata_da = io;
   delete from public.trip_members where user_id    = io;
   delete from auth.users         where id          = io;
 end;
@@ -938,5 +1043,16 @@ begin
   alter publication supabase_realtime add table public.trips;
 exception
   when duplicate_object then null;  -- già inclusa: va bene così
+end;
+$$;
+
+--  E sulle chiamate a raccolta, che senza il tempo reale non servirebbero a
+--  niente: una chiamata che arriva dopo dieci minuti e' gente che ti aspetta
+--  in piazza.
+do $$
+begin
+  alter publication supabase_realtime add table public.raccolte;
+exception
+  when duplicate_object then null;
 end;
 $$;

@@ -923,6 +923,14 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 .hh-act:active{transform:scale(.95)}
 .hh-act.on{border-color:var(--green);color:var(--green-deep)}
+/* "A raccolta" e' pieno, non contornato: sta in mezzo ad altri cinque tasti
+   uguali e va trovato senza leggerli. Lo vede solo chi organizza.
+   Il colore e' --green, che e' scritto sia nel tema chiaro sia in quello
+   scuro: --ink invece si ribalta, e sul telefono in notturna sarebbe stato
+   bianco su chiaro. */
+.hh-act-forte{
+  background:var(--green);color:#fff;border-color:var(--green);font-weight:800;
+}
 
 /* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
 .hh-tap{cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
@@ -1621,6 +1629,24 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="tkBigTitle">Biglietto</div><button class="x x-close" onclick="closeSheet('mTicketBig')">✕</button></div>
   <div id="tkBigBody" style="text-align:center"></div>
+</div></div>
+<!-- A raccolta: il tasto di chi organizza, e l'avviso di chi lo riceve.
+     Sono due fogli e non uno perche' sono due momenti diversi: da una parte
+     chi chiama e deve solo schiacciare, dall'altra chi riceve e deve capire
+     in due secondi chi lo chiama, dove, e da che parte incamminarsi. -->
+<div class="modal" id="mRaccolta"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Chiami tutti qui?</div><button class="x x-close" onclick="closeSheet('mRaccolta')">✕</button></div>
+  <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem">Ai compagni di viaggio arriva un avviso con <strong>il punto dove sei adesso</strong> e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.</p>
+  <div class="fg"><label>Due parole, se servono</label><input id="raccNota" maxlength="60" placeholder="Si parte"></div>
+  <div class="chips" id="raccVeloci" style="margin:.2rem 0 .9rem"></div>
+  <button class="btn btn-grad btn-block" onclick="mandaRaccolta()">📣 Chiama tutti qui</button>
+  <div id="raccMsg" style="font-size:.82rem;color:var(--ink-faint);line-height:1.5;margin-top:.7rem;text-align:center"></div>
+</div></div>
+<div class="modal" id="mRaccoltaIn"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t" id="raccInT">A raccolta</div><button class="x x-close" onclick="closeSheet('mRaccoltaIn')">✕</button></div>
+  <div id="raccInBody"></div>
 </div></div>
 <div class="modal" id="mPhoto"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3284,9 +3310,96 @@ const DIZIONARIO_RESTO={
 };
 Object.keys(DIZIONARIO_RESTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RESTO[l]));
 
+/* Le frasi di "A raccolta". Stanno in un blocco loro perche' sono
+   arrivate tutte insieme, con la funzione: chi le rilegge fra sei mesi
+   vede subito di cosa parlano. */
+const DIZIONARIO_RACCOLTA={
+  en:{
+    '📣 A raccolta':'📣 Gather round',
+    'A raccolta':'Gather round',
+    'Chiami tutti qui?':'Call everyone here?',
+    'Due parole, se servono':'A couple of words, if useful',
+    '📣 Chiama tutti qui':'📣 Call everyone here',
+    '🧭 Portami lì':'🧭 Take me there',
+    'Ho capito':'Got it',
+    'Si parte':'Time to go',
+    'Pausa qui':'Break here',
+    'Si mangia':'Time to eat',
+    'Ci vediamo qui':'Meet me here',
+    '📣 A raccolta: l\'avviso è partito':'📣 Gather round: the alert is on its way',
+    'Serve essere admin di un viaggio condiviso':'You need to be an admin of a shared trip',
+    'Guardo dove sei...':'Checking where you are…',
+    'Non ci sono riuscito. Riprova fra un momento.':'I couldn’t do it. Try again in a moment.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Without your location I can’t tell the others where you are. Check that the app is allowed to see it.',
+    'Ai compagni di viaggio arriva un avviso con':'Your travel companions get an alert with',
+    'il punto dove sei adesso':'the spot where you are right now'
+  },
+  es:{
+    '📣 A raccolta':'📣 Reunión',
+    'A raccolta':'Reunión',
+    'Chiami tutti qui?':'¿Llamas a todos aquí?',
+    'Due parole, se servono':'Dos palabras, si hacen falta',
+    '📣 Chiama tutti qui':'📣 Llama a todos aquí',
+    '🧭 Portami lì':'🧭 Llévame allí',
+    'Ho capito':'Entendido',
+    'Si parte':'Nos vamos',
+    'Pausa qui':'Pausa aquí',
+    'Si mangia':'A comer',
+    'Ci vediamo qui':'Nos vemos aquí',
+    '📣 A raccolta: l\'avviso è partito':'📣 Reunión: el aviso ha salido',
+    'Serve essere admin di un viaggio condiviso':'Hay que ser admin de un viaje compartido',
+    'Guardo dove sei...':'Miro dónde estás…',
+    'Non ci sono riuscito. Riprova fra un momento.':'No lo he conseguido. Inténtalo dentro de un momento.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sin la ubicación no puedo decir a los demás dónde estás. Comprueba que la app pueda verla.',
+    'Ai compagni di viaggio arriva un avviso con':'A tus compañeros de viaje les llega un aviso con',
+    'il punto dove sei adesso':'el punto donde estás ahora'
+  },
+  fr:{
+    '📣 A raccolta':'📣 On se retrouve',
+    'A raccolta':'On se retrouve',
+    'Chiami tutti qui?':'Tu appelles tout le monde ici ?',
+    'Due parole, se servono':'Deux mots, si besoin',
+    '📣 Chiama tutti qui':'📣 Appelle tout le monde ici',
+    '🧭 Portami lì':'🧭 Emmène-moi là-bas',
+    'Ho capito':'C’est compris',
+    'Si parte':'On y va',
+    'Pausa qui':'Pause ici',
+    'Si mangia':'On mange',
+    'Ci vediamo qui':'On se retrouve ici',
+    '📣 A raccolta: l\'avviso è partito':'📣 On se retrouve : l’alerte est partie',
+    'Serve essere admin di un viaggio condiviso':'Il faut être admin d’un voyage partagé',
+    'Guardo dove sei...':'Je regarde où tu es…',
+    'Non ci sono riuscito. Riprova fra un momento.':'Je n’y suis pas arrivé. Réessaie dans un instant.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sans ta position je ne peux pas dire aux autres où tu es. Vérifie que l’app a le droit de la voir.',
+    'Ai compagni di viaggio arriva un avviso con':'Tes compagnons de voyage reçoivent une alerte avec',
+    'il punto dove sei adesso':'l’endroit où tu es maintenant'
+  },
+  pt:{
+    '📣 A raccolta':'📣 Toca a reunir',
+    'A raccolta':'Toca a reunir',
+    'Chiami tutti qui?':'Chamas todos aqui?',
+    'Due parole, se servono':'Duas palavras, se ajudarem',
+    '📣 Chiama tutti qui':'📣 Chama todos aqui',
+    '🧭 Portami lì':'🧭 Leva-me lá',
+    'Ho capito':'Percebi',
+    'Si parte':'Vamos embora',
+    'Pausa qui':'Pausa aqui',
+    'Si mangia':'Vamos comer',
+    'Ci vediamo qui':'Encontramo-nos aqui',
+    '📣 A raccolta: l\'avviso è partito':'📣 Toca a reunir: o aviso saiu',
+    'Serve essere admin di un viaggio condiviso':'É preciso ser admin de uma viagem partilhada',
+    'Guardo dove sei...':'Vou ver onde estás…',
+    'Non ci sono riuscito. Riprova fra un momento.':'Não consegui. Tenta outra vez daqui a um momento.',
+    'Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.':'Sem a localização não consigo dizer aos outros onde estás. Vê se a app a pode ver.',
+    'Ai compagni di viaggio arriva un avviso con':'Aos teus companheiros de viagem chega um aviso com',
+    'il punto dove sei adesso':'o ponto onde estás agora'
+  }
+};
+Object.keys(DIZIONARIO_RACCOLTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RACCOLTA[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=658;
+const FRASI_IN_TUTTO=676;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4162,7 +4275,11 @@ function renderHomeHero(){
      il nome): niente e' diventato irraggiungibile.
      "Naviga la giornata" e' andato in time-table e basta, che e' il posto dove
      si guarda la giornata. */
+  /* "A raccolta" sta per primo, e solo per chi organizza un viaggio in
+     gruppo: e' l'unica cosa qui dentro che si usa mentre della gente ti sta
+     aspettando, e cercarla fra le altre sarebbe il momento sbagliato. */
   const actsBar=`<div class="hh-acts">
+    ${raccoltaPossibile(t)?'<button class="hh-act hh-act-forte" onclick="apriRaccolta()">📣 A raccolta</button>':''}
     <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
     <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
     <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
@@ -5015,6 +5132,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
+- A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple, Google o quello di GeppGo). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
@@ -12229,6 +12347,11 @@ function afterAuth(){
 async function cloudStart(){
   await pullCloud();
   subscribeRT();
+  /* L'orecchio per le chiamate a raccolta si mette subito, prima delle foto:
+     una chiamata che arriva in ritardo e' gente che aspetta in piazza. Poi si
+     guarda se ne era partita una mentre l'app era chiusa. */
+  raccoltaAscolta();
+  raccolteDalCloud();
   if(pendingJoin2){const c=pendingJoin2;pendingJoin2=null;doJoin2(c);}
   /* Le foto vengono dopo i viaggi, e non fanno aspettare nessuno: sono
      pesanti e non servono per far partire l'app. Prima si spedisce quello
@@ -12245,6 +12368,19 @@ async function cloudStart(){
      pesano molto di piu', quindi non ha senso guardarle ogni venti secondi. */
   clearInterval(window._fotoInt);
   window._fotoInt=setInterval(()=>{if(navigator.onLine!==false)fotoDaSpedire().then(fotoDalCloud);},120000);
+  /* Quando il telefono va in tasca il collegamento in tempo reale cade, e al
+     ritorno non arriva niente di quello che e' successo nel frattempo. Il
+     momento in cui uno riprende in mano il telefono e' esattamente quello in
+     cui deve trovare la chiamata: si riattacca l'orecchio e si guarda. */
+  if(!window._raccVis){
+    window._raccVis=1;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState!=='visible')return;
+      if(!sb||!session||navigator.onLine===false)return;
+      raccoltaAscolta();
+      raccolteDalCloud();
+    });
+  }
 }
 async function pullCloud(){
   try{
@@ -14796,6 +14932,199 @@ async function inviaSegnalazione(){
   if(error){msg.textContent='Non riesco a inviare: '+error.message;return;}
   closeSheet('mSegnala');closeSheet('mPhoto');
   toast('Segnalazione inviata. Grazie: la guardiamo al più presto.');
+}
+
+/* ===== A RACCOLTA =====
+   Sei persone in una citta' che non conoscono, e bisogna ripartire. Fin qui
+   si faceva a voce - urlando - o con otto messaggi che nessuno legge. Chi
+   organizza schiaccia un tasto, e sugli altri telefoni compare "Marco chiama
+   a raccolta", col punto dove sta e la strada per arrivarci.
+
+   Qui viaggia una posizione, che e' la cosa piu' delicata che l'app tocchi.
+   Percio':
+   - e' la posizione di CHI CHIAMA, non di chi riceve: nessuno viene
+     localizzato, uno dice dove sta e gli altri decidono se andarci;
+   - si prende in QUELL'ISTANTE, quando si schiaccia il tasto. Non parte
+     niente che segua qualcuno nel tempo, e una chiamata non si aggiorna mai:
+     se il punto cambia se ne fa un'altra;
+   - la puo' fare solo un ADMIN del viaggio;
+   - dopo due ore il database non la mostra piu' a nessuno. Non e' l'app a
+     nasconderla: e' la regola di lettura, che vale anche se l'app sbaglia.
+
+   L'avviso a telefono spento vuole l'app nativa e non c'e' ancora. Con l'app
+   aperta - anche in un'altra scheda - la chiamata arriva nell'istante in cui
+   parte; riaprendo l'app si trova comunque, finche' non e' scaduta. */
+const RACCOLTA_ORE=2;
+const RACCOLTA_VISTE='geppgo_racc_viste';
+let raccChan=null,raccIn=null,raccInvio=false;
+
+/* Chi puo' chiamare. Un viaggio da soli non ha nessuno da chiamare, e un
+   viaggio che non e' nel cloud non ha modo di far arrivare niente a nessuno:
+   in tutti e due i casi il tasto non compare, invece di comparire e non
+   funzionare. */
+function raccoltaPossibile(t){
+  return !!(t&&t.cid&&t._admin&&sb&&session&&(t.participants||[]).length>1);
+}
+/* Le chiamate gia' viste, per non rimettere in faccia lo stesso avviso ogni
+   volta che l'app si sincronizza. Sta nel telefono e basta. */
+function raccolteViste(){
+  try{return JSON.parse(localStorage.getItem(RACCOLTA_VISTE)||'[]');}catch(e){return [];}
+}
+function raccoltaSegnaVista(id){
+  const l=raccolteViste();
+  if(l.includes(id))return;
+  l.push(id);
+  /* Non cresce all'infinito: le chiamate scadono in due ore, ricordarsene
+     cinquanta e' gia' piu' del necessario. */
+  try{localStorage.setItem(RACCOLTA_VISTE,JSON.stringify(l.slice(-50)));}catch(e){}
+}
+
+function apriRaccolta(){
+  const t=T();
+  if(!raccoltaPossibile(t)){toast('Serve essere admin di un viaggio condiviso');return;}
+  document.getElementById('raccNota').value='';
+  document.getElementById('raccMsg').textContent='';
+  /* Le frasi che si dicono davvero, pronte da toccare: in mezzo alla strada
+     nessuno scrive. */
+  document.getElementById('raccVeloci').innerHTML=
+    ['Si parte','Pausa qui','Si mangia','Ci vediamo qui']
+      .map(f=>`<button class="chip" onclick="raccoltaFrase(${jesc(f)})">${esc(f)}</button>`).join('');
+  openSheet('mRaccolta');
+}
+function raccoltaFrase(f){
+  const el=document.getElementById('raccNota');
+  el.value=f;
+}
+async function mandaRaccolta(){
+  const t=T();
+  if(!raccoltaPossibile(t)){toast('Serve essere admin di un viaggio condiviso');return;}
+  if(raccInvio)return;
+  const msg=document.getElementById('raccMsg');
+  raccInvio=true;
+  msg.textContent='Guardo dove sei...';
+  try{
+    const p=await raccoltaDoveSono();
+    if(!p){msg.textContent='Senza la posizione non posso dire agli altri dove sei. Controlla che l\'app possa vederla.';return;}
+    const io=(t.participants||[]).find(x=>x.isMe);
+    const{error}=await sb.from('raccolte').insert({
+      trip_id:t.cid,chiamata_da:myUid,
+      nome:(io&&io.name)||app.myName||null,
+      lat:p.lat,lng:p.lng,
+      nota:(document.getElementById('raccNota').value||'').trim()||null
+    });
+    if(error){msg.textContent=raccoltaSpiega(error);return;}
+    /* Le proprie chiamate vecchie si portano via: una posizione che non
+       serve piu' a nessuno non ha motivo di restare li'. Se non riesce non
+       importa, il database smette comunque di mostrarla dopo due ore. */
+    try{await sb.from('raccolte').delete().eq('chiamata_da',myUid).eq('trip_id',t.cid)
+      .lt('creata_il',new Date(Date.now()-RACCOLTA_ORE*3600000).toISOString());}catch(e){}
+    closeSheet('mRaccolta');
+    toast('📣 A raccolta: l\'avviso è partito');
+  }catch(e){
+    msg.textContent='Non ci sono riuscito. Riprova fra un momento.';
+  }finally{raccInvio=false;}
+}
+function raccoltaSpiega(e){
+  const m=((e&&(e.message||e.error||e))||'').toString();
+  if(/relation.*raccolte.*does not exist|PGRST205|schema cache/i.test(m))
+    return 'Nel database manca la tabella delle chiamate: va lanciato supabase-schema.sql sul progetto Supabase.';
+  if(/row-level security|permission denied|violates/i.test(m))
+    return 'Il database non mi lascia mandare la chiamata: la può fare solo un admin del viaggio.';
+  if(/fetch|network|Failed to fetch|offline/i.test(m))
+    return 'Senza rete non posso avvisare nessuno.';
+  return m?('Il cloud ha risposto: '+m):'Non sono riuscito a mandare la chiamata.';
+}
+/* La posizione, una volta sola. Se il telefono ne ha una recente in mano si
+   prende quella - in mezzo ai palazzi il GPS puo' metterci venti secondi, e
+   qui si sta facendo aspettare della gente in piazza. */
+function raccoltaDoveSono(){
+  if(myPos&&myPosAt&&Date.now()-myPosAt<60000)return Promise.resolve({lat:myPos.lat,lng:myPos.lng});
+  return new Promise(res=>{
+    if(!navigator.geolocation)return res(null);
+    navigator.geolocation.getCurrentPosition(
+      p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>res(myPos?{lat:myPos.lat,lng:myPos.lng}:null),
+      {enableHighAccuracy:true,timeout:12000,maximumAge:30000});
+  });
+}
+
+/* Quando ne arriva una. Si mostra solo se e' di un viaggio che ho, se non
+   e' mia, se non e' scaduta e se non l'ho gia' vista. */
+function raccoltaArrivata(r){
+  if(!r||!r.trip_id)return;
+  if(r.chiamata_da===myUid)return;
+  const t=app.trips.find(x=>x.cid===r.trip_id);
+  if(!t)return;
+  if(r.scade_il&&new Date(r.scade_il).getTime()<Date.now())return;
+  if(raccolteViste().includes(r.id))return;
+  raccoltaSegnaVista(r.id);
+  raccIn=r;
+  mostraRaccolta(r,t);
+  raccoltaAvvisoDiSistema(r);
+}
+function mostraRaccolta(r,t){
+  const chi=r.nome||'Qualcuno del viaggio';
+  const quando=r.creata_il?new Date(r.creata_il):new Date();
+  const min=Math.max(0,Math.round((Date.now()-quando.getTime())/60000));
+  const dist=myPos?hav(myPos,{lat:r.lat,lng:r.lng}):null;
+  const quanto=dist==null?'':(dist<1000?Math.round(dist)+' m da te':(dist/1000).toFixed(1)+' km da te');
+  document.getElementById('raccInT').textContent=chi+' chiama a raccolta';
+  document.getElementById('raccInBody').innerHTML=
+    `<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem">
+      <div style="font-family:Fraunces,serif;font-size:1.35rem;font-weight:600;line-height:1.25">${esc(r.nota||'A raccolta')}</div>
+      <div style="font-size:.85rem;color:var(--ink-soft);margin-top:.45rem">${esc(t.name||'')}${quanto?' · '+esc(quanto):''} · ${min<1?'adesso':(min+' min fa')}</div>
+    </div>
+    <button class="btn btn-grad btn-block" style="margin-bottom:.5rem" onclick="raccoltaPortami()">🧭 Portami lì</button>
+    <button class="btn btn-soft btn-block" onclick="closeSheet('mRaccoltaIn')">Ho capito</button>
+    <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem">È il punto in cui ${esc(chi)} stava quando ha chiamato, non dove si trova adesso: l'app non segue nessuno. Vale per ${RACCOLTA_ORE} ore.</p>`;
+  openSheet('mRaccoltaIn');
+}
+function raccoltaPortami(){
+  if(!raccIn)return;
+  closeSheet('mRaccoltaIn');
+  openNav(raccIn.lat,raccIn.lng,(raccIn.nome?raccIn.nome+' — ':'')+'a raccolta');
+}
+/* L'avviso vero del telefono, quello che si vede anche se l'app sta in
+   un'altra scheda. Non si chiede il permesso qui: si usa solo se e' gia'
+   stato dato. A telefono spento serve l'app nativa, che ancora non c'e'. */
+function raccoltaAvvisoDiSistema(r){
+  try{
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    if(document.visibilityState==='visible')return;
+    new Notification((r.nome||'Qualcuno')+' chiama a raccolta',
+      {body:r.nota||'Tocca per vedere dove',tag:'geppgo-raccolta'});
+  }catch(e){}
+}
+
+/* L'orecchio: le chiamate arrivano nell'istante in cui partono. Realtime
+   rispetta i permessi del database, quindi qui non arriva niente dei viaggi
+   che non sono miei. */
+function raccoltaAscolta(){
+  if(!sb||!session)return;
+  if(raccChan){try{sb.removeChannel(raccChan);}catch(e){}raccChan=null;}
+  try{
+    raccChan=sb.channel('raccolte-rt')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'raccolte'},
+          e=>raccoltaArrivata(e&&e.new))
+      .subscribe();
+  }catch(e){}
+}
+/* E il ripescaggio, per chi riapre l'app dopo. Il database mostra solo quelle
+   ancora valide, quindi qui non serve filtrare le scadute: se torna, vale. */
+async function raccolteDalCloud(){
+  if(!sb||!session)return;
+  try{
+    const{data:righe}=await sb.from('raccolte').select('*').order('creata_il',{ascending:false});
+    if(!righe||!righe.length)return;
+    for(const r of righe){
+      if(r.chiamata_da===myUid)continue;
+      if(raccolteViste().includes(r.id))continue;
+      raccoltaArrivata(r);
+      /* Una sola alla volta: due fogli uno sull'altro non li legge nessuno.
+         Le altre restano da vedere al giro dopo. */
+      break;
+    }
+  }catch(e){}
 }
 async function openDiary(){
   const t=T();if(!t){toast('Apri prima un viaggio');return;}

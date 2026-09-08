@@ -17,7 +17,10 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   const r=[]; const ok=(n,c,e='')=>r.push(`${c?'  OK  ':' FALLITO '} ${n}${e?' — '+e:''}`);
 
   const home = await p.evaluate(()=>[...document.querySelectorAll('.hh-acts .hh-act')].map(x=>x.textContent.trim()));
-  ok('in home restano cinque tasti', home.length===5, home.length+': '+home.join(' | '));
+  // Cinque perché questo è un viaggio da soli e non condiviso: chi organizza
+  // un viaggio di gruppo ne vede un sesto, "📣 A raccolta", ed è giusto così
+  // (lo prova prova-raccolta.js). Qui si tiene ferma la home di tutti gli altri.
+  ok('in home restano cinque tasti, in un viaggio da soli', home.length===5, home.length+': '+home.join(' | '));
   ok('e sono nell\'ordine giusto',
      home.join('|')==='🚻 Bagno vicino|🚬 Area fumatori|🏧 Bancomat|🎒 Bagagli|Condividi', home.join(' | '));
   const via=['Concludi','Rinomina','Giorni','Persone','Consigli','Salvato','Naviga la giornata','concludere'];
