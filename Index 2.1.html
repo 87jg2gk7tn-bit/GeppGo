@@ -306,7 +306,18 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .starter{background:var(--blue-tint);color:var(--blue-deep);border:none;padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:var(--ease)}
 .starter:active{transform:scale(.95)}
 .modal{position:fixed;inset:0;background:rgba(27,35,30,.45);backdrop-filter:blur(5px);z-index:9999;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .3s var(--ease)}
-.modal.active{display:flex;opacity:1}
+/* "In scena" vuol dire: sta nel layout, ma puo' essere ancora invisibile e
+   non prende i tocchi. Serve perche' una transizione non parte da
+   display:none — il browser non ha un "prima" da cui muoversi e mette tutto
+   subito al suo posto. Per questo la salita del foglio, scritta qui sotto fin
+   dall'inizio, non e' mai partita in nessun foglio dell'app: comparivano
+   tutti gia' arrivati. Ora openSheet mette prima "in-scena" e solo dopo
+   "active", e i due momenti sono separati da un fotogramma.
+   pointer-events non e' un dettaglio: mentre il foglio scende e' ancora
+   grande quanto lo schermo, e senza questo si mangerebbe i tocchi per un
+   terzo di secondo dopo essere stato chiuso. */
+.modal.in-scena{display:flex;pointer-events:none}
+.modal.active{display:flex;opacity:1;pointer-events:auto}
 .sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:1.4rem 1.25rem calc(1.4rem + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s var(--spring)}
 /* Biglietto a schermo intero, sempre bianco a massimo contrasto (anche col
    tema scuro): è pensato per essere letto da uno scanner al gate, quindi
@@ -993,6 +1004,25 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 /* ══════════════════════════════════════════════════════════════════
    GEPPGO · HOME "CIELO" — FINE
    ══════════════════════════════════════════════════════════════════ */
+
+/* ── Chi ha chiesto meno movimento lo ottiene ────────────────────────────
+   Non e' un vezzo per pochi: per chi soffre di vertigini o emicrania, le
+   cose che scivolano e rimbalzano sullo schermo danno nausea vera, e sia
+   iPhone sia Android hanno un interruttore apposta ("Riduci movimento").
+   Fino a qui l'app non lo guardava: i fogli salivano, le pagine
+   scivolavano, il pallino del GPS lampeggiava e basta.
+   Le animazioni non spariscono, diventano istantanee: tutto arriva dov'era
+   diretto, solo senza il viaggio. Cosi' niente si rompe e niente resta a
+   meta' strada — che e' quello che succede togliendo le animazioni e basta.
+   Sta in fondo al foglio di stile apposta, per vincere su tutto il resto. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
 </style>
 </head>
 <body>
@@ -8742,7 +8772,7 @@ async function internalNav(lat,lng,name){
   /* Il navigatore interno disegna il percorso sulla mappa grande, che sta
      dietro: se il foglio da cui si e' partiti resta aperto, si va sulla mappa
      e non si vede niente. Si chiude tutto quello che e' rimasto davanti. */
-  document.querySelectorAll('.modal.active').forEach(m2=>m2.classList.remove('active'));
+  document.querySelectorAll('.modal.active').forEach(m2=>closeSheet(m2));
   if(!meMarker){toast('Attiva prima il GPS');return;}
   const m=meMarker.getLatLng();go('plan');toast('🧭 Calcolo il percorso...');
   try{
@@ -9050,8 +9080,35 @@ function confirmDo(title,msg,cb,icon,okText,okClass){
 }
 
 /* ===== HELPERS ===== */
-function openSheet(id){document.getElementById(id).classList.add('active');}
-function closeSheet(id){document.getElementById(id).classList.remove('active');}
+/* Un foglio deve salire, non comparire.
+   Il motivo per cui non lo faceva e' sottile, ed e' rimasto nascosto a lungo
+   perche' la CSS sembrava giusta: passando da display:none a display:flex
+   nello stesso momento in cui cambia la posizione, il browser non ha nessun
+   "prima" da cui partire e mette tutto subito dov'e'. Misurato: il foglio era
+   gia' arrivato al primo fotogramma, in tutti i fogli dell'app.
+   Quindi si separano i due momenti: prima entra nel layout ancora giu', si
+   obbliga il browser a guardarlo cosi' com'e' (leggere offsetHeight lo
+   costringe a fare i conti), e solo dopo si accende "active" — che e' il
+   momento da cui la salita ha un senso. */
+function openSheet(id){
+  const m=(typeof id==='string')?document.getElementById(id):id;
+  if(!m)return;
+  clearTimeout(m._uscita);
+  m.classList.add('in-scena');
+  void m.offsetHeight;
+  m.classList.add('active');
+}
+function closeSheet(id){
+  const m=(typeof id==='string')?document.getElementById(id):id;
+  if(!m)return;
+  m.classList.remove('active');
+  /* Si toglie dal layout solo quando ha finito di scendere. Il tempo e' un
+     ripiego voluto, non una pigrizia: se la transizione non parte affatto —
+     movimento ridotto, scheda in secondo piano, foglio gia' chiuso —
+     transitionend non arriverebbe mai e il foglio resterebbe li' per sempre. */
+  clearTimeout(m._uscita);
+  m._uscita=setTimeout(()=>{m.classList.remove('in-scena');},400);
+}
 /* ===== Tendine (select) sempre dal basso, come il resto dell'app =====
    Ogni <select> nativo viene "avvolto" in un contenitore invisibile con
    sopra un livello trasparente che intercetta il tap: così il picker di
@@ -12148,14 +12205,14 @@ function initSheetSwipe(){
     grip.style.padding='16px 44px';grip.style.margin='-16px auto -6px';grip.style.boxSizing='content-box';grip.style.touchAction='none';grip.style.cursor='grab';
     grip.addEventListener('pointerdown',e=>{on=true;sy=e.clientY;dy=0;sheet.style.transition='none';grip.setPointerCapture(e.pointerId);});
     grip.addEventListener('pointermove',e=>{if(!on)return;dy=e.clientY-sy;if(dy<0)dy=0;sheet.style.transform=`translateY(${dy}px)`;});
-    const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dy>90){if(modal.id==='mScanner')closeScanner();else if(modal.id==='mActDetail')cancelActDetail();else modal.classList.remove('active');}dy=0;};
+    const fin=()=>{if(!on)return;on=false;sheet.style.transition='';sheet.style.transform='';if(dy>90){if(modal.id==='mScanner')closeScanner();else if(modal.id==='mActDetail')cancelActDetail();else closeSheet(modal);}dy=0;};
     grip.addEventListener('pointerup',fin);grip.addEventListener('pointercancel',fin);
   });
 }
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
     if(m.id==='mJoin'||m.id==='mNotif')return;
-    m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else m.classList.remove('active');}});
+    m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else closeSheet(m);}});
     const head=m.querySelector('.sheet-head');
     if(!head||head.querySelector('.x-close'))return;
     const b=document.createElement('button');
