@@ -41,18 +41,30 @@ const stato = {
     ] };
     app.trips.forEach(decorateTrip);
 
-    window.CLOUD = { caricate: [], righe: [], segnalazioni: [], tolte: [], firmate: [], rpc: [] };
+    window.CLOUD = { caricate: [], righe: [], segnalazioni: [], tolte: [], firmate: [], rpc: [], file: {}, scaricati: [] };
+    // Le foto piene, separate dalle miniature: da quando ogni foto ne porta
+    // due, contare i caricamenti non dice piu' quante foto sono partite.
+    window.PIENE = () => CLOUD.caricate.filter(c => !/-mini\.jpg$/.test(c.percorso));
+    window.ULTIMA_PIENA = () => { const p = PIENE(); return p[p.length - 1]; };
     session = { user: { id: 'io' } };
     sb = {
       storage: { from: (b) => ({
         upload: async (percorso, blob, opz) => {
           CLOUD.caricate.push({ bucket: b, percorso, tipo: blob.type, bytes: blob.size, opz });
+          // Il finto magazzino tiene i byte veri e li ridà uguali: è l'unico
+          // modo perché "quanto si scarica" sia una misura e non una stima.
+          CLOUD.file[percorso] = blob;
           return { data: { path: percorso }, error: null };
         },
-        remove: async (l) => { CLOUD.tolte.push(...l); return { error: null }; },
+        remove: async (l) => { CLOUD.tolte.push(...l); l.forEach(p => delete CLOUD.file[p]); return { error: null }; },
         createSignedUrl: async (percorso, sec) => {
           CLOUD.firmate.push({ percorso, sec });
-          return { data: { signedUrl: 'data:image/jpeg;base64,' + window.__JPEG }, error: null };
+          const blob = CLOUD.file[percorso] ||
+            new Blob([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], { type: 'image/jpeg' });
+          // Ogni indirizzo firmato viene scaricato subito dopo: segnarne il
+          // peso qui vale quanto misurare il traffico.
+          CLOUD.scaricati.push({ percorso, bytes: blob.size });
+          return { data: { signedUrl: URL.createObjectURL(blob) }, error: null };
         }
       })},
       from: (tab) => ({
@@ -101,10 +113,10 @@ const stato = {
     await new Promise(r => setTimeout(r, 400));
     const dopo = await phAll(101);
     sb = vero;
-    const prima = CLOUD.caricate.length;
+    const prima = PIENE().length;
     await fotoDaSpedire();
     await new Promise(r => setTimeout(r, 400));
-    return { quante: dopo.length, caricatePrima: prima, caricateDopo: CLOUD.caricate.length };
+    return { quante: dopo.length, caricatePrima: prima, caricateDopo: PIENE().length };
   });
   ok('senza rete la foto si salva lo stesso sul telefono', offline.quante === 2, offline.quante + ' foto');
   ok('e parte da sola appena la rete torna', offline.caricateDopo === offline.caricatePrima + 1,
@@ -258,12 +270,12 @@ const stato = {
   const intatta = await page.evaluate(async () => {
     app.settings.fotoQualita = 'originale';
     const byte = Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0));
-    const prima = CLOUD.caricate.length;
+    const prima = PIENE().length;
     const pr = addPhoto({ files: [new File([byte], 'o.jpg', { type: 'image/jpeg' })], value: '' });
     await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
     await new Promise(r => setTimeout(r, 700));
-    const c = CLOUD.caricate[CLOUD.caricate.length - 1];
-    return { partito: byte.length, arrivato: c && c.bytes, nuove: CLOUD.caricate.length - prima };
+    const c = ULTIMA_PIENA();
+    return { partito: byte.length, arrivato: c && c.bytes, nuove: PIENE().length - prima };
   });
   ok('con "Originale" il file parte identico, byte per byte',
      intatta.arrivato === intatta.partito, intatta.partito + ' -> ' + intatta.arrivato + ' byte');
@@ -271,24 +283,24 @@ const stato = {
   // un file che non è JPEG non può restare "originale": si ripiega, non si perde
   const nonJpeg = await page.evaluate(async () => {
     app.settings.fotoQualita = 'originale';
-    const prima = CLOUD.caricate.length;
+    const prima = PIENE().length;
     const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='), c => c.charCodeAt(0));
     const pr = addPhoto({ files: [new File([png], 'x.png', { type: 'image/png' })], value: '' });
     await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
     await new Promise(r => setTimeout(r, 700));
-    const c = CLOUD.caricate[CLOUD.caricate.length - 1];
-    return { nuove: CLOUD.caricate.length - prima, tipo: c && c.tipo };
+    const c = ULTIMA_PIENA();
+    return { nuove: PIENE().length - prima, tipo: c && c.tipo };
   });
   ok('un PNG viene comunque accolto, convertito in JPEG', nonJpeg.nuove === 1 && nonJpeg.tipo === 'image/jpeg',
      JSON.stringify(nonJpeg));
 
   const annulla = await page.evaluate(async () => {
-    const prima = (await phAll(101)).length, su = CLOUD.caricate.length;
+    const prima = (await phAll(101)).length, su = PIENE().length;
     const pr = addPhoto({ files: [new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'n.jpg', { type: 'image/jpeg' })], value: '' });
     await new Promise(r => setTimeout(r, 150));
     scegliQualita(null);
     await pr; await new Promise(r => setTimeout(r, 300));
-    return { prima, dopo: (await phAll(101)).length, su, suDopo: CLOUD.caricate.length };
+    return { prima, dopo: (await phAll(101)).length, su, suDopo: PIENE().length };
   });
   ok('chiudendo senza scegliere non si carica niente',
      annulla.dopo === annulla.prima && annulla.suDopo === annulla.su,
@@ -301,7 +313,7 @@ const stato = {
     const pr = addPhoto({ files: [new File([byte], 'i.jpg', { type: 'image/jpeg' })], value: '' });
     await new Promise(r => setTimeout(r, 150)); scegliQualita('originale'); await pr;
     await new Promise(r => setTimeout(r, 700));
-    const ultima = CLOUD.caricate[CLOUD.caricate.length - 1];
+    const ultima = ULTIMA_PIENA();
     const caricata = ultima.bytes;
 
     // quello che il telefono ha in mano: presa per identità, non per ordine
@@ -327,13 +339,13 @@ const stato = {
   const blocco = await page.evaluate(async () => {
     const fai = n => Array.from({ length: n }, (_, i) =>
       new File([Uint8Array.from(atob(window.__JPEG), c => c.charCodeAt(0))], 'b' + i + '.jpg', { type: 'image/jpeg' }));
-    const prima = (await phAll(101)).length, su = CLOUD.caricate.length;
+    const prima = (await phAll(101)).length, su = PIENE().length;
     const pr = addPhoto({ files: fai(5), value: '' });
     await new Promise(r => setTimeout(r, 200));
     const titolo = document.querySelector('#mFotoQual .sheet-t').textContent;
     scegliQualita('alta'); await pr;
     await new Promise(r => setTimeout(r, 1500));
-    return { titolo, aggiunte: (await phAll(101)).length - prima, caricate: CLOUD.caricate.length - su };
+    return { titolo, aggiunte: (await phAll(101)).length - prima, caricate: PIENE().length - su };
   });
   ok('si caricano più foto in una volta', blocco.aggiunte === 5, blocco.aggiunte + ' aggiunte');
   ok('e la qualità si sceglie una volta sola per tutte', /queste 5 foto/.test(blocco.titolo), blocco.titolo);
@@ -355,6 +367,224 @@ const stato = {
 
   const multi = await page.evaluate(() => document.getElementById('phInput').hasAttribute('multiple'));
   ok('e il selettore del telefono ne fa scegliere più di una', multi === true);
+
+  // ── le miniature: quanto si scarica davvero ──────────────────────────────
+  // Prima di questa parte ogni telefono si tirava giù ogni foto di ogni
+  // viaggio a grandezza naturale, per sempre. Qui si misura: con una foto
+  // vera, quanto parte, quanto pesa la miniatura, e quanti byte scende chi
+  // apre l'app senza guardare niente.
+  const mini = await page.evaluate(async () => {
+    // Una foto vera, non un pixel: rumore a 1600x1200, che comprime male
+    // proprio come una foto di città piena di dettagli.
+    const fotoFinta = (lato) => new Promise(res => {
+      const cv = document.createElement('canvas');
+      cv.width = lato; cv.height = Math.round(lato * 0.75);
+      const cx = cv.getContext('2d');
+      const im = cx.createImageData(cv.width, cv.height);
+      for (let i = 0; i < im.data.length; i += 4) {
+        im.data[i] = Math.random() * 255; im.data[i + 1] = Math.random() * 255;
+        im.data[i + 2] = Math.random() * 255; im.data[i + 3] = 255;
+      }
+      cx.putImageData(im, 0, 0);
+      cv.toBlob(b => res(b), 'image/jpeg', 0.9);
+    });
+    const blob = await fotoFinta(1600);
+    app.settings.fotoQualita = 'alta';
+    const prima = CLOUD.caricate.length;
+    const pr = addPhoto({ files: [new File([blob], 'vera.jpg', { type: 'image/jpeg' })], value: '' });
+    await new Promise(r => setTimeout(r, 200)); scegliQualita('alta'); await pr;
+    await new Promise(r => setTimeout(r, 1500));
+    const nuovi = CLOUD.caricate.slice(prima);
+    const piena = nuovi.find(c => !/-mini\.jpg$/.test(c.percorso));
+    const piccola = nuovi.find(c => /-mini\.jpg$/.test(c.percorso));
+    const riga = CLOUD.righe[CLOUD.righe.length - 1];
+    return { quanti: nuovi.length, piena, piccola, riga };
+  });
+  ok('di ogni foto parte anche una miniatura', mini.quanti === 2 && !!mini.piccola,
+     mini.quanti + ' file: ' + (mini.piccola ? mini.piccola.percorso : 'nessuna miniatura'));
+  ok('con lo stesso nome della foto, più "-mini"',
+     !!mini.piccola && mini.piccola.percorso === mini.piena.percorso.replace(/\.jpg$/, '-mini.jpg'),
+     mini.piccola && mini.piccola.percorso);
+  ok('nella stessa cartella del viaggio, così valgono gli stessi permessi',
+     !!mini.piccola && mini.piccola.percorso.startsWith('aaa-bbb-ccc/'), mini.piccola && mini.piccola.percorso);
+  const kb = c => c ? Math.round(c.bytes / 1024) + ' KB' : 'niente';
+  ok('e pesa una frazione della foto',
+     !!mini.piccola && mini.piccola.bytes * 8 < mini.piena.bytes,
+     kb(mini.piena) + ' -> ' + kb(mini.piccola));
+  ok('il registro sa dov\'è la miniatura',
+     !!mini.piccola && !!mini.riga && mini.riga.percorso_mini === mini.piccola.percorso,
+     String(mini.riga && mini.riga.percorso_mini));
+
+  // Il compagno che apre l'app: si scarica la miniatura, non la foto.
+  const traffico = await page.evaluate(async () => {
+    const piena = ULTIMA_PIENA();
+    const pesoPieno = CLOUD.file[piena.percorso].size;
+    window.__RIGHE_REMOTE = [{
+      id: 'foto-vera-di-luca', trip_id: 'aaa-bbb-ccc', caricata_da: 'luca', giorno: '2026-09-01',
+      percorso: piena.percorso, percorso_mini: piena.percorso.replace(/\.jpg$/, '-mini.jpg'),
+      creata_il: new Date().toISOString()
+    }];
+    CLOUD.scaricati = [];
+    await fotoDalCloud();
+    await new Promise(r => setTimeout(r, 600));
+    const rec = (await phAll(101)).find(x => x.cloudId === 'foto-vera-di-luca');
+    return {
+      pesoPieno, scaricati: CLOUD.scaricati.slice(),
+      byte: CLOUD.scaricati.reduce((n, x) => n + x.bytes, 0),
+      haMini: !!(rec && rec.mini), haPiena: !!(rec && rec.data), id: rec && rec.id
+    };
+  });
+  ok('sincronizzando arriva la miniatura, non la foto',
+     traffico.scaricati.length === 1 && /-mini\.jpg$/.test(traffico.scaricati[0].percorso),
+     JSON.stringify(traffico.scaricati.map(x => x.percorso)));
+  ok('e la foto piena resta nel cloud finché non la si apre',
+     traffico.haMini === true && traffico.haPiena === false,
+     'miniatura ' + traffico.haMini + ', foto ' + traffico.haPiena);
+  ok('così chi apre l\'app scarica almeno otto volte meno',
+     traffico.byte * 8 < traffico.pesoPieno,
+     Math.round(traffico.pesoPieno / 1024) + ' KB prima, ' + Math.round(traffico.byte / 1024) + ' KB adesso');
+
+  // La striscia del giorno si disegna con la miniatura: è alta 62 pixel.
+  const striscia = await page.evaluate(async () => {
+    await renderDayPhotos();
+    const rec = (await phAll(101)).find(x => x.cloudId === 'foto-vera-di-luca');
+    const img = [...document.querySelectorAll('#dayPhotos img')].find(i => i.getAttribute('onclick').includes(rec.id));
+    return { trovata: !!img, èLaMini: !!img && img.src === rec.mini };
+  });
+  ok('la striscia del giorno mostra la miniatura', striscia.trovata && striscia.èLaMini === true,
+     JSON.stringify(striscia));
+
+  // Aprendola davvero, la foto vera scende - una volta sola.
+  const apre = await page.evaluate(async () => {
+    const rec = (await phAll(101)).find(x => x.cloudId === 'foto-vera-di-luca');
+    // Il finto cloud risponde in un millesimo di secondo, e così non si
+    // vedrebbe mai quello che c'è da vedere: la miniatura che tiene il posto
+    // mentre la foto vera sta arrivando. Qui si mette la lentezza di una
+    // rete da viaggio, e solo sulla foto piena.
+    const veroSt = sb.storage;
+    sb.storage = { from: (b) => {
+      const s = veroSt.from(b);
+      return Object.assign({}, s, {
+        createSignedUrl: async (p, sec) => {
+          if (!/-mini\.jpg$/.test(p)) await new Promise(r => setTimeout(r, 500));
+          return s.createSignedUrl(p, sec);
+        }
+      });
+    }};
+    CLOUD.scaricati = [];
+    await openPhoto(rec.id);
+    await new Promise(r => setTimeout(r, 150));
+    const subito = document.getElementById('phBig').src;
+    await new Promise(r => setTimeout(r, 1200));
+    const dopo = document.getElementById('phBig').src;
+    const salvato = (await phAll(101)).find(x => x.cloudId === 'foto-vera-di-luca');
+    const primoGiro = CLOUD.scaricati.slice();
+    // riaperta: non deve scaricare di nuovo niente
+    CLOUD.scaricati = [];
+    await openPhoto(rec.id);
+    await new Promise(r => setTimeout(r, 800));
+    sb.storage = veroSt;
+    return {
+      subitoÈLaMini: subito === rec.mini,
+      cambiata: dopo !== subito && dopo.length > 100,
+      tenuta: !!(salvato && salvato.data),
+      primoGiro, secondoGiro: CLOUD.scaricati.slice()
+    };
+  });
+  ok('aprendo una foto si vede subito la miniatura, senza attese', apre.subitoÈLaMini === true);
+  ok('poi al suo posto arriva la foto vera', apre.cambiata === true);
+  ok('scaricata dal percorso della foto piena',
+     apre.primoGiro.length === 1 && !/-mini\.jpg$/.test(apre.primoGiro[0].percorso),
+     JSON.stringify(apre.primoGiro.map(x => x.percorso)));
+  ok('e da lì in poi resta sul telefono: senza rete si rivede', apre.tenuta === true);
+  ok('riaprendola non si scarica una seconda volta', apre.secondoGiro.length === 0,
+     JSON.stringify(apre.secondoGiro.map(x => x.percorso)));
+
+  // Nel rullino ci va la foto vera, mai la miniatura.
+  const salvaVera = await page.evaluate(async () => {
+    const rec = (await phAll(101)).find(x => x.cloudId === 'foto-vera-di-luca');
+    // si riparte da capo: solo miniatura, come chi non l'ha mai aperta
+    const db = await idbP();
+    delete rec.data;
+    await new Promise(r => { db.transaction('ph', 'readwrite').objectStore('ph').put(rec).onsuccess = r; });
+    let uscito = null;
+    navigator.canShare = () => true;
+    navigator.share = async (d) => { uscito = d.files[0].size; };
+    await openPhoto(rec.id);
+    await new Promise(r => setTimeout(r, 80));
+    phRec = await new Promise(res => { const q = db.transaction('ph').objectStore('ph').get(rec.id); q.onsuccess = e => res(e.target.result); });
+    delete phRec.data;
+    await salvaFoto();
+    const peso = p => (p && CLOUD.file[p]) ? CLOUD.file[p].size : 0;
+    return { uscito, pesoMini: peso(rec.percorsoMini), pesoPieno: peso(rec.percorso) };
+  });
+  ok('salvandola sul telefono esce la foto vera, non la miniatura',
+     salvaVera.pesoPieno > 0 && salvaVera.uscito === salvaVera.pesoPieno,
+     salvaVera.uscito + ' byte (miniatura ' + salvaVera.pesoMini + ', foto ' + salvaVera.pesoPieno + ')');
+
+  // Cancellando una foto se ne va anche la miniatura: una cancellazione che
+  // lascia in giro una copia più piccola non è una cancellazione.
+  const elimMini = await page.evaluate(async () => {
+    const rec = (await phAll(101)).find(x => x.chi === 'io' && x.percorsoMini);
+    if (!rec) return { tolte: [], percorso: null, mini: null };
+    await openPhoto(rec.id); await new Promise(r => setTimeout(r, 150));
+    CLOUD.tolte = [];
+    delPhoto(); await new Promise(r => setTimeout(r, 150));
+    document.getElementById('cfOk').click();
+    await new Promise(r => setTimeout(r, 500));
+    return { tolte: CLOUD.tolte.slice(), percorso: rec.percorso, mini: rec.percorsoMini };
+  });
+  ok('cancellando la foto sparisce anche la miniatura',
+     !!elimMini.mini && elimMini.tolte.includes(elimMini.percorso) && elimMini.tolte.includes(elimMini.mini),
+     JSON.stringify(elimMini.tolte));
+
+  // Le foto messe prima che le miniature esistessero non hanno niente da
+  // scaricare in piccolo: si prende la foto piena, come si è sempre fatto.
+  const vecchia = await page.evaluate(async () => {
+    window.__RIGHE_REMOTE = [{
+      id: 'foto-vecchia', trip_id: 'aaa-bbb-ccc', caricata_da: 'luca', giorno: '2026-09-01',
+      percorso: 'aaa-bbb-ccc/foto-vecchia.jpg', creata_il: new Date().toISOString()
+    }];
+    CLOUD.scaricati = [];
+    await fotoDalCloud();
+    await new Promise(r => setTimeout(r, 500));
+    const rec = (await phAll(101)).find(x => x.cloudId === 'foto-vecchia');
+    return { scaricati: CLOUD.scaricati.map(x => x.percorso), haPiena: !!(rec && rec.data) };
+  });
+  ok('una foto vecchia, senza miniatura, si scarica lo stesso',
+     vecchia.haPiena === true && vecchia.scaricati.length === 1 && !/-mini/.test(vecchia.scaricati[0]),
+     JSON.stringify(vecchia));
+
+  // E su un database dove lo schema non è ancora stato rilanciato la colonna
+  // della miniatura non c'è: la foto deve arrivare comunque, senza.
+  const senzaColonna = await page.evaluate(async () => {
+    const vero = sb.from;
+    const tentativi = [];
+    sb.from = (tab) => {
+      const base = vero(tab);
+      if (tab !== 'foto') return base;
+      return Object.assign({}, base, {
+        insert: async (riga) => {
+          tentativi.push(Object.keys(riga));
+          if ('percorso_mini' in riga)
+            return { error: { message: "Could not find the 'percorso_mini' column of 'foto' in the schema cache" } };
+          return base.insert(riga);
+        }
+      });
+    };
+    const rec = { id: 'senza-colonna', tripId: 101, date: '2026-09-01', ts: Date.now(),
+      data: 'data:image/jpeg;base64,' + window.__JPEG };
+    const db = await idbP();
+    await new Promise(r => { db.transaction('ph', 'readwrite').objectStore('ph').put(rec).onsuccess = r; });
+    const esito = await fotoSuCloud(rec);
+    sb.from = vero;
+    return { esito, tentativi, perche: fotoPerche, rimasti: Object.keys(CLOUD.file).filter(p => /senza/.test(p)) };
+  });
+  ok('se al database manca la colonna, la foto arriva lo stesso',
+     senzaColonna.esito === true, 'esito ' + senzaColonna.esito + ' — ' + senzaColonna.perche);
+  ok('riprovando senza la miniatura, non lasciandola a metà',
+     senzaColonna.tentativi.length === 2 && !senzaColonna.tentativi[1].includes('percorso_mini'),
+     JSON.stringify(senzaColonna.tentativi));
 
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;

@@ -28,7 +28,7 @@ Ricavato leggendo il codice, non a ricordo.
 |---|---|---|
 | Contact Info → **Email Address** | L'email dell'account | App Functionality |
 | Identifiers → **User ID** | L'id dell'utente su Supabase | App Functionality |
-| User Content → **Photos or Videos** | Le foto del diario | App Functionality |
+| User Content → **Photos or Videos** | Le foto del diario, e di ognuna una copia piccola | App Functionality |
 | User Content → **Other User Content** | Viaggi, tappe, spese, note, biglietti | App Functionality |
 | User Content → **Customer Support** | Le segnalazioni sulle foto | App Functionality |
 

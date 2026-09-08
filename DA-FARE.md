@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 6 settembre 2026.
+Aggiornato: 8 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -18,6 +18,11 @@ e il tasto "Elimina il mio account" non funziona.
 
 SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
 leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
+
+Da rilanciare **anche se lo hai già fatto una volta**: ora c'è la colonna
+`percorso_mini`, che porta le miniature. Senza, l'app se ne accorge e carica
+le foto come prima — non si rompe niente — ma ogni telefono continua a
+scaricarsi ogni foto intera, che è quaranta volte il traffico.
 
 **E guardare in quale regione sta il progetto Supabase** (Project Settings →
 General → Region): serve a completare una frase della privacy policy. Se è
@@ -236,8 +241,15 @@ carica una volta e viene scaricata da ognuno degli altri: in un gruppo di sei,
 una foto conta ×5.
 
 Un viaggio come il Giappone (6 persone, 300 foto a qualità Alta, 1,5 MB):
-450 MB di spazio, **2,25 GB di traffico**. Il gratuito dà 1 GB di spazio e
-~5 GB di traffico: **un solo viaggio ne consuma metà**.
+450 MB di spazio e — **prima delle miniature** — 2,25 GB di traffico. Il
+gratuito dà 1 GB di spazio e ~5 GB di traffico: un solo viaggio ne consumava
+metà.
+
+**Con le miniature** (fatte l'8 settembre 2026) lo stesso viaggio scarica
+~10 MB in tutto invece di 2,25 GB, più le foto che qualcuno apre davvero.
+Misurato nella prova: **1316 KB a foto prima, 34 KB adesso — 38 volte meno.**
+Lo spazio sale invece del 2,5% (la copia piccola si paga in archivio, ma
+l'archivio costa quattro volte meno del traffico).
 
 Col Pro (100 GB spazio, ~250 GB traffico) ci stanno ~100 viaggi al mese.
 Oltre, si paga a consumo: ordini di grandezza ~0,02 $/GB al mese di spazio e
@@ -248,12 +260,14 @@ cambiano.**
 - La qualità scelta al caricamento è anche una manopola dei costi: Leggera
   (145 KB) contro Alta (1,5 MB) contro Originale (5,6 MB) sono dieci e
   quaranta volte tanto.
-- **C'è un difetto di progetto che si pagherà**: oggi l'app scarica *ogni foto
-  di ogni viaggio sul telefono di ognuno, per sempre*. La correzione, quando i
-  volumi cresceranno: miniatura leggera per la striscia del giorno, foto piena
-  solo quando qualcuno la apre davvero. Taglierebbe il traffico di circa dieci
-  volte. Non è stata fatta perché sarebbe stata ottimizzazione prematura, ma è
-  la prima cosa da fare il giorno che la bolletta sale.
+- ~~Il difetto di progetto che si sarebbe pagato: l'app scaricava *ogni foto
+  di ogni viaggio sul telefono di ognuno, per sempre*.~~ **Fatto.** Di ogni
+  foto parte anche una copia da 480 px (`<id>-mini.jpg`, stessa cartella,
+  stessi permessi, colonna `percorso_mini`): è quella che scende
+  sincronizzando, e la foto piena scende solo quando qualcuno la apre — e da
+  lì in poi resta sul telefono. Chi scarica la foto nel rullino se la prende
+  intera, sempre. Le foto caricate prima di questa modifica non hanno la
+  copia piccola: per quelle si continua a scaricare l'intera, e va bene così.
 
 ---
 
@@ -378,6 +392,18 @@ qualcuno che risponde".
 - **Provare anche la strada, non solo la destinazione.** Una query SQL corretta
   può rompersi nel copia-incolla (stringhe di soli spazi che si spezzano). Se
   si chiede a qualcuno di incollare qualcosa, va provato *incollandolo*.
+- **Una colonna nuova nel database è un modo nuovo di rompersi.** Fra il
+  momento in cui l'app la usa e il momento in cui qualcuno rilancia lo schema
+  passa del tempo, e in quel tempo ogni riga che la nomina viene respinta.
+  Chi scrive: riprova senza. Chi legge: chiede `*`, non la colonna per nome.
+  Vale per `percorso_mini`, varrà per la prossima.
+- **Un finto cloud che risponde all'istante nasconde proprio quello che si
+  vuole dimostrare.** La prova "si vede subito la miniatura, e la foto vera
+  arriva dopo" passava anche senza miniature: il finto scaricamento finiva
+  prima di guardare. Ci vuole la lentezza di una rete vera, messa apposta.
+- **Il traffico si misura, non si stima.** Il finto magazzino tiene i byte
+  veri delle foto caricate e li ridà uguali: così la prova dice "1316 KB
+  prima, 34 KB adesso" invece di "adesso è più leggero".
 
 ---
 

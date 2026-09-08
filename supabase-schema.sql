@@ -661,6 +661,21 @@ create table if not exists public.foto (
 create index if not exists foto_trip_idx on public.foto(trip_id);
 create index if not exists foto_chi_idx  on public.foto(caricata_da);
 
+--  L'indirizzo della miniatura, accanto a quello della foto piena.
+--
+--  Prima ogni telefono si scaricava ogni foto di ogni viaggio a grandezza
+--  naturale, per sempre: con l'"Alta" sono circa 1,5 MB a foto, e un viaggio
+--  di sei persone con duecento foto voleva dire trecento megabyte scaricati
+--  da ognuno per guardare una striscia di immagini alta sessanta pixel.
+--  Adesso viaggia la miniatura - una quarantina di kilobyte - e la foto
+--  piena si scarica solo quando qualcuno la apre davvero.
+--
+--  Sta fuori dal create table apposta: chi ha gia' lanciato lo schema una
+--  volta la colonna non ce l'ha, e "create table if not exists" non torna
+--  indietro ad aggiungerla. E' vuota per le foto caricate prima di oggi: per
+--  quelle l'app continua a scaricare la foto piena, come faceva.
+alter table public.foto add column if not exists percorso_mini text;
+
 --  Le segnalazioni. E' il canale con cui si viene a sapere: chi ospita non
 --  risponde di quello che non sa, ma risponde di quello che sa e lascia li'.
 --  Averlo, e tenerlo funzionante, e' meta' della tutela.
@@ -747,9 +762,12 @@ create policy segn_select on public.segnalazioni
 
 
 -- ── i file veri, dentro il magazzino ────────────────────────────────────────
---  Il percorso di ogni file e' "<id del viaggio>/<id della foto>.jpg". La
---  prima cartella dice a quale viaggio appartiene, ed e' su quella che si
---  decide chi puo' leggerlo.
+--  Il percorso di ogni file e' "<id del viaggio>/<id della foto>.jpg", e
+--  quello della sua miniatura "<id del viaggio>/<id della foto>-mini.jpg".
+--  La prima cartella dice a quale viaggio appartiene, ed e' su quella che si
+--  decide chi puo' leggerlo: la miniatura sta nella stessa cartella della
+--  foto proprio per questo, cosi' e' protetta dalle stesse regole senza
+--  doverne scrivere di nuove.
 --
 --  Il confronto e' fatto fra testo e testo, non convertendo la cartella in
 --  uuid: un file con un nome storto farebbe fallire la conversione e, con

@@ -96,6 +96,45 @@ begin
   perform pg_temp.torno_admin();
   perform pg_temp.prova('e l''estranea no, nemmeno il file', v_n = 0, v_n||' file');
 
+  -- ── la miniatura ─────────────────────────────────────────────────────────
+  -- Di ogni foto viaggia anche una copia piccola: e' quella che i compagni si
+  -- scaricano davvero. Sta nella stessa cartella della foto apposta, perche'
+  -- le tocchino le stesse regole senza doverne scrivere di nuove - e questa
+  -- e' la prova che le tocchino sul serio.
+  -- La colonna dove finisce il suo indirizzo. Vive fuori dal create table, in
+  -- un alter, perche' su un database gia' esistente il create non l'avrebbe
+  -- mai aggiunta: se questa prova diventa rossa vuol dire che l'alter e'
+  -- stato tolto o spostato dentro.
+  select count(*) into v_n from information_schema.columns
+   where table_schema='public' and table_name='foto' and column_name='percorso_mini';
+  perform pg_temp.prova('il registro ha il posto per l''indirizzo della miniatura', v_n = 1);
+
+  perform pg_temp.sono(bruno);
+  insert into storage.objects(bucket_id,name,owner)
+    values ('foto-viaggi', replace(v_perc,'.jpg','-mini.jpg'), bruno);
+  perform pg_temp.torno_admin();
+
+  perform pg_temp.sono(anna);
+  select count(*) into v_n from storage.objects
+   where bucket_id='foto-viaggi' and name like '%-mini.jpg';
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('la miniatura la raggiungono i compagni', v_n = 1, v_n||' file');
+
+  perform pg_temp.sono(carla);
+  select count(*) into v_n from storage.objects
+   where bucket_id='foto-viaggi' and name like '%-mini.jpg';
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('e l''estranea non raggiunge nemmeno quella', v_n = 0, v_n||' file');
+
+  perform pg_temp.sono(carla);
+  begin
+    insert into storage.objects(bucket_id,name,owner)
+      values ('foto-viaggi', v_trip::text||'/intrusa-mini.jpg', carla);
+    v_txt := 'CARICATA';
+  exception when others then v_txt := 'respinta'; end;
+  perform pg_temp.torno_admin();
+  perform pg_temp.prova('e non ne infila una sua chiamandola miniatura', v_txt = 'respinta', v_txt);
+
   -- caricare un file dentro il viaggio di altri
   perform pg_temp.sono(carla);
   begin

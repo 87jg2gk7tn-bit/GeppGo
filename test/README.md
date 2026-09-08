@@ -131,8 +131,8 @@ lo schema i permessi siano **esattamente** sette, con i nomi giusti e nessun
 ## Le foto
 
 ```sh
-psql -f test/supabase-prova-foto.sql   # 29 controlli sui permessi delle foto
-node test/prova-foto.js                # 28 controlli sul comportamento dell'app
+psql -f test/supabase-prova-foto.sql   # 33 controlli sui permessi delle foto
+node test/prova-foto.js                # 76 controlli sul comportamento dell'app
 ```
 
 Le foto sono la cosa più delicata che GeppGo custodisca, e la parte che le
@@ -154,6 +154,16 @@ verificano, in sostanza:
   più;
 - l'**admin del viaggio** può togliere la foto di chiunque, e togliere una
   persona dal viaggio.
+
+E quanto si scarica, che qui è una misura e non un'impressione. Il finto
+magazzino tiene i byte veri dei file caricati e li ridà uguali, così la prova
+può dire il numero: sincronizzando un viaggio scendono **34 KB a foto invece
+di 1316** — la copia piccola, non l'intera. La foto vera arriva solo quando
+qualcuno la apre davvero, una volta sola, e da lì resta sul telefono; chi la
+salva nel rullino se la prende comunque intera. Le prove verificano anche i
+due modi in cui questo poteva rompere le cose vecchie: una foto caricata prima
+che le miniature esistessero si scarica lo stesso, e un database su cui lo
+schema non è stato rilanciato accetta la foto comunque, senza la miniatura.
 
 Sono i meccanismi che il DSA (Reg. UE 2022/2065, art. 16) chiede a chi ospita
 contenuti altrui e che l'App Store pretende alla linea guida 1.2: poter essere
