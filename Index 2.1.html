@@ -15086,9 +15086,17 @@ function raccoltaPortami(){
 }
 /* L'avviso vero del telefono, quello che si vede anche se l'app sta in
    un'altra scheda. Non si chiede il permesso qui: si usa solo se e' gia'
-   stato dato. A telefono spento serve l'app nativa, che ancora non c'e'. */
+   stato dato. A telefono spento serve l'app nativa, che ancora non c'e'.
+
+   Servono tutti e due i sì: quello del telefono e quello dato dentro l'app
+   (app.consentNotif), come per gli altri avvisi. Il permesso del browser
+   resta acceso anche dopo che uno ha spento le notifiche dal Profilo, e
+   guardare solo quello vorrebbe dire suonare in faccia a chi ha detto di no.
+   Che la chiamata sia urgente non c'entra: chi ha detto di no la trova
+   comunque aperta quando riprende in mano il telefono. */
 function raccoltaAvvisoDiSistema(r){
   try{
+    if(!app.consentNotif)return;
     if(!('Notification' in window)||Notification.permission!=='granted')return;
     if(document.visibilityState==='visible')return;
     new Notification((r.nome||'Qualcuno')+' chiama a raccolta',

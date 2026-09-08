@@ -298,6 +298,45 @@ const stato = {
   ok('quella giusta, non la scaduta', /Ci vediamo qui/.test(ripesca.corpo) && !/vecchia/.test(ripesca.corpo),
      ripesca.corpo.slice(0, 60));
 
+  // ── l'avviso del telefono rispetta il no dato dentro l'app ──────────────
+  // Il permesso del browser resta acceso anche dopo che uno ha spento le
+  // notifiche dal Profilo: guardare solo quello vorrebbe dire suonare in
+  // faccia a chi ha detto di no. Che la chiamata sia urgente non c'entra.
+  const avvisi = await page.evaluate(async () => {
+    const suonati = [];
+    const vera = window.Notification;
+    window.Notification = function (t, o) { suonati.push({ t, o }); };
+    window.Notification.permission = 'granted';
+    // l'app crede di stare in secondo piano, che è quando l'avviso serve
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+
+    const chiama = (id) => raccoltaArrivata({
+      id, trip_id: 'aaa-bbb-ccc', chiamata_da: 'luca', nome: 'Luca', lat: 35.66, lng: 139.7,
+      nota: 'Si parte', creata_il: new Date().toISOString(),
+      scade_il: new Date(Date.now() + 7200000).toISOString()
+    });
+
+    app.consentNotif = false;
+    chiama('n1');
+    await new Promise(x => setTimeout(x, 150));
+    const conNo = suonati.length;
+
+    app.consentNotif = true;
+    closeSheet('mRaccoltaIn');
+    await new Promise(x => setTimeout(x, 150));
+    chiama('n2');
+    await new Promise(x => setTimeout(x, 150));
+    const conSi = suonati.length;
+
+    window.Notification = vera;
+    delete document.visibilityState;
+    return { conNo, conSi, titolo: (suonati[0] || {}).t, corpo: ((suonati[0] || {}).o || {}).body };
+  });
+  ok('chi ha spento le notifiche non se le sente suonare', avvisi.conNo === 0, avvisi.conNo + ' suonati');
+  ok('chi le ha accese sì', avvisi.conSi === 1, avvisi.conSi + ' suonati');
+  ok('e l\'avviso dice chi chiama', /Luca chiama a raccolta/.test(avvisi.titolo || ''), String(avvisi.titolo));
+  ok('con le sue parole', /Si parte/.test(avvisi.corpo || ''), String(avvisi.corpo));
+
   // ── quello che non deve esserci ─────────────────────────────────────────
   // Una chiamata non si aggiorna mai: se esistesse un update, una riga
   // potrebbe diventare un puntino che segue qualcuno per due ore.
