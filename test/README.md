@@ -223,25 +223,25 @@ piccoli a vedersi.** Se un giorno qualcuno «sistemasse» la faccenda mettendo
 del padding vero, l'app cambierebbe faccia — ed è esattamente quello che non
 si vuole.
 
-**Due cose imparate da una CI rossa**, e sono il motivo per cui la prova è
-scritta così:
+**Tre CI rosse per imparare una cosa sola**, e sono il motivo per cui la
+verifica delle sovrapposizioni è geometrica e non fatta chiedendo al browser
+«chi risponde in questo punto?».
 
-- **si misura tre volte: a 390 px, a 320, e a 390 coi font finti larghi.**
-  Qui i font di Google non si scaricano, in CI sì: con i font veri il testo è
-  più largo, la barra in basso scorre di più e le voci ai bordi finiscono a
-  cavallo del bordo della pillola. La prova andava a tastare un punto fuori
-  dalla barra e trovava la scheda dietro — verde in locale per dieci giri,
-  rossa in CI due volte di fila.
-  La terza passata allarga apposta le voci della barra e **riproduce quel
-  caso qui**: non serve più aspettare la CI per scoprirlo. La seconda (320 px)
-  è un iPhone SE, cioè un telefono vero.
-  Tolte le protezioni, la prova torna rossa anche nella passata coi font
-  larghi: è così che si sa che quella passata sta davvero facendo il suo
-  lavoro.
-- **un'area tagliata non conta.** Allargare un tasto dentro una striscia che
-  scorre non serve per la parte che sborda: `overflow` la taglia. Sommare gli
-  scostamenti scritti nel CSS misurerebbe le intenzioni, non la realtà —
-  quindi l'area viene intersecata con la striscia che contiene il tasto.
+Quella domanda dà risposte diverse in posti diversi: la barra in basso è una
+pillola con gli angoli tondi, e il browser rispetta il raggio nel decidere chi
+risponde — l'angolo dell'area allargata di una voce ci cade *fuori*, e fuori
+c'è la pagina. La risposta cambia anche con la larghezza dello schermo, con i
+font (qui quelli di Google non si scaricano, in CI sì) e con quanto la barra è
+scorsa. Verde qui per dieci giri, rossa in CI tre volte.
+
+Adesso la prova confronta i rettangoli delle aree fra loro e dice anche di
+quanti pixel si sovrappongono (`per 18×45 px`). È la domanda giusta — *due
+tasti vicini si prendono lo stesso pezzo di schermo?* — e i rettangoli danno
+la stessa risposta ovunque.
+
+Resta il giro su **tre condizioni**: 390 px, 320 px (un iPhone SE, cioè un
+telefono vero) e 390 con le voci della barra allargate apposta, che simula i
+font che qui non arrivano.
 
 ## A raccolta
 

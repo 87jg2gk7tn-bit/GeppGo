@@ -77,7 +77,7 @@ const stato = { trips: [
       return !c || (b.left >= c.left - 1 && b.right <= c.right + 1);
     };
     const num = v => Math.abs(parseFloat(v) || 0);
-    const piccoli = [], rubati = [], visti = [];
+    const piccoli = [], rubati = [], visti = [], aree = [];
     /* Con un foglio aperto, tutto quello che sta dietro è coperto: chiedere
        "chi risponde qui?" restituirebbe il foglio, e sembrerebbe un furto di
        tocchi quando invece è solo un foglio davanti. Si guarda dentro il
@@ -101,29 +101,27 @@ const stato = { trips: [
         const h = Math.round(basso - alto), w = Math.round(des - sin);
         visti.push(c);
         if (h < 44 || w < 44) piccoli.push(`${c} ${w}×${h}`);
-        /* I quattro angoli dell'area vera: se lì risponde un altro tasto,
-           quel tasto sta rubando i tocchi.
-           Un tasto a cavallo del bordo della sua striscia dà un riquadro
-           rovesciato (sinistra oltre destra): lì la sonda finirebbe fuori
-           dalla barra, sulla pagina dietro, e griderebbe al furto per un
-           tasto che è solo mezzo fuori vista. Questo caso ha fatto due CI
-           rosse: si salta. */
         if (des - sin < 4 || basso - alto < 4) continue;
-        const angoli = [[sin + 2, alto + 2], [des - 2, alto + 2],
-                        [sin + 2, basso - 2], [des - 2, basso - 2]];
-        for (const [x, y] of angoli) {
-          // mai tastare fuori dalla striscia che contiene il tasto
-          if (cont && (x < cont.left + 1 || x > cont.right - 1 ||
-                       y < cont.top + 1 || y > cont.bottom - 1)) continue;
-          const sotto = document.elementFromPoint(x, y);
-          if (!sotto) continue;
-          if (sotto === el || el.contains(sotto) || sotto.closest('.' + c) === el) continue;
-          // rispondere il contenitore non è rubare: è la barra sotto al tasto
-          if (sotto.contains(el)) continue;
-          const chi = sotto.closest(CLASSI.map(k => '.' + k).join(',')) || sotto.closest('button,[onclick]');
-          if (chi && chi !== el && !chi.contains(el))
-            rubati.push(`${c} "${(el.textContent || '').trim().slice(0, 12)}" → ${(chi.className || '').split(' ')[0]}`);
-        }
+        aree.push({ el, c, sin, des, alto, basso });
+      }
+    }
+    /* Le aree non si devono sovrapporre. Lo si misura sulla geometria, non
+       chiedendo al browser "chi risponde in questo punto?": quella domanda
+       dava risposte diverse in CI e qui, perche' la barra in basso e' una
+       pillola con gli angoli tondi e l'angolo di un'area ci cade fuori — e
+       fuori c'e' la pagina. Tre CI rosse per un tasto che non aveva niente
+       che non andasse.
+       Qui invece si guarda solo quello che conta davvero: due tasti vicini
+       che si prendono lo stesso pezzo di schermo. E' una domanda di
+       rettangoli, e i rettangoli danno la stessa risposta ovunque. */
+    for (let i = 0; i < aree.length; i++) {
+      for (let j = i + 1; j < aree.length; j++) {
+        const A = aree[i], B = aree[j];
+        if (A.el.contains(B.el) || B.el.contains(A.el)) continue;
+        const sovraX = Math.min(A.des, B.des) - Math.max(A.sin, B.sin);
+        const sovraY = Math.min(A.basso, B.basso) - Math.max(A.alto, B.alto);
+        if (sovraX > 1 && sovraY > 1)
+          rubati.push(`${A.c} "${(A.el.textContent || '').trim().slice(0, 10)}" e ${B.c} "${(B.el.textContent || '').trim().slice(0, 10)}" per ${Math.round(sovraX)}x${Math.round(sovraY)} px`);
       }
     }
     return { piccoli: [...new Set(piccoli)], rubati: [...new Set(rubati)], visti: [...new Set(visti)] };
