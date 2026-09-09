@@ -226,7 +226,12 @@ function proveNienteScorciatoie() {
   const colpevoli = [];
   fs.readdirSync(QUI).filter(f => /^prova-.*\.js$/.test(f)).forEach(f => {
     const src = fs.readFileSync(path.join(QUI, f), 'utf8');
-    if (/file:\/\/\/|['"`]\/(home|Users)\//.test(src)) colpevoli.push(f);
+    /* Non solo /home e /Users: anche /tmp e /var. Due prove scrivevano le
+       loro immagini dentro la cartella di lavoro di UNA sessione
+       (/tmp/claude-0/...), che su qualunque altra macchina non esiste — e la
+       guardia non le vedeva, perche' guardava solo le cartelle delle persone.
+       Per le immagini c'e' cartellaFoto() in browser.js. */
+    if (/file:\/\/\/|['"`]\/(home|Users|tmp|var)\//.test(src)) colpevoli.push(f);
   });
   riga('niente percorsi a mano', colpevoli.length ? 'male' : 'ok',
     colpevoli.length ? colpevoli.join(', ') : 'tutte passano da browser.js');

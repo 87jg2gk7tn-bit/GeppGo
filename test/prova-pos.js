@@ -1,5 +1,5 @@
-const { apriBrowser, APP, RADICE, leafletJs, leafletCss } = require('./browser');
-const OUT = '/tmp/claude-0/-home-user-GeppGo/63cda2c7-b8e3-5374-b037-1b6d541802ce/scratchpad';
+const { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto } = require('./browser');
+const OUT = cartellaFoto();
 
 // due tappe con posizione, così la mini-mappa della home viene costruita
 const stato = {
@@ -107,8 +107,20 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
   // com'è fatto il pallino, guardato da vicino
   await page.evaluate(() => document.getElementById('homeMapWrap').scrollIntoView({ block: 'center' }));
   await page.waitForTimeout(500);
-  const wrap = await page.$('#homeMapWrap');
-  await wrap.screenshot({ path: `${OUT}/pos-pallino.png` });
+  /* Questa immagine non e' un controllo: nessuno ci fa sopra un'asserzione,
+     serve a chi vuole vedere com'era fatto il pallino. Ma fotografare un
+     ELEMENTO fa aspettare a Playwright che stia fermo, e la mini-mappa si
+     assesta ancora un attimo dopo che le tessere sono arrivate: su una
+     macchina lenta "element is not stable" ha fatto diventare rossa la prova
+     in CI, con i 21 controlli tutti passati.
+     Un'immagine di contorno non puo' bocciare una prova: se non riesce,
+     amen. */
+  try {
+    const wrap = await page.$('#homeMapWrap');
+    if (wrap) await wrap.screenshot({ path: `${OUT}/pos-pallino.png`, timeout: 5000 });
+  } catch (e) {
+    console.log('  (la foto del pallino non e\' venuta: ' + e.message.split('\n')[0] + ')');
+  }
 
   // ── posizione vecchia: non si mostra ─────────────────────────────────
   await page.evaluate(() => { myPosAt = Date.now() - (POS_FRESCA_MS + 60000); homeMePlace(); });

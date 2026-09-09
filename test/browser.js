@@ -9,6 +9,7 @@
    questa macchina, e se non c'e' ne' l'uno ne' l'altro si lascia decidere a
    Playwright (che sui server delle prove automatiche se lo scarica da solo). */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { chromium } = require('playwright-core');
 
@@ -58,4 +59,17 @@ function dentroLeaflet(nome) {
   catch (e) { return path.join(RADICE, 'node_modules/leaflet/dist/', nome); }
 }
 
-module.exports = { apriBrowser, APP, RADICE, leafletJs, leafletCss };
+/* Dove finiscono le immagini che le prove scattano per farsi guardare da un
+   essere umano. Non sono controlli: nessuna prova ci fa sopra un'asserzione,
+   servono a chi vuole vedere com'era la schermata in quel momento.
+   Serve una funzione, e non una costante scritta a mano, perche' due prove
+   avevano dentro il percorso della cartella di lavoro di UNA sessione — che
+   su qualunque altra macchina non esiste. E' lo stesso errore del percorso
+   di Chromium, ripetuto in un altro punto. */
+function cartellaFoto() {
+  const dir = path.join(os.tmpdir(), 'geppgo-prove');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
+  return dir;
+}
+
+module.exports = { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto };
