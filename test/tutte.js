@@ -170,6 +170,36 @@ function proveDb() {
     }
   }
   if (tutteBene) riga('aggiornamento', 'ok', 'si posa sul database vero, e regge');
+
+  /* E si rilancia. In cima al file c'è scritto che si può fare quante volte
+     si vuole, ed è l'istruzione che riceve chi deve aggiornare il progetto
+     vero — ma per un po' non era vero: al secondo giro la pulizia provava a
+     togliere is_trip_member mentre i permessi delle foto ci si appoggiavano,
+     e il file si fermava a metà lasciando il database scoperto.
+     Non lo prendeva nessuna prova, perché tutte partivano da un database
+     dove quel file non era ancora passato. Qui si prova la cosa vera: due
+     volte di fila, sullo stesso database. */
+  const dinuovo = psql(['-f', path.join(QUI, '..', 'supabase-schema.sql')]);
+  if (dinuovo.status !== 0) {
+    riga('rilanciabile', 'male', 'al secondo lancio si rompe');
+    console.log(`      ${G}${(dinuovo.stderr || '').trim().split('\n').slice(0, 6).join('\n      ')}${Z}`);
+    return;
+  }
+  const terzo = psql(['-f', path.join(QUI, '..', 'supabase-schema.sql')]);
+  if (terzo.status !== 0) { riga('rilanciabile', 'male', 'al terzo lancio si rompe'); return; }
+  /* E dopo i rilanci i permessi devono essere ancora quelli giusti: un file
+     che gira senza errori ma lascia il database aperto sarebbe peggio. */
+  let reggeAncora = true;
+  for (const f of file) {
+    const res = spawnSync('psql', ['-q', '-f', path.join(QUI, f)], { encoding: 'utf8' });
+    const uscita = (res.stdout || '') + (res.stderr || '');
+    if (!conta(uscita) || uscita.includes('FALLITO')) {
+      reggeAncora = false;
+      riga(f.replace(/^supabase-prova-|\.sql$/g, '') + ' (rilanciato)', 'male',
+        (conta(uscita) || { passate: '?', tutte: '?' }).passate + '/' + (conta(uscita) || {}).tutte);
+    }
+  }
+  if (reggeAncora) riga('rilanciabile', 'ok', 'tre lanci di fila, e i permessi reggono');
 }
 
 // ── e la sintassi dell'app, che è la prova più veloce che ci sia ────────────

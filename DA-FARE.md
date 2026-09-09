@@ -16,8 +16,26 @@ dell'account. Finché non è fatto, le foto non arrivano nel cloud — l'app dic
 *"ancora solo su questo telefono — il magazzino delle foto non c'è ancora"* —
 e il tasto "Elimina il mio account" non funziona.
 
-SQL Editor → incolla → Run. Poi si prova ad aggiungere una foto: sotto deve
-leggersi *"salvata anche nel cloud: la vedono i compagni di viaggio"*.
+**Come si fa, in concreto.** Supabase → **SQL Editor** → **New query** →
+incolla **tutto** il contenuto di `supabase-schema.sql` (in GitHub: apri il
+file, tasto **Copy raw file**) → **Run**. Ci mette qualche secondo. Alla fine
+deve dire *Success*: se compare un errore in rosso, **non** proseguire e
+riportalo, perché vuol dire che il file si è fermato a metà lasciando il
+database scoperto.
+
+Poi la verifica, che è più affidabile del messaggio verde: si aggiunge una
+foto e sotto deve leggersi *"salvata anche nel cloud: la vedono i compagni di
+viaggio"*; e in un viaggio condiviso con qualcun altro, da admin, in home deve
+comparire il tasto **📣 A raccolta**.
+
+⚠️ **Il file si può rilanciare quante volte si vuole — ma solo da oggi.**
+Fino al 9 settembre non era vero: al secondo lancio si fermava con *«cannot
+drop function is_trip_member because other objects depend on it»*, perché la
+pulizia toglieva quella funzione mentre i permessi delle foto ci si
+appoggiavano ancora. Nessuna prova lo prendeva, perché tutte partivano da un
+database dove quel file non era ancora passato. Adesso c'è una prova
+(`rilanciabile`) che lo lancia **tre volte di fila** e ricontrolla i permessi
+dopo.
 
 Da rilanciare **anche se lo hai già fatto una volta**, e adesso ci sono due
 motivi:
@@ -567,6 +585,17 @@ qualcuno che risponde".
   sborda: `overflow` la taglia. Una prova che somma gli scostamenti scritti
   nel CSS misura le intenzioni; per misurare la realtà va intersecata con la
   striscia che contiene il tasto.
+- **«Si può rilanciare quante volte si vuole» va provato rilanciandolo.**
+  In cima a `supabase-schema.sql` c'era scritto da sempre, ed era
+  l'istruzione data a chi doveva aggiornare il progetto vero. Non era vero:
+  al secondo lancio la pulizia toglieva `is_trip_member` mentre i permessi
+  delle foto ci si appoggiavano, e il file si fermava a metà — lasciando il
+  database **scoperto**, che è il caso peggiore possibile.
+  Nessuna prova lo prendeva, perché tutte partivano da un database dove quel
+  file non era ancora passato: si provava il primo lancio e l'aggiornamento
+  da una versione vecchia, mai *lo stesso file due volte*. È il difetto più
+  facile da non vedere che ci sia — quello nascosto dentro un'istruzione che
+  si dà per scontata.
 - **Prima di aggiungere qualcosa a una schermata, si guarda la schermata.**
   Aggiungere un'azione allo stato vuoto delle spese e dei biglietti sembrava
   un miglioramento ovvio; erano due tasti identici uno sopra l'altro, perché

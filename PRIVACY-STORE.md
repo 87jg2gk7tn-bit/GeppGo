@@ -142,6 +142,70 @@ Da chiedere in particolare:
 - come è messa la responsabilità sui dati dei compagni di viaggio, che sono
   persone che non hanno accettato niente.
 
+#### Il punto nuovo, e quello su cui serve davvero un parere: «A raccolta»
+
+**Da settembre 2026 c'è un caso, e uno solo, in cui GeppGo conserva una
+posizione.** Fino a ieri si poteva dire senza distinguo che la posizione
+*viene usata ma non conservata*; adesso non è più vero, ed è la cosa da far
+guardare per prima.
+
+Come funziona, in breve — chi organizza un viaggio di gruppo preme un tasto
+(«A raccolta») e ai compagni arriva un avviso con il punto in cui si trova,
+per ritrovarsi quando ci si è persi in una città.
+
+Quello che finisce nel database, e nient'altro:
+
+| Campo | Cosa contiene |
+|---|---|
+| `trip_id` | quale viaggio |
+| `chiamata_da` | l'id dell'utente che ha chiamato |
+| `nome` | il suo nome dentro il viaggio (spesso di fantasia) |
+| `lat`, `lng` | il punto in cui si trovava **in quell'istante** |
+| `nota` | due parole facoltative («Si parte») |
+| `creata_il`, `scade_il` | quando, e fino a quando vale |
+
+Le garanzie, e sono **strutturali** — regole del database, non promesse
+dell'app, il che significa che valgono anche se l'app ha un difetto:
+
+1. **È la posizione di chi chiama, mai di chi riceve.** Nessuno viene
+   localizzato: una persona dichiara dove si trova, gli altri decidono se
+   andarci.
+2. **Non si aggiorna mai.** Sulla tabella non esiste alcun permesso di
+   `UPDATE`: nessuna riga può diventare un puntino che segue qualcuno. Se il
+   punto cambia se ne scrive una nuova.
+3. **La può scrivere solo un admin del viaggio, e solo a nome proprio.**
+4. **Scade dopo due ore**, e la scadenza è un vincolo `CHECK` sulla tabella
+   (`scade_il <= creata_il + 2 ore`) più la regola di lettura: passate quelle,
+   il database non la mostra più a nessuno, **nemmeno a chi l'ha scritta**.
+5. **Si può ritirare subito**, e sparisce cancellando l'account.
+6. La vedono **solo le persone di quel viaggio**.
+
+Le domande da porre al legale, in ordine di importanza:
+
+- **La base giuridica.** È consenso (l'utente preme il tasto sapendo cosa fa,
+  e il telefono chiede comunque il permesso di geolocalizzazione) o legittimo
+  interesse? E il consenso di chi *riceve* serve, visto che riceve un dato
+  altrui e non uno proprio?
+- **La conservazione di due ore basta a dirsi proporzionata**, o va motivata
+  per iscritto nella policy?
+- **È un dato particolare?** Una posizione in un certo momento può rivelare,
+  per inferenza, un luogo di culto o una struttura sanitaria. Serve qualcosa
+  in più dell'art. 6, o la natura occasionale e la scadenza breve bastano?
+- **Serve una valutazione d'impatto (DPIA, art. 35)?** L'orientamento è di no
+  — non c'è monitoraggio sistematico, è un gesto puntuale e volontario, e
+  scade — ma è esattamente il tipo di conclusione che va confermata da chi ne
+  risponde.
+- **Minori.** Un viaggio di gruppo può includere quattordicenni: cambia
+  qualcosa il fatto che a condividere la posizione sia l'organizzatore adulto
+  e non loro?
+
+Il testo già scritto sta in `privacy.html`, sezione **«A raccolta»**: sono
+sette righe più un elenco puntato, ed è quello il pezzo da far correggere.
+Il codice che lo implementa sta in `supabase-schema.sql` (sezione
+`A RACCOLTA`) e in `Index 2.1.html` (blocco `===== A RACCOLTA =====`); le
+garanzie qui sopra sono verificate da 17 prove sui permessi del database e 43
+sul comportamento dell'app.
+
 ### 3. Rifare la scheda quando cambia qualcosa
 
 Ogni volta che l'app inizia a raccogliere un dato nuovo o a parlare con un

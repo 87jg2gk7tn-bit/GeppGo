@@ -124,11 +124,22 @@ create index if not exists trips_owner_idx       on public.trips(owner);
 --
 --  Si toglie tutto e si rimette solo quello che c'e' scritto qui: cosi' il
 --  risultato dipende da questo file e non da cosa e' passato di li' prima.
+--
+--  Le tabelle sono TUTTE quelle che questo file governa, non solo le prime
+--  due. Il motivo e' preciso: qui sotto si buttano via anche le funzioni
+--  is_trip_member e is_trip_admin, e i permessi di foto, segnalazioni e
+--  raccolte ci si appoggiano. Lasciandoli in piedi, Postgres rifiuta di
+--  togliere la funzione ("cannot drop function ... because other objects
+--  depend on it") e il file si ferma a meta'.
+--  Non e' un caso di scuola: succede la SECONDA volta che si lancia questo
+--  file su un progetto vero, cioe' esattamente quello che c'e' scritto in
+--  cima che si puo' fare. Per un po' non e' stato vero.
 do $$
 declare p record;
 begin
   for p in select policyname, tablename from pg_policies
-            where schemaname='public' and tablename in ('trips','trip_members')
+            where schemaname='public'
+              and tablename in ('trips','trip_members','foto','segnalazioni','raccolte')
   loop
     execute format('drop policy if exists %I on public.%I', p.policyname, p.tablename);
   end loop;
