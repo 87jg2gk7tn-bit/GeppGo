@@ -263,12 +263,26 @@ va rifatto vedere.
     La prova controlla tutt'e due le cose: la misura **e** che nessuna area
     rubi il tocco alla vicina.
 
+    **Fatto — il giorno vuoto è un tasto, non un cartello.** Diceva *«tocca il
+    titolo per aprire la giornata»* e mandava la persona a cercare un titolo,
+    mentre il tasto che fa quella cosa le stava due centimetri sopra: adesso
+    il riquadro **è** il tasto e dice «Aggiungi la prima tappa».
+
+    Avevo fatto lo stesso a spese e biglietti, ed era sbagliato: **quelle due
+    schermate avevano già l'azione a un centimetro di distanza** — un tasto
+    «Aggiungi spesa» sotto, e in cima ai biglietti tutta una scheda «Aggiungi
+    biglietto» con tre modi. Il risultato erano due tasti identici uno sopra
+    l'altro. Tolto. La regola: *prima di aggiungere un'azione a una schermata,
+    si guarda la schermata* — con uno screenshot, non a memoria.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
-    per forza) e una passata sull'aspetto delle schermate più viste. Il
-    passaggio fra una schermata e l'altra è stato misurato ed è già a posto:
-    è un'`animation`, che a differenza di una `transition` parte anche su un
-    elemento appena mostrato.
+    per forza) e gli altri stati vuoti che sono ancora cartelli senza
+    un'azione vicina («Nessun luogo salvato», «Niente in time-table»,
+    «Nessuna voce ancora» nei bagagli) — **da guardare uno per uno prima di
+    toccarli.** Il passaggio fra una schermata e l'altra è stato misurato ed è
+    già a posto: è un'`animation`, che a differenza di una `transition` parte
+    anche su un elemento appena mostrato.
 15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
     funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
     modifica costa una pubblicazione invece di un salvataggio. Quello che il
@@ -530,6 +544,25 @@ qualcuno che risponde".
   «chi risponde in questo punto?» restituisce il foglio, e sembra un furto di
   tocchi quando è solo un foglio davanti. Una prova che misura i tocchi deve
   guardare dentro il foglio aperto, non dietro.
+- **Qui i font di Google non si scaricano, in CI sì.** È la seconda cosa
+  irraggiungibile da questo contenitore dopo la CDN di Supabase, e cambia le
+  misure: con i font veri il testo è più largo, la barra in basso scorre di
+  più e le voci ai bordi sporgono dalla pillola. Una prova che tasta un punto
+  «appena fuori» da un tasto lì trova la pagina invece della barra — verde in
+  locale per dieci giri, rossa in CI al primo. **Ogni prova che misura pixel
+  va lanciata anche a schermo stretto** (320 px), che è la condizione in cui
+  la differenza salta fuori — e per giunta è un telefono vero.
+- **Un'area tagliata non è area guadagnata.** Allargare un tasto con
+  `::after` dentro una striscia che scorre non serve a niente per la parte che
+  sborda: `overflow` la taglia. Una prova che somma gli scostamenti scritti
+  nel CSS misura le intenzioni; per misurare la realtà va intersecata con la
+  striscia che contiene il tasto.
+- **Prima di aggiungere qualcosa a una schermata, si guarda la schermata.**
+  Aggiungere un'azione allo stato vuoto delle spese e dei biglietti sembrava
+  un miglioramento ovvio; erano due tasti identici uno sopra l'altro, perché
+  l'azione su quelle schermate c'era già a un centimetro di distanza. Non si
+  vedeva leggendo il codice, si è visto con uno screenshot. Vale per ogni
+  modifica all'aspetto: **un'immagine prima e una dopo**, non la memoria.
 
 ---
 

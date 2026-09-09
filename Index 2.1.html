@@ -901,10 +901,18 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   display:grid;place-items:center;font-size:.7rem;font-weight:800;
   border:2px solid var(--surface);margin-right:-7px;
 }
+/* Il riquadro del giorno vuoto e' un tasto, non un cartello: quando non c'e'
+   niente in programma e' l'unica cosa da fare, e vale la pena che si tocchi
+   tutta invece di rimandare a un altro tasto piu' piccolo. */
 .hh-empty{
+  display:flex;flex-direction:column;align-items:center;gap:.35rem;width:100%;
   background:var(--surface);border:1px dashed var(--line);border-radius:var(--r-lg);
   padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
+  font-family:inherit;cursor:pointer;transition:var(--ease);
 }
+.hh-empty:active{transform:scale(.99)}
+.hh-empty-t{font-size:.86rem;color:var(--ink-faint)}
+.hh-empty-a{font-size:.92rem;font-weight:800;color:var(--green-deep)}
 
 /* ── riga dei viaggi aperti, col "+" fermo a destra ────────────── */
 .hh-tripbar{position:relative;display:flex;align-items:center;gap:.5rem;margin-bottom:.95rem}
@@ -3409,6 +3417,8 @@ Object.keys(DIZIONARIO_RESTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_
    vede subito di cosa parlano. */
 const DIZIONARIO_RACCOLTA={
   en:{
+    'Questa giornata è ancora vuota':'This day is still empty',
+    'Aggiungi la prima tappa':'Add the first stop',
     '📣 A raccolta':'📣 Gather round',
     'A raccolta':'Gather round',
     'Chiami tutti qui?':'Call everyone here?',
@@ -3429,6 +3439,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'the spot where you are right now'
   },
   es:{
+    'Questa giornata è ancora vuota':'Este día está todavía vacío',
+    'Aggiungi la prima tappa':'Añade la primera parada',
     '📣 A raccolta':'📣 Reunión',
     'A raccolta':'Reunión',
     'Chiami tutti qui?':'¿Llamas a todos aquí?',
@@ -3449,6 +3461,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'el punto donde estás ahora'
   },
   fr:{
+    'Questa giornata è ancora vuota':'Cette journée est encore vide',
+    'Aggiungi la prima tappa':'Ajoute la première étape',
     '📣 A raccolta':'📣 On se retrouve',
     'A raccolta':'On se retrouve',
     'Chiami tutti qui?':'Tu appelles tout le monde ici ?',
@@ -3469,6 +3483,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'l’endroit où tu es maintenant'
   },
   pt:{
+    'Questa giornata è ancora vuota':'Este dia ainda está vazio',
+    'Aggiungi la prima tappa':'Acrescenta a primeira paragem',
     '📣 A raccolta':'📣 Toca a reunir',
     'A raccolta':'Toca a reunir',
     'Chiami tutti qui?':'Chamas todos aqui?',
@@ -3493,7 +3509,7 @@ Object.keys(DIZIONARIO_RACCOLTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=676;
+const FRASI_IN_TUTTO=678;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4448,7 +4464,17 @@ function renderHomeHero(){
       ${a.notes?`<div class="hh-card-s">${esc(a.notes)}</div>`:''}
       ${av?`<div class="hh-avs">${av}</div>`:''}
     </div>`;
-  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
+  }).join('')}</div>`:
+  /* Il riquadro del giorno vuoto diceva "tocca il titolo per aprire la
+     giornata", e mandava la persona a cercare un titolo — mentre il tasto
+     che fa esattamente quella cosa gli sta due centimetri sopra. Adesso il
+     riquadro E' il tasto: e' la cosa piu' grande dello schermo in un momento
+     in cui non c'e' nient'altro da fare, ed e' giusto che sia lui a
+     rispondere al dito. */
+  `<button class="hh-empty" onclick="homeAdd()">
+      <span class="hh-empty-t">Questa giornata è ancora vuota</span>
+      <span class="hh-empty-a">Aggiungi la prima tappa</span>
+    </button>`}`);
   homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
   assicuraCittaDelGiorno(t,day);
   backfillActPhotos(t);

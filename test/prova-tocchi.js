@@ -50,11 +50,31 @@ const stato = { trips: [
 
   const guarda = async (pagina) => await page.evaluate(({ CLASSI, pagina }) => {
     if (pagina) go(pagina);
+    /* La striscia che contiene un tasto, quando scorre, lo taglia ai bordi:
+       la barra in basso ha nove voci e ne mostra cinque. Una voce mezza
+       fuori ha un angolo che cade SOPRA la pagina, non sopra la barra, e
+       chiedere lì "chi risponde?" darebbe la scheda che sta dietro — che non
+       è un furto di tocchi, è una voce non ancora scorsa in vista.
+       Questa distinzione è costata una CI rossa: in locale i font di Google
+       non si scaricano, le voci sono più strette e ci stanno tutte; sulla
+       macchina delle prove no. */
+    const scatola = el => {
+      let p = el.parentElement;
+      while (p && p !== document.body) {
+        const s = getComputedStyle(p);
+        if (/auto|scroll|hidden/.test(s.overflowX + s.overflowY)) return p.getBoundingClientRect();
+        p = p.parentElement;
+      }
+      return null;
+    };
     const vis = el => {
       const s = getComputedStyle(el);
       if (s.display === 'none' || s.visibility === 'hidden') return false;
       const b = el.getBoundingClientRect();
-      return b.width > 0 && b.height > 0 && b.top >= 0 && b.bottom <= innerHeight;
+      if (!(b.width > 0 && b.height > 0 && b.top >= 0 && b.bottom <= innerHeight)) return false;
+      const c = scatola(el);
+      // dentro la sua striscia per intero, se ne ha una che scorre
+      return !c || (b.left >= c.left - 1 && b.right <= c.right + 1);
     };
     const num = v => Math.abs(parseFloat(v) || 0);
     const piccoli = [], rubati = [], visti = [];
@@ -69,13 +89,22 @@ const stato = { trips: [
         const b = el.getBoundingClientRect();
         const a = getComputedStyle(el, '::after');
         const su = num(a.top), giu = num(a.bottom), sx = num(a.left), dx = num(a.right);
-        const h = Math.round(b.height + su + giu), w = Math.round(b.width + sx + dx);
+        /* L'area vera, non quella sulla carta: dentro una striscia che
+           scorre, quello che sborda viene tagliato — e un'area tagliata non
+           è area guadagnata. Si conta solo quello che resta dentro. */
+        const cont = scatola(el);
+        let alto = b.top - su, basso = b.bottom + giu, sin = b.left - sx, des = b.right + dx;
+        if (cont) {
+          alto = Math.max(alto, cont.top); basso = Math.min(basso, cont.bottom);
+          sin = Math.max(sin, cont.left); des = Math.min(des, cont.right);
+        }
+        const h = Math.round(basso - alto), w = Math.round(des - sin);
         visti.push(c);
         if (h < 44 || w < 44) piccoli.push(`${c} ${w}×${h}`);
-        /* I quattro angoli dell'area allargata: se lì risponde un altro
-           tasto, quel tasto sta rubando i tocchi. */
-        const angoli = [[b.left - sx + 2, b.top - su + 2], [b.right + dx - 2, b.top - su + 2],
-                        [b.left - sx + 2, b.bottom + giu - 2], [b.right + dx - 2, b.bottom + giu - 2]];
+        /* I quattro angoli dell'area vera: se lì risponde un altro tasto,
+           quel tasto sta rubando i tocchi. */
+        const angoli = [[sin + 2, alto + 2], [des - 2, alto + 2],
+                        [sin + 2, basso - 2], [des - 2, basso - 2]];
         for (const [x, y] of angoli) {
           const sotto = document.elementFromPoint(x, y);
           if (!sotto) continue;
@@ -90,13 +119,23 @@ const stato = { trips: [
   }, { CLASSI, pagina });
 
   const tutti = { piccoli: [], rubati: [], visti: [] };
-  for (const pg of [null, 'discover', 'money', 'hotels', 'tickets', 'trips']) {
-    const m = await guarda(pg);
-    await page.evaluate(() => new Promise(r2 => setTimeout(r2, 350)));
-    tutti.piccoli.push(...m.piccoli);
-    tutti.rubati.push(...m.rubati);
-    tutti.visti.push(...m.visti);
+  /* Due larghezze, non una. Su uno schermo stretto la barra in basso scorre
+     di più e le voci ai bordi sporgono: è la condizione in cui una prova
+     scritta con leggerezza dà risposte sbagliate, ed è anche un telefono
+     vero — un iPhone SE è largo 320. */
+  for (const largo of [390, 320]) {
+    await page.setViewportSize({ width: largo, height: 844 });
+    await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
+    for (const pg of [null, 'discover', 'money', 'hotels', 'tickets', 'trips']) {
+      const m = await guarda(pg);
+      await page.evaluate(() => new Promise(r2 => setTimeout(r2, 350)));
+      tutti.piccoli.push(...m.piccoli.map(x => x + ' (a ' + largo + ')'));
+      tutti.rubati.push(...m.rubati.map(x => x + ' (a ' + largo + ')'));
+      tutti.visti.push(...m.visti);
+    }
   }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
 
   /* Le righe delle liste sono il posto dove i tasti erano più piccoli di
      tutti — 30 e 32 px scritti a mano, fuori dalla misura di casa. Vanno
@@ -159,6 +198,35 @@ const stato = { trips: [
      pillola nera che si sposta): quello che conta è che non ce ne siano
      tanti muti. */
   ok('quasi tutti rispondono al tocco', muti.length <= 3, 'muti: ' + (muti.join(', ') || 'nessuno'));
+
+  // ── il giorno vuoto è un tasto, non un cartello ─────────────────────────
+  // Diceva "tocca il titolo per aprire la giornata", e mandava la persona a
+  // cercare un titolo mentre il tasto che fa quella cosa gli stava due
+  // centimetri sopra. Quando non c'è niente in programma è l'unica cosa da
+  // fare sullo schermo: è giusto che sia lui a rispondere al dito.
+  const vuoto = await page.evaluate(async () => {
+    const t = T();
+    t.pois = []; t.days.forEach(d => d.activities = []);
+    save(); renderAll(); go('plan');
+    await new Promise(r2 => setTimeout(r2, 500));
+    const el = document.querySelector('.hh-empty');
+    if (!el) return { c: 'non c\'è' };
+    const b = el.getBoundingClientRect();
+    let chiamato = false;
+    const vero = window.homeAdd;
+    window.homeAdd = () => { chiamato = true; };
+    // si tocca il centro, come farebbe un dito
+    document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2).click();
+    await new Promise(r2 => setTimeout(r2, 150));
+    window.homeAdd = vero;
+    return { c: 'c\'è', tasto: el.tagName, alto: Math.round(b.height),
+             testo: el.innerText.replace(/\s+/g, ' ').trim(), chiamato };
+  });
+  ok('il giorno vuoto dice cosa fare, invece di mandarti a cercare',
+     /Aggiungi la prima tappa/.test(vuoto.testo || ''), vuoto.testo || vuoto.c);
+  ok('ed è un tasto vero, non un cartello', vuoto.tasto === 'BUTTON', String(vuoto.tasto));
+  ok('toccandolo si aggiunge la tappa', vuoto.chiamato === true);
+  ok('ed è grande abbastanza da non poterlo sbagliare', vuoto.alto >= 44, vuoto.alto + ' px');
 
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;

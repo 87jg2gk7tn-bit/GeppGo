@@ -223,6 +223,20 @@ piccoli a vedersi.** Se un giorno qualcuno «sistemasse» la faccenda mettendo
 del padding vero, l'app cambierebbe faccia — ed è esattamente quello che non
 si vuole.
 
+**Due cose imparate da una CI rossa**, e sono il motivo per cui la prova è
+scritta così:
+
+- **si misura a 390 px e a 320.** Qui i font di Google non si scaricano, in CI
+  sì: con i font veri il testo è più largo, la barra in basso scorre di più e
+  le voci ai bordi sporgono dalla pillola. La prova andava a tastare un punto
+  fuori dalla barra e trovava la scheda dietro — verde in locale per dieci
+  giri, rossa in CI al primo. A 320 px la differenza salta fuori anche qui, e
+  in più è un telefono vero.
+- **un'area tagliata non conta.** Allargare un tasto dentro una striscia che
+  scorre non serve per la parte che sborda: `overflow` la taglia. Sommare gli
+  scostamenti scritti nel CSS misurerebbe le intenzioni, non la realtà —
+  quindi l'area viene intersecata con la striscia che contiene il tasto.
+
 ## A raccolta
 
 ```sh
