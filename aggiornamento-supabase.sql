@@ -15,7 +15,7 @@
 -- ============================================================================
 
 
--- ── 1 · Le miniature delle foto ─────────────────────────────────────────────
+-- -- 1 - Le miniature delle foto ----------------------------------------------------------------------
 --  L'indirizzo della copia piccola, accanto a quello della foto piena. Sta
 --  fuori dal "create table" apposta: su una tabella che esiste gia', il create
 --  non torna indietro ad aggiungere una colonna.
@@ -24,7 +24,7 @@
 alter table public.foto add column if not exists percorso_mini text;
 
 
--- ── 2 · A raccolta ──────────────────────────────────────────────────────────
+-- -- 2 - A raccolta ----------------------------------------------------------------------
 create table if not exists public.raccolte (
   id          uuid             primary key default gen_random_uuid(),
   trip_id     uuid             not null references public.trips(id) on delete cascade,
@@ -106,7 +106,7 @@ create policy racc_delete on public.raccolte
 drop policy if exists racc_update on public.raccolte;
 
 
--- ── 3 · Cancellare l'account porta via anche le chiamate ────────────────────
+-- -- 3 - Cancellare l'account porta via anche le chiamate ----------------------------------------------------------------------
 --  Dentro una chiamata c'e' un posto in cui sei stato: se ne va con te.
 create or replace function public.elimina_account()
 returns void
@@ -159,7 +159,7 @@ begin
 end;
 $$;
 
--- ── 4 · Il tempo reale sulle chiamate ───────────────────────────────────────
+-- -- 4 - Il tempo reale sulle chiamate ----------------------------------------------------------------------
 --  Senza questo la chiamata arriverebbe al giro di sincronizzazione dopo, e
 --  una chiamata in ritardo e' gente che ti aspetta in piazza.
 do $$
