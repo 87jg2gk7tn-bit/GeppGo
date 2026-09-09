@@ -249,10 +249,26 @@ va rifatto vedere.
     tutto arriva dov'era diretto, senza il viaggio — togliere le animazioni e
     basta lascerebbe le cose a metà strada.
 
+    **Fatto — tutto quello che si tocca arriva a 44×44.** Misurato: la barra
+    in basso era alta 41 px, le scorciatoie della home 27, il «+» della
+    giornata 26, la X della pubblicità 14, i tasti a icona delle liste 30 e
+    32. Apple indica 44 come minimo e qui non è burocrazia: l'app si usa
+    camminando, con una mano sola, e un tasto da 27 px lo si sbaglia.
+    **L'aspetto non è cambiato**: cresce solo l'area invisibile che risponde
+    al dito (`::after`), che è il mestiere che fa iOS per conto suo. Due sole
+    cose si vedono, e sono volute: i due tondi col «+» erano più piccoli di
+    qualunque altra cosa nella loro riga e non sembravano tasti, e le
+    scorciatoie della home hanno più aria fra una riga e l'altra — è lo spazio
+    che serve perché la riga di sotto non si prenda i tocchi di quella sopra.
+    La prova controlla tutt'e due le cose: la misura **e** che nessuna area
+    rubi il tocco alla vicina.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
-    per forza), il passaggio fra una schermata e l'altra, e una passata
-    sull'aspetto delle schermate più viste.
+    per forza) e una passata sull'aspetto delle schermate più viste. Il
+    passaggio fra una schermata e l'altra è stato misurato ed è già a posto:
+    è un'`animation`, che a differenza di una `transition` parte anche su un
+    elemento appena mostrato.
 15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
     funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
     modifica costa una pubblicazione invece di un salvataggio. Quello che il
@@ -504,6 +520,16 @@ qualcuno che risponde".
   layout per finire la discesa, senza `pointer-events:none` si mangia i tocchi
   per un terzo di secondo dopo essere stato chiuso — e l'app sembra bloccata
   proprio nel momento in cui uno riprende a toccarla.
+- **Allargare l'area di un tasto può rubare il tocco a quello accanto**, e il
+  risultato è peggio di un tasto piccolo: il dito va nel posto giusto e
+  succede la cosa sbagliata. Ogni volta che si allarga un'area invisibile va
+  controllato lo spazio fra i vicini — la prova lo fa toccando i quattro
+  angoli di ogni area e guardando chi risponde, ed è così che sono venuti
+  fuori i quattro tasti della schermata delle spese.
+- **Con un foglio aperto, tutto quello che sta dietro è coperto.** Chiedere
+  «chi risponde in questo punto?» restituisce il foglio, e sembra un furto di
+  tocchi quando è solo un foglio davanti. Una prova che misura i tocchi deve
+  guardare dentro il foglio aperto, non dietro.
 
 ---
 

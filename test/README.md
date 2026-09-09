@@ -194,6 +194,35 @@ grande quanto lo schermo per un terzo di secondo — e che con «riduci il
 movimento» acceso le animazioni diventino **istantanee e non sparite**:
 togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
 
+## Quanto è grande quello che si tocca
+
+```sh
+node test/prova-tocchi.js   # 5 controlli su tutti i tasti dell'app
+```
+
+Apple indica **44×44** come minimo, e non è un capriccio da linee guida:
+GeppGo si usa camminando per una città che non si conosce, con una mano sola,
+di fretta. Un tasto da 27 px lo si sbaglia — e sbagliarlo vuol dire aprire la
+cosa accanto.
+
+Misurato prima di questa prova: la barra in basso era alta **41 px**, le
+scorciatoie della home **27**, il «+» della giornata **26**, la X della
+pubblicità **14**. Niente di tutto questo si vedeva leggendo il codice.
+
+La correzione allarga l'area invisibile che risponde al dito (`::after`) senza
+toccare l'aspetto, e per questo la prova controlla **due cose insieme**:
+
+1. che ogni tasto arrivi a 44×44;
+2. che le aree allargate **non si rubino i tocchi a vicenda**. Un'area
+   invisibile che copre il tasto accanto è peggio di un tasto piccolo: il dito
+   va nel posto giusto e succede la cosa sbagliata. Si controlla toccando i
+   quattro angoli di ogni area e guardando chi risponde.
+
+C'è anche un controllo che sembra strano e non lo è: **che i tasti restino
+piccoli a vedersi.** Se un giorno qualcuno «sistemasse» la faccenda mettendo
+del padding vero, l'app cambierebbe faccia — ed è esattamente quello che non
+si vuole.
+
 ## A raccolta
 
 ```sh
