@@ -226,12 +226,18 @@ si vuole.
 **Due cose imparate da una CI rossa**, e sono il motivo per cui la prova è
 scritta così:
 
-- **si misura a 390 px e a 320.** Qui i font di Google non si scaricano, in CI
-  sì: con i font veri il testo è più largo, la barra in basso scorre di più e
-  le voci ai bordi sporgono dalla pillola. La prova andava a tastare un punto
-  fuori dalla barra e trovava la scheda dietro — verde in locale per dieci
-  giri, rossa in CI al primo. A 320 px la differenza salta fuori anche qui, e
-  in più è un telefono vero.
+- **si misura tre volte: a 390 px, a 320, e a 390 coi font finti larghi.**
+  Qui i font di Google non si scaricano, in CI sì: con i font veri il testo è
+  più largo, la barra in basso scorre di più e le voci ai bordi finiscono a
+  cavallo del bordo della pillola. La prova andava a tastare un punto fuori
+  dalla barra e trovava la scheda dietro — verde in locale per dieci giri,
+  rossa in CI due volte di fila.
+  La terza passata allarga apposta le voci della barra e **riproduce quel
+  caso qui**: non serve più aspettare la CI per scoprirlo. La seconda (320 px)
+  è un iPhone SE, cioè un telefono vero.
+  Tolte le protezioni, la prova torna rossa anche nella passata coi font
+  larghi: è così che si sa che quella passata sta davvero facendo il suo
+  lavoro.
 - **un'area tagliata non conta.** Allargare un tasto dentro una striscia che
   scorre non serve per la parte che sborda: `overflow` la taglia. Sommare gli
   scostamenti scritti nel CSS misurerebbe le intenzioni, non la realtà —

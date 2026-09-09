@@ -102,15 +102,26 @@ const stato = { trips: [
         visti.push(c);
         if (h < 44 || w < 44) piccoli.push(`${c} ${w}×${h}`);
         /* I quattro angoli dell'area vera: se lì risponde un altro tasto,
-           quel tasto sta rubando i tocchi. */
+           quel tasto sta rubando i tocchi.
+           Un tasto a cavallo del bordo della sua striscia dà un riquadro
+           rovesciato (sinistra oltre destra): lì la sonda finirebbe fuori
+           dalla barra, sulla pagina dietro, e griderebbe al furto per un
+           tasto che è solo mezzo fuori vista. Questo caso ha fatto due CI
+           rosse: si salta. */
+        if (des - sin < 4 || basso - alto < 4) continue;
         const angoli = [[sin + 2, alto + 2], [des - 2, alto + 2],
                         [sin + 2, basso - 2], [des - 2, basso - 2]];
         for (const [x, y] of angoli) {
+          // mai tastare fuori dalla striscia che contiene il tasto
+          if (cont && (x < cont.left + 1 || x > cont.right - 1 ||
+                       y < cont.top + 1 || y > cont.bottom - 1)) continue;
           const sotto = document.elementFromPoint(x, y);
           if (!sotto) continue;
           if (sotto === el || el.contains(sotto) || sotto.closest('.' + c) === el) continue;
+          // rispondere il contenitore non è rubare: è la barra sotto al tasto
+          if (sotto.contains(el)) continue;
           const chi = sotto.closest(CLASSI.map(k => '.' + k).join(',')) || sotto.closest('button,[onclick]');
-          if (chi && chi !== el)
+          if (chi && chi !== el && !chi.contains(el))
             rubati.push(`${c} "${(el.textContent || '').trim().slice(0, 12)}" → ${(chi.className || '').split(' ')[0]}`);
         }
       }
@@ -123,18 +134,35 @@ const stato = { trips: [
      di più e le voci ai bordi sporgono: è la condizione in cui una prova
      scritta con leggerezza dà risposte sbagliate, ed è anche un telefono
      vero — un iPhone SE è largo 320. */
-  for (const largo of [390, 320]) {
+  /* La terza passata simula i font veri, che da qui non si scaricano ma in
+     CI sì: il testo più largo fa scorrere di più la barra in basso e manda
+     le voci ai bordi a cavallo del bordo della pillola. È il caso che ha
+     fatto rossa la CI due volte mentre qui era verde — adesso si riproduce
+     anche qui, e non serve più aspettare la CI per scoprirlo. */
+  const LARGHEZZE = [[390, false], [320, false], [390, true]];
+  for (const [largo, fontLarghi] of LARGHEZZE) {
     await page.setViewportSize({ width: largo, height: 844 });
+    await page.evaluate((on) => {
+      const vecchio = document.getElementById('provaFontLarghi');
+      if (vecchio) vecchio.remove();
+      if (!on) return;
+      const st = document.createElement('style');
+      st.id = 'provaFontLarghi';
+      st.textContent = '.nav-item{padding-left:1.1rem!important;padding-right:1.1rem!important}';
+      document.head.appendChild(st);
+    }, fontLarghi);
     await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
     for (const pg of [null, 'discover', 'money', 'hotels', 'tickets', 'trips']) {
       const m = await guarda(pg);
       await page.evaluate(() => new Promise(r2 => setTimeout(r2, 350)));
-      tutti.piccoli.push(...m.piccoli.map(x => x + ' (a ' + largo + ')'));
-      tutti.rubati.push(...m.rubati.map(x => x + ' (a ' + largo + ')'));
+      const dove = ' (a ' + largo + (fontLarghi ? ', font larghi' : '') + ')';
+      tutti.piccoli.push(...m.piccoli.map(x => x + dove));
+      tutti.rubati.push(...m.rubati.map(x => x + dove));
       tutti.visti.push(...m.visti);
     }
   }
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => { const v = document.getElementById('provaFontLarghi'); if (v) v.remove(); });
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
 
   /* Le righe delle liste sono il posto dove i tasti erano più piccoli di

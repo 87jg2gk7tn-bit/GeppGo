@@ -547,11 +547,16 @@ qualcuno che risponde".
 - **Qui i font di Google non si scaricano, in CI sì.** È la seconda cosa
   irraggiungibile da questo contenitore dopo la CDN di Supabase, e cambia le
   misure: con i font veri il testo è più largo, la barra in basso scorre di
-  più e le voci ai bordi sporgono dalla pillola. Una prova che tasta un punto
-  «appena fuori» da un tasto lì trova la pagina invece della barra — verde in
-  locale per dieci giri, rossa in CI al primo. **Ogni prova che misura pixel
-  va lanciata anche a schermo stretto** (320 px), che è la condizione in cui
-  la differenza salta fuori — e per giunta è un telefono vero.
+  più e le voci ai bordi finiscono a cavallo del bordo della pillola. Una
+  prova che tasta un punto «appena fuori» da un tasto lì trova la pagina
+  invece della barra — verde in locale per dieci giri, **rossa in CI due
+  volte di fila**.
+  La prima correzione (misurare anche a 320 px) non è bastata: il caso vero
+  non era «lo schermo stretto», era «il testo più largo». La correzione che
+  regge è **riprodurre la condizione**: `prova-tocchi.js` fa una passata in
+  cui allarga apposta le voci della barra, e quel caso adesso si vede qui.
+  La regola generale: quando la CI vede una cosa che qui non si vede, non si
+  aggira — **si riproduce**, altrimenti si scopre la volta dopo.
 - **Un'area tagliata non è area guadagnata.** Allargare un tasto con
   `::after` dentro una striscia che scorre non serve a niente per la parte che
   sborda: `overflow` la taglia. Una prova che somma gli scostamenti scritti

@@ -387,8 +387,13 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 /* --- SPESE STILE TRICOUNT --- */
 .money-hero{background:var(--grad);color:#fff;border-radius:var(--r-xl);padding:1.3rem;margin-bottom:.9rem;box-shadow:var(--sh-green);position:relative;overflow:hidden}
 .money-hero::after{content:'';position:absolute;right:-30px;top:-40px;width:170px;height:170px;background:radial-gradient(circle,rgba(217,201,168,.22),transparent 70%)}
-.mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:.9rem}
-.mh-name{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:600}
+.mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:.9rem;gap:.6rem}
+/* Su uno schermo stretto (un iPhone SE e' largo 320) i quattro tasti a icona
+   si stringevano per far posto al nome del viaggio, e da 38 px scendevano a
+   37: sotto il minimo che si riesce a toccare senza sbagliare. A cedere deve
+   essere il nome, che si accorcia e si legge lo stesso; i tasti no. */
+.mh-top>div:first-child{min-width:0}
+.mh-name{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mh-sub{font-size:.76rem;opacity:.85;margin-top:.15rem;font-weight:600}
 .mh-tot{font-family:'Fraunces',serif;font-size:2.1rem;font-weight:600;line-height:1;position:relative}
 .mh-lbl{font-size:.75rem;opacity:.85;margin-top:.25rem;position:relative}
@@ -1065,6 +1070,9 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 .hh-add::after     {inset:-7px}        /* 30 → 44 */
 .ibtn::after       {inset:-3px}        /* 38 → 44 */
 .edit-ic::after    {inset:-5px}        /* 34 → 44 */
+/* Un tasto che si stringe per far posto al testo accanto torna sotto misura
+   proprio sugli schermi piccoli, che sono quelli dove serve di piu'. */
+.ibtn,.edit-ic{flex-shrink:0}
 .seg-btn::after    {inset:-5px 0}      /* 34 → 44 */
 .gps-pill::after,.th-btn::after{inset:-3px}   /* 38 → 44 */
 .ad-x::after       {inset:-15px -8px}  /* 14 → 44 */
