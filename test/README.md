@@ -194,6 +194,55 @@ grande quanto lo schermo per un terzo di secondo — e che con «riduci il
 movimento» acceso le animazioni diventino **istantanee e non sparite**:
 togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
 
+## Quanto è grande quello che si tocca
+
+```sh
+node test/prova-tocchi.js   # 5 controlli su tutti i tasti dell'app
+```
+
+Apple indica **44×44** come minimo, e non è un capriccio da linee guida:
+GeppGo si usa camminando per una città che non si conosce, con una mano sola,
+di fretta. Un tasto da 27 px lo si sbaglia — e sbagliarlo vuol dire aprire la
+cosa accanto.
+
+Misurato prima di questa prova: la barra in basso era alta **41 px**, le
+scorciatoie della home **27**, il «+» della giornata **26**, la X della
+pubblicità **14**. Niente di tutto questo si vedeva leggendo il codice.
+
+La correzione allarga l'area invisibile che risponde al dito (`::after`) senza
+toccare l'aspetto, e per questo la prova controlla **due cose insieme**:
+
+1. che ogni tasto arrivi a 44×44;
+2. che le aree allargate **non si rubino i tocchi a vicenda**. Un'area
+   invisibile che copre il tasto accanto è peggio di un tasto piccolo: il dito
+   va nel posto giusto e succede la cosa sbagliata. Si controlla toccando i
+   quattro angoli di ogni area e guardando chi risponde.
+
+C'è anche un controllo che sembra strano e non lo è: **che i tasti restino
+piccoli a vedersi.** Se un giorno qualcuno «sistemasse» la faccenda mettendo
+del padding vero, l'app cambierebbe faccia — ed è esattamente quello che non
+si vuole.
+
+**Tre CI rosse per imparare una cosa sola**, e sono il motivo per cui la
+verifica delle sovrapposizioni è geometrica e non fatta chiedendo al browser
+«chi risponde in questo punto?».
+
+Quella domanda dà risposte diverse in posti diversi: la barra in basso è una
+pillola con gli angoli tondi, e il browser rispetta il raggio nel decidere chi
+risponde — l'angolo dell'area allargata di una voce ci cade *fuori*, e fuori
+c'è la pagina. La risposta cambia anche con la larghezza dello schermo, con i
+font (qui quelli di Google non si scaricano, in CI sì) e con quanto la barra è
+scorsa. Verde qui per dieci giri, rossa in CI tre volte.
+
+Adesso la prova confronta i rettangoli delle aree fra loro e dice anche di
+quanti pixel si sovrappongono (`per 18×45 px`). È la domanda giusta — *due
+tasti vicini si prendono lo stesso pezzo di schermo?* — e i rettangoli danno
+la stessa risposta ovunque.
+
+Resta il giro su **tre condizioni**: 390 px, 320 px (un iPhone SE, cioè un
+telefono vero) e 390 con le voci della barra allargate apposta, che simula i
+font che qui non arrivano.
+
 ## A raccolta
 
 ```sh

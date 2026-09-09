@@ -116,6 +116,9 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--p
 .search-ic{position:absolute;left:.95rem;top:50%;transform:translateY(-50%);color:var(--ink-faint)}
 .seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:.25rem;margin-bottom:.95rem;gap:.25rem}
 .seg-btn{flex:1;padding:.6rem;border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:700;font-size:.85rem;color:var(--ink-soft);border-radius:calc(var(--r-md) - 4px);transition:var(--ease)}
+/* Era l'unico tasto dell'app che non diceva niente quando lo si toccava: su
+   una connessione lenta uno lo tocca due volte perche' non sa se ha preso. */
+.seg-btn:active{transform:scale(.96)}
 .seg-btn.active{background:var(--surface);color:var(--blue);box-shadow:var(--sh-xs)}
 .results{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
 .res{padding:.95rem;border-bottom:1px solid var(--line-soft)}
@@ -384,14 +387,22 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 /* --- SPESE STILE TRICOUNT --- */
 .money-hero{background:var(--grad);color:#fff;border-radius:var(--r-xl);padding:1.3rem;margin-bottom:.9rem;box-shadow:var(--sh-green);position:relative;overflow:hidden}
 .money-hero::after{content:'';position:absolute;right:-30px;top:-40px;width:170px;height:170px;background:radial-gradient(circle,rgba(217,201,168,.22),transparent 70%)}
-.mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:.9rem}
-.mh-name{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:600}
+.mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:.9rem;gap:.6rem}
+/* Su uno schermo stretto (un iPhone SE e' largo 320) i quattro tasti a icona
+   si stringevano per far posto al nome del viaggio, e da 38 px scendevano a
+   37: sotto il minimo che si riesce a toccare senza sbagliare. A cedere deve
+   essere il nome, che si accorcia e si legge lo stesso; i tasti no. */
+.mh-top>div:first-child{min-width:0}
+.mh-name{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mh-sub{font-size:.76rem;opacity:.85;margin-top:.15rem;font-weight:600}
 .mh-tot{font-family:'Fraunces',serif;font-size:2.1rem;font-weight:600;line-height:1;position:relative}
 .mh-lbl{font-size:.75rem;opacity:.85;margin-top:.25rem;position:relative}
 .mh-me{display:inline-block;margin-top:.9rem;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:.4rem .85rem;border-radius:100px;font-size:.82rem;font-weight:800;position:relative}
 .mh-me.neg{background:rgba(184,92,56,.55)}
-.ibtn.ghost{background:rgba(255,255,255,.18);border-color:transparent;color:#fff;width:34px;height:34px;font-size:.95rem;backdrop-filter:blur(8px)}
+/* 38 come tutti gli altri tasti a icona dell'app, non 34: a 34 l'area da
+   toccare non ci arrivava a 44 senza pestare i piedi al tasto accanto, e
+   sono le quattro azioni principali della schermata delle spese. */
+.ibtn.ghost{background:rgba(255,255,255,.18);border-color:transparent;color:#fff;width:38px;height:38px;font-size:.95rem;backdrop-filter:blur(8px)}
 /* Il "+" della testata è l'azione principale, non un'utilità come le altre:
    stesso formato, ma più marcato. Croce disegnata, non il carattere "+",
    che a seconda del font non sta mai in mezzo al tondo. */
@@ -574,7 +585,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-mode{cursor:pointer;opacity:.4;font-size:.95rem}
 .tt-travel-mode.on{opacity:1}
 
-.edit-ic{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
+.edit-ic{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
 /* Il tic per segnare chi ha gia' dato la sua parte: verde pieno quando non
    manca piu' nessuno, contornato finche' qualcuno deve ancora dare. */
 .exp-btns{display:flex;flex-direction:column;gap:.3rem;flex-shrink:0}
@@ -895,10 +906,18 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   display:grid;place-items:center;font-size:.7rem;font-weight:800;
   border:2px solid var(--surface);margin-right:-7px;
 }
+/* Il riquadro del giorno vuoto e' un tasto, non un cartello: quando non c'e'
+   niente in programma e' l'unica cosa da fare, e vale la pena che si tocchi
+   tutta invece di rimandare a un altro tasto piu' piccolo. */
 .hh-empty{
+  display:flex;flex-direction:column;align-items:center;gap:.35rem;width:100%;
   background:var(--surface);border:1px dashed var(--line);border-radius:var(--r-lg);
   padding:1.3rem;text-align:center;font-size:.86rem;color:var(--ink-faint);
+  font-family:inherit;cursor:pointer;transition:var(--ease);
 }
+.hh-empty:active{transform:scale(.99)}
+.hh-empty-t{font-size:.86rem;color:var(--ink-faint)}
+.hh-empty-a{font-size:.92rem;font-weight:800;color:var(--green-deep)}
 
 /* ── riga dei viaggi aperti, col "+" fermo a destra ────────────── */
 .hh-tripbar{position:relative;display:flex;align-items:center;gap:.5rem;margin-bottom:.95rem}
@@ -1015,6 +1034,67 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
    diretto, solo senza il viaggio. Cosi' niente si rompe e niente resta a
    meta' strada — che e' quello che succede togliendo le animazioni e basta.
    Sta in fondo al foglio di stile apposta, per vincere su tutto il resto. */
+/* ── Tutto quello che si tocca dev'essere grande abbastanza ──────────────
+   Misurato con l'app aperta: la barra in basso era alta 41 px, le
+   scorciatoie della home 27, il "+" della giornata 26, la X della
+   pubblicita' 14. Il minimo che Apple indica e' 44x44, e non e' un capriccio
+   da linee guida: GeppGo si usa camminando per una citta' che non si
+   conosce, con una mano sola, spesso con i guanti o sotto la pioggia. Un
+   tasto da 27 px lo si sbaglia, e sbagliarlo vuol dire aprire la cosa
+   accanto.
+
+   La correzione NON cambia l'aspetto: i tasti restano grandi come sono, e a
+   crescere e' solo l'area invisibile che risponde al dito (::after). E' lo
+   stesso mestiere che fa iOS per conto suo, e l'unico modo di guadagnare
+   spazio da toccare senza rifare il disegno di tutta l'app.
+
+   Due cose vanno tenute d'occhio, e c'e' una prova che le controlla:
+   - le aree non si devono sovrapporre, se no un tasto ruba il tocco al suo
+     vicino ed e' peggio di prima. Per questo dove i tasti vanno a capo il
+     passo fra le righe e' cresciuto quanto basta;
+   - dentro una striscia che scorre, quello che sborda viene tagliato: li'
+     l'area cresce solo fin dentro il margine interno della striscia, che e'
+     stato allargato apposta e compensato sul margine esterno perche' niente
+     si sposti. */
+.nav-item,.hh-act,.hh-day,.hh-trip,.hh-trip-add,.hh-add,
+.ibtn,.edit-ic,.seg-btn,.gps-pill,.th-btn,.ad-x{position:relative}
+.nav-item::after,.hh-act::after,.hh-day::after,.hh-trip::after,
+.hh-trip-add::after,.hh-add::after,.ibtn::after,.edit-ic::after,.seg-btn::after,
+.gps-pill::after,.th-btn::after,.ad-x::after{content:'';position:absolute}
+
+.nav-item::after   {inset:-3px 0}      /* 41 → 47 di altezza */
+.hh-act::after     {inset:-9px -2px}   /* 27 → 45 */
+.hh-day::after     {inset:-7px -2px}   /* 31 → 45 */
+.hh-trip::after    {inset:-9px -2px}   /* 27 → 45 */
+.hh-trip-add::after{inset:-4px}        /* 36 → 44 */
+.hh-add::after     {inset:-7px}        /* 30 → 44 */
+.ibtn::after       {inset:-3px}        /* 38 → 44 */
+.edit-ic::after    {inset:-5px}        /* 34 → 44 */
+/* Un tasto che si stringe per far posto al testo accanto torna sotto misura
+   proprio sugli schermi piccoli, che sono quelli dove serve di piu'. */
+.ibtn,.edit-ic{flex-shrink:0}
+.seg-btn::after    {inset:-5px 0}      /* 34 → 44 */
+.gps-pill::after,.th-btn::after{inset:-3px}   /* 38 → 44 */
+.ad-x::after       {inset:-15px -8px}  /* 14 → 44 */
+
+/* I due tondi con il "+" crescono di qualche pixel anche a vedersi: da 26 e
+   31 px erano piu' piccoli di qualunque altra cosa nella loro riga, e non
+   sembravano tasti. */
+.hh-add{width:30px;height:30px}
+.hh-trip-add{width:36px;height:36px}
+
+/* Le strisce che scorrono: un po' di margine interno perche' l'area da
+   toccare ci stia dentro senza essere tagliata, e altrettanto tolto da
+   quello esterno perche' a schermo non si muova niente. I conti tornano al
+   pixel apposta: la prima volta la striscia dei viaggi aveva spinto giu'
+   tutta la pagina di 14 px, e non era una decisione - era una svista. */
+.hh-days{margin-top:1.05rem;padding-top:.45rem;padding-bottom:.5rem;margin-bottom:-.1rem}
+.hh-trips{padding:.6rem 0;margin:-.6rem 0}
+/* Quando le scorciatoie vanno a capo, fra una riga e l'altra ci vuole lo
+   spazio che le due aree occupano (9 px + 9 px): senza, la riga di sotto si
+   prenderebbe i tocchi di quella di sopra. */
+.hh-acts{row-gap:1.2rem}
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{
     animation-duration:.01ms!important;
@@ -3345,6 +3425,8 @@ Object.keys(DIZIONARIO_RESTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_
    vede subito di cosa parlano. */
 const DIZIONARIO_RACCOLTA={
   en:{
+    'Questa giornata è ancora vuota':'This day is still empty',
+    'Aggiungi la prima tappa':'Add the first stop',
     '📣 A raccolta':'📣 Gather round',
     'A raccolta':'Gather round',
     'Chiami tutti qui?':'Call everyone here?',
@@ -3365,6 +3447,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'the spot where you are right now'
   },
   es:{
+    'Questa giornata è ancora vuota':'Este día está todavía vacío',
+    'Aggiungi la prima tappa':'Añade la primera parada',
     '📣 A raccolta':'📣 Reunión',
     'A raccolta':'Reunión',
     'Chiami tutti qui?':'¿Llamas a todos aquí?',
@@ -3385,6 +3469,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'el punto donde estás ahora'
   },
   fr:{
+    'Questa giornata è ancora vuota':'Cette journée est encore vide',
+    'Aggiungi la prima tappa':'Ajoute la première étape',
     '📣 A raccolta':'📣 On se retrouve',
     'A raccolta':'On se retrouve',
     'Chiami tutti qui?':'Tu appelles tout le monde ici ?',
@@ -3405,6 +3491,8 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'l’endroit où tu es maintenant'
   },
   pt:{
+    'Questa giornata è ancora vuota':'Este dia ainda está vazio',
+    'Aggiungi la prima tappa':'Acrescenta a primeira paragem',
     '📣 A raccolta':'📣 Toca a reunir',
     'A raccolta':'Toca a reunir',
     'Chiami tutti qui?':'Chamas todos aqui?',
@@ -3429,7 +3517,7 @@ Object.keys(DIZIONARIO_RACCOLTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=676;
+const FRASI_IN_TUTTO=678;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4384,7 +4472,17 @@ function renderHomeHero(){
       ${a.notes?`<div class="hh-card-s">${esc(a.notes)}</div>`:''}
       ${av?`<div class="hh-avs">${av}</div>`:''}
     </div>`;
-  }).join('')}</div>`:`<div class="hh-empty">Nessuna tappa per questo giorno — tocca il titolo per aprire la giornata</div>`}`);
+  }).join('')}</div>`:
+  /* Il riquadro del giorno vuoto diceva "tocca il titolo per aprire la
+     giornata", e mandava la persona a cercare un titolo — mentre il tasto
+     che fa esattamente quella cosa gli sta due centimetri sopra. Adesso il
+     riquadro E' il tasto: e' la cosa piu' grande dello schermo in un momento
+     in cui non c'e' nient'altro da fare, ed e' giusto che sia lui a
+     rispondere al dito. */
+  `<button class="hh-empty" onclick="homeAdd()">
+      <span class="hh-empty-t">Questa giornata è ancora vuota</span>
+      <span class="hh-empty-a">Aggiungi la prima tappa</span>
+    </button>`}`);
   homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
   assicuraCittaDelGiorno(t,day);
   backfillActPhotos(t);
@@ -4489,7 +4587,7 @@ function renderPacking(){
   const cats=packCategorie(list);
   box.innerHTML=cats.map(cat=>{
     const voci=list.filter(p=>(p.cat||'Extra')===cat),fatte=voci.filter(p=>p.checked).length;
-    return `<div class="pack-cat${fatte===voci.length?' done':''}"><b>${esc(cat)}</b><i>${fatte}/${voci.length}</i></div>${voci.map(p=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="edit-ic" style="flex-shrink:0" onclick="editPackItem(${p.id})">✎</button><button class="ibtn" style="width:30px;height:30px;flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`;
+    return `<div class="pack-cat${fatte===voci.length?' done':''}"><b>${esc(cat)}</b><i>${fatte}/${voci.length}</i></div>${voci.map(p=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(p.label)}</span></label><button class="edit-ic" style="flex-shrink:0" onclick="editPackItem(${p.id})">✎</button><button class="ibtn" style="flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`;
   }).join('');
 }
 function addPackItem(){
@@ -5514,7 +5612,7 @@ function renderSaved(){
   c.innerHTML=t.pois.map(p=>{
     const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||'',photo:p.photo||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
     const thumb=p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">${placeIcon(p.type,p.type)}</div>`;
-    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" style="width:32px;height:32px" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
+    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.6rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
   }).join('');
 }
 /* ===== NEL PROGRAMMA: i posti che sono gia' in time-table =====

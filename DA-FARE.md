@@ -249,10 +249,40 @@ va rifatto vedere.
     tutto arriva dov'era diretto, senza il viaggio — togliere le animazioni e
     basta lascerebbe le cose a metà strada.
 
+    **Fatto — tutto quello che si tocca arriva a 44×44.** Misurato: la barra
+    in basso era alta 41 px, le scorciatoie della home 27, il «+» della
+    giornata 26, la X della pubblicità 14, i tasti a icona delle liste 30 e
+    32. Apple indica 44 come minimo e qui non è burocrazia: l'app si usa
+    camminando, con una mano sola, e un tasto da 27 px lo si sbaglia.
+    **L'aspetto non è cambiato**: cresce solo l'area invisibile che risponde
+    al dito (`::after`), che è il mestiere che fa iOS per conto suo. Due sole
+    cose si vedono, e sono volute: i due tondi col «+» erano più piccoli di
+    qualunque altra cosa nella loro riga e non sembravano tasti, e le
+    scorciatoie della home hanno più aria fra una riga e l'altra — è lo spazio
+    che serve perché la riga di sotto non si prenda i tocchi di quella sopra.
+    La prova controlla tutt'e due le cose: la misura **e** che nessuna area
+    rubi il tocco alla vicina.
+
+    **Fatto — il giorno vuoto è un tasto, non un cartello.** Diceva *«tocca il
+    titolo per aprire la giornata»* e mandava la persona a cercare un titolo,
+    mentre il tasto che fa quella cosa le stava due centimetri sopra: adesso
+    il riquadro **è** il tasto e dice «Aggiungi la prima tappa».
+
+    Avevo fatto lo stesso a spese e biglietti, ed era sbagliato: **quelle due
+    schermate avevano già l'azione a un centimetro di distanza** — un tasto
+    «Aggiungi spesa» sotto, e in cima ai biglietti tutta una scheda «Aggiungi
+    biglietto» con tre modi. Il risultato erano due tasti identici uno sopra
+    l'altro. Tolto. La regola: *prima di aggiungere un'azione a una schermata,
+    si guarda la schermata* — con uno screenshot, non a memoria.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
-    per forza), il passaggio fra una schermata e l'altra, e una passata
-    sull'aspetto delle schermate più viste.
+    per forza) e gli altri stati vuoti che sono ancora cartelli senza
+    un'azione vicina («Nessun luogo salvato», «Niente in time-table»,
+    «Nessuna voce ancora» nei bagagli) — **da guardare uno per uno prima di
+    toccarli.** Il passaggio fra una schermata e l'altra è stato misurato ed è
+    già a posto: è un'`animation`, che a differenza di una `transition` parte
+    anche su un elemento appena mostrato.
 15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
     funzioni, aspetto, lingue — e solo dopo ci si muove sul nativo, dove ogni
     modifica costa una pubblicazione invece di un salvataggio. Quello che il
@@ -504,6 +534,45 @@ qualcuno che risponde".
   layout per finire la discesa, senza `pointer-events:none` si mangia i tocchi
   per un terzo di secondo dopo essere stato chiuso — e l'app sembra bloccata
   proprio nel momento in cui uno riprende a toccarla.
+- **Allargare l'area di un tasto può rubare il tocco a quello accanto**, e il
+  risultato è peggio di un tasto piccolo: il dito va nel posto giusto e
+  succede la cosa sbagliata. Ogni volta che si allarga un'area invisibile va
+  controllato lo spazio fra i vicini — la prova lo fa toccando i quattro
+  angoli di ogni area e guardando chi risponde, ed è così che sono venuti
+  fuori i quattro tasti della schermata delle spese.
+- **Con un foglio aperto, tutto quello che sta dietro è coperto.** Chiedere
+  «chi risponde in questo punto?» restituisce il foglio, e sembra un furto di
+  tocchi quando è solo un foglio davanti. Una prova che misura i tocchi deve
+  guardare dentro il foglio aperto, non dietro.
+- **`elementFromPoint` non è un modo affidabile di misurare i tocchi**, e
+  questa lezione è costata **tre CI rosse di fila** su un tasto che non aveva
+  niente che non andasse.
+  La barra in basso è una pillola con gli angoli tondi, e il browser rispetta
+  il raggio nel decidere «chi risponde in questo punto»: l'angolo dell'area
+  allargata di una voce ci cade *fuori*, e fuori c'è la pagina. Poi la
+  risposta cambia con la larghezza dello schermo, con i font (qui quelli di
+  Google non si scaricano, in CI sì) e con quanto la barra è scorsa.
+  Ho sbagliato diagnosi due volte prima di capirlo: prima ho dato la colpa
+  allo schermo stretto, poi ai font. Erano tutte e due vere e nessuna delle
+  due era la causa.
+  **La correzione non è aggirare il caso: è cambiare domanda.** Quello che
+  serve sapere è se due tasti vicini si prendono lo stesso pezzo di schermo —
+  ed è una domanda di rettangoli, che dà la stessa risposta ovunque. Adesso
+  la prova confronta le aree fra loro e dice anche di quanti pixel si
+  sovrappongono.
+  La regola: **quando una prova dà risposte diverse in posti diversi, il
+  problema è la domanda, non l'ambiente.**
+- **Un'area tagliata non è area guadagnata.** Allargare un tasto con
+  `::after` dentro una striscia che scorre non serve a niente per la parte che
+  sborda: `overflow` la taglia. Una prova che somma gli scostamenti scritti
+  nel CSS misura le intenzioni; per misurare la realtà va intersecata con la
+  striscia che contiene il tasto.
+- **Prima di aggiungere qualcosa a una schermata, si guarda la schermata.**
+  Aggiungere un'azione allo stato vuoto delle spese e dei biglietti sembrava
+  un miglioramento ovvio; erano due tasti identici uno sopra l'altro, perché
+  l'azione su quelle schermate c'era già a un centimetro di distanza. Non si
+  vedeva leggendo il codice, si è visto con uno screenshot. Vale per ogni
+  modifica all'aspetto: **un'immagine prima e una dopo**, non la memoria.
 
 ---
 
