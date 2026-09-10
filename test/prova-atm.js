@@ -1,5 +1,5 @@
-const { apriBrowser, APP, RADICE } = require('./browser');
-const OUT = '/tmp/claude-0/-home-user-GeppGo/63cda2c7-b8e3-5374-b037-1b6d541802ce/scratchpad';
+const { apriBrowser, APP, RADICE, cartellaFoto } = require('./browser');
+const OUT = cartellaFoto();
 
 const stato = {
   trips: [{

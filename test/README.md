@@ -35,10 +35,23 @@ eredita lo stato di quella prima non dice niente di affidabile.
 
 ## Due trappole, imparate a caro prezzo
 
-**Il percorso del progetto non si scrive a mano.** Sei prove avevano dentro
+**Nessun percorso si scrive a mano.** Sei prove avevano dentro
 `file:///home/user/GeppGo/Index%202.1.html`: passavano su quella macchina e
 fallivano dovunque altro. Si usa `APP` di `browser.js`, e il lanciatore boccia
 chi se lo riscrive.
+
+E ne erano rimasti altri due, in un posto che nessuno guardava: due prove
+scrivevano le immagini dentro la cartella di lavoro di **una sessione**
+(`/tmp/claude-0/...`). La guardia cercava solo `/home` e `/Users` — adesso
+guarda anche `/tmp` e `/var`. Per le immagini c'è **`cartellaFoto()`** in
+`browser.js`, che dà una cartella temporanea vera.
+
+Quelle immagini, va detto, **non sono controlli**: nessuna prova ci fa sopra
+un'asserzione, servono a chi vuole vedere com'era la schermata. Per questo
+stanno in un `try/catch` — fotografare un *elemento* fa aspettare a Playwright
+che stia fermo, e su una macchina lenta «element is not stable» ha fatto
+diventare rossa `pos` con tutti e 21 i controlli passati. Un'immagine di
+contorno non può bocciare una prova.
 
 **Nello stato di prova ci va `skipAuth: true`,** se la prova non riguarda
 l'account. Senza, l'app apre a tutto schermo il pannello "accedi o crea

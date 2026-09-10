@@ -596,6 +596,19 @@ qualcuno che risponde".
   da una versione vecchia, mai *lo stesso file due volte*. È il difetto più
   facile da non vedere che ci sia — quello nascosto dentro un'istruzione che
   si dà per scontata.
+- **Il percorso scritto a mano ritorna, e la guardia va allargata.** Dopo la
+  storia dei sei `file:///home/user/...` ne erano rimasti altri due, in un
+  posto che nessuno guardava: due prove scrivevano le loro immagini dentro la
+  cartella di lavoro di **una sessione** (`/tmp/claude-0/...`). La guardia del
+  lanciatore non li vedeva perché cercava solo le cartelle delle persone
+  (`/home`, `/Users`). Ora guarda anche `/tmp` e `/var`, e per le immagini
+  c'è `cartellaFoto()` in `browser.js`.
+- **Un'immagine di contorno non può bocciare una prova.** Fotografare un
+  *elemento* fa aspettare a Playwright che stia fermo: la mini-mappa si
+  assesta un attimo dopo che arrivano le tessere, e su una macchina lenta
+  «element is not stable» ha fatto diventare rossa `pos` **con tutti e 21 i
+  controlli passati**. Le immagini che nessuno controlla vanno in un
+  try/catch: sono per farsi guardare, non per giudicare.
 - **Prima di aggiungere qualcosa a una schermata, si guarda la schermata.**
   Aggiungere un'azione allo stato vuoto delle spese e dei biglietti sembrava
   un miglioramento ovvio; erano due tasti identici uno sopra l'altro, perché
