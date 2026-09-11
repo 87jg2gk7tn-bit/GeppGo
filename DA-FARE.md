@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 8 settembre 2026.
+Aggiornato: 11 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -10,45 +10,34 @@ dov'era rimasto, senza rifare ragionamenti già fatti.
 
 ## ⚠️ DA FARE SUBITO
 
-**Lanciare su Supabase lo schema aggiornato** (`supabase-schema.sql`, tutto il
-file: è rilanciabile senza danni). Contiene la parte foto e la cancellazione
-dell'account. Finché non è fatto, le foto non arrivano nel cloud — l'app dice
-*"ancora solo su questo telefono — il magazzino delle foto non c'è ancora"* —
-e il tasto "Elimina il mio account" non funziona.
+~~**Lanciare su Supabase lo schema aggiornato**~~ ✅ **fatto l'11 settembre**:
+i sette permessi rispondono tutti `ok`, quindi la colonna `percorso_mini` (le
+miniature) e la tabella `raccolte` («A raccolta») ci sono.
 
-**Come si fa, in concreto.** Supabase → **SQL Editor** → **New query** →
-incolla **tutto** il contenuto di `supabase-schema.sql` (in GitHub: apri il
-file, tasto **Copy raw file**) → **Run**. Ci mette qualche secondo. Alla fine
-deve dire *Success*: se compare un errore in rosso, **non** proseguire e
-riportalo, perché vuol dire che il file si è fermato a metà lasciando il
-database scoperto.
+Restano due cose, e non sono codice:
 
-Poi la verifica, che è più affidabile del messaggio verde: si aggiunge una
-foto e sotto deve leggersi *"salvata anche nel cloud: la vedono i compagni di
-viaggio"*; e in un viaggio condiviso con qualcun altro, da admin, in home deve
-comparire il tasto **📣 A raccolta**.
+- **Guardare in quale regione sta il progetto Supabase** (Project Settings →
+  General → Region): serve a completare una frase della privacy policy. Se è
+  fuori dall'Europa va detto per nome. Cinque minuti.
+- **Far leggere a un avvocato la parte «A raccolta» della privacy policy.** Il
+  riassunto pronto da mandargli, con le sei garanzie strutturali e le cinque
+  domande, sta in fondo a `PRIVACY-STORE.md`.
 
-⚠️ **Il file si può rilanciare quante volte si vuole — ma solo da oggi.**
-Fino al 9 settembre non era vero: al secondo lancio si fermava con *«cannot
+**Come si rilancia lo schema**, quando servirà di nuovo: Supabase → **SQL
+Editor** → **New query** → incolla **tutto** il contenuto di
+`supabase-schema.sql` (in GitHub: apri il file, tasto **Copy raw file**) →
+**Run**. Alla fine deve dire *Success*: se compare un errore in rosso, **non**
+proseguire e riportalo, perché vuol dire che il file si è fermato a metà
+lasciando il database scoperto.
+
+⚠️ **Il file si può rilanciare quante volte si vuole — ma solo dal 9
+settembre.** Prima non era vero: al secondo lancio si fermava con *«cannot
 drop function is_trip_member because other objects depend on it»*, perché la
 pulizia toglieva quella funzione mentre i permessi delle foto ci si
 appoggiavano ancora. Nessuna prova lo prendeva, perché tutte partivano da un
 database dove quel file non era ancora passato. Adesso c'è una prova
 (`rilanciabile`) che lo lancia **tre volte di fila** e ricontrolla i permessi
 dopo.
-
-Da rilanciare **anche se lo hai già fatto una volta**, e adesso ci sono due
-motivi:
-- la colonna `percorso_mini`, che porta le miniature. Senza, l'app se ne
-  accorge e carica le foto come prima — non si rompe niente — ma ogni
-  telefono continua a scaricarsi ogni foto intera, che è quaranta volte il
-  traffico.
-- la tabella `raccolte`, che fa funzionare «A raccolta». Senza, il tasto c'è
-  ma dice *«nel database manca la tabella delle chiamate»*.
-
-**E guardare in quale regione sta il progetto Supabase** (Project Settings →
-General → Region): serve a completare una frase della privacy policy. Se è
-fuori dall'Europa va detto per nome. Cinque minuti.
 
 ---
 
@@ -110,9 +99,11 @@ va rifatto vedere.
 
 ### Poi, per crescere
 
-6. ~~**Cinque lingue**~~ ✅ **fatto** (italiano, inglese, spagnolo, francese,
-   portoghese). **567 frasi, l'81% di quello che si legge a schermo**, e tutti
-   e 141 i messaggi a comparsa. Superata la soglia dell'80%, **le lingue si
+6. ~~**Cinque lingue**~~ ✅ **finito** (italiano, inglese, spagnolo, francese,
+   portoghese). **714 frasi per lingua**, e a schermo **non resta più niente
+   in italiano**: c'è una prova che gira per tutte le schermate e per tutti e
+   cinquantatré i pannelli in ognuna delle quattro lingue e non deve trovare
+   una parola italiana. Superata la soglia dell'80%, **le lingue si
    accendono da sole**: chi apre l'app con il telefono in spagnolo la trova in
    spagnolo, senza che nessuno abbia toccato una riga di codice per
    accenderla. Era il modo di finire il lavoro senza mai lasciare l'app in
@@ -134,12 +125,47 @@ va rifatto vedere.
    nell'app sono 182 e le domande decine: metterci `t()` a mano sarebbe stato
    altrettante occasioni di dimenticarsene.
 
-   **Quello che resta in italiano, e perché.** Il 19% che manca sono i nomi
-   propri (GeppGo, Android, Google Maps), gli indirizzi, gli esempi che non si
-   traducono («es. MXP» è un codice di aeroporto) e le frasi generate dal
-   codice cucendo pezzi insieme. Quelle vanno prima riscritte come frasi
-   intere: **una frase per volta, mai cucita da pezzi**, perché in un'altra
-   lingua le parole vanno in un altro ordine.
+   **Le frasi cucite dal codice, e come sono state sciolte.** Erano l'ultimo
+   pezzo rimasto in italiano e il più insidioso: «1 TAPPA», «Devi 12,00»,
+   «GIAPPONE · GIORNO 1 DI 3», «3 luoghi». Cucite da pezzi funzionavano solo
+   in italiano — altrove il numero va da un'altra parte, l'articolo cambia con
+   la parola che segue e il plurale non si fa allo stesso modo. Ora la chiave
+   del dizionario è **la frase intera con i buchi segnati `{1}`, `{2}`**, e si
+   riempie con `tv('{1} TAPPE', n)`. Quello che esce da `tv()` è già nella
+   lingua giusta e finisce in `GIA_TRADOTTE`, perché il conteggio della
+   copertura sappia che è tradotto: senza quel passaggio queste frasi
+   risultavano non tradotte **proprio perché** erano tradotte bene, e la
+   percentuale in Profilo mentiva verso il basso.
+
+   **Le date e i numeri seguono la lingua** (`loc()`, e `LOCALI` accanto a
+   `fmtMoney`). Erano trentasette `'it-IT'` scritti a mano: «martedì 1
+   settembre» in mezzo a una schermata inglese è la prima cosa che salta
+   all'occhio, e «2.400,00» letto da un inglese fa due virgola quattro.
+
+   Restano in italiano solo i nomi propri (GeppGo, Android, Google Maps), gli
+   indirizzi e gli esempi che non si traducono («es. MXP» è un codice di
+   aeroporto). La percentuale in Profilo si ferma sul 91% perché conta anche
+   quelli, insieme ai nomi delle persone e alle cifre: è un numero onesto per
+   difetto, non un lavoro a metà.
+
+   **Misurare, non leggere.** L'elenco di cosa mancava è stato tirato fuori
+   girando l'app con un browser vero, non guardando il codice. Due trappole
+   pagate per intero: le chiavi ricopiate a mano da un elenco **troncato a 95
+   caratteri** non corrispondevano a niente (si prendono per indice dal file
+   misurato, mai a occhio), e il riconoscitore di frasi italiane segnalava
+   frasi inglesi perché `\bi\b` prende anche l'«I» inglese — prima di
+   chiedersi «sembra italiana?» bisogna scartare quello che è già una
+   traduzione.
+
+   `traduciPagina()` da solo non bastava: girava all'avvio e dopo un
+   ridisegno, ma i pannelli che si riempiono al momento restavano indietro.
+   C'è un `MutationObserver` che traduce quello che compare dopo.
+
+   **Quello che resta fuori, e non per dimenticanza: `privacy.html` è ancora
+   solo in italiano.** È un testo legale, e tradurlo vuol dire produrre
+   quattro testi legali: va fatto insieme all'avvocato che deve già guardare
+   la parte «A raccolta», non prima e non a parte. Da decidere con lui se
+   basta la versione italiana con un riassunto, o se servono le quattro.
 
    Nelle prove le pagine nascono sempre in italiano (`test/browser.js`):
    ereditare la lingua del computer su cui girano vorrebbe dire provare l'app
@@ -615,6 +641,26 @@ qualcuno che risponde".
   l'azione su quelle schermate c'era già a un centimetro di distanza. Non si
   vedeva leggendo il codice, si è visto con uno screenshot. Vale per ogni
   modifica all'aspetto: **un'immagine prima e una dopo**, non la memoria.
+- **Le chiavi del dizionario non si ricopiano a occhio.** L'elenco di cosa
+  restava da tradurre veniva stampato troncato a 95 caratteri: una parte delle
+  chiavi del primo lotto non corrispondeva a niente e quelle frasi restavano
+  in italiano senza che nulla segnalasse l'errore. Si prendono **per indice**
+  dal file misurato, così sono esatte al byte.
+- **Un riconoscitore di «sembra italiano» prende anche l'inglese.** `\bi\b`
+  vale per «i» italiano e per «I» inglese, `\bla\b` e `\bcome\b` lo stesso.
+  Prima di chiedersi se una frase sembri italiana bisogna **scartare quello
+  che è già una traduzione** (i valori del dizionario, più `GIA_TRADOTTE` per
+  le frasi composte): senza quel filtro l'elenco delle cose da fare si riempie
+  di roba già fatta.
+- **Aprire una pagina nelle prove costa 13 secondi**, e non è colpa dell'app:
+  il foglio di stile di Google Fonts non è raggiungibile da qui e ci mette
+  12,7 secondi a fallire, bloccando il `domcontentloaded`. Una prova che apre
+  dieci pagine ci mette due minuti solo per quello. Si risolve bloccando
+  `fonts.googleapis.com` in `test/browser.js` — non è stato fatto qui perché
+  cambia il carattere con cui la pagina viene disegnata, e c'è una prova
+  (`prova-tocchi`) che misura i pixel: va provato da solo, non in mezzo ad
+  altro. Nel frattempo, **le pagine si riusano**: quello che si può chiedere a
+  una pagina già aperta non merita di aprirne un'altra.
 
 ---
 

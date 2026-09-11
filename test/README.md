@@ -477,11 +477,39 @@ E il dizionario si controlla da sé: le quattro lingue devono avere le stesse
 frasi, nessuna traduzione vuota, e non devono essere l'italiano ricopiato per
 far salire il conto.
 
+**Il controllo che conta davvero** è l'ultimo arrivato: l'app viene aperta in
+ognuna delle quattro lingue, si gira per tutte le schermate e si aprono tutti
+i pannelli (li conta la prova da sola: uno nuovo entra senza che nessuno se ne
+ricordi), e **non deve restare a schermo una parola italiana**. Una frase si
+riconosce italiana da una parola che in inglese non esiste — ma prima si
+scarta quello che è già una traduzione, perché `\bi\b` prende anche l'«I»
+inglese e senza quel filtro l'elenco si riempie di inglese scambiato per
+italiano.
+
+Poi le **frasi composte**. Erano l'ultimo pezzo rimasto in italiano: «1
+TAPPA», «Devi 12,00», «GIAPPONE · GIORNO 1 DI 3». Cucite da pezzi funzionavano
+solo in italiano, perché altrove il numero va da un'altra parte e il plurale
+non si fa allo stesso modo. Ora la chiave è la frase intera coi buchi `{1}`,
+`{2}` e si riempie con `tv()`. La prova controlla che si traducano intere, che
+una mai tradotta resti in italiano col buco riempito lo stesso, e che il
+conteggio della copertura sappia che sono già tradotte — senza quest'ultimo
+pezzo risulterebbero non tradotte *proprio perché* sono tradotte bene.
+
+Infine **date e numeri**: in inglese «Tuesday 1 September» e `¥2,400.00`, in
+italiano «martedì 1 settembre» e `¥2.400,00`. Erano trentasette `'it-IT'`
+scritti a mano.
+
+Un avvertimento sul tempo: aprire una pagina qui costa **tredici secondi**, e
+non è colpa dell'app — il foglio di stile di Google Fonts non è raggiungibile
+e ci mette 12,7 secondi a fallire, bloccando il `domcontentloaded`. Per questo
+i controlli nuovi riusano le pagine già aperte invece di aprirne una per
+domanda.
+
 Un controllo merita una riga a parte: **una lingua si accende da sola solo
 all'80% del dizionario**. Sotto quella soglia l'app resta tutta in italiano
 anche se il telefono è spagnolo — un'app mezza tradotta è peggio di una tutta
 in una lingua sola, chi la apre pensa che sia rotta. La prova verifica tutte e
-due le facce: che oggi (91 frasi su 656) non ci passi, e che riempiendo il
+due le facce: che una lingua svuotata non ci passi, e che riempiendo il
 dizionario la lingua si accenda da sola senza toccare una riga di codice.
 
 Questo guasto l'ha trovato la suite completa: le prove girano con la lingua di
