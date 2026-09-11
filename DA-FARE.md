@@ -100,7 +100,7 @@ va rifatto vedere.
 ### Poi, per crescere
 
 6. ~~**Cinque lingue**~~ ✅ **finito** (italiano, inglese, spagnolo, francese,
-   portoghese). **714 frasi per lingua**, e a schermo **non resta più niente
+   portoghese). **720 frasi per lingua**, e a schermo **non resta più niente
    in italiano**: c'è una prova che gira per tutte le schermate e per tutti e
    cinquantatré i pannelli in ognuna delle quattro lingue e non deve trovare
    una parola italiana. Superata la soglia dell'80%, **le lingue si
@@ -652,6 +652,22 @@ qualcuno che risponde".
   che è già una traduzione** (i valori del dizionario, più `GIA_TRADOTTE` per
   le frasi composte): senza quel filtro l'elenco delle cose da fare si riempie
   di roba già fatta.
+- **Girare per le schermate non basta: certi cartelli dipendono dalla rete.**
+  L'avviso «⚠️ Viaggi solo su questo telefono» esce solo se la libreria di
+  Supabase si è scaricata e non c'è una sessione. Qui la libreria non si
+  scarica, quindi quel cartello non compariva mai e la prova diceva «non resta
+  niente in italiano» — mentre sulla macchina delle prove automatiche, dove la
+  rete c'è, era rimasto in italiano per intero, in tutte e quattro le lingue.
+  Adesso la prova **forza** i due stati (non connesso, memoria piena) invece
+  di sperare che si presentino. La regola generale: uno stato che dipende
+  dall'ambiente va messo in scena, non aspettato.
+- **`toLocaleString` non raggruppa le migliaia allo stesso modo dappertutto.**
+  In italiano e in spagnolo i gruppi partono dalla **quinta** cifra
+  (`minimumGroupingDigits` = 2), quindi 2400 si scrive `2400,00` e non
+  `2.400,00` — ma dipende anche dalla versione di ICU del browser: la stessa
+  prova dava `2.400,00` qui e `2400,00` sulla macchina delle prove. Per
+  provare i separatori si usa un numero grosso (1.234.567), che raggruppa in
+  ogni lingua e con ogni versione.
 - **Aprire una pagina nelle prove costa 13 secondi**, e non è colpa dell'app:
   il foglio di stile di Google Fonts non è raggiungibile da qui e ci mette
   12,7 secondi a fallire, bloccando il `domcontentloaded`. Una prova che apre

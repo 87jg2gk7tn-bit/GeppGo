@@ -3870,6 +3870,12 @@ Object.keys(DIZIONARIO_PANNELLI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
    mai incollando pezzi tradotti uno per uno. */
 const DIZIONARIO_COMPOSTE={
   en:{
+    '⚠️ Memoria del telefono piena':'⚠️ Phone storage full',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'The latest changes are on screen only: reopening the app they wouldn’t be there. Export a copy right away, then free up space on the phone.',
+    'Esporta i dati adesso':'Export the data now',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Trips on this phone only',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'You’re not signed in: if the phone loses its data, the trips don’t come back. Sign in and I’ll keep them safe online, tied to you.',
+    'Accedi ora':'Sign in now',
     'Già in programma il {1}.':'Already in the timetable on {1}.',
     'G{1}':'D{1}',
     'Giorno {1}':'Day {1}',
@@ -3915,6 +3921,12 @@ const DIZIONARIO_COMPOSTE={
     'Pieno · 5 tappe':'Packed · 5 stops'
   },
   es:{
+    '⚠️ Memoria del telefono piena':'⚠️ Memoria del teléfono llena',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'Los últimos cambios se han quedado solo en la pantalla: al reabrir la app ya no estarían. Exporta ahora una copia y luego libera espacio en el teléfono.',
+    'Esporta i dati adesso':'Exporta los datos ahora',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Viajes solo en este teléfono',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'No has iniciado sesión: si el teléfono pierde los datos, los viajes no vuelven. Entra y te los pongo a salvo en línea, ligados a ti.',
+    'Accedi ora':'Entra ahora',
     'Già in programma il {1}.':'Ya en el horario el {1}.',
     'G{1}':'D{1}',
     'Giorno {1}':'Día {1}',
@@ -3960,6 +3972,12 @@ const DIZIONARIO_COMPOSTE={
     'Pieno · 5 tappe':'Lleno · 5 paradas'
   },
   fr:{
+    '⚠️ Memoria del telefono piena':'⚠️ Mémoire du téléphone pleine',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'Les dernières modifications ne sont qu’à l’écran : en rouvrant l’app elles n’y seraient plus. Exporte tout de suite une copie, puis libère de la place sur le téléphone.',
+    'Esporta i dati adesso':'Exporte les données maintenant',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Voyages seulement sur ce téléphone',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'Tu n’es pas connecté : si le téléphone perd ses données, les voyages ne reviennent pas. Connecte-toi et je les mets à l’abri en ligne, liés à toi.',
+    'Accedi ora':'Connecte-toi',
     'Già in programma il {1}.':'Déjà au programme le {1}.',
     'G{1}':'J{1}',
     'Giorno {1}':'Jour {1}',
@@ -4005,6 +4023,12 @@ const DIZIONARIO_COMPOSTE={
     'Pieno · 5 tappe':'Chargé · 5 étapes'
   },
   pt:{
+    '⚠️ Memoria del telefono piena':'⚠️ Memória do telemóvel cheia',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'As últimas alterações ficaram só no ecrã: ao reabrir a app já não estariam lá. Exporta já uma cópia e depois liberta espaço no telemóvel.',
+    'Esporta i dati adesso':'Exporta os dados agora',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Viagens só neste telemóvel',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'Não estás com sessão iniciada: se o telemóvel perder os dados, as viagens não voltam. Entra e ponho-tas a salvo online, ligadas a ti.',
+    'Accedi ora':'Entra agora',
     'Già in programma il {1}.':'Já no horário no {1}.',
     'G{1}':'D{1}',
     'Giorno {1}':'Dia {1}',
@@ -4054,7 +4078,7 @@ Object.keys(DIZIONARIO_COMPOSTE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=803;
+const FRASI_IN_TUTTO=809;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la

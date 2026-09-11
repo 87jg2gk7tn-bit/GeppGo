@@ -52,13 +52,17 @@ async function apri(browser, lingua, linguaTelefono) {
   ok('e t() restituisce la frase così com\'è',
      await it.evaluate(() => t('Salva')) === 'Salva');
   /* Aprire una pagina costa tredici secondi: quello che si può chiedere a una
-     già aperta, glielo si chiede qui invece di aprirne un'altra. */
+     già aperta, glielo si chiede qui invece di aprirne un'altra.
+     La cifra è un milione e non duemila: in italiano e in spagnolo i gruppi
+     partono dalla quinta cifra, e "2400,00" o "2.400,00" dipendono dalla
+     versione di ICU del browser — la prova diceva cose diverse qui e sulla
+     macchina delle prove automatiche. */
   const formatiIt = await it.evaluate(() => ({
-    soldi: fmtMoney(2400, 'JPY'),
+    soldi: fmtMoney(1234567, 'JPY'),
     data: new Date('2026-09-01').toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' })
   }));
   ok('in italiano date e numeri non cambiano di una virgola',
-     formatiIt.soldi === '¥2.400,00' && /settembre/.test(formatiIt.data),
+     formatiIt.soldi === '¥1.234.567,00' && /settembre/.test(formatiIt.data),
      formatiIt.soldi + ' · ' + formatiIt.data);
   await it.close();
 
@@ -246,7 +250,7 @@ async function apri(browser, lingua, linguaTelefono) {
 
     /* Date e numeri: si chiedono a questa pagina, che è già aperta. */
     formati[l] = await p.evaluate(() => ({
-      soldi: fmtMoney(2400, 'JPY'),
+      soldi: fmtMoney(1234567, 'JPY'),
       data: new Date('2026-09-01').toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' })
     }));
     /* E le frasi composte, che si controllano una volta sola in inglese. */
@@ -287,6 +291,24 @@ async function apri(browser, lingua, linguaTelefono) {
         });
       };
       for (const pg of pagine) { go(pg); await attendi(200); cerca(); }
+      /* Gli avvisi in cima alla home si vedono solo in certi stati, e lo stato
+         dipende dalla RETE: dove la libreria di Supabase non si scarica, il
+         cartello "viaggi solo su questo telefono" non compare mai. Girando
+         l'app qui non usciva, sulla macchina delle prove automatiche sì — ed
+         era davvero rimasto in italiano. Quindi si forzano tutti e due, invece
+         di sperare che si presentino. */
+      go('plan');
+      for (const stato of ['nonConnesso', 'memoriaPiena']) {
+        window.GEPPGO_SUPA_URL = window.GEPPGO_SUPA_URL || 'https://finto.supabase.co';
+        window.GEPPGO_SUPA_KEY = window.GEPPGO_SUPA_KEY || 'finta';
+        sb = sb || {};
+        session = null;
+        storageFull = (stato === 'memoriaPiena');
+        renderCloudWarn();
+        await attendi(150);
+        cerca();
+      }
+      storageFull = false; renderCloudWarn();
       /* Tutti i pannelli, non un elenco scritto a mano: uno nuovo entra nella
          prova da solo, invece di restare fuori finché qualcuno se ne accorge. */
       const fogli = [...document.querySelectorAll('.modal')].map(m => m.id).filter(Boolean);
@@ -342,7 +364,7 @@ async function apri(browser, lingua, linguaTelefono) {
   ok('in inglese la data si legge in inglese',
      /September/.test(formati.en.data) && !/settembre/.test(formati.en.data), formati.en.data);
   ok('e i numeri si scrivono come li scrive chi legge',
-     formati.en.soldi === '¥2,400.00', formati.en.soldi);
+     formati.en.soldi === '¥1,234,567.00', formati.en.soldi);
   ok('e lo stesso in francese', /septembre/.test(formati.fr.data), formati.fr.data);
   ok('e in portoghese', /setembro/.test(formati.pt.data), formati.pt.data);
 

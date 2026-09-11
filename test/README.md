@@ -495,9 +495,19 @@ una mai tradotta resti in italiano col buco riempito lo stesso, e che il
 conteggio della copertura sappia che sono già tradotte — senza quest'ultimo
 pezzo risulterebbero non tradotte *proprio perché* sono tradotte bene.
 
-Infine **date e numeri**: in inglese «Tuesday 1 September» e `¥2,400.00`, in
-italiano «martedì 1 settembre» e `¥2.400,00`. Erano trentasette `'it-IT'`
-scritti a mano.
+Infine **date e numeri**: in inglese «Tuesday 1 September» e `¥1,234,567.00`,
+in italiano «martedì 1 settembre» e `¥1.234.567,00`. Erano trentasette
+`'it-IT'` scritti a mano. La cifra di prova è un milione e non duemila per un
+motivo: in italiano e in spagnolo i gruppi partono dalla **quinta** cifra, e
+se 2400 diventi `2400,00` o `2.400,00` dipende dalla versione di ICU del
+browser — la prova diceva cose diverse qui e in CI.
+
+E un avvertimento che vale oltre le lingue: **certi cartelli dipendono dalla
+rete**. «⚠️ Viaggi solo su questo telefono» esce solo se la libreria di
+Supabase si è scaricata e non c'è una sessione: dove la rete non c'è, quel
+cartello non compare e la prova dice che va tutto bene, mentre in CI era
+rimasto in italiano per intero. La prova adesso **mette in scena** i due stati
+invece di aspettarli.
 
 Un avvertimento sul tempo: aprire una pagina qui costa **tredici secondi**, e
 non è colpa dell'app — il foglio di stile di Google Fonts non è raggiungibile
