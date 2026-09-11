@@ -2077,7 +2077,13 @@ function persistLastPush(){try{localStorage.setItem('geppgo2_lastpush',JSON.stri
 const CURR=[{c:'EUR',s:'€'},{c:'USD',s:'$'},{c:'GBP',s:'£'},{c:'JPY',s:'¥'},{c:'CHF',s:'CHF'},{c:'CNY',s:'¥'},{c:'KRW',s:'₩'},{c:'THB',s:'฿'},{c:'INR',s:'₹'},{c:'AUD',s:'A$'},{c:'CAD',s:'C$'},{c:'NZD',s:'NZ$'},{c:'MXN',s:'$'},{c:'BRL',s:'R$'},{c:'ZAR',s:'R'},{c:'AED',s:'AED'},{c:'TRY',s:'₺'},{c:'SEK',s:'kr'},{c:'NOK',s:'kr'},{c:'DKK',s:'kr'},{c:'PLN',s:'zł'},{c:'CZK',s:'Kč'},{c:'HUF',s:'Ft'},{c:'SGD',s:'S$'},{c:'HKD',s:'HK$'},{c:'IDR',s:'Rp'},{c:'MYR',s:'RM'},{c:'PHP',s:'₱'},{c:'VND',s:'₫'},{c:'EGP',s:'E£'},{c:'MAD',s:'DH'},{c:'ILS',s:'₪'},{c:'SAR',s:'SAR'},{c:'TWD',s:'NT$'},{c:'ISK',s:'kr'},{c:'CLP',s:'$'},{c:'COP',s:'$'},{c:'ARS',s:'$'},{c:'PEN',s:'S/'}];
 const C2C={JP:'JPY',US:'USD',GB:'GBP',IE:'EUR',FR:'EUR',DE:'EUR',IT:'EUR',ES:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',AT:'EUR',GR:'EUR',FI:'EUR',LU:'EUR',SK:'EUR',SI:'EUR',EE:'EUR',LV:'EUR',LT:'EUR',CY:'EUR',MT:'EUR',HR:'EUR',CH:'CHF',CN:'CNY',KR:'KRW',TH:'THB',IN:'INR',AU:'AUD',CA:'CAD',NZ:'NZD',MX:'MXN',BR:'BRL',ZA:'ZAR',AE:'AED',TR:'TRY',SE:'SEK',NO:'NOK',DK:'DKK',PL:'PLN',CZ:'CZK',HU:'HUF',SG:'SGD',HK:'HKD',ID:'IDR',MY:'MYR',PH:'PHP',VN:'VND',EG:'EGP',MA:'MAD',IL:'ILS',SA:'SAR',TW:'TWD',IS:'ISK',CL:'CLP',CO:'COP',AR:'ARS',PE:'PEN'};
 function curSym(c){const f=CURR.find(x=>x.c===c);return f?f.s:c;}
-function fmtMoney(a,c){return curSym(c)+(a||0).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+/* In che lingua si scrivono date e numeri. Non e' un dettaglio di contorno:
+   "martedi' 1 settembre" in mezzo a una schermata inglese e' la prima cosa
+   che salta all'occhio, e "2.400,00" letto da un inglese fa duemila virgola
+   quattro. Finche' la lingua e' l'italiano non cambia niente. */
+const LOCALI={it:'it-IT',en:'en-GB',es:'es-ES',fr:'fr-FR',pt:'pt-PT'};
+function loc(){try{return LOCALI[linguaScelta()]||'it-IT';}catch(e){return 'it-IT';}}
+function fmtMoney(a,c){return curSym(c)+(a||0).toLocaleString(loc(),{minimumFractionDigits:2,maximumFractionDigits:2});}
 /* Il salvataggio non deve MAI fallire in silenzio: la spesa appena scritta è
    già nell'oggetto in memoria, quindi a schermo si vede, ma se la scrittura su
    disco salta ci si accorge di averla persa solo riaprendo l'app. Prima questa
@@ -3425,6 +3431,51 @@ Object.keys(DIZIONARIO_RESTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_
    vede subito di cosa parlano. */
 const DIZIONARIO_RACCOLTA={
   en:{
+    'Giorni':'Days',
+    'Luoghi':'Places',
+    '📅 Giorni':'📅 Days',
+    'Senza data':'No date',
+    'La giornata':'The day',
+    'Non connesso':'Not signed in',
+    'Ho un codice':'I have a code',
+    'Aggiungi spesa':'Add expense',
+    'Aggiungi tappa':'Add stop',
+    'Rinomina viaggio':'Rename trip',
+    '+ Aggiungi viaggio':'+ Add trip',
+    '📍 Posti da un reel':'📍 Places from a reel',
+    '🏁 Concludi viaggio':'🏁 Finish trip',
+    '🗑️ Elimina viaggio':'🗑️ Delete trip',
+    'Premi 🔄 per caricare':'Tap 🔄 to load',
+    'Nessun viaggio concluso':'No finished trips',
+    'spesa totale del viaggio':'total spent on the trip',
+    'Chi ha già dato la sua parte':'Who has already chipped in',
+    'Diario del viaggio (stampa / PDF)':'Trip diary (print / PDF)',
+    'I viaggi vivono solo su questo telefono':'Trips live only on this phone',
+    'https://... oppure il codice':'https://… or the code',
+    'sul link "Reset password" →':'the “Reset password” link →',
+    'Tua spesa':'Your expense',
+    'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Nothing yet: the map fills itself in while you look at it.',
+    'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'One tap to see the day, another on the same day to open the timetable',
+    'Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.':'Paste it here: I’ll find everything that’s needed inside, without you having to look for anything.',
+    'es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file':'e.g. fish markets early in the morning, brutalist architecture, small jazz bars, no queues',
+    'Se il nome dell\'albergo non basta, incolla l\'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.':'If the hotel name isn’t enough, paste the full address or the Google Maps link: I’ll read the exact coordinates from it.',
+    'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Suggestions come from your interests and the places you save. How sensitive the alerts are, and how far they reach, is set in Settings.',
+    'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'I create the days missing from the range. The ones already there, with their activities, stay where they are: I never take anything away.',
+    'I posti che hai già in time-table. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'The places you already have in the timetable. Tap the label to say whether it’s a must-see or skippable: it changes how much I warn you when you pass nearby.',
+    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'The areas you look at on the map stay in the phone, and you can see them again with no signal. Look at an area before you leave and you’ve got it there.',
+    'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR and barcodes, from the camera, from a photo or from a PDF downloaded from your mail: I just copy them, exactly as they are, in their original shape.',
+    'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ An Instagram link alone isn’t enough: Instagram doesn’t allow reading other people’s video content. Paste the text or a screenshot.',
+    'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Tick the ones you like: you’ll find them among the saved places in “Discover”, and from there they show up on the trip preview map too.',
+    'Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).':'Pick a result: I’ll ask you the dates and put check-in and check-out in the timetable (check-out in the morning, check-in in the evening, like in real life).',
+    'Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c\'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.':'GeppGo photos are only visible inside the trip they belong to: there’s no public board and no address you could pass on to strangers.',
+    'La segnalazione arriva a chi gestisce GeppGo. Se riguarda un minore o un reato, viene trattata con precedenza e, quando serve, riferita alle autorità.':'The report reaches whoever runs GeppGo. If it involves a minor or a crime, it’s handled first and, where needed, passed to the authorities.',
+    'In time-table metto il check-in alle 15:00 e il check-out alle 10:00: poi li sposti come qualsiasi attività. Il costo finisce da solo in Soldi e Budget.':'In the timetable I put check-in at 15:00 and check-out at 10:00: then you move them like any other activity. The cost lands by itself in Money and Budget.',
+    'Lo ridisegno con questa forma: se sul biglietto vero c\'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.':'I redraw it in this shape: if the real ticket has a barcode, there must be a barcode here too, otherwise the gate reader won’t take it.',
+    'È solo la proposta di partenza: ogni volta che aggiungi una foto l\'app te lo richiede, così una foto importante e un cartello dell\'autobus non pesano uguale.':'It’s only the starting suggestion: every time you add a photo the app asks you again, so an important photo and a bus timetable sign don’t weigh the same.',
+    'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'If someone is in danger right now, call 112. In Italy, reports about material involving minors also go to the Polizia Postale, at commissariatodips.it.',
+    'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'For those who’d rather wander than plan: paste a list (an AI-generated one is fine, one item per line), I’ll turn it into saved places and warn you when you pass nearby.',
+    'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Photograph a monument or building you don’t know: I’ll tell you what it is, a bit of history and context, and whether you need to book to visit it. Drag your finger across the photo to circle the subject.',
+    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'There’s no “download the whole city”: OpenStreetMap’s maps are kept up by volunteers, and downloading them in bulk is forbidden by their terms. Keeping what you’ve already looked at, on the other hand, is exactly what they ask you to do.',
     'Questa giornata è ancora vuota':'This day is still empty',
     'Aggiungi la prima tappa':'Add the first stop',
     '📣 A raccolta':'📣 Gather round',
@@ -3447,6 +3498,51 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'the spot where you are right now'
   },
   es:{
+    'Giorni':'Días',
+    'Luoghi':'Lugares',
+    '📅 Giorni':'📅 Días',
+    'Senza data':'Sin fecha',
+    'La giornata':'El día',
+    'Non connesso':'No has entrado',
+    'Ho un codice':'Tengo un código',
+    'Aggiungi spesa':'Añadir gasto',
+    'Aggiungi tappa':'Añadir parada',
+    'Rinomina viaggio':'Cambiar nombre del viaje',
+    '+ Aggiungi viaggio':'+ Añadir viaje',
+    '📍 Posti da un reel':'📍 Lugares de un reel',
+    '🏁 Concludi viaggio':'🏁 Terminar viaje',
+    '🗑️ Elimina viaggio':'🗑️ Eliminar viaje',
+    'Premi 🔄 per caricare':'Toca 🔄 para cargar',
+    'Nessun viaggio concluso':'Ningún viaje terminado',
+    'spesa totale del viaggio':'gasto total del viaje',
+    'Chi ha già dato la sua parte':'Quién ya ha puesto su parte',
+    'Diario del viaggio (stampa / PDF)':'Diario del viaje (imprimir / PDF)',
+    'I viaggi vivono solo su questo telefono':'Los viajes viven solo en este teléfono',
+    'https://... oppure il codice':'https://… o el código',
+    'sul link "Reset password" →':'el enlace «Reset password» →',
+    'Tua spesa':'Tu gasto',
+    'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Todavía nada: el mapa se llena solo mientras lo miras.',
+    'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Un toque para ver el día, otro en el mismo día para abrir la time-table',
+    'Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.':'Pégalo aquí: encuentro dentro todo lo que hace falta, sin que tengas que buscar nada.',
+    'es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file':'p. ej. mercados de pescado a primera hora, arquitectura brutalista, bares de jazz pequeños, nada de colas',
+    'Se il nome dell\'albergo non basta, incolla l\'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.':'Si el nombre del hotel no basta, pega la dirección completa o el enlace de Google Maps: de ahí leo las coordenadas exactas.',
+    'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Las sugerencias nacen de tus intereses y de los lugares que guardas. La sensibilidad y el radio de los avisos se ajustan en Ajustes.',
+    'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Creo los días que faltan en el intervalo. Los que ya están, con sus actividades, se quedan donde están: nunca quito nada.',
+    'I posti che hai già in time-table. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Los sitios que ya tienes en la time-table. Toca la etiqueta para decir si es imprescindible o prescindible: cambia cuánto te aviso al pasar cerca.',
+    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'Las zonas que miras en el mapa se quedan en el teléfono, y se vuelven a ver aunque no haya cobertura. Mira una zona antes de salir y ya la tienes.',
+    'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR y códigos de barras, desde la cámara, desde una foto o desde un PDF descargado del correo: solo los copio, tal cual, con su forma original.',
+    'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ El enlace de Instagram por sí solo no basta: Instagram no permite leer el contenido de los vídeos ajenos. Pega el texto o una captura.',
+    'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Marca los que te interesen: los encuentras entre los lugares guardados en «Descubre», y de ahí aparecen también en el mapa de la vista previa del viaje.',
+    'Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).':'Elige un resultado: te pregunto las fechas y coloco entrada y salida en la time-table (salida por la mañana, entrada por la tarde, como en la vida real).',
+    'Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c\'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.':'Las fotos de GeppGo se ven solo dentro del viaje en el que están: no hay ningún tablón público ni ninguna dirección que se pueda pasar a extraños.',
+    'La segnalazione arriva a chi gestisce GeppGo. Se riguarda un minore o un reato, viene trattata con precedenza e, quando serve, riferita alle autorità.':'La denuncia llega a quien gestiona GeppGo. Si afecta a un menor o a un delito, se trata con prioridad y, cuando hace falta, se traslada a las autoridades.',
+    'In time-table metto il check-in alle 15:00 e il check-out alle 10:00: poi li sposti come qualsiasi attività. Il costo finisce da solo in Soldi e Budget.':'En la time-table pongo la entrada a las 15:00 y la salida a las 10:00: luego las mueves como cualquier actividad. El coste va solo a Dinero y Presupuesto.',
+    'Lo ridisegno con questa forma: se sul biglietto vero c\'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.':'Lo redibujo con esta forma: si en el billete de verdad hay un código de barras, aquí tiene que haber un código de barras, si no el lector del torno no lo acepta.',
+    'È solo la proposta di partenza: ogni volta che aggiungi una foto l\'app te lo richiede, così una foto importante e un cartello dell\'autobus non pesano uguale.':'Es solo la propuesta de partida: cada vez que añades una foto la app te lo vuelve a preguntar, así una foto importante y un cartel del autobús no pesan igual.',
+    'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Si alguien está en peligro ahora mismo, llama al 112. En Italia las denuncias sobre material que afecta a menores se hacen también a la Polizia Postale, en commissariatodips.it.',
+    'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Para quien quiere callejear sin planificar: pega una lista (también generada por una IA, una entrada por línea), la convierto en lugares guardados y te aviso cuando pases cerca.',
+    'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Fotografía un monumento o edificio que no conozcas: te cuento qué es, algo de historia y contexto, y si hace falta reservar para visitarlo. Arrastra el dedo sobre la foto para rodear el sujeto.',
+    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'No existe un «descarga toda la ciudad»: los mapas de OpenStreetMap los mantienen voluntarios, y descargarlos en bloque está prohibido por sus condiciones. Guardar lo que ya has mirado, en cambio, es justo lo que piden hacer.',
     'Questa giornata è ancora vuota':'Este día está todavía vacío',
     'Aggiungi la prima tappa':'Añade la primera parada',
     '📣 A raccolta':'📣 Reunión',
@@ -3469,6 +3565,51 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'el punto donde estás ahora'
   },
   fr:{
+    'Giorni':'Jours',
+    'Luoghi':'Lieux',
+    '📅 Giorni':'📅 Jours',
+    'Senza data':'Sans date',
+    'La giornata':'La journée',
+    'Non connesso':'Non connecté',
+    'Ho un codice':'J’ai un code',
+    'Aggiungi spesa':'Ajouter une dépense',
+    'Aggiungi tappa':'Ajouter une étape',
+    'Rinomina viaggio':'Renommer le voyage',
+    '+ Aggiungi viaggio':'+ Ajouter un voyage',
+    '📍 Posti da un reel':'📍 Lieux depuis un reel',
+    '🏁 Concludi viaggio':'🏁 Terminer le voyage',
+    '🗑️ Elimina viaggio':'🗑️ Supprimer le voyage',
+    'Premi 🔄 per caricare':'Touche 🔄 pour charger',
+    'Nessun viaggio concluso':'Aucun voyage terminé',
+    'spesa totale del viaggio':'dépense totale du voyage',
+    'Chi ha già dato la sua parte':'Qui a déjà donné sa part',
+    'Diario del viaggio (stampa / PDF)':'Journal du voyage (impression / PDF)',
+    'I viaggi vivono solo su questo telefono':'Les voyages vivent seulement sur ce téléphone',
+    'https://... oppure il codice':'https://… ou le code',
+    'sul link "Reset password" →':'le lien « Reset password » →',
+    'Tua spesa':'Ta dépense',
+    'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Rien pour l’instant : la carte se remplit toute seule pendant que tu la regardes.',
+    'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Une touche pour voir la journée, une autre sur le même jour pour ouvrir la time-table',
+    'Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.':'Colle-le ici : j’y trouve tout ce qu’il faut, sans que tu aies à chercher quoi que ce soit.',
+    'es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file':'p. ex. marchés au poisson tôt le matin, architecture brutaliste, petits bars de jazz, pas de files',
+    'Se il nome dell\'albergo non basta, incolla l\'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.':'Si le nom de l’hôtel ne suffit pas, colle l’adresse complète ou le lien Google Maps : j’y lis les coordonnées exactes.',
+    'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Les suggestions viennent de tes centres d’intérêt et des lieux que tu enregistres. La sensibilité et le rayon des alertes se règlent dans les Réglages.',
+    'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Je crée les jours qui manquent dans l’intervalle. Ceux qui existent déjà, avec leurs activités, restent où ils sont : je n’enlève jamais rien.',
+    'I posti che hai già in time-table. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Les endroits que tu as déjà dans la time-table. Touche l’étiquette pour dire si c’est incontournable ou facultatif : ça change à quel point je te préviens en passant à côté.',
+    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'Les zones que tu regardes sur la carte restent dans le téléphone, et se revoient même sans réseau. Regarde une zone avant de partir et tu l’as.',
+    'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR et codes-barres, depuis l’appareil photo, une photo ou un PDF téléchargé depuis le mail : je les copie, tels quels, avec leur forme d’origine.',
+    'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ Le lien Instagram seul ne suffit pas : Instagram ne permet pas de lire le contenu des vidéos des autres. Colle le texte ou une capture.',
+    'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Coche ceux qui t’intéressent : tu les retrouves parmi les lieux enregistrés dans « Découvrir », et de là ils apparaissent aussi sur la carte de l’aperçu du voyage.',
+    'Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).':'Choisis un résultat : je te demande les dates et je place l’arrivée et le départ dans la time-table (départ le matin, arrivée le soir, comme dans la vraie vie).',
+    'Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c\'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.':'Les photos de GeppGo ne se voient qu’à l’intérieur du voyage où elles sont : il n’y a aucun mur public ni aucune adresse qu’on puisse transmettre à des inconnus.',
+    'La segnalazione arriva a chi gestisce GeppGo. Se riguarda un minore o un reato, viene trattata con precedenza e, quando serve, riferita alle autorità.':'Le signalement arrive à ceux qui gèrent GeppGo. S’il concerne un mineur ou un délit, il est traité en priorité et, si nécessaire, transmis aux autorités.',
+    'In time-table metto il check-in alle 15:00 e il check-out alle 10:00: poi li sposti come qualsiasi attività. Il costo finisce da solo in Soldi e Budget.':'Dans la time-table je mets l’arrivée à 15h00 et le départ à 10h00 : ensuite tu les déplaces comme n’importe quelle activité. Le coût va tout seul dans Argent et Budget.',
+    'Lo ridisegno con questa forma: se sul biglietto vero c\'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.':'Je le redessine avec cette forme : si le vrai billet a un code-barres, il doit y avoir un code-barres ici aussi, sinon le lecteur du portique ne le prend pas.',
+    'È solo la proposta di partenza: ogni volta che aggiungi una foto l\'app te lo richiede, così una foto importante e un cartello dell\'autobus non pesano uguale.':'Ce n’est que la proposition de départ : chaque fois que tu ajoutes une photo l’app te le redemande, comme ça une photo importante et un panneau de bus ne pèsent pas pareil.',
+    'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Si quelqu’un est en danger maintenant, appelle le 112. En Italie, les signalements de contenus impliquant des mineurs se font aussi à la Polizia Postale, sur commissariatodips.it.',
+    'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Pour ceux qui préfèrent flâner que planifier : colle une liste (même générée par une IA, une entrée par ligne), je la transforme en lieux enregistrés et je te préviens quand tu passes à côté.',
+    'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Photographie un monument ou un bâtiment que tu ne connais pas : je te raconte ce que c’est, un peu d’histoire et de contexte, et s’il faut réserver pour le visiter. Fais glisser ton doigt sur la photo pour entourer le sujet.',
+    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'Il n’existe pas de « télécharge toute la ville » : les cartes d’OpenStreetMap sont tenues par des bénévoles, et les télécharger en bloc est interdit par leurs conditions. Garder ce que tu as déjà regardé, en revanche, c’est exactement ce qu’ils demandent.',
     'Questa giornata è ancora vuota':'Cette journée est encore vide',
     'Aggiungi la prima tappa':'Ajoute la première étape',
     '📣 A raccolta':'📣 On se retrouve',
@@ -3491,6 +3632,51 @@ const DIZIONARIO_RACCOLTA={
     'il punto dove sei adesso':'l’endroit où tu es maintenant'
   },
   pt:{
+    'Giorni':'Dias',
+    'Luoghi':'Lugares',
+    '📅 Giorni':'📅 Dias',
+    'Senza data':'Sem data',
+    'La giornata':'O dia',
+    'Non connesso':'Sem sessão',
+    'Ho un codice':'Tenho um código',
+    'Aggiungi spesa':'Acrescentar despesa',
+    'Aggiungi tappa':'Acrescentar paragem',
+    'Rinomina viaggio':'Mudar o nome da viagem',
+    '+ Aggiungi viaggio':'+ Acrescentar viagem',
+    '📍 Posti da un reel':'📍 Lugares de um reel',
+    '🏁 Concludi viaggio':'🏁 Terminar viagem',
+    '🗑️ Elimina viaggio':'🗑️ Eliminar viagem',
+    'Premi 🔄 per caricare':'Toca em 🔄 para carregar',
+    'Nessun viaggio concluso':'Nenhuma viagem terminada',
+    'spesa totale del viaggio':'gasto total da viagem',
+    'Chi ha già dato la sua parte':'Quem já deu a sua parte',
+    'Diario del viaggio (stampa / PDF)':'Diário da viagem (imprimir / PDF)',
+    'I viaggi vivono solo su questo telefono':'As viagens vivem só neste telemóvel',
+    'https://... oppure il codice':'https://… ou o código',
+    'sul link "Reset password" →':'a ligação «Reset password» →',
+    'Tua spesa':'A tua despesa',
+    'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Ainda nada: o mapa enche-se sozinho enquanto olhas para ele.',
+    'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Um toque para ver o dia, outro no mesmo dia para abrir a time-table',
+    'Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.':'Cola aqui: encontro lá dentro tudo o que é preciso, sem que tenhas de procurar nada.',
+    'es. mercati del pesce la mattina presto, architettura brutalista, jazz bar piccoli, niente file':'p. ex. mercados de peixe de manhã cedo, arquitetura brutalista, bares de jazz pequenos, nada de filas',
+    'Se il nome dell\'albergo non basta, incolla l\'indirizzo per esteso o il link di Google Maps: da lì leggo le coordinate esatte.':'Se o nome do hotel não chegar, cola a morada completa ou a ligação do Google Maps: daí leio as coordenadas exatas.',
+    'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'As sugestões nascem dos teus interesses e dos lugares que guardas. A sensibilidade e o raio dos avisos regulam-se nas Definições.',
+    'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Crio os dias que faltam no intervalo. Os que já existem, com as suas atividades, ficam onde estão: nunca tiro nada.',
+    'I posti che hai già in time-table. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Os sítios que já tens na time-table. Toca na etiqueta para dizer se é imperdível ou dispensável: muda o quanto te aviso ao passar perto.',
+    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'As zonas que olhas no mapa ficam no telemóvel, e vêem-se outra vez mesmo sem rede. Olha para uma zona antes de partir e ficas com ela.',
+    'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR e códigos de barras, da câmara, de uma foto ou de um PDF descarregado do email: copio-os e pronto, tal e qual, com a forma original.',
+    'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ Só a ligação do Instagram não chega: o Instagram não deixa ler o conteúdo dos vídeos dos outros. Cola o texto ou uma captura.',
+    'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Marca os que te interessam: encontra-los entre os lugares guardados em «Descobrir», e daí aparecem também no mapa da pré-visualização da viagem.',
+    'Scegli un risultato: ti chiedo le date e piazzo check-in e check-out in time-table (check-out la mattina, check-in la sera, come nella vita vera).':'Escolhe um resultado: pergunto-te as datas e ponho o check-in e o check-out na time-table (check-out de manhã, check-in à noite, como na vida real).',
+    'Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c\'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.':'As fotos do GeppGo veem-se só dentro da viagem onde estão: não há nenhum mural público nem nenhum endereço que se possa passar a estranhos.',
+    'La segnalazione arriva a chi gestisce GeppGo. Se riguarda un minore o un reato, viene trattata con precedenza e, quando serve, riferita alle autorità.':'A denúncia chega a quem gere o GeppGo. Se envolver um menor ou um crime, é tratada com prioridade e, quando for preciso, comunicada às autoridades.',
+    'In time-table metto il check-in alle 15:00 e il check-out alle 10:00: poi li sposti come qualsiasi attività. Il costo finisce da solo in Soldi e Budget.':'Na time-table ponho o check-in às 15:00 e o check-out às 10:00: depois moves-os como qualquer atividade. O custo vai sozinho para Dinheiro e Orçamento.',
+    'Lo ridisegno con questa forma: se sul biglietto vero c\'è un codice a barre, qui deve esserci un codice a barre, se no il lettore del varco non lo prende.':'Volto a desenhá-lo com esta forma: se no bilhete verdadeiro há um código de barras, aqui tem de haver um código de barras, senão o leitor do torniquete não o aceita.',
+    'È solo la proposta di partenza: ogni volta che aggiungi una foto l\'app te lo richiede, così una foto importante e un cartello dell\'autobus non pesano uguale.':'É só a proposta de partida: sempre que acrescentas uma foto a app volta a perguntar-te, assim uma foto importante e um cartaz do autocarro não pesam o mesmo.',
+    'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Se alguém está em perigo agora, liga para o 112. Em Itália, as denúncias sobre material que envolve menores fazem-se também à Polizia Postale, em commissariatodips.it.',
+    'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Para quem quer vaguear sem planear: cola uma lista (mesmo gerada por uma IA, uma entrada por linha), transformo-a em lugares guardados e aviso-te quando passares perto.',
+    'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Fotografa um monumento ou edifício que não conheças: conto-te o que é, um pouco de história e contexto, e se é preciso reservar para o visitar. Arrasta o dedo sobre a foto para rodear o motivo.',
+    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'Não existe um «descarrega a cidade toda»: os mapas do OpenStreetMap são mantidos por voluntários, e descarregá-los em bloco é proibido pelas condições deles. Guardar o que já olhaste, pelo contrário, é exatamente o que pedem para fazer.',
     'Questa giornata è ancora vuota':'Este dia ainda está vazio',
     'Aggiungi la prima tappa':'Acrescenta a primeira paragem',
     '📣 A raccolta':'📣 Toca a reunir',
@@ -3515,9 +3701,384 @@ const DIZIONARIO_RACCOLTA={
 };
 Object.keys(DIZIONARIO_RACCOLTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RACCOLTA[l]));
 
+/* Le frasi lunghe dei pannelli: le spiegazioni che si leggono una volta
+   sola, quando si apre una cosa nuova. Stanno in fondo perche' sono le
+   ultime arrivate e perche' sono lunghe: in mezzo alle altre non si
+   sarebbe piu' letto niente. */
+const DIZIONARIO_PANNELLI={
+  en:{
+    ': le':': the',
+    'non tua':'not yours',
+    'Nella mail (':'In the mail (',
+    'un\'attività, e un po\'':'an activity, and a bit',
+    'Qui il codice viene solo':'Here the code is only',
+    'risultato della codifica':'result of the encoding',
+    '(quella già installata sul telefono):':'(the one already on your phone):',
+    '. Servono una volta sola su questo telefono.':'. They’re needed only once on this phone.',
+    '(anche a schermo bloccato, nell\'app installata), quando':'(even on a locked screen, in the installed app), when',
+    'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'sunscreen\nphone charger\npassport\nflip-flops',
+    '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. If the mail shows a 6-digit code, that works too.',
+    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Or by hand, if the Supabase project is yours: the two values are in',
+    'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommended: on a phone you can’t tell it from the original, about 1.5 MB per photo',
+    'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'to the ones you already have, each in its own category. The ones already there I skip.',
+    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Day 1: breakfast, museum at 9:30, lunch downtown…\nDay 2: market, park, local dinner…',
+    '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple doesn’t let a web app sit in the share sheet. You get there in a minute with the app',
+    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': an itinerary written by ChatGPT, a list by hand, or cells copied from Excel. I’ll work it out.',
+    '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. In Italy, material involving minors is also reported to the Polizia Postale, at commissariatodips.it.',
+    'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'From there: open the hotel mail → Share → GeppGo → this panel opens with the booking already read.',
+    'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'and the way to reach you. The location is taken right now, once only: nobody is followed.',
+    '. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.':'. Reports involving minors or crimes are looked at first and, where needed, passed to the authorities.',
+    'Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.':'Paste the reel caption (or upload a screenshot where the names can be read): I’ll pull out the places and put them on the map for you.',
+    'con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l\'umano.':'with a sensible route: I look up the places, group them by how close they are, set the times. Then you drag and fix — the human is always in charge.',
+    ': la lettura resta dentro il telefono, non passa da nessun ente e non "timbra" niente. Il biglietto resta valido esattamente com\'era.':': the read stays inside the phone, goes through no operator and “stamps” nothing. The ticket stays valid exactly as it was.',
+    '⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell\'app nativa (Apple trattiene il 15–30%).':'⚠️ Demo with no payment. Real payments need Apple’s in-app purchases, possible only in the native app (Apple keeps 15–30%).',
+    'li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all\'ora giusta, e lascia il tempo per spostarsi da un posto all\'altro.':'puts them in: it looks up the addresses, works out which lines are meals and puts them at the right time, and leaves time to move from one place to the next.',
+    'Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.':'Automatic snapshots of your data, on this phone. If someone deletes by mistake, you go back: the restore is sent to the cloud as well.',
+    '— se hai installato GeppGo dal browser, compare da solo fra le app del tasto Condividi: apri la mail, Condividi, GeppGo. Il testo arriva qui dentro già letto.':'— if you installed GeppGo from the browser, it shows up by itself among the Share apps: open the mail, Share, GeppGo. The text arrives in here already read.',
+    'Incolla un elenco di posti, uno per riga (anche generato da un\'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono,':'Paste a list of places, one per line (AI-generated is fine): I’ll add them to this day, without touching the ones already there. If there are no times,',
+    'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'On top of that, from Settings you can export the timed activities to your calendar (Apple or Google) as an extra reminder. Without consent you won’t get any notification.',
+    'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Automatic snapshots of your data, on this phone (one every 10 minutes, I keep the last 6). If something goes wrong — a deletion by mistake, a mess — you go back in one tap.',
+    'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Open the confirmation mail, select all, copy and paste it below. If the confirmation is an attached PDF, just upload it. I read the name, address, dates and times, look up the place on the map, and',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Creates a file with the timed activities and the booking reminders: opening it, the iPhone adds them to the calendar you prefer (Apple or Google). The main channel stays the app’s notifications.',
+    'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'The read happens inside the phone, goes through no operator and “stamps” nothing: a ticket counts as used only when the gate of whoever sold it to you reads it. One precaution only: don’t show the codes to strangers.',
+    'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Skippable places use about half the radius, suggestions even less. Each place is flagged at most once a day and only a few times in all; marked as visited, it never comes back. Far from everything, the checks pause to save battery.',
+    'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Paste the text of the email: flight, train, bus, ferry, accommodation, car hire, restaurant or activity. I’ll get the dates, times, places, code and total out of it — even if the mail is in English, Spanish, French or Portuguese, and even if there’s an outbound and a return inside. You always check the data before saving — it all works on the phone, without sending anything anywhere.',
+    'Ogni biglietto che aggiungi qui si collega a questa attività e va subito a una persona. Se sul PDF c\'è scritto il nome di chi entra, il biglietto va a lui; se non c\'è, il primo al primo, il secondo al secondo, e chi ne carichi dopo va a chi non ne ha ancora. Il codice del voucher o della prenotazione lo riconosco e lo tengo da parte: non è un ingresso. Lo stesso codice letto due volte non viene contato due volte.':'Every ticket you add here is linked to this activity and goes straight to one person. If the PDF says who is going in, the ticket goes to them; if it doesn’t, the first to the first, the second to the second, and the ones you upload later go to whoever hasn’t got one yet. The voucher or booking code I recognise and set aside: it isn’t an entry. The same code read twice isn’t counted twice.'
+  },
+  es:{
+    ': le':': las',
+    'non tua':'no tuyo',
+    'Nella mail (':'En el correo (',
+    'un\'attività, e un po\'':'una actividad, y un poco',
+    'Qui il codice viene solo':'Aquí el código solo se',
+    'risultato della codifica':'resultado de la codificación',
+    '(quella già installata sul telefono):':'(la que ya tienes en el teléfono):',
+    '. Servono una volta sola su questo telefono.':'. Hacen falta una sola vez en este teléfono.',
+    '(anche a schermo bloccato, nell\'app installata), quando':'(incluso con la pantalla bloqueada, en la app instalada), cuando',
+    'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'crema solar\ncargador del móvil\npasaporte\nchanclas',
+    '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Si el correo muestra un código de 6 cifras, también vale.',
+    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'O a mano, si el proyecto de Supabase es tuyo: los dos valores están en',
+    'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: en un teléfono no se distingue del original, unos 1,5 MB por foto',
+    'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'a los que ya tienes, cada uno en su categoría. Los que ya están me los salto.',
+    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Día 1: desayuno, museo a las 9:30, comida en el centro…\nDía 2: mercado, parque, cena típica…',
+    '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple no deja que una app web esté en el menú de compartir. Se llega en un minuto con la app',
+    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': un itinerario escrito por ChatGPT, una lista a mano, o celdas copiadas de Excel. Ya lo entiendo yo.',
+    '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. En Italia el material que afecta a menores se denuncia también a la Polizia Postale, en commissariatodips.it.',
+    'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'Desde ahí: abre el correo del hotel → Compartir → GeppGo → se abre este panel con la reserva ya leída.',
+    'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'y el camino para llegar hasta ti. La ubicación se toma en este momento, una sola vez: nadie es seguido.',
+    '. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.':'. Las denuncias que afectan a menores o a delitos se miran primero y, cuando hace falta, se trasladan a las autoridades.',
+    'Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.':'Pega el texto del reel (o sube una captura donde se lean los nombres): extraigo los sitios y te los pongo en el mapa.',
+    'con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l\'umano.':'con una ruta con sentido: busco los sitios, los agrupo por cercanía, pongo los horarios. Luego arrastras y corriges tú — manda siempre la persona.',
+    ': la lettura resta dentro il telefono, non passa da nessun ente e non "timbra" niente. Il biglietto resta valido esattamente com\'era.':': la lectura se queda dentro del teléfono, no pasa por ninguna entidad y no «valida» nada. El billete sigue válido exactamente como estaba.',
+    '⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell\'app nativa (Apple trattiene il 15–30%).':'⚠️ Demo sin pago. Los pagos de verdad requieren las compras dentro de la app de Apple, posibles solo en la app nativa (Apple se queda el 15–30%).',
+    'li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all\'ora giusta, e lascia il tempo per spostarsi da un posto all\'altro.':'los pone él: busca las direcciones, entiende qué líneas son comidas y las pone a su hora, y deja tiempo para desplazarse de un sitio a otro.',
+    'Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.':'Fotografías automáticas de los datos, en este teléfono. Si alguien borra por error, vuelves atrás: la restauración se reenvía también a la nube.',
+    '— se hai installato GeppGo dal browser, compare da solo fra le app del tasto Condividi: apri la mail, Condividi, GeppGo. Il testo arriva qui dentro già letto.':'— si has instalado GeppGo desde el navegador, aparece solo entre las apps del botón Compartir: abre el correo, Compartir, GeppGo. El texto llega aquí ya leído.',
+    'Incolla un elenco di posti, uno per riga (anche generato da un\'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono,':'Pega una lista de sitios, uno por línea (también generada por una IA): los añado a este día, sin tocar los que ya están. Si no hay horarios,',
+    'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'Además, desde Ajustes puedes exportar las actividades con hora a tu calendario (Apple o Google) como recordatorio adicional. Sin el consentimiento no recibirás ninguna notificación.',
+    'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Fotografías automáticas de los datos, en este teléfono (una cada 10 minutos, guardo las últimas 6). Si algo sale mal — un borrado por error, un lío — vuelves atrás en un toque.',
+    'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Abre el correo de confirmación, selecciona todo, copia y pega aquí abajo. Si la confirmación es un PDF adjunto, súbelo sin más. Leo nombre, dirección, fechas y horarios, busco la ubicación en el mapa, y',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Crea un archivo con las actividades con hora y los recordatorios de reserva: al abrirlo, el iPhone los añade al calendario que prefieras (Apple o Google). El canal principal siguen siendo las notificaciones de la app.',
+    'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'La lectura ocurre dentro del teléfono, no pasa por ninguna entidad y no «valida» nada: un billete consta como usado solo cuando lo lee el torno de quien te lo vendió. Única precaución: no enseñes los códigos a desconocidos.',
+    'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Los lugares prescindibles usan alrededor de la mitad del radio, las sugerencias aún menos. Cada lugar se avisa como mucho una vez al día y pocas veces en total; marcado como visitado, no vuelve. Lejos de todo, los controles se pausan para ahorrar batería.',
+    'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Pega el texto del correo: vuelo, tren, autobús, ferry, alojamiento, alquiler de coche, restaurante o actividad. Saco fechas, horarios, lugares, código y total — aunque el correo esté en inglés, español, francés o portugués, y aunque dentro haya ida y vuelta. Siempre compruebas los datos antes de guardar — todo funciona en el teléfono, sin mandar nada fuera.',
+    'Ogni biglietto che aggiungi qui si collega a questa attività e va subito a una persona. Se sul PDF c\'è scritto il nome di chi entra, il biglietto va a lui; se non c\'è, il primo al primo, il secondo al secondo, e chi ne carichi dopo va a chi non ne ha ancora. Il codice del voucher o della prenotazione lo riconosco e lo tengo da parte: non è un ingresso. Lo stesso codice letto due volte non viene contato due volte.':'Cada billete que añades aquí se enlaza a esta actividad y va enseguida a una persona. Si en el PDF está escrito el nombre de quien entra, el billete va para él; si no, el primero al primero, el segundo al segundo, y los que subas después van a quien todavía no tiene. El código del voucher o de la reserva lo reconozco y lo aparto: no es una entrada. El mismo código leído dos veces no se cuenta dos veces.'
+  },
+  fr:{
+    ': le':' : les',
+    'non tua':'pas à toi',
+    'Nella mail (':'Dans le mail (',
+    'un\'attività, e un po\'':'une activité, et un peu',
+    'Qui il codice viene solo':'Ici le code est seulement',
+    'risultato della codifica':'résultat de l’encodage',
+    '(quella già installata sul telefono):':'(celle déjà installée sur le téléphone) :',
+    '. Servono una volta sola su questo telefono.':'. Ils ne servent qu’une seule fois sur ce téléphone.',
+    '(anche a schermo bloccato, nell\'app installata), quando':'(même écran verrouillé, dans l’app installée), quand',
+    'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'crème solaire\nchargeur de téléphone\npasseport\ntongs',
+    '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Si le mail affiche un code à 6 chiffres, ça marche aussi.',
+    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Ou à la main, si le projet Supabase est le tien : les deux valeurs sont dans',
+    'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommandée : sur un téléphone on ne la distingue pas de l’originale, environ 1,5 Mo par photo',
+    'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'à ceux que tu as déjà, chacun dans sa catégorie. Ceux qui y sont déjà, je les saute.',
+    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Jour 1 : petit-déjeuner, musée à 9h30, déjeuner au centre…\nJour 2 : marché, parc, dîner typique…',
+    '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple ne laisse pas une app web figurer dans la feuille de partage. On y arrive en une minute avec l’app',
+    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': un itinéraire écrit par ChatGPT, une liste à la main, ou des cellules copiées d’Excel. Je m’en occupe.',
+    '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. En Italie, le matériel impliquant des mineurs se signale aussi à la Polizia Postale, sur commissariatodips.it.',
+    'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'De là : ouvre le mail de l’hôtel → Partager → GeppGo → ce panneau s’ouvre avec la réservation déjà lue.',
+    'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'et le chemin pour te rejoindre. La position est prise à cet instant, une seule fois : personne n’est suivi.',
+    '. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.':'. Les signalements concernant des mineurs ou des délits sont regardés en premier et, si nécessaire, transmis aux autorités.',
+    'Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.':'Colle la légende du reel (ou charge une capture où on lit les noms) : j’en extrais les lieux et je te les mets sur la carte.',
+    'con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l\'umano.':'avec un parcours sensé : je cherche les lieux, je les regroupe par proximité, je donne les horaires. Ensuite tu déplaces et corriges — c’est toujours l’humain qui commande.',
+    ': la lettura resta dentro il telefono, non passa da nessun ente e non "timbra" niente. Il biglietto resta valido esattamente com\'era.':': la lecture reste dans le téléphone, ne passe par aucun organisme et ne « composte » rien. Le billet reste valable exactement comme il était.',
+    '⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell\'app nativa (Apple trattiene il 15–30%).':'⚠️ Démo sans paiement. Les vrais paiements exigent les achats intégrés d’Apple, possibles seulement dans l’app native (Apple retient 15–30 %).',
+    'li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all\'ora giusta, e lascia il tempo per spostarsi da un posto all\'altro.':'les met lui-même : il cherche les adresses, comprend quelles lignes sont des repas et les met à la bonne heure, et laisse le temps de se déplacer d’un endroit à l’autre.',
+    'Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.':'Photographies automatiques des données, sur ce téléphone. Si quelqu’un supprime par erreur, tu reviens en arrière : la restauration repart aussi vers le cloud.',
+    '— se hai installato GeppGo dal browser, compare da solo fra le app del tasto Condividi: apri la mail, Condividi, GeppGo. Il testo arriva qui dentro già letto.':'— si tu as installé GeppGo depuis le navigateur, il apparaît tout seul parmi les apps du bouton Partager : ouvre le mail, Partager, GeppGo. Le texte arrive ici déjà lu.',
+    'Incolla un elenco di posti, uno per riga (anche generato da un\'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono,':'Colle une liste de lieux, un par ligne (même générée par une IA) : je les ajoute à cette journée, sans toucher à ceux qui y sont déjà. S’il n’y a pas d’horaires,',
+    'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'En plus, depuis les Réglages tu peux exporter les activités à horaire vers ton calendrier (Apple ou Google) comme rappel supplémentaire. Sans le consentement tu ne recevras aucune notification.',
+    'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Photographies automatiques des données, sur ce téléphone (une toutes les 10 minutes, je garde les 6 dernières). Si quelque chose tourne mal — une suppression par erreur, un cafouillage — tu reviens en arrière en une touche.',
+    'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Ouvre le mail de confirmation, sélectionne tout, copie et colle ci-dessous. Si la confirmation est un PDF joint, charge-le simplement. Je lis le nom, l’adresse, les dates et les horaires, je cherche l’endroit sur la carte, et',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Crée un fichier avec les activités à horaire et les rappels de réservation : en l’ouvrant, l’iPhone les ajoute au calendrier que tu préfères (Apple ou Google). Le canal principal reste les notifications de l’app.',
+    'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'La lecture se fait dans le téléphone, ne passe par aucun organisme et ne « composte » rien : un billet n’est utilisé que lorsque le portique de celui qui te l’a vendu le lit. Seule précaution : ne montre pas les codes à des inconnus.',
+    'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Les lieux facultatifs utilisent environ la moitié du rayon, les suggestions encore moins. Chaque lieu est signalé au plus une fois par jour et peu de fois en tout ; marqué comme visité, il ne revient plus. Loin de tout, les contrôles se mettent en pause pour économiser la batterie.',
+    'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Colle le texte de l’e-mail : vol, train, bus, ferry, hébergement, location de voiture, restaurant ou activité. J’en tire les dates, les horaires, les lieux, le code et le total — même si le mail est en anglais, espagnol, français ou portugais, et même s’il contient un aller et un retour. Tu vérifies toujours les données avant d’enregistrer — tout fonctionne sur le téléphone, sans rien envoyer ailleurs.',
+    'Ogni biglietto che aggiungi qui si collega a questa attività e va subito a una persona. Se sul PDF c\'è scritto il nome di chi entra, il biglietto va a lui; se non c\'è, il primo al primo, il secondo al secondo, e chi ne carichi dopo va a chi non ne ha ancora. Il codice del voucher o della prenotazione lo riconosco e lo tengo da parte: non è un ingresso. Lo stesso codice letto due volte non viene contato due volte.':'Chaque billet que tu ajoutes ici est lié à cette activité et va tout de suite à une personne. Si le PDF indique le nom de celui qui entre, le billet lui revient ; sinon, le premier au premier, le deuxième au deuxième, et ceux que tu charges ensuite vont à ceux qui n’en ont pas encore. Le code du voucher ou de la réservation, je le reconnais et je le mets de côté : ce n’est pas une entrée. Le même code lu deux fois n’est pas compté deux fois.'
+  },
+  pt:{
+    ': le':': as',
+    'non tua':'não é tua',
+    'Nella mail (':'No email (',
+    'un\'attività, e un po\'':'uma atividade, e um pouco',
+    'Qui il codice viene solo':'Aqui o código é só',
+    'risultato della codifica':'resultado da codificação',
+    '(quella già installata sul telefono):':'(a que já tens no telemóvel):',
+    '. Servono una volta sola su questo telefono.':'. São precisos só uma vez neste telemóvel.',
+    '(anche a schermo bloccato, nell\'app installata), quando':'(mesmo com o ecrã bloqueado, na app instalada), quando',
+    'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'protetor solar\ncarregador do telemóvel\npassaporte\nchinelos',
+    '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Se o email mostrar um código de 6 dígitos, também serve.',
+    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Ou à mão, se o projeto Supabase for teu: os dois valores estão em',
+    'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: num telemóvel não se distingue do original, cerca de 1,5 MB por foto',
+    'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'aos que já tens, cada um na sua categoria. Os que já lá estão, salto-os.',
+    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Dia 1: pequeno-almoço, museu às 9:30, almoço no centro…\nDia 2: mercado, parque, jantar típico…',
+    '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— a Apple não deixa uma app web estar no menu de partilha. Chega-se lá num minuto com a app',
+    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': um itinerário escrito pelo ChatGPT, uma lista à mão, ou células copiadas do Excel. Eu trato de perceber.',
+    '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. Em Itália, o material que envolve menores denuncia-se também à Polizia Postale, em commissariatodips.it.',
+    'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'A partir daí: abre o email do hotel → Partilhar → GeppGo → abre-se este painel com a reserva já lida.',
+    'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'e o caminho para chegar até ti. A localização é tirada neste momento, uma só vez: ninguém é seguido.',
+    '. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.':'. As denúncias que envolvem menores ou crimes são vistas primeiro e, quando é preciso, comunicadas às autoridades.',
+    'Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.':'Cola a legenda do reel (ou carrega uma captura onde se leiam os nomes): extraio os lugares e ponho-tos no mapa.',
+    'con un giro sensato: cerco i posti, li raggruppo per vicinanza, do gli orari. Poi trascini e correggi tu — comanda sempre l\'umano.':'com um percurso com sentido: procuro os sítios, agrupo-os por proximidade, dou os horários. Depois arrastas e corriges tu — quem manda é sempre a pessoa.',
+    ': la lettura resta dentro il telefono, non passa da nessun ente e non "timbra" niente. Il biglietto resta valido esattamente com\'era.':': a leitura fica dentro do telemóvel, não passa por nenhuma entidade e não «valida» nada. O bilhete continua válido exatamente como estava.',
+    '⚠️ Demo senza pagamento. I pagamenti veri richiedono gli acquisti in-app di Apple, possibili solo nell\'app nativa (Apple trattiene il 15–30%).':'⚠️ Demo sem pagamento. Os pagamentos a sério exigem as compras dentro da app da Apple, possíveis só na app nativa (a Apple fica com 15–30%).',
+    'li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all\'ora giusta, e lascia il tempo per spostarsi da un posto all\'altro.':'põe-nas ele: procura as moradas, percebe que linhas são refeições e põe-nas à hora certa, e deixa tempo para ir de um sítio ao outro.',
+    'Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.':'Fotografias automáticas dos dados, neste telemóvel. Se alguém apagar por engano, voltas atrás: o restauro é reenviado também para a nuvem.',
+    '— se hai installato GeppGo dal browser, compare da solo fra le app del tasto Condividi: apri la mail, Condividi, GeppGo. Il testo arriva qui dentro già letto.':'— se instalaste o GeppGo a partir do navegador, aparece sozinho entre as apps do botão Partilhar: abre o email, Partilhar, GeppGo. O texto chega aqui já lido.',
+    'Incolla un elenco di posti, uno per riga (anche generato da un\'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono,':'Cola uma lista de lugares, um por linha (mesmo gerada por uma IA): acrescento-os a este dia, sem tocar nos que já lá estão. Se não houver horários,',
+    'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'Além disso, nas Definições podes exportar as atividades com hora para o teu calendário (Apple ou Google) como lembrete extra. Sem o consentimento não receberás nenhuma notificação.',
+    'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Fotografias automáticas dos dados, neste telemóvel (uma a cada 10 minutos, guardo as últimas 6). Se algo correr mal — um apagar por engano, uma trapalhada — voltas atrás num toque.',
+    'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Abre o email de confirmação, seleciona tudo, copia e cola aqui em baixo. Se a confirmação for um PDF anexo, carrega-o e pronto. Leio o nome, a morada, as datas e os horários, procuro a posição no mapa, e',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Cria um ficheiro com as atividades com hora e os lembretes de reserva: ao abri-lo, o iPhone acrescenta-os ao calendário que preferires (Apple ou Google). O canal principal continuam a ser as notificações da app.',
+    'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'A leitura acontece dentro do telemóvel, não passa por nenhuma entidade e não «valida» nada: um bilhete conta como usado só quando o torniquete de quem to vendeu o lê. Única precaução: não mostres os códigos a estranhos.',
+    'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Os lugares dispensáveis usam cerca de metade do raio, as sugestões ainda menos. Cada lugar é avisado no máximo uma vez por dia e poucas vezes ao todo; marcado como visitado, não volta mais. Longe de tudo, as verificações fazem uma pausa para poupar bateria.',
+    'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Cola o texto do email: voo, comboio, autocarro, ferry, alojamento, aluguer de carro, restaurante ou atividade. Dele tiro datas, horários, lugares, código e total — mesmo que o email esteja em inglês, espanhol, francês ou português, e mesmo que lá dentro haja ida e volta. Verificas sempre os dados antes de guardar — funciona tudo no telemóvel, sem mandar nada para fora.',
+    'Ogni biglietto che aggiungi qui si collega a questa attività e va subito a una persona. Se sul PDF c\'è scritto il nome di chi entra, il biglietto va a lui; se non c\'è, il primo al primo, il secondo al secondo, e chi ne carichi dopo va a chi non ne ha ancora. Il codice del voucher o della prenotazione lo riconosco e lo tengo da parte: non è un ingresso. Lo stesso codice letto due volte non viene contato due volte.':'Cada bilhete que acrescentas aqui liga-se a esta atividade e vai logo para uma pessoa. Se no PDF estiver escrito o nome de quem entra, o bilhete vai para essa pessoa; se não estiver, o primeiro ao primeiro, o segundo ao segundo, e os que carregares depois vão para quem ainda não tem. O código do voucher ou da reserva reconheço-o e ponho-o de lado: não é uma entrada. O mesmo código lido duas vezes não é contado duas vezes.'
+  }
+};
+Object.keys(DIZIONARIO_PANNELLI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_PANNELLI[l]));
+
+/* Le frasi che il codice compone: la chiave e' la frase intera, con i
+   buchi {1}, {2} al posto del numero o del nome. Si riempiono con tv(),
+   mai incollando pezzi tradotti uno per uno. */
+const DIZIONARIO_COMPOSTE={
+  en:{
+    '⚠️ Memoria del telefono piena':'⚠️ Phone storage full',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'The latest changes are on screen only: reopening the app they wouldn’t be there. Export a copy right away, then free up space on the phone.',
+    'Esporta i dati adesso':'Export the data now',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Trips on this phone only',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'You’re not signed in: if the phone loses its data, the trips don’t come back. Sign in and I’ll keep them safe online, tied to you.',
+    'Accedi ora':'Sign in now',
+    'Già in programma il {1}.':'Already in the timetable on {1}.',
+    'G{1}':'D{1}',
+    'Giorno {1}':'Day {1}',
+    'Salvataggio attivo':'Saving on',
+    'Salvato ora':'Saved just now',
+    'Salvato {1} min fa':'Saved {1} min ago',
+    'Salvato {1}h fa':'Saved {1}h ago',
+    '{1} luogo salvato non ancora in programma':'{1} saved place not in the timetable yet',
+    '{1} luoghi salvati non ancora in programma':'{1} saved places not in the timetable yet',
+    'Nessun luogo salvato da mettere':'No saved place to add',
+    'Nessun biglietto intestato a {1}':'No ticket in {1}’s name',
+    'Nessun biglietto senza nome':'No ticket without a name',
+    'Nessun biglietto':'No tickets',
+    'Nessun luogo salvato':'No saved places',
+    'Nessuna spesa ancora':'No expenses yet',
+    'Niente in time-table, per ora':'Nothing in the timetable yet',
+    'Nessun hotel: cercalo qui sopra':'No hotels: search for one above',
+    'Vedi tutti i biglietti':'See all tickets',
+    'Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.':'About {1}% of what you read on screen is translated. The rest is coming, and until then it stays in Italian.',
+    ' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.':' While that’s the case, the app won’t switch to this language on its own: you pick it here.',
+    'tramonto {1}':'sunset {1}',
+    '{1} in viaggio':'{1} travelling',
+    '{1} · GIORNO {2} DI {3}':'{1} · DAY {2} OF {3}',
+    '{1} TAPPA':'{1} STOP',
+    '{1} TAPPE':'{1} STOPS',
+    '{1} luogo':'{1} place',
+    '{1} luoghi':'{1} places',
+    'Giorno {1} · {2}':'Day {1} · {2}',
+    'Disponibile tra {1} giorni':'Available in {1} days',
+    'Ti devono {1}':'They owe you {1}',
+    'Devi {1}':'You owe {1}',
+    'Spesa di {1}':'{1}’s spending',
+    ' · di cui previste {1}':' · of which planned {1}',
+    '{1} · {2} giorni · {3}':'{1} · {2} days · {3}',
+    '{1}/2 viaggi tuoi in corso · con pubblicità':'{1}/2 of your trips open · with ads',
+    'Senza date':'No dates',
+    'Viaggio · Giorno':'Trip · Day',
+    '3 · si respira':'3 · easy does it',
+    '4 · normale':'4 · normal',
+    '5 · pieno':'5 · packed',
+    'Rilassato · 3 tappe':'Easy · 3 stops',
+    'Normale · 4 tappe':'Normal · 4 stops',
+    'Pieno · 5 tappe':'Packed · 5 stops'
+  },
+  es:{
+    '⚠️ Memoria del telefono piena':'⚠️ Memoria del teléfono llena',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'Los últimos cambios se han quedado solo en la pantalla: al reabrir la app ya no estarían. Exporta ahora una copia y luego libera espacio en el teléfono.',
+    'Esporta i dati adesso':'Exporta los datos ahora',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Viajes solo en este teléfono',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'No has iniciado sesión: si el teléfono pierde los datos, los viajes no vuelven. Entra y te los pongo a salvo en línea, ligados a ti.',
+    'Accedi ora':'Entra ahora',
+    'Già in programma il {1}.':'Ya en el horario el {1}.',
+    'G{1}':'D{1}',
+    'Giorno {1}':'Día {1}',
+    'Salvataggio attivo':'Guardado activo',
+    'Salvato ora':'Guardado ahora',
+    'Salvato {1} min fa':'Guardado hace {1} min',
+    'Salvato {1}h fa':'Guardado hace {1}h',
+    '{1} luogo salvato non ancora in programma':'{1} lugar guardado que aún no está en el horario',
+    '{1} luoghi salvati non ancora in programma':'{1} lugares guardados que aún no están en el horario',
+    'Nessun luogo salvato da mettere':'Ningún lugar guardado que poner',
+    'Nessun biglietto intestato a {1}':'Ningún billete a nombre de {1}',
+    'Nessun biglietto senza nome':'Ningún billete sin nombre',
+    'Nessun biglietto':'Ningún billete',
+    'Nessun luogo salvato':'Ningún lugar guardado',
+    'Nessuna spesa ancora':'Aún ningún gasto',
+    'Niente in time-table, per ora':'Nada en el horario, por ahora',
+    'Nessun hotel: cercalo qui sopra':'Ningún hotel: búscalo aquí arriba',
+    'Vedi tutti i biglietti':'Ver todos los billetes',
+    'Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.':'Traducido alrededor del {1}% de lo que se lee en las pantallas. El resto llega, y mientras tanto se queda en italiano.',
+    ' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.':' Mientras sea así, la app no cambia sola a este idioma: lo eliges tú aquí.',
+    'tramonto {1}':'puesta de sol {1}',
+    '{1} in viaggio':'{1} de viaje',
+    '{1} · GIORNO {2} DI {3}':'{1} · DÍA {2} DE {3}',
+    '{1} TAPPA':'{1} PARADA',
+    '{1} TAPPE':'{1} PARADAS',
+    '{1} luogo':'{1} lugar',
+    '{1} luoghi':'{1} lugares',
+    'Giorno {1} · {2}':'Día {1} · {2}',
+    'Disponibile tra {1} giorni':'Disponible en {1} días',
+    'Ti devono {1}':'Te deben {1}',
+    'Devi {1}':'Debes {1}',
+    'Spesa di {1}':'Gasto de {1}',
+    ' · di cui previste {1}':' · de las cuales previstas {1}',
+    '{1} · {2} giorni · {3}':'{1} · {2} días · {3}',
+    '{1}/2 viaggi tuoi in corso · con pubblicità':'{1}/2 viajes tuyos en curso · con publicidad',
+    'Senza date':'Sin fechas',
+    'Viaggio · Giorno':'Viaje · Día',
+    '3 · si respira':'3 · con calma',
+    '4 · normale':'4 · normal',
+    '5 · pieno':'5 · lleno',
+    'Rilassato · 3 tappe':'Tranquilo · 3 paradas',
+    'Normale · 4 tappe':'Normal · 4 paradas',
+    'Pieno · 5 tappe':'Lleno · 5 paradas'
+  },
+  fr:{
+    '⚠️ Memoria del telefono piena':'⚠️ Mémoire du téléphone pleine',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'Les dernières modifications ne sont qu’à l’écran : en rouvrant l’app elles n’y seraient plus. Exporte tout de suite une copie, puis libère de la place sur le téléphone.',
+    'Esporta i dati adesso':'Exporte les données maintenant',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Voyages seulement sur ce téléphone',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'Tu n’es pas connecté : si le téléphone perd ses données, les voyages ne reviennent pas. Connecte-toi et je les mets à l’abri en ligne, liés à toi.',
+    'Accedi ora':'Connecte-toi',
+    'Già in programma il {1}.':'Déjà au programme le {1}.',
+    'G{1}':'J{1}',
+    'Giorno {1}':'Jour {1}',
+    'Salvataggio attivo':'Sauvegarde active',
+    'Salvato ora':'Enregistré à l’instant',
+    'Salvato {1} min fa':'Enregistré il y a {1} min',
+    'Salvato {1}h fa':'Enregistré il y a {1}h',
+    '{1} luogo salvato non ancora in programma':'{1} lieu enregistré pas encore au programme',
+    '{1} luoghi salvati non ancora in programma':'{1} lieux enregistrés pas encore au programme',
+    'Nessun luogo salvato da mettere':'Aucun lieu enregistré à mettre',
+    'Nessun biglietto intestato a {1}':'Aucun billet au nom de {1}',
+    'Nessun biglietto senza nome':'Aucun billet sans nom',
+    'Nessun biglietto':'Aucun billet',
+    'Nessun luogo salvato':'Aucun lieu enregistré',
+    'Nessuna spesa ancora':'Aucune dépense pour l’instant',
+    'Niente in time-table, per ora':'Rien dans le programme, pour l’instant',
+    'Nessun hotel: cercalo qui sopra':'Aucun hôtel : cherche-le ci-dessus',
+    'Vedi tutti i biglietti':'Voir tous les billets',
+    'Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.':'Environ {1}% de ce qu’on lit à l’écran est traduit. Le reste arrive, et en attendant il reste en italien.',
+    ' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.':' Tant que c’est le cas, l’app ne passe pas à cette langue toute seule : tu la choisis ici.',
+    'tramonto {1}':'coucher du soleil {1}',
+    '{1} in viaggio':'{1} en voyage',
+    '{1} · GIORNO {2} DI {3}':'{1} · JOUR {2} SUR {3}',
+    '{1} TAPPA':'{1} ÉTAPE',
+    '{1} TAPPE':'{1} ÉTAPES',
+    '{1} luogo':'{1} lieu',
+    '{1} luoghi':'{1} lieux',
+    'Giorno {1} · {2}':'Jour {1} · {2}',
+    'Disponibile tra {1} giorni':'Disponible dans {1} jours',
+    'Ti devono {1}':'On te doit {1}',
+    'Devi {1}':'Tu dois {1}',
+    'Spesa di {1}':'Dépense de {1}',
+    ' · di cui previste {1}':' · dont prévues {1}',
+    '{1} · {2} giorni · {3}':'{1} · {2} jours · {3}',
+    '{1}/2 viaggi tuoi in corso · con pubblicità':'{1}/2 de tes voyages en cours · avec pubs',
+    'Senza date':'Sans dates',
+    'Viaggio · Giorno':'Voyage · Jour',
+    '3 · si respira':'3 · on respire',
+    '4 · normale':'4 · normal',
+    '5 · pieno':'5 · chargé',
+    'Rilassato · 3 tappe':'Tranquille · 3 étapes',
+    'Normale · 4 tappe':'Normal · 4 étapes',
+    'Pieno · 5 tappe':'Chargé · 5 étapes'
+  },
+  pt:{
+    '⚠️ Memoria del telefono piena':'⚠️ Memória do telemóvel cheia',
+    'Le ultime modifiche sono rimaste solo a schermo: riaprendo l\'app non ci sarebbero più. Esporta subito una copia, poi libera spazio sul telefono.':'As últimas alterações ficaram só no ecrã: ao reabrir a app já não estariam lá. Exporta já uma cópia e depois liberta espaço no telemóvel.',
+    'Esporta i dati adesso':'Exporta os dados agora',
+    '⚠️ Viaggi solo su questo telefono':'⚠️ Viagens só neste telemóvel',
+    'Non sei connesso all\'account: se il telefono perde i dati, i viaggi non tornano. Accedi e li metto al sicuro online, legati a te.':'Não estás com sessão iniciada: se o telemóvel perder os dados, as viagens não voltam. Entra e ponho-tas a salvo online, ligadas a ti.',
+    'Accedi ora':'Entra agora',
+    'Già in programma il {1}.':'Já no horário no {1}.',
+    'G{1}':'D{1}',
+    'Giorno {1}':'Dia {1}',
+    'Salvataggio attivo':'Guardar ativo',
+    'Salvato ora':'Guardado agora',
+    'Salvato {1} min fa':'Guardado há {1} min',
+    'Salvato {1}h fa':'Guardado há {1}h',
+    '{1} luogo salvato non ancora in programma':'{1} lugar guardado ainda fora do horário',
+    '{1} luoghi salvati non ancora in programma':'{1} lugares guardados ainda fora do horário',
+    'Nessun luogo salvato da mettere':'Nenhum lugar guardado para pôr',
+    'Nessun biglietto intestato a {1}':'Nenhum bilhete em nome de {1}',
+    'Nessun biglietto senza nome':'Nenhum bilhete sem nome',
+    'Nessun biglietto':'Nenhum bilhete',
+    'Nessun luogo salvato':'Nenhum lugar guardado',
+    'Nessuna spesa ancora':'Ainda nenhuma despesa',
+    'Niente in time-table, per ora':'Nada no horário, por agora',
+    'Nessun hotel: cercalo qui sopra':'Nenhum hotel: procura-o aqui em cima',
+    'Vedi tutti i biglietti':'Ver todos os bilhetes',
+    'Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.':'Traduzido cerca de {1}% do que se lê nos ecrãs. O resto chega, e entretanto fica em italiano.',
+    ' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.':' Enquanto for assim, a app não muda sozinha para esta língua: escolhe-la tu aqui.',
+    'tramonto {1}':'pôr do sol {1}',
+    '{1} in viaggio':'{1} em viagem',
+    '{1} · GIORNO {2} DI {3}':'{1} · DIA {2} DE {3}',
+    '{1} TAPPA':'{1} PARAGEM',
+    '{1} TAPPE':'{1} PARAGENS',
+    '{1} luogo':'{1} lugar',
+    '{1} luoghi':'{1} lugares',
+    'Giorno {1} · {2}':'Dia {1} · {2}',
+    'Disponibile tra {1} giorni':'Disponível dentro de {1} dias',
+    'Ti devono {1}':'Devem-te {1}',
+    'Devi {1}':'Deves {1}',
+    'Spesa di {1}':'Gasto de {1}',
+    ' · di cui previste {1}':' · das quais previstas {1}',
+    '{1} · {2} giorni · {3}':'{1} · {2} dias · {3}',
+    '{1}/2 viaggi tuoi in corso · con pubblicità':'{1}/2 viagens tuas a decorrer · com publicidade',
+    'Senza date':'Sem datas',
+    'Viaggio · Giorno':'Viagem · Dia',
+    '3 · si respira':'3 · com calma',
+    '4 · normale':'4 · normal',
+    '5 · pieno':'5 · cheio',
+    'Rilassato · 3 tappe':'Tranquilo · 3 paragens',
+    'Normale · 4 tappe':'Normal · 4 paragens',
+    'Pieno · 5 tappe':'Cheio · 5 paragens'
+  }
+};
+Object.keys(DIZIONARIO_COMPOSTE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_COMPOSTE[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=678;
+const FRASI_IN_TUTTO=809;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -3542,6 +4103,32 @@ function t(frase){
   if(l==='it'||!frase)return frase;
   const d=DIZIONARIO[l];
   return (d&&d[frase])||frase;
+}
+/* Le frasi che il codice compone con dentro un numero o un nome. La chiave
+   e' la frase INTERA, con i buchi segnati {1}, {2}: tradurre i pezzi staccati
+   regge solo in italiano, perche' altrove il numero va prima, l'articolo
+   cambia con la parola che segue, e il plurale non si fa allo stesso modo.
+
+   Quello che esce di qui e' gia' nella lingua giusta, e bisogna dirlo al
+   conteggio della copertura: se non glielo si dice, queste frasi risultano
+   per sempre non tradotte proprio perche' sono tradotte bene. */
+const GIA_TRADOTTE=new Set();
+function tv(frase){
+  const v=Array.prototype.slice.call(arguments,1);
+  const s=t(frase).replace(/\{(\d+)\}/g,(_,i)=>v[i-1]==null?'':String(v[i-1]));
+  if(linguaScelta()!=='it'){
+    /* Ci finiscono dentro anche le cifre, che cambiano a ogni spesa: senza
+       un tetto l'insieme cresce per tutta la giornata. Si buttano le piu'
+       vecchie, poche per volta, invece di svuotare tutto in un colpo: uno
+       svuotamento improvviso farebbe risultare non tradotto, per un istante,
+       quello che si sta guardando. */
+    if(GIA_TRADOTTE.size>600){
+      let n=200;
+      for(const x of GIA_TRADOTTE){if(n--<=0)break;GIA_TRADOTTE.delete(x);}
+    }
+    GIA_TRADOTTE.add(s.trim());
+  }
+  return s;
 }
 /* A che punto siamo davvero. Il conto si fa MENTRE si traduce, non dopo:
    dopo, la pagina e' gia' nella lingua nuova e le frasi italiane non ci sono
@@ -3571,6 +4158,7 @@ function traduciPagina(radice){
     const testo=nodo.nodeValue,pulito=testo.trim();
     quanti++;
     if(d[pulito]){fatti++;nodo.nodeValue=testo.replace(pulito,d[pulito]);}
+    else if(GIA_TRADOTTE.has(pulito))fatti++;
   });
   dove.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
     ['placeholder','title','aria-label'].forEach(a=>{
@@ -3585,6 +4173,42 @@ function traduciPagina(radice){
      direbbe due per cento anche a lavoro finito. E' lo stesso inganno di
      prima, un piano piu' su - preso due volte. */
   if(!radice&&!ultimaCopertura.tutte)ultimaCopertura={tutte:quanti,tradotte:fatti};
+}
+/* Chi traduce quello che nasce dopo.
+   traduciPagina() passava due volte: all'avvio e alla fine di renderAll().
+   Ma l'app scrive HTML dentro i contenitori da decine di punti diversi — un
+   foglio che si apre, un elenco che si riempie, una riga che compare — e
+   tutto quello che nasceva li' restava in italiano ANCHE avendo la frase nel
+   dizionario. Si vedeva solo aprendo l'app in inglese e guardando, non
+   leggendo il codice.
+   Rincorrere i punti a mano e' lo stesso errore delle frasi cucite a pezzi:
+   si dimentica sempre l'ultimo, e ogni riga nuova che qualcuno scrive domani
+   ricomincia da capo. Qui invece si guarda la pagina cambiare e si traduce
+   quello che arriva, chiunque l'abbia scritto.
+   Tradurre cambia il testo dentro i nodi e gli attributi, non aggiunge nodi:
+   l'osservatore non si sveglia da solo, e il cerchio non si chiude mai. */
+let osservatore=null;
+function osservaPerTradurre(){
+  if(osservatore||linguaScelta()==='it')return;
+  if(typeof MutationObserver==='undefined')return;
+  let inCoda=[],previsto=false;
+  osservatore=new MutationObserver(m=>{
+    for(const x of m)for(const n of x.addedNodes){
+      if(n.nodeType===1)inCoda.push(n);
+      else if(n.nodeType===3&&n.parentNode)inCoda.push(n.parentNode);
+    }
+    if(!inCoda.length||previsto)return;
+    /* Si aspetta la fine del giro invece di tradurre a ogni mutazione: una
+       schermata che si ridisegna ne fa centinaia, e tradurle una per una
+       vorrebbe dire passare cento volte sulla stessa roba. */
+    previsto=true;
+    requestAnimationFrame(()=>{
+      previsto=false;
+      const da=inCoda;inCoda=[];
+      da.forEach(n=>{try{if(n.isConnected)traduciPagina(n);}catch(e){}});
+    });
+  });
+  osservatore.observe(document.body,{childList:true,subtree:true});
 }
 function cambiaLingua(l){
   if(!LINGUE[l])return;
@@ -3602,6 +4226,7 @@ document.addEventListener('DOMContentLoaded',()=>{
      mescolati a quelli tradotti. */
   document.documentElement.lang=linguaScelta();
   traduciPagina();
+  osservaPerTradurre();
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
   if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
@@ -3957,7 +4582,7 @@ function renderTripZoomBody(){
   assicuraTasso(cur,app.curVista||'',ridisegnaSoldi);
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
-  let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
+  let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
   el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
   <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
     <button class="btn btn-soft" style="flex:1" onclick="toggleStatus()">🏁 Concludi viaggio</button>
@@ -4420,12 +5045,12 @@ function renderHomeHero(){
   const mood=w?homeMood(w.code):'';
   const bits=[];
   if(w)bits.push(`${Math.round(w.tempMax)}° ${wxShort(w.code)}`);
-  const ss=homeSunset(w);if(ss)bits.push(`tramonto ${ss}`);
-  bits.push(`${(t.participants||[]).length} in viaggio`);
+  const ss=homeSunset(w);if(ss)bits.push(tv('tramonto {1}',ss));
+  bits.push(tv('{1} in viaggio',(t.participants||[]).length));
   const nx=homeNext(t,day),acts=homeActs(day);
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
   paint(`<div class="hh">${tripsBar}
-    <div class="hh-eyebrow hh-tap" onclick="openDay(${i})">${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span></div>
+    <div class="hh-eyebrow hh-tap" onclick="openDay(${i})">${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
@@ -4452,12 +5077,12 @@ function renderHomeHero(){
   </div>`;})()}
   <div class="hh-days">${t.days.map((d,j)=>{
     const dt=new Date(d.date);
-    const lb=isNaN(dt.getTime())?('G'+(j+1)):dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
+    const lb=isNaN(dt.getTime())?tv('G{1}',j+1):dt.toLocaleDateString(loc(),{weekday:'short',day:'numeric'});
     return `<button class="hh-day ${j===i?'on':''}" onclick="selHomeDay(${j})" title="Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table">${esc(lb)}</button>`;
   }).join('')}</div>
   <div class="hh-sec">
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
-    <div class="hh-sec-c">${acts.length} ${acts.length===1?'TAPPA':'TAPPE'}</div>
+    <div class="hh-sec-c">${acts.length===1?tv('{1} TAPPA',acts.length):tv('{1} TAPPE',acts.length)}</div>
   </div>
   ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione">🧭</button><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div></div>
   <div class="hh-cards">${acts.map(a=>{
@@ -5262,6 +5887,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple, Google o quello di GeppGo). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
+- La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
@@ -5473,7 +6099,7 @@ function pickPri(el){document.querySelectorAll('#mSavePOI .rcard').forEach(r=>r.
 function fillDayOptions(){
   const t=app.trips.find(x=>x.id===parseInt(document.getElementById('savePOITrip').value));
   const ds=document.getElementById('savePOIDay');ds.innerHTML='<option value="">Non assegnare</option>';
-  if(t&&t.days.length){t.days.forEach(d=>{const s=new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});ds.innerHTML+=`<option value="${d.date}">${s}</option>`;});ds.onchange=()=>{document.getElementById('savePOIHourWrap').style.display=ds.value?'block':'none';previewWx();};}
+  if(t&&t.days.length){t.days.forEach(d=>{const s=new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'});ds.innerHTML+=`<option value="${d.date}">${s}</option>`;});ds.onchange=()=>{document.getElementById('savePOIHourWrap').style.display=ds.value?'block':'none';previewWx();};}
   document.getElementById('savePOIHourWrap').style.display='none';document.getElementById('savePOIHour').value='';
   document.getElementById('wxPreview').innerHTML='';
 }
@@ -5606,9 +6232,9 @@ function backfillPoiPhotos(t){
 }
 function renderSaved(){
   const t=T(),c=document.getElementById('savedPOIs'),cnt=document.getElementById('savedCount');
-  if(!t||!t.pois.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗺️</div><div class="empty-t">Nessun luogo salvato</div></div>`;cnt.textContent='0 luoghi';return;}
+  if(!t||!t.pois.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗺️</div><div class="empty-t">Nessun luogo salvato</div></div>`;cnt.textContent=tv('{1} luoghi',0);return;}
   backfillPoiPhotos(t);
-  cnt.textContent=`${t.pois.length} ${t.pois.length===1?'luogo':'luoghi'}`;
+  cnt.textContent=t.pois.length===1?tv('{1} luogo',t.pois.length):tv('{1} luoghi',t.pois.length);
   c.innerHTML=t.pois.map(p=>{
     const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||'',photo:p.photo||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
     const thumb=p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">${placeIcon(p.type,p.type)}</div>`;
@@ -5643,7 +6269,7 @@ function renderProgramPlaces(){
     const pri=a.priority||(poi&&poi.priority)||'';
     const lbl=pri==='essential'?'⭐ Essenziale':(pri==='skippable'?'Saltabile':'Non indicato');
     const cls=pri==='essential'?'ess':'skip';
-    const quando=`G${di+1}${a.time?' · '+esc(a.time):''}`;
+    const quando=`${tv('G{1}',di+1)}${a.time?' · '+esc(a.time):''}`;
     return `<div style="padding:.7rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;display:flex;gap:.6rem;align-items:center;cursor:pointer" onclick="openActDetail(${di},${a.id})">
       ${thumb}
       <div style="flex:1;min-width:0">
@@ -5800,7 +6426,7 @@ function renderTimeline(){
   if(!t.days.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗓️</div><div class="empty-t">Nessun giorno ancora</div></div>`;return;}
   const today=new Date();today.setHours(0,0,0,0);
   c.innerHTML=t.days.map((day,i)=>{
-    const w=t.weather[day.date],dO=new Date(day.date),ds=dO.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}),da=Math.round((dO-today)/864e5);
+    const w=t.weather[day.date],dO=new Date(day.date),ds=dO.toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),da=Math.round((dO-today)/864e5);
     let wc='';if(w){const cl=w.precipitation>5?'rain':(w.precipitation<1&&w.tempMax>20?'sun':'');wc=`<span class="wchip ${cl}">${wxEmoji(w.code)} ${Math.round(w.tempMax)}°/${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}mm`:''}</span>`;}else if(da>16){wc=`<span class="wchip na">⏳ Meteo tra ${da-16}gg</span>`;}
     (day.activities||[]).sort((a,b)=>{if(!a.time&&!b.time)return 0;if(!a.time)return 1;if(!b.time)return -1;return a.time.localeCompare(b.time);});
     return `<div class="day"><div class="day-head" onclick="openDay(${i})"><div class="day-l"><div class="day-num">${i+1}</div><div><div class="day-t">${esc(day.title||ds)}</div>${day.title?`<div class="day-m">${ds}</div>`:''}${wc}</div></div><span style="color:var(--ink-faint);font-size:1.1rem;padding:.3rem">›</span></div>${w&&w.precipitation>5?`<div class="wbanner">⚠️ <strong>Pioggia prevista (${w.precipitation}mm).</strong> Le attività outdoor sono evidenziate.</div>`:''}<div class="acts" id="acts-${i}" data-i="${i}">${(day.activities||[]).map((a,j)=>actHTML(a,i,j,w)).join('')}</div><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openAddAct(${i})">Aggiungi attività</button></div>`;
@@ -5813,7 +6439,7 @@ function bookBadge(a){
   if(b.by){const d=Math.round((new Date(b.by)-new Date().setHours(0,0,0,0))/864e5);
     if(d<0)return '<span class="book-badge urgent">⚠️ Scaduta!</span>';
     if(d<=3)return `<span class="book-badge urgent">🔔 Prenota entro ${d===0?'oggi':d+'gg'}</span>`;
-    return `<span class="book-badge">🎟️ Prenota entro ${new Date(b.by).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>`;}
+    return `<span class="book-badge">🎟️ Prenota entro ${new Date(b.by).toLocaleDateString(loc(),{day:'numeric',month:'short'})}</span>`;}
   return '<span class="book-badge">🎟️ Da prenotare</span>';
 }
 function actHTML(a,di,ai,w){
@@ -5829,7 +6455,7 @@ function reschedule(di,ai){
      buco di orario. */
   const alt=`<button class="chip green" style="margin-top:.5rem" onclick="alternativeMeteo(${di})">✦ Alternative al coperto</button>`;
   if(!better.length)return `<div class="wbanner">⛈️ Outdoor con pioggia.<br>${alt}</div>`;
-  const b=better[0],ds=new Date(b.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  const b=better[0],ds=new Date(b.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'});
   return `<div class="wbanner">💡 <strong>${ds}</strong> sarebbe meglio (${wxEmoji(b.w.code)} ${Math.round(b.w.tempMax)}°)<br><button class="chip green" style="margin-top:.5rem" onclick="moveAct(${di},${ai},${b.i})">↪️ Sposta a ${ds}</button> ${alt}</div>`;
 }
 function moveAct(f,ai,to){const t=T();const[a]=t.days[f].activities.splice(ai,1);t.days[to].activities.push(a);save();renderTimeline();toast('✅ Spostata');}
@@ -6215,16 +6841,16 @@ function renderWeather(){
   if(!t.days.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗓️</div><div class="empty-t">Aggiungi giorni al viaggio</div></div>`;return;}
   const today=new Date();today.setHours(0,0,0,0);
   const rows=t.days.map((day,i)=>{
-    const w=t.weather[day.date],ds=new Date(day.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}),da=Math.round((new Date(day.date)-today)/864e5);
+    const w=t.weather[day.date],ds=new Date(day.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),da=Math.round((new Date(day.date)-today)/864e5);
     if(!w){
-      if(da>16)return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">Disponibile tra ${da-16} giorni</div></div></div></div>`;
-      return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
+      if(da>16)return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${tv('Disponibile tra {1} giorni',da-16)}</div></div></div></div>`;
+      return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
     }
     const rain=w.precipitation>5,sun=w.precipitation<1&&w.tempMax>20,cls=rain?'rain':(sun?'sun':'cloud'),out=(day.activities||[]).filter(a=>a.type==='outdoor').length;
     /* Su quale posto e' la previsione: senza, un "22° e pioggia" non dice se
        parla di dove passi la giornata o della citta' scritta nel viaggio. */
     const dove=(w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):(day.city||w.luogo||'');
-    return `<div class="wcard ${cls}"><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">Giorno ${i+1} · ${ds}</div><div class="wc-d">${dove?`<b>${esc(dove)}</b> · `:''}${wxDesc(w.code)}${rain&&out>0?` · ⚠️ ${out} outdoor a rischio`:''}</div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
+    return `<div class="wcard ${cls}"><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${dove?`<b>${esc(dove)}</b> · `:''}${wxDesc(w.code)}${rain&&out>0?` · ⚠️ ${out} outdoor a rischio`:''}</div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
   }).join('');
   c.innerHTML=rows||`<div class="empty"><div class="empty-t">Nessun giorno</div></div>`;
 }
@@ -6305,7 +6931,7 @@ function renderTricount(){
       const byDay={};
       t.expenses.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(e=>{const d=(e.date||'').split('T')[0];(byDay[d]=byDay[d]||[]).push(e);});
       body=Object.keys(byDay).map(d=>{
-        const lbl=d?new Date(d).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}):'Senza data';
+        const lbl=d?new Date(d).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}):'Senza data';
         return `<div class="section-label">${lbl}</div><div class="card" style="padding:.35rem .5rem">${byDay[d].map(e=>{
           if(e.type==='transfer'){const f2=t.participants.find(p=>p.id===e.payerId),g2=t.participants.find(p=>p.id===e.splitAmong[0]);return `<div class="exp-row" onclick="delExpense(${e.id})"><div class="cat-ic">↔</div><div class="exp-info"><div class="exp-d">Rimborso</div><div class="exp-meta">${esc(f2?.name||'?')} → ${esc(g2?.name||'?')} · tocca per annullare</div></div><div style="text-align:right"><div class="exp-amt" style="color:var(--green-deep)">${fmtVista(e.amount,cur)}</div></div></div>`;}
           const payer=t.participants.find(p=>p.id===e.payerId),ic=(CATS.find(x=>x.k===e.category)||{i:'🧾'}).i;
@@ -6331,7 +6957,7 @@ function renderTricount(){
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
   c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi" (da' un link con dentro l'invito al viaggio, un QR e le due righe per attaccare l'app alla schermata iniziale del telefono)>🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
     <div class="mh-tot-row"><div class="mh-tot">${fmtVista(total,cur)}</div>${vistaSel(cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtVista(planned,cur)} previste dal gruppo · tua parte ${fmtVista(plannedMine,cur)}</div>`:``}
-    <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?`Ti devono ${fmtVista(myBal,cur)}`:`Devi ${fmtVista(Math.abs(myBal),cur)}`)}</div></div>
+    <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?tv('Ti devono {1}',fmtVista(myBal,cur)):tv('Devi {1}',fmtVista(Math.abs(myBal),cur)))}</div></div>
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
     ${body}<div style="display:flex;justify-content:center;margin:1.1rem 0 .5rem"><button class="btn btn-grad" style="padding:.95rem 2.4rem" onclick="openExpense()">Aggiungi spesa</button></div>`;
 }
@@ -6672,9 +7298,9 @@ function elencoTappe(t){
   const out=[];
   (t.days||[]).forEach((d,i)=>{
     const dt=new Date(d.date);
-    const gg=isNaN(dt.getTime())?`Giorno ${i+1}`:dt.toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+    const gg=isNaN(dt.getTime())?tv('Giorno {1}',i+1):dt.toLocaleDateString(loc(),{day:'numeric',month:'short'});
     (d.activities||[]).slice().sort((a,b)=>(a.time||'zz').localeCompare(b.time||'zz'))
-      .forEach(a=>out.push({id:a.id,di:i,d,a,etichetta:`G${i+1} · ${gg}${a.time?' · '+a.time:''} · ${a.name}`}));
+      .forEach(a=>out.push({id:a.id,di:i,d,a,etichetta:`${tv('G{1}',i+1)} · ${gg}${a.time?' · '+a.time:''} · ${a.name}`}));
   });
   return out;
 }
@@ -6824,7 +7450,7 @@ function renderBudget(){
   const mineCnt=t.expenses.filter(e=>e.type!=='transfer'&&(e.splitAmong||[]).includes(pid)).length;
   assicuraTasso(cur,app.curVista||'',ridisegnaSoldi);
   document.getElementById('bAmt').innerHTML=`<span>${fmtVista(mine,cur)}</span>${vistaSel(cur)}`;
-  document.getElementById('bCurLabel').innerHTML=`Spesa di ${esc(who?who.name:'—')}${minePlan>0?' · di cui previste '+fmtVista(minePlan,cur):''}`;
+  document.getElementById('bCurLabel').innerHTML=tv('Spesa di {1}',esc(who?who.name:'—'))+(minePlan>0?tv(' · di cui previste {1}',fmtVista(minePlan,cur)):'');
   document.getElementById('bPer').innerHTML=fmtVista(totGroup,cur);
   document.getElementById('bPpl').textContent=t.participants.length;
   document.getElementById('bCnt').textContent=mineCnt;
@@ -6918,7 +7544,7 @@ async function copyShare(link){try{await navigator.clipboard.writeText(link);toa
 function handleJoin(code){
   let data;try{data=JSON.parse(decodeURIComponent(atob(code)));}catch(e){return;}
   history.replaceState(null,'',location.pathname);
-  let dates='';if(data.s&&data.e){dates=`${new Date(data.s).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(data.e).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
+  let dates='';if(data.s&&data.e){dates=`${new Date(data.s).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(data.e).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
   document.getElementById('joinBody').innerHTML=`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem"><div style="font-weight:800;font-size:1.05rem">${esc(data.n)}</div>${dates?`<div style="font-size:.82rem;color:var(--ink-soft);margin-top:.2rem">${dates}${data.d?' · '+esc(data.d):''}</div>`:''}</div><p style="font-size:.9rem;color:var(--ink-soft);margin-bottom:.8rem">Chi sei tra i partecipanti?</p><div class="rgroup" id="joinPick">${data.p.map((n,i)=>`<label class="rcard ${i===0?'sel':''}" onclick="pickJoin(this)"><input type="radio" name="jp" value="${esc(n)}" ${i===0?'checked':''}><div><div class="rlbl">${esc(n)}</div></div></label>`).join('')}<label class="rcard" onclick="pickJoin(this);document.getElementById('joinNewWrap').style.display='block'"><input type="radio" name="jp" value="__new__"><div><div class="rlbl">➕ Non sono in lista</div><div class="rsub">Aggiungi il mio nome</div></div></label></div><div class="fg" id="joinNewWrap" style="display:none;margin-top:.7rem"><input id="joinNewName" placeholder="Il tuo nome"></div><button class="btn btn-grad btn-block" style="margin-top:1rem" onclick='confirmJoin(${JSON.stringify(data).replace(/'/g,"&apos;")})'>Entra nel viaggio</button>`;
   openSheet('mJoin');
 }
@@ -6941,10 +7567,10 @@ function renderTripsList(){
   const open=app.trips.filter(t=>t.status!=='closed'),closed=app.trips.filter(t=>t.status==='closed');
   const card=(t,isClosed)=>{
     const spent=t.expenses.reduce((s,e)=>s+(e.type==='transfer'?0:e.amount),0),cur=t.currency||'EUR';
-    let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
+    let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
     // In corso: ci si passa sopra e si apre la scheda del viaggio (era quello
     // che facevano i quadrati in home). Concluso: resta il riepilogo in sola lettura.
-    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${dates||'Senza date'} · ${t.days.length} giorni · ${fmtMoney(spent,cur)}</div></div><div style="color:var(--ink-faint)">›</div></div>`;
+    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${tv('{1} · {2} giorni · {3}',dates||tv('Senza date'),t.days.length,fmtMoney(spent,cur))}</div></div><div style="color:var(--ink-faint)">›</div></div>`;
   };
   document.getElementById('openTrips').innerHTML=open.length?open.map(t=>card(t,false)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio in corso</div></div>`;
   document.getElementById('closedTrips').innerHTML=closed.length?closed.map(t=>card(t,true)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio concluso</div></div>`;
@@ -6952,11 +7578,11 @@ function renderTripsList(){
 function openDetail(id){
   const t=app.trips.find(x=>x.id===id);if(!t)return;const cur=t.currency||'EUR';
   const spent=t.expenses.reduce((s,e)=>s+(e.type==='transfer'?0:e.amount),0);
-  let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`;}
+  let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
   document.getElementById('detailTitle').textContent=t.name;const {txns}=computeSettle(t);
   document.getElementById('detailBody').innerHTML=avvisoEliminazione(t)+`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1.2rem"><div style="font-size:.85rem;color:var(--ink-soft)">${dates||'Senza date'}${t.destination?' · '+esc(t.destination):''}</div><div style="display:flex;gap:1.2rem;margin-top:.6rem"><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.days.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Giorni</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${t.pois.length}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Luoghi</div></div><div><div style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600">${fmtMoney(spent,cur)}</div><div style="font-size:.7rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em">Spesa</div></div></div></div>
     <button class="btn btn-soft btn-block" style="margin-bottom:1.2rem" onclick="closeSheet('mDetail');apriRicordo(${t.id})">📖 Il ricordo del viaggio</button>
-    <div class="detail-sec"><h4>📅 Itinerario</h4>${t.days.length?t.days.map((d,i)=>{const ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});return `<div class="detail-day"><div class="detail-day-t">G${i+1} · ${esc(d.title||ds)}</div>${(d.activities||[]).length?d.activities.map(a=>`<div class="detail-act"><span>${a.completed?'✅':'•'}</span><span>${a.time?'<strong>'+a.time+'</strong> ':''}${esc(a.name)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink-faint)">Nessuna attività</div>'}</div>`;}).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun giorno</div>'}</div>
+    <div class="detail-sec"><h4>📅 Itinerario</h4>${t.days.length?t.days.map((d,i)=>{const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'});return `<div class="detail-day"><div class="detail-day-t">${tv('G{1}',i+1)} · ${esc(d.title||ds)}</div>${(d.activities||[]).length?d.activities.map(a=>`<div class="detail-act"><span>${a.completed?'✅':'•'}</span><span>${a.time?'<strong>'+a.time+'</strong> ':''}${esc(a.name)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink-faint)">Nessuna attività</div>'}</div>`;}).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun giorno</div>'}</div>
     <div class="detail-sec"><h4>📍 Luoghi salvati</h4>${t.pois.length?t.pois.map(p=>`<div class="detail-act"><span>${p.priority==='essential'?'⭐':'🔵'}</span><span>${esc(p.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun luogo</div>'}</div>
     <div class="detail-sec"><h4>💸 Spese (${cur})</h4>${t.expenses.length?t.expenses.map(e=>{const p=t.participants.find(x=>x.id===e.payerId);return `<div class="exp-row" style="padding:.5rem 0"><div class="exp-info"><div class="exp-d" style="font-size:.85rem">${esc(e.desc)}</div><div class="exp-meta">${e.category} · ${esc(p?.name||'?')}</div></div><div class="exp-amt">${fmtMoney(e.amount,cur)}</div></div>`;}).join('')+(txns.length?'<div style="margin-top:.6rem">'+txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle" style="font-size:.82rem"><span><strong>${esc(f.name)}</strong> → <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span></div>`;}).join('')+'</div>':''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessuna spesa</div>'}</div>
     <div class="detail-sec"><h4>🎫 Biglietti</h4>${t.tickets.length?t.tickets.map(tk=>`<div class="detail-act"><span>🎫</span><span>${esc(tk.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun biglietto</div>'}</div>
@@ -7038,8 +7664,8 @@ let ricordoT=null,ricordoConFoto=false,ricordoImg=[],ricordoQuanteFoto=0;
 function ricordoDate(t){
   if(!t.start||!t.end)return '';
   const o={day:'numeric',month:'long'};
-  return new Date(t.start).toLocaleDateString('it-IT',o)+' – '+
-         new Date(t.end).toLocaleDateString('it-IT',{...o,year:'numeric'});
+  return new Date(t.start).toLocaleDateString(loc(),o)+' – '+
+         new Date(t.end).toLocaleDateString(loc(),{...o,year:'numeric'});
 }
 async function apriRicordo(id){
   const t=app.trips.find(x=>x.id===id);if(!t)return;
@@ -7055,7 +7681,7 @@ async function apriRicordo(id){
   let extra='';
   if(n.cat)extra+=`<div style="font-size:.85rem;color:var(--ink-soft);margin-top:.9rem">Dove è andata di più: <b>${esc(n.cat)}</b> · ${fmtMoney(n.catSpesa,n.cur)}</div>`;
   if(n.pieno){
-    const ds=new Date(n.pieno.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    const ds=new Date(n.pieno.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
     extra+=`<div style="font-size:.85rem;color:var(--ink-soft);margin-top:.3rem">Il giorno più pieno: <b>${esc(n.pieno.title||ds)}</b> · ${(n.pieno.activities||[]).length} tappe</div>`;
   }
   document.getElementById('ricordoBody').innerHTML=
@@ -7966,7 +8592,7 @@ function openTkLink(ids){
   tkLinkIds=Array.isArray(ids)?ids.slice():[ids];
   const cur=(tkLinkIds.length===1)?t.tickets.find(x=>x.id===tkLinkIds[0]):null;
   let opts='<option value="">Nessuna attività</option>';
-  t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{opts+=`<option value="${a.id}" ${cur&&cur.actId===a.id?'selected':''}>G${di+1} ${a.time||''} · ${esc(a.name)}</option>`;});});
+  t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{opts+=`<option value="${a.id}" ${cur&&cur.actId===a.id?'selected':''}>${tv('G{1}',di+1)} ${a.time||''} · ${esc(a.name)}</option>`;});});
   document.getElementById('tlAct').innerHTML=opts;
   document.getElementById('mTkLinkHint').textContent=tkLinkIds.length>1?('Colleghi insieme '+tkLinkIds.length+' biglietti'):'';
   openSheet('mTkLink');
@@ -8171,7 +8797,7 @@ function renderTickets(){
   const mostrati=t.tickets.filter(tk=>tkFiltro(t,tk));
   if(!mostrati.length){
     const chi=(t.participants||[]).find(p=>String(p.id)===tkWhoVal(t));
-    c.innerHTML=`<div class="empty"><div class="empty-ic">🎫</div><div class="empty-t">${chi?'Nessun biglietto intestato a '+esc(chi.name):'Nessun biglietto senza nome'}</div><button class="btn btn-soft" style="margin-top:.7rem" onclick="setTkWho('tutti')">Vedi tutti i biglietti</button></div>`;
+    c.innerHTML=`<div class="empty"><div class="empty-ic">🎫</div><div class="empty-t">${chi?tv('Nessun biglietto intestato a {1}',esc(chi.name)):'Nessun biglietto senza nome'}</div><button class="btn btn-soft" style="margin-top:.7rem" onclick="setTkWho('tutti')">Vedi tutti i biglietti</button></div>`;
     return;
   }
   const groups=[],seen=new Set();
@@ -9690,7 +10316,7 @@ function renderBookingPreview(){
   const box=document.getElementById('bookResult'),t=T();
   if(!prenTrovate.length){box.innerHTML='';return;}
   const p=prenTrovate[Math.min(prenScelta,prenTrovate.length-1)];
-  const dayOpts=t?t.days.map((d,i)=>`<option value="${i}" ${d.date===p.dataDa?'selected':''}>G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join(''):'';
+  const dayOpts=t?t.days.map((d,i)=>`<option value="${i}" ${d.date===p.dataDa?'selected':''}>${tv('G{1}',i+1)} · ${new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'})}</option>`).join(''):'';
   /* Se nella mail ce n'e' piu' d'una - andata e ritorno, quasi sempre - si
      vedono tutte e si aggiungono una per una. Prima se ne leggeva una sola e
      il ritorno andava scritto a mano, cioe' non veniva scritto. */
@@ -9848,7 +10474,7 @@ function renderAds(){
   const n=viaggiMiei().length;
   b.textContent=app.premium?'✨ Premium':'Gratis';
   b.style.background=app.premium?'var(--brown)':'var(--ink-faint)';
-  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':`${n}/2 viaggi tuoi in corso · con pubblicità`;
+  s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':tv('{1}/2 viaggi tuoi in corso · con pubblicità',n);
   btn.textContent=app.premium?'Gestisci piano':'Scopri Premium';
 }
 
@@ -9862,7 +10488,7 @@ function renderBookings(){
   const t=T(),c=document.getElementById('bookings');if(!c)return;
   const list=allBookings(t).filter(x=>!x.a.booking.done);
   if(!list.length){c.innerHTML='';return;}
-  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${list.length} ${list.length===1?'attività':'attività'} in attesa</div></div></div>${list.map(x=>`<div class="book-row"><input type="checkbox" onchange="markBooked(${x.a.id})"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}${x.a.booking.seats>1?` · ${x.a.booking.seats} nominativi`:''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
+  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${list.length} ${list.length===1?'attività':'attività'} in attesa</div></div></div>${list.map(x=>`<div class="book-row"><input type="checkbox" onchange="markBooked(${x.a.id})"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString(loc(),{day:'numeric',month:'short'})}${x.a.booking.seats>1?` · ${x.a.booking.seats} nominativi`:''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
 }
 function markBooked(id){
   const t=T();t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.id===id&&a.booking)a.booking.done=true;}));
@@ -9953,13 +10579,13 @@ function openTimetable(){
 }
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
-  const d=t.days[i],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  const d=t.days[i],ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('dayTt').textContent=(d.title?d.title+' · ':'')+ds;
-  document.getElementById('ttEyebrow').innerHTML=`${esc(String(t.name||'').toUpperCase())} · GIORNO ${i+1} DI ${t.days.length} <span class="hh-chev">›</span>`;
+  document.getElementById('ttEyebrow').innerHTML=`${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span>`;
   document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>{
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
-    const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString('it-IT',{weekday:'short'});
-    const dn=isNaN(dt.getTime())?('G'+(j+1)):dt.getDate();
+    const wd=isNaN(dt.getTime())?'':dt.toLocaleDateString(loc(),{weekday:'short'});
+    const dn=isNaN(dt.getTime())?tv('G{1}',j+1):dt.getDate();
     return `<button class="tt-day ${j===i?'on':''}" onclick="openDay(${j})">${wx?`<span class="tt-day-wx">${wx}</span>`:''}${wd?`<span class="tt-day-wd">${esc(wd)}</span>`:''}<span class="tt-day-n">${dn}</span></button>`;
   }).join('')+`<button class="tt-day-add" onclick="fromDayFlag=true;openAddDay()" title="Aggiungi giorno" aria-label="Aggiungi giorno"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
   clearDragUndo();
@@ -10221,8 +10847,8 @@ function buildTT(){
     if(di===ttDay){activeTops=r.tops;activeD=r.d;}
     if(cols===1)return r.html;
     const dd=t.days[di],isAct=di===ttDay;
-    const lbl=new Date(dd.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
-    return `<div class="tt-col ${isAct?'tt-col-active':'tt-peek'}"><div class="tt-col-h" ${isAct?'':`onclick="openDay(${di})"`}>G${di+1} · ${esc(lbl)}</div>${r.html}</div>`;
+    const lbl=new Date(dd.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'});
+    return `<div class="tt-col ${isAct?'tt-col-active':'tt-peek'}"><div class="tt-col-h" ${isAct?'':`onclick="openDay(${di})"`}>${tv('G{1}',di+1)} · ${esc(lbl)}</div>${r.html}</div>`;
   }).join('');
   document.getElementById('ttBody').innerHTML=cols>1?`<div class="tt-multi">${colsHtml}</div>`:colsHtml;
   if(activeTops){
@@ -10523,7 +11149,7 @@ function addSceltaMenu(){
     </div>`;
   box.innerHTML=
     voce('📝','Nuova attività','La scrivi tu, da zero','addSceltaNuova()')+
-    voce('📍','Attività salvata',n?`${n} ${n===1?'luogo salvato':'luoghi salvati'} non ancora in programma`:'Nessun luogo salvato da mettere','addSceltaSalvate()',!n)+
+    voce('📍','Attività salvata',n?(n===1?tv('{1} luogo salvato non ancora in programma',n):tv('{1} luoghi salvati non ancora in programma',n)):'Nessun luogo salvato da mettere','addSceltaSalvate()',!n)+
     voce('🏨','Rientro in hotel','La tappa che chiude la giornata','addSceltaHotel()')+
     voce('📷','Foto','Dalla galleria o dalla fotocamera','addSceltaFoto()')+
     voce('📋','Importa lista','Un elenco incollato o un PDF','addSceltaImporta()');
@@ -11392,7 +12018,7 @@ function mostraItinerario(t,p,dove,stato){
     `<div class="card">${p.commento?`<div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.8rem">${esc(p.commento)}</div>`:''}
      ${p.giorni.map(g=>{
        const d=t.days[g.giorno],ds=new Date(d.date);
-       const et=isNaN(ds.getTime())?`Giorno ${g.giorno+1}`:ds.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+       const et=isNaN(ds.getTime())?tv('Giorno {1}',g.giorno+1):ds.toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'});
        return `<div style="margin-bottom:.9rem"><div class="card-h" style="font-size:.95rem;margin-bottom:.4rem">${esc(et)}</div>
          ${g.attivita.map(a=>{
          if(eUnCheckInScritto(a))
@@ -11554,7 +12180,7 @@ function adqChiedi(s){document.getElementById('adqInput').value=s;adqInvia();}
 function openAssistenteGiorno(){
   const t=T();if(!t||!t.days[ttDay]){toast('Apri prima una giornata');return;}
   const d=t.days[ttDay],dt=new Date(d.date);
-  const et=isNaN(dt.getTime())?`Giorno ${ttDay+1}`:dt.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  const et=isNaN(dt.getTime())?tv('Giorno {1}',ttDay+1):dt.toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'});
   document.getElementById('adqTitle').textContent='Assistente · '+et;
   document.getElementById('adqStarters').innerHTML=[
     'Ha senso il giro di questa giornata?',
@@ -11888,7 +12514,7 @@ function openActDetail(di,id){
   document.getElementById('adFlyCur').innerHTML=curOpts(fex0?fex0.origCurrency:(t.currency||'EUR'));
   window._routeMode=(a.type==='flight')?'fly':(a.route?'transit':null);
   setRouteLabels();updFlyVis();
-  document.getElementById('adDay').innerHTML=t.days.map((dd,j)=>`<option value="${j}" ${j===di?'selected':''}>G${j+1} · ${new Date(dd.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
+  document.getElementById('adDay').innerHTML=t.days.map((dd,j)=>`<option value="${j}" ${j===di?'selected':''}>${tv('G{1}',j+1)} · ${new Date(dd.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
   document.getElementById('adType').value=a.type||'any';
   document.getElementById('adDay').onchange=()=>{updateAdWx();updateAdParent();};document.getElementById('adType').addEventListener('change',updateAdWx);document.getElementById('adType').addEventListener('change',updFlyVis);setTimeout(()=>{updateAdWx();updFlyVis();},50);
   document.getElementById('adDone').checked=!!a.completed;
@@ -13151,7 +13777,7 @@ function renderRainTip(){
   let best=-1,bw=1e9;
   t.days.forEach((dd,j)=>{if(j===ttDay)return;const w2=t.weather[dd.date];if(!w2)return;if(w2.precipitation<bw){bw=w2.precipitation;best=j;}});
   const asciutto=best>=0&&bw<=2&&bw<w.precipitation-2;
-  const bd=asciutto?new Date(t.days[best].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'}):'';
+  const bd=asciutto?new Date(t.days[best].date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'}):'';
   const quante=outs.length===1?"1 tappa all'aperto":`${outs.length} tappe all'aperto`;
   box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.85rem;margin-bottom:.8rem">
     <div style="font-weight:800;font-size:.9rem;color:var(--clay-deep)">⛈️ ${wxDesc(w.code)}, ${w.precipitation} mm di pioggia</div>
@@ -13206,7 +13832,7 @@ function renderRainSwaps(){
   const sugg=findRainSwaps(t,ttDay).filter(s=>!rainSwapHide[d.date+':'+s.outAct.id+':'+s.inAct.id]);
   if(!sugg.length){box.innerHTML='';return;}
   box.innerHTML=sugg.map(s=>{
-    const dLbl=new Date(t.days[s.inDay].date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+    const dLbl=new Date(t.days[s.inDay].date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'});
     const km=(s.dist/1000).toFixed(s.dist<1000?0:1);
     return `<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.75rem;margin-bottom:.6rem"><div style="font-size:.82rem;color:var(--ink-soft);line-height:1.5">Con la pioggia niente <b>${esc(s.outAct.name)}</b>: <b>${esc(s.inAct.name)}</b> (${dLbl}) è al chiuso e a ${s.dist<1000?km+' m':km+' km'} da lì. Le scambio?</div><div style="display:flex;gap:.5rem;margin-top:.5rem"><button class="btn btn-grad" style="flex:1;padding:.55rem" onclick="swapRainActs(${ttDay},${s.outAct.id},${s.inDay},${s.inAct.id})">🔄 Scambia</button><button class="btn btn-soft" style="padding:.55rem" onclick="rainSwapHide['${d.date+':'+s.outAct.id+':'+s.inAct.id}']=1;renderRainSwaps()">No</button></div></div>`;
   }).join('');
@@ -13251,7 +13877,7 @@ async function geocodeCities(t){
   }
 }
 let hotSearchT=null,lastHotRes=[],pendingHotel=null,bulkBusy=false,cityT=null,cityInpRef=null;
-function fmtRange(a,b){try{const f=d=>new Date(d).toLocaleDateString('it-IT',{day:'numeric',month:'short'});return (a&&b)?f(a)+' – '+f(b):'';}catch(e){return'';}}
+function fmtRange(a,b){try{const f=d=>new Date(d).toLocaleDateString(loc(),{day:'numeric',month:'short'});return (a&&b)?f(a)+' – '+f(b):'';}catch(e){return'';}}
 function migrateData(){
   const seenT={},outT=[];
   const scoreT=x=>((x.cid?1000:0)+(x.days||[]).reduce((s2,d)=>s2+((d.activities||[]).length),0)+((x.pois||[]).length)+((x.expenses||[]).length));
@@ -14036,7 +14662,7 @@ function openTicketSheet(){
   document.getElementById('tkType').value='attraction';document.getElementById('tkTime').value='';
   document.getElementById('tkCost').value='';document.getElementById('tkPaid').value='paid';
   document.getElementById('tkCur').innerHTML=curOpts(t.currency||'EUR');
-  document.getElementById('tkDay').innerHTML='<option value="">Nessuno</option>'+t.days.map((d,i)=>`<option value="${i}">G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
+  document.getElementById('tkDay').innerHTML='<option value="">Nessuno</option>'+t.days.map((d,i)=>`<option value="${i}">${tv('G{1}',i+1)} · ${new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
   openSheet('mTicket');
 }
 let editPoiId=null;
@@ -14050,11 +14676,11 @@ function openEditPOI(id){
   if(linked){
     document.getElementById('epSched').style.display='none';
     const dn=document.getElementById('epSchedDone');dn.style.display='block';
-    dn.innerHTML=`Già in programma il G${linked.di+1}. <button class="chip" onclick="closeSheet('mEditPOI');setTimeout(()=>openActDetail(${linked.di},${linked.a.id}),160)">Apri l'attività</button>`;
+    dn.innerHTML=`${tv('Già in programma il {1}.',tv('G{1}',linked.di+1))} <button class="chip" onclick="closeSheet('mEditPOI');setTimeout(()=>openActDetail(${linked.di},${linked.a.id}),160)">Apri l'attività</button>`;
   }else{
     document.getElementById('epSched').style.display='block';
     document.getElementById('epSchedDone').style.display='none';
-    document.getElementById('epDay').innerHTML='<option value="">Non ancora</option>'+t.days.map((d,i)=>`<option value="${i}" ${pp.assignedDay===d.date?'selected':''}>G${i+1} · ${new Date(d.date).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
+    document.getElementById('epDay').innerHTML='<option value="">Non ancora</option>'+t.days.map((d,i)=>`<option value="${i}" ${pp.assignedDay===d.date?'selected':''}>${tv('G{1}',i+1)} · ${new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');
     document.getElementById('epHour').value='';
   }
   openSheet('mEditPOI');
@@ -14111,14 +14737,14 @@ function toggleDark(v){app.settings.dark=v;save();applyTheme();renderAll();}
 function getSnaps(){try{return JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){return [];}}
 function snapRowsHtml(){
   const snaps=getSnaps();
-  return snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
+  return snaps.slice().reverse().map(s2=>{const d=new Date(s2.ts);return `<div class="exp-row" style="cursor:default"><div class="exp-info"><div class="exp-d">${d.toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'})} · ${d.toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit'})}</div><div class="exp-meta">punto di ripristino</div></div><button class="chip" onclick="restoreSnap(${s2.ts})">Ripristina</button></div>`;}).join('')||`<div style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Ancora nessun punto: si creano da soli mentre usi l'app (uno ogni 10 minuti, tengo gli ultimi 6).</div>`;
 }
 function lastSnapLabel(){
-  const snaps=getSnaps();if(!snaps.length)return 'Salvataggio attivo';
+  const snaps=getSnaps();if(!snaps.length)return tv('Salvataggio attivo');
   const mins=Math.round((Date.now()-snaps[snaps.length-1].ts)/60000);
-  if(mins<1)return 'Salvato ora';
-  if(mins<60)return `Salvato ${mins} min fa`;
-  return `Salvato ${Math.round(mins/60)}h fa`;
+  if(mins<1)return tv('Salvato ora');
+  if(mins<60)return tv('Salvato {1} min fa',mins);
+  return tv('Salvato {1}h fa',Math.round(mins/60));
 }
 function openRestore(){renderRestoreList();openSheet('mRestore');}
 function renderRestoreList(){const box=document.getElementById('restoreBody');if(box)box.innerHTML=snapRowsHtml();}
@@ -14140,8 +14766,10 @@ function mostraLingua(){
      tutto: una persona che vede meta' app in italiano deve sapere perche'. */
   const c=coperturaLingua();
   const q=c.tutte?Math.round(c.tradotte/c.tutte*100):0;
-  nota.textContent=`Tradotto circa il ${q}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.`+
-    (linguaPronta(ora)?'':' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.');
+  /* Questa nota parla della traduzione: se fosse l'unica cosa rimasta in
+     italiano darebbe proprio l'impressione che vuole smentire. */
+  nota.textContent=tv('Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.',q)+
+    (linguaPronta(ora)?'':tv(' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.'));
 }
 function tessereMostraStato(){
   const box=document.getElementById('tessereStato');if(!box)return;
@@ -14968,7 +15596,7 @@ async function openPhoto(id){
       if(big)big.src=v.data;
     });
     const chi=nomeDiChiHaCaricato(v);
-    const quando=v.ts?new Date(v.ts).toLocaleDateString('it-IT',{day:'numeric',month:'long'}):'';
+    const quando=v.ts?new Date(v.ts).toLocaleDateString(loc(),{day:'numeric',month:'long'}):'';
     const nuvola=v.cloudId
       ?'salvata anche nel cloud: la vedono i compagni di viaggio'
       :'ancora solo su questo telefono'+(v.perche?' — '+v.perche:'');
@@ -15299,9 +15927,9 @@ async function openDiary(){
   const el=document.getElementById('diaryPrint');
   el.innerHTML=`<h1>${esc(t.name)}</h1><div class="dsub">${esc(t.destination||'')} · ${t.days.length} giorni · ${t.participants.map(pp=>esc(pp.name)).join(', ')}</div>`+
     t.days.map((d,i)=>{
-      const w=t.weather[d.date],ds=new Date(d.date).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+      const w=t.weather[d.date],ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
       const acts=(d.activities||[]).slice().sort((a,b)=>String(a.time||'99').localeCompare(String(b.time||'99')));
-      return `<h2>Giorno ${i+1} · ${ds} ${w?wxEmo(w)+' '+Math.round(w.tempMax)+'°':''}</h2>`+
+      return `<h2>${tv('Giorno {1} · {2}',i+1,ds)} ${w?wxEmo(w)+' '+Math.round(w.tempMax)+'°':''}</h2>`+
         (acts.length?`<ul>${acts.map(a=>`<li>${a.time?'<b>'+a.time+'</b> ':''}${esc(a.name)}${a.notes?' — '+esc(a.notes):''}</li>`).join('')}</ul>`:'<div class="dsub">Giornata libera</div>')+
         /* Nel diario da stampare va la foto piena se e' gia' qui, altrimenti
            la miniatura: e' un riquadro di due centimetri, e non vale la pena
