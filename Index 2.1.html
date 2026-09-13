@@ -4824,6 +4824,14 @@ function stratoMappa(opzioni){
   });
   return s;
 }
+/* Prima di togliere una mappa le si dice di stare ferma. Se una zoomata e'
+   ancora in corso quando il riquadro sparisce, Leaflet la finisce lo stesso e
+   va a cercare un pannello che non c'e' piu': "Cannot read properties of
+   undefined (reading '_leaflet_pos')". Non si vede quasi mai - serve una
+   macchina lenta e il momento giusto - ed e' successo una volta sulla
+   macchina delle prove, con tutti i controlli passati. stop() annulla il
+   movimento in corso, e il momento giusto smette di esistere. */
+function fermaMappa(m){try{if(m&&m.stop)m.stop();}catch(e){}}
 function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);stratoMappa().addTo(map);drawMarkers();}
 function drawMarkers(){
   if(!map||typeof L==='undefined')return;
@@ -5164,7 +5172,7 @@ let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=
    riempire il riquadro in cima con quella evidenziata. */
 let homeSoonActs=[],homeSoonDay=null,homeSoonDi=0;
 function destroyHomeMap(){
-  if(homeMapObj){try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
+  if(homeMapObj){fermaMappa(homeMapObj);try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
   /* se ne vanno con la mappa: tenerne il riferimento vorrebbe dire provare a
      toglierli da una mappa che non esiste piu' */
@@ -5997,7 +6005,7 @@ function rankPlaces(data,q){
 }
 function placeIcon(t,c){const m={station:'🚉',aerodrome:'✈️',airport:'✈️',museum:'🏛️',castle:'🏰',palace:'🏰',cathedral:'⛪',church:'⛪',monument:'🗿',attraction:'⭐',memorial:'🪦',ruins:'🏛️',hotel:'🏨',restaurant:'🍴',cafe:'☕',park:'🌳',beach:'🏖️',viewpoint:'🔭',theme_park:'🎢',zoo:'🦁',aquarium:'🐠',archaeological_site:'🗿',artwork:'🖼️',bus_station:'🚌',subway_entrance:'🚇',garden:'🌸'};return m[t]||m[c]||'📍';}
 function renderResults(data,target){
-  Object.values(miniMaps).forEach(m=>{try{m.remove()}catch(e){}});miniMaps={};
+  Object.values(miniMaps).forEach(m=>{fermaMappa(m);try{m.remove()}catch(e){}});miniMaps={};
   document.getElementById(target).innerHTML=`<div class="results">${data.map((p,i)=>{
     const name=p.display_name.split(',')[0],addr=p.display_name.split(',').slice(1,4).join(',').trim();
     const type=p.type||p.class,hours=p.extratags?.opening_hours||'',website=p.extratags?.website||p.extratags?.['contact:website']||'',phone=p.extratags?.phone||p.extratags?.['contact:phone']||'';
@@ -6224,7 +6232,7 @@ function renderPlaceInfo(place,extra,opts){
       ${hasLoc?`<button class="btn btn-soft" style="flex:1" onclick="openNav(${place.lat},${place.lng},${jesc(place.name)})">🧭 Naviga</button>`:''}
     </div>`;
   if(hasLoc)setTimeout(()=>{
-    if(piMapObj){try{piMapObj.remove()}catch(e){}piMapObj=null;}
+    if(piMapObj){fermaMappa(piMapObj);try{piMapObj.remove()}catch(e){}piMapObj=null;}
     if(typeof L==='undefined')return;
     piMapObj=L.map('piMap',{zoomControl:false,attributionControl:false}).setView([place.lat,place.lng],16);
     stratoMappa().addTo(piMapObj);
@@ -11562,7 +11570,7 @@ function buildDayMap(){
   const t=T(),d=t.days[ttDay],wrap=document.getElementById('dayMapWrap');
   const pts=(d.activities||[]).filter(a=>a.lat).sort((x,y)=>String(x.time||'99').localeCompare(String(y.time||'99')));
   const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&d.date>=h.checkIn&&d.date<h.checkOut);
-  if(dayMapObj){try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
+  if(dayMapObj){fermaMappa(dayMapObj);try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
   dayMeMarker=null;dayMeHalo=null;
   if(!pts.length&&!hh){wrap.style.display='none';return;}
   if(typeof L==='undefined'){wrap.style.display='none';return;}

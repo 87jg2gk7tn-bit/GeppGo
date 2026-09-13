@@ -723,6 +723,14 @@ qualcuno che risponde".
   lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
   e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
   dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
+- **Una mappa va fermata prima di toglierla.** Se una zoomata e' ancora in
+  corso quando il riquadro sparisce, Leaflet la finisce lo stesso e va a
+  cercare un pannello che non c'e' piu': *«Cannot read properties of undefined
+  (reading `_leaflet_pos`)»*. Non si vede quasi mai — serve una macchina lenta
+  e il momento giusto — ed e' successo una volta in CI con **tutti e 42 i
+  controlli passati**, perche' la prova conta anche gli errori di pagina.
+  `map.stop()` prima di `map.remove()` annulla il movimento in corso, e il
+  momento giusto smette di esistere. Vale per tutt'e quattro le mappe dell'app.
 - **I numeri vanno tolti dal confronto fra due lingue.** «tu €1.200,00» e
   «tu €1200,00» sono la stessa frase con lo stesso «tu» non tradotto, ma come
   stringhe sono diverse — e quanti puntini ci mette l'italiano **dipende dalla
