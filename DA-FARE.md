@@ -723,6 +723,13 @@ qualcuno che risponde".
   lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
   e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
   dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
+- **Una prova che guarda lo schermo deve aspettare un segnale, non un tempo.**
+  La traduzione delle cose che nascono dopo passa da un `requestAnimationFrame`:
+  sulla macchina delle prove, con quattro browser addosso, il portoghese e'
+  stato fotografato prima che toccasse a lui, e sono comparsi in italiano i
+  tasti della home — frasi che erano tradotte benissimo. Un `await` di 230 ms
+  non e' una garanzia. Adesso si aspetta che la barra in basso NON dica piu'
+  «Spese», e dopo ogni cambio di schermata si lasciano passare due fotogrammi.
 - **Una mappa va fermata prima di toglierla.** Se una zoomata e' ancora in
   corso quando il riquadro sparisce, Leaflet la finisce lo stesso e va a
   cercare un pannello che non c'e' piu': *«Cannot read properties of undefined

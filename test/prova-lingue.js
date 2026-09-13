@@ -304,7 +304,15 @@ async function apri(browser, lingua, linguaTelefono) {
   /* Quello che si legge davvero, in una lingua. Si girano le schermate, si
      forzano gli stati che dipendono dalla rete, e si aprono tutti i pannelli. */
   const LEGGI = `(async (pagine) => {
+    /* L'osservatore traduce su requestAnimationFrame: due giri di fotogrammi
+       piu' una pausa, altrimenti si legge la schermata mezzo secondo prima
+       che tocchi a lui. */
     const attendi = ms => new Promise(r => setTimeout(r, ms));
+    const respira = async ms => {
+      await new Promise(r => requestAnimationFrame(r));
+      await new Promise(r => requestAnimationFrame(r));
+      await attendi(ms);
+    };
     const fuori = new Set();
     const vis = el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden'; };
     const guarda = () => {
@@ -326,11 +334,11 @@ async function apri(browser, lingua, linguaTelefono) {
         const v = (o.textContent || '').trim(); if (v) fuori.add(v);
       });
     };
-    for (const pg of pagine) { go(pg); await attendi(230); guarda(); }
+    for (const pg of pagine) { go(pg); await respira(230); guarda(); }
     /* Il Profilo con l'account dentro mostra tasti che senza account non
        esistono: "Cambia password", "Esci", "Elimina il mio account". Erano
        tutti e tre in italiano, e nessuno se n'era accorto. */
-    try { session = { user: { id: 'io', email: 'q@x.it' } }; renderProfile(); await attendi(200); guarda(); } catch (e) {}
+    try { session = { user: { id: 'io', email: 'q@x.it' } }; renderProfile(); await respira(200); guarda(); } catch (e) {}
     /* E i due avvisi in cima alla home, che dipendono dalla RETE: dove la
        libreria di Supabase non si scarica non compaiono mai. */
     try {
@@ -338,12 +346,12 @@ async function apri(browser, lingua, linguaTelefono) {
       window.GEPPGO_SUPA_URL = window.GEPPGO_SUPA_URL || 'https://finto.supabase.co';
       window.GEPPGO_SUPA_KEY = window.GEPPGO_SUPA_KEY || 'finta';
       sb = sb || {}; session = null;
-      for (const pieno of [false, true]) { storageFull = pieno; renderCloudWarn(); await attendi(120); guarda(); }
+      for (const pieno of [false, true]) { storageFull = pieno; renderCloudWarn(); await respira(120); guarda(); }
       storageFull = false; renderCloudWarn();
     } catch (e) {}
-    try { openDay(0); await attendi(450); guarda(); } catch (e) {}
+    try { openDay(0); await respira(450); guarda(); } catch (e) {}
     const fogli = [...document.querySelectorAll('.modal')].map(m => m.id).filter(Boolean);
-    for (const f of fogli) { openSheet(f); await attendi(160); guarda(); closeSheet(f); await attendi(190); }
+    for (const f of fogli) { openSheet(f); await respira(160); guarda(); closeSheet(f); await attendi(190); }
     return [...fuori];
   })`;
   const PAGINE = ['plan', 'discover', 'money', 'hotels', 'tickets', 'weather', 'identify', 'trips'];
@@ -351,6 +359,16 @@ async function apri(browser, lingua, linguaTelefono) {
   const leggiIn = async (lingua) => {
     const p = await apri(browser, lingua);
     p.on('pageerror', e => err.push(`PAGEERROR(${lingua}): ` + e.message));
+    /* Non si guarda finché la traduzione non è passata. La prima mano la dà
+       traduciPagina() all'avvio, ma l'osservatore traduce quello che nasce
+       dopo su un requestAnimationFrame: sulla macchina delle prove, con
+       quattro browser addosso, il portoghese è stato fotografato prima che
+       toccasse a lui e sono comparsi in italiano i tasti della home — frasi
+       che erano tradotte benissimo. Si aspetta un segnale certo, non un
+       tempo. */
+    if (lingua !== 'it') await p.waitForFunction(
+      () => document.querySelector('.nav-item[data-p="money"]').getAttribute('title') !== 'Spese',
+      { timeout: 20000 });
     const visti = await p.evaluate(([leggi, pg]) => eval(leggi)(pg), [LEGGI, PAGINE]);
     /* I valori del dizionario si chiedono a questa pagina, che è già aperta:
        aprirne una apposta costerebbe altri tredici secondi per lingua. */
