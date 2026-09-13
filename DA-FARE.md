@@ -14,14 +14,19 @@ dov'era rimasto, senza rifare ragionamenti già fatti.
 i sette permessi rispondono tutti `ok`, quindi la colonna `percorso_mini` (le
 miniature) e la tabella `raccolte` («A raccolta») ci sono.
 
-Restano due cose, e non sono codice:
+~~**Guardare in quale regione sta il progetto Supabase**~~ ✅ **fatto il 13
+settembre**: `eu-north-1`, North EU (Stockholm). I server sono in Svezia,
+dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
+lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
+più: per conservare i dati non si esce dall'Europa.
 
-- **Guardare in quale regione sta il progetto Supabase** (Project Settings →
-  General → Region): serve a completare una frase della privacy policy. Se è
-  fuori dall'Europa va detto per nome. Cinque minuti.
-- **Far leggere a un avvocato la parte «A raccolta» della privacy policy.** Il
-  riassunto pronto da mandargli, con le sei garanzie strutturali e le cinque
-  domande, sta in fondo a `PRIVACY-STORE.md`.
+Resta una cosa sola, e non è codice:
+
+- **Far leggere a un avvocato la privacy policy**, in particolare la parte
+  «A raccolta». Il riassunto pronto da mandargli, con le sei garanzie
+  strutturali e le domande, sta in fondo a `PRIVACY-STORE.md` — dove ora c'è
+  anche la domanda su Supabase Inc., che è una società statunitense pur
+  tenendo i server in Svezia.
 
 **Come si rilancia lo schema**, quando servirà di nuovo: Supabase → **SQL
 Editor** → **New query** → incolla **tutto** il contenuto di
@@ -77,9 +82,9 @@ combatte l'unico motore di crescita che c'è.
 4. ~~**Privacy policy + scheda dati**~~ ✅ fatto. `privacy.html` (raggiungibile
    sotto `/privacy`), linkata alla registrazione e dal Profilo.
    `PRIVACY-STORE.md` dice voce per voce cosa rispondere ad Apple e Google.
-   **Restano due cose che non sono codice:** dire in quale regione stanno i
-   server Supabase, e far leggere il testo a un avvocato — vedi in fondo a
-   `PRIVACY-STORE.md`.
+   I server stanno a Stoccolma (`eu-north-1`), dentro lo Spazio economico
+   europeo, e la policy lo dice per nome. **Resta una cosa che non è codice:**
+   far leggere il testo a un avvocato — vedi in fondo a `PRIVACY-STORE.md`.
 5. ~~**Test e CI nel repo**~~ ✅ fatto. `npm test` le lancia tutte;
    `.github/workflows/prove.yml` le fa girare da sole a ogni push e a ogni PR,
    con un Postgres vero per i permessi. Le prove che vivevano in una cartella
@@ -90,7 +95,7 @@ combatte l'unico motore di crescita che c'è.
    pannello dell'account che si mangia i tocchi.
 
 **I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
-pubblicare non è codice: la regione dei server, l'avvocato, la società.
+pubblicare non è codice: l'avvocato e la società.
 
 ⚠️ **Con «A raccolta» (punto 13) la privacy policy è cambiata**: adesso c'è un
 caso in cui una posizione viene conservata, ed è dichiarato in `privacy.html`
