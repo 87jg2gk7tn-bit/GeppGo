@@ -236,92 +236,132 @@ async function apri(browser, lingua, linguaTelefono) {
      ['en','es','fr','pt'].map(l => l + ':' + diz[l].ugualiAllItaliano).join(' '));
 
   // ── niente italiano rimasto a schermo ────────────────────────────────────
-  /* La prova che conta davvero: si gira per le schermate e per i pannelli con
-     l'app in ognuna delle quattro lingue, e non deve restare NIENTE in
-     italiano. Una frase si riconosce italiana da una parola che in inglese
-     non esiste; quelle già tradotte si scartano prima, perché "I" inglese è
-     anche "i" italiano e senza quel filtro l'elenco si riempiva di inglese. */
-  const SPIE = "\\b(il|lo|gli|le|un|una|del|della|dei|delle|che|non|per|con|sul|sulla|nel|nella|questo|questa|quando|dove|puoi|devi|sono|hai|ho|ma|piu'|più|già|gia'|ancora|senza|dopo|prima|tuo|tua|tuoi|viaggio|giorno|giorni|spesa|spese|foto|luogo|luoghi|tappa|tappe|nessun|nessuna|niente|ora)\\b";
+  /* La prova che conta davvero, e per un po' ha detto una bugia.
+     Il primo metodo cercava frasi contenenti una parolina italiana ("il",
+     "che", "non", "giorni"): "Esci", "Saldi", "Recupero", "Condividi" non ne
+     hanno nessuna, quindi per la prova non esistevano. Diceva zero mentre a
+     schermo ne restavano ottanta, e non era un caso limite: erano i tasti del
+     Profilo, quelli della home e le voci dei menù.
+     Il metodo di adesso non indovina, CONFRONTA: la stessa schermata si apre
+     in italiano e nella lingua da provare, e si raccoglie quello che si legge.
+     Una stringa che compare identica in tutt'e due o è un nome proprio, o non
+     è tradotta — e i nomi propri stanno in un elenco scritto qui sotto, dove
+     si vedono. */
+  const IDENTICHE_PER_DAVVERO = new Set([
+    'GeppGo', 'Leaflet', '© OSM', 'A JavaScript library for interactive maps',
+    'Google Maps', 'Apple', 'Google', 'Android', 'Supabase', 'ChatGPT', 'Excel',
+    'iPhone', 'Instagram', 'OpenStreetMap', 'GeppGo Premium', 'Premium', 'GPS',
+    'Home', 'Email', 'Password', 'Shopping', 'Budget', 'Hotel', 'ℹ️ Info', '🗺️ Maps',
+    'Check-in', 'Check-out', '💾 Backup', '1 km', 'PDF', 'QR', 'Go', 'ok', 'OK',
+    'Italiano', 'English', 'Español', 'Français', 'Português',
+    'Project URL', 'Project Settings > API', 'https://...', 'tu@esempio.it',
+    'es. MXP', 'es. NRT', 'q@x.it', 'GeppGo · build r91', 'build r91',
+    'Marco', 'https://xxxxx.supabase.co',
+    'merati.giacomo94@gmail.com',
+    "Louvre\nMusée d'Orsay\nSainte-Chapelle"
+  ]);
+  /* I dati del viaggio di prova: il nome che ha scritto una persona non si
+     traduce, e comparirebbe identico in tutte le lingue per forza. */
+  const MIEI = [stato.trips[0].name, stato.trips[0].destination, stato.myName,
+                ...stato.trips[0].participants.map(p => p.name)].filter(Boolean);
+  const eMio = x => MIEI.some(m => x.includes(m));
+  /* Numeri, orari, cifre, emoji e frecce: uguali in ogni lingua per natura. */
+  const SENZA_LETTERE = /^[^\p{L}]*$/u;
+  const CODICE_VALUTA = /^[A-Z]{3}( \(.{1,4}\))?$/;
+  const NOME_E_NUMERO = /^[A-Z][a-zà-ÿ]*( \(tu\)| \(you\)| \(tú\)| \(toi\))? · \d+$/;
+
+  /* Quello che si legge davvero, in una lingua. Si girano le schermate, si
+     forzano gli stati che dipendono dalla rete, e si aprono tutti i pannelli. */
+  const LEGGI = `(async (pagine) => {
+    const attendi = ms => new Promise(r => setTimeout(r, ms));
+    const fuori = new Set();
+    const vis = el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden'; };
+    const guarda = () => {
+      const cam = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => {
+          const q = n.parentNode;
+          if (!q || q.nodeName === 'SCRIPT' || q.nodeName === 'STYLE') return NodeFilter.FILTER_REJECT;
+          if (!vis(q)) return NodeFilter.FILTER_REJECT;
+          return n.nodeValue && n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }});
+      let n; while ((n = cam.nextNode())) fuori.add(n.nodeValue.trim());
+      document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el => {
+        if (!vis(el)) return;
+        ['placeholder','title','aria-label'].forEach(a => {
+          const v = (el.getAttribute(a) || '').trim(); if (v) fuori.add(v);
+        });
+      });
+      document.querySelectorAll('option').forEach(o => {
+        const v = (o.textContent || '').trim(); if (v) fuori.add(v);
+      });
+    };
+    for (const pg of pagine) { go(pg); await attendi(230); guarda(); }
+    /* Il Profilo con l'account dentro mostra tasti che senza account non
+       esistono: "Cambia password", "Esci", "Elimina il mio account". Erano
+       tutti e tre in italiano, e nessuno se n'era accorto. */
+    try { session = { user: { id: 'io', email: 'q@x.it' } }; renderProfile(); await attendi(200); guarda(); } catch (e) {}
+    /* E i due avvisi in cima alla home, che dipendono dalla RETE: dove la
+       libreria di Supabase non si scarica non compaiono mai. */
+    try {
+      go('plan');
+      window.GEPPGO_SUPA_URL = window.GEPPGO_SUPA_URL || 'https://finto.supabase.co';
+      window.GEPPGO_SUPA_KEY = window.GEPPGO_SUPA_KEY || 'finta';
+      sb = sb || {}; session = null;
+      for (const pieno of [false, true]) { storageFull = pieno; renderCloudWarn(); await attendi(120); guarda(); }
+      storageFull = false; renderCloudWarn();
+    } catch (e) {}
+    try { openDay(0); await attendi(450); guarda(); } catch (e) {}
+    const fogli = [...document.querySelectorAll('.modal')].map(m => m.id).filter(Boolean);
+    for (const f of fogli) { openSheet(f); await attendi(160); guarda(); closeSheet(f); await attendi(190); }
+    return [...fuori];
+  })`;
+  const PAGINE = ['plan', 'discover', 'money', 'hotels', 'tickets', 'weather', 'identify', 'trips'];
+
+  const leggiIn = async (lingua) => {
+    const p = await apri(browser, lingua);
+    p.on('pageerror', e => err.push(`PAGEERROR(${lingua}): ` + e.message));
+    const visti = await p.evaluate(([leggi, pg]) => eval(leggi)(pg), [LEGGI, PAGINE]);
+    /* I valori del dizionario si chiedono a questa pagina, che è già aperta:
+       aprirne una apposta costerebbe altri tredici secondi per lingua. */
+    const valori = lingua === 'it' ? null : await p.evaluate(lg =>
+      Object.values(DIZIONARIO[lg]).concat([...GIA_TRADOTTE]), lingua);
+    const extra = lingua === 'it' ? null : await p.evaluate(() => ({
+      soldi: fmtMoney(1234567, 'JPY'),
+      data: new Date('2026-09-01').toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' }),
+      composte: {
+        tappa: tv('{1} TAPPA', 1), tappe: tv('{1} TAPPE', 4),
+        giorno: tv('{1} · GIORNO {2} DI {3}', 'GIAPPONE', 1, 3),
+        devi: tv('Devi {1}', '€12,00'),
+        ignota: tv('Mai tradotta, con {1} dentro', 7),
+        contata: (() => { tv('{1} luoghi', 9); return GIA_TRADOTTE.has('9 places'); })()
+      }
+    }));
+    await p.close();
+    return { visti: new Set(visti), extra, valori };
+  };
+
+  const inItaliano = (await leggiIn('it')).visti;
   const formati = {};
   let composte = null;
   for (const l of ['en', 'es', 'fr', 'pt']) {
-    const p = await apri(browser, l);
-    p.on('pageerror', e => err.push(`PAGEERROR(resta ${l}): ` + e.message));
-
-    /* Date e numeri: si chiedono a questa pagina, che è già aperta. */
-    formati[l] = await p.evaluate(() => ({
-      soldi: fmtMoney(1234567, 'JPY'),
-      data: new Date('2026-09-01').toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' })
-    }));
-    /* E le frasi composte, che si controllano una volta sola in inglese. */
-    if (l === 'en') composte = await p.evaluate(() => ({
-      tappa: tv('{1} TAPPA', 1),
-      tappe: tv('{1} TAPPE', 4),
-      giorno: tv('{1} · GIORNO {2} DI {3}', 'GIAPPONE', 1, 3),
-      devi: tv('Devi {1}', '€12,00'),
-      ignota: tv('Mai tradotta, con {1} dentro', 7),
-      contata: (() => { tv('{1} luoghi', 9); return GIA_TRADOTTE.has('9 places'); })()
-    }));
-
-    /* Il giro si fa tutto dentro la pagina, non un pannello per volta da
-       fuori: con cinquanta pannelli per quattro lingue, andare e tornare ogni
-       volta faceva durare la prova sette minuti invece di uno. */
-    const resta = await p.evaluate(async ([spie, lg, pagine]) => {
-      const TRAD = new Set(Object.values(DIZIONARIO[lg]));
-      const re = new RegExp(spie, 'i');
-      const fuori = [];
-      const attendi = ms => new Promise(r => setTimeout(r, ms));
-      const vis = el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden'; };
-      /* Le composte non stanno fra i valori del dizionario, perché il buco è
-         già riempito: senza GIA_TRADOTTE risulterebbero non tradotte. */
-      const guarda = x => { if (x.length > 2 && !TRAD.has(x) && !GIA_TRADOTTE.has(x) && re.test(x)) fuori.push(x); };
-      const cerca = () => {
-        const cam = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-          acceptNode: n => {
-            const q = n.parentNode;
-            if (!q || q.nodeName === 'SCRIPT' || q.nodeName === 'STYLE') return NodeFilter.FILTER_REJECT;
-            if (!vis(q)) return NodeFilter.FILTER_REJECT;
-            return n.nodeValue && n.nodeValue.trim().length > 2 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-          }
-        });
-        let n; while ((n = cam.nextNode())) guarda(n.nodeValue.trim());
-        document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el => {
-          if (!vis(el)) return;
-          ['placeholder', 'title', 'aria-label'].forEach(a => guarda((el.getAttribute(a) || '').trim()));
-        });
-      };
-      for (const pg of pagine) { go(pg); await attendi(200); cerca(); }
-      /* Gli avvisi in cima alla home si vedono solo in certi stati, e lo stato
-         dipende dalla RETE: dove la libreria di Supabase non si scarica, il
-         cartello "viaggi solo su questo telefono" non compare mai. Girando
-         l'app qui non usciva, sulla macchina delle prove automatiche sì — ed
-         era davvero rimasto in italiano. Quindi si forzano tutti e due, invece
-         di sperare che si presentino. */
-      go('plan');
-      for (const stato of ['nonConnesso', 'memoriaPiena']) {
-        window.GEPPGO_SUPA_URL = window.GEPPGO_SUPA_URL || 'https://finto.supabase.co';
-        window.GEPPGO_SUPA_KEY = window.GEPPGO_SUPA_KEY || 'finta';
-        sb = sb || {};
-        session = null;
-        storageFull = (stato === 'memoriaPiena');
-        renderCloudWarn();
-        await attendi(150);
-        cerca();
-      }
-      storageFull = false; renderCloudWarn();
-      /* Tutti i pannelli, non un elenco scritto a mano: uno nuovo entra nella
-         prova da solo, invece di restare fuori finché qualcuno se ne accorge. */
-      const fogli = [...document.querySelectorAll('.modal')].map(m => m.id).filter(Boolean);
-      for (const f of fogli) {
-        openSheet(f); await attendi(150); cerca();
-        closeSheet(f); await attendi(200);
-      }
-      return fuori;
-    }, [SPIE, l, ['plan', 'discover', 'money', 'hotels', 'tickets', 'weather', 'identify', 'trips']]);
-    const unici = [...new Set(resta)];
-    ok(`in ${LINGUA_NOME[l]} non resta niente in italiano a schermo`, unici.length === 0,
-       unici.length ? unici.slice(0, 4).map(x => JSON.stringify(x.slice(0, 60))).join(' | ') : 'tutte le schermate e i pannelli');
-    await p.close();
+    const { visti, extra, valori } = await leggiIn(l);
+    formati[l] = extra;
+    if (l === 'en') composte = extra.composte;
+    /* Fra italiano e spagnolo tante parole sono uguali per davvero: "persona",
+       "hotel", "total". Il criterio che distingue non è l'occhio, è il
+       dizionario — se quella stringa è un VALORE della lingua di arrivo,
+       allora è la traduzione giusta e si dà il caso che coincida; se non c'è,
+       nessuno l'ha mai tradotta. Insieme ai valori vanno le composte già
+       riempite da tv(): il buco è stato sostituito, quindi nel dizionario non
+       si trovano più. */
+    const tradotte = new Set(valori);
+    const resta = [...inItaliano].filter(x =>
+      visti.has(x) && !tradotte.has(x) && !IDENTICHE_PER_DAVVERO.has(x) &&
+      !SENZA_LETTERE.test(x) && !CODICE_VALUTA.test(x) && !NOME_E_NUMERO.test(x) &&
+      !eMio(x) && x.length > 1);
+    ok(`in ${LINGUA_NOME[l]} non resta niente in italiano a schermo`, resta.length === 0,
+       resta.length ? `${resta.length}: ` + resta.slice(0, 5).map(x => JSON.stringify(x.slice(0, 40))).join(' ')
+                    : `${inItaliano.size} frasi confrontate, nessuna uguale`);
   }
 
   // ── le frasi che il codice compone ───────────────────────────────────────

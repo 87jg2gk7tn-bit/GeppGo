@@ -4094,9 +4094,371 @@ const DIZIONARIO_COMPOSTE={
 };
 Object.keys(DIZIONARIO_COMPOSTE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_COMPOSTE[l]));
 
+/* Quello che il vecchio metro non vedeva. Il riconoscitore cercava frasi
+   contenenti una parolina italiana ("il", "che", "non", "giorni"):
+   "Esci", "Saldi", "Recupero", "Condividi" non ne hanno nessuna, e per la
+   prova non esistevano. Trovate confrontando la stessa schermata in
+   italiano e in inglese - quello che si legge uguale, o e' un nome proprio
+   o non e' tradotto. */
+const DIZIONARIO_SFUGGITE={
+  en:{
+    'Da concludere':'To be finished',
+    'Annulla l\'allungamento':'Undo the stretch',
+    'Annulla lo spostamento':'Undo the move',
+    '{1}g':'{1}d',
+    'FRA {1} GIORNI':'IN {1} DAYS',
+    'era alle {1}':'was at {1}',
+    'fra {1} minuto':'in {1} minute',
+    'fra {1} minuti':'in {1} minutes',
+    'fra {1}h':'in {1}h',
+    'fra {1}h {2}′':'in {1}h {2}′',
+    '{1} · alle {2}':'{1} · at {2}',
+    'domani alle {1}':'tomorrow at {1}',
+    'dopodomani alle {1}':'the day after tomorrow at {1}',
+    'fra {1} giorni':'in {1} days',
+    'fra {1} giorni · alle {2}':'in {1} days · at {2}',
+    '{1} persona':'{1} person',
+    '{1} persone':'{1} people',
+    '{1} posto':'{1} place',
+    '{1} posti':'{1} places',
+    'Budget di {1}':'{1}’s budget',
+    'Budget di {1} (tu)':'{1}’s budget (you)',
+    '{1} attività in attesa':'{1} activities waiting',
+    ' {1} stimati oggi':' {1} estimated today',
+    ' · {1} pers.':' · {1} people',
+    ' · prenotare':' · to book',
+    '{1} biglietto non è di nessuno':'{1} ticket belongs to nobody',
+    '{1} biglietti non sono di nessuno':'{1} tickets belong to nobody',
+    'Tutti · {1}':'All · {1}',
+    'Senza nome · {1}':'No name · {1}',
+    '{1} (tu) · {2}':'{1} (you) · {2}',
+    'Consigli attivi':'Tips on',
+    'Consigli off':'Tips off',
+    'Per {1} persone':'For {1} people',
+    'Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla':'Press and hold a stop and drag it up or down to move the time · tap to open it',
+    'Colosseo\nForo Romano\nPranzo in trattoria\nPantheon\nCena a Trastevere':'Colosseum\nRoman Forum\nLunch at a trattoria\nPantheon\nDinner in Trastevere',
+    'Esci':'Sign out',
+    'Saldi':'Balances',
+    'Volo ✈️':'Flight ✈️',
+    'Comandi':'Shortcuts',
+    '0 posti':'0 places',
+    'guardali':'see them',
+    'Recupero':'Recovery',
+    '→ attiva':'→ turn on',
+    'e scrivi':'and type',
+    'e salva.':'and save.',
+    'Concluso':'Finished',
+    'Condividi':'Share',
+    'pagato da':'paid by',
+    '↺ Cerchio':'↺ Circle',
+    '🎒 Bagagli':'🎒 Packing',
+    'Essenziale':'Must-see',
+    'Ripristina':'Restore',
+    '✎ Rinomina':'✎ Rename',
+    '🏧 Bancomat':'🏧 Cash machine',
+    'GIÀ PASSATA':'ALREADY DONE',
+    '3. Aggiungi':'3. Add',
+    'seguito dal':'followed by the',
+    '4. Chiamalo':'4. Name it',
+    'Riduci zoom':'Zoom out',
+    'Sei in pari':'You’re square',
+    '1. Comandi →':'1. Shortcuts →',
+    'Aumenta zoom':'Zoom in',
+    'In programma':'In the timetable',
+    '🧭 Indicazioni':'🧭 Directions',
+    'Il tuo account':'Your account',
+    '🚻 Bagno vicino':'🚻 Toilet nearby',
+    'Aggiungi giorno':'Add a day',
+    'Concludi/Riapri':'Finish/Reopen',
+    'Cambia password':'Change password',
+    '🚬 Area fumatori':'🚬 Smoking area',
+    '🎟️ Da prenotare':'🎟️ To book',
+    'No, indipendente':'No, on its own',
+    'Viaggi conclusi ›':'Finished trips ›',
+    '1 persona mancante':'1 person missing',
+    'punto di ripristino':'restore point',
+    'Niente da annullare':'Nothing to undo',
+    '2. Aggiungi l\'azione':'2. Add the action',
+    'Accedi o crea account':'Sign in or create an account',
+    ', e sotto lascia solo':', and below leave only',
+    'Valuta in cui leggere':'Currency to read in',
+    'Elimina questo giorno':'Delete this day',
+    '→ incollalo qui sotto,':'→ paste it below,',
+    'Elimina il mio account':'Delete my account',
+    'Nessun viaggio in corso':'No trip in progress',
+    'Di chi vuoi vedere i biglietti':'Whose tickets do you want to see',
+    '(Testo → Ingresso comando rapido).':'(Text → Shortcut Input).'
+  },
+  es:{
+    'Da concludere':'Por terminar',
+    'Annulla l\'allungamento':'Deshacer el alargamiento',
+    'Annulla lo spostamento':'Deshacer el movimiento',
+    '{1}g':'{1}d',
+    'FRA {1} GIORNI':'DENTRO DE {1} DÍAS',
+    'era alle {1}':'era a las {1}',
+    'fra {1} minuto':'en {1} minuto',
+    'fra {1} minuti':'en {1} minutos',
+    'fra {1}h':'en {1}h',
+    'fra {1}h {2}′':'en {1}h {2}′',
+    '{1} · alle {2}':'{1} · a las {2}',
+    'domani alle {1}':'mañana a las {1}',
+    'dopodomani alle {1}':'pasado mañana a las {1}',
+    'fra {1} giorni':'en {1} días',
+    'fra {1} giorni · alle {2}':'en {1} días · a las {2}',
+    '{1} persona':'{1} persona',
+    '{1} persone':'{1} personas',
+    '{1} posto':'{1} lugar',
+    '{1} posti':'{1} lugares',
+    'Budget di {1}':'Presupuesto de {1}',
+    'Budget di {1} (tu)':'Presupuesto de {1} (tú)',
+    '{1} attività in attesa':'{1} actividades en espera',
+    ' {1} stimati oggi':' {1} estimados hoy',
+    ' · {1} pers.':' · {1} pers.',
+    ' · prenotare':' · por reservar',
+    '{1} biglietto non è di nessuno':'{1} billete no es de nadie',
+    '{1} biglietti non sono di nessuno':'{1} billetes no son de nadie',
+    'Tutti · {1}':'Todos · {1}',
+    'Senza nome · {1}':'Sin nombre · {1}',
+    '{1} (tu) · {2}':'{1} (tú) · {2}',
+    'Consigli attivi':'Consejos activos',
+    'Consigli off':'Consejos off',
+    'Per {1} persone':'Para {1} personas',
+    'Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla':'Mantén pulsada una parada y arrástrala arriba o abajo para mover la hora · toca para abrirla',
+    'Colosseo\nForo Romano\nPranzo in trattoria\nPantheon\nCena a Trastevere':'Coliseo\nForo Romano\nComida en una trattoria\nPanteón\nCena en Trastevere',
+    'Esci':'Salir',
+    'Saldi':'Saldos',
+    'Volo ✈️':'Vuelo ✈️',
+    'Comandi':'Atajos',
+    '0 posti':'0 lugares',
+    'guardali':'míralos',
+    'Recupero':'Recuperación',
+    '→ attiva':'→ activa',
+    'e scrivi':'y escribe',
+    'e salva.':'y guarda.',
+    'Concluso':'Terminado',
+    'Condividi':'Compartir',
+    'pagato da':'pagado por',
+    '↺ Cerchio':'↺ Círculo',
+    '🎒 Bagagli':'🎒 Equipaje',
+    'Essenziale':'Imprescindible',
+    'Ripristina':'Restaurar',
+    '✎ Rinomina':'✎ Renombrar',
+    '🏧 Bancomat':'🏧 Cajero',
+    'GIÀ PASSATA':'YA PASADA',
+    '3. Aggiungi':'3. Añade',
+    'seguito dal':'seguido del',
+    '4. Chiamalo':'4. Llámalo',
+    'Riduci zoom':'Alejar',
+    'Sei in pari':'Estás en paz',
+    '1. Comandi →':'1. Atajos →',
+    'Aumenta zoom':'Acercar',
+    'In programma':'En el horario',
+    '🧭 Indicazioni':'🧭 Indicaciones',
+    'Il tuo account':'Tu cuenta',
+    '🚻 Bagno vicino':'🚻 Baño cerca',
+    'Aggiungi giorno':'Añadir día',
+    'Concludi/Riapri':'Terminar/Reabrir',
+    'Cambia password':'Cambiar contraseña',
+    '🚬 Area fumatori':'🚬 Zona de fumadores',
+    '🎟️ Da prenotare':'🎟️ Por reservar',
+    'No, indipendente':'No, independiente',
+    'Viaggi conclusi ›':'Viajes terminados ›',
+    '1 persona mancante':'falta 1 persona',
+    'punto di ripristino':'punto de restauración',
+    'Niente da annullare':'Nada que deshacer',
+    '2. Aggiungi l\'azione':'2. Añade la acción',
+    'Accedi o crea account':'Entra o crea una cuenta',
+    ', e sotto lascia solo':', y abajo deja solo',
+    'Valuta in cui leggere':'Moneda en la que leer',
+    'Elimina questo giorno':'Eliminar este día',
+    '→ incollalo qui sotto,':'→ pégalo aquí abajo,',
+    'Elimina il mio account':'Eliminar mi cuenta',
+    'Nessun viaggio in corso':'Ningún viaje en curso',
+    'Di chi vuoi vedere i biglietti':'De quién quieres ver los billetes',
+    '(Testo → Ingresso comando rapido).':'(Texto → Entrada del atajo).'
+  },
+  fr:{
+    'Da concludere':'À terminer',
+    'Annulla l\'allungamento':'Annuler l’allongement',
+    'Annulla lo spostamento':'Annuler le déplacement',
+    '{1}g':'{1}j',
+    'FRA {1} GIORNI':'DANS {1} JOURS',
+    'era alle {1}':'était à {1}',
+    'fra {1} minuto':'dans {1} minute',
+    'fra {1} minuti':'dans {1} minutes',
+    'fra {1}h':'dans {1}h',
+    'fra {1}h {2}′':'dans {1}h {2}′',
+    '{1} · alle {2}':'{1} · à {2}',
+    'domani alle {1}':'demain à {1}',
+    'dopodomani alle {1}':'après-demain à {1}',
+    'fra {1} giorni':'dans {1} jours',
+    'fra {1} giorni · alle {2}':'dans {1} jours · à {2}',
+    '{1} persona':'{1} personne',
+    '{1} persone':'{1} personnes',
+    '{1} posto':'{1} lieu',
+    '{1} posti':'{1} lieux',
+    'Budget di {1}':'Budget de {1}',
+    'Budget di {1} (tu)':'Budget de {1} (toi)',
+    '{1} attività in attesa':'{1} activités en attente',
+    ' {1} stimati oggi':' {1} estimés aujourd’hui',
+    ' · {1} pers.':' · {1} pers.',
+    ' · prenotare':' · à réserver',
+    '{1} biglietto non è di nessuno':'{1} billet n’est à personne',
+    '{1} biglietti non sono di nessuno':'{1} billets ne sont à personne',
+    'Tutti · {1}':'Tous · {1}',
+    'Senza nome · {1}':'Sans nom · {1}',
+    '{1} (tu) · {2}':'{1} (toi) · {2}',
+    'Consigli attivi':'Conseils actifs',
+    'Consigli off':'Conseils off',
+    'Per {1} persone':'Pour {1} personnes',
+    'Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla':'Appuie longuement sur une étape et fais-la glisser vers le haut ou le bas pour déplacer l’horaire · touche pour l’ouvrir',
+    'Colosseo\nForo Romano\nPranzo in trattoria\nPantheon\nCena a Trastevere':'Colisée\nForum romain\nDéjeuner dans une trattoria\nPanthéon\nDîner au Trastevere',
+    'Esci':'Se déconnecter',
+    'Saldi':'Soldes',
+    'Volo ✈️':'Vol ✈️',
+    'Comandi':'Raccourcis',
+    '0 posti':'0 lieux',
+    'guardali':'les voir',
+    'Recupero':'Récupération',
+    '→ attiva':'→ active',
+    'e scrivi':'et écris',
+    'e salva.':'et enregistre.',
+    'Concluso':'Terminé',
+    'Condividi':'Partager',
+    'pagato da':'payé par',
+    '↺ Cerchio':'↺ Cercle',
+    '🎒 Bagagli':'🎒 Bagages',
+    'Essenziale':'Incontournable',
+    'Ripristina':'Restaurer',
+    '✎ Rinomina':'✎ Renommer',
+    '🏧 Bancomat':'🏧 Distributeur',
+    'GIÀ PASSATA':'DÉJÀ PASSÉE',
+    '3. Aggiungi':'3. Ajoute',
+    'seguito dal':'suivi du',
+    '4. Chiamalo':'4. Appelle-le',
+    'Riduci zoom':'Dézoomer',
+    'Sei in pari':'Tu es à jour',
+    '1. Comandi →':'1. Raccourcis →',
+    'Aumenta zoom':'Zoomer',
+    'In programma':'Au programme',
+    '🧭 Indicazioni':'🧭 Itinéraire',
+    'Il tuo account':'Ton compte',
+    '🚻 Bagno vicino':'🚻 Toilettes tout près',
+    'Aggiungi giorno':'Ajouter un jour',
+    'Concludi/Riapri':'Terminer/Rouvrir',
+    'Cambia password':'Changer le mot de passe',
+    '🚬 Area fumatori':'🚬 Espace fumeurs',
+    '🎟️ Da prenotare':'🎟️ À réserver',
+    'No, indipendente':'Non, indépendant',
+    'Viaggi conclusi ›':'Voyages terminés ›',
+    '1 persona mancante':'1 personne manquante',
+    'punto di ripristino':'point de restauration',
+    'Niente da annullare':'Rien à annuler',
+    '2. Aggiungi l\'azione':'2. Ajoute l’action',
+    'Accedi o crea account':'Connecte-toi ou crée un compte',
+    ', e sotto lascia solo':', et en dessous laisse seulement',
+    'Valuta in cui leggere':'Monnaie d’affichage',
+    'Elimina questo giorno':'Supprimer ce jour',
+    '→ incollalo qui sotto,':'→ colle-le ci-dessous,',
+    'Elimina il mio account':'Supprimer mon compte',
+    'Nessun viaggio in corso':'Aucun voyage en cours',
+    'Di chi vuoi vedere i biglietti':'De qui veux-tu voir les billets',
+    '(Testo → Ingresso comando rapido).':'(Texte → Entrée du raccourci).'
+  },
+  pt:{
+    'Da concludere':'Por terminar',
+    'Annulla l\'allungamento':'Anular o alongamento',
+    'Annulla lo spostamento':'Anular a deslocação',
+    '{1}g':'{1}d',
+    'FRA {1} GIORNI':'DAQUI A {1} DIAS',
+    'era alle {1}':'era às {1}',
+    'fra {1} minuto':'daqui a {1} minuto',
+    'fra {1} minuti':'daqui a {1} minutos',
+    'fra {1}h':'daqui a {1}h',
+    'fra {1}h {2}′':'daqui a {1}h {2}′',
+    '{1} · alle {2}':'{1} · às {2}',
+    'domani alle {1}':'amanhã às {1}',
+    'dopodomani alle {1}':'depois de amanhã às {1}',
+    'fra {1} giorni':'daqui a {1} dias',
+    'fra {1} giorni · alle {2}':'daqui a {1} dias · às {2}',
+    '{1} persona':'{1} pessoa',
+    '{1} persone':'{1} pessoas',
+    '{1} posto':'{1} lugar',
+    '{1} posti':'{1} lugares',
+    'Budget di {1}':'Orçamento de {1}',
+    'Budget di {1} (tu)':'Orçamento de {1} (tu)',
+    '{1} attività in attesa':'{1} atividades à espera',
+    ' {1} stimati oggi':' {1} estimados hoje',
+    ' · {1} pers.':' · {1} pess.',
+    ' · prenotare':' · por reservar',
+    '{1} biglietto non è di nessuno':'{1} bilhete não é de ninguém',
+    '{1} biglietti non sono di nessuno':'{1} bilhetes não são de ninguém',
+    'Tutti · {1}':'Todos · {1}',
+    'Senza nome · {1}':'Sem nome · {1}',
+    '{1} (tu) · {2}':'{1} (tu) · {2}',
+    'Consigli attivi':'Sugestões ativas',
+    'Consigli off':'Sugestões off',
+    'Per {1} persone':'Para {1} pessoas',
+    'Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla':'Mantém premida uma paragem e arrasta-a para cima ou para baixo para mudar a hora · toca para abrir',
+    'Colosseo\nForo Romano\nPranzo in trattoria\nPantheon\nCena a Trastevere':'Coliseu\nFórum Romano\nAlmoço numa trattoria\nPanteão\nJantar em Trastevere',
+    'Esci':'Sair',
+    'Saldi':'Saldos',
+    'Volo ✈️':'Voo ✈️',
+    'Comandi':'Atalhos',
+    '0 posti':'0 lugares',
+    'guardali':'vê-los',
+    'Recupero':'Recuperação',
+    '→ attiva':'→ ativa',
+    'e scrivi':'e escreve',
+    'e salva.':'e guarda.',
+    'Concluso':'Terminada',
+    'Condividi':'Partilhar',
+    'pagato da':'pago por',
+    '↺ Cerchio':'↺ Círculo',
+    '🎒 Bagagli':'🎒 Bagagem',
+    'Essenziale':'Imperdível',
+    'Ripristina':'Restaurar',
+    '✎ Rinomina':'✎ Renomear',
+    '🏧 Bancomat':'🏧 Multibanco',
+    'GIÀ PASSATA':'JÁ PASSOU',
+    '3. Aggiungi':'3. Acrescenta',
+    'seguito dal':'seguido do',
+    '4. Chiamalo':'4. Chama-lhe',
+    'Riduci zoom':'Reduzir zoom',
+    'Sei in pari':'Estás quite',
+    '1. Comandi →':'1. Atalhos →',
+    'Aumenta zoom':'Aumentar zoom',
+    'In programma':'No horário',
+    '🧭 Indicazioni':'🧭 Direções',
+    'Il tuo account':'A tua conta',
+    '🚻 Bagno vicino':'🚻 Casa de banho perto',
+    'Aggiungi giorno':'Acrescentar dia',
+    'Concludi/Riapri':'Terminar/Reabrir',
+    'Cambia password':'Mudar a palavra-passe',
+    '🚬 Area fumatori':'🚬 Zona de fumadores',
+    '🎟️ Da prenotare':'🎟️ Por reservar',
+    'No, indipendente':'Não, independente',
+    'Viaggi conclusi ›':'Viagens terminadas ›',
+    '1 persona mancante':'falta 1 pessoa',
+    'punto di ripristino':'ponto de restauro',
+    'Niente da annullare':'Nada para anular',
+    '2. Aggiungi l\'azione':'2. Acrescenta a ação',
+    'Accedi o crea account':'Entra ou cria uma conta',
+    ', e sotto lascia solo':', e em baixo deixa só',
+    'Valuta in cui leggere':'Moeda em que ler',
+    'Elimina questo giorno':'Eliminar este dia',
+    '→ incollalo qui sotto,':'→ cola-o aqui em baixo,',
+    'Elimina il mio account':'Eliminar a minha conta',
+    'Nessun viaggio in corso':'Nenhuma viagem a decorrer',
+    'Di chi vuoi vedere i biglietti':'De quem queres ver os bilhetes',
+    '(Testo → Ingresso comando rapido).':'(Texto → Entrada do atalho).'
+  }
+};
+Object.keys(DIZIONARIO_SFUGGITE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_SFUGGITE[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=809;
+const FRASI_IN_TUTTO=895;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4178,7 +4540,12 @@ function traduciPagina(radice){
     if(d[pulito]){fatti++;nodo.nodeValue=testo.replace(pulito,d[pulito]);}
     else if(GIA_TRADOTTE.has(pulito))fatti++;
   });
-  dove.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+  /* Anche l'elemento da cui si parte, non solo i suoi figli: querySelectorAll
+     non restituisce mai se stesso, e l'osservatore consegna proprio i nodi
+     appena nati - un tasto col title addosso passava liscio. */
+  const conAttributi=[...dove.querySelectorAll('[placeholder],[title],[aria-label]')];
+  if(dove.nodeType===1&&(dove.hasAttribute('placeholder')||dove.hasAttribute('title')||dove.hasAttribute('aria-label')))conAttributi.unshift(dove);
+  conAttributi.forEach(el=>{
     ['placeholder','title','aria-label'].forEach(a=>{
       const v=el.getAttribute(a);
       if(!v||v.trim().length<2)return;
@@ -4652,7 +5019,7 @@ function renderTripZoomBody(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">Consigli ${t.suggestOn?'attivi':'off'}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
   <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
     <button class="btn btn-soft" style="flex:1" onclick="toggleStatus()">🏁 Concludi viaggio</button>
     <!-- "Elimina" è TEMPORANEO, solo per i test: quando avremo Premium, qui
@@ -4990,11 +5357,11 @@ function soonLabel(m,ms){
   if(m<=0)return'ADESSO';
   if(m<90)return'FRA POCO';
   const g=giorniDiCalendario(ms);
-  if(g==null)return m<1440?'PIÙ TARDI':('FRA '+Math.round(m/1440)+' GIORNI');
+  if(g==null)return m<1440?'PIÙ TARDI':tv('FRA {1} GIORNI',Math.round(m/1440));
   if(g<=0)return'PIÙ TARDI';
   if(g===1)return'DOMANI';
   if(g===2)return'DOPODOMANI';
-  return 'FRA '+g+' GIORNI';
+  return tv('FRA {1} GIORNI',g);
 }
 /* Dentro l'anello ci sta poco: forma compatta. */
 function soonRingText(m,ms){
@@ -5003,19 +5370,19 @@ function soonRingText(m,ms){
   if(m<60)return m+'′';
   if(m<1440)return Math.floor(m/60)+'h';
   const g=giorniDiCalendario(ms);
-  return (g!=null?g:Math.round(m/1440))+'g';
+  return tv('{1}g',g!=null?g:Math.round(m/1440));
 }
 /* Quanto manca, per esteso, sotto il nome. */
 function soonWhen(m,a,ms){
   const ora=(a&&a.time)?a.time:'';
-  if(m<-60)return ora?('era alle '+ora):'già passata';
+  if(m<-60)return ora?tv('era alle {1}',ora):'già passata';
   if(m<=0)return'adesso';
-  if(m<60)return'fra '+m+(m===1?' minuto':' minuti');
+  if(m<60)return m===1?tv('fra {1} minuto',m):tv('fra {1} minuti',m);
   const g=giorniDiCalendario(ms);
-  if(g==null||g<=0){const h=Math.floor(m/60),r=m%60;return'fra '+h+'h'+(r?' '+r+'′':'')+(ora?' · alle '+ora:'');}
-  if(g===1)return'domani'+(ora?' alle '+ora:'');
-  if(g===2)return'dopodomani'+(ora?' alle '+ora:'');
-  return 'fra '+g+' giorni'+(ora?' · alle '+ora:'');
+  if(g==null||g<=0){const h=Math.floor(m/60),r=m%60;const q=r?tv('fra {1}h {2}′',h,r):tv('fra {1}h',h);return ora?tv('{1} · alle {2}',q,ora):q;}
+  if(g===1)return ora?tv('domani alle {1}',ora):'domani';
+  if(g===2)return ora?tv('dopodomani alle {1}',ora):'dopodomani';
+  return ora?tv('fra {1} giorni · alle {2}',g,ora):tv('fra {1} giorni',g);
 }
 /* L'anello si riempie avvicinandosi: quasi vuoto a due ore, pieno all'ora. */
 function soonRing(m){
@@ -6325,7 +6692,7 @@ function renderProgramPlaces(){
     if(!actLoc(t,a))return;
     voci.push({a,di,d});
   }));
-  if(cnt)cnt.textContent=`${voci.length} ${voci.length===1?'posto':'posti'}`;
+  if(cnt)cnt.textContent=voci.length===1?tv('{1} posto',1):tv('{1} posti',voci.length);
   if(!voci.length){
     c.innerHTML='<div class="empty"><div class="empty-ic">🕒</div><div class="empty-t">Niente in time-table, per ora</div></div>';
     return;
@@ -6514,7 +6881,7 @@ function bookBadge(a){
 function actHTML(a,di,ai,w){
   const rain=w&&w.precipitation>5,warn=a.type==='outdoor'&&rain;
   const b=a.booking||{};
-  return `<div class="act ${a.completed?'done':''} ${warn?'warn':''}"><span class="grip">⋮⋮</span><div class="act-rail"><div class="act-hour ${a.time?'':'none'}">${a.time||'·'}</div>${a.timeEnd?`<div style="font-size:.64rem;color:var(--ink-faint);font-weight:700">–${a.timeEnd}</div>`:''}</div><input type="checkbox" class="act-check" ${a.completed?'checked':''} onchange="toggleAct(${di},${a.id})"><div class="act-b"><div class="act-n">${esc(a.name)} ${a.type==='outdoor'?'🌳':a.type==='indoor'?'🏛️':''}</div>${a.notes?`<div class="act-notes">${esc(a.notes).replace(/\n/g,'<br>')}</div>`:''}${b.needed&&(b.who?b.who.length:b.seats)>1?`<div class="act-time">Per ${b.who?b.who.length:b.seats} persone</div>`:''}${warn?reschedule(di,ai):''}<div class="act-foot">${bookBadge(a)}${a.priority?`<span class="pri-badge ${a.priority==='essential'?'ess':'skip'}">${a.priority==='essential'?'Essenziale':'Saltabile'}</span>`:''}${b.needed&&b.url?`<a class="chip" href="${esc(b.url)}" target="_blank">🎟️ Prenota</a>`:''}${a.lat?`<button class="chip" onclick="openNav(${a.lat},${a.lng},${jesc(a.name)})">🧭</button>`:''}<button class="chip" style="margin-left:auto;color:var(--red)" onclick="delAct(${di},${a.id})">🗑️</button></div></div></div>`;
+  return `<div class="act ${a.completed?'done':''} ${warn?'warn':''}"><span class="grip">⋮⋮</span><div class="act-rail"><div class="act-hour ${a.time?'':'none'}">${a.time||'·'}</div>${a.timeEnd?`<div style="font-size:.64rem;color:var(--ink-faint);font-weight:700">–${a.timeEnd}</div>`:''}</div><input type="checkbox" class="act-check" ${a.completed?'checked':''} onchange="toggleAct(${di},${a.id})"><div class="act-b"><div class="act-n">${esc(a.name)} ${a.type==='outdoor'?'🌳':a.type==='indoor'?'🏛️':''}</div>${a.notes?`<div class="act-notes">${esc(a.notes).replace(/\n/g,'<br>')}</div>`:''}${b.needed&&(b.who?b.who.length:b.seats)>1?`<div class="act-time">${tv('Per {1} persone',b.who?b.who.length:b.seats)}</div>`:''}${warn?reschedule(di,ai):''}<div class="act-foot">${bookBadge(a)}${a.priority?`<span class="pri-badge ${a.priority==='essential'?'ess':'skip'}">${a.priority==='essential'?'Essenziale':'Saltabile'}</span>`:''}${b.needed&&b.url?`<a class="chip" href="${esc(b.url)}" target="_blank">🎟️ Prenota</a>`:''}${a.lat?`<button class="chip" onclick="openNav(${a.lat},${a.lng},${jesc(a.name)})">🧭</button>`:''}<button class="chip" style="margin-left:auto;color:var(--red)" onclick="delAct(${di},${a.id})">🗑️</button></div></div></div>`;
 }
 function reschedule(di,ai){
   const t=T(),better=[];t.days.forEach((d,i)=>{if(i===di)return;const w=t.weather[d.date];if(w&&w.precipitation<2)better.push({i,date:d.date,w});});
@@ -7024,7 +7391,7 @@ function renderTricount(){
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
-  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length} persone</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi" (da' un link con dentro l'invito al viaggio, un QR e le due righe per attaccare l'app alla schermata iniziale del telefono)>🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
+  c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length===1?tv('{1} persona',1):tv('{1} persone',t.participants.length)}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi" (da' un link con dentro l'invito al viaggio, un QR e le due righe per attaccare l'app alla schermata iniziale del telefono)>🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
     <div class="mh-tot-row"><div class="mh-tot">${fmtVista(total,cur)}</div>${vistaSel(cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtVista(planned,cur)} previste dal gruppo · tua parte ${fmtVista(plannedMine,cur)}</div>`:``}
     <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?tv('Ti devono {1}',fmtVista(myBal,cur)):tv('Devi {1}',fmtVista(Math.abs(myBal),cur)))}</div></div>
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
@@ -7507,7 +7874,7 @@ function renderBudget(){
   const cur=t.currency||'EUR';
   const me=t.participants.find(p=>p.isMe)||t.participants[0];
   const prev=sel.value;
-  sel.innerHTML=t.participants.map(p=>`<option value="${p.id}">Budget di ${esc(p.name)}${p.isMe?' (tu)':''}</option>`).join('');
+  sel.innerHTML=t.participants.map(p=>`<option value="${p.id}">${p.isMe?tv('Budget di {1} (tu)',esc(p.name)):tv('Budget di {1}',esc(p.name))}</option>`).join('');
   if(prev&&[...sel.options].some(o=>o.value===prev))sel.value=prev;
   else if(me)sel.value=String(me.id);
   const pid=parseInt(sel.value)||(me?me.id:0);
@@ -8856,8 +9223,8 @@ function renderTkWho(t){
   const v=tkWhoVal(t);
   const conta=pid=>t.tickets.filter(tk=>String(tk.personId)===String(pid)).length;
   const senza=t.tickets.filter(tk=>tk.personId==null&&!eVoucher(tk)).length;
-  bar.innerHTML=`<div class="fg" style="margin-bottom:${(v!=='tutti'&&senza)?'.35rem':'0'}"><label>Di chi vuoi vedere i biglietti</label><select onchange="setTkWho(this.value)"><option value="tutti" ${v==='tutti'?'selected':''}>Tutti · ${t.tickets.length}</option>${(t.participants||[]).map(p=>`<option value="${p.id}" ${v===String(p.id)?'selected':''}>${esc(p.name)}${p.isMe?' (tu)':''} · ${conta(p.id)}</option>`).join('')}${senza?`<option value="senza" ${v==='senza'?'selected':''}>Senza nome · ${senza}</option>`:''}</select></div>`
-    +((v!=='tutti'&&v!=='senza'&&senza)?`<div style="font-size:.74rem;color:var(--ink-faint);line-height:1.4">${senza} ${senza===1?'biglietto non è di nessuno':'biglietti non sono di nessuno'} · <a href="javascript:void 0" onclick="setTkWho('senza')" style="color:var(--blue);font-weight:700">guardali</a></div>`:'');
+  bar.innerHTML=`<div class="fg" style="margin-bottom:${(v!=='tutti'&&senza)?'.35rem':'0'}"><label>Di chi vuoi vedere i biglietti</label><select onchange="setTkWho(this.value)"><option value="tutti" ${v==='tutti'?'selected':''}>${tv('Tutti · {1}',t.tickets.length)}</option>${(t.participants||[]).map(p=>`<option value="${p.id}" ${v===String(p.id)?'selected':''}>${p.isMe?tv('{1} (tu) · {2}',esc(p.name),conta(p.id)):esc(p.name)+' · '+conta(p.id)}</option>`).join('')}${senza?`<option value="senza" ${v==='senza'?'selected':''}>${tv('Senza nome · {1}',senza)}</option>`:''}</select></div>`
+    +((v!=='tutti'&&v!=='senza'&&senza)?`<div style="font-size:.74rem;color:var(--ink-faint);line-height:1.4">${senza===1?tv('{1} biglietto non è di nessuno',senza):tv('{1} biglietti non sono di nessuno',senza)} · <a href="javascript:void 0" onclick="setTkWho('senza')" style="color:var(--blue);font-weight:700">guardali</a></div>`:'');
 }
 function renderTickets(){
   const t=T(),c=document.getElementById('ticketsList');
@@ -10557,7 +10924,7 @@ function renderBookings(){
   const t=T(),c=document.getElementById('bookings');if(!c)return;
   const list=allBookings(t).filter(x=>!x.a.booking.done);
   if(!list.length){c.innerHTML='';return;}
-  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${list.length} ${list.length===1?'attività':'attività'} in attesa</div></div></div>${list.map(x=>`<div class="book-row"><input type="checkbox" onchange="markBooked(${x.a.id})"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString(loc(),{day:'numeric',month:'short'})}${x.a.booking.seats>1?` · ${x.a.booking.seats} nominativi`:''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
+  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${list.length===1?tv('{1} attività in attesa',1):tv('{1} attività in attesa',list.length)}</div></div></div>${list.map(x=>`<div class="book-row"><input type="checkbox" onchange="markBooked(${x.a.id})"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString(loc(),{day:'numeric',month:'short'})}${x.a.booking.seats>1?` · ${x.a.booking.seats} nominativi`:''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
 }
 function markBooked(id){
   const t=T();t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.id===id&&a.booking)a.booking.done=true;}));
@@ -10790,7 +11157,7 @@ function buildTTDayInner(t,di){
   let html='';
   const trav=computeDayTravel(d,t);
   if(trav.totalMin){
-    html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${trav.totalCost!=null?' · ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):''} stimati oggi</div>`;
+    html+=`<div style="font-size:.78rem;font-weight:700;color:var(--ink-soft);margin-bottom:.5rem">${trav.mode==='car'?'🚗':trav.mode==='train'?'🚆':'🚶'} ${fmtMinutes(trav.totalMin)}${tv(' {1} stimati oggi',trav.totalCost!=null?'· ~'+fmtMoney(trav.totalCost,t.currency||'EUR'):'')}</div>`;
   }
   /* Quando il gruppo si divide - quattro a Fujiyoshida, due a Disneysea - dall'
      hotel si parte in due direzioni, ma il tratto veniva contato solo per la
@@ -10875,7 +11242,7 @@ function buildTTDayInner(t,di){
     const a=it.a;
     const cls='tt-block'+(it.compact?' tt-compact':'')+(a.completed?' done':'');
     const w=`calc((100% - 58px)/${it.cols} - 4px)`,l=`calc(52px + ${it.col} * ((100% - 58px)/${it.cols}))`;
-    const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?` · ${a.who.length} pers.`:'';
+    const nWho=(a.who&&a.who.length&&a.who.length<t.participants.length)?tv(' · {1} pers.',a.who.length):'';
     let inline='';
     if(it.trattoInline){
       const tr=it.trattoInline,st2=tr.nxt.a.travelState;
@@ -10884,7 +11251,7 @@ function buildTTDayInner(t,di){
         inline=` <span class="tsub-tratto">→ ${est.mode==='car'?'🚗':est.mode==='train'?'🚆':'🚶'} ${est.minutes} min</span>`;
       }
     }
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?' · prenotare':''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?tv(' · prenotare'):''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
   tratti.forEach(tr=>{
@@ -10987,7 +11354,7 @@ function markDrag(a,prev,tipo){
   const b=document.getElementById('ttUndo');
   if(b){
     b.classList.add('on');
-    const q=lastDrag.tipo==='durata'?'Annulla l\'allungamento':'Annulla lo spostamento';
+    const q=lastDrag.tipo==='durata'?tv('Annulla l\'allungamento'):tv('Annulla lo spostamento');
     b.title=q;b.setAttribute('aria-label',q);
   }
 }
@@ -10995,7 +11362,7 @@ function markDrag(a,prev,tipo){
 function clearDragUndo(){
   lastDrag=null;
   const b=document.getElementById('ttUndo');
-  if(b){b.classList.remove('on');b.title='Niente da annullare';b.setAttribute('aria-label','Niente da annullare');}
+  if(b){b.classList.remove('on');const n=tv('Niente da annullare');b.title=n;b.setAttribute('aria-label',n);}
 }
 function undoDrag(){
   /* Da spento risponde lo stesso, invece di fare finta di niente: chi lo tocca
