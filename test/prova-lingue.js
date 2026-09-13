@@ -316,6 +316,16 @@ async function apri(browser, lingua, linguaTelefono) {
     const fuori = new Set();
     const vis = el => { const s = getComputedStyle(el); return s.display !== 'none' && s.visibility !== 'hidden'; };
     const guarda = () => {
+      /* Si traduce e POI si guarda. L'osservatore traduce quello che nasce su
+         un requestAnimationFrame, e inseguirlo con le attese e' una corsa che
+         si perde a turno: prima e' toccato al portoghese, poi allo spagnolo
+         con "Essenziale" e "Indicazioni" — frasi tradotte benissimo.
+         La domanda di questa prova e' "il dizionario e' completo?", non
+         "l'osservatore ha fatto in tempo?": quella e' un'altra prova, e c'e'
+         gia' ("resta tradotta anche dopo che l'app si ridisegna"). Chiamando
+         traduciPagina() qui, quello che resta in italiano resta perche' NON
+         SI SA tradurre, che e' l'unica cosa che vogliamo sapere. */
+      try { traduciPagina(); } catch (e) {}
       const cam = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: n => {
           const q = n.parentNode;

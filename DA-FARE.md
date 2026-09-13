@@ -723,13 +723,18 @@ qualcuno che risponde".
   lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
   e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
   dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
-- **Una prova che guarda lo schermo deve aspettare un segnale, non un tempo.**
-  La traduzione delle cose che nascono dopo passa da un `requestAnimationFrame`:
-  sulla macchina delle prove, con quattro browser addosso, il portoghese e'
-  stato fotografato prima che toccasse a lui, e sono comparsi in italiano i
-  tasti della home — frasi che erano tradotte benissimo. Un `await` di 230 ms
-  non e' una garanzia. Adesso si aspetta che la barra in basso NON dica piu'
-  «Spese», e dopo ogni cambio di schermata si lasciano passare due fotogrammi.
+- **Una prova non deve rincorrere quello che puo' fare lei stessa.** La
+  traduzione di cio' che nasce dopo passa da un `requestAnimationFrame`: sulla
+  macchina delle prove, carica, la prova sulle lingue fotografava le schermate
+  prima che l'osservatore avesse fatto il suo giro, e segnalava in italiano
+  frasi tradotte benissimo. Prima e' toccato al portoghese (i tasti della
+  home), poi allo spagnolo («Essenziale», «Indicazioni»): allungare le attese
+  e' una corsa che si perde a turno.
+  La domanda di quella prova e' **«il dizionario e' completo?»**, non
+  «l'osservatore ha fatto in tempo?» — che e' un'altra domanda, e ha gia' la
+  sua prova. Quindi si chiama `traduciPagina()` e POI si guarda: quello che
+  resta in italiano resta perche' NON SI SA tradurre. Quando una prova balla,
+  vale la pena chiedersi se sta misurando la cosa che le interessa.
 - **Una mappa va fermata prima di toglierla.** Se una zoomata e' ancora in
   corso quando il riquadro sparisce, Leaflet la finisce lo stesso e va a
   cercare un pannello che non c'e' piu': *«Cannot read properties of undefined
