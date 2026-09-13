@@ -170,6 +170,50 @@ const SEGUI = `(async (id, quanti) => {
 
   await calmo.close();
 
+  // ── la giornata si apre dov'è la giornata ────────────────────────────────
+  /* La griglia parte dalle 06:00 perché lì comincia il sistema di coordinate,
+     ma nessuno ha una tappa alle sei: aprendo il giorno si vedevano due ore e
+     mezza di righe vuote e la prima tappa restava sotto la piega. La griglia
+     non si tocca — riquadri e trascinamento contano tutti da quell'ora — si
+     sposta lo sguardo. Si misura in pixel dove finisce il primo riquadro
+     rispetto allo schermo, non se esiste una riga di codice che scorre. */
+  const conTappe = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  conTappe.on('pageerror', e => err.push('PAGEERROR(giornata): ' + e.message));
+  await conTappe.addInitScript(s => {
+    const st = JSON.parse(JSON.stringify(s));
+    st.trips[0].days[0].activities = [
+      { id: 11, name: 'Fushimi Inari', time: '08:30', timeEnd: '10:30', lat: 34.96, lng: 135.77,
+        who: [1], completed: false, booking: { needed: false, done: false } },
+      { id: 12, name: 'Nishiki', time: '11:30', timeEnd: '13:00', lat: 35.00, lng: 135.76,
+        who: [1], completed: false, booking: { needed: false, done: false } }];
+    localStorage.setItem('geppgo2', JSON.stringify(st));
+  }, stato);
+  await conTappe.goto(APP, { waitUntil: 'domcontentloaded' });
+  await conTappe.waitForFunction(() => typeof myPos !== 'undefined', { timeout: 20000 });
+  await conTappe.waitForTimeout(500);
+  const giornata = await conTappe.evaluate(async () => {
+    openDay(0);
+    await new Promise(r2 => setTimeout(r2, 800));
+    const primo = document.querySelector('.tt-block');
+    if (!primo) return { errore: 'nessun riquadro' };
+    const b = primo.getBoundingClientRect();
+    return { cima: Math.round(b.top), fondo: Math.round(b.bottom), alto: innerHeight,
+             scorso: Math.round(document.querySelector('.scroll').scrollTop) };
+  });
+  /* Nel terzo superiore, non "da qualche parte a schermo": con la soglia
+     larga il controllo passava anche sul codice rotto, e un controllo che
+     non distingue le due versioni non prova niente. */
+  ok('aprendo la giornata la prima tappa è in cima, non sotto la piega',
+     giornata.cima > 0 && giornata.cima < giornata.alto / 3,
+     `cima a ${giornata.cima}px su uno schermo di ${giornata.alto}`);
+  /* E non incollata al bordo: sopra resta un'ora di griglia, altrimenti non
+     si capisce che è una linea del tempo e non un elenco. */
+  ok('e con un po\' di griglia sopra, per capire che è una linea del tempo',
+     giornata.cima > 60, `${giornata.cima}px dal bordo`);
+  ok('la pagina si è davvero spostata, non è rimasta in cima',
+     giornata.scorso > 100, giornata.scorso + 'px');
+  await conTappe.close();
+
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);

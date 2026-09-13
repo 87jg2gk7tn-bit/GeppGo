@@ -254,6 +254,62 @@ const stato = { trips: [
   ok('toccandolo si aggiunge la tappa', vuoto.chiamato === true);
   ok('ed è grande abbastanza da non poterlo sbagliare', vuoto.alto >= 44, vuoto.alto + ' px');
 
+  /* ── arrivare al Profilo ──────────────────────────────────────────────
+     Le nove voci della pillola chiedono 426 px; su un iPhone da 390 ce ne
+     sono 361. Il Profilo resta fuori su OGNI telefono, anche sul più grande
+     — e dentro il Profilo ci sono l'account, la lingua, i ripristini e la
+     scheda del viaggio. La pillola scorreva già, ma non lo diceva a nessuno:
+     scrollbar nascosta, nessun bordo sfumato, e nessuno portava in vista la
+     voce dove sei andato. Stringere le icone non si può, sono già a 44,8. */
+  for (const largo of [320, 390, 430]) {
+    const p2 = await browser.newPage({ viewport: { width: largo, height: 844 } });
+    p2.on('pageerror', e => err.push(`PAGEERROR(barra ${largo}): ` + e.message));
+    await p2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
+    await p2.goto(APP, { waitUntil: 'domcontentloaded' });
+    await p2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
+    await p2.waitForTimeout(700);
+
+    const d = await p2.evaluate(async () => {
+      const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
+      const barra = document.querySelector('.nav');
+      const dentro = sel => {
+        const v = document.querySelector(sel), rb = barra.getBoundingClientRect();
+        const r2 = v.getBoundingClientRect();
+        return r2.left >= rb.left - 0.5 && r2.right <= rb.right + 0.5;
+      };
+      const allAvvio = {
+        profiloSiVede: dentro('[data-p="trips"]'),
+        ombraDestra: barra.classList.contains('altro-a-destra'),
+        ombraSinistra: barra.classList.contains('altro-a-sinistra')
+      };
+      go('trips');
+      await attendi(700);
+      const suProfilo = {
+        profiloSiVede: dentro('[data-p="trips"]'),
+        ombraDestra: barra.classList.contains('altro-a-destra'),
+        ombraSinistra: barra.classList.contains('altro-a-sinistra')
+      };
+      go('plan');
+      await attendi(700);
+      return { allAvvio, suProfilo, homeSiVede: dentro('[data-p="plan"]') };
+    });
+
+    /* Il punto: se vai nel Profilo, il Profilo lo devi vedere. */
+    ok(`a ${largo}px, andando nel Profilo la pillola lo porta in vista`,
+       d.suProfilo.profiloSiVede === true);
+    ok(`a ${largo}px, e tornando in Home riporta la Home`,
+       d.homeSiVede === true);
+    /* E l'ombra dice da che parte c'è dell'altro, invece di lasciare
+       un'icona tagliata a metà che sembra un difetto. */
+    ok(`a ${largo}px, all'avvio l'ombra dice che a destra c'è dell'altro`,
+       d.allAvvio.ombraDestra === true && d.allAvvio.ombraSinistra === false,
+       `destra ${d.allAvvio.ombraDestra}, sinistra ${d.allAvvio.ombraSinistra}`);
+    ok(`a ${largo}px, arrivati in fondo l'ombra passa a sinistra`,
+       d.suProfilo.ombraSinistra === true && d.suProfilo.ombraDestra === false,
+       `destra ${d.suProfilo.ombraDestra}, sinistra ${d.suProfilo.ombraSinistra}`);
+    await p2.close();
+  }
+
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);

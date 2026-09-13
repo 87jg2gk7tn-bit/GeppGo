@@ -740,6 +740,24 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
   box-shadow:var(--sh-lg);
   scroll-padding:.32rem;
 }
+/* La pillola scorre da sempre, ma non lo diceva a nessuno: barra di
+   scorrimento nascosta, nessun bordo sfumato, e l'unico indizio era l'ultima
+   icona tagliata a meta' - che non sembra un invito a scorrere, sembra un
+   difetto. Misurato: le nove voci chiedono 426px e su un iPhone da 390 ce ne
+   sono 361, quindi il Profilo resta fuori su OGNI telefono, anche sul piu'
+   grande. Stringerle non si puo': sono gia' a 44,8px e sotto i 44 si perde il
+   bersaglio minimo del dito.
+   L'ombra e' interna apposta: dipinta sul riquadro e non sul contenuto, resta
+   ferma sul bordo mentre le icone scorrono, e sparisce da sola quando da
+   quella parte non c'e' piu' niente. */
+.nav{--ombra-scorri:rgba(30,26,18,.46)}
+/* Al buio l'ombra va al contrario: una sfumatura scura su una pillola gia'
+   quasi nera non si vede (misurata: due punti di luminosita' su 255). Serve
+   un chiarore. */
+body.dark .nav{--ombra-scorri:rgba(240,234,220,.30)}
+.nav.altro-a-destra{box-shadow:var(--sh-lg),inset -24px 0 18px -18px var(--ombra-scorri)}
+.nav.altro-a-sinistra{box-shadow:var(--sh-lg),inset 24px 0 18px -18px var(--ombra-scorri)}
+.nav.altro-a-sinistra.altro-a-destra{box-shadow:var(--sh-lg),inset -24px 0 18px -18px var(--ombra-scorri),inset 24px 0 18px -18px var(--ombra-scorri)}
 .nav-item{
   border-bottom:none!important;
   border-radius:999px;
@@ -4227,6 +4245,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.documentElement.lang=linguaScelta();
   traduciPagina();
   osservaPerTradurre();
+  navAvvia();
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
   if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
@@ -4287,17 +4306,34 @@ const TESSERE_MAX=1500;
 const TESSERE_URL='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 let tessereScritte=0;
 /* Un riquadro vuoto ma non bianco: cosi' si capisce che li' la mappa non c'e'
-   ancora, invece di sembrare rotta. */
-const TESSERA_VUOTA=(()=>{
+   ancora, invece di sembrare rotta.
+   Ce ne vogliono due, uno per tema. Prima era uno solo, color crema, disegnato
+   una volta all'avvio: con il tema scuro veniva fuori una lastra chiara in
+   mezzo a una schermata nera - e proprio nella situazione per cui la mappa
+   offline esiste, cioe' all'estero, senza campo, quasi sempre di sera. */
+const TESSERE_COLORI={chiaro:['#EFE7D8','#E0D5BE'],scuro:['#221F19','#2F2B22']};
+const TESSERE_DISEGNATE={};
+function tesseraVuota(){
+  const tema=document.body.classList.contains('dark')?'scuro':'chiaro';
+  if(TESSERE_DISEGNATE[tema])return TESSERE_DISEGNATE[tema];
   try{
+    const [fondo,punti]=TESSERE_COLORI[tema];
     const c=document.createElement('canvas');c.width=c.height=256;
     const g=c.getContext('2d');
-    g.fillStyle='#EFE7D8';g.fillRect(0,0,256,256);
-    g.fillStyle='#E0D5BE';
+    g.fillStyle=fondo;g.fillRect(0,0,256,256);
+    g.fillStyle=punti;
     for(let y=8;y<256;y+=32)for(let x=8;x<256;x+=32)g.fillRect(x,y,2,2);
-    return c.toDataURL('image/png');
+    return TESSERE_DISEGNATE[tema]=c.toDataURL('image/png');
   }catch(e){return '';}
-})();
+}
+/* Le tessere gia' disegnate tengono l'immagine vecchia: cambiando tema vanno
+   ridipinte, altrimenti la lastra chiara resta li' finche' non si muove la
+   mappa. */
+function tessereRitinta(){
+  document.querySelectorAll('img[data-geppgo="vuota"]').forEach(img=>{
+    try{img.src=tesseraVuota();}catch(e){}
+  });
+}
 function tessereLeggi(k){
   return idbP().then(db=>new Promise(res=>{
     const q=db.transaction('tessere').objectStore('tessere').get(k);
@@ -4391,12 +4427,12 @@ function stratoMappa(opzioni){
           /* Si staccano tutti e due i ganci prima di mettere il riquadro
              vuoto: quello che carica scatterebbe di nuovo sul riquadro stesso
              e cancellerebbe il fatto che li' la mappa non c'era. */
-          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';consegna();};
+          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=tesseraVuota();img.dataset.geppgo='vuota';consegna();};
           img.src=url;
         };
         tessereLeggi(chiave).then(blob=>{
           if(blob){img.src=URL.createObjectURL(blob);img.dataset.geppgo='memoria';consegna();return;}
-          if(navigator.onLine===false){img.src=TESSERA_VUOTA;img.dataset.geppgo='vuota';consegna();return;}
+          if(navigator.onLine===false){img.src=tesseraVuota();img.dataset.geppgo='vuota';consegna();return;}
           fetch(url).then(r=>r.ok?r.blob():null).then(b=>{
             if(!b){comeImmagine();return;}
             tessereScrivi(chiave,b);
@@ -4450,11 +4486,44 @@ function drawMarkers(){
   }
   if(t.pois.length)map.fitBounds(L.latLngBounds(t.pois.map(p=>[p.lat,p.lng])),{padding:[40,40],maxZoom:14});
 }
+/* Le nove voci in basso non entrano in uno schermo da telefono, e quelle in
+   fondo - Identifica e soprattutto il Profilo - restano fuori. Il Profilo
+   tiene dentro l'account, la lingua, i ripristini e la scheda del viaggio:
+   non puo' essere la voce che non si vede mai.
+   Due cose, e nessuna sposta niente di posto. La prima: quando si va da
+   qualche parte, la pillola porta quella voce in mezzo, cosi' dov'e' finito
+   il dito si vede sempre. La seconda: le ombre sui bordi dicono da che parte
+   c'e' dell'altro. */
+function navPortaInVista(subito){
+  const barra=document.querySelector('.nav');if(!barra)return;
+  const voce=barra.querySelector('.nav-item.active');if(!voce)return;
+  const meta=voce.offsetLeft-(barra.clientWidth-voce.offsetWidth)/2;
+  const dove=Math.max(0,Math.min(meta,barra.scrollWidth-barra.clientWidth));
+  /* Si sposta scrollLeft a mano invece di scrollIntoView: quello, su una
+     pillola incollata in fondo allo schermo, si porta dietro anche la
+     pagina. */
+  const fermo=subito||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  try{barra.scrollTo({left:dove,behavior:fermo?'auto':'smooth'});}
+  catch(e){barra.scrollLeft=dove;}
+}
+function navBordi(){
+  const barra=document.querySelector('.nav');if(!barra)return;
+  const resta=barra.scrollWidth-barra.clientWidth;
+  barra.classList.toggle('altro-a-destra',barra.scrollLeft<resta-1);
+  barra.classList.toggle('altro-a-sinistra',barra.scrollLeft>1);
+}
+function navAvvia(){
+  const barra=document.querySelector('.nav');if(!barra)return;
+  barra.addEventListener('scroll',navBordi,{passive:true});
+  addEventListener('resize',()=>{navBordi();navPortaInVista(true);});
+  navPortaInVista(true);navBordi();
+}
 function go(p){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelector(`[data-p="${p}"]`).classList.add('active');
   document.getElementById(p).classList.add('active');
+  navPortaInVista();navBordi();
   if(p==='plan'&&map)setTimeout(()=>map.invalidateSize(),120);
   if(p==='identify'&&idImg)setTimeout(drawIdCanvas,60);
 }
@@ -10594,6 +10663,38 @@ function openDay(i){
   meteoSeguiLeTappe(t,d);
   buildTT();buildDayMap();
   go('mDay');initTTFab();
+  ttApriDoveServe(d);
+}
+/* La griglia parte dalle 06:00 perche' li' comincia il sistema di
+   coordinate, ma quasi nessuno ha una tappa alle sei: aprendo la giornata si
+   vedevano due ore e mezza di righe vuote prima del primo impegno. La
+   griglia non si tocca - le posizioni dei riquadri e il trascinamento
+   contano tutti da quell'ora - si sposta lo sguardo.
+   Se e' oggi e siamo in mezzo alla giornata si va su adesso, che e' quello
+   che uno sta cercando; altrimenti sul primo impegno, con un'ora di griglia
+   sopra per capire che e' una linea del tempo e non un elenco. */
+function ttApriDoveServe(d){
+  requestAnimationFrame(()=>{
+    const scorre=document.querySelector('.scroll'),corpo=document.getElementById('ttBody');
+    if(!scorre||!corpo)return;
+    const riquadri=[...corpo.querySelectorAll('.tt-block')];
+    if(!riquadri.length)return;   /* giornata vuota: si resta in cima */
+    let mira=riquadri[0];
+    const oggi=new Date();
+    if(d&&String(d.date)===oggi.toISOString().slice(0,10)){
+      const ora=oggi.getHours()*60+oggi.getMinutes();
+      const dopo=riquadri.find(el=>{
+        const a=(d.activities||[]).find(x=>String(x.id)===el.dataset.id);
+        const r=a&&actRange(a);
+        return r&&r[1]>=ora;
+      });
+      if(dopo)mira=dopo;
+    }
+    const alto=scorre.getBoundingClientRect().top;
+    const dove=scorre.scrollTop+(mira.getBoundingClientRect().top-alto)-TT_H-24;
+    try{scorre.scrollTo({top:Math.max(0,dove),behavior:'auto'});}
+    catch(e){scorre.scrollTop=Math.max(0,dove);}
+  });
 }
 function ttNav(dir){
   const t=T();if(!t)return;
@@ -14731,7 +14832,7 @@ function snapNow(force){
     localStorage.setItem('geppgo2_snap',out);
   }catch(e){}
 }
-function applyTheme(){document.body.classList.toggle('dark',!!app.settings.dark);}
+function applyTheme(){document.body.classList.toggle('dark',!!app.settings.dark);tessereRitinta();}
 function toggleDark(v){app.settings.dark=v;save();applyTheme();renderAll();}
 /* ===== QW-6: PUNTI DI RIPRISTINO RESI VISIBILI ===== */
 function getSnaps(){try{return JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){return [];}}

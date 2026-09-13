@@ -210,6 +210,47 @@ const TESSERA = Buffer.from(
   const spiega = await page.evaluate(() => document.body.textContent);
   ok('la scelta è spiegata in Profilo', /vietato dalle loro condizioni/i.test(spiega));
 
+  // ── e il riquadro vuoto sa che ora è ─────────────────────────────────────
+  /* Dove la mappa non c'è ancora resta un riquadro. Era disegnato una volta
+     sola all'avvio, color crema: con il tema scuro veniva fuori una lastra
+     chiara in mezzo a una schermata nera — e proprio nella situazione per cui
+     la mappa offline esiste, cioè all'estero, senza campo, quasi sempre di
+     sera. Si legge il colore del pixel, non il codice. */
+  const riquadro = await page.evaluate(async () => {
+    const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
+    const colore = async () => {
+      const im = new Image(); im.src = tesseraVuota(); await im.decode();
+      const c = document.createElement('canvas'); c.width = c.height = 8;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+      const d = g.getImageData(1, 1, 1, 1).data;
+      /* Quanto è chiaro, da 0 (nero) a 255 (bianco). */
+      return Math.round(0.299 * d[0] + 0.587 * d[1] + 0.114 * d[2]);
+    };
+    app.settings.dark = false; applyTheme(); await attendi(60);
+    const chiaro = await colore();
+    app.settings.dark = true; applyTheme(); await attendi(60);
+    const scuro = await colore();
+    /* E quelle già appese devono essere ridipinte: senza, la lastra chiara
+       resta lì finché non si muove la mappa. */
+    const finta = document.createElement('img');
+    finta.dataset.geppgo = 'vuota';
+    app.settings.dark = false; applyTheme();
+    finta.src = tesseraVuota();
+    document.body.appendChild(finta);
+    const prima = finta.src;
+    app.settings.dark = true; applyTheme(); await attendi(60);
+    const dopo = finta.src;
+    finta.remove();
+    app.settings.dark = false; applyTheme();
+    return { chiaro, scuro, ridipinta: prima !== dopo };
+  });
+  ok('in tema chiaro il riquadro della mappa è chiaro',
+     riquadro.chiaro > 200, 'luminosità ' + riquadro.chiaro);
+  ok('in tema scuro è scuro, non una lastra bianca in mezzo al nero',
+     riquadro.scuro < 60, 'luminosità ' + riquadro.scuro);
+  ok('e cambiando tema quelle già a schermo vengono ridipinte',
+     riquadro.ridipinta === true);
+
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);
