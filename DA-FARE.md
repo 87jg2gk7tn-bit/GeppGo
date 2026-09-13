@@ -105,10 +105,18 @@ va rifatto vedere.
 ### Poi, per crescere
 
 6. ~~**Cinque lingue**~~ ✅ **finito** (italiano, inglese, spagnolo, francese,
-   portoghese). **720 frasi per lingua**, e a schermo **non resta più niente
-   in italiano**: c'è una prova che gira per tutte le schermate e per tutti e
-   cinquantatré i pannelli in ognuna delle quattro lingue e non deve trovare
-   una parola italiana. Superata la soglia dell'80%, **le lingue si
+   portoghese). **803 frasi per lingua**, e a schermo **non resta più niente
+   in italiano**.
+
+   ⚠️ **Questa riga ha già detto una bugia una volta, il 13 settembre.** La
+   prova diceva zero, e Giacomo ha aperto l'app in inglese e ha trovato
+   «Esci», «Saldi», «Recupero», «Condividi», «Bagagli», tutti i tasti del
+   Profilo. Il riconoscitore cercava frasi contenenti una parolina italiana e
+   quelle parole non ne hanno nessuna. Adesso il metodo **confronta** la
+   stessa schermata in italiano e nella lingua da provare, invece di
+   indovinare: 801 frasi messe una accanto all'altra, nessuna uguale. Se un
+   giorno questa riga dovesse tornare a mentire, il posto da guardare è il
+   metro, non l'app. Superata la soglia dell'80%, **le lingue si
    accendono da sole**: chi apre l'app con il telefono in spagnolo la trova in
    spagnolo, senza che nessuno abbia toccato una riga di codice per
    accenderla. Era il modo di finire il lavoro senza mai lasciare l'app in
@@ -699,6 +707,78 @@ qualcuno che risponde".
   pillola già quasi nera ne toglie **due su 255**: non esiste. Lì serve un
   chiarore. Un accorgimento visivo non è fatto finché non se ne è letto il
   pixel in tutti e due i temi.
+- **Un riconoscitore di «sembra italiano» non e' una prova: e' un indovinello.**
+  Il primo metro cercava frasi contenenti una parolina italiana (`il`, `che`,
+  `non`, `giorni`). «Esci», «Saldi», «Recupero», «Condividi», «Bagagli» non ne
+  hanno nessuna: per la prova non esistevano. Ha detto **zero frasi rimaste in
+  italiano mentre a schermo ne restavano ottanta** — e non erano casi limite,
+  erano i tasti del Profilo e quelli della home. L'ha visto Giacomo aprendo
+  l'app, non la suite.
+  Il metodo che regge non indovina, **confronta**: la stessa schermata si apre
+  in italiano e nella lingua da provare e si raccoglie quello che si legge.
+  Una stringa identica in tutt'e due o e' un nome proprio, o non e' tradotta.
+  Due accortezze lo rendono esatto invece che rumoroso: fra italiano e
+  spagnolo molte parole coincidono per davvero («persona», «hotel»), e la
+  differenza la dice il dizionario — se quella stringa e' un **valore** della
+  lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
+  e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
+  dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
+- **Una prova non deve rincorrere quello che puo' fare lei stessa.** La
+  traduzione di cio' che nasce dopo passa da un `requestAnimationFrame`: sulla
+  macchina delle prove, carica, la prova sulle lingue fotografava le schermate
+  prima che l'osservatore avesse fatto il suo giro, e segnalava in italiano
+  frasi tradotte benissimo. Prima e' toccato al portoghese (i tasti della
+  home), poi allo spagnolo («Essenziale», «Indicazioni»): allungare le attese
+  e' una corsa che si perde a turno.
+  La domanda di quella prova e' **«il dizionario e' completo?»**, non
+  «l'osservatore ha fatto in tempo?» — che e' un'altra domanda, e ha gia' la
+  sua prova. Quindi si chiama `traduciPagina()` e POI si guarda: quello che
+  resta in italiano resta perche' NON SI SA tradurre. Quando una prova balla,
+  vale la pena chiedersi se sta misurando la cosa che le interessa.
+- **Una mappa va fermata prima di toglierla.** Se una zoomata e' ancora in
+  corso quando il riquadro sparisce, Leaflet la finisce lo stesso e va a
+  cercare un pannello che non c'e' piu': *«Cannot read properties of undefined
+  (reading `_leaflet_pos`)»*. Non si vede quasi mai — serve una macchina lenta
+  e il momento giusto — ed e' successo una volta in CI con **tutti e 42 i
+  controlli passati**, perche' la prova conta anche gli errori di pagina.
+  `map.stop()` prima di `map.remove()` **non basta**: ferma lo spostamento, non
+  la zoomata, che si chiude da sola con un `transitionend` che arriva dopo.
+  Dentro Leaflet quel gestore comincia con «se non sto zoomando, lascia
+  perdere», quindi bisogna anche abbassargli la bandierina
+  (`m._animatingZoom = false`). E' roba interna della libreria, ed e' scritto
+  nel codice perche' si sappia perche'. Vale per tutt'e quattro le mappe.
+- **I numeri vanno tolti dal confronto fra due lingue.** «tu €1.200,00» e
+  «tu €1200,00» sono la stessa frase con lo stesso «tu» non tradotto, ma come
+  stringhe sono diverse — e quanti puntini ci mette l'italiano **dipende dalla
+  versione di ICU del browser**: su questa macchina l'italiano scrive
+  `1.200,00` e lo spagnolo `1200,00`, sulla macchina delle prove tutt'e due
+  `1200,00`. Risultato: il «tu» passava qui e veniva preso in CI. Si sostituisce
+  il numero **intero, separatori compresi** — togliendo solo le cifre restano i
+  puntini a distinguerle e non serve a niente. E' la seconda volta che la
+  stessa stranezza di ICU morde: la prima aveva reso ballerina una
+  riga di prova, questa volta ha nascosto un difetto vero.
+- **Una prova con un viaggio vuoto guarda senza vedere.** Con un partecipante,
+  nessuna tappa e nessuna spesa, meta' delle frasi dell'app non si disegna
+  proprio: la prova sulle lingue girava su un viaggio cosi' ed e' il secondo
+  motivo per cui ottanta frasi in italiano sono passate. Riempiendolo il
+  confronto passa da 763 a 801 frasi per lingua, e sul codice di prima ne
+  trova 55 invece di 44. Quando si aggiunge una schermata, si aggiunge anche
+  **il dato che la fa comparire**.
+- **Un controllo che legge un fotogramma preciso e' un controllo ballerino.**
+  «Il foglio arriva al suo posto» leggeva il quarto fotogramma: con la
+  macchina occupata da altri browser i fotogrammi arrivano prima che lo stile
+  sia ricalcolato, ed e' diventato rosso una volta da solo mentre in CI era
+  verde. Le due cose che interessano — che non scivoli e che arrivi — vanno
+  misurate in due momenti diversi: i campioni durante, la posizione finale
+  dopo.
+- **`querySelectorAll` non restituisce mai l'elemento da cui parte.** Il
+  traduttore cercava `[title]` fra i *figli* del nodo che gli veniva
+  consegnato, e l'osservatore gli consegna proprio i nodi appena nati: un
+  tasto con il suo `title` addosso passava liscio ogni volta.
+- **Un attributo riscritto a mano non passa da nessuna parte.** L'osservatore
+  guarda i figli che nascono (`childList`), non gli attributi che cambiano:
+  `b.title = 'Niente da annullare'` restava in italiano per sempre. Quelle
+  scritture vanno fatte passare da `tv()` al momento in cui avvengono.
 - **Le chiavi del dizionario non si ricopiano a occhio.** L'elenco di cosa
   restava da tradurre veniva stampato troncato a 95 caratteri: una parte delle
   chiavi del primo lotto non corrispondeva a niente e quelle frasi restavano

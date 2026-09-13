@@ -477,14 +477,43 @@ E il dizionario si controlla da sé: le quattro lingue devono avere le stesse
 frasi, nessuna traduzione vuota, e non devono essere l'italiano ricopiato per
 far salire il conto.
 
-**Il controllo che conta davvero** è l'ultimo arrivato: l'app viene aperta in
-ognuna delle quattro lingue, si gira per tutte le schermate e si aprono tutti
-i pannelli (li conta la prova da sola: uno nuovo entra senza che nessuno se ne
-ricordi), e **non deve restare a schermo una parola italiana**. Una frase si
-riconosce italiana da una parola che in inglese non esiste — ma prima si
-scarta quello che è già una traduzione, perché `\bi\b` prende anche l'«I»
-inglese e senza quel filtro l'elenco si riempie di inglese scambiato per
-italiano.
+**Il controllo che conta davvero** è l'ultimo arrivato, e la prima versione
+**diceva una bugia**. Cercava frasi contenenti una parolina italiana (`il`,
+`che`, `non`, `giorni`): «Esci», «Saldi», «Recupero», «Condividi» non ne hanno
+nessuna, quindi per la prova non esistevano. Ha detto *zero frasi rimaste in
+italiano* mentre a schermo ne restavano ottanta — i tasti del Profilo e quelli
+della home. L'ha visto una persona aprendo l'app, non la suite.
+
+Il metodo di adesso non indovina, **confronta**: la stessa schermata si apre
+in italiano e nella lingua da provare, si gira per tutte le pagine e si aprono
+tutti i pannelli, e si raccoglie quello che si legge. Una stringa identica in
+tutt'e due o è un nome proprio, o non è tradotta.
+
+Due accortezze lo rendono esatto invece che rumoroso:
+
+- fra italiano e spagnolo molte parole coincidono **per davvero**
+  («persona», «hotel», «total»), e la differenza la dice il dizionario: se
+  quella stringa è un **valore** della lingua d'arrivo, è la traduzione giusta
+  che si dà il caso coincida;
+- le frasi composte escono da `tv()` col buco già riempito, quindi nel
+  dizionario non si trovano più: vanno cercate in `GIA_TRADOTTE`.
+
+I nomi propri stanno in un elenco scritto nel file, dove si vedono e si
+discutono, invece che dentro un'espressione regolare. E si scarta anche quello
+che coincide per forza: una data scritta bene («dom 15» è l'abbreviazione
+giusta sia in italiano sia in spagnolo — *domenica*, *domingo*), le unità
+(«88 min · 6.1 km»), e i nomi che ha scritto una persona, presi dal viaggio di
+prova e non da un elenco a mano, così una tappa nuova non diventa un falso
+allarme.
+
+**Il viaggio di prova è pieno apposta.** Con un viaggio vuoto — un
+partecipante, nessuna tappa, nessuna spesa — metà delle frasi non si disegna
+mai, e la prova non le vede nemmeno: è esattamente così che ottanta frasi in
+italiano sono passate sotto il naso. Riempiendolo (due persone, tappe con
+orario, una prenotazione da fare, una spesa, un biglietto) il confronto passa
+da 763 a 801 frasi per lingua, e sul codice di prima ne trova 55 invece di 44.
+Quando si aggiunge una schermata, **si aggiunge anche il dato che la fa
+comparire**, altrimenti la prova la guarda senza vederla.
 
 Poi le **frasi composte**. Erano l'ultimo pezzo rimasto in italiano: «1
 TAPPA», «Devi 12,00», «GIAPPONE · GIORNO 1 DI 3». Cucite da pezzi funzionavano
