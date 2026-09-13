@@ -135,7 +135,15 @@ const SEGUI = `(async (id, quanti) => {
     openSheet('mNav');
     const campioni = await eval(segui)('mNav', 4);
     const s = document.querySelector('#mNav .sheet');
-    return { campioni, durata: getComputedStyle(s).transitionDuration };
+    /* Dove si ferma si guarda DOPO, non al quarto fotogramma: con la macchina
+       occupata i fotogrammi arrivano prima che il browser abbia ricalcolato
+       lo stile, e questa riga è diventata rossa una volta da sola mentre in
+       CI era verde. Quello che conta qui sono due cose diverse — che non
+       scivoli (i campioni) e che arrivi (la posizione finale) — e vanno
+       misurate in due momenti diversi. */
+    await new Promise(r => setTimeout(r, 250));
+    const dovunque = Math.round(new DOMMatrixReadOnly(getComputedStyle(s).transform).m42);
+    return { campioni, dovunque, durata: getComputedStyle(s).transitionDuration };
   }, SEGUI);
   /* "Non scivola" vuol dire: non passa per le posizioni in mezzo. Il primo
      campione è ancora quello di partenza — openSheet mette il foglio giù e
@@ -145,7 +153,7 @@ const SEGUI = `(async (id, quanti) => {
   ok('con "riduci il movimento" il foglio non scivola',
      aMeta.length === 0, fermo.campioni.join(' → '));
   ok('ma arriva lo stesso al suo posto, non a metà strada',
-     fermo.campioni[fermo.campioni.length - 1] === 0, String(fermo.campioni[fermo.campioni.length - 1]));
+     fermo.dovunque === 0, String(fermo.dovunque));
   /* Istantanee, non sparite: se la durata fosse zero secco certe transizioni
      non emetterebbero transitionend, e chi ci si appoggia resterebbe fermo. */
   const sec = parseFloat(fermo.durata.split(',')[0]);

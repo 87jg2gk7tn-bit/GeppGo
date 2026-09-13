@@ -10,12 +10,30 @@ const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
 const fs = require('fs');
 const path = require('path');
 
+/* Il viaggio di prova è pieno apposta. Con un viaggio vuoto — un partecipante,
+   nessuna tappa, nessuna spesa — metà delle frasi dell'app non si disegna mai,
+   e la prova non le vede nemmeno: è così che ottanta frasi in italiano sono
+   passate sotto il naso. Qui dentro ci sono due persone, tappe con orario e
+   con solo una parte del gruppo, una prenotazione da fare, una spesa e un
+   biglietto: bastano a far comparire le frasi che il codice compone. */
 const stato = {
   trips: [{ id: 1730000000012, name: 'Giappone', destination: 'Tokyo', currency: 'EUR',
     status: 'open', start: '2026-03-14', end: '2026-03-16',
-    participants: [{ id: 1, name: 'Gepp', isMe: true }],
-    pois: [], expenses: [], tickets: [], hotels: [], weather: {}, createdAt: 1,
-    days: [{ id: 'd1', date: '2026-03-14', title: '', activities: [] }] }],
+    participants: [{ id: 1, name: 'Gepp', isMe: true }, { id: 2, name: 'Luca' }],
+    pois: [{ id: 91, name: 'Fushimi', lat: 34.96, lng: 135.77, address: 'Kyoto',
+             notes: '', priority: 'essential', assignedDay: null }],
+    expenses: [{ id: 1, desc: 'Ramen', amount: 2400, currency: 'EUR', payerId: 1,
+                 category: 'Cibo', type: 'food', paid: true, splitAmong: [1, 2],
+                 date: '2026-03-14' }],
+    tickets: [{ id: 7, name: 'Ingresso', code: 'AB12', format: 'qrcode',
+                type: 'attraction', who: 1 }],
+    hotels: [], weather: {}, createdAt: 1,
+    days: [{ id: 'd1', date: '2026-03-14', title: '', activities: [
+      { id: 11, name: 'Fushimi', time: '09:30', timeEnd: '11:00', lat: 34.96, lng: 135.77,
+        who: [1, 2], completed: false, type: 'outdoor', booking: { needed: true, done: false } },
+      { id: 12, name: 'Nishiki', time: '14:00', timeEnd: '15:00', lat: 35.00, lng: 135.76,
+        who: [1], completed: true, type: 'outdoor', booking: { needed: false, done: false } }] },
+      { id: 'd2', date: '2026-03-15', title: '', activities: [] }] }],
   currentTripId: 1730000000012, settings: { proxRadius: 200 }, myName: 'Gepp', skipAuth: true
 };
 
@@ -261,10 +279,23 @@ async function apri(browser, lingua, linguaTelefono) {
     "Louvre\nMusée d'Orsay\nSainte-Chapelle"
   ]);
   /* I dati del viaggio di prova: il nome che ha scritto una persona non si
-     traduce, e comparirebbe identico in tutte le lingue per forza. */
-  const MIEI = [stato.trips[0].name, stato.trips[0].destination, stato.myName,
-                ...stato.trips[0].participants.map(p => p.name)].filter(Boolean);
+     traduce, e comparirebbe identico in tutte le lingue per forza. Si prendono
+     TUTTI dal viaggio, non a mano: aggiungendo una tappa alla prova, il suo
+     nome entra qui da solo invece di diventare un falso allarme. */
+  const t0 = stato.trips[0];
+  const MIEI = [t0.name, t0.destination, stato.myName,
+                ...t0.participants.map(x => x.name),
+                ...(t0.pois || []).flatMap(x => [x.name, x.address]),
+                ...(t0.expenses || []).map(x => x.desc),
+                ...(t0.tickets || []).flatMap(x => [x.name, x.code]),
+                ...(t0.days || []).flatMap(d => (d.activities || []).map(a => a.name))
+               ].filter(Boolean);
   const eMio = x => MIEI.some(m => x.includes(m));
+  /* Le unità si scrivono uguali in tutte e quattro le lingue: tolte quelle, se
+     non resta una lettera la stringa è fatta solo di numeri e misure. Ce ne
+     può essere più d'una nella stessa riga ("88 min · 6.1 km"). */
+  const UNITA = /\b(min|km|kg|MB|GB|px|h|m)\b/g;
+  const soloUnita = x => !/\p{L}/u.test(x.replace(UNITA, ' '));
   /* Numeri, orari, cifre, emoji e frecce: uguali in ogni lingua per natura. */
   const SENZA_LETTERE = /^[^\p{L}]*$/u;
   const CODICE_VALUTA = /^[A-Z]{3}( \(.{1,4}\))?$/;
@@ -340,6 +371,27 @@ async function apri(browser, lingua, linguaTelefono) {
     return { visti: new Set(visti), extra, valori };
   };
 
+  /* I nomi dei giorni e dei mesi di una lingua, corti e lunghi, con e senza
+     punto: servono a riconoscere una data scritta bene. */
+  const dateDi = (l) => {
+    const loc = { it: 'it-IT', en: 'en-GB', es: 'es-ES', fr: 'fr-FR', pt: 'pt-PT' }[l];
+    const fuori = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(Date.UTC(2026, 2, 1 + i));
+      for (const f of ['short', 'long', 'narrow'])
+        fuori.push(d.toLocaleDateString(loc, { weekday: f, timeZone: 'UTC' }));
+    }
+    for (let m = 0; m < 12; m++) {
+      const d = new Date(Date.UTC(2026, m, 15));
+      for (const f of ['short', 'long'])
+        fuori.push(d.toLocaleDateString(loc, { month: f, timeZone: 'UTC' }));
+    }
+    /* Anche quelli italiani: la stringa da scartare è uguale nelle due lingue,
+       quindi le sue parole vanno riconosciute da tutt'e due le parti. */
+    if (l !== 'it') fuori.push(...dateDi('it'));
+    return fuori.map(x => x.toLowerCase().replace(/[.,]/g, ''));
+  };
+
   const inItaliano = (await leggiIn('it')).visti;
   const formati = {};
   let composte = null;
@@ -355,10 +407,27 @@ async function apri(browser, lingua, linguaTelefono) {
        riempite da tv(): il buco è stato sostituito, quindi nel dizionario non
        si trovano più. */
     const tradotte = new Set(valori);
+    /* Una data scritta bene può coincidere: "dom 15" è l'abbreviazione giusta
+       sia in italiano sia in spagnolo (domenica, domingo). Non è un buco — la
+       prova sui formati controlla a parte che le date seguano la lingua. Si
+       scarta quello che è fatto SOLO di nomi di giorni e mesi della lingua
+       d'arrivo, perché allora è tradotto per definizione. */
+    const paroleData = new Set(dateDi(l));
+    const soloData = x => {
+      const parole = x.toLowerCase().match(/\p{L}+/gu);
+      return !!parole && parole.every(w => paroleData.has(w));
+    };
+    /* E quello che resta togliendo i pezzi già tradotti da tv(): "14:00–15:00
+       · 1 pers." è un orario più una composta, e di italiano non ha niente. */
+    const fraseComposta = x => {
+      let resto = x;
+      for (const pezzo of valori) if (pezzo && pezzo.length > 2 && resto.includes(pezzo)) resto = resto.split(pezzo).join(' ');
+      return !/\p{L}/u.test(resto);
+    };
     const resta = [...inItaliano].filter(x =>
       visti.has(x) && !tradotte.has(x) && !IDENTICHE_PER_DAVVERO.has(x) &&
       !SENZA_LETTERE.test(x) && !CODICE_VALUTA.test(x) && !NOME_E_NUMERO.test(x) &&
-      !eMio(x) && x.length > 1);
+      !soloUnita(x) && !eMio(x) && !soloData(x) && !fraseComposta(x) && x.length > 1);
     ok(`in ${LINGUA_NOME[l]} non resta niente in italiano a schermo`, resta.length === 0,
        resta.length ? `${resta.length}: ` + resta.slice(0, 5).map(x => JSON.stringify(x.slice(0, 40))).join(' ')
                     : `${inItaliano.size} frasi confrontate, nessuna uguale`);

@@ -114,7 +114,7 @@ va rifatto vedere.
    Profilo. Il riconoscitore cercava frasi contenenti una parolina italiana e
    quelle parole non ne hanno nessuna. Adesso il metodo **confronta** la
    stessa schermata in italiano e nella lingua da provare, invece di
-   indovinare: 763 frasi messe una accanto all'altra, nessuna uguale. Se un
+   indovinare: 801 frasi messe una accanto all'altra, nessuna uguale. Se un
    giorno questa riga dovesse tornare a mentire, il posto da guardare è il
    metro, non l'app. Superata la soglia dell'80%, **le lingue si
    accendono da sole**: chi apre l'app con il telefono in spagnolo la trova in
@@ -723,6 +723,20 @@ qualcuno che risponde".
   lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
   e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
   dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
+- **Una prova con un viaggio vuoto guarda senza vedere.** Con un partecipante,
+  nessuna tappa e nessuna spesa, meta' delle frasi dell'app non si disegna
+  proprio: la prova sulle lingue girava su un viaggio cosi' ed e' il secondo
+  motivo per cui ottanta frasi in italiano sono passate. Riempiendolo il
+  confronto passa da 763 a 801 frasi per lingua, e sul codice di prima ne
+  trova 55 invece di 44. Quando si aggiunge una schermata, si aggiunge anche
+  **il dato che la fa comparire**.
+- **Un controllo che legge un fotogramma preciso e' un controllo ballerino.**
+  «Il foglio arriva al suo posto» leggeva il quarto fotogramma: con la
+  macchina occupata da altri browser i fotogrammi arrivano prima che lo stile
+  sia ricalcolato, ed e' diventato rosso una volta da solo mentre in CI era
+  verde. Le due cose che interessano — che non scivoli e che arrivi — vanno
+  misurate in due momenti diversi: i campioni durante, la posizione finale
+  dopo.
 - **`querySelectorAll` non restituisce mai l'elemento da cui parte.** Il
   traduttore cercava `[title]` fra i *figli* del nodo che gli veniva
   consegnato, e l'osservatore gli consegna proprio i nodi appena nati: un

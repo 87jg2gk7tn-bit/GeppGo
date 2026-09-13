@@ -499,7 +499,21 @@ Due accortezze lo rendono esatto invece che rumoroso:
   dizionario non si trovano più: vanno cercate in `GIA_TRADOTTE`.
 
 I nomi propri stanno in un elenco scritto nel file, dove si vedono e si
-discutono, invece che dentro un'espressione regolare.
+discutono, invece che dentro un'espressione regolare. E si scarta anche quello
+che coincide per forza: una data scritta bene («dom 15» è l'abbreviazione
+giusta sia in italiano sia in spagnolo — *domenica*, *domingo*), le unità
+(«88 min · 6.1 km»), e i nomi che ha scritto una persona, presi dal viaggio di
+prova e non da un elenco a mano, così una tappa nuova non diventa un falso
+allarme.
+
+**Il viaggio di prova è pieno apposta.** Con un viaggio vuoto — un
+partecipante, nessuna tappa, nessuna spesa — metà delle frasi non si disegna
+mai, e la prova non le vede nemmeno: è esattamente così che ottanta frasi in
+italiano sono passate sotto il naso. Riempiendolo (due persone, tappe con
+orario, una prenotazione da fare, una spesa, un biglietto) il confronto passa
+da 763 a 801 frasi per lingua, e sul codice di prima ne trova 55 invece di 44.
+Quando si aggiunge una schermata, **si aggiunge anche il dato che la fa
+comparire**, altrimenti la prova la guarda senza vederla.
 
 Poi le **frasi composte**. Erano l'ultimo pezzo rimasto in italiano: «1
 TAPPA», «Devi 12,00», «GIAPPONE · GIORNO 1 DI 3». Cucite da pezzi funzionavano
