@@ -4831,7 +4831,16 @@ function stratoMappa(opzioni){
    macchina lenta e il momento giusto - ed e' successo una volta sulla
    macchina delle prove, con tutti i controlli passati. stop() annulla il
    movimento in corso, e il momento giusto smette di esistere. */
-function fermaMappa(m){try{if(m&&m.stop)m.stop();}catch(e){}}
+function fermaMappa(m){
+  try{if(m&&m.stop)m.stop();}catch(e){}
+  /* stop() ferma lo spostamento, ma non la ZOOMATA: quella si chiude da sola
+     con un transitionend che arriva dopo, e a quel punto _onZoomTransitionEnd
+     va a leggere un pannello che non c'e' piu'. Dentro Leaflet quel gestore
+     comincia con "se non sto zoomando, lascia perdere": abbassare la
+     bandierina e' l'unico modo per dirglielo. E' roba interna della libreria,
+     e sta scritto qui perche' si sappia perche'. */
+  try{if(m)m._animatingZoom=false;}catch(e){}
+}
 function initMap(){map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);stratoMappa().addTo(map);drawMarkers();}
 function drawMarkers(){
   if(!map||typeof L==='undefined')return;

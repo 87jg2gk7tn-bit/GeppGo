@@ -741,8 +741,12 @@ qualcuno che risponde".
   (reading `_leaflet_pos`)»*. Non si vede quasi mai — serve una macchina lenta
   e il momento giusto — ed e' successo una volta in CI con **tutti e 42 i
   controlli passati**, perche' la prova conta anche gli errori di pagina.
-  `map.stop()` prima di `map.remove()` annulla il movimento in corso, e il
-  momento giusto smette di esistere. Vale per tutt'e quattro le mappe dell'app.
+  `map.stop()` prima di `map.remove()` **non basta**: ferma lo spostamento, non
+  la zoomata, che si chiude da sola con un `transitionend` che arriva dopo.
+  Dentro Leaflet quel gestore comincia con «se non sto zoomando, lascia
+  perdere», quindi bisogna anche abbassargli la bandierina
+  (`m._animatingZoom = false`). E' roba interna della libreria, ed e' scritto
+  nel codice perche' si sappia perche'. Vale per tutt'e quattro le mappe.
 - **I numeri vanno tolti dal confronto fra due lingue.** «tu €1.200,00» e
   «tu €1200,00» sono la stessa frase con lo stesso «tu» non tradotto, ma come
   stringhe sono diverse — e quanti puntini ci mette l'italiano **dipende dalla
