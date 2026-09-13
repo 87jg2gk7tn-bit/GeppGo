@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 11 settembre 2026.
+Aggiornato: 13 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -14,14 +14,19 @@ dov'era rimasto, senza rifare ragionamenti già fatti.
 i sette permessi rispondono tutti `ok`, quindi la colonna `percorso_mini` (le
 miniature) e la tabella `raccolte` («A raccolta») ci sono.
 
-Restano due cose, e non sono codice:
+~~**Guardare in quale regione sta il progetto Supabase**~~ ✅ **fatto il 13
+settembre**: `eu-north-1`, North EU (Stockholm). I server sono in Svezia,
+dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
+lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
+più: per conservare i dati non si esce dall'Europa.
 
-- **Guardare in quale regione sta il progetto Supabase** (Project Settings →
-  General → Region): serve a completare una frase della privacy policy. Se è
-  fuori dall'Europa va detto per nome. Cinque minuti.
-- **Far leggere a un avvocato la parte «A raccolta» della privacy policy.** Il
-  riassunto pronto da mandargli, con le sei garanzie strutturali e le cinque
-  domande, sta in fondo a `PRIVACY-STORE.md`.
+Resta una cosa sola, e non è codice:
+
+- **Far leggere a un avvocato la privacy policy**, in particolare la parte
+  «A raccolta». Il riassunto pronto da mandargli, con le sei garanzie
+  strutturali e le domande, sta in fondo a `PRIVACY-STORE.md` — dove ora c'è
+  anche la domanda su Supabase Inc., che è una società statunitense pur
+  tenendo i server in Svezia.
 
 **Come si rilancia lo schema**, quando servirà di nuovo: Supabase → **SQL
 Editor** → **New query** → incolla **tutto** il contenuto di
@@ -77,9 +82,9 @@ combatte l'unico motore di crescita che c'è.
 4. ~~**Privacy policy + scheda dati**~~ ✅ fatto. `privacy.html` (raggiungibile
    sotto `/privacy`), linkata alla registrazione e dal Profilo.
    `PRIVACY-STORE.md` dice voce per voce cosa rispondere ad Apple e Google.
-   **Restano due cose che non sono codice:** dire in quale regione stanno i
-   server Supabase, e far leggere il testo a un avvocato — vedi in fondo a
-   `PRIVACY-STORE.md`.
+   I server stanno a Stoccolma (`eu-north-1`), dentro lo Spazio economico
+   europeo, e la policy lo dice per nome. **Resta una cosa che non è codice:**
+   far leggere il testo a un avvocato — vedi in fondo a `PRIVACY-STORE.md`.
 5. ~~**Test e CI nel repo**~~ ✅ fatto. `npm test` le lancia tutte;
    `.github/workflows/prove.yml` le fa girare da sole a ogni push e a ogni PR,
    con un Postgres vero per i permessi. Le prove che vivevano in una cartella
@@ -90,7 +95,7 @@ combatte l'unico motore di crescita che c'è.
    pannello dell'account che si mangia i tocchi.
 
 **I cinque blocchi per lo store sono chiusi.** Quello che resta prima di
-pubblicare non è codice: la regione dei server, l'avvocato, la società.
+pubblicare non è codice: l'avvocato e la società.
 
 ⚠️ **Con «A raccolta» (punto 13) la privacy policy è cambiata**: adesso c'è un
 caso in cui una posizione viene conservata, ed è dichiarato in `privacy.html`
@@ -277,6 +282,48 @@ va rifatto vedere.
 ### Quello che resta, in ordine
 
 14. **Rivedere il layout e i movimenti.** In corso.
+
+    **Fatto il 13 settembre — al Profilo non si arrivava.** Le nove voci della
+    pillola in basso chiedono 426 px; su un iPhone da 390 ce ne sono 361.
+    Misurato su quattro larghezze: il **Profilo resta fuori su ogni telefono
+    esistente**, anche su un Pro Max da 430, e a 390 resta fuori anche
+    Identifica. Dentro il Profilo ci sono l'account, la lingua, i ripristini,
+    la cancellazione e la scheda del viaggio: non può essere la voce che non
+    si vede mai. La pillola scorreva già — è una scelta di progetto, scritta
+    nel commento fin dall'inizio — ma non lo diceva a nessuno: scrollbar
+    nascosta, nessun bordo sfumato, nessuno che portasse in vista la voce
+    attiva. L'unico indizio era l'ultima icona tagliata a metà, che non sembra
+    un invito a scorrere: sembra un difetto.
+    Stringere le icone **non si può**: sono a 44,8 px e sotto i 44 si perde il
+    bersaglio minimo del dito, sistemato apposta poche settimane fa. Quindi si
+    è lavorato sull'onestà dello scorrimento: quando vai da qualche parte la
+    pillola porta quella voce in mezzo, e un'ombra sul bordo dice da che parte
+    c'è dell'altro. Al buio l'ombra va al contrario — una sfumatura scura su
+    una pillola già quasi nera vale due punti di luminosità su 255, misurati:
+    lì serve un chiarore.
+
+    **Fatto — al buio, senza campo, la mappa non è più una lastra chiara.** Il
+    riquadro che sostituisce le tessere mancanti era disegnato una volta sola
+    all'avvio, color crema, e non sapeva niente del tema: veniva fuori una
+    lastra chiarissima in mezzo a una schermata nera, e **proprio nella
+    situazione per cui la mappa offline esiste** — all'estero, senza rete,
+    quasi sempre di sera. Adesso ce n'è uno per tema e quelle già appese
+    vengono ridipinte quando il tema cambia.
+
+    **Fatto — la giornata si apre dov'è la giornata.** La griglia della Time
+    Table parte dalle 06:00 perché lì comincia il sistema di coordinate, ma
+    nessuno ha una tappa alle sei: si aprivano due ore e mezza di righe vuote
+    e la prima tappa restava sotto la piega (misurato: a 507 px su uno schermo
+    da 844). La griglia non si tocca — i riquadri e il trascinamento contano
+    tutti da quell'ora — si sposta lo sguardo: si apre sulla prima tappa, o su
+    *adesso* se è oggi e siamo in mezzo alla giornata, con un'ora di griglia
+    sopra per capire che è una linea del tempo e non un elenco.
+
+    **Da guardare insieme:** i quattro tasti fra la mappa e la giornata
+    («Ordina il giro con l'IA», «Chiedi all'assistente», «Autopilota»,
+    «Naviga la giornata») sono quattro inviti in tre stili diversi, uno
+    accanto all'altro, e spingono la giornata più in basso. Non è un difetto
+    da correggere di nascosto: è una scelta su cosa conta di più.
 
     **Fatto l'8 settembre — i fogli salgono davvero.** Era il difetto più
     longevo del progetto: la salita era scritta nel CSS dal primo giorno,
@@ -641,6 +688,17 @@ qualcuno che risponde".
   l'azione su quelle schermate c'era già a un centimetro di distanza. Non si
   vedeva leggendo il codice, si è visto con uno screenshot. Vale per ogni
   modifica all'aspetto: **un'immagine prima e una dopo**, non la memoria.
+- **Un bordo sfumato su una pillola che scorre si fa con l'ombra INTERNA.**
+  Una maschera (`mask-image`) sfumerebbe anche il fondo e il bordo della
+  pillola, che si vedrebbe dissolvere; uno `::before` in un contenitore flex
+  diventa un elemento della fila e sposta tutto. L'ombra interna invece è
+  dipinta sul riquadro e non sul contenuto: resta ferma sul bordo mentre le
+  icone scorrono, rispetta l'arrotondamento, e non serve toccare la struttura.
+- **Al buio le ombre vanno al contrario, e va misurato.** La stessa sfumatura
+  scura che in tema chiaro toglie 24 punti di luminosità, in tema scuro su una
+  pillola già quasi nera ne toglie **due su 255**: non esiste. Lì serve un
+  chiarore. Un accorgimento visivo non è fatto finché non se ne è letto il
+  pixel in tutti e due i temi.
 - **Le chiavi del dizionario non si ricopiano a occhio.** L'elenco di cosa
   restava da tradurre veniva stampato troncato a 95 caratteri: una parte delle
   chiavi del primo lotto non corrispondeva a niente e quelle frasi restavano

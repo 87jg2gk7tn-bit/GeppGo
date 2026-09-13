@@ -112,20 +112,25 @@ Alla domanda *"l'utente può chiedere la cancellazione?"*: sì, dall'app.
 
 ---
 
-## Tre cose che restano da fare, e non sono codice
+## Due cose che restano da fare, e non sono codice
 
-### 1. Dire dove stanno i server (5 minuti)
+### 1. ~~Dire dove stanno i server~~ ✅ fatto il 13 settembre
 
-Nella privacy policy c'è un punto che rimanda alla regione del progetto
-Supabase senza nominarla, perché va guardata: pannello Supabase → *Project
-Settings → General → Region*.
+Il progetto sta in **`eu-north-1` — North EU (Stockholm)**: i server sono in
+Svezia, dentro lo Spazio economico europeo. La privacy policy adesso lo dice
+per nome, e il paragrafo sulle clausole contrattuali standard è stato tolto:
+non serve, perché per conservare i dati non si esce dall'Europa.
 
-- Se è in Europa (per esempio `eu-central-1`, Francoforte): si può scrivere
-  che i dati restano nello Spazio economico europeo, e il paragrafo sulle
-  clausole contrattuali standard si può togliere.
-- Se è negli Stati Uniti: va detto chiaramente che i dati escono dall'Europa,
-  e su quale base. Il paragrafo che c'è adesso copre il caso, ma è meglio
-  nominare il Paese.
+Nelle schede degli store, alla domanda «i dati vengono trasferiti fuori
+dall'UE/SEE?», per la **conservazione** la risposta è no.
+
+⚠️ Una cosa da chiedere all'avvocato, insieme al resto: **Supabase Inc. è una
+società statunitense**, anche se i server di questo progetto sono in Svezia.
+Un fornitore extra-UE che amministra un database europeo può comunque
+comportare un accesso dagli Stati Uniti per l'assistenza tecnica. Non è un
+problema del codice e non cambia dove stanno i dati, ma è la differenza fra
+scrivere «i dati restano in Europa» e «i dati sono conservati in Europa» — e
+la formula giusta la deve dare un legale, non io.
 
 ### 2. Far leggere il testo a un avvocato
 
