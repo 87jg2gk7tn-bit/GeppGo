@@ -4102,6 +4102,7 @@ Object.keys(DIZIONARIO_COMPOSTE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
    o non e' tradotto. */
 const DIZIONARIO_SFUGGITE={
   en:{
+    'tu {1}':'you {1}',
     'Da concludere':'To be finished',
     'Annulla l\'allungamento':'Undo the stretch',
     'Annulla lo spostamento':'Undo the move',
@@ -4190,6 +4191,7 @@ const DIZIONARIO_SFUGGITE={
     '(Testo → Ingresso comando rapido).':'(Text → Shortcut Input).'
   },
   es:{
+    'tu {1}':'tú {1}',
     'Da concludere':'Por terminar',
     'Annulla l\'allungamento':'Deshacer el alargamiento',
     'Annulla lo spostamento':'Deshacer el movimiento',
@@ -4278,6 +4280,7 @@ const DIZIONARIO_SFUGGITE={
     '(Testo → Ingresso comando rapido).':'(Texto → Entrada del atajo).'
   },
   fr:{
+    'tu {1}':'toi {1}',
     'Da concludere':'À terminer',
     'Annulla l\'allungamento':'Annuler l’allongement',
     'Annulla lo spostamento':'Annuler le déplacement',
@@ -4366,6 +4369,7 @@ const DIZIONARIO_SFUGGITE={
     '(Testo → Ingresso comando rapido).':'(Texte → Entrée du raccourci).'
   },
   pt:{
+    'tu {1}':'tu {1}',
     'Da concludere':'Por terminar',
     'Annulla l\'allungamento':'Anular o alongamento',
     'Annulla lo spostamento':'Anular a deslocação',
@@ -4458,7 +4462,7 @@ Object.keys(DIZIONARIO_SFUGGITE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONAR
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
    messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=895;
+const FRASI_IN_TUTTO=896;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -7381,7 +7385,7 @@ function renderTricount(){
             ?`<div class="exp-manca">${q.mancanti.length===1?'1 persona mancante':q.mancanti.length+' persone mancanti'}</div>`
             :`<div class="exp-manca ok">tutti a posto</div>`):'';
           const tic=q.debitori.length?`<button class="tic-ic ${q.mancanti.length?'':'on'}" title="Chi ha già dato la sua parte" onclick="event.stopPropagation();openSaldoSpesa(${e.id})">✓</button>`:'';
-          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong>${tappaDiSpesa(t,e)}</div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">tu ${fmtVista(mine,cur)}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
+          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong>${tappaDiSpesa(t,e)}</div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">${tv('tu {1}',fmtVista(mine,cur))}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
         }).join('')}</div>`;
       }).join('');
     }

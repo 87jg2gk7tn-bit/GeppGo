@@ -723,6 +723,16 @@ qualcuno che risponde".
   lingua d'arrivo allora e' la traduzione giusta che si dà il caso coincida;
   e le frasi composte, che escono da `tv()` col buco gia' riempito, nel
   dizionario non si trovano piu' e vanno cercate in `GIA_TRADOTTE`.
+- **I numeri vanno tolti dal confronto fra due lingue.** «tu €1.200,00» e
+  «tu €1200,00» sono la stessa frase con lo stesso «tu» non tradotto, ma come
+  stringhe sono diverse — e quanti puntini ci mette l'italiano **dipende dalla
+  versione di ICU del browser**: su questa macchina l'italiano scrive
+  `1.200,00` e lo spagnolo `1200,00`, sulla macchina delle prove tutt'e due
+  `1200,00`. Risultato: il «tu» passava qui e veniva preso in CI. Si sostituisce
+  il numero **intero, separatori compresi** — togliendo solo le cifre restano i
+  puntini a distinguerle e non serve a niente. E' la seconda volta che la
+  stessa stranezza di ICU morde: la prima aveva reso ballerina una
+  riga di prova, questa volta ha nascosto un difetto vero.
 - **Una prova con un viaggio vuoto guarda senza vedere.** Con un partecipante,
   nessuna tappa e nessuna spesa, meta' delle frasi dell'app non si disegna
   proprio: la prova sulle lingue girava su un viaggio cosi' ed e' il secondo

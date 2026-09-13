@@ -392,6 +392,18 @@ async function apri(browser, lingua, linguaTelefono) {
     return fuori.map(x => x.toLowerCase().replace(/[.,]/g, ''));
   };
 
+  /* I numeri fuori dal confronto. Non e' un dettaglio: "tu €1.200,00" e
+     "tu €1200,00" sono la stessa frase con lo stesso "tu" non tradotto, ma
+     come stringhe sono diverse — e quanti puntini ci mette l'italiano dipende
+     dalla versione di ICU del browser. Su questa macchina l'italiano scrive
+     1.200,00 e lo spagnolo 1200,00, quindi le due non coincidevano e il "tu"
+     e' passato; sulla macchina delle prove scrivono uguale, e l'ha preso.
+     Si sostituisce il numero INTERO, separatori compresi: togliendo solo le
+     cifre resterebbero i puntini a distinguere "€.," da "€,", e il "tu"
+     continuerebbe a passare. Cosi' il risultato non dipende piu' da dove gira
+     la prova. */
+  const chiave = x => x.replace(/\d[\d.,\u00a0\u202f ]*/g, '#').replace(/\s+/g, ' ').trim();
+
   const inItaliano = (await leggiIn('it')).visti;
   const formati = {};
   let composte = null;
@@ -406,7 +418,8 @@ async function apri(browser, lingua, linguaTelefono) {
        nessuno l'ha mai tradotta. Insieme ai valori vanno le composte già
        riempite da tv(): il buco è stato sostituito, quindi nel dizionario non
        si trovano più. */
-    const tradotte = new Set(valori);
+    const tradotte = new Set(valori.map(chiave));
+    const visteAltrove = new Set([...visti].map(chiave));
     /* Una data scritta bene può coincidere: "dom 15" è l'abbreviazione giusta
        sia in italiano sia in spagnolo (domenica, domingo). Non è un buco — la
        prova sui formati controlla a parte che le date seguano la lingua. Si
@@ -425,7 +438,7 @@ async function apri(browser, lingua, linguaTelefono) {
       return !/\p{L}/u.test(resto);
     };
     const resta = [...inItaliano].filter(x =>
-      visti.has(x) && !tradotte.has(x) && !IDENTICHE_PER_DAVVERO.has(x) &&
+      visteAltrove.has(chiave(x)) && !tradotte.has(chiave(x)) && !IDENTICHE_PER_DAVVERO.has(x) &&
       !SENZA_LETTERE.test(x) && !CODICE_VALUTA.test(x) && !NOME_E_NUMERO.test(x) &&
       !soloUnita(x) && !eMio(x) && !soloData(x) && !fraseComposta(x) && x.length > 1);
     ok(`in ${LINGUA_NOME[l]} non resta niente in italiano a schermo`, resta.length === 0,
