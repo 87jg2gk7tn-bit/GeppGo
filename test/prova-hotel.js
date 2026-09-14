@@ -124,7 +124,12 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
              tag: [...document.querySelectorAll('#hotelList .ht-tag')].map(x => x.textContent.trim()) };
   });
   ok('la scheda dice quante notti copre', scheda.tag.some(x => /2 notti/.test(x)), scheda.tag.join(' | '));
-  ok('e quanto costa, senza dover andare in Spese', /2[.,]400/.test(scheda.tag.join(' ')),
+  /* Le cifre senza punteggiatura: come si raggruppano le migliaia lo decide
+     la lingua della macchina, e non è quello che questa riga deve misurare.
+     Cercando «2.400» la prova passava qui e cadeva su CI, dove lo stesso
+     numero si scrive «2400,00». */
+  ok('e quanto costa, senza dover andare in Spese',
+     /2400/.test(scheda.tag.join(' ').replace(/\D/g, '')),
      scheda.tag.join(' | '));
   ok('e che è ancora da pagare', /da pagare/i.test(scheda.tag.join(' ')), scheda.tag.join(' | '));
   await page.close();
