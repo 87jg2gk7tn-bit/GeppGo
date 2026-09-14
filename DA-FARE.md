@@ -479,9 +479,13 @@ va rifatto vedere.
     non ha più bisogno di un rettangolo bianco dietro per tagliarla — ed era
     quel rettangolo, più di ogni altra cosa, a farla sembrare una tabella di
     vent'anni fa. Le targhette dei tratti hanno perso il bordo tratteggiato.
-    E la testata prende la forma della home: occhiello piccolo, e grande **la
-    data**, perché la cosa di cui parla la schermata è il giorno — «Time
-    Table» lo si legge quando ci si è già dentro.
+    Sulla testata avevo provato a fare come la home — occhiello piccolo e
+    grande **la data**, perché la cosa di cui parla la schermata è il giorno —
+    e **Giacomo l'ha bocciata**: il titolo è tornato «Time Table», con la data
+    sotto. La ragione regge: alla time-table ci si arriva anche da un link o
+    dopo aver messo giù il telefono, e «Lunedì 14 settembre» da solo non dice
+    in che parte dell'app sei finito. Il nome della schermata non è un
+    doppione, è un appiglio.
 
     **E adesso dice a che punto della giornata sei.** Una riga color mattone
     attraversa la griglia all'ora che è adesso, con l'orario scritto nella

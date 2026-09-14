@@ -517,7 +517,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .ts-s{display:block;font-size:.8rem;color:var(--ink-soft);line-height:1.45;margin-top:.2rem}
 
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
-.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.7rem,7.4vw,2.3rem);line-height:1;letter-spacing:-.02em;color:var(--ink);margin-top:.25rem}
+.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
 .tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
 .tt-daynav{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
 .tt-daynav .x{flex-shrink:0}
@@ -1716,13 +1716,14 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="page" id="mDay"><div class="tt-sheet">
   <div class="tt-head">
     <div style="min-width:0">
-      <!-- Come la home: occhiello piccolo, e poi grande la cosa di cui parla
-           la schermata. Qui la cosa e' il GIORNO, non il nome della sezione:
-           "Time Table" lo si legge quando ci si e' gia' dentro, e la data no.
-           Il nome che uno si e' dato per quella giornata, se c'e', sta sotto. -->
+      <!-- Il titolo dice in che schermata sei, e la data sta sotto. Avevo
+           provato il contrario - data grande, come la home fa col nome della
+           citta' - ma il nome della sezione serve: ci si arriva anche da un
+           link o dopo aver messo giu' il telefono, e "Lunedi' 14 settembre"
+           da solo non dice in che parte dell'app sei finito. -->
       <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="openTripZoom(T().id)">Viaggio · Giorno <span class="hh-chev">›</span></div>
-      <div class="tt-title" id="ttTitolo">Time Table</div>
-      <div class="tt-sub" id="dayTt"></div>
+      <div class="tt-title">Time Table</div>
+      <div class="tt-sub" id="dayTt">Giorno</div>
     </div>
     <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home">✕</button>
   </div>
@@ -12096,13 +12097,7 @@ function openTimetable(){
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
-  /* La data e' il titolo, in grande. Il nome che uno ha dato alla giornata
-     ("giorno del castello") sta sotto, e se non c'e' la riga sparisce
-     invece di lasciare un vuoto. */
-  document.getElementById('ttTitolo').textContent=ds.charAt(0).toUpperCase()+ds.slice(1);
-  const sotto=document.getElementById('dayTt');
-  sotto.textContent=d.title||'';
-  sotto.style.display=d.title?'':'none';
+  document.getElementById('dayTt').textContent=(d.title?d.title+' · ':'')+ds;
   document.getElementById('ttEyebrow').innerHTML=`${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span>`;
   document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>{
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
