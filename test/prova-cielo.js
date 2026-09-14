@@ -226,19 +226,40 @@ const oreFinte = (data) => {
   await page.close();
 
   // ══ e cambia davvero col tempo che fa, misurato ══════════════════════
-  page = await apri(stato({ [oggi]: wx(63, 13, 8, 14) }));
+  /* Quattro millimetri: pioggia normale. Il caso "forte" viene subito
+     dopo, con ventidue, e le due cose devono vedersi diverse. */
+  page = await apri(stato({ [oggi]: wx(63, 13, 8, 4) }));
   const pioggia = await page.evaluate(([luce]) => {
     const hh = document.querySelector('.hh');
     const chip = document.querySelector('.hh-trip:not(.on)');
     return { classi: hh.className, luce: eval(luce)(hh),
-             strati: document.querySelectorAll('.hh-velo .cl-pio').length,
-             forte: !!document.querySelector('.hh-velo .cl-pio.forte'),
+             gocce: document.querySelectorAll('.hh-velo .cl-g').length,
+             /* La pioggia vera non ha due gocce uguali. Se lunghezze,
+                trasparenze e velocità fossero tutte identiche saremmo
+                tornati alla grata che si muove: qui si contano i valori
+                DISTINTI, che è l'unico modo di misurare la varietà. */
+             lunghezze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).height)).size,
+             trasparenze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).opacity)).size,
+             velocita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).animationDuration)),
              sole: !!document.querySelector('.hh-velo .cl-astro'),
              inchiostroChip: getComputedStyle(chip).color };
   }, [LUCE]);
   ok('con la pioggia il cielo è di pioggia', /c-pioggia/.test(pioggia.classi), pioggia.classi);
-  ok('e la pioggia è disegnata su due strati, per darle profondità',
-     pioggia.strati === 2, pioggia.strati + ' strati');
+  /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
+     una grata che si muove, non pioggia. Quello che mancava non era la
+     velocità, era la VARIETÀ. */
+  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce === 18, pioggia.gocce + ' gocce');
+  /* Non tutte diverse al pixel — le lunghezze sono numeri interi, qualche
+     doppione capita — ma la gran parte sì: è quello che rompe la griglia. */
+  ok('e quasi nessuna è uguale all\'altra: lunghezze diverse',
+     pioggia.lunghezze >= Math.round(pioggia.gocce * 0.7),
+     pioggia.lunghezze + ' lunghezze diverse su ' + pioggia.gocce + ' gocce');
+  ok('trasparenze diverse, che è come si legge la profondità',
+     pioggia.trasparenze >= pioggia.gocce - 2, pioggia.trasparenze + ' trasparenze');
+  /* E piano: due secondi buoni per attraversare l'intestazione. La prima
+     versione ci metteva quattro decimi. */
+  ok('e scendono piano, nessuna sotto il secondo e mezzo',
+     Math.min(...pioggia.velocita) >= 1.5, 'la più veloce ' + Math.min(...pioggia.velocita) + 's');
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
   ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
      `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
@@ -253,11 +274,12 @@ const oreFinte = (data) => {
      «pioviggina» e «prendi l'ombrello», e si deve vedere. */
   page = await apri(stato({ [oggi]: wx(65, 14, 9, 22) }));
   const forte = await page.evaluate(() => {
-    const f = document.querySelector('.hh-velo .cl-pio.forte');
-    const n = document.querySelector('.hh-velo .cl-pio:not(.forte):not(.dietro)');
-    return { cè: !!f, passo: f ? getComputedStyle(f).backgroundSize : '', normale: n ? 1 : 0 };
+    const hh = document.querySelector('.hh');
+    const g = document.querySelectorAll('.hh-velo .cl-g');
+    return { classe: hh.className.includes('forte'), quante: g.length };
   });
-  ok('quando piove forte le gocce si infittiscono', forte.cè === true, forte.passo);
+  ok('quando piove forte le gocce sono di più',
+     forte.classe === true && forte.quante === 30, forte.quante + ' gocce');
   await page.close();
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
@@ -275,7 +297,7 @@ const oreFinte = (data) => {
     classi: document.querySelector('.hh').className,
     bagliore: !!document.querySelector('.hh-velo .cl-lampo'),
     saetta: !!document.querySelector('.hh-velo .cl-saetta'),
-    pioggia: !!document.querySelector('.hh-velo .cl-pio')
+    pioggia: document.querySelectorAll('.hh-velo .cl-g').length > 0
   }));
   ok('col temporale il cielo è di temporale', /c-tempo/.test(tempo.classi), tempo.classi);
   ok('e ci sono il bagliore, la saetta e la pioggia',
@@ -450,6 +472,92 @@ const oreFinte = (data) => {
      /non sono arrivate/i.test(senzaRete.testo), senzaRete.testo.slice(0, 60));
   ok('e il resto della tendina si vede lo stesso', senzaRete.heroCè === true);
   await page.close();
+
+  // ══ DA DOVE VIENE IL METEO ═══════════════════════════════════════════
+  /* Il difetto piu' grosso che il meteo abbia mai avuto, e dal codice non si
+     vedeva: un viaggio con destinazione "Giappone" prendeva le previsioni dal
+     CENTRO GEOGRAFICO del Giappone - le montagne del Gunma, mille metri di
+     quota. Le previsioni erano giuste, era il posto a essere sbagliato, e uno
+     leggeva otto gradi e neve mentre a Tokyo ce n'erano venti.
+     Qui si guarda le COORDINATE che l'app chiede davvero, che e' l'unico modo
+     di accorgersene. */
+  const CENTRO_GIAPPONE = { lat: 36.5748, lng: 139.2394 };   // quello che risponde Nominatim per "Giappone"
+  const KYOTO = { lat: 35.0116, lng: 135.7681 };
+
+  async function chiediMeteo(giorni, extra) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    const chiamate = [];
+    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    /* Il geocodificatore risponde come risponde quello vero a "Giappone":
+       il paese, col suo centro geografico. */
+    await page.route(/nominatim\.openstreetmap\.org/, ro => ro.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify([{ lat: '36.5748', lon: '139.2394', addresstype: 'country',
+        type: 'administrative', place_rank: 4, boundingbox: ['20.2', '45.7', '122.7', '154.2'],
+        address: { country: 'Giappone', country_code: 'jp' }, name: 'Giappone' }]) }));
+    await page.route(/api\.open-meteo\.com/, ro => {
+      const u = ro.request().url();
+      chiamate.push(u);
+      const dd = (u.match(/start_date=(\d{4}-\d{2}-\d{2})/) || [])[1] || oggi;
+      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        daily: { time: [dd], weather_code: [71], temperature_2m_max: [1], temperature_2m_min: [-6],
+                 precipitation_sum: [4], wind_speed_10m_max: [9],
+                 sunset: [dd + 'T17:40'], sunrise: [dd + 'T06:30'] } }) });
+    });
+    await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), {
+      trips: [Object.assign({
+        id: 1, name: 'Giappone 26', destination: 'Giappone', currency: 'JPY', status: 'open',
+        start: oggi, end: domani, participants: [{ id: 1, name: 'Gepp', isMe: true }],
+        pois: [], expenses: [], tickets: [], hotels: [], weather: {}, createdAt: 1, days: giorni
+      }, extra || {})],
+      currentTripId: 1, settings: {}, myName: 'Gepp', skipAuth: true });
+    await page.goto(APP, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => typeof refreshWeather === 'function', { timeout: 20000 });
+    await page.evaluate(async () => { await ensureDestLoc(T()); await refreshWeather(); });
+    await page.waitForTimeout(700);
+    const dove = await page.evaluate(() => {
+      const t = T(), d = t.days[0];
+      return { luogo: (t.weather[d.date] || {}).luogo || '', vicino: !!(t.weather[d.date] || {}).vicino,
+               cè: !!t.weather[d.date], destLoc: t.destLoc, tipo: t.destTipo,
+               perche: percheNienteMeteo(t) };
+    });
+    await page.close();
+    const coord = chiamate.map(u => {
+      const m = u.match(/latitude=([-\d.]+)&longitude=([-\d.]+)/);
+      return m ? { lat: +m[1], lng: +m[2] } : null;
+    }).filter(Boolean);
+    return { coord, dove };
+  }
+  const vicino = (c, p) => Math.abs(c.lat - p.lat) < 0.05 && Math.abs(c.lng - p.lng) < 0.05;
+
+  /* Giornata vuota, destinazione "Giappone", nient'altro: prima si andava a
+     prendere il meteo in mezzo alle montagne. Adesso non si va da nessuna
+     parte, e si dice perche'. */
+  const soloPaese = await chiediMeteo([{ id: 'd1', date: oggi, title: '', activities: [] }]);
+  ok('un paese intero non è un posto da cui prendere il meteo',
+     !soloPaese.coord.some(c => vicino(c, CENTRO_GIAPPONE)),
+     soloPaese.coord.map(c => c.lat + ',' + c.lng).join(' | ') || 'nessuna chiamata');
+  ok('e invece di un numero sbagliato si dice cosa manca',
+     /paese intero/i.test(soloPaese.dove.perche) && soloPaese.dove.cè === false,
+     soloPaese.dove.perche || 'niente');
+
+  /* Ma se il viaggio HA delle tappe, anche in un altro giorno, quelle
+     valgono: il meteo di Kyoto e' una risposta, quello del centro del
+     Giappone no. */
+  const conTappe = await chiediMeteo([
+    { id: 'd1', date: oggi, title: '', activities: [] },
+    { id: 'd2', date: domani, title: '', activities: [
+      { id: 21, name: 'Fushimi Inari', time: '10:00', timeEnd: '12:00',
+        lat: KYOTO.lat, lng: KYOTO.lng, who: [1], completed: false, type: 'outdoor',
+        booking: { needed: false, done: false } }] }]);
+  ok('per una giornata vuota si guardano le tappe dei giorni intorno',
+     conTappe.coord.some(c => vicino(c, KYOTO)) && !conTappe.coord.some(c => vicino(c, CENTRO_GIAPPONE)),
+     conTappe.coord.map(c => c.lat.toFixed(3) + ',' + c.lng.toFixed(3)).join(' | '));
+  ok('e si dice che è un\'approssimazione, non una certezza',
+     conTappe.dove.vicino === true, 'vicino=' + conTappe.dove.vicino);
 
   // ══ la barra in basso ha una voce in meno ════════════════════════════
   page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));

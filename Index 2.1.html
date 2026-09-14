@@ -484,8 +484,40 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tchip:active{transform:scale(.95)}
 
 /* ── Time Table: testata come l'occhiello di home, non più "Giorno" ──── */
+/* Le due cose che si fanno camminando. Sono uguali fra loro e larghe uguale:
+   un invito solo, in due modi. */
+.tt-azioni{display:flex;gap:.5rem;margin-bottom:.5rem}
+.tt-az{
+  flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;
+  gap:.4rem;padding:.9rem .5rem;border-radius:var(--r-md);cursor:pointer;
+  border:none;background:var(--surface);box-shadow:var(--sh-sm);
+  font-family:inherit;font-weight:700;font-size:.82rem;color:var(--ink);
+  transition:var(--ease);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tt-az:active{transform:scale(.97)}
+.tt-az-ic{font-size:1rem;line-height:1;flex-shrink:0}
+/* La porta per gli strumenti da tavolino: si vede, ma non compete. */
+.tt-costruisci{
+  display:block;width:100%;margin-bottom:.7rem;padding:.92rem .5rem;border-radius:var(--r-md);
+  border:1px dashed var(--line);background:transparent;cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:.78rem;color:var(--ink-faint);
+  transition:var(--ease);
+}
+.tt-costruisci:active{transform:scale(.99)}
+.tt-strumento{
+  display:flex;gap:.8rem;width:100%;text-align:left;margin-bottom:.6rem;
+  padding:.9rem;border-radius:var(--r-lg);cursor:pointer;
+  border:1px solid var(--line-soft);background:var(--paper);
+  font-family:inherit;transition:var(--ease);
+}
+.tt-strumento:active{transform:scale(.99)}
+.ts-ic{font-size:1.4rem;line-height:1.1;flex-shrink:0}
+.ts-b{display:block;min-width:0}
+.ts-t{display:block;font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--ink)}
+.ts-s{display:block;font-size:.8rem;color:var(--ink-soft);line-height:1.45;margin-top:.2rem}
+
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
-.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
+.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.7rem,7.4vw,2.3rem);line-height:1;letter-spacing:-.02em;color:var(--ink);margin-top:.25rem}
 .tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
 .tt-daynav{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
 .tt-daynav .x{flex-shrink:0}
@@ -499,7 +531,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-day-wd{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
 .tt-day-n{font-size:1.05rem;font-weight:800;margin-top:.05rem}
 .tt-day-wx{position:absolute;top:-3px;right:-3px;font-size:.72rem}
-.tt-day.on{background:var(--green);color:#fff}
+.tt-day.on{background:var(--grad);color:#fff;box-shadow:var(--sh-green)}
 .tt-day:active{transform:scale(.94)}
 .tt-day-add{
   flex:0 0 auto;width:38px;height:38px;align-self:center;border-radius:50%;cursor:pointer;
@@ -522,16 +554,45 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .pill-ghost:active{transform:scale(.94)}
 
 .ttgrid{position:relative;margin-top:.5rem}
-.tt-line{position:absolute;left:0;right:0;border-top:1px dashed var(--line-soft)}
-.tt-line span{position:absolute;left:0;top:-8px;background:var(--surface);padding-right:6px;font-family:'Fraunces',serif;font-size:.72rem;color:var(--ink-faint)}
-.tt-block{position:absolute;background:var(--green-tint);border:1px solid var(--green-soft);border-radius:10px;padding:.38rem .6rem .38rem .55rem;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:.08rem;transition:box-shadow .15s var(--ease)}
-.tt-block .tname{font-size:.86rem;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tt-block .tsub{font-size:.7rem;color:var(--green-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* La riga dell'ora parte DOPO la colonna delle ore, invece di attraversarla:
+   cosi' il numero non ha piu' bisogno di un rettangolo bianco dietro per
+   tagliare la riga, ed era quel rettangolo a far sembrare la griglia una
+   tabella di vent'anni fa. */
+.tt-line{position:absolute;left:46px;right:0;border-top:1px solid var(--line-soft)}
+.tt-line span{
+  position:absolute;left:-46px;top:-7px;width:38px;text-align:right;
+  font-size:.62rem;font-weight:800;letter-spacing:.09em;color:var(--ink-faint);
+}
+/* Dove sei adesso. E' la cosa piu' utile che una linea del tempo possa
+   avere e non c'era: senza, per capire a che punto della giornata sei devi
+   guardare l'orologio e poi cercare l'ora nella colonna. */
+.tt-ora{position:absolute;left:46px;right:0;height:0;border-top:2px solid var(--clay);z-index:6;pointer-events:none}
+.tt-ora::before{content:'';position:absolute;left:-3px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--clay)}
+.tt-ora b{position:absolute;left:-46px;top:-8px;width:38px;text-align:right;font-size:.62rem;font-weight:800;letter-spacing:.02em;color:var(--clay)}
+/* Le tappe: schede bianche con l'ombra morbida come tutte le altre schede
+   dell'app, e il nome nel serif con cui l'app scrive i nomi. Erano
+   rettangoli color sabbia con un bordo di un pixel: l'unico posto
+   dell'app rimasto cosi'. La bandella d'oro sul fianco e' quella che le
+   fa leggere come una fila anche quando sono lontane fra loro. */
+.tt-block{
+  position:absolute;background:var(--surface);border:1px solid var(--line-soft);
+  border-radius:13px;box-shadow:var(--sh-sm);
+  padding:.36rem .6rem .36rem .78rem;overflow:hidden;cursor:pointer;
+  display:flex;flex-direction:column;gap:.05rem;transition:box-shadow .15s var(--ease);
+}
+.tt-block::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--grad);
+}
+.tt-block .tname{font-family:'Fraunces',serif;font-size:.97rem;font-weight:600;letter-spacing:-.01em;line-height:1.18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.tt-block .tsub{font-size:.68rem;color:var(--ink-faint);font-weight:700;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* La distanza scritta di fianco all'orario, per le tappe attaccate dove fra i
    due riquadri non c'e' spazio per la targhetta: piu' chiara dell'orario, cosi'
    si distingue a colpo d'occhio che e' un'altra cosa. */
 .tt-block .tsub-tratto{color:var(--ink-faint);font-weight:700}
-.tt-block.done{opacity:.55}.tt-block.done .tname{text-decoration:line-through}
+.tt-block.done{opacity:.5;box-shadow:none}
+.tt-block.done::before{background:var(--line)}
+.tt-block.done .tname{text-decoration:line-through}
 /* Agganciato dalla pressione lunga: si stacca dalla pagina, cosi' si vede a
    colpo d'occhio che adesso e' lui a seguire il dito. */
 .tt-block.tt-moving{outline:2px solid var(--green);outline-offset:2px;transform:scale(1.02);opacity:.94;transition:none}
@@ -539,7 +600,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    coloravano di blu le ore e i nomi, con tanto di maniglie, invece di
    agganciare il riquadro. Nella time-table non c'e' niente da selezionare. */
 #ttBody,#ttBody *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.tt-block.tt-compact{padding:.1rem .55rem .1rem .5rem;flex-direction:row;align-items:center;gap:.35rem}
+.tt-block.tt-compact{padding:.1rem .55rem .1rem .72rem;flex-direction:row;align-items:center;gap:.35rem}
+.tt-block.tt-compact .tname{font-size:.88rem}
 .tt-block.tt-compact .tname{flex:1 1 auto;min-width:0}
 .tt-block.tt-compact .tsub{flex:0 0 auto}
 .tt-block.tt-compact .tszr{height:8px}
@@ -552,7 +614,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:8px;padding:.2rem .45rem;font-size:.65rem;font-weight:800;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
-.tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;color:var(--ink-faint);background:transparent;border:1px dashed var(--line);border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .3rem;z-index:1}
+.tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--ink-soft);background:var(--paper);border:none;box-shadow:var(--sh-xs);border-radius:9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 .35rem;z-index:1}
 .tt-travel-shown{gap:.4rem;justify-content:space-between;padding:0 .5rem}
 /* La tendina della valuta sta di fianco alla cifra grossa, e da li' comanda
    tutti i numeri della pagina. */
@@ -568,7 +630,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
 .tt-travel-toggle{cursor:pointer;opacity:.6}
 .tt-travel-toggle:active{opacity:1}
-.tt-hotel-travel{display:flex;align-items:center;font-size:.78rem;font-weight:700;color:var(--ink-faint);border:1px dashed var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tt-hotel-travel{display:flex;align-items:center;font-size:.76rem;font-weight:700;color:var(--ink-soft);background:var(--paper);border:none;box-shadow:var(--sh-xs);border-radius:10px;padding:.42rem .6rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 /* Targhetta per le tappe attaccate: sta sopra le altre cose e ha il fondo
    pieno, altrimenti sulla linea di confine non si leggerebbe. */
 .tt-travel-tight{z-index:8;background:var(--paper);border-style:solid;padding:0 .45rem;gap:.35rem;justify-content:flex-end;white-space:nowrap;overflow:hidden;font-size:.7rem;box-shadow:var(--sh-xs)}
@@ -1003,7 +1065,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   --cl-alto:#8FB6D6;
   --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
   --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.5);
-  --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.9);
+  --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.92);--vel:1;
   --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
 }
 /* Due colori per ogni cielo: --cl-alto e' quello che tinge l'alto
@@ -1016,10 +1078,15 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.c-pioggia{--cl-alto:#54687A;--cl-g:linear-gradient(168deg,#4C5E6E 0%,#788C9A 55%,#AAB8C1 100%)}
 .cielo.c-neve   {--cl-alto:#7C93AB;--cl-g:linear-gradient(168deg,#8196AB 0%,#BACCDB 55%,#E9F1F7 100%)}
 .cielo.c-tempo  {--cl-alto:#333B47;--cl-g:linear-gradient(168deg,#2E3540 0%,#515B69 55%,#838D9A 100%)}
+/* Piove forte: piu' gocce sul vetro, e quelle che corrono ci mettono meno
+   ad arrivare in fondo. E' la differenza fra "pioviggina" e "prendi
+   l'ombrello", e si deve vedere senza leggere i millimetri. */
+.cielo.forte{--vel:.58;--cl-goccia:#fff}
+.cielo.notte.forte{--cl-goccia:rgba(226,240,255,.92)}
 .cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
 /* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
 .cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.28);
-  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(210,226,244,.75);
+  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);
   --cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
 .cielo.notte.c-sereno {--cl-alto:#0F2039;--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
 .cielo.notte.c-velato {--cl-alto:#182942;--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
@@ -1030,7 +1097,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.notte.c-tempo  {--cl-alto:#12171E;--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
 .cielo.notte.c-ignoto {--cl-alto:#252B30;--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
 
-.cl-astro,.cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
+.cl-astro,.cl-nuv,.cl-g,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
   position:absolute;pointer-events:none;
 }
 /* Il sole (o la luna): un disco con due aloni, uno stretto e uno largo. */
@@ -1067,25 +1134,44 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    esattamente una piastrella - cosi' il giro si chiude e il salto non
    si vede. Due strati a velocita' diverse, uno dietro piu' spento: e'
    quello che le da' profondita' invece di farla sembrare una grata. */
-.cl-pio,.cl-nev{inset:calc(-18% - 20px) -16%;}
-.cl-pio{
-  background-image:radial-gradient(ellipse calc(1.1px*var(--s)) calc(14px*var(--s)) at 50% 40%,var(--cl-goccia),transparent 72%);
-  background-size:calc(16px*var(--s)) calc(66px*var(--s));
-  rotate:14deg;opacity:.8;
-  animation:cl-piove .62s linear infinite;
+/* LA PIOGGIA: GOCCE VERE CHE SCENDONO, PIANO.
+   Tre tentativi per arrivarci. Il primo erano trattini fitti tutti alla
+   stessa velocita': una grata che si muove, non pioggia. Il secondo erano
+   gocce ferme sul vetro, disegnate ad anello, e sembravano bolle di
+   sapone. Quello che mancava a tutti e due non era la velocita' ne' la
+   forma: era la VARIETA'. La pioggia vera non ha due gocce uguali - una
+   e' lunga e vicina, quella dietro e' corta e sbiadita, e nessuna delle
+   due cade come l'altra.
+   Quindi non c'e' piu' una piastrella ripetuta: ci sono diciotto gocce,
+   una per una - trenta quando piove forte - ognuna con la sua lunghezza,
+   il suo spessore, la sua trasparenza e la sua velocita'. E vanno piano:
+   una goccia attraversa l'intestazione in due o tre secondi, non in
+   mezzo. */
+.cl-g{
+  top:0;border-radius:999px;
+  height:calc(var(--h)*1px*var(--s));
+  width:calc(var(--w)*1px*var(--s));
+  opacity:var(--o);
+  /* Sfumata in cima: una goccia in caduta si vede come una scia che
+     svanisce, non come un bastoncino con due estremita' nette. */
+  background:linear-gradient(180deg,transparent 0,var(--cl-goccia) 85%,var(--cl-goccia) 100%);
+  rotate:7deg;
+  /* Mezzo pixel di sfocatura: una goccia che cade la vedi sfocata perche'
+     si muove, e senza questo sono bastoncini col bordo netto. */
+  filter:blur(calc(.45px*var(--s)));
+  animation-name:cl-cade;animation-timing-function:linear;animation-iteration-count:infinite;
 }
-.cl-pio.dietro{
-  background-size:calc(27px*var(--s)) calc(48px*var(--s));
-  rotate:10deg;opacity:.34;animation-duration:1.05s;
+/* Scende anche di lato, di poco: la pioggia a piombo non esiste.
+   E arriva solo fino a dove il velo e' ancora visibile: portarla piu' giu'
+   vorrebbe dire far passare le gocce nella parte gia' dissolta, cioe'
+   tenerle accese dove non si vedono. Contate: su ventisei gocce ne
+   arrivava UNA nella fascia in cui si guardano. */
+@keyframes cl-cade{
+  from{transform:translate(calc(16px*var(--s)),calc(-60px*var(--s)))}
+  to  {transform:translate(calc(-18px*var(--s)),calc(330px*var(--s)))}
 }
-/* Quando piove forte le gocce sono piu' fitte e piu' lunghe, e cadono
-   piu' in fretta: e' la differenza fra "pioviggina" e "prendi l'ombrello". */
-.cl-pio.forte{
-  background-image:radial-gradient(ellipse calc(1.3px*var(--s)) calc(19px*var(--s)) at 50% 40%,var(--cl-goccia),transparent 74%);
-  background-size:calc(12px*var(--s)) calc(74px*var(--s));
-  rotate:16deg;opacity:.95;animation-duration:.44s;
-}
-@keyframes cl-piove{from{background-position:0 0}to{background-position:0 100%}}
+
+.cl-nev{inset:calc(-18% - 20px) -16%;}
 .cl-nev{
   background-image:radial-gradient(circle calc(3.2px*var(--s)) at 50% 50%,#fff,transparent 66%);
   background-size:calc(21px*var(--s)) calc(42px*var(--s));
@@ -1132,7 +1218,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     radial-gradient(circle calc(1px*var(--s))   at 70% 31%,#fff,transparent);
 }
 @media (prefers-reduced-motion:reduce){
-  .cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta{animation:none}
+  .cl-nuv,.cl-g,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta{animation:none}
+  /* La pioggia si ferma a meta' caduta invece di sparire: si vede lo
+     stesso che piove, e non si muove niente. */
+  .cl-g{transform:translateY(calc(180px*var(--s)))}
   .cl-lampo,.cl-saetta{opacity:0}
 }
 
@@ -1148,8 +1237,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   position:absolute;inset:0;overflow:hidden;pointer-events:none;--s:1;
   /* Sfuma verso il basso invece di finire con un taglio: e' la
      differenza fra un cielo e un'immagine incollata sopra. */
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.34) 52%,transparent 76%);
-  mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.34) 52%,transparent 76%);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.3) 48%,transparent 72%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.3) 48%,transparent 72%);
 }
 /* Quando il cielo in alto e' scuro, quello che ci sta sopra deve
    schiarirsi: le pillole dei viaggi erano inchiostro tenue su un fondo
@@ -1627,9 +1716,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="page" id="mDay"><div class="tt-sheet">
   <div class="tt-head">
     <div style="min-width:0">
+      <!-- Come la home: occhiello piccolo, e poi grande la cosa di cui parla
+           la schermata. Qui la cosa e' il GIORNO, non il nome della sezione:
+           "Time Table" lo si legge quando ci si e' gia' dentro, e la data no.
+           Il nome che uno si e' dato per quella giornata, se c'e', sta sotto. -->
       <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="openTripZoom(T().id)">Viaggio · Giorno <span class="hh-chev">›</span></div>
-      <div class="tt-title">Time Table</div>
-      <div class="tt-sub" id="dayTt">Giorno</div>
+      <div class="tt-title" id="ttTitolo">Time Table</div>
+      <div class="tt-sub" id="dayTt"></div>
     </div>
     <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home">✕</button>
   </div>
@@ -1642,7 +1735,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
-  <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.6rem"><button class="chip green" onclick="sistemaGiornata()">✦ Ordina il giro con l'IA</button><button class="chip green" onclick="openAssistenteGiorno()">💬 Chiedi all'assistente</button><button class="chip" onclick="openGenForDay()">🧭 Autopilota</button><button class="chip green" onclick="navigaGiornata()">🧭 Naviga la giornata</button></div>
+  <!-- Erano quattro inviti in tre stili diversi, uno accanto all'altro, e
+       spingevano la giornata sotto la piega. Qui restano i due che si usano
+       CAMMINANDO: portami in giro, e chiedi una cosa. Gli altri due si usano
+       da fermi mentre il viaggio si costruisce, e stanno dietro una porta
+       che dice cosa c'e' dentro. -->
+  <div class="tt-azioni">
+    <button class="tt-az" onclick="navigaGiornata()"><span class="tt-az-ic">🧭</span>Naviga la giornata</button>
+    <button class="tt-az" onclick="openAssistenteGiorno()"><span class="tt-az-ic">💬</span>Chiedi all'assistente</button>
+  </div>
+  <button class="tt-costruisci" onclick="openSheet('mCostruisci')">✦ Costruisci la giornata ›</button>
   <div id="dayPhotos" style="display:flex;gap:.45rem;overflow-x:auto;margin-bottom:.6rem"></div>
   <input type="file" id="phInput" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
   <div id="ttBody"></div>
@@ -1679,6 +1781,19 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
   <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r91</div>
+</div></div>
+<div class="modal" id="mCostruisci"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Costruisci la giornata</div><button class="x x-close" onclick="closeSheet('mCostruisci')">✕</button></div>
+  <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.55;margin:-.6rem 0 1rem">Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.</p>
+  <button class="tt-strumento" onclick="closeSheet('mCostruisci');sistemaGiornata()">
+    <span class="ts-ic">✦</span>
+    <span class="ts-b"><span class="ts-t">Ordina il giro con l'IA</span><span class="ts-s">Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.</span></span>
+  </button>
+  <button class="tt-strumento" onclick="closeSheet('mCostruisci');openGenForDay()">
+    <span class="ts-ic">🪄</span>
+    <span class="ts-b"><span class="ts-t">Autopilota</span><span class="ts-s">Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all'altro.</span></span>
+  </button>
 </div></div>
 <div class="modal modal-top" id="mMeteo"><div class="sheet sheet-top">
   <div class="sheet-head">
@@ -5042,10 +5157,75 @@ const DIZIONARIO_PIOGGIA={
 };
 Object.keys(DIZIONARIO_PIOGGIA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_PIOGGIA[l]));
 
+/* I tasti della giornata. Due si usano camminando e stanno in vista, due
+   si usano da fermi e stanno dietro una porta: sono tutte frasi nuove,
+   perche' prima l'emoji stava attaccata al testo e la chiave era
+   un'altra. */
+const DIZIONARIO_GIORNATA={
+  en:{
+    'Naviga la giornata':'Navigate the day',
+    'Chiedi all\'assistente':'Ask the assistant',
+    '✦ Costruisci la giornata ›':'✦ Build the day ›',
+    'Costruisci la giornata':'Build the day',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Two desk tools: you use them while the trip is being planned, not while you are living it.',
+    'Ordina il giro con l\'IA':'Order the route with AI',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'It puts the stops you already added back in order, so the route doesn’t send you back twice.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'You paste it a list of places and it puts them on the clock, leaving time to get from one to the next.'
+  },
+  es:{
+    'Naviga la giornata':'Guíame por el día',
+    'Chiedi all\'assistente':'Pregunta al asistente',
+    '✦ Costruisci la giornata ›':'✦ Monta el día ›',
+    'Costruisci la giornata':'Monta el día',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Dos herramientas de escritorio: se usan mientras se prepara el viaje, no mientras se hace.',
+    'Ordina il giro con l\'IA':'Ordena la ruta con la IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Reordena las paradas que ya has puesto, para que la ruta no te haga volver atrás dos veces.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Le pegas una lista de sitios y él los pone en hora, dejando tiempo para ir de uno a otro.'
+  },
+  fr:{
+    'Naviga la giornata':'Guide-moi dans la journée',
+    'Chiedi all\'assistente':'Demande à l’assistant',
+    '✦ Costruisci la giornata ›':'✦ Construis la journée ›',
+    'Costruisci la giornata':'Construis la journée',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Deux outils de bureau : on les utilise pendant qu’on prépare le voyage, pas pendant qu’on le vit.',
+    'Ordina il giro con l\'IA':'Ordonne le parcours avec l’IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Il remet dans l’ordre les étapes déjà ajoutées, pour que le parcours ne te fasse pas revenir deux fois.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Tu lui colles une liste de lieux et il les met à l’heure, en laissant le temps d’aller de l’un à l’autre.'
+  },
+  pt:{
+    'Naviga la giornata':'Guia-me pelo dia',
+    'Chiedi all\'assistente':'Pergunta ao assistente',
+    '✦ Costruisci la giornata ›':'✦ Monta o dia ›',
+    'Costruisci la giornata':'Monta o dia',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Duas ferramentas de secretária: usam-se enquanto se prepara a viagem, não enquanto se faz.',
+    'Ordina il giro con l\'IA':'Ordena o percurso com a IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Volta a pôr por ordem as paragens que já puseste, para o percurso não te fazer voltar atrás duas vezes.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Colas-lhe uma lista de sítios e ele põe-nos na hora, deixando tempo para ir de um ao outro.'
+  }
+};
+Object.keys(DIZIONARIO_GIORNATA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_GIORNATA[l]));
+
+/* Perche' per una giornata il meteo non c'e'. */
+const DIZIONARIO_DOVE={
+  en:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'“{1}” is a whole country: add a stop or a city, otherwise I don’t know where to look.'
+  },
+  es:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'«{1}» es un país entero: añade una parada o una ciudad, si no no sé dónde mirar.'
+  },
+  fr:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'« {1} » est un pays entier : ajoute une étape ou une ville, sinon je ne sais pas où regarder.'
+  },
+  pt:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'«{1}» é um país inteiro: acrescenta uma paragem ou uma cidade, senão não sei onde olhar.'
+  }
+};
+Object.keys(DIZIONARIO_DOVE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DOVE[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=965;
+const FRASI_IN_TUTTO=974;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -5981,6 +6161,34 @@ function cieloNotte(w,date){
   const alba=oraDi(w&&w.sunrise)||6.5;
   return ora>=tramonto||ora<alba;
 }
+/* Le gocce, una per una. Non una piastrella ripetuta: una piastrella si
+   riconosce sempre, e a riconoscerla la pioggia diventa una tenda a
+   strisce. Qui ogni goccia ha la sua lunghezza, il suo spessore, la sua
+   trasparenza e la sua velocita' - ed e' quella differenza, non la
+   velocita', a farla sembrare pioggia.
+   I numeri sono sparsi ma sempre gli stessi: presi a caso davvero, a ogni
+   ridisegno della home la pioggia salterebbe di posto. */
+function gocceDiPioggia(quante){
+  /* Numeri sparsi, ma sempre gli stessi. Con Math.random() la pioggia
+     cambierebbe posto a ogni ridisegno della home - e la home si ridisegna
+     spesso - quindi si vedrebbe saltare. Questo e' il vecchio trucco del
+     seno: da un indice tira fuori un numero fra 0 e 1 che sembra a caso e
+     invece e' sempre quello. */
+  const r=(i,seme)=>{const x=Math.sin((i+1)*seme)*10000;return x-Math.floor(x);};
+  let out='';
+  for(let i=0;i<quante;i++){
+    const sx=(r(i,12.9898)*98+1).toFixed(1);
+    const lung=(18+r(i,78.233)*34).toFixed(0);        /* 18 - 52 px */
+    const larg=(0.9+r(i,43.111)*0.9).toFixed(2);      /* 0,9 - 1,8 px */
+    /* Le sbiadite sono quelle lontane, e cadono piu' piano: e' cosi' che
+       l'occhio legge la profondita' anche in una scena piatta. */
+    const opa=(0.2+r(i,93.989)*0.55).toFixed(2);
+    const dur=(3.5-opa*2.1+r(i,27.61)*0.7).toFixed(2); /* 1,9 - 3,4 s */
+    const rit=(-r(i,51.317)*4).toFixed(2);
+    out+=`<span class="cl-g" style="left:${sx}%;--h:${lung};--w:${larg};--o:${opa};animation-duration:${dur}s;animation-delay:${rit}s"></span>`;
+  }
+  return out;
+}
 /* La scena: quali pezzi disegnare sopra la sfumatura. Il sole sparisce
    quando il cielo e' coperto - un sole dietro tre nuvole non lo vedresti
    comunque, e disegnarlo lo farebbe sembrare una giornata bella. */
@@ -5993,12 +6201,9 @@ function cieloScena(w,date){
   if(k!=='c-nuvolo'&&k!=='c-tempo'&&k!=='c-pioggia'&&k!=='c-neve'&&k!=='c-ignoto')p.push('<span class="cl-astro"></span>');
   const nuvole=k==='c-sereno'?0:(k==='c-nuvolo'||k==='c-tempo')?3:2;
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
+  const forte=!!(w&&w.precipitation>8);
   if(k==='c-pioggia'||k==='c-tempo'){
-    /* Due strati: quello dietro piu' rado e piu' lento, quello davanti
-       fitto. E' quello che fa sembrare pioggia una cosa che altrimenti
-       sarebbe una grata di righe. */
-    p.push('<span class="cl-pio dietro"></span>');
-    p.push(`<span class="cl-pio${(w&&w.precipitation>8)?' forte':''}"></span>`);
+    p.push(gocceDiPioggia(forte?30:18));
   }
   if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');
@@ -6006,7 +6211,7 @@ function cieloScena(w,date){
   /* Se l'alto del cielo e' scuro, quello che ci scrivi sopra va
      schiarito: e' l'unica cosa che il disegno impone al testo. */
   const buio=notte||k==='c-pioggia'||k==='c-tempo';
-  return{classi:`cielo ${k}${notte?' notte':''}`,dentro:p.join(''),buio:buio};
+  return{classi:`cielo ${k}${notte?' notte':''}${forte?' forte':''}`,dentro:p.join(''),buio:buio};
 }
 /* Il cielo dell'intestazione. Quando la previsione non c'e' - un
    viaggio fra un mese - non si disegna niente: l'intestazione resta
@@ -7048,7 +7253,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica, Profilo. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home, di fianco ai nomi dei viaggi. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi, in quest'ordine: "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa), poi "Bagagli" - la lista bagagli sta li' - e "Condividi". Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
-- Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home). Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
+- Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
@@ -7798,6 +8003,11 @@ async function ensureDestLoc(t){
       const bb=d[0].boundingbox;
       if(bb&&bb.length===4)t.destBB=[parseFloat(bb[0]),parseFloat(bb[1]),parseFloat(bb[2]),parseFloat(bb[3])];
       if(d[0].address&&d[0].address.country_code)t.destCountry=d[0].address.country_code;
+      /* Che cosa e' il posto trovato conta quanto dove sta: un paese intero
+         ha un centro geografico, ma quel centro non e' un posto dove
+         qualcuno va. Serve al meteo, che se no lo prende da li'. */
+      t.destTipo=d[0].addresstype||d[0].type||'';
+      t.destRank=(d[0].place_rank!=null)?+d[0].place_rank:null;
       save();
     }
   }catch(e){}
@@ -8051,7 +8261,9 @@ function renderMeteoHero(t){
   const w=(t.weather||{})[d.date],s=cieloScena(w,d.date);
   const i=t.days.indexOf(d);
   const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
-  const dove=(w&&w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):((w&&w.luogo)||d.city||cittaDelGiorno(t,d)||'');
+  /* Il "circa" non e' un vezzo: quel meteo viene dalle tappe di un altro
+     giorno, perche' questo non ne ha. Dirlo costa una tilde. */
+  const dove=(w&&w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):(((w&&w.vicino)?'≈ ':'')+((w&&w.luogo)||d.city||cittaDelGiorno(t,d)||''));
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(d.date)-oggi)/864e5);
   const destra=w
@@ -8143,7 +8355,11 @@ function renderWeather(){
     const w=t.weather[day.date],ds=new Date(day.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),da=Math.round((new Date(day.date)-today)/864e5);
     if(!w){
       if(da>16)return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${tv('Disponibile tra {1} giorni',da-16)}</div></div></div></div>`;
-      return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
+      /* Se il meteo non c'e' perche' non sappiamo DOVE guardare, si dice
+         quello: "premi per caricare" manderebbe a premere un tasto che non
+         puo' funzionare. */
+      const perche=percheNienteMeteo(t);
+      return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">${perche?'📍':'❓'}</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${perche?esc(perche):'Premi 🔄 per caricare'}</div></div></div></div>`;
     }
     const rain=w.precipitation>5,sun=w.precipitation<1&&w.tempMax>20,cls=rain?'rain':(sun?'sun':'cloud'),out=(day.activities||[]).filter(a=>a.type==='outdoor').length;
     /* Su quale posto e' la previsione: senza, un "22° e pioggia" non dice se
@@ -11880,7 +12096,13 @@ function openTimetable(){
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('dayTt').textContent=(d.title?d.title+' · ':'')+ds;
+  /* La data e' il titolo, in grande. Il nome che uno ha dato alla giornata
+     ("giorno del castello") sta sotto, e se non c'e' la riga sparisce
+     invece di lasciare un vuoto. */
+  document.getElementById('ttTitolo').textContent=ds.charAt(0).toUpperCase()+ds.slice(1);
+  const sotto=document.getElementById('dayTt');
+  sotto.textContent=d.title||'';
+  sotto.style.display=d.title?'':'none';
   document.getElementById('ttEyebrow').innerHTML=`${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span>`;
   document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>{
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
@@ -12045,6 +12267,10 @@ function buildTTDayInner(t,di){
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
+  /* La riga di adesso, e solo se la giornata e' oggi. Su un giorno che non
+     e' oggi non vuol dire niente, e una riga che non vuol dire niente uno
+     la legge lo stesso. */
+  html+=rigaAdesso(d,H);
   /* Misure dei riquadri, calcolate una volta sola: servono per disegnarli e
      anche per sapere quanto spazio resta davvero fra l'uno e l'altro. Sotto
      l'ora il layout impilato (nome sopra, orario sotto) rischia di non
@@ -15012,6 +15238,48 @@ async function nomeLuogo(t,g){
   }catch(e){return '';}
 }
 
+/* ===== DA DOVE SI PRENDE IL METEO =====
+   Il difetto piu' grosso che il meteo abbia mai avuto, e non si vedeva dal
+   codice: un viaggio con destinazione "Giappone" prendeva le previsioni dal
+   CENTRO GEOGRAFICO del Giappone. Nominatim, cercando un paese, risponde
+   con quello: le montagne del Gunma, mille metri di quota, forse il posto
+   piu' diverso da Tokyo che ci sia in Giappone. Le previsioni erano giuste,
+   era il posto a essere sbagliato - e uno legge "8 gradi e neve" mentre a
+   Tokyo ce ne sono venti.
+   Un paese non e' un posto: se la destinazione e' un paese intero, non la si
+   usa e basta. */
+function destPuntuale(t){
+  if(!t||!t.destLoc)return null;
+  if(t.destTipo==='country'||(t.destRank!=null&&t.destRank<=5))return null;
+  return t.destLoc;
+}
+/* E prima di rinunciare: se questa giornata non ha ancora tappe, il posto
+   piu' vicino al vero sono le tappe delle giornate INTORNO. Se il 3 non hai
+   messo niente ma il 2 e il 4 sei a Kyoto, il meteo di Kyoto e' una
+   risposta; quello del centro del Giappone no. Poi l'hotel, poi le citta'
+   del viaggio. */
+function postoDaVicino(t,day){
+  if(!t||!t.days||!day)return null;
+  const qui=new Date(day.date).getTime();
+  const cand=[];
+  t.days.forEach(d=>{
+    if(!d||d.date===day.date)return;
+    const g=luoghiDelGiorno(t,d);
+    if(g.length)cand.push({d:Math.abs(new Date(d.date).getTime()-qui),loc:g[0]});
+  });
+  (t.hotels||[]).forEach(h=>{if(h&&h.lat)cand.push({d:9e12,loc:{lat:h.lat,lng:h.lng}});});
+  (t.cities||[]).forEach(c=>{if(c&&c.lat)cand.push({d:8e12,loc:{lat:c.lat,lng:c.lng}});});
+  cand.sort((a,b)=>a.d-b.d);
+  return cand.length?cand[0].loc:null;
+}
+/* Perche' per questa giornata il meteo non c'e'. Dirlo vale piu' che
+   mostrare un numero preso da un posto sbagliato. */
+function percheNienteMeteo(t){
+  if(!t)return '';
+  if(t.destination&&!destPuntuale(t)&&t.destLoc)
+    return tv('«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.',String(t.destination).split(',')[0].trim());
+  return '';
+}
 async function fetchDayWx(t,day){
   /* L'alba viaggia insieme al resto perche' e' lo stesso identico
      scaricamento: serve al cielo disegnato in cima alla home per sapere
@@ -15055,14 +15323,18 @@ async function fetchDayWx(t,day){
       const ks=Object.keys(multi);
       if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
     }
-    /* 3. E se non c'e' neanche quella: l'hotel di quella notte, e in mancanza
-          anche di quello la destinazione del viaggio. */
-    const loc=dayLoc(t,day)||t.destLoc;
+    /* 3. E se non c'e' neanche quella: l'hotel di quella notte; poi le tappe
+          delle giornate intorno, che sono un'approssimazione onesta; e solo
+          per ultima la destinazione del viaggio, ma SOLO se e' un posto vero
+          e non un paese intero. */
+    const preciso=dayLoc(t,day);
+    const vicino=preciso?null:postoDaVicino(t,day);
+    const loc=preciso||vicino||destPuntuale(t);
     if(!loc)return false;
     const w=await one(loc);
     if(w){
       const nome=(await nomeLuogo(t,loc))||(t.destination||'').split(',')[0].trim();
-      t.weather[day.date]=Object.assign({},w,{luogo:nome});save();return true;
+      t.weather[day.date]=Object.assign({},w,{luogo:nome},vicino?{vicino:true}:{});save();return true;
     }
     return false;
   }catch(e){return false;}
@@ -15084,6 +15356,33 @@ function meteoSeguiLeTappe(t,day){
     .then(ok=>{wxAutoBusy=false;if(ok){renderDayWx();renderWeather();}})
     .catch(()=>{wxAutoBusy=false;});
 }
+/* Dove sei adesso dentro la giornata. Senza, per capire a che punto sei devi
+   guardare l'orologio e poi cercare quell'ora nella colonna: due gesti per una
+   cosa che una riga dice da sola. */
+function oggiISO(){const x=new Date();x.setHours(0,0,0,0);return x.toISOString().slice(0,10);}
+function rigaAdesso(d,H){
+  if(!d||d.date!==oggiISO())return '';
+  const n=new Date(),ora=n.getHours()+n.getMinutes()/60;
+  if(ora<6||ora>=24)return '';
+  const hh=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  return `<div class="tt-ora" id="ttAdesso" style="top:${(ora-6)*H}px"><b>${hh}</b></div>`;
+}
+/* E poi si muove da sola. Ridisegnare tutta la time-table ogni minuto
+   costerebbe caro e farebbe saltare un trascinamento a meta': qui si sposta
+   solo la riga, e solo se e' a schermo. */
+function adessoCammina(){
+  const el=document.getElementById('ttAdesso');if(!el)return;
+  const pag=document.getElementById('mDay');
+  if(!pag||!pag.classList.contains('active'))return;
+  const n=new Date(),ora=n.getHours()+n.getMinutes()/60;
+  if(ora<6||ora>=24){el.style.display='none';return;}
+  el.style.display='';
+  el.style.top=((ora-6)*TT_H)+'px';
+  const b=el.querySelector('b');
+  if(b)b.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+setInterval(adessoCammina,60000);
+
 function renderDayWx(){
   const t=T(),d=t.days[ttDay],el=document.getElementById('dayWx');if(!el)return;
   const w=t.weather[d.date];

@@ -24,11 +24,28 @@ const stato = {trips:[{id:1730000000001,name:'Praga',destination:'Praga',currenc
   const r=[]; const ok=(n,c,e='')=>r.push(`${c?'  OK  ':' FALLITO '} ${n}${e?' — '+e:''}`);
 
   // i tre tasti non sono più nella riga
-  const chip = await p.evaluate(()=>[...document.querySelectorAll('#mDay .chip')].map(x=>x.textContent.trim()));
+  const chip = await p.evaluate(()=>[...document.querySelectorAll('#mDay .tt-az, #mDay .tt-costruisci')].map(x=>x.textContent.trim()));
   ok('"Rientro in hotel" non è più nella riga', !chip.some(x=>/Rientro in hotel/.test(x)), chip.join(' | '));
   ok('"Importa lista" non è più nella riga', !chip.some(x=>/Importa lista/.test(x)));
   ok('"+ Foto" non è più nella riga', !chip.some(x=>/\+ Foto/.test(x)));
-  ok('restano le quattro azioni sulla giornata', chip.length===4, chip.join(' | '));
+  /* Le azioni sulla giornata sono ancora quattro, ma non stanno più tutte
+     in fila: due si usano camminando e restano in vista, due si usano da
+     fermi e stanno dietro "Costruisci la giornata". Sopra la griglia si
+     vedono quindi due tasti più la porta. */
+  const dietro = await p.evaluate(async ()=>{
+    const porta = document.querySelector('#mDay .tt-costruisci');
+    if(!porta) return [];
+    porta.click();
+    await new Promise(r2=>setTimeout(r2,450));
+    const v = [...document.querySelectorAll('.tt-strumento .ts-t')].map(x=>x.textContent.trim());
+    closeSheet('mCostruisci');
+    await new Promise(r2=>setTimeout(r2,450));
+    return v;
+  });
+  ok('sopra la griglia restano i due tasti da strada, più la porta', chip.length===3, chip.join(' | '));
+  ok('e le altre due azioni sono dietro la porta, non sparite',
+     dietro.length===2 && dietro.some(x=>/Ordina il giro/.test(x)) && dietro.some(x=>/Autopilota/.test(x)),
+     dietro.join(' | '));
 
   // il "+" apre il menu
   await p.evaluate(()=>addFromDay());

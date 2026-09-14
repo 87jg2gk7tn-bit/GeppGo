@@ -46,7 +46,7 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   ok('dal Profilo si apre la scheda del viaggio', dalProfilo==='aperta', dalProfilo);
 
   // "Naviga la giornata" è ancora in time-table
-  const tt = await p.evaluate(()=>[...document.querySelectorAll('#mDay .chip')].map(x=>x.textContent.trim()));
+  const tt = await p.evaluate(()=>[...document.querySelectorAll('#mDay .tt-az')].map(x=>x.textContent.trim()));
   ok('"Naviga la giornata" è in time-table', tt.some(x=>/Naviga la giornata/.test(x)), tt.join(' | '));
 
   await p.evaluate(()=>{closeSheet('mTripZoom');go('plan');scrollTo(0,0);});
