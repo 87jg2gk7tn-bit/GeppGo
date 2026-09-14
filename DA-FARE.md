@@ -291,8 +291,10 @@ va rifatto vedere.
 
 14. **Rivedere il layout e i movimenti.** In corso.
 
-    **Fatto il 13 settembre — al Profilo non si arrivava.** Le nove voci della
-    pillola in basso chiedono 426 px; su un iPhone da 390 ce ne sono 361.
+    **Fatto il 13 settembre — al Profilo non si arrivava.** Le voci della
+    pillola in basso chiedevano 426 px; su un iPhone da 390 ce ne sono 361.
+    (Il 14 settembre il Meteo è uscito dalla barra e sono scese a otto: non
+    basta lo stesso, la pillola scorre ancora anche su un Pro Max da 430.)
     Misurato su quattro larghezze: il **Profilo resta fuori su ogni telefono
     esistente**, anche su un Pro Max da 430, e a 390 resta fuori anche
     Identifica. Dentro il Profilo ci sono l'account, la lingua, i ripristini,
@@ -316,6 +318,50 @@ va rifatto vedere.
     messaggio — vede che di là c'è dell'altro, e la mano va da sola. La
     sfumatura sta solo dalla parte dove c'è davvero qualcosa: arrivati in
     fondo quel lato torna netto, ed è l'unico modo per sapere che è finita.
+
+    **Fatto il 14 settembre — il meteo è uscito dalla barra ed è salito in
+    cima.** Era una delle nove voci in basso, cioè una sezione dove andare. Ma
+    che tempo fa non è un posto: è una cosa che si guarda di sfuggita dieci
+    volte al giorno mentre si sta facendo altro, e per farlo si dovevano
+    lasciare la home, guardare, e tornare indietro. Adesso sta **in cima alla
+    home**, di fianco ai nomi dei viaggi, in un riquadro che disegna il cielo
+    di quella giornata; toccandolo scende una tendina dall'alto con la
+    giornata in grande, le **ore una per una**, e sotto tutti i giorni del
+    viaggio. La barra in basso ci ha guadagnato una voce in meno.
+
+    Il cielo è **disegnato, non scaricato**, e non è una scorciatoia: una
+    fotografia vera vorrebbe dire chiamare un servizio di immagini a ogni
+    giornata — un altro nome nella privacy, un'altra cosa che smette di
+    funzionare in aereo. Così è tutto CSS: sfumatura per il tipo di cielo,
+    sole o luna con l'alone, nuvole che passano, pioggia che scende, il lampo
+    ogni tanto nel temporale, le stelle quando è sereno di notte. Costa
+    niente, funziona senza rete, e cambia davvero col tempo che fa. La scena è
+    scritta tutta in `em`: lo stesso pezzo di CSS veste il francobollo in cima
+    (54 px) e il riquadro grande della tendina (176 px), e per ingrandirla
+    basta cambiare il `font-size` di chi la contiene.
+
+    **Il «+» si è spostato di fianco ai viaggi.** Stava all'estremo destro
+    della riga, staccato dai nomi a cui appartiene. Adesso gli sta appiccicato,
+    e resta **fuori** dallo scorrevole apposta: se scorresse insieme ai nomi,
+    con tre viaggi in lista non lo vedresti mai. I nomi, dove la fila continua,
+    **svaniscono** invece di essere tagliati di netto — la stessa cura data
+    alla barra in basso, e per la stessa ragione: un nome mozzato sembra un
+    difetto, un nome che sfuma dice «scorri».
+
+    **Le ore si chiedono solo per la giornata che stai guardando**, e solo
+    quando la tendina è aperta: sono una chiamata in più a un'API che non è
+    nostra, e chiederle per tutti i sette giorni quando ne guardi uno
+    sarebbe sprecarne sei. Non si salvano sul telefono — fra un'ora sarebbero
+    già vecchie.
+
+    **E per strada è saltato fuori un buco vecchio.** Le parole del tempo —
+    «pioggia leggera», «cielo limpido», «mattina piovosa», l'avviso della
+    pioggia in time-table con le tappe all'aperto a rischio — **non erano
+    tradotte in nessuna delle quattro lingue**, e la prova non poteva
+    accorgersene: il viaggio di prova non aveva meteo, quindi quelle frasi non
+    si disegnavano mai. Adesso il viaggio di prova ce l'ha, e sono tradotte
+    tutte e sessantanove. Due erano cucite a pezzi e a pezzi non si traducono:
+    la chiave è la frase intera col buco.
 
     **Fatto — al buio, senza campo, la mappa non è più una lastra chiara.** Il
     riquadro che sostituisce le tessere mancanti era disegnato una volta sola
@@ -497,6 +543,45 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Il valore di una proprietà CSS personalizzata torna com'è scritto.**
+  `getPropertyValue('--cl-g')` restituisce `linear-gradient(168deg,#3D8FD8…)`
+  con i colori in esadecimale: il browser non li normalizza in `rgb()` come fa
+  per le proprietà vere. Una prova che cercava `rgb(` dentro quel valore
+  trovava `null`, e `null < 90` è **vero** — quindi il controllo «di notte il
+  cielo è scuro» passava senza aver misurato niente. Un confronto con un
+  valore che può essere `null` va scritto in modo che `null` lo faccia
+  fallire, non passare.
+- **`elementFromPoint` sul bordo esatto non è un metro.** Cercare il bersaglio
+  di un tasto camminando pixel per pixel dal centro verso fuori dà 41 px per un
+  tasto che ne misura 44: l'ultimo pixel cade sul confine e il browser
+  risponde col genitore. La misura buona è quella geometrica di
+  `prova-tocchi`, che legge gli scarti di `::after` e li taglia sul
+  contenitore. È lo stesso inganno che aveva già fatto rossa la CI tre volte —
+  se una misura di tocchi esiste già lì, non se ne scrive una seconda.
+- **In Playwright vince l'ultima rotta registrata, non la più specifica.**
+  Registrare prima `hourly=` e poi il generico `api.open-meteo.com` che
+  annulla significa annullare anche le chiamate che volevi far passare. La
+  rotta specifica va registrata **dopo** quella generica.
+- **Una prova che non fa succedere la cosa, non la prova.** Le parole del
+  tempo sono rimaste non tradotte in quattro lingue per mesi con la prova
+  sulle lingue verde: il viaggio di prova aveva `weather: {}`, quindi
+  «pioggia leggera» e «mattina limpida» non si disegnavano mai. Non era il
+  metro a essere rotto — era la scena vuota. Prima di fidarsi di un «non
+  resta niente in italiano», si guarda **cosa c'era a schermo** mentre lo
+  diceva.
+- **Il confronto fra due lingue non vede le frasi mezze tradotte.** «14°
+  pioggia · sunset 18:20» in inglese non coincide con la versione italiana,
+  quindi passa — anche se «pioggia» è lì in italiano in mezzo. Per questo le
+  parole che finiscono **cucite dentro altre frasi** (`wxShort`, `wxDesc`)
+  devono uscire già tradotte dalla funzione, invece di aspettare il
+  traduttore del DOM: quello arriva solo quando la parola sta da sola dentro
+  un elemento suo.
+- **`querySelectorAll` non restituisce l'elemento da cui parte**, e una
+  `class` aggiunta in un ramo di un `return` non finisce negli altri rami. La
+  riga del giorno scelto nel meteo non si segnava perché avevo messo la
+  classe nei due rami «senza previsione» e dimenticato quello normale — cioè
+  l'unico che si vede quasi sempre.
 
 - **In Postgres i permessi si sommano.** Ne basta uno vecchio dimenticato per
   riaprire quello che lo schema chiude. Nel progetto vero ce n'erano quindici,

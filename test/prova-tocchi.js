@@ -51,7 +51,7 @@ const stato = { trips: [
   const guarda = async (pagina) => await page.evaluate(({ CLASSI, pagina }) => {
     if (pagina) go(pagina);
     /* La striscia che contiene un tasto, quando scorre, lo taglia ai bordi:
-       la barra in basso ha nove voci e ne mostra cinque. Una voce mezza
+       la barra in basso ha otto voci e ne mostra cinque. Una voce mezza
        fuori ha un angolo che cade SOPRA la pagina, non sopra la barra, e
        chiedere lì "chi risponde?" darebbe la scheda che sta dietro — che non
        è un furto di tocchi, è una voce non ancora scorsa in vista.
@@ -265,8 +265,10 @@ const stato = { trips: [
   ok('ed è grande abbastanza da non poterlo sbagliare', vuoto.alto >= 44, vuoto.alto + ' px');
 
   /* ── arrivare al Profilo ──────────────────────────────────────────────
-     Le nove voci della pillola chiedono 426 px; su un iPhone da 390 ce ne
-     sono 361. Il Profilo resta fuori su OGNI telefono, anche sul più grande
+     Le voci della pillola chiedono più spazio di quanto ce ne sia: su un
+     iPhone da 390 la pillola è larga 361 px. Tolto il Meteo, che adesso si
+     apre dal riquadro del cielo in cima alla home, ne sono rimaste otto — e
+     non bastano ancora: il Profilo resta fuori su OGNI telefono, anche sul più grande
      — e dentro il Profilo ci sono l'account, la lingua, i ripristini e la
      scheda del viaggio. La pillola scorreva già, ma non lo diceva a nessuno:
      scrollbar nascosta, nessun bordo sfumato, e nessuno portava in vista la

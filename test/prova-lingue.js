@@ -27,7 +27,18 @@ const stato = {
                  date: '2026-03-14' }],
     tickets: [{ id: 7, name: 'Ingresso', code: 'AB12', format: 'qrcode',
                 type: 'attraction', who: 1 }],
-    hotels: [], weather: {}, createdAt: 1,
+    hotels: [], createdAt: 1,
+    /* Il meteo c'è apposta. Senza, "pioggia leggera", "cielo limpido" e
+       "mattina piovosa" non si disegnavano mai: erano rimaste in italiano in
+       tutte e quattro le lingue, e questa prova non poteva vederle perché il
+       viaggio di prova non aveva un tempo che fa. Uno dei due giorni piove e
+       l'altro no, così si prendono due rami diversi. */
+    weather: {
+      '2026-03-14': { code: 61, tempMax: 14, tempMin: 6, precipitation: 7.2, windSpeed: 12,
+                      sunset: '2026-03-14T18:20', sunrise: '2026-03-14T06:40', luogo: 'Kyoto' },
+      '2026-03-15': { code: 0, tempMax: 19, tempMin: 8, precipitation: 0, windSpeed: 5,
+                      sunset: '2026-03-15T18:21', sunrise: '2026-03-15T06:39', luogo: 'Kyoto' }
+    },
     days: [{ id: 'd1', date: '2026-03-14', title: '', activities: [
       { id: 11, name: 'Fushimi', time: '09:30', timeEnd: '11:00', lat: 34.96, lng: 135.77,
         who: [1, 2], completed: false, type: 'outdoor', booking: { needed: true, done: false } },
@@ -89,9 +100,17 @@ async function apri(browser, lingua, linguaTelefono) {
   en.on('pageerror', e => err.push('PAGEERROR(en): ' + e.message));
   const barraEn = await en.evaluate(() =>
     [...document.querySelectorAll('.nav-item')].map(n => n.getAttribute('title')));
+  /* "Weather" non è più fra le voci: il meteo si apre dal riquadro del
+     cielo in cima alla home. Che sia tradotto anche lì lo controlla il
+     confronto fra le due lingue più sotto, che guarda dentro la tendina. */
   ok('in inglese la barra è tradotta',
-     barraEn.includes('Expenses') && barraEn.includes('Discover') && barraEn.includes('Weather'),
+     barraEn.includes('Expenses') && barraEn.includes('Discover') && barraEn.includes('Timetable'),
      barraEn.join(' · '));
+  ok('e il meteo non è più una voce della barra',
+     !barraEn.includes('Weather') && !barraEn.includes('Meteo'), barraEn.join(' · '));
+  ok('ma il riquadro del cielo lo dice nella lingua giusta',
+     await en.evaluate(() => (document.querySelector('.hh-cielo') || {}).title) === 'Weather for the trip',
+     await en.evaluate(() => (document.querySelector('.hh-cielo') || {}).title || 'non c\'è'));
   ok('e anche le etichette per chi non vede', await en.evaluate(() =>
      document.querySelector('.nav-item[data-p="money"]').getAttribute('aria-label')) === 'Expenses');
   ok('la pagina dichiara la lingua che sta usando',
@@ -364,7 +383,10 @@ async function apri(browser, lingua, linguaTelefono) {
     for (const f of fogli) { openSheet(f); await respira(160); guarda(); closeSheet(f); await attendi(190); }
     return [...fuori];
   })`;
-  const PAGINE = ['plan', 'discover', 'money', 'hotels', 'tickets', 'weather', 'identify', 'trips'];
+  /* "weather" non c'è più: il meteo non è una sezione della barra, è una
+     tendina che si apre dal riquadro in cima alla home. Viene guardata lo
+     stesso, perché il giro qui sopra apre tutti i .modal uno per uno. */
+  const PAGINE = ['plan', 'discover', 'money', 'hotels', 'tickets', 'identify', 'trips'];
 
   const leggiIn = async (lingua) => {
     const p = await apri(browser, lingua);
@@ -470,7 +492,7 @@ async function apri(browser, lingua, linguaTelefono) {
       !SENZA_LETTERE.test(x) && !CODICE_VALUTA.test(x) && !NOME_E_NUMERO.test(x) &&
       !soloUnita(x) && !eMio(x) && !soloData(x) && !fraseComposta(x) && x.length > 1);
     ok(`in ${LINGUA_NOME[l]} non resta niente in italiano a schermo`, resta.length === 0,
-       resta.length ? `${resta.length}: ` + resta.slice(0, 5).map(x => JSON.stringify(x.slice(0, 40))).join(' ')
+       resta.length ? `${resta.length}: ` + resta.slice(0, 12).map(x => JSON.stringify(x.slice(0, 70))).join(' ')
                     : `${inItaliano.size} frasi confrontate, nessuna uguale`);
   }
 
