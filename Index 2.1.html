@@ -738,26 +738,33 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
   -webkit-backdrop-filter:blur(24px) saturate(165%);
   border:1px solid var(--line);
   box-shadow:var(--sh-lg);
-  scroll-padding:.32rem;
+  overflow:visible;
 }
-/* La pillola scorre da sempre, ma non lo diceva a nessuno: barra di
-   scorrimento nascosta, nessun bordo sfumato, e l'unico indizio era l'ultima
-   icona tagliata a meta' - che non sembra un invito a scorrere, sembra un
-   difetto. Misurato: le nove voci chiedono 426px e su un iPhone da 390 ce ne
-   sono 361, quindi il Profilo resta fuori su OGNI telefono, anche sul piu'
-   grande. Stringerle non si puo': sono gia' a 44,8px e sotto i 44 si perde il
-   bersaglio minimo del dito.
-   L'ombra e' interna apposta: dipinta sul riquadro e non sul contenuto, resta
-   ferma sul bordo mentre le icone scorrono, e sparisce da sola quando da
-   quella parte non c'e' piu' niente. */
-.nav{--ombra-scorri:rgba(30,26,18,.46)}
-/* Al buio l'ombra va al contrario: una sfumatura scura su una pillola gia'
-   quasi nera non si vede (misurata: due punti di luminosita' su 255). Serve
-   un chiarore. */
-body.dark .nav{--ombra-scorri:rgba(240,234,220,.30)}
-.nav.altro-a-destra{box-shadow:var(--sh-lg),inset -24px 0 18px -18px var(--ombra-scorri)}
-.nav.altro-a-sinistra{box-shadow:var(--sh-lg),inset 24px 0 18px -18px var(--ombra-scorri)}
-.nav.altro-a-sinistra.altro-a-destra{box-shadow:var(--sh-lg),inset -24px 0 18px -18px var(--ombra-scorri),inset 24px 0 18px -18px var(--ombra-scorri)}
+/* Le nove voci chiedono piu' spazio di quanto ne abbia un telefono, quindi la
+   pillola scorre. Il punto e' farlo capire senza dirlo.
+   La pista che scorre sta DENTRO la pillola, non e' la pillola: cosi' la
+   sfumatura puo' mangiarsi le icone ai bordi senza mangiarsi anche il vetro e
+   la sua cornice. Le voci non vengono tagliate di netto - svaniscono sotto il
+   bordo, come se continuassero sotto il vetro. Chi guarda non legge un
+   messaggio, vede che di la' c'e' dell'altro; e la mano va da sola.
+   La sfumatura c'e' solo dalla parte dove c'e' davvero qualcosa: arrivato in
+   fondo, quel lato torna netto ed e' l'unico modo per sapere che e' finita. */
+.nav-track{
+  display:flex; align-items:center; gap:.1rem;
+  overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding:1.6rem;
+  --sf:34px;                         /* quanto e' lunga la dissolvenza */
+  --sx:0px; --dx:0px;
+}
+.nav-track::-webkit-scrollbar{display:none}
+.nav.altro-a-sinistra .nav-track{--sx:var(--sf)}
+.nav.altro-a-destra   .nav-track{--dx:var(--sf)}
+.nav-track{
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--sx),#000 calc(100% - var(--dx)),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 var(--sx),#000 calc(100% - var(--dx)),transparent 100%);
+}
 .nav-item{
   border-bottom:none!important;
   border-radius:999px;
@@ -1006,10 +1013,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 /* ── barra in basso: icone in tratto sottile, "+" oro al centro ──
    A riposo si vedono le cinque del mock (mappa, lente, +, €, persona);
    le altre cinque restano raggiungibili scorrendo la pillola. */
-.nav{align-items:center;gap:.1rem}
-.nav-item{display:grid;place-items:center;padding:.55rem .68rem;color:var(--ink-faint)}
-.nav-item svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.ni-tx{font-size:1.24rem;font-weight:600;line-height:23px;display:block}
+.nav{align-items:center;gap:0}
+.nav-item{display:grid;place-items:center;padding:.55rem .7rem;color:var(--ink-faint)}
+/* Da 23 a 27: a 23 px, in mezzo a una strada e con una mano sola, l'icona si
+   guarda due volte prima di riconoscerla. */
+.nav-item svg{width:27px;height:27px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ni-tx{font-size:1.4rem;font-weight:600;line-height:27px;display:block}
 .nav-item.active{background:var(--ink);color:var(--paper)}
 
 /* ── "La giornata": il + di aggiunta le sta accanto, non più in barra ── */
@@ -1168,7 +1177,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <button class="th-btn" id="thLight" onclick="toggleDark(false)" title="Tema chiaro" aria-label="Tema chiaro">☀</button>
     </div>
   </div>
-  <div class="nav">
+  <div class="nav"><div class="nav-track">
     <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
     <div class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
     <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
@@ -1178,7 +1187,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></div>
     <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></div>
     <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
-  </div>
+  </div></div>
   <div class="scroll">
     <div class="page active" id="plan">
       <div id="homeHero"></div>
@@ -4883,26 +4892,31 @@ function drawMarkers(){
    il dito si vede sempre. La seconda: le ombre sui bordi dicono da che parte
    c'e' dell'altro. */
 function navPortaInVista(subito){
-  const barra=document.querySelector('.nav');if(!barra)return;
-  const voce=barra.querySelector('.nav-item.active');if(!voce)return;
-  const meta=voce.offsetLeft-(barra.clientWidth-voce.offsetWidth)/2;
-  const dove=Math.max(0,Math.min(meta,barra.scrollWidth-barra.clientWidth));
+  const barra=document.querySelector('.nav'),pista=barra&&barra.querySelector('.nav-track');
+  if(!pista)return;
+  const voce=pista.querySelector('.nav-item.active');if(!voce)return;
+  const meta=voce.offsetLeft-(pista.clientWidth-voce.offsetWidth)/2;
+  const dove=Math.max(0,Math.min(meta,pista.scrollWidth-pista.clientWidth));
   /* Si sposta scrollLeft a mano invece di scrollIntoView: quello, su una
      pillola incollata in fondo allo schermo, si porta dietro anche la
      pagina. */
   const fermo=subito||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  try{barra.scrollTo({left:dove,behavior:fermo?'auto':'smooth'});}
-  catch(e){barra.scrollLeft=dove;}
+  try{pista.scrollTo({left:dove,behavior:fermo?'auto':'smooth'});}
+  catch(e){pista.scrollLeft=dove;}
 }
 function navBordi(){
-  const barra=document.querySelector('.nav');if(!barra)return;
-  const resta=barra.scrollWidth-barra.clientWidth;
-  barra.classList.toggle('altro-a-destra',barra.scrollLeft<resta-1);
-  barra.classList.toggle('altro-a-sinistra',barra.scrollLeft>1);
+  const barra=document.querySelector('.nav'),pista=barra&&barra.querySelector('.nav-track');
+  if(!pista)return;
+  const resta=pista.scrollWidth-pista.clientWidth;
+  /* Le classi restano sulla pillola: e' lei che comanda la dissolvenza della
+     pista, e da fuori si legge in un colpo d'occhio da che parte c'e' altro. */
+  barra.classList.toggle('altro-a-destra',pista.scrollLeft<resta-1);
+  barra.classList.toggle('altro-a-sinistra',pista.scrollLeft>1);
 }
 function navAvvia(){
-  const barra=document.querySelector('.nav');if(!barra)return;
-  barra.addEventListener('scroll',navBordi,{passive:true});
+  const barra=document.querySelector('.nav'),pista=barra&&barra.querySelector('.nav-track');
+  if(!pista)return;
+  pista.addEventListener('scroll',navBordi,{passive:true});
   addEventListener('resize',()=>{navBordi();navPortaInVista(true);});
   navPortaInVista(true);navBordi();
 }

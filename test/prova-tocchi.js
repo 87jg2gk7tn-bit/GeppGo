@@ -197,19 +197,29 @@ const stato = { trips: [
      tutti.visti.length >= CLASSI.length - 1,
      tutti.visti.length + ' classi su ' + CLASSI.length + ': ' + tutti.visti.join(', '));
 
-  // ── l'aspetto non è cambiato ────────────────────────────────────────────
-  // L'area cresce, il tasto no: è tutto il punto. Se un giorno qualcuno
-  // "sistemasse" questo mettendo del padding vero, l'app cambierebbe faccia.
+  // ── quello che cresce, e quello che no ──────────────────────────────────
+  /* Per le scorciatoie della home cresce solo l'area invisibile: il tasto
+     resta piccolo com'è sempre stato, ed è tutto il punto. Se un giorno
+     qualcuno "sistemasse" questo mettendo del padding vero, l'app cambierebbe
+     faccia in una schermata che non voleva cambiarla.
+     La barra in basso è un caso a parte, e per scelta: le sue icone sono state
+     portate da 23 a 27 px perché a 23, camminando per una città che non
+     conosci e con una mano sola, un'icona la guardi due volte prima di
+     riconoscerla. Quindi lì il tasto DEVE essere più alto di prima — ma non
+     tanto da mangiarsi lo schermo. */
   await page.evaluate(() => go('plan'));
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
   const aspetto = await page.evaluate(() => {
     const a = document.querySelector('.hh-act'), n = document.querySelector('.nav-item');
     return { scorciatoia: Math.round(a.getBoundingClientRect().height),
-             barra: Math.round(n.getBoundingClientRect().height) };
+             barra: Math.round(n.getBoundingClientRect().height),
+             icona: Math.round(document.querySelector('.nav-item svg').getBoundingClientRect().width) };
   });
-  ok('ma i tasti restano piccoli a vedersi, come sono sempre stati',
-     aspetto.scorciatoia < 34 && aspetto.barra < 44,
-     'scorciatoia ' + aspetto.scorciatoia + ' px, barra ' + aspetto.barra + ' px');
+  ok('le scorciatoie della home restano piccole a vedersi, come sono sempre state',
+     aspetto.scorciatoia < 34, aspetto.scorciatoia + ' px');
+  ok('le icone della barra invece si vedono, senza gonfiare la pillola',
+     aspetto.icona >= 26 && aspetto.barra >= 44 && aspetto.barra <= 52,
+     'icona ' + aspetto.icona + ' px, tasto ' + aspetto.barra + ' px');
 
   // ── e ogni tasto dice qualcosa quando lo tocchi ─────────────────────────
   const muti = await page.evaluate((CLASSI) => {
@@ -277,17 +287,31 @@ const stato = { trips: [
         const r2 = v.getBoundingClientRect();
         return r2.left >= rb.left - 0.5 && r2.right <= rb.right + 0.5;
       };
+      /* La dissolvenza si legge dal vero: quanto e' lunga la parte
+         trasparente della maschera, a sinistra e a destra. Zero vuol dire
+         bordo netto — da quella parte non c'e' altro. */
+      const pista = barra.querySelector('.nav-track');
+      const sfuma = () => {
+        const st = getComputedStyle(pista);
+        return { sx: parseFloat(st.getPropertyValue('--sx')) || 0,
+                 dx: parseFloat(st.getPropertyValue('--dx')) || 0,
+                 maschera: (st.maskImage || st.webkitMaskImage || '') };
+      };
       const allAvvio = {
         profiloSiVede: dentro('[data-p="trips"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
-        ombraSinistra: barra.classList.contains('altro-a-sinistra')
+        ombraSinistra: barra.classList.contains('altro-a-sinistra'),
+        sfuma: sfuma(),
+        pistaScorre: getComputedStyle(pista).overflowX,
+        pillolaNonScorre: getComputedStyle(barra).overflowX
       };
       go('trips');
       await attendi(700);
       const suProfilo = {
         profiloSiVede: dentro('[data-p="trips"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
-        ombraSinistra: barra.classList.contains('altro-a-sinistra')
+        ombraSinistra: barra.classList.contains('altro-a-sinistra'),
+        sfuma: sfuma()
       };
       go('plan');
       await attendi(700);
@@ -307,6 +331,24 @@ const stato = { trips: [
     ok(`a ${largo}px, arrivati in fondo l'ombra passa a sinistra`,
        d.suProfilo.ombraSinistra === true && d.suProfilo.ombraDestra === false,
        `destra ${d.suProfilo.ombraDestra}, sinistra ${d.suProfilo.ombraSinistra}`);
+    /* Il vetro non si dissolve insieme alle voci: a scorrere e' la pista
+       dentro la pillola, non la pillola. Se un giorno qualcuno rimettesse
+       l'overflow sulla pillola, la maschera si mangerebbe anche la cornice. */
+    ok(`a ${largo}px, a scorrere è la pista, non il vetro`,
+       d.allAvvio.pistaScorre === 'auto' && d.allAvvio.pillolaNonScorre === 'visible',
+       `pista ${d.allAvvio.pistaScorre}, pillola ${d.allAvvio.pillolaNonScorre}`);
+    /* E la dissolvenza sta dalla parte dove c'e' davvero dell'altro: all'inizio
+       a destra, arrivati in fondo a sinistra. E' l'unico modo che ha una
+       persona per sapere che di la' la fila continua — e per sapere quando e'
+       finita. */
+    ok(`a ${largo}px, all'avvio le voci svaniscono a destra e il bordo sinistro è netto`,
+       d.allAvvio.sfuma.dx > 8 && d.allAvvio.sfuma.sx === 0,
+       `sinistra ${d.allAvvio.sfuma.sx}px, destra ${d.allAvvio.sfuma.dx}px`);
+    ok(`a ${largo}px, in fondo si ribalta`,
+       d.suProfilo.sfuma.sx > 8 && d.suProfilo.sfuma.dx === 0,
+       `sinistra ${d.suProfilo.sfuma.sx}px, destra ${d.suProfilo.sfuma.dx}px`);
+    ok(`a ${largo}px, ed è una sfumatura, non un taglio netto`,
+       /gradient/.test(d.allAvvio.sfuma.maschera), d.allAvvio.sfuma.maschera.slice(0, 60));
     await p2.close();
   }
 

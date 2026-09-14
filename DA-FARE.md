@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 13 settembre 2026.
+Aggiornato: 14 settembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -305,10 +305,17 @@ va rifatto vedere.
     Stringere le icone **non si può**: sono a 44,8 px e sotto i 44 si perde il
     bersaglio minimo del dito, sistemato apposta poche settimane fa. Quindi si
     è lavorato sull'onestà dello scorrimento: quando vai da qualche parte la
-    pillola porta quella voce in mezzo, e un'ombra sul bordo dice da che parte
-    c'è dell'altro. Al buio l'ombra va al contrario — una sfumatura scura su
-    una pillola già quasi nera vale due punti di luminosità su 255, misurati:
-    lì serve un chiarore.
+    pillola porta quella voce in mezzo.
+
+    **Rifatto il 14 settembre, e adesso si capisce.** Le icone sono passate da
+    23 a 27 px: a 23, camminando per una città che non conosci e con una mano
+    sola, un'icona la guardi due volte prima di riconoscerla. E lo scorrimento
+    non si annuncia più con un'ombra, si vede: la fila delle voci scorre in una
+    **pista dentro la pillola**, e ai bordi le icone **svaniscono sotto il
+    vetro** invece di essere tagliate di netto. Chi guarda non legge un
+    messaggio — vede che di là c'è dell'altro, e la mano va da sola. La
+    sfumatura sta solo dalla parte dove c'è davvero qualcosa: arrivati in
+    fondo quel lato torna netto, ed è l'unico modo per sapere che è finita.
 
     **Fatto — al buio, senza campo, la mappa non è più una lastra chiara.** Il
     riquadro che sostituisce le tessere mancanti era disegnato una volta sola
@@ -696,17 +703,26 @@ qualcuno che risponde".
   l'azione su quelle schermate c'era già a un centimetro di distanza. Non si
   vedeva leggendo il codice, si è visto con uno screenshot. Vale per ogni
   modifica all'aspetto: **un'immagine prima e una dopo**, non la memoria.
-- **Un bordo sfumato su una pillola che scorre si fa con l'ombra INTERNA.**
-  Una maschera (`mask-image`) sfumerebbe anche il fondo e il bordo della
-  pillola, che si vedrebbe dissolvere; uno `::before` in un contenitore flex
-  diventa un elemento della fila e sposta tutto. L'ombra interna invece è
-  dipinta sul riquadro e non sul contenuto: resta ferma sul bordo mentre le
-  icone scorrono, rispetta l'arrotondamento, e non serve toccare la struttura.
+- **Per far capire che una fila scorre, la fila va DENTRO al contenitore, non
+  è il contenitore.** Prima la pillola in basso era essa stessa l'elemento che
+  scorre, e questo obbliga a segnalare lo scorrimento con un'ombra interna —
+  una maschera avrebbe dissolto anche il vetro e la sua cornice. Con una pista
+  (`.nav-track`) che scorre dentro la pillola, la maschera può mangiarsi le
+  icone ai bordi lasciando intatto il vetro: le voci **svaniscono sotto il
+  bordo** invece di essere tagliate di netto, e si capisce che di là la fila
+  continua senza che nessuno lo scriva. Costa un elemento in più nell'HTML e
+  ripaga in tutto il resto — fra l'altro la maschera funziona uguale nei due
+  temi, mentre l'ombra andava invertita al buio.
 - **Al buio le ombre vanno al contrario, e va misurato.** La stessa sfumatura
   scura che in tema chiaro toglie 24 punti di luminosità, in tema scuro su una
   pillola già quasi nera ne toglie **due su 255**: non esiste. Lì serve un
-  chiarore. Un accorgimento visivo non è fatto finché non se ne è letto il
-  pixel in tutti e due i temi.
+  chiarore — o, meglio, un accorgimento che non dipenda dal colore, come la
+  maschera. Un effetto visivo non è fatto finché non se ne è letto il pixel in
+  tutti e due i temi.
+- **Una lunghezza che una prova deve leggere si scrive in pixel.** La
+  dissolvenza era `2.1rem`: `getComputedStyle().getPropertyValue('--sf')`
+  restituisce la stringa così com'è, e `parseFloat` dà **2.1**, non 33.6. La
+  prova confrontava rem con pixel e diceva di no a una cosa giusta.
 - **Un riconoscitore di «sembra italiano» non e' una prova: e' un indovinello.**
   Il primo metro cercava frasi contenenti una parolina italiana (`il`, `che`,
   `non`, `giorni`). «Esci», «Saldi», «Recupero», «Condividi», «Bagagli» non ne
