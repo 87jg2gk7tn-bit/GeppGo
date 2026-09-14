@@ -364,6 +364,18 @@ va rifatto vedere.
     la finestra è più grande. Quello che cambia è `--s`, e sposta di poco: 1
     nell'intestazione, 0,62 nel riquadro della tendina.
 
+    **Il sole stava a cavallo del bordo.** Misurato: il disco partiva quattro
+    pixel sopra l'inizio del velo, e la linea in alto lo tagliava di netto —
+    insieme all'alone, che è proprio la parte che lo fa sembrare luce e non un
+    cerchio giallo. Fra l'inizio del velo e la riga dei viaggi ci sono 72 px,
+    quindi lo spazio c'era: adesso è un disco da 52 con **9 px d'aria sopra e
+    11 prima delle pillole**. E l'alone è diventato **doppio** — uno stretto e
+    denso attaccato al disco, uno largo e molto più tenue — perché uno solo,
+    largo 78 px e alla stessa intensità del nucleo, arrivava fin sotto la
+    temperatura e si leggeva come una macchia gialla addosso al numero. Tre
+    controlli geometrici lo tengono fermo: tutto dentro, lontano dalle pillole,
+    lontano dalla temperatura.
+
     Una cosa che il disegno impone al testo: quando il cielo in alto è scuro
     (pioggia, temporale, notte) l'intestazione prende la classe `cl-buio` e i
     nomi dei viaggi passano all'inchiostro chiaro. Inchiostro tenue su un

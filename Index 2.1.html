@@ -1064,7 +1064,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   --s:1;
   --cl-alto:#8FB6D6;
   --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
-  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.5);
+  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.42);--cl-alone2:rgba(255,231,163,.17);
   --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.92);--vel:1;
   --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
 }
@@ -1085,8 +1085,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.notte.forte{--cl-goccia:rgba(226,240,255,.92)}
 .cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
 /* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
-.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.28);
-  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);
+.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.26);
+  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);--cl-alone2:rgba(228,238,248,.1);
   --cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
 .cielo.notte.c-sereno {--cl-alto:#0F2039;--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
 .cielo.notte.c-velato {--cl-alto:#182942;--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
@@ -1102,14 +1102,23 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 /* Il sole (o la luna): un disco con due aloni, uno stretto e uno largo. */
 /* Sta in alto a DESTRA, sopra la riga dei viaggi. A sinistra finiva
-   dietro il primo nome, e un sole mezzo coperto da una pillola non
-   sembra un sole: sembra uno sbaglio. */
+   dietro il primo nome, e un sole mezzo coperto da una pillola non sembra
+   un sole: sembra uno sbaglio.
+   E sta SOTTO il bordo, non a cavallo: misurato, il disco partiva quattro
+   pixel sopra l'inizio del velo e la linea in alto lo tagliava di netto -
+   insieme all'alone, che e' la parte che lo fa sembrare luce. Fra l'inizio
+   del velo e la riga dei viaggi ci sono settantadue pixel: un disco da
+   cinquantadue con nove di aria sopra ci sta intero, e ne restano undici
+   prima delle pillole.
+   L'alone e' DUE aloni, uno stretto e uno largo molto piu' tenue. Uno solo,
+   alla stessa intensita', arrivava fin sotto la temperatura: una macchia
+   gialla, non una luce. */
 .cl-astro{
-  top:calc(-4px*var(--s));right:16%;
-  width:calc(60px*var(--s));height:calc(60px*var(--s));border-radius:50%;
+  top:calc(9px*var(--s));right:21%;
+  width:calc(52px*var(--s));height:calc(52px*var(--s));border-radius:50%;
   background:var(--cl-astro);
-  box-shadow:0 0 calc(26px*var(--s)) calc(15px*var(--s)) var(--cl-alone),
-             0 0 calc(78px*var(--s)) calc(38px*var(--s)) var(--cl-alone);
+  box-shadow:0 0 calc(16px*var(--s)) calc(5px*var(--s)) var(--cl-alone),
+             0 0 calc(54px*var(--s)) calc(20px*var(--s)) var(--cl-alone2);
 }
 /* La luna e' lo stesso disco con un morso d'ombra: nessuna immagine in
    piu', e il morso lascia intravedere il cielo che ha dietro. */

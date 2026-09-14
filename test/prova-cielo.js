@@ -221,6 +221,33 @@ const oreFinte = (data) => {
   ok('e svanisce verso il basso, invece di finire con un taglio', sfondo.veloSvanisce === true);
   ok('col sereno c\'è il sole e non ci sono nuvole davanti',
      sfondo.sole === true && sfondo.nuvole === 0, `sole ${sfondo.sole}, nuvole ${sfondo.nuvole}`);
+  /* Il sole sta SOTTO il bordo, non a cavallo. Partiva quattro pixel sopra
+     l'inizio del velo e la linea in alto lo tagliava di netto — insieme
+     all'alone, che è la parte che lo fa sembrare luce. E non deve finire
+     addosso né alle pillole dei viaggi né alla temperatura: un sole mezzo
+     coperto da un'altra cosa non sembra un sole, sembra uno sbaglio. */
+  const astro = await page.evaluate(() => {
+    const velo = document.querySelector('.hh-velo');
+    const sole = document.querySelector('.hh-velo .cl-astro');
+    const chip = document.querySelector('.hh-trip'), grado = document.querySelector('.hh-grado');
+    if (!velo || !sole) return { cè: false };
+    const v = velo.getBoundingClientRect(), s2 = sole.getBoundingClientRect();
+    const c = chip && chip.getBoundingClientRect(), g = grado && grado.getBoundingClientRect();
+    return {
+      cè: true,
+      ariaSopra: Math.round(s2.top - v.top),
+      ariaSotto: c ? Math.round(c.top - s2.bottom) : null,
+      distanzaGrado: g ? Math.round(g.left - s2.right) : null,
+      largo: Math.round(s2.width)
+    };
+  });
+  ok('il sole sta tutto dentro, non a cavallo della linea in alto',
+     astro.cè === true && astro.ariaSopra >= 4, astro.ariaSopra + 'px d\'aria sopra');
+  ok('e non finisce addosso ai nomi dei viaggi',
+     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px prima delle pillole');
+  ok('né addosso alla temperatura',
+     astro.distanzaGrado !== null && astro.distanzaGrado >= 12,
+     astro.distanzaGrado + 'px dalla temperatura');
   ok('e il tondo decorativo si spegne', sfondo.tondoSpento === true);
   const luceSereno = sfondo.luce;
   await page.close();
