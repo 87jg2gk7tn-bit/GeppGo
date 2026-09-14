@@ -122,6 +122,16 @@ const oreFinte = (data) => {
 
   // ══ la riga in cima: i nomi, il "+", la temperatura ══════════════════
   let page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
+  /* La riga va misurata quando ha finito di prendere le sue misure. Se la
+     si interroga mentre si sta ancora assestando - i caratteri che
+     arrivano, il cielo che si disegna - si legge una fila che NON sborda,
+     e allora le sfumature sono spente tutte e due: la prova dice «0px,
+     0px» senza che niente sia rotto. Su un runner lento è successo
+     davvero, e su un altro identico no. */
+  await page.waitForFunction(() => {
+    const f = document.querySelector('.hh-trips');
+    return f && f.scrollWidth - f.clientWidth > 1;
+  }, { timeout: 8000 }).catch(() => {});
   const riga = await page.evaluate(() => {
     const barra = document.querySelector('.hh-tripbar');
     const fila = document.querySelector('.hh-trips');
@@ -175,16 +185,21 @@ const oreFinte = (data) => {
   ok('e dove la fila continua svaniscono, invece di essere tagliati',
      riga.vdx > 8 && riga.vsx === 0, `sinistra ${riga.vsx}px, destra ${riga.vdx}px`);
   ok('ed è una sfumatura, non un taglio', /gradient/.test(riga.maschera), riga.maschera.slice(0, 40));
-  const inFondo = await page.evaluate(async () => {
+  /* Si chiama a mano chi decide le sfumature, invece di lanciare un evento
+     e sperare che qualcuno lo raccolga entro un decimo di secondo:
+     l'aspettare era metà del ballo. */
+  const inFondo = await page.evaluate(() => {
     const fila = document.querySelector('.hh-trips');
-    fila.scrollLeft = fila.scrollWidth;
-    fila.dispatchEvent(new Event('scroll'));
-    await new Promise(r2 => setTimeout(r2, 120));
+    const resta = fila.scrollWidth - fila.clientWidth;
+    fila.scrollLeft = resta;
+    viaggiBordi();
     const st = getComputedStyle(fila);
-    return { sx: parseFloat(st.getPropertyValue('--vsx')) || 0, dx: parseFloat(st.getPropertyValue('--vdx')) || 0 };
+    return { sx: parseFloat(st.getPropertyValue('--vsx')) || 0,
+             dx: parseFloat(st.getPropertyValue('--vdx')) || 0,
+             sborda: Math.round(resta), fermaA: Math.round(fila.scrollLeft) };
   });
   ok('arrivati in fondo la sfumatura si ribalta', inFondo.sx > 8 && inFondo.dx === 0,
-     `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px`);
+     `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px · la fila sborda di ${inFondo.sborda}px, ferma a ${inFondo.fermaA}px`);
 
   // ══ il cielo È lo sfondo, non un'immagine appoggiata sopra ═══════════
   const sfondo = await page.evaluate(([luce]) => {
