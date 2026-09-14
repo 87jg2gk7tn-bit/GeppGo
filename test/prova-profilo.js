@@ -18,7 +18,11 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   const barra = await p.evaluate(()=>[...document.querySelectorAll('.nav-item')].map(x=>x.dataset.p));
   ok('la sezione Impostazioni non è più nella barra', !barra.includes('settings'), barra.join(' · '));
   ok('il Profilo è l\'ultima voce', barra[barra.length-1]==='trips', barra.join(' · '));
-  ok('non ci sono più due icone uguali a sole', barra.filter(x=>x==='weather'||x==='settings').length===1);
+  /* Impostazioni e Meteo avevano tutt'e due un sole per icona, e nella
+     barra si leggeva come un doppione. Impostazioni è sparita dentro il
+     Profilo, il Meteo è diventato il riquadro del cielo in cima alla home:
+     nella barra di soli non ce n'è più nessuno. */
+  ok('nella barra non c\'è più nessuna icona a sole', barra.filter(x=>x==='weather'||x==='settings').length===0, barra.join(' · '));
 
   // il contenuto: tutto dentro il Profilo
   await p.evaluate(()=>{go('trips');scrollTo(0,0);});

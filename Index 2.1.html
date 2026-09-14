@@ -193,7 +193,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .wc-t{font-weight:800;font-size:.95rem}
 .wc-d{font-family:'Fraunces',serif;font-style:italic;font-size:.82rem;opacity:.92;margin-top:.12rem}
 .wc-temp{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;line-height:1;text-align:right}
-.wc-min{font-size:.76rem;opacity:.88;margin-top:.2rem;text-align:right}
+.wc-min{font-size:.76rem;opacity:.88;margin-top:.2rem;text-align:right;white-space:nowrap}
 .budget-hero{background:var(--grad);color:#fff;padding:1.4rem;border-radius:var(--r-xl);margin-bottom:.95rem;box-shadow:var(--sh-blue);position:relative;overflow:hidden}
 .budget-hero::after{content:'';position:absolute;right:-25px;bottom:-35px;width:150px;height:150px;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
 .bh-amt{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;letter-spacing:-.01em;line-height:1;position:relative}
@@ -944,12 +944,25 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-empty-t{font-size:.86rem;color:var(--ink-faint)}
 .hh-empty-a{font-size:.92rem;font-weight:800;color:var(--green-deep)}
 
-/* ── riga dei viaggi aperti, col "+" fermo a destra ────────────── */
-.hh-tripbar{position:relative;display:flex;align-items:center;gap:.5rem;margin-bottom:.95rem}
+/* ── riga dei viaggi aperti, col cielo del giorno all'altro capo ──
+   Il "+" stava fermo all'estremo destro, staccato da tutto. Adesso sta
+   in coda ai viaggi, dove uno lo cerca: e' l'ultima cosa della lista,
+   non un tasto per conto suo. Lo spazio che lascia libero non e' vuoto,
+   ci sta il cielo della giornata. */
+.hh-tripbar{position:relative;display:flex;align-items:center;gap:.55rem;margin-bottom:.95rem}
 .hh-trips{
-  display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;
+  display:flex;align-items:center;gap:.35rem;overflow-x:auto;scrollbar-width:none;
   flex:1;min-width:0;padding:.15rem 0;
+  /* Stessa cura della barra in basso: dove la fila continua le voci
+     svaniscono, dove finisce il bordo resta netto. Un nome tagliato a
+     meta' sembra un difetto; un nome che sfuma dice "scorri". */
+  --vf:26px;--vsx:0px;--vdx:0px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--vsx),#000 calc(100% - var(--vdx)),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 var(--vsx),#000 calc(100% - var(--vdx)),transparent 100%);
+  scroll-padding:1.4rem;
 }
+.hh-trips.viaggi-a-sinistra{--vsx:var(--vf)}
+.hh-trips.viaggi-a-destra{--vdx:var(--vf)}
 .hh-trips::-webkit-scrollbar{display:none}
 .hh-trip-add{
   flex:0 0 auto;width:31px;height:31px;border-radius:50%;cursor:pointer;
@@ -966,6 +979,198 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 .hh-trip:active{transform:scale(.95)}
 .hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ── il cielo della giornata ──────────────────────────────────────
+   Una fotografia vera del meteo vorrebbe dire chiamare un servizio di
+   immagini a ogni giornata: un altro nome nella privacy, un'altra cosa
+   che smette di funzionare quando il telefono e' senza rete. Cosi' il
+   cielo e' disegnato - sfumatura, sole o luna, nuvole che passano,
+   pioggia che scende - e cambia davvero col tempo che fa, anche in
+   aereo.
+   Le stesse classi vestono il riquadro piccolo in cima alla home e
+   quello grande dentro la tendina: dentro e' tutto in "em", quindi per
+   ingrandire la scena intera basta cambiare il font-size di chi la
+   contiene. */
+.cielo{
+  position:relative;overflow:hidden;isolation:isolate;
+  --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
+  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.55);
+  --cl-nuv:rgba(255,255,255,.88);
+  --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
+}
+.cielo::before{content:'';position:absolute;inset:0;background:var(--cl-g)}
+.cielo>span{position:absolute;pointer-events:none}
+.cielo.c-sereno {--cl-g:linear-gradient(168deg,#3D8FD8 0%,#7CBEEA 52%,#C9E5F7 100%)}
+.cielo.c-velato {--cl-g:linear-gradient(168deg,#62A2D6 0%,#9DC9E7 55%,#D9E9F3 100%)}
+.cielo.c-nuvolo {--cl-g:linear-gradient(168deg,#77889A 0%,#A7B4BE 55%,#D3D9DD 100%)}
+.cielo.c-nebbia {--cl-g:linear-gradient(168deg,#99A2A5 0%,#C4C8C3 60%,#E3E1D7 100%)}
+.cielo.c-pioggia{--cl-g:linear-gradient(168deg,#4C5E6E 0%,#788C9A 55%,#AAB8C1 100%)}
+.cielo.c-neve   {--cl-g:linear-gradient(168deg,#8196AB 0%,#BACCDB 55%,#E9F1F7 100%)}
+.cielo.c-tempo  {--cl-g:linear-gradient(168deg,#2E3540 0%,#515B69 55%,#838D9A 100%)}
+.cielo.c-ignoto {--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
+/* Di notte cambia tutto: il sole diventa luna, le nuvole si spengono e
+   la scritta passa da scura a chiara. */
+.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.3);
+  --cl-nuv:rgba(188,202,219,.42);--cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
+.cielo.notte.c-sereno {--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
+.cielo.notte.c-velato {--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
+.cielo.notte.c-nuvolo {--cl-g:linear-gradient(168deg,#1B222B 0%,#333E4B 60%,#55606D 100%)}
+.cielo.notte.c-nebbia {--cl-g:linear-gradient(168deg,#232A2E 0%,#3E464A 60%,#646A69 100%)}
+.cielo.notte.c-pioggia{--cl-g:linear-gradient(168deg,#141D26 0%,#2A3A48 60%,#4A5D6C 100%)}
+.cielo.notte.c-neve   {--cl-g:linear-gradient(168deg,#1A2534 0%,#334458 60%,#5D7186 100%)}
+.cielo.notte.c-tempo  {--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
+.cielo.notte.c-ignoto {--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
+
+/* Il sole (o la luna): un disco con l'alone intorno. */
+.cl-astro{
+  top:.13em;left:.15em;width:.29em;height:.29em;border-radius:50%;
+  background:var(--cl-astro);
+  box-shadow:0 0 .12em .07em var(--cl-alone),0 0 .34em .16em var(--cl-alone);
+}
+/* La luna e' lo stesso disco con un morso d'ombra: niente immagine in
+   piu', e il morso e' scuro e trasparente insieme, cosi' lascia vedere
+   il cielo che ha dietro qualunque esso sia. */
+.cielo.notte .cl-astro::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 122% 24%,rgba(10,16,28,.92) 52%,transparent 62%);
+}
+/* Le nuvole: un cuscino con due gobbe sopra, tre profondita' diverse. */
+.cl-nuv{
+  height:.075em;border-radius:.05em;background:var(--cl-nuv);
+  animation:cl-passa 34s linear infinite;
+}
+.cl-nuv::before,.cl-nuv::after{content:'';position:absolute;background:inherit;border-radius:50%}
+.cl-nuv::before{width:.15em;height:.15em;left:16%;top:-.085em}
+.cl-nuv::after {width:.105em;height:.105em;left:52%;top:-.05em}
+/* Le nuvole stanno in percentuale sulla larghezza e in em sull'altezza:
+   il riquadro in cima e' un francobollo, quello nella tendina e' largo
+   tre volte tanto, e le nuvole devono spargersi in tutti e due invece di
+   ammucchiarsi nell'angolo. */
+.cl-nuv.n1{width:.38em;top:.30em;left:-4%;opacity:.95;animation-duration:38s}
+.cl-nuv.n2{width:.27em;top:.15em;left:44%;opacity:.7;transform:scale(.9);animation-duration:52s;animation-delay:-14s}
+.cl-nuv.n3{width:.45em;top:.47em;left:16%;opacity:.85;animation-duration:29s;animation-delay:-7s}
+@keyframes cl-passa{from{translate:-.75em 0}to{translate:1.5em 0}}
+
+/* Pioggia e neve: una piastrella con una goccia dentro, che scorre di
+   esattamente una piastrella - cosi' il giro si chiude e non si vede
+   il salto. */
+.cl-pio,.cl-nev{inset:-14% -12%;opacity:.75}
+.cl-pio{
+  background-image:radial-gradient(ellipse .008em .05em at 50% 40%,rgba(255,255,255,.95),transparent 70%);
+  background-size:.115em .3em;
+  rotate:13deg;animation:cl-piove .55s linear infinite;
+}
+.cl-nev{
+  background-image:radial-gradient(circle .022em at 50% 50%,rgba(255,255,255,.95),transparent 70%);
+  background-size:.17em .34em;
+  animation:cl-nevica 3.4s linear infinite;
+}
+@keyframes cl-piove {from{background-position:0 0}to{background-position:0 .3em}}
+@keyframes cl-nevica{from{background-position:0 0}to{background-position:0 .34em}}
+/* La nebbia: due strisce chiare che passano piano, una sopra l'altra. */
+.cl-neb{
+  inset:0;
+  background:
+    linear-gradient(transparent 34%,rgba(255,255,255,.5) 44% 54%,transparent 64%),
+    linear-gradient(transparent 62%,rgba(255,255,255,.38) 70% 78%,transparent 86%);
+  animation:cl-nebbia 16s ease-in-out infinite alternate;
+}
+@keyframes cl-nebbia{from{translate:-.06em 0;opacity:.75}to{translate:.06em 0;opacity:1}}
+/* Il lampo: quasi sempre spento, un guizzo ogni tanto. Se fosse
+   frequente diventerebbe una lucina che lampeggia, cioe' un difetto. */
+.cl-lampo{
+  inset:0;background:linear-gradient(180deg,rgba(255,255,255,.92),transparent 62%);
+  opacity:0;animation:cl-tuono 8s linear infinite;
+}
+@keyframes cl-tuono{0%,4%,100%{opacity:0}1%{opacity:.85}2%{opacity:.1}3%{opacity:.55}}
+/* Le stelle, solo quando il cielo e' sgombro: puntini fermi. */
+.cl-stelle{
+  inset:0;opacity:.85;
+  background-image:
+    radial-gradient(circle .009em at 22% 22%,#fff,transparent),
+    radial-gradient(circle .007em at 61% 13%,#fff,transparent),
+    radial-gradient(circle .008em at 82% 31%,#fff,transparent),
+    radial-gradient(circle .006em at 44% 38%,#fff,transparent),
+    radial-gradient(circle .007em at 12% 47%,#fff,transparent),
+    radial-gradient(circle .009em at 91% 9%,#fff,transparent);
+}
+/* La temperatura sta dentro la scena, quindi non puo' contare su un
+   fondo di un colore solo: l'alone dietro e' quello che la tiene
+   leggibile tanto sul sereno quanto sul temporale. */
+.cl-t{
+  right:.115em;bottom:.03em;font-family:'Fraunces',serif;font-weight:600;
+  font-size:.315em;line-height:1.1;color:var(--cl-ink);
+  text-shadow:0 .02em .06em var(--cl-ombra);letter-spacing:-.02em;
+}
+.cl-att{
+  left:.11em;right:.11em;bottom:.07em;font-weight:700;font-size:.21em;
+  line-height:1.15;color:var(--cl-ink);text-shadow:0 .03em .09em var(--cl-ombra);
+  text-align:right;letter-spacing:-.01em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+@media (prefers-reduced-motion:reduce){
+  .cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo{animation:none}
+  .cl-lampo{opacity:0}
+}
+
+/* Il riquadro in cima alla home. Il font-size non e' un refuso: e' la
+   misura della scena, tutto il resto e' in em. */
+.hh-cielo{
+  flex:0 0 auto;width:120px;height:54px;font-size:54px;
+  border:none;padding:0;background:transparent;border-radius:15px;cursor:pointer;
+  box-shadow:0 3px 11px rgba(20,30,26,.18),inset 0 0 0 1px rgba(255,255,255,.3);
+  transition:var(--ease);
+}
+.hh-cielo:active{transform:scale(.96)}
+@media(max-width:359px){.hh-cielo{width:96px;height:48px;font-size:48px}}
+
+/* ── la tendina del meteo ─────────────────────────────────────────
+   Scende dall'alto perche' viene dall'alto: la si apre col dito sul
+   riquadro in cima, e la cosa che si apre deve arrivare da dove hai
+   toccato, non dal lato opposto dello schermo. */
+.mt-hero{
+  position:relative;height:176px;font-size:176px;border-radius:var(--r-lg);
+  margin-bottom:.9rem;
+  box-shadow:0 8px 24px rgba(20,30,26,.22),inset 0 0 0 1px rgba(255,255,255,.24);
+}
+.mt-txt{
+  position:absolute;left:1.05rem;right:1.05rem;bottom:.9rem;z-index:2;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:.7rem;
+  color:var(--cl-ink);text-shadow:0 1px 7px var(--cl-ombra);
+}
+.mt-g{font-size:.66rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;opacity:.92}
+.mt-p{font-family:'Fraunces',serif;font-size:1.55rem;font-weight:600;line-height:1.04;margin-top:.18rem}
+.mt-d{font-family:'Fraunces',serif;font-style:italic;font-size:.9rem;margin-top:.12rem;opacity:.95}
+.mt-temp{font-family:'Fraunces',serif;font-size:2.8rem;font-weight:600;line-height:.88;letter-spacing:-.03em;white-space:nowrap;text-align:right}
+.mt-min{font-size:.76rem;font-weight:700;text-align:right;opacity:.92;margin-top:.28rem;white-space:nowrap}
+.mt-tit{font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:1.1rem .1rem .5rem}
+/* Ora per ora: una fila che scorre, e la colonnina sotto e' la
+   probabilita' di pioggia. Un numero in percentuale lo leggi, una
+   colonnina la vedi mentre scorri. */
+.mt-ore{display:flex;gap:.32rem;overflow-x:auto;scrollbar-width:none;padding:.15rem .1rem;margin:0 -.1rem}
+.mt-ore::-webkit-scrollbar{display:none}
+.mt-ora{
+  flex:0 0 auto;width:54px;display:grid;justify-items:center;gap:.24rem;
+  padding:.55rem .2rem .5rem;border-radius:14px;
+  background:var(--paper);border:1px solid var(--line);
+}
+.mt-ora.adesso{border-color:var(--green);background:var(--surface);box-shadow:var(--sh-sm)}
+.mt-ora.passata{opacity:.4}
+.mt-o-h{font-size:.68rem;font-weight:700;color:var(--ink-faint)}
+.mt-ora.adesso .mt-o-h{color:var(--green-deep)}
+.mt-o-e{font-size:1.1rem;line-height:1}
+.mt-o-t{font-family:'Fraunces',serif;font-size:.98rem;font-weight:600;color:var(--ink);line-height:1}
+.mt-o-b{width:34px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.mt-o-b i{display:block;height:100%;background:var(--green);border-radius:2px}
+/* Un'ora asciutta ha la colonnina spenta invece di sparire: se sparisse,
+   le celle non sarebbero piu' alte uguali e la fila ballerebbe. */
+.mt-o-b.asciutto{opacity:.3}
+.mt-vuoto{font-size:.84rem;color:var(--ink-faint);line-height:1.5;padding:.2rem .1rem}
+/* Il giorno che stai guardando resta segnato nella lista: senza, tocchi
+   una riga e non sai piu' quale delle sette e' finita li' sopra. */
+.wcard{cursor:pointer;transition:var(--ease)}
+.wcard:active{transform:scale(.99)}
+.wcard.sel{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--green)}
 
 /* ── scorciatoie del viaggio, sotto al titolo in home ──────────────
    Vanno a capo invece di scorrere: sono poche e vanno viste tutte,
@@ -1182,7 +1387,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <div class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
     <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
     <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><svg viewBox="0 0 24 24"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8"/></svg></div>
-    <div class="nav-item" data-p="weather" onclick="go('weather')" title="Meteo" aria-label="Meteo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.9"/><path d="M12 3.2v2.1M12 18.7v2.1M4.8 4.8l1.5 1.5M17.7 17.7l1.5 1.5M3.2 12h2.1M18.7 12h2.1M4.8 19.2l1.5-1.5M17.7 6.3l1.5-1.5"/></svg></div>
     <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></div>
     <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></div>
     <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></div>
@@ -1265,12 +1469,6 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
           <div id="bookResult" style="margin-top:.85rem"></div>
         </div>
       </div>
-      <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
-    </div>
-    <div class="page" id="weather">
-      <div class="card"><div class="card-head"><div><div class="card-h">Previsioni</div><div class="card-sub" id="wxTripName">—</div></div><button class="ibtn blue" onclick="refreshWeather()">🔄</button></div></div>
-      <div id="cityEditor"></div>
-      <div id="weatherList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
     <div class="page" id="money">
@@ -1430,6 +1628,22 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
   </div>
   <div style="text-align:center;font-size:.68rem;color:var(--ink-faint);margin-top:1rem;letter-spacing:.05em">build r91</div>
+</div></div>
+<div class="modal modal-top" id="mMeteo"><div class="sheet sheet-top">
+  <div class="sheet-head">
+    <div><div class="sheet-t">Meteo</div><div class="card-sub" id="wxTripName">—</div></div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="ibtn blue" onclick="refreshWeather()" title="Aggiorna il meteo" aria-label="Aggiorna il meteo">🔄</button>
+      <button class="x x-close" onclick="closeSheet('mMeteo')">✕</button>
+    </div>
+  </div>
+  <div id="mtHero"></div>
+  <div id="mtOre"></div>
+  <div class="mt-tit">Tutti i giorni</div>
+  <div id="weatherList"></div>
+  <div id="cityEditor"></div>
+  <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
+  <div class="sheet-grip" style="margin:1rem auto 0"></div>
 </div></div>
 <div class="modal modal-top" id="mTripZoom"><div class="sheet sheet-top" id="tripZoomSheet">
   <div class="sheet-head" style="justify-content:flex-end;margin-bottom:.6rem"><button class="x x-close" onclick="closeTripZoom()">✕</button></div>
@@ -4469,9 +4683,318 @@ const DIZIONARIO_SFUGGITE={
 };
 Object.keys(DIZIONARIO_SFUGGITE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_SFUGGITE[l]));
 
-/* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate piu' 182
-   messaggi. Serve a una cosa sola, ed e' importante. */
-const FRASI_IN_TUTTO=896;
+/* Le parole del tempo che fa. Non erano tradotte in nessuna lingua, e la
+   prova non poteva accorgersene: il viaggio di prova non aveva meteo,
+   quindi "pioggia leggera" e "mattina limpida" non si disegnavano mai.
+   Adesso il cielo sta in cima alla home, sempre in vista, e queste sono
+   fra le prime parole che uno legge aprendo l'app. */
+const DIZIONARIO_CIELO={
+  en:{
+    'sereno':'clear',
+    'poco nuvoloso':'a few clouds',
+    'nebbia':'fog',
+    'pioggia':'rain',
+    'neve':'snow',
+    'acquazzoni':'showers',
+    'temporale':'thunderstorm',
+    'variabile':'changeable',
+    'cielo limpido':'clear sky',
+    'nuvole leggere':'light clouds',
+    'foschia sottile':'thin haze',
+    'pioggia leggera':'light rain',
+    'neve leggera':'light snow',
+    'acquazzoni improvvisi':'sudden showers',
+    'temporale in arrivo':'thunderstorm coming',
+    'cielo variabile':'changeable sky',
+    'mattina limpida':'clear morning',
+    'mattina velata':'hazy morning',
+    'mattina nebbiosa':'foggy morning',
+    'mattina piovosa':'rainy morning',
+    'mattina nevosa':'snowy morning',
+    'mattina instabile':'unsettled morning',
+    'mattina tempestosa':'stormy morning',
+    'mattina incerta':'uncertain morning',
+    'pomeriggio limpido':'clear afternoon',
+    'pomeriggio velato':'hazy afternoon',
+    'pomeriggio nebbioso':'foggy afternoon',
+    'pomeriggio piovoso':'rainy afternoon',
+    'pomeriggio nevoso':'snowy afternoon',
+    'pomeriggio instabile':'unsettled afternoon',
+    'pomeriggio tempestoso':'stormy afternoon',
+    'pomeriggio incerto':'uncertain afternoon',
+    'sera limpida':'clear evening',
+    'sera velata':'hazy evening',
+    'sera nebbiosa':'foggy evening',
+    'sera piovosa':'rainy evening',
+    'sera nevosa':'snowy evening',
+    'sera instabile':'unsettled evening',
+    'sera tempestosa':'stormy evening',
+    'sera incerta':'uncertain evening',
+    'Meteo del viaggio':'Weather for the trip',
+    'Aggiorna il meteo':'Refresh the weather',
+    'Ora per ora':'Hour by hour',
+    'Tutti i giorni':'Every day',
+    'adesso':'now',
+    'non ancora caricato':'not loaded yet',
+    'Carico le ore…':'Loading the hours…',
+    'Le ore non sono arrivate: manca la rete, oppure la giornata non ha ancora un posto.':'The hours did not arrive: there is no connection, or the day has no place yet.',
+    'min {1}°':'min {1}°',
+    'fra {1} gg':'in {1}d',
+    'Giorno {1} di {2}':'Day {1} of {2}',
+    '{1}% di pioggia':'{1}% chance of rain',
+    'Le previsioni coprono sedici giorni: per questa giornata arrivano fra {1} giorni.':'The forecast covers sixteen days: for this one it arrives in {1} days.'
+  },
+  es:{
+    'sereno':'despejado',
+    'poco nuvoloso':'algo nublado',
+    'nebbia':'niebla',
+    'pioggia':'lluvia',
+    'neve':'nieve',
+    'acquazzoni':'chubascos',
+    'temporale':'tormenta',
+    'variabile':'variable',
+    'cielo limpido':'cielo despejado',
+    'nuvole leggere':'nubes ligeras',
+    'foschia sottile':'bruma ligera',
+    'pioggia leggera':'lluvia ligera',
+    'neve leggera':'nieve ligera',
+    'acquazzoni improvvisi':'chubascos repentinos',
+    'temporale in arrivo':'tormenta en camino',
+    'cielo variabile':'cielo variable',
+    'mattina limpida':'mañana despejada',
+    'mattina velata':'mañana velada',
+    'mattina nebbiosa':'mañana con niebla',
+    'mattina piovosa':'mañana lluviosa',
+    'mattina nevosa':'mañana con nieve',
+    'mattina instabile':'mañana inestable',
+    'mattina tempestosa':'mañana tormentosa',
+    'mattina incerta':'mañana incierta',
+    'pomeriggio limpido':'tarde despejada',
+    'pomeriggio velato':'tarde velada',
+    'pomeriggio nebbioso':'tarde con niebla',
+    'pomeriggio piovoso':'tarde lluviosa',
+    'pomeriggio nevoso':'tarde con nieve',
+    'pomeriggio instabile':'tarde inestable',
+    'pomeriggio tempestoso':'tarde tormentosa',
+    'pomeriggio incerto':'tarde incierta',
+    'sera limpida':'noche despejada',
+    'sera velata':'noche velada',
+    'sera nebbiosa':'noche con niebla',
+    'sera piovosa':'noche lluviosa',
+    'sera nevosa':'noche con nieve',
+    'sera instabile':'noche inestable',
+    'sera tempestosa':'noche tormentosa',
+    'sera incerta':'noche incierta',
+    'Meteo del viaggio':'El tiempo del viaje',
+    'Aggiorna il meteo':'Actualiza el tiempo',
+    'Ora per ora':'Hora a hora',
+    'Tutti i giorni':'Todos los días',
+    'adesso':'ahora',
+    'non ancora caricato':'todavía sin cargar',
+    'Carico le ore…':'Cargo las horas…',
+    'Le ore non sono arrivate: manca la rete, oppure la giornata non ha ancora un posto.':'Las horas no han llegado: no hay conexión, o el día aún no tiene un lugar.',
+    'min {1}°':'mín. {1}°',
+    'fra {1} gg':'en {1} d',
+    'Giorno {1} di {2}':'Día {1} de {2}',
+    '{1}% di pioggia':'{1}% de lluvia',
+    'Le previsioni coprono sedici giorni: per questa giornata arrivano fra {1} giorni.':'La previsión cubre dieciséis días: para este llega dentro de {1} días.'
+  },
+  fr:{
+    'sereno':'dégagé',
+    'poco nuvoloso':'peu nuageux',
+    'nebbia':'brouillard',
+    'pioggia':'pluie',
+    'neve':'neige',
+    'acquazzoni':'averses',
+    'temporale':'orage',
+    'variabile':'variable',
+    'cielo limpido':'ciel dégagé',
+    'nuvole leggere':'nuages légers',
+    'foschia sottile':'brume légère',
+    'pioggia leggera':'pluie fine',
+    'neve leggera':'neige légère',
+    'acquazzoni improvvisi':'averses soudaines',
+    'temporale in arrivo':'orage en approche',
+    'cielo variabile':'ciel variable',
+    'mattina limpida':'matinée dégagée',
+    'mattina velata':'matinée voilée',
+    'mattina nebbiosa':'matinée brumeuse',
+    'mattina piovosa':'matinée pluvieuse',
+    'mattina nevosa':'matinée neigeuse',
+    'mattina instabile':'matinée instable',
+    'mattina tempestosa':'matinée orageuse',
+    'mattina incerta':'matinée incertaine',
+    'pomeriggio limpido':'après-midi dégagé',
+    'pomeriggio velato':'après-midi voilé',
+    'pomeriggio nebbioso':'après-midi brumeux',
+    'pomeriggio piovoso':'après-midi pluvieux',
+    'pomeriggio nevoso':'après-midi neigeux',
+    'pomeriggio instabile':'après-midi instable',
+    'pomeriggio tempestoso':'après-midi orageux',
+    'pomeriggio incerto':'après-midi incertain',
+    'sera limpida':'soirée dégagée',
+    'sera velata':'soirée voilée',
+    'sera nebbiosa':'soirée brumeuse',
+    'sera piovosa':'soirée pluvieuse',
+    'sera nevosa':'soirée neigeuse',
+    'sera instabile':'soirée instable',
+    'sera tempestosa':'soirée orageuse',
+    'sera incerta':'soirée incertaine',
+    'Meteo del viaggio':'La météo du voyage',
+    'Aggiorna il meteo':'Actualise la météo',
+    'Ora per ora':'Heure par heure',
+    'Tutti i giorni':'Tous les jours',
+    'adesso':'maintenant',
+    'non ancora caricato':'pas encore chargé',
+    'Carico le ore…':'Je charge les heures…',
+    'Le ore non sono arrivate: manca la rete, oppure la giornata non ha ancora un posto.':'Les heures ne sont pas arrivées : pas de connexion, ou la journée n’a pas encore de lieu.',
+    'min {1}°':'min {1}°',
+    'fra {1} gg':'dans {1} j',
+    'Giorno {1} di {2}':'Jour {1} sur {2}',
+    '{1}% di pioggia':'{1}% de pluie',
+    'Le previsioni coprono sedici giorni: per questa giornata arrivano fra {1} giorni.':'Les prévisions couvrent seize jours : pour cette journée elles arrivent dans {1} jours.'
+  },
+  pt:{
+    'sereno':'limpo',
+    'poco nuvoloso':'pouco nublado',
+    'nebbia':'nevoeiro',
+    'pioggia':'chuva',
+    'neve':'neve',
+    'acquazzoni':'aguaceiros',
+    'temporale':'trovoada',
+    'variabile':'variável',
+    'cielo limpido':'céu limpo',
+    'nuvole leggere':'nuvens leves',
+    'foschia sottile':'neblina leve',
+    'pioggia leggera':'chuva fraca',
+    'neve leggera':'neve fraca',
+    'acquazzoni improvvisi':'aguaceiros repentinos',
+    'temporale in arrivo':'trovoada a caminho',
+    'cielo variabile':'céu variável',
+    'mattina limpida':'manhã limpa',
+    'mattina velata':'manhã velada',
+    'mattina nebbiosa':'manhã com nevoeiro',
+    'mattina piovosa':'manhã chuvosa',
+    'mattina nevosa':'manhã com neve',
+    'mattina instabile':'manhã instável',
+    'mattina tempestosa':'manhã tempestuosa',
+    'mattina incerta':'manhã incerta',
+    'pomeriggio limpido':'tarde limpa',
+    'pomeriggio velato':'tarde velada',
+    'pomeriggio nebbioso':'tarde com nevoeiro',
+    'pomeriggio piovoso':'tarde chuvosa',
+    'pomeriggio nevoso':'tarde com neve',
+    'pomeriggio instabile':'tarde instável',
+    'pomeriggio tempestoso':'tarde tempestuosa',
+    'pomeriggio incerto':'tarde incerta',
+    'sera limpida':'noite limpa',
+    'sera velata':'noite velada',
+    'sera nebbiosa':'noite com nevoeiro',
+    'sera piovosa':'noite chuvosa',
+    'sera nevosa':'noite com neve',
+    'sera instabile':'noite instável',
+    'sera tempestosa':'noite tempestuosa',
+    'sera incerta':'noite incerta',
+    'Meteo del viaggio':'O tempo da viagem',
+    'Aggiorna il meteo':'Atualiza o tempo',
+    'Ora per ora':'Hora a hora',
+    'Tutti i giorni':'Todos os dias',
+    'adesso':'agora',
+    'non ancora caricato':'ainda por carregar',
+    'Carico le ore…':'A carregar as horas…',
+    'Le ore non sono arrivate: manca la rete, oppure la giornata non ha ancora un posto.':'As horas não chegaram: não há ligação, ou o dia ainda não tem um lugar.',
+    'min {1}°':'mín. {1}°',
+    'fra {1} gg':'em {1} d',
+    'Giorno {1} di {2}':'Dia {1} de {2}',
+    '{1}% di pioggia':'{1}% de chuva',
+    'Le previsioni coprono sedici giorni: per questa giornata arrivano fra {1} giorni.':'A previsão cobre dezasseis dias: para este dia chega dentro de {1} dias.'
+  }
+};
+Object.keys(DIZIONARIO_CIELO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_CIELO[l]));
+/* Le frasi che il codice cuce intorno al tempo che fa: l'avviso della
+   pioggia, le tappe all'aperto a rischio, il giorno asciutto dove
+   spostarle. Erano cucite a pezzi, e a pezzi non si traducono: adesso
+   la chiave e' la frase intera col buco. */
+const DIZIONARIO_PIOGGIA={
+  en:{
+    '✦ Alternative al coperto':'✦ Indoor alternatives',
+    'Ignora':'Ignore',
+    'Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.':'Nothing changes on its own: I show you every suggestion first, one by one.',
+    'è previsto asciutto.':'is expected to be dry.',
+    'è previsto quasi asciutto.':'is expected to be almost dry.',
+    'asciutto':'dry',
+    'valuta un giorno asciutto':'consider a dry day',
+    '{1} · ⚠️ {2} all\'aperto a rischio':'{1} · ⚠️ {2} outdoor at risk',
+    '1 tappa all\'aperto':'1 outdoor stop',
+    '{1} tappe all\'aperto':'{1} outdoor stops',
+    '{1} in questa giornata: {2}{3}.':'{1} on this day: {2}{3}.',
+    ' e altre {1}':' and {1} more',
+    '⛈️ {1}, {2} mm di pioggia':'⛈️ {1}, {2} mm of rain',
+    '{1} mm di pioggia':'{1} mm of rain',
+    'Quel giorno: {1}°, {2}':'That day: {1}°, {2}',
+    '⛈️ Outdoor con pioggia.':'⛈️ Outdoor stops in the rain.'
+  },
+  es:{
+    '✦ Alternative al coperto':'✦ Alternativas bajo techo',
+    'Ignora':'Ignorar',
+    'Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.':'Nada cambia solo: cualquier propuesta te la enseño antes, una por una.',
+    'è previsto asciutto.':'se prevé seco.',
+    'è previsto quasi asciutto.':'se prevé casi seco.',
+    'asciutto':'seco',
+    'valuta un giorno asciutto':'piensa en un día seco',
+    '{1} · ⚠️ {2} all\'aperto a rischio':'{1} · ⚠️ {2} al aire libre en riesgo',
+    '1 tappa all\'aperto':'1 parada al aire libre',
+    '{1} tappe all\'aperto':'{1} paradas al aire libre',
+    '{1} in questa giornata: {2}{3}.':'{1} en este día: {2}{3}.',
+    ' e altre {1}':' y {1} más',
+    '⛈️ {1}, {2} mm di pioggia':'⛈️ {1}, {2} mm de lluvia',
+    '{1} mm di pioggia':'{1} mm de lluvia',
+    'Quel giorno: {1}°, {2}':'Ese día: {1}°, {2}',
+    '⛈️ Outdoor con pioggia.':'⛈️ Al aire libre con lluvia.'
+  },
+  fr:{
+    '✦ Alternative al coperto':'✦ Alternatives à l’abri',
+    'Ignora':'Ignorer',
+    'Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.':'Rien ne change tout seul : je te montre chaque proposition avant, une par une.',
+    'è previsto asciutto.':'s’annonce sec.',
+    'è previsto quasi asciutto.':'s’annonce presque sec.',
+    'asciutto':'sec',
+    'valuta un giorno asciutto':'vise plutôt un jour sec',
+    '{1} · ⚠️ {2} all\'aperto a rischio':'{1} · ⚠️ {2} en plein air menacées',
+    '1 tappa all\'aperto':'1 étape en plein air',
+    '{1} tappe all\'aperto':'{1} étapes en plein air',
+    '{1} in questa giornata: {2}{3}.':'{1} dans cette journée : {2}{3}.',
+    ' e altre {1}':' et {1} autres',
+    '⛈️ {1}, {2} mm di pioggia':'⛈️ {1}, {2} mm de pluie',
+    '{1} mm di pioggia':'{1} mm de pluie',
+    'Quel giorno: {1}°, {2}':'Ce jour-là : {1}°, {2}',
+    '⛈️ Outdoor con pioggia.':'⛈️ Plein air sous la pluie.'
+  },
+  pt:{
+    '✦ Alternative al coperto':'✦ Alternativas cobertas',
+    'Ignora':'Ignorar',
+    'Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.':'Nada muda sozinho: qualquer proposta mostro-ta antes, uma a uma.',
+    'è previsto asciutto.':'prevê-se seco.',
+    'è previsto quasi asciutto.':'prevê-se quase seco.',
+    'asciutto':'seco',
+    'valuta un giorno asciutto':'pensa num dia seco',
+    '{1} · ⚠️ {2} all\'aperto a rischio':'{1} · ⚠️ {2} ao ar livre em risco',
+    '1 tappa all\'aperto':'1 paragem ao ar livre',
+    '{1} tappe all\'aperto':'{1} paragens ao ar livre',
+    '{1} in questa giornata: {2}{3}.':'{1} neste dia: {2}{3}.',
+    ' e altre {1}':' e mais {1}',
+    '⛈️ {1}, {2} mm di pioggia':'⛈️ {1}, {2} mm de chuva',
+    '{1} mm di pioggia':'{1} mm de chuva',
+    'Quel giorno: {1}°, {2}':'Nesse dia: {1}°, {2}',
+    '⛈️ Outdoor con pioggia.':'⛈️ Ao ar livre com chuva.'
+  }
+};
+Object.keys(DIZIONARIO_PIOGGIA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_PIOGGIA[l]));
+
+/* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
+   messaggi, e il resto composto o scoperto per strada. Serve a una cosa
+   sola, ed e' importante. */
+const FRASI_IN_TUTTO=965;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -4903,6 +5426,23 @@ function navPortaInVista(subito){
   const fermo=subito||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   try{pista.scrollTo({left:dove,behavior:fermo?'auto':'smooth'});}
   catch(e){pista.scrollLeft=dove;}
+}
+/* La stessa cosa per la riga dei viaggi in cima: dove la fila continua i
+   nomi svaniscono, invece di essere tagliati a meta' come fossero un
+   difetto. Con tre viaggi e il cielo all'altro capo lo spazio finisce
+   subito, e senza la sfumatura sembrava che l'app avesse sbagliato a
+   disegnare. */
+function viaggiBordi(){
+  const fila=document.querySelector('.hh-trips');if(!fila)return;
+  const resta=fila.scrollWidth-fila.clientWidth;
+  fila.classList.toggle('viaggi-a-destra',fila.scrollLeft<resta-1);
+  fila.classList.toggle('viaggi-a-sinistra',fila.scrollLeft>1);
+}
+function viaggiAscolta(){
+  const fila=document.querySelector('.hh-trips');if(!fila)return;
+  fila.removeEventListener('scroll',viaggiBordi);
+  fila.addEventListener('scroll',viaggiBordi,{passive:true});
+  viaggiBordi();
 }
 function navBordi(){
   const barra=document.querySelector('.nav'),pista=barra&&barra.querySelector('.nav-track');
@@ -5342,11 +5882,101 @@ function homeMood(code){
   const a=code===0?['limpido','limpida']:code<=3?['velato','velata']:code<=49?['nebbioso','nebbiosa']:code<=67?['piovoso','piovosa']:code<=77?['nevoso','nevosa']:code<=82?['instabile','instabile']:code<=99?['tempestoso','tempestosa']:['incerto','incerta'];
   return part[0]+' '+(part[1]==='f'?a[1]:a[0]);
 }
-function wxShort(c){if(c===0)return'sereno';if(c<=3)return'poco nuvoloso';if(c<=49)return'nebbia';if(c<=67)return'pioggia';if(c<=77)return'neve';if(c<=82)return'acquazzoni';if(c<=99)return'temporale';return'variabile';}
+/* Le parole del tempo escono di qui gia' tradotte. Prima uscivano in
+   italiano e ci pensava il traduttore del DOM, ma solo quando finivano
+   da sole dentro un elemento: cucite in mezzo a un'altra frase ("24°
+   sereno · tramonto 20:30") restavano li' in italiano per sempre, e
+   nemmeno la prova poteva vederle, perche' la riga intera nelle due
+   lingue non coincide.
+   La versione grezza serve ancora, ma per un altro mestiere: i testi che
+   si mandano all'IA sono scritti in italiano dalla prima all'ultima
+   riga, e infilarci dentro "light rain" sarebbe un peggioramento. */
+function wxShortIt(c){if(c===0)return'sereno';if(c<=3)return'poco nuvoloso';if(c<=49)return'nebbia';if(c<=67)return'pioggia';if(c<=77)return'neve';if(c<=82)return'acquazzoni';if(c<=99)return'temporale';return'variabile';}
+function wxShort(c){return tv(wxShortIt(c));}
 function homeSunset(w){
   if(!w||!w.sunset)return'';
   const m=String(w.sunset).match(/T(\d{2}:\d{2})/);
   return m?m[1]:'';
+}
+
+/* ===== IL CIELO DISEGNATO =====
+   Da che codice meteo viene quale cielo. I codici sono quelli di
+   Open-Meteo: sono a scaglioni e non a categorie, quindi la traduzione
+   in "che aria tira" va fatta a mano una volta sola, qui. */
+function cieloCodice(c){
+  if(c==null)return'c-ignoto';
+  if(c===0)return'c-sereno';
+  if(c<=2)return'c-velato';
+  if(c===3)return'c-nuvolo';
+  if(c<=48)return'c-nebbia';
+  if(c<=67)return'c-pioggia';
+  if(c<=77)return'c-neve';
+  if(c<=82)return'c-pioggia';
+  if(c<=86)return'c-neve';
+  return'c-tempo';
+}
+function oraDi(x){const m=String(x||'').match(/T(\d{2}):(\d{2})/);return m?(+m[1]+ +m[2]/60):null;}
+/* Notte si', ma solo per OGGI: su un giorno futuro l'ora di adesso non
+   vuol dire niente, e disegnare la luna sopra il meteo di giovedi'
+   sarebbe una bugia grafica. Se il tramonto non ci fosse si tira a
+   indovinare con orari comuni, ma e' un ripiego, non la regola. */
+function cieloNotte(w,date){
+  if(!date)return false;
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const g=new Date(date);g.setHours(0,0,0,0);
+  if(g.getTime()!==oggi.getTime())return false;
+  const ora=new Date().getHours()+new Date().getMinutes()/60;
+  const tramonto=oraDi(w&&w.sunset)||20.5;
+  const alba=oraDi(w&&w.sunrise)||6.5;
+  return ora>=tramonto||ora<alba;
+}
+/* La scena: quali pezzi disegnare sopra la sfumatura. Il sole sparisce
+   quando il cielo e' coperto - un sole dietro tre nuvole non lo vedresti
+   comunque, e disegnarlo lo farebbe sembrare una giornata bella. */
+function cieloScena(w,date){
+  const k=cieloCodice(w?w.code:null),notte=cieloNotte(w,date),p=[];
+  if(notte&&(k==='c-sereno'||k==='c-velato'))p.push('<span class="cl-stelle"></span>');
+  /* Niente sole quando il cielo e' coperto (dietro tre nuvole non lo
+     vedresti) e nemmeno quando il meteo non si sa: un sole disegnato su
+     una previsione che non abbiamo e' una bugia, non una decorazione. */
+  if(k!=='c-nuvolo'&&k!=='c-tempo'&&k!=='c-pioggia'&&k!=='c-ignoto')p.push('<span class="cl-astro"></span>');
+  const nuvole=k==='c-sereno'?0:(k==='c-nuvolo'||k==='c-tempo')?3:2;
+  for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
+  if(k==='c-pioggia'||k==='c-tempo')p.push('<span class="cl-pio"></span>');
+  if(k==='c-tempo')p.push('<span class="cl-lampo"></span>');
+  if(k==='c-neve')p.push('<span class="cl-nev"></span>');
+  if(k==='c-nebbia')p.push('<span class="cl-neb"></span>');
+  return{classi:`cielo ${k}${notte?' notte':''}`,dentro:p.join('')};
+}
+/* Il riquadro in cima alla home. Quando il meteo non c'e' ancora non
+   resta vuoto: dice quando arrivera', che e' l'unica cosa vera che si
+   possa dire di un giorno oltre le previsioni. */
+function cieloRiquadro(t,day){
+  const w=day?(t.weather||{})[day.date]:null;
+  const s=cieloScena(w,day?day.date:'');
+  let scritta;
+  if(w)scritta=`<span class="cl-t">${Math.round(w.tempMax)}°</span>`;
+  else{
+    const oggi=new Date();oggi.setHours(0,0,0,0);
+    const da=day?Math.round((new Date(day.date)-oggi)/864e5):null;
+    scritta=`<span class="cl-att">${(da!=null&&da>16)?tv('fra {1} gg',da-16):tv('Meteo')}</span>`;
+  }
+  return `<button class="hh-cielo ${s.classi}" onclick="apriMeteo()" title="${tv('Meteo del viaggio')}" aria-label="${tv('Meteo del viaggio')}">${s.dentro}${scritta}</button>`;
+}
+/* Se il giorno in vista e' dentro le previsioni ma il meteo non c'e'
+   ancora, se lo prende da solo: un riquadro che dovrebbe dire che tempo
+   fa e non lo dice e' peggio di niente. Una volta per giornata, che
+   l'API e' di qualcun altro. */
+const CIELO_CHIESTO=new Set();
+function cieloChiediSeManca(t,day){
+  if(!t||!day||(t.weather||{})[day.date])return;
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(day.date)-oggi)/864e5);
+  if(da<0||da>16)return;
+  const k=t.id+'|'+day.date;if(CIELO_CHIESTO.has(k))return;
+  CIELO_CHIESTO.add(k);
+  Promise.resolve().then(()=>fetchDayWx(t,day))
+    .then(ok=>{if(ok){renderHomeHero();renderWeather();}}).catch(()=>{});
 }
 function homeActs(day){
   return ((day&&day.activities)||[]).slice().sort((x,y)=>String(x.time||'99:99').localeCompare(String(y.time||'99:99')));
@@ -5451,6 +6081,7 @@ function renderHomeHero(){
     const place=()=>{
       center(box.querySelector('.hh-days'),'.hh-day.on',keepD);
       center(box.querySelector('.hh-trips'),'.hh-trip.on',keepT);
+      viaggiAscolta();
     };
     place();
     // Se il layout non era ancora pronto la prima assegnazione viene ignorata.
@@ -5470,12 +6101,18 @@ function renderHomeHero(){
     </div>`);
     return;
   }
-  // Riga dei viaggi aperti: scorre in orizzontale come la barra in basso quando
-  // sono tanti, e il "+" resta fermo a destra così non scappa via scorrendo.
+  /* Riga dei viaggi aperti: scorre in orizzontale come la barra in basso
+     quando sono tanti, e il "+" sta appiccicato alla loro destra invece
+     che all'estremo del riquadro: e' il tasto dei viaggi, e stava a due
+     centimetri dai viaggi. Resta fuori dallo scorrevole apposta - se
+     scorresse coi nomi, con tre viaggi non lo vedresti mai.
+     All'altro capo c'e' il cielo della giornata: prima era spazio vuoto,
+     adesso e' l'unica porta del meteo. */
   const aperti=app.trips.filter(x=>x.status!=='closed');
-  const tripsBar=`<div class="hh-tripbar">
+  const barraViaggi=g=>`<div class="hh-tripbar" onclick="meteoDaBarra(event)">
     <div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>
     <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    ${cieloRiquadro(t,g)}
   </div>`;
   /* Qui restano solo le cose che servono mentre si e' in giro, e sono in
      quest'ordine per un motivo: prima le tre ricerche di cosa c'e' qui intorno,
@@ -5501,7 +6138,7 @@ function renderHomeHero(){
     <button class="hh-act" onclick="openShare()">Condividi</button>
   </div>`;
   if(!t.days||!t.days.length){
-    paint(`<div class="hh">${tripsBar}
+    paint(`<div class="hh">${barraViaggi(null)}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
@@ -5520,7 +6157,8 @@ function renderHomeHero(){
   bits.push(tv('{1} in viaggio',(t.participants||[]).length));
   const nx=homeNext(t,day),acts=homeActs(day);
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
-  paint(`<div class="hh">${tripsBar}
+  cieloChiediSeManca(t,day);
+  paint(`<div class="hh">${barraViaggi(day)}
     <div class="hh-eyebrow hh-tap" onclick="openDay(${i})">${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
@@ -6345,7 +6983,7 @@ function sembraUnComando(s){
    preciso, non un consiglio di viaggio. Qui c'e' la mappa, tenuta corta perche'
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
-- La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Meteo, Hotel, Biglietti, Identifica, Profilo. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
+- La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica, Profilo. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home, di fianco ai nomi dei viaggi. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
 - Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi, in quest'ordine: "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa), poi "Bagagli" - la lista bagagli sta li' - e "Condividi". Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima c'e' la striscia dei giorni: un tocco cambia giorno. I tasti sopra la griglia sono "Ordina il giro con l'IA", "Chiedi all'assistente", "Autopilota", "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home). Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
@@ -6353,7 +6991,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
-- Meteo: le previsioni giorno per giorno, prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Identifica: si fotografa un posto e l'app dice cos'e'.
+- Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple, Google o quello di GeppGo). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
@@ -7304,29 +7942,157 @@ function dayLoc(t,day){
   if(hh)return{lat:hh.lat,lng:hh.lng};
   return null;
 }
+/* ===== LA TENDINA DEL METEO =====
+   Il meteo era una delle nove voci della barra in basso, cioe' una
+   sezione da raggiungere. Ma il tempo che fa non e' un posto dove si
+   va: e' una cosa che si guarda di sfuggita, dieci volte al giorno,
+   mentre si sta facendo altro. Adesso sta in cima alla home, sempre in
+   vista, e toccandolo si apre tutto il resto. La barra in basso ci ha
+   guadagnato una voce in meno. */
+let mtGiorno='';
+function meteoDaBarra(ev){
+  /* Nella riga in cima ci sono tre cose che rispondono al dito - i
+     viaggi, il "+", il cielo - e in mezzo dello spazio. Quello spazio
+     non e' un buco: e' ancora la striscia del meteo. */
+  if(ev&&ev.target&&ev.target.closest&&ev.target.closest('.hh-trip,.hh-trip-add,.hh-cielo'))return;
+  apriMeteo();
+}
+function apriMeteo(){
+  const t=T();
+  if(!t){toast('Crea prima un viaggio');return;}
+  /* Si apre sul giorno che la home sta mostrando: e' quello che avevi
+     davanti un attimo fa, e ricominciare dal primo giorno del viaggio
+     vorrebbe dire farti scorrere fino a dove eri gia'. */
+  const d=t.days&&t.days.length?t.days[homeDayIndex(t)]:null;
+  mtGiorno=d?d.date:'';
+  renderWeather();
+  openSheet('mMeteo');
+  meteoOreMostra();
+}
+function meteoGiorno(date){
+  mtGiorno=date;renderWeather();meteoOreMostra();
+  const h=document.getElementById('mtHero');
+  if(h&&h.scrollIntoView)h.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function meteoGiornoScelto(t){
+  if(!t||!t.days||!t.days.length)return null;
+  return t.days.find(d=>d.date===mtGiorno)||t.days[homeDayIndex(t)]||t.days[0];
+}
+/* Il riquadro grande in cima alla tendina: il cielo di quella giornata
+   grande quanto basta per guardarlo, e sopra le poche cifre che
+   contano. */
+function renderMeteoHero(t){
+  const box=document.getElementById('mtHero');if(!box)return;
+  const d=meteoGiornoScelto(t);
+  if(!d){box.innerHTML='';return;}
+  const w=(t.weather||{})[d.date],s=cieloScena(w,d.date);
+  const i=t.days.indexOf(d);
+  const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
+  const dove=(w&&w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):((w&&w.luogo)||d.city||cittaDelGiorno(t,d)||'');
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(d.date)-oggi)/864e5);
+  const destra=w
+    ? `<div><div class="mt-temp">${Math.round(w.tempMax)}°</div><div class="mt-min">${tv('min {1}°',Math.round(w.tempMin))}${w.precipitation>0?` · 💧${w.precipitation} mm`:''}</div></div>`
+    : `<div class="mt-min">${da>16?tv('fra {1} giorni',da-16):tv('non ancora caricato')}</div>`;
+  const ss=homeSunset(w);
+  box.innerHTML=`<div class="${s.classi} mt-hero">${s.dentro}
+    <div class="mt-txt">
+      <div style="min-width:0">
+        <div class="mt-g">${tv('Giorno {1} di {2}',i+1,t.days.length)}</div>
+        <div class="mt-p">${esc(dove||t.name||'')}</div>
+        <div class="mt-d">${esc(ds)}${w?' · '+wxDesc(w.code):''}${ss?' · '+tv('tramonto {1}',ss):''}</div>
+      </div>
+      ${destra}
+    </div></div>`;
+}
+/* Ora per ora. Costa una chiamata in piu', quindi si chiede solo per la
+   giornata che stai guardando e solo quando la tendina e' aperta: le
+   altre sei non le stai guardando. Le ore non si salvano sul telefono -
+   fra un'ora sarebbero gia' vecchie. */
+const METEO_ORE={};
+async function meteoOre(t,day){
+  const l=dayLoc(t,day)||t.destLoc;if(!l)return null;
+  const k=`${day.date}|${(+l.lat).toFixed(3)}|${(+l.lng).toFixed(3)}`;
+  if(METEO_ORE[k])return METEO_ORE[k];
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${l.lat}&longitude=${l.lng}&hourly=temperature_2m,weather_code,precipitation_probability&timezone=auto&start_date=${day.date}&end_date=${day.date}`;
+    const r=await fetch(u),j=await r.json();
+    if(!j.hourly||!j.hourly.time||!j.hourly.time.length)return null;
+    const ore=j.hourly.time.map((x,i)=>({
+      ora:String(x).slice(11,16),
+      code:j.hourly.weather_code[i],
+      temp:j.hourly.temperature_2m[i],
+      pio:(j.hourly.precipitation_probability||[])[i]
+    }));
+    METEO_ORE[k]=ore;return ore;
+  }catch(e){return null;}
+}
+function meteoOreMostra(){
+  const box=document.getElementById('mtOre'),t=T();if(!box)return;
+  const d=t?meteoGiornoScelto(t):null;
+  if(!t||!d){box.innerHTML='';return;}
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(d.date)-oggi)/864e5);
+  if(da<0){box.innerHTML='';return;}
+  if(da>16){box.innerHTML=`<div class="mt-tit">Ora per ora</div><div class="mt-vuoto">${tv('Le previsioni coprono sedici giorni: per questa giornata arrivano fra {1} giorni.',da-16)}</div>`;return;}
+  box.innerHTML=`<div class="mt-tit">Ora per ora</div><div class="mt-vuoto">${tv('Carico le ore…')}</div>`;
+  const perChi=d.date;
+  meteoOre(t,d).then(ore=>{
+    /* Nel frattempo si puo' aver cambiato giornata: se e' cosi' questa
+       risposta non serve piu' a nessuno e sovrascriverebbe l'altra. */
+    if(mtGiorno!==perChi)return;
+    if(!ore){box.innerHTML=`<div class="mt-tit">Ora per ora</div><div class="mt-vuoto">${tv('Le ore non sono arrivate: manca la rete, oppure la giornata non ha ancora un posto.')}</div>`;return;}
+    const adesso=(da===0)?new Date().getHours():-1;
+    const celle=ore.map(o=>{
+      const h=parseInt(o.ora,10);
+      const cl=h===adesso?' adesso':(adesso>=0&&h<adesso?' passata':'');
+      const pio=o.pio==null?0:o.pio;
+      return `<div class="mt-ora${cl}">
+        <div class="mt-o-h">${h===adesso?tv('adesso'):esc(o.ora)}</div>
+        <div class="mt-o-e">${wxEmoji(o.code)}</div>
+        <div class="mt-o-t">${Math.round(o.temp)}°</div>
+        <div class="mt-o-b${pio<5?' asciutto':''}" title="${tv('{1}% di pioggia',pio)}"><i style="width:${Math.max(0,Math.min(100,pio))}%"></i></div>
+      </div>`;
+    }).join('');
+    box.innerHTML=`<div class="mt-tit">Ora per ora</div><div class="mt-ore" id="mtOreFila">${celle}</div>`;
+    /* Se e' oggi, la fila parte dall'ora che e' adesso: le sei del
+       mattino gia' passate non servono a nessuno alle cinque di sera. */
+    const fila=document.getElementById('mtOreFila'),qui=fila&&fila.querySelector('.adesso');
+    if(qui)fila.scrollLeft=Math.max(0,qui.offsetLeft-fila.offsetLeft-8);
+  });
+}
 function renderWeather(){
   renderCityEditor();
   const t=T(),c=document.getElementById('weatherList');
-  document.getElementById('wxTripName').textContent=t?(t.name+(t.destination?' · '+t.destination:'')):'—';
+  if(!c)return;
+  /* La destinazione si aggiunge solo se dice qualcosa in piu' del nome:
+     un viaggio che si chiama "Praga" e va a Praga leggeva "Praga · Praga". */
+  const dest=t&&t.destination&&t.destination.trim().toLowerCase()!==String(t.name||'').trim().toLowerCase()?' · '+t.destination:'';
+  document.getElementById('wxTripName').textContent=t?(t.name+dest):'—';
+  renderMeteoHero(t);
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">🌤️</div><div class="empty-t">Nessun viaggio</div></div>`;return;}
   if(!t.days.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗓️</div><div class="empty-t">Aggiungi giorni al viaggio</div></div>`;return;}
+  const scelto=meteoGiornoScelto(t);
   const today=new Date();today.setHours(0,0,0,0);
   const rows=t.days.map((day,i)=>{
+    const sel=(scelto&&scelto.date===day.date)?' sel':'';
+    const apri=` onclick="meteoGiorno('${day.date}')"`;
     const w=t.weather[day.date],ds=new Date(day.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),da=Math.round((new Date(day.date)-today)/864e5);
     if(!w){
-      if(da>16)return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${tv('Disponibile tra {1} giorni',da-16)}</div></div></div></div>`;
-      return `<div class="wcard na"><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
+      if(da>16)return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${tv('Disponibile tra {1} giorni',da-16)}</div></div></div></div>`;
+      return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
     }
     const rain=w.precipitation>5,sun=w.precipitation<1&&w.tempMax>20,cls=rain?'rain':(sun?'sun':'cloud'),out=(day.activities||[]).filter(a=>a.type==='outdoor').length;
     /* Su quale posto e' la previsione: senza, un "22° e pioggia" non dice se
        parla di dove passi la giornata o della citta' scritta nel viaggio. */
     const dove=(w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):(day.city||w.luogo||'');
-    return `<div class="wcard ${cls}"><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${dove?`<b>${esc(dove)}</b> · `:''}${wxDesc(w.code)}${rain&&out>0?` · ⚠️ ${out} outdoor a rischio`:''}</div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
+    return `<div class="wcard ${cls}${sel}"${apri}><div class="wc-l"><div class="wc-emoji">${wxEmoji(w.code)}</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${dove?`<b>${esc(dove)}</b><span> · </span>`:''}<span>${rain&&out>0?tv('{1} · ⚠️ {2} all\'aperto a rischio',wxDesc(w.code),out):wxDesc(w.code)}</span></div></div></div><div><div class="wc-temp">${Math.round(w.tempMax)}°</div><div class="wc-min">min ${Math.round(w.tempMin)}°${w.precipitation>0?` · 💧${w.precipitation}`:''}</div></div></div>`;
   }).join('');
   c.innerHTML=rows||`<div class="empty"><div class="empty-t">Nessun giorno</div></div>`;
 }
 function wxEmoji(c){if(c===0)return'☀️';if(c<=3)return'⛅';if(c<=49)return'🌫️';if(c<=67)return'🌧️';if(c<=77)return'❄️';if(c<=82)return'🌦️';if(c<=99)return'⛈️';return'🌤️';}
-function wxDesc(c){if(c===0)return'cielo limpido';if(c<=3)return'nuvole leggere';if(c<=49)return'foschia sottile';if(c<=67)return'pioggia leggera';if(c<=77)return'neve leggera';if(c<=82)return'acquazzoni improvvisi';if(c<=99)return'temporale in arrivo';return'cielo variabile';}
+function wxDescIt(c){if(c===0)return'cielo limpido';if(c<=3)return'nuvole leggere';if(c<=49)return'foschia sottile';if(c<=67)return'pioggia leggera';if(c<=77)return'neve leggera';if(c<=82)return'acquazzoni improvvisi';if(c<=99)return'temporale in arrivo';return'cielo variabile';}
+function wxDesc(c){return tv(wxDescIt(c));}
 function fillCurrencySelect(sel){sel.innerHTML=CURR.map(c=>`<option value="${c.c}">${c.c} ${c.s!==c.c?'('+c.s+')':''}</option>`).join('');}
 async function getRate(from,to){
   if(from===to)return 1;const key=from,now=Date.now();
@@ -11928,7 +12694,7 @@ ${fisse}${no.length?`- non puoi ${no.map(k=>MOSSE_DIVIETI[k]).join(', n\u00e9 ')
 function mosseContesto(t,oggi){
   const g=t.days.map((d,i)=>{
     const w=t.weather[d.date];
-    const meteo=w?` · ${wxShort(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
+    const meteo=w?` · ${wxShortIt(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
     const voci=(d.activities||[]).slice().sort((a,b)=>{
       const x=tMin(a.time),y=tMin(b.time);return (x==null?9999:x)-(y==null?9999:y);
     }).map(a=>{
@@ -12339,7 +13105,7 @@ async function creaItinerarioIA(){
   try{
     const giorni=t.days.map((d,i)=>{
       const w=t.weather[d.date];
-      const meteo=w?` · previsto ${wxShort(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
+      const meteo=w?` · previsto ${wxShortIt(w.code)} ${Math.round(w.tempMax)}°${w.precipitation>0?`, pioggia ${w.precipitation}mm`:''}`:'';
       const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time}-${a.timeEnd||''} ${a.name}`).join('; ');
       return `giorno ${i} — ${d.date}${meteo}${gia?` — c'è già: ${gia}`:' — libero'}`;
     }).join('\n');
@@ -14184,11 +14950,14 @@ async function nomeLuogo(t,g){
 }
 
 async function fetchDayWx(t,day){
-  const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunset';
+  /* L'alba viaggia insieme al resto perche' e' lo stesso identico
+     scaricamento: serve al cielo disegnato in cima alla home per sapere
+     se e' giorno o notte senza tirare a indovinare. */
+  const F='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,sunset,sunrise';
   const one=async loc=>{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&daily=${F}&timezone=auto&start_date=${day.date}&end_date=${day.date}`;
     const r=await fetch(u);const d2=await r.json();
-    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0],sunset:(d2.daily.sunset&&d2.daily.sunset[0])||null};
+    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0],sunset:(d2.daily.sunset&&d2.daily.sunset[0])||null,sunrise:(d2.daily.sunrise&&d2.daily.sunrise[0])||null};
     return null;
   };
   try{
@@ -14261,7 +15030,7 @@ function renderDayWx(){
     el.innerHTML=Object.entries(w.multi).map(pr=>`${esc(pr[0])} ${wxEmo(pr[1])}${Math.round(pr[1].tempMax)}°${pr[1].precipitation>0?' '+pr[1].precipitation+'mm':''}`).join(' · ');
   }else{
     const dove=d.city||w.luogo||'';
-    el.innerHTML=`${wxEmo(w)} ${Math.round(w.tempMin)}–${Math.round(w.tempMax)}° · ${w.precipitation>0?w.precipitation+' mm di pioggia':'asciutto'}${dove?` · ${esc(dove)}`:''}`;
+    el.innerHTML=`${wxEmo(w)} ${Math.round(w.tempMin)}–${Math.round(w.tempMax)}° · ${w.precipitation>0?tv('{1} mm di pioggia',w.precipitation):tv('asciutto')}${dove?` · ${esc(dove)}`:''}`;
   }
 }
 let rainHide={};
@@ -14281,10 +15050,10 @@ function renderRainTip(){
   t.days.forEach((dd,j)=>{if(j===ttDay)return;const w2=t.weather[dd.date];if(!w2)return;if(w2.precipitation<bw){bw=w2.precipitation;best=j;}});
   const asciutto=best>=0&&bw<=2&&bw<w.precipitation-2;
   const bd=asciutto?new Date(t.days[best].date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'}):'';
-  const quante=outs.length===1?"1 tappa all'aperto":`${outs.length} tappe all'aperto`;
+  const quante=outs.length===1?tv("1 tappa all'aperto"):tv("{1} tappe all'aperto",outs.length);
   box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.85rem;margin-bottom:.8rem">
-    <div style="font-weight:800;font-size:.9rem;color:var(--clay-deep)">⛈️ ${wxDesc(w.code)}, ${w.precipitation} mm di pioggia</div>
-    <div style="font-size:.82rem;color:var(--ink-soft);margin:.3rem 0 .7rem;line-height:1.5">${quante} in questa giornata: ${esc(outs.slice(0,3).map(a=>a.name).join(', '))}${outs.length>3?` e altre ${outs.length-3}`:''}.${asciutto?` <b>${bd}</b> è previsto ${bw<1?'asciutto':'quasi asciutto'}.`:''}</div>
+    <div style="font-weight:800;font-size:.9rem;color:var(--clay-deep)">${tv('⛈️ {1}, {2} mm di pioggia',wxDesc(w.code),w.precipitation)}</div>
+    <div style="font-size:.82rem;color:var(--ink-soft);margin:.3rem 0 .7rem;line-height:1.5"><span>${tv('{1} in questa giornata: {2}{3}.',quante,esc(outs.slice(0,3).map(a=>a.name).join(', ')),outs.length>3?tv(' e altre {1}',outs.length-3):'')}</span>${asciutto?` <b>${bd}</b><span> ${bw<1?tv('è previsto asciutto.'):tv('è previsto quasi asciutto.')}</span>`:''}</div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
       <button class="btn btn-grad" style="flex:1;min-width:150px;padding:.6rem" onclick="alternativeMeteo(${ttDay})">✦ Alternative al coperto</button>
       ${asciutto?`<button class="btn btn-soft" style="flex:1;min-width:130px;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">↪️ Sposta a ${bd.split(' ')[0]}</button>`:''}
@@ -14356,7 +15125,7 @@ function updateAdWx(){
   const di=parseInt(document.getElementById('adDay').value);const d=t.days[di];const w=d?t.weather[d.date]:null;
   if(!w){el.innerHTML='';return;}
   const out=document.getElementById('adType').value==='outdoor',rain=w.precipitation>5;
-  el.innerHTML=`${wxEmo(w)} Quel giorno: ${Math.round(w.tempMax)}°, ${w.precipitation>0?w.precipitation+' mm di pioggia':'asciutto'}${(out&&rain)?' · <b style="color:var(--clay-deep)">valuta un giorno asciutto</b>':''}`;
+  el.innerHTML=`${wxEmo(w)} ${tv('Quel giorno: {1}°, {2}',Math.round(w.tempMax),w.precipitation>0?tv('{1} mm di pioggia',w.precipitation):tv('asciutto'))}${(out&&rain)?' · <b style="color:var(--clay-deep)">valuta un giorno asciutto</b>':''}`;
 }
 function renderCityEditor(){
   const box=document.getElementById('cityEditor');if(!box)return;const t=T();
