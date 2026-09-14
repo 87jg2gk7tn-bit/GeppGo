@@ -403,14 +403,23 @@ va rifatto vedere.
     due gocce uguali — una è lunga e vicina, quella dietro è corta e
     sbiadita, e nessuna delle due cade come l'altra.
 
-    Adesso non c'è più una piastrella ripetuta: ci sono **diciotto gocce (o
-    trenta se piove forte), una per una**, ognuna con la sua lunghezza, il suo
-    spessore, la sua trasparenza e la sua velocità. Le sbiadite sono le
-    lontane e cadono più piano, ed è così che l'occhio legge la profondità in
-    una scena piatta. E vanno **piano**: due o tre secondi per attraversare
-    l'intestazione, non mezzo. I numeri sono sparsi ma sempre gli stessi (il
-    vecchio trucco del seno): con `Math.random()` la pioggia salterebbe di
-    posto a ogni ridisegno della home.
+    Adesso non c'è più una piastrella ripetuta: ci sono **ventisei gocce (o
+    quarantaquattro se piove forte), una per una**, ognuna con la sua
+    lunghezza, il suo spessore, la sua trasparenza e la sua velocità. Le
+    sbiadite sono le lontane e cadono un filo più piano, ed è così che
+    l'occhio legge la profondità in una scena piatta. I numeri sono sparsi ma
+    sempre gli stessi (il vecchio trucco del seno): con `Math.random()` la
+    pioggia salterebbe di posto a ogni ridisegno della home.
+
+    **Sulla velocità ci si è sbagliati due volte, in due direzioni opposte.**
+    Prima troppo veloce e tutte uguali: una grata che si muove. Poi, per
+    correggere, l'ho fatta lenta — due, tre secondi per goccia — e Giacomo:
+    *«hai mai visto una pioggia così lenta? Sembrano stelle cadenti»*. Aveva
+    ragione. **Quello che impedisce alla pioggia di sembrare una grata non è
+    la lentezza, è che non ce n'è una uguale all'altra.** Ora sta a mezzo
+    secondo scarso, e le strisce sono corte: una striscia lunga che scende
+    adagio non è pioggia, è una stella cadente — la lunghezza va con la
+    velocità, non contro.
 
     Una cosa contata, non guardata a occhio: la caduta arriva a 330 px e non
     a 600, perché **su ventisei gocce ne arrivava UNA** nella fascia in cui
@@ -651,6 +660,18 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Correggere un difetto tirando la leva opposta lo sposta, non lo toglie.**
+  La pioggia sembrava una grata perché le gocce erano tutte uguali; l'ho
+  rallentata, e sono diventate stelle cadenti. La leva giusta era la varietà,
+  non la velocità — e finché non l'ho capito ho fatto due giri in direzioni
+  opposte senza avvicinarmi. Quando una correzione peggiora le cose da
+  un'altra parte, di solito si sta muovendo la leva sbagliata.
+- **Contare quanti valori sono diversi non misura la varietà.** Due controlli
+  della pioggia contavano le lunghezze distinte: con numeri interi in un
+  intervallo stretto i doppioni sono inevitabili, e il conteggio diceva «poca
+  varietà» proprio mentre ce n'era parecchia. Quello che conta è
+  l'**ampiezza**: quanto c'è fra il minimo e il massimo.
 
 - **Un paese non è un posto.** Cercando «Giappone», «Francia» o «Spagna», il
   geocodificatore risponde col **centroide del paese** — per il Giappone le

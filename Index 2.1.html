@@ -1142,11 +1142,15 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    forma: era la VARIETA'. La pioggia vera non ha due gocce uguali - una
    e' lunga e vicina, quella dietro e' corta e sbiadita, e nessuna delle
    due cade come l'altra.
-   Quindi non c'e' piu' una piastrella ripetuta: ci sono diciotto gocce,
-   una per una - trenta quando piove forte - ognuna con la sua lunghezza,
-   il suo spessore, la sua trasparenza e la sua velocita'. E vanno piano:
-   una goccia attraversa l'intestazione in due o tre secondi, non in
-   mezzo. */
+   Quindi non c'e' piu' una piastrella ripetuta: ci sono ventisei gocce,
+   una per una - quarantaquattro quando piove forte - ognuna con la sua
+   lunghezza, il suo spessore, la sua trasparenza e la sua velocita'.
+   SULLA VELOCITA' ci si e' sbagliati due volte, in due direzioni opposte.
+   Prima troppo veloci e tutte uguali: una grata che si muove. Poi, per
+   correggere, troppo lente: strisce lunghe che scendevano adagio, cioe'
+   stelle cadenti. La pioggia vera e' VELOCE - mezzo secondo per
+   attraversare l'intestazione - e quello che le impedisce di sembrare una
+   grata non e' la lentezza, e' che non ce n'e' una uguale all'altra. */
 .cl-g{
   top:0;border-radius:999px;
   height:calc(var(--h)*1px*var(--s));
@@ -1167,8 +1171,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    tenerle accese dove non si vedono. Contate: su ventisei gocce ne
    arrivava UNA nella fascia in cui si guardano. */
 @keyframes cl-cade{
-  from{transform:translate(calc(16px*var(--s)),calc(-60px*var(--s)))}
-  to  {transform:translate(calc(-18px*var(--s)),calc(330px*var(--s)))}
+  from{transform:translate(calc(9px*var(--s)),calc(-40px*var(--s)))}
+  to  {transform:translate(calc(-10px*var(--s)),calc(330px*var(--s)))}
 }
 
 .cl-nev{inset:calc(-18% - 20px) -16%;}
@@ -6179,13 +6183,17 @@ function gocceDiPioggia(quante){
   let out='';
   for(let i=0;i<quante;i++){
     const sx=(r(i,12.9898)*98+1).toFixed(1);
-    const lung=(18+r(i,78.233)*34).toFixed(0);        /* 18 - 52 px */
-    const larg=(0.9+r(i,43.111)*0.9).toFixed(2);      /* 0,9 - 1,8 px */
+    /* Corte. Una striscia lunga che scende adagio non e' pioggia, e' una
+       stella cadente: la lunghezza va con la velocita', non contro. */
+    const lung=(9+r(i,78.233)*17).toFixed(0);        /* 9 - 26 px */
+    const larg=(0.8+r(i,43.111)*0.8).toFixed(2);      /* 0,8 - 1,6 px */
     /* Le sbiadite sono quelle lontane, e cadono piu' piano: e' cosi' che
        l'occhio legge la profondita' anche in una scena piatta. */
     const opa=(0.2+r(i,93.989)*0.55).toFixed(2);
-    const dur=(3.5-opa*2.1+r(i,27.61)*0.7).toFixed(2); /* 1,9 - 3,4 s */
-    const rit=(-r(i,51.317)*4).toFixed(2);
+    /* Mezzo secondo scarso, e le lontane (piu' sbiadite) un filo piu'
+       lente: e' cosi' che si legge la profondita' senza rallentare tutto. */
+    const dur=(0.88-opa*0.42+r(i,27.61)*0.16).toFixed(2); /* 0,40 - 0,88 s */
+    const rit=(-r(i,51.317)*1.4).toFixed(2);
     out+=`<span class="cl-g" style="left:${sx}%;--h:${lung};--w:${larg};--o:${opa};animation-duration:${dur}s;animation-delay:${rit}s"></span>`;
   }
   return out;
@@ -6204,7 +6212,7 @@ function cieloScena(w,date){
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
   const forte=!!(w&&w.precipitation>8);
   if(k==='c-pioggia'||k==='c-tempo'){
-    p.push(gocceDiPioggia(forte?30:18));
+    p.push(gocceDiPioggia(forte?44:26));
   }
   if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');

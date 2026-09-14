@@ -241,6 +241,8 @@ const oreFinte = (data) => {
              lunghezze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).height)).size,
              trasparenze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).opacity)).size,
              velocita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).animationDuration)),
+             altezze: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).height)),
+             opacita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).opacity)),
              sole: !!document.querySelector('.hh-velo .cl-astro'),
              inchiostroChip: getComputedStyle(chip).color };
   }, [LUCE]);
@@ -248,18 +250,36 @@ const oreFinte = (data) => {
   /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
      una grata che si muove, non pioggia. Quello che mancava non era la
      velocità, era la VARIETÀ. */
-  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce === 18, pioggia.gocce + ' gocce');
-  /* Non tutte diverse al pixel — le lunghezze sono numeri interi, qualche
-     doppione capita — ma la gran parte sì: è quello che rompe la griglia. */
-  ok('e quasi nessuna è uguale all\'altra: lunghezze diverse',
-     pioggia.lunghezze >= Math.round(pioggia.gocce * 0.7),
-     pioggia.lunghezze + ' lunghezze diverse su ' + pioggia.gocce + ' gocce');
-  ok('trasparenze diverse, che è come si legge la profondità',
-     pioggia.trasparenze >= pioggia.gocce - 2, pioggia.trasparenze + ' trasparenze');
-  /* E piano: due secondi buoni per attraversare l'intestazione. La prima
-     versione ci metteva quattro decimi. */
-  ok('e scendono piano, nessuna sotto il secondo e mezzo',
-     Math.min(...pioggia.velocita) >= 1.5, 'la più veloce ' + Math.min(...pioggia.velocita) + 's');
+  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce === 26, pioggia.gocce + ' gocce');
+  /* Contare quante sono DIVERSE era un metro sbagliato: le lunghezze sono
+     numeri interi in un intervallo stretto, quindi i doppioni sono
+     inevitabili e il conteggio diceva "poca varietà" anche quando ce n'era
+     parecchia. Quello che conta è l'AMPIEZZA: fra la goccia più corta e la
+     più lunga ci deve essere una differenza che si vede. */
+  const spanH = Math.max(...pioggia.altezze) - Math.min(...pioggia.altezze);
+  ok('e non ce n\'è una uguale all\'altra: lunghezze sparse su tutto l\'intervallo',
+     pioggia.lunghezze >= 10 && spanH >= 12,
+     pioggia.lunghezze + ' lunghezze diverse, da ' + Math.min(...pioggia.altezze) +
+     ' a ' + Math.max(...pioggia.altezze) + 'px');
+  const opa = pioggia.opacita;
+  ok('e trasparenze sparse, che è come si legge la profondità',
+     pioggia.trasparenze >= 15 && (Math.max(...opa) - Math.min(...opa)) >= 0.35,
+     pioggia.trasparenze + ' trasparenze, da ' + Math.min(...opa).toFixed(2) +
+     ' a ' + Math.max(...opa).toFixed(2));
+  /* Sulla velocità ci si è sbagliati due volte, in due direzioni opposte:
+     prima troppo veloci e tutte uguali (una grata che si muove), poi troppo
+     lente per correggere — strisce lunghe che scendevano adagio, cioè stelle
+     cadenti. La pioggia vera è VELOCE: mezzo secondo per attraversare
+     l'intestazione. Quello che le impedisce di sembrare una grata non è la
+     lentezza, è che non ce n'è una uguale all'altra — ed è il controllo qui
+     sopra a tenerlo fermo. */
+  ok('e scendono come scende la pioggia, né a scatti né come stelle cadenti',
+     Math.min(...pioggia.velocita) >= 0.3 && Math.max(...pioggia.velocita) <= 1.1,
+     'da ' + Math.min(...pioggia.velocita) + 's a ' + Math.max(...pioggia.velocita) + 's');
+  /* Una striscia lunga che scende adagio è una stella cadente. La lunghezza
+     va con la velocità, non contro: corte. */
+  ok('e sono strisce corte, non scie',
+     pioggia.altezze.every(h => h <= 30), 'la più lunga ' + Math.max(...pioggia.altezze) + 'px');
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
   ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
      `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
@@ -279,7 +299,7 @@ const oreFinte = (data) => {
     return { classe: hh.className.includes('forte'), quante: g.length };
   });
   ok('quando piove forte le gocce sono di più',
-     forte.classe === true && forte.quante === 30, forte.quante + ' gocce');
+     forte.classe === true && forte.quante === 44, forte.quante + ' gocce');
   await page.close();
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
