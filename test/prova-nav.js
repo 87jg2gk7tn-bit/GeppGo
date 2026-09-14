@@ -182,7 +182,9 @@ const viaggio = (activities, travelMode) => ({
   page = await apri(viaggio([tappa(1, 'A', '09:00', 35.1, 139.1), tappa(2, 'B', '12:00', 35.2, 139.2)], 'walk'));
   const tasti = await page.evaluate(() => {
     const trova = sel => [...document.querySelectorAll(sel)].find(x => /Naviga la giornata/.test(x.textContent));
-    const h = trova('.hh-acts .hh-act'), tt = trova('#mDay .chip');
+    /* Non e' piu' una .chip in fila con altre tre: e' uno dei due tasti
+        che si usano camminando, e si chiama .tt-az. */
+    const h = trova('.hh-acts .hh-act'), tt = trova('#mDay .tt-az');
     return { home: h ? h.getAttribute('onclick') : null, tt: tt ? tt.getAttribute('onclick') : null };
   });
   ok('il tasto sta nella time-table', tasti.tt === 'navigaGiornata()', String(tasti.tt));
@@ -191,7 +193,8 @@ const viaggio = (activities, travelMode) => ({
   // premuto davvero dalla time-table
   const daTT = await page.evaluate(() => {
     window.__url = null;
-    [...document.querySelectorAll('#mDay .chip')].find(x => /Naviga la giornata/.test(x.textContent)).click();
+    const b = [...document.querySelectorAll('#mDay .tt-az')].find(x => /Naviga la giornata/.test(x.textContent));
+    if (b) b.click();
     return window.__url;
   });
   ok('premendolo in time-table parte il percorso', /maps\/dir/.test(daTT || ''), daTT ? daTT.slice(0, 60) : 'niente');

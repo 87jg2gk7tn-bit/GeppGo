@@ -1065,7 +1065,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   --cl-alto:#8FB6D6;
   --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
   --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.5);
-  --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.46);--vel:1;
+  --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.92);--vel:1;
   --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
 }
 /* Due colori per ogni cielo: --cl-alto e' quello che tinge l'alto
@@ -1081,12 +1081,12 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 /* Piove forte: piu' gocce sul vetro, e quelle che corrono ci mettono meno
    ad arrivare in fondo. E' la differenza fra "pioviggina" e "prendi
    l'ombrello", e si deve vedere senza leggere i millimetri. */
-.cielo.forte{--vel:.58;--cl-goccia:rgba(255,255,255,.62)}
-.cielo.notte.forte{--cl-goccia:rgba(216,234,252,.54)}
+.cielo.forte{--vel:.58;--cl-goccia:#fff}
+.cielo.notte.forte{--cl-goccia:rgba(226,240,255,.92)}
 .cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
 /* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
 .cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.28);
-  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(206,226,248,.4);
+  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);
   --cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
 .cielo.notte.c-sereno {--cl-alto:#0F2039;--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
 .cielo.notte.c-velato {--cl-alto:#182942;--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
@@ -1097,7 +1097,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.notte.c-tempo  {--cl-alto:#12171E;--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
 .cielo.notte.c-ignoto {--cl-alto:#252B30;--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
 
-.cl-astro,.cl-nuv,.cl-vetro,.cl-riga,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
+.cl-astro,.cl-nuv,.cl-g,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
   position:absolute;pointer-events:none;
 }
 /* Il sole (o la luna): un disco con due aloni, uno stretto e uno largo. */
@@ -1134,89 +1134,40 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    esattamente una piastrella - cosi' il giro si chiude e il salto non
    si vede. Due strati a velocita' diverse, uno dietro piu' spento: e'
    quello che le da' profondita' invece di farla sembrare una grata. */
-/* LA PIOGGIA E' SUL VETRO, non davanti agli occhi.
-   Prima erano trattini che scendevano in fretta, tutti alla stessa
-   velocita' e tutti uguali: una grata che si muove, non pioggia. Ma tu il
-   temporale non lo guardi in mezzo alla strada - lo guardi da dietro un
-   vetro, e su un vetro la pioggia sta quasi ferma: tante goccioline
-   appoggiate, e ogni tanto una che si stacca e scivola giu' a scatti,
-   fermandosi due volte per strada.
-   Cosi': uno strato di gocce ferme, e cinque o sei che corrono. */
+/* LA PIOGGIA: GOCCE VERE CHE SCENDONO, PIANO.
+   Tre tentativi per arrivarci. Il primo erano trattini fitti tutti alla
+   stessa velocita': una grata che si muove, non pioggia. Il secondo erano
+   gocce ferme sul vetro, disegnate ad anello, e sembravano bolle di
+   sapone. Quello che mancava a tutti e due non era la velocita' ne' la
+   forma: era la VARIETA'. La pioggia vera non ha due gocce uguali - una
+   e' lunga e vicina, quella dietro e' corta e sbiadita, e nessuna delle
+   due cade come l'altra.
+   Quindi non c'e' piu' una piastrella ripetuta: ci sono venti gocce, una
+   per una, ognuna con la sua lunghezza, il suo spessore, la sua
+   trasparenza e la sua velocita'. E vanno piano: una goccia attraversa
+   l'intestazione in due o tre secondi, non in mezzo. */
+.cl-g{
+  top:0;border-radius:999px;
+  height:calc(var(--h)*1px*var(--s));
+  width:calc(var(--w)*1px*var(--s));
+  opacity:var(--o);
+  /* Sfumata in cima: una goccia in caduta si vede come una scia che
+     svanisce, non come un bastoncino con due estremita' nette. */
+  background:linear-gradient(180deg,transparent 0,var(--cl-goccia) 85%,var(--cl-goccia) 100%);
+  rotate:7deg;
+  animation-name:cl-cade;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+/* Scende anche di lato, di poco: la pioggia a piombo non esiste.
+   E arriva solo fino a dove il velo e' ancora visibile: portarla piu' giu'
+   vorrebbe dire far passare le gocce nella parte gia' dissolta, cioe'
+   tenerle accese dove non si vedono. Contate: su ventisei gocce ne
+   arrivava UNA nella fascia in cui si guardano. */
+@keyframes cl-cade{
+  from{transform:translate(calc(16px*var(--s)),calc(-60px*var(--s)))}
+  to  {transform:translate(calc(-18px*var(--s)),calc(330px*var(--s)))}
+}
+
 .cl-nev{inset:calc(-18% - 20px) -16%;}
-.cl-vetro{inset:0;opacity:.9}
-.cl-vetro,.cl-vetro::after{
-  /* Due griglie di misura diversa, una sopra l'altra: due griglie che non
-     vanno a tempo smettono di leggersi come una griglia. */
-  background-repeat:repeat;
-}
-/* Ogni goccia e' un ANELLO, non un puntino: su un vetro e' il bordo che
-   prende la luce, il centro lascia vedere quello che c'e' dietro. Coi
-   puntini pieni sembravano granelli di polvere - misurato a occhio su uno
-   screenshot, ed era vero. */
-.cl-vetro{
-  background-image:
-    radial-gradient(circle calc(5.5px*var(--s)) at 16% 11%,transparent 0 46%,var(--cl-goccia) 64%,rgba(255,255,255,.07) 80%,transparent 90%),
-    radial-gradient(circle calc(3.2px*var(--s)) at 48% 24%,transparent 0 44%,var(--cl-goccia) 63%,transparent 86%),
-    radial-gradient(circle calc(6.5px*var(--s)) at 79% 7%, transparent 0 47%,var(--cl-goccia) 65%,rgba(255,255,255,.06) 81%,transparent 91%),
-    radial-gradient(circle calc(3.8px*var(--s)) at 30% 43%,transparent 0 45%,var(--cl-goccia) 63%,transparent 86%),
-    radial-gradient(circle calc(5px*var(--s))   at 89% 36%,transparent 0 46%,var(--cl-goccia) 64%,transparent 88%),
-    radial-gradient(circle calc(2.6px*var(--s)) at 62% 54%,transparent 0 42%,var(--cl-goccia) 62%,transparent 84%),
-    radial-gradient(circle calc(6px*var(--s))   at 8% 64%, transparent 0 46%,var(--cl-goccia) 64%,rgba(255,255,255,.06) 80%,transparent 90%),
-    radial-gradient(circle calc(3.5px*var(--s)) at 42% 80%,transparent 0 44%,var(--cl-goccia) 63%,transparent 86%),
-    radial-gradient(circle calc(4.6px*var(--s)) at 72% 90%,transparent 0 45%,var(--cl-goccia) 63%,transparent 87%),
-    radial-gradient(circle calc(2.9px*var(--s)) at 22% 94%,transparent 0 43%,var(--cl-goccia) 62%,transparent 85%);
-  background-size:calc(163px*var(--s)) calc(181px*var(--s));
-  /* Mezzo pixel di sfocatura: e' quello che separa "gocce viste
-     attraverso un vetro" da "cerchi disegnati col compasso". */
-  filter:blur(calc(.55px*var(--s)));
-}
-.cl-vetro::after{
-  content:'';position:absolute;inset:0;opacity:.8;
-  background-image:
-    radial-gradient(circle calc(2.1px*var(--s)) at 27% 17%,transparent 0 40%,var(--cl-goccia) 60%,transparent 84%),
-    radial-gradient(circle calc(1.6px*var(--s)) at 68% 37%,transparent 0 38%,var(--cl-goccia) 58%,transparent 82%),
-    radial-gradient(circle calc(2.5px*var(--s)) at 12% 54%,transparent 0 41%,var(--cl-goccia) 60%,transparent 84%),
-    radial-gradient(circle calc(1.4px*var(--s)) at 84% 71%,transparent 0 36%,var(--cl-goccia) 57%,transparent 80%),
-    radial-gradient(circle calc(2.3px*var(--s)) at 52% 86%,transparent 0 40%,var(--cl-goccia) 59%,transparent 83%),
-    radial-gradient(circle calc(1.8px*var(--s)) at 91% 12%,transparent 0 38%,var(--cl-goccia) 58%,transparent 82%),
-    radial-gradient(circle calc(1.3px*var(--s)) at 37% 62%,transparent 0 36%,var(--cl-goccia) 57%,transparent 80%),
-    radial-gradient(circle calc(2px*var(--s))   at 60% 8%, transparent 0 39%,var(--cl-goccia) 58%,transparent 82%);
-  background-size:calc(89px*var(--s)) calc(101px*var(--s));
-}
-/* La goccia che scivola: la scia sopra e la testa in fondo, come quando
-   una goccia si porta via quelle che incontra. */
-.cl-riga{
-  top:calc(-34px*var(--s));border-radius:999px;
-  background:linear-gradient(180deg,transparent 0,rgba(255,255,255,.16) 35%,var(--cl-goccia) 96%);
-  animation-name:cl-scivola;animation-timing-function:linear;animation-iteration-count:infinite;
-}
-/* La testa: e' lei la goccia, il resto e' la scia bagnata che si lascia
-   dietro. */
-.cl-riga::after{
-  content:'';position:absolute;left:50%;bottom:calc(-3px*var(--s));
-  width:calc(5px*var(--s));height:calc(5px*var(--s));margin-left:calc(-2.5px*var(--s));
-  border-radius:50%;
-  background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.8),var(--cl-goccia) 60%,transparent 88%);
-}
-/* A scatti, non a velocita' costante: una goccia vera parte, si ferma
-   contro qualcosa, riparte. Una velocita' costante e' quello che faceva
-   sembrare la vecchia pioggia una tapparella. */
-@keyframes cl-scivola{
-  0%  {transform:translateY(0);opacity:0}
-  5%  {opacity:1}
-  17% {transform:translateY(calc(66px*var(--s)))}
-  25% {transform:translateY(calc(80px*var(--s)))}
-  47% {transform:translateY(calc(232px*var(--s)))}
-  56% {transform:translateY(calc(255px*var(--s)))}
-  93% {opacity:1}
-  100%{transform:translateY(calc(580px*var(--s)));opacity:0}
-}
-.cl-riga.r1{left:12%;width:calc(2.2px*var(--s));height:calc(22px*var(--s));animation-duration:calc(9s*var(--vel));animation-delay:-1s}
-.cl-riga.r2{left:34%;width:calc(1.6px*var(--s));height:calc(15px*var(--s));animation-duration:calc(12.5s*var(--vel));animation-delay:-6s}
-.cl-riga.r3{left:58%;width:calc(2.6px*var(--s));height:calc(28px*var(--s));animation-duration:calc(7.5s*var(--vel));animation-delay:-3.5s}
-.cl-riga.r4{left:79%;width:calc(1.8px*var(--s));height:calc(18px*var(--s));animation-duration:calc(11s*var(--vel));animation-delay:-8s}
-.cl-riga.r5{left:46%;width:calc(2.3px*var(--s));height:calc(24px*var(--s));animation-duration:calc(10s*var(--vel));animation-delay:-5s}
-.cl-riga.r6{left:90%;width:calc(2px*var(--s));height:calc(20px*var(--s));animation-duration:calc(8.5s*var(--vel));animation-delay:-2.2s}
 .cl-nev{
   background-image:radial-gradient(circle calc(3.2px*var(--s)) at 50% 50%,#fff,transparent 66%);
   background-size:calc(21px*var(--s)) calc(42px*var(--s));
@@ -1263,10 +1214,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     radial-gradient(circle calc(1px*var(--s))   at 70% 31%,#fff,transparent);
 }
 @media (prefers-reduced-motion:reduce){
-  .cl-nuv,.cl-riga,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta{animation:none}
-  /* Le gocce che corrono spariscono: quelle ferme sul vetro restano, e
-     bastano a dire che piove. */
-  .cl-riga{display:none}
+  .cl-nuv,.cl-g,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta{animation:none}
+  /* La pioggia si ferma a meta' caduta invece di sparire: si vede lo
+     stesso che piove, e non si muove niente. */
+  .cl-g{transform:translateY(calc(180px*var(--s)))}
   .cl-lampo,.cl-saetta{opacity:0}
 }
 
@@ -5202,10 +5153,75 @@ const DIZIONARIO_PIOGGIA={
 };
 Object.keys(DIZIONARIO_PIOGGIA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_PIOGGIA[l]));
 
+/* I tasti della giornata. Due si usano camminando e stanno in vista, due
+   si usano da fermi e stanno dietro una porta: sono tutte frasi nuove,
+   perche' prima l'emoji stava attaccata al testo e la chiave era
+   un'altra. */
+const DIZIONARIO_GIORNATA={
+  en:{
+    'Naviga la giornata':'Navigate the day',
+    'Chiedi all\'assistente':'Ask the assistant',
+    '✦ Costruisci la giornata ›':'✦ Build the day ›',
+    'Costruisci la giornata':'Build the day',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Two desk tools: you use them while the trip is being planned, not while you are living it.',
+    'Ordina il giro con l\'IA':'Order the route with AI',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'It puts the stops you already added back in order, so the route doesn’t send you back twice.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'You paste it a list of places and it puts them on the clock, leaving time to get from one to the next.'
+  },
+  es:{
+    'Naviga la giornata':'Guíame por el día',
+    'Chiedi all\'assistente':'Pregunta al asistente',
+    '✦ Costruisci la giornata ›':'✦ Monta el día ›',
+    'Costruisci la giornata':'Monta el día',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Dos herramientas de escritorio: se usan mientras se prepara el viaje, no mientras se hace.',
+    'Ordina il giro con l\'IA':'Ordena la ruta con la IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Reordena las paradas que ya has puesto, para que la ruta no te haga volver atrás dos veces.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Le pegas una lista de sitios y él los pone en hora, dejando tiempo para ir de uno a otro.'
+  },
+  fr:{
+    'Naviga la giornata':'Guide-moi dans la journée',
+    'Chiedi all\'assistente':'Demande à l’assistant',
+    '✦ Costruisci la giornata ›':'✦ Construis la journée ›',
+    'Costruisci la giornata':'Construis la journée',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Deux outils de bureau : on les utilise pendant qu’on prépare le voyage, pas pendant qu’on le vit.',
+    'Ordina il giro con l\'IA':'Ordonne le parcours avec l’IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Il remet dans l’ordre les étapes déjà ajoutées, pour que le parcours ne te fasse pas revenir deux fois.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Tu lui colles une liste de lieux et il les met à l’heure, en laissant le temps d’aller de l’un à l’autre.'
+  },
+  pt:{
+    'Naviga la giornata':'Guia-me pelo dia',
+    'Chiedi all\'assistente':'Pergunta ao assistente',
+    '✦ Costruisci la giornata ›':'✦ Monta o dia ›',
+    'Costruisci la giornata':'Monta o dia',
+    'Due strumenti da tavolino: si usano mentre il viaggio si prepara, non mentre lo si fa.':'Duas ferramentas de secretária: usam-se enquanto se prepara a viagem, não enquanto se faz.',
+    'Ordina il giro con l\'IA':'Ordena o percurso com a IA',
+    'Rimette in fila le tappe che hai già messo, così il giro non ti fa tornare indietro due volte.':'Volta a pôr por ordem as paragens que já puseste, para o percurso não te fazer voltar atrás duas vezes.',
+    'Gli incolli un elenco di posti e li mette lui in orario, lasciando il tempo per spostarsi da uno all\'altro.':'Colas-lhe uma lista de sítios e ele põe-nos na hora, deixando tempo para ir de um ao outro.'
+  }
+};
+Object.keys(DIZIONARIO_GIORNATA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_GIORNATA[l]));
+
+/* Perche' per una giornata il meteo non c'e'. */
+const DIZIONARIO_DOVE={
+  en:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'“{1}” is a whole country: add a stop or a city, otherwise I don’t know where to look.'
+  },
+  es:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'«{1}» es un país entero: añade una parada o una ciudad, si no no sé dónde mirar.'
+  },
+  fr:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'« {1} » est un pays entier : ajoute une étape ou une ville, sinon je ne sais pas où regarder.'
+  },
+  pt:{
+    '«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.':'«{1}» é um país inteiro: acrescenta uma paragem ou uma cidade, senão não sei onde olhar.'
+  }
+};
+Object.keys(DIZIONARIO_DOVE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DOVE[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=965;
+const FRASI_IN_TUTTO=974;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6141,6 +6157,34 @@ function cieloNotte(w,date){
   const alba=oraDi(w&&w.sunrise)||6.5;
   return ora>=tramonto||ora<alba;
 }
+/* Le gocce, una per una. Non una piastrella ripetuta: una piastrella si
+   riconosce sempre, e a riconoscerla la pioggia diventa una tenda a
+   strisce. Qui ogni goccia ha la sua lunghezza, il suo spessore, la sua
+   trasparenza e la sua velocita' - ed e' quella differenza, non la
+   velocita', a farla sembrare pioggia.
+   I numeri sono sparsi ma sempre gli stessi: presi a caso davvero, a ogni
+   ridisegno della home la pioggia salterebbe di posto. */
+function gocceDiPioggia(quante){
+  /* Numeri sparsi, ma sempre gli stessi. Con Math.random() la pioggia
+     cambierebbe posto a ogni ridisegno della home - e la home si ridisegna
+     spesso - quindi si vedrebbe saltare. Questo e' il vecchio trucco del
+     seno: da un indice tira fuori un numero fra 0 e 1 che sembra a caso e
+     invece e' sempre quello. */
+  const r=(i,seme)=>{const x=Math.sin((i+1)*seme)*10000;return x-Math.floor(x);};
+  let out='';
+  for(let i=0;i<quante;i++){
+    const sx=(r(i,12.9898)*98+1).toFixed(1);
+    const lung=(18+r(i,78.233)*34).toFixed(0);        /* 18 - 52 px */
+    const larg=(0.9+r(i,43.111)*0.9).toFixed(2);      /* 0,9 - 1,8 px */
+    /* Le sbiadite sono quelle lontane, e cadono piu' piano: e' cosi' che
+       l'occhio legge la profondita' anche in una scena piatta. */
+    const opa=(0.2+r(i,93.989)*0.55).toFixed(2);
+    const dur=(3.5-opa*2.1+r(i,27.61)*0.7).toFixed(2); /* 1,9 - 3,4 s */
+    const rit=(-r(i,51.317)*4).toFixed(2);
+    out+=`<span class="cl-g" style="left:${sx}%;--h:${lung};--w:${larg};--o:${opa};animation-duration:${dur}s;animation-delay:${rit}s"></span>`;
+  }
+  return out;
+}
 /* La scena: quali pezzi disegnare sopra la sfumatura. Il sole sparisce
    quando il cielo e' coperto - un sole dietro tre nuvole non lo vedresti
    comunque, e disegnarlo lo farebbe sembrare una giornata bella. */
@@ -6155,12 +6199,7 @@ function cieloScena(w,date){
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
   const forte=!!(w&&w.precipitation>8);
   if(k==='c-pioggia'||k==='c-tempo'){
-    /* Il vetro bagnato, e sopra le poche gocce che scivolano. Non sono
-       tante apposta: su un vetro vero quelle che corrono si contano, il
-       resto sta fermo. Quando piove forte diventano sei e vanno piu'
-       svelte. */
-    p.push('<span class="cl-vetro"></span>');
-    for(let i=1;i<=(forte?6:4);i++)p.push(`<span class="cl-riga r${i}"></span>`);
+    p.push(gocceDiPioggia(forte?30:18));
   }
   if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');
@@ -7960,6 +7999,11 @@ async function ensureDestLoc(t){
       const bb=d[0].boundingbox;
       if(bb&&bb.length===4)t.destBB=[parseFloat(bb[0]),parseFloat(bb[1]),parseFloat(bb[2]),parseFloat(bb[3])];
       if(d[0].address&&d[0].address.country_code)t.destCountry=d[0].address.country_code;
+      /* Che cosa e' il posto trovato conta quanto dove sta: un paese intero
+         ha un centro geografico, ma quel centro non e' un posto dove
+         qualcuno va. Serve al meteo, che se no lo prende da li'. */
+      t.destTipo=d[0].addresstype||d[0].type||'';
+      t.destRank=(d[0].place_rank!=null)?+d[0].place_rank:null;
       save();
     }
   }catch(e){}
@@ -8213,7 +8257,9 @@ function renderMeteoHero(t){
   const w=(t.weather||{})[d.date],s=cieloScena(w,d.date);
   const i=t.days.indexOf(d);
   const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
-  const dove=(w&&w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):((w&&w.luogo)||d.city||cittaDelGiorno(t,d)||'');
+  /* Il "circa" non e' un vezzo: quel meteo viene dalle tappe di un altro
+     giorno, perche' questo non ne ha. Dirlo costa una tilde. */
+  const dove=(w&&w.multi&&Object.keys(w.multi).length>1)?Object.keys(w.multi).join(' e '):(((w&&w.vicino)?'≈ ':'')+((w&&w.luogo)||d.city||cittaDelGiorno(t,d)||''));
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(d.date)-oggi)/864e5);
   const destra=w
@@ -8305,7 +8351,11 @@ function renderWeather(){
     const w=t.weather[day.date],ds=new Date(day.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),da=Math.round((new Date(day.date)-today)/864e5);
     if(!w){
       if(da>16)return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">⏳</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${tv('Disponibile tra {1} giorni',da-16)}</div></div></div></div>`;
-      return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">❓</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">Premi 🔄 per caricare</div></div></div></div>`;
+      /* Se il meteo non c'e' perche' non sappiamo DOVE guardare, si dice
+         quello: "premi per caricare" manderebbe a premere un tasto che non
+         puo' funzionare. */
+      const perche=percheNienteMeteo(t);
+      return `<div class="wcard na${sel}"${apri}><div class="wc-l"><div class="wc-emoji">${perche?'📍':'❓'}</div><div><div class="wc-t">${tv('Giorno {1} · {2}',i+1,ds)}</div><div class="wc-d">${perche?esc(perche):'Premi 🔄 per caricare'}</div></div></div></div>`;
     }
     const rain=w.precipitation>5,sun=w.precipitation<1&&w.tempMax>20,cls=rain?'rain':(sun?'sun':'cloud'),out=(day.activities||[]).filter(a=>a.type==='outdoor').length;
     /* Su quale posto e' la previsione: senza, un "22° e pioggia" non dice se
@@ -15184,6 +15234,48 @@ async function nomeLuogo(t,g){
   }catch(e){return '';}
 }
 
+/* ===== DA DOVE SI PRENDE IL METEO =====
+   Il difetto piu' grosso che il meteo abbia mai avuto, e non si vedeva dal
+   codice: un viaggio con destinazione "Giappone" prendeva le previsioni dal
+   CENTRO GEOGRAFICO del Giappone. Nominatim, cercando un paese, risponde
+   con quello: le montagne del Gunma, mille metri di quota, forse il posto
+   piu' diverso da Tokyo che ci sia in Giappone. Le previsioni erano giuste,
+   era il posto a essere sbagliato - e uno legge "8 gradi e neve" mentre a
+   Tokyo ce ne sono venti.
+   Un paese non e' un posto: se la destinazione e' un paese intero, non la si
+   usa e basta. */
+function destPuntuale(t){
+  if(!t||!t.destLoc)return null;
+  if(t.destTipo==='country'||(t.destRank!=null&&t.destRank<=5))return null;
+  return t.destLoc;
+}
+/* E prima di rinunciare: se questa giornata non ha ancora tappe, il posto
+   piu' vicino al vero sono le tappe delle giornate INTORNO. Se il 3 non hai
+   messo niente ma il 2 e il 4 sei a Kyoto, il meteo di Kyoto e' una
+   risposta; quello del centro del Giappone no. Poi l'hotel, poi le citta'
+   del viaggio. */
+function postoDaVicino(t,day){
+  if(!t||!t.days||!day)return null;
+  const qui=new Date(day.date).getTime();
+  const cand=[];
+  t.days.forEach(d=>{
+    if(!d||d.date===day.date)return;
+    const g=luoghiDelGiorno(t,d);
+    if(g.length)cand.push({d:Math.abs(new Date(d.date).getTime()-qui),loc:g[0]});
+  });
+  (t.hotels||[]).forEach(h=>{if(h&&h.lat)cand.push({d:9e12,loc:{lat:h.lat,lng:h.lng}});});
+  (t.cities||[]).forEach(c=>{if(c&&c.lat)cand.push({d:8e12,loc:{lat:c.lat,lng:c.lng}});});
+  cand.sort((a,b)=>a.d-b.d);
+  return cand.length?cand[0].loc:null;
+}
+/* Perche' per questa giornata il meteo non c'e'. Dirlo vale piu' che
+   mostrare un numero preso da un posto sbagliato. */
+function percheNienteMeteo(t){
+  if(!t)return '';
+  if(t.destination&&!destPuntuale(t)&&t.destLoc)
+    return tv('«{1}» è un paese intero: aggiungi una tappa o una città, se no non so dove guardare.',String(t.destination).split(',')[0].trim());
+  return '';
+}
 async function fetchDayWx(t,day){
   /* L'alba viaggia insieme al resto perche' e' lo stesso identico
      scaricamento: serve al cielo disegnato in cima alla home per sapere
@@ -15227,14 +15319,18 @@ async function fetchDayWx(t,day){
       const ks=Object.keys(multi);
       if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
     }
-    /* 3. E se non c'e' neanche quella: l'hotel di quella notte, e in mancanza
-          anche di quello la destinazione del viaggio. */
-    const loc=dayLoc(t,day)||t.destLoc;
+    /* 3. E se non c'e' neanche quella: l'hotel di quella notte; poi le tappe
+          delle giornate intorno, che sono un'approssimazione onesta; e solo
+          per ultima la destinazione del viaggio, ma SOLO se e' un posto vero
+          e non un paese intero. */
+    const preciso=dayLoc(t,day);
+    const vicino=preciso?null:postoDaVicino(t,day);
+    const loc=preciso||vicino||destPuntuale(t);
     if(!loc)return false;
     const w=await one(loc);
     if(w){
       const nome=(await nomeLuogo(t,loc))||(t.destination||'').split(',')[0].trim();
-      t.weather[day.date]=Object.assign({},w,{luogo:nome});save();return true;
+      t.weather[day.date]=Object.assign({},w,{luogo:nome},vicino?{vicino:true}:{});save();return true;
     }
     return false;
   }catch(e){return false;}

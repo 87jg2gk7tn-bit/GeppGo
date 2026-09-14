@@ -370,19 +370,52 @@ va rifatto vedere.
     temporale non si legge, e non è un dettaglio estetico: è la riga con cui
     si cambia viaggio.
 
-    **La pioggia, rifatta una terza volta: è sul vetro.** I primi due
-    tentativi erano trattini che scendevano in fretta, tutti uguali e tutti
-    alla stessa velocità — una grata che si muove, non pioggia. L'errore era
-    a monte: **il temporale non lo guardi in mezzo alla strada, lo guardi da
-    dietro un vetro**, e su un vetro la pioggia sta quasi ferma. Adesso c'è
-    uno strato di goccioline appoggiate — ognuna è un **anello**, perché su
-    un vetro è il bordo della goccia che prende la luce e il centro lascia
-    vedere quello che c'è dietro — e sopra quattro o sei gocce che scivolano
-    giù **a scatti**, fermandosi due volte per strada come fanno quelle vere.
-    Mezzo pixel di sfocatura è quello che separa «gocce viste attraverso un
-    vetro» da «cerchi disegnati col compasso»: senza, sembravano bolle di
-    sapone (provato, guardato, corretto). Quando piove forte le gocce che
-    corrono passano da quattro a sei e ci mettono meno ad arrivare in fondo.
+    **⚠️ Il difetto più grosso che il meteo abbia mai avuto, e dal codice non
+    si vedeva.** Un viaggio con destinazione **«Giappone»** prendeva le
+    previsioni dal **centro geografico del Giappone**: cercando un paese,
+    Nominatim risponde col suo centroide — le montagne del Gunma, mille metri
+    di quota, forse il posto più diverso da Tokyo che ci sia in Giappone. Le
+    previsioni erano giuste, era il *posto* a essere sbagliato, e si leggeva
+    «1 grado e neve» mentre a Tokyo ce n'erano venti. **Lo ha trovato
+    Giacomo usandola, non la suite.**
+
+    Adesso: un paese intero non è un posto, e non si usa (si guarda
+    `addresstype`/`place_rank` di Nominatim, che ora vengono salvati). Prima
+    di rinunciare si prova con le **tappe delle giornate intorno** — se il 3
+    è vuoto ma il 2 e il 4 sei a Kyoto, Kyoto è una risposta e il centro del
+    Giappone no — poi l'hotel, poi le città del viaggio. Quando è
+    un'approssimazione il riquadro lo dice con un `≈` davanti al nome del
+    posto. E se davvero non si sa dove guardare, **si dice quello** invece di
+    mostrare un numero preso a caso: *«Giappone» è un paese intero: aggiungi
+    una tappa o una città*.
+
+    **Sulla fonte:** 3B Meteo non ha un'API pubblica gratuita, servirebbe una
+    licenza commerciale. Open-Meteo, che usiamo già, è gratuito, senza chiave,
+    e per il Giappone instrada sul modello **JMA** — il servizio
+    meteorologico nazionale giapponese, cioè la stessa fonte che qualunque
+    altro servizio rivenderebbe. Il problema non era la fonte.
+
+    **La pioggia, rifatta tre volte.** Il primo tentativo erano trattini
+    fitti tutti alla stessa velocità: una grata che si muove, non pioggia. Il
+    secondo, gocce ferme sul vetro disegnate ad anello: sembravano bolle di
+    sapone, e Giacomo l'ha detto subito. Quello che mancava a tutti e due non
+    era la velocità né la forma: era la **varietà**. La pioggia vera non ha
+    due gocce uguali — una è lunga e vicina, quella dietro è corta e
+    sbiadita, e nessuna delle due cade come l'altra.
+
+    Adesso non c'è più una piastrella ripetuta: ci sono **diciotto gocce (o
+    trenta se piove forte), una per una**, ognuna con la sua lunghezza, il suo
+    spessore, la sua trasparenza e la sua velocità. Le sbiadite sono le
+    lontane e cadono più piano, ed è così che l'occhio legge la profondità in
+    una scena piatta. E vanno **piano**: due o tre secondi per attraversare
+    l'intestazione, non mezzo. I numeri sono sparsi ma sempre gli stessi (il
+    vecchio trucco del seno): con `Math.random()` la pioggia salterebbe di
+    posto a ogni ridisegno della home.
+
+    Una cosa contata, non guardata a occhio: la caduta arriva a 330 px e non
+    a 600, perché **su ventisei gocce ne arrivava UNA** nella fascia in cui
+    si guardano — tutte le altre passavano la vita nella parte già dissolta
+    dalla maschera.
 
     **Il «+» si è spostato di fianco ai viaggi.** Stava all'estremo destro
     della riga, staccato dai nomi a cui appartiene. Adesso gli sta appiccicato,
@@ -614,6 +647,28 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Un paese non è un posto.** Cercando «Giappone», «Francia» o «Spagna», il
+  geocodificatore risponde col **centroide del paese** — per il Giappone le
+  montagne del Gunma a mille metri. Prendere il meteo da lì dà numeri veri di
+  un posto in cui non va nessuno, e sembra che la fonte sia inaffidabile
+  mentre è la domanda a essere sbagliata. Prima di usare delle coordinate per
+  qualcosa di locale, si guarda **che cosa** è il posto che il
+  geocodificatore ha trovato (`addresstype`, `place_rank`), non solo dove sta.
+- **Quando non sai, dillo.** La stessa giornata senza tappe adesso non mostra
+  un numero preso a caso: dice *«Giappone» è un paese intero, aggiungi una
+  tappa o una città*. Un numero sbagliato costa più di un vuoto spiegato,
+  perché sul numero uno ci fa la valigia.
+- **Il difetto l'ha trovato una persona usandola, non la suite.** È la
+  seconda volta (la prima erano le ottanta frasi in italiano). Le prove
+  coprono quello che il codice fa; non coprono quello che il codice *chiede*
+  a un servizio esterno. La prova nuova infatti guarda **le coordinate che
+  l'app manda a Open-Meteo**, non quello che ne torna indietro.
+- **Prima di spingere, la suite intera.** Quattro prove rosse in CI (`lingue`,
+  `nav`, `piu`, `tasti`) perché avevo girato solo quelle che *credevo*
+  toccate. Cambiare la classe di un tasto (`.chip` → `.tt-az`) rompe ogni
+  prova che quel tasto lo cercava per classe, e la lista di chi lo cerca non
+  sta in testa a nessuno. Cinque minuti di suite valgono un giro di CI rossa.
 
 - **Un'animazione sbagliata quasi sempre è una metafora sbagliata.** La
   pioggia è stata rifatta tre volte, e le prime due erano varianti della
