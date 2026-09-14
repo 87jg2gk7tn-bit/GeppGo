@@ -122,6 +122,16 @@ const oreFinte = (data) => {
 
   // ══ la riga in cima: i nomi, il "+", la temperatura ══════════════════
   let page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
+  /* La riga va misurata quando ha finito di prendere le sue misure. Se la
+     si interroga mentre si sta ancora assestando - i caratteri che
+     arrivano, il cielo che si disegna - si legge una fila che NON sborda,
+     e allora le sfumature sono spente tutte e due: la prova dice «0px,
+     0px» senza che niente sia rotto. Su un runner lento è successo
+     davvero, e su un altro identico no. */
+  await page.waitForFunction(() => {
+    const f = document.querySelector('.hh-trips');
+    return f && f.scrollWidth - f.clientWidth > 1;
+  }, { timeout: 8000 }).catch(() => {});
   const riga = await page.evaluate(() => {
     const barra = document.querySelector('.hh-tripbar');
     const fila = document.querySelector('.hh-trips');
@@ -175,16 +185,21 @@ const oreFinte = (data) => {
   ok('e dove la fila continua svaniscono, invece di essere tagliati',
      riga.vdx > 8 && riga.vsx === 0, `sinistra ${riga.vsx}px, destra ${riga.vdx}px`);
   ok('ed è una sfumatura, non un taglio', /gradient/.test(riga.maschera), riga.maschera.slice(0, 40));
-  const inFondo = await page.evaluate(async () => {
+  /* Si chiama a mano chi decide le sfumature, invece di lanciare un evento
+     e sperare che qualcuno lo raccolga entro un decimo di secondo:
+     l'aspettare era metà del ballo. */
+  const inFondo = await page.evaluate(() => {
     const fila = document.querySelector('.hh-trips');
-    fila.scrollLeft = fila.scrollWidth;
-    fila.dispatchEvent(new Event('scroll'));
-    await new Promise(r2 => setTimeout(r2, 120));
+    const resta = fila.scrollWidth - fila.clientWidth;
+    fila.scrollLeft = resta;
+    viaggiBordi();
     const st = getComputedStyle(fila);
-    return { sx: parseFloat(st.getPropertyValue('--vsx')) || 0, dx: parseFloat(st.getPropertyValue('--vdx')) || 0 };
+    return { sx: parseFloat(st.getPropertyValue('--vsx')) || 0,
+             dx: parseFloat(st.getPropertyValue('--vdx')) || 0,
+             sborda: Math.round(resta), fermaA: Math.round(fila.scrollLeft) };
   });
   ok('arrivati in fondo la sfumatura si ribalta', inFondo.sx > 8 && inFondo.dx === 0,
-     `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px`);
+     `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px · la fila sborda di ${inFondo.sborda}px, ferma a ${inFondo.fermaA}px`);
 
   // ══ il cielo È lo sfondo, non un'immagine appoggiata sopra ═══════════
   const sfondo = await page.evaluate(([luce]) => {
@@ -249,7 +264,6 @@ const oreFinte = (data) => {
      astro.distanzaGrado !== null && astro.distanzaGrado >= 12,
      astro.distanzaGrado + 'px dalla temperatura');
   ok('e il tondo decorativo si spegne', sfondo.tondoSpento === true);
-  const luceSereno = sfondo.luce;
   await page.close();
 
   // ══ e cambia davvero col tempo che fa, misurato ══════════════════════
@@ -308,8 +322,32 @@ const oreFinte = (data) => {
   ok('e sono strisce corte, non scie',
      pioggia.altezze.every(h => h <= 30), 'la più lunga ' + Math.max(...pioggia.altezze) + 'px');
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
-  ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
-     `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
+  /* Il confronto fra i cieli NON si fa su due pagine vive: quelle si portano
+     dietro l'orologio della macchina, e dopo il tramonto il cielo di pioggia
+     è più CHIARO di quello sereno — le nuvole rimandano giù la luce, è fisica
+     giusta e prova sbagliata. Costata una riga rossa alle nove di sera.
+     Le tavolozze si misurano su elementi costruiti apposta: giorno contro
+     giorno, notte contro notte, e l'ora che è non c'entra più niente. */
+  const tavolozza = await page.evaluate(([luce]) => {
+    const fai = cls => {
+      const d = document.createElement('div');
+      d.className = cls; d.style.position = 'absolute'; d.style.left = '-9999px';
+      document.body.appendChild(d);
+      const v = eval(luce)(d); d.remove(); return v;
+    };
+    return { sereno: fai('cielo c-sereno'), velato: fai('cielo c-velato'),
+             pioggia: fai('cielo c-pioggia'), tempo: fai('cielo c-tempo'),
+             serenoNotte: fai('cielo c-sereno notte') };
+  }, [LUCE]);
+  ok('di giorno il cielo di pioggia è più scuro di quello sereno',
+     tavolozza.pioggia < tavolozza.sereno - 15,
+     `pioggia ${tavolozza.pioggia}, sereno ${tavolozza.sereno}`);
+  ok('e quello del temporale è più scuro ancora',
+     tavolozza.tempo < tavolozza.pioggia - 10,
+     `temporale ${tavolozza.tempo}, pioggia ${tavolozza.pioggia}`);
+  ok('e la notte è più scura del giorno, a parità di tempo che fa',
+     tavolozza.serenoNotte < tavolozza.sereno - 40,
+     `notte ${tavolozza.serenoNotte}, giorno ${tavolozza.sereno}`);
   /* Se il cielo in alto si fa scuro, quello che ci sta sopra deve
      schiarirsi: inchiostro tenue su un temporale non si legge più. */
   ok('e i nomi dei viaggi passano all\'inchiostro chiaro',
@@ -382,8 +420,7 @@ const oreFinte = (data) => {
   }, [LUCE]);
   ok('dopo il tramonto il cielo è di notte', /\bnotte\b/.test(notte.classi), notte.classi);
   ok('e di notte è scuro davvero, non solo di nome',
-     typeof notte.luce === 'number' && notte.luce < 90,
-     `luce ${notte.luce} contro ${luceSereno} di giorno`);
+     typeof notte.luce === 'number' && notte.luce < 90, 'luce ' + notte.luce);
   ok('e ci sono le stelle e la luna', notte.stelle === true && notte.luna === true);
   await page.close();
 

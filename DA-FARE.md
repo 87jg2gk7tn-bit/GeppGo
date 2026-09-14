@@ -582,6 +582,33 @@ va rifatto vedere.
     l'altro. Tolto. La regola: *prima di aggiungere un'azione a una schermata,
     si guarda la schermata* — con uno screenshot, non a memoria.
 
+    **Fatto — i Biglietti dicevano di non avere quello che avevano.** Il
+    filtro «di chi vuoi vedere i biglietti» partiva su **te** quando il
+    viaggio ha più di una persona. Ma i biglietti sono per le **attrazioni** —
+    un ingresso al castello preso per il gruppo non è «di» nessuno in
+    particolare — e quasi mai uno si ferma a dire di chi è ciascuno. Così
+    aprendo la sezione si leggeva *«Nessun biglietto intestato a Gepp»* mentre
+    il viaggio i biglietti ce li aveva, e l'unico appiglio era una scritta
+    grigia da dodici pixel. Partire da te sembrava un riguardo ed era un
+    inganno: adesso si parte da **tutti**, e il filtro per persona resta come
+    affinamento.
+
+    E l'aria: i tre modi per aggiungere un biglietto erano **tre tasti in due
+    stili** (uno pieno, due vuoti), come se il primo contasse più degli altri
+    — e non è vero, dipende solo da dove ce l'hai il biglietto. Adesso sono
+    tre tasti uguali, con l'emoji sopra e la parola sotto: andando a capo da
+    sole le etichette si spezzavano ognuna a modo suo, e se il capo è voluto
+    diventa un incolonnamento. Le **sei righe di grigio** prima di poter fare
+    qualcosa — il muro di testo più alto dell'app — sono dietro «Come funziona
+    la lettura»: sono cose vere e vanno tenute, soprattutto quella sul codice
+    che leggendolo non si consuma, ma si leggono una volta, non a ogni
+    apertura.
+
+    Infine i gruppi dicono anche **quando**: «Castello di Praga · Giorno 2 ·
+    mar 15 set · 11:00». Un biglietto è di un'attrazione ma anche di un
+    momento, e prima quella metà non c'era. E i biglietti non attaccati a
+    nessuna tappa hanno un titolo loro invece di restare orfani in fondo.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
     per forza) e gli altri stati vuoti che sono ancora cartelli senza
@@ -698,6 +725,28 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Un filtro con un valore di partenza può nascondere tutto quello che hai.**
+  I biglietti partivano filtrati su «te», e chi non assegna i biglietti a
+  nessuno — cioè quasi tutti — apriva la sezione e leggeva «nessun biglietto»
+  con tre biglietti dentro. Un valore di partenza che *toglie* roba dalla
+  vista va scelto col caso normale in testa, non col caso ordinato.
+- **⚠️ Non cancellare voci di dizionario con un regex.** Le voci stanno
+  parecchie per riga: un `'📷 Scansiona':'…',` tolto da una riga si porta via
+  il contesto delle altre, e soprattutto può essere una voce che serviva a un
+  ALTRO tasto. È successo: `'📷 Scansiona'` era usato anche nella scheda
+  «aggiungi attività», e toglierlo l'avrebbe lasciato in italiano nelle
+  quattro lingue. Se ne accorge solo `prova-lingue` — o nessuno. Prima di
+  togliere una chiave, si cerca **dove è usata**, non dove è scritta.
+- **`MAPPA_APP` invecchia in silenzio.** È il foglio che l'assistente ha
+  davanti quando qualcuno gli chiede dov'è una cosa: se la schermata cambia e
+  il foglio no, l'assistente risponde una cosa e l'app ne fa un'altra, e
+  nessuno se ne accorge finché non è un utente a farlo notare. È successo coi
+  biglietti: il filtro è passato a «tutti» e la mappa continuava a dire «di
+  suo parte dai tuoi». Ora `prova-biglietti` mette le due cose una contro
+  l'altra e misura se dicono lo stesso. **Dove si cambia un valore di
+  partenza o un percorso, si aggiunge una prova di questo tipo:** la mappa è
+  una promessa, e una promessa senza prova scade da sola.
 
 - **Un dato che non scade è un dato che mente.** Il meteo si scaricava una
   volta e restava lì: una previsione per domani presa una settimana prima

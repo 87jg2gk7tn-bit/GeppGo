@@ -1045,6 +1045,29 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-trip:active{transform:scale(.95)}
 .hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+/* Tre modi per fare la stessa cosa. L'emoji va sopra e la parola sotto:
+   andando a capo da sole, le tre etichette si spezzavano ognuna a modo suo e
+   la riga sembrava sciatta. Se il capo e' voluto, e' un incolonnamento. */
+.tk-modo{
+  display:grid;place-items:center;gap:.28rem;padding:.72rem .3rem;
+  line-height:1.15;font-size:.82rem;white-space:normal;
+}
+.tk-modo>span{font-size:1.2rem;line-height:1}
+
+/* Una spiegazione che serve una volta sola non deve stare aperta per
+   sempre: si legge, e poi si richiude da sé la volta dopo. */
+.spiega{margin-top:.6rem}
+.spiega>summary{
+  list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;
+  font-size:.76rem;font-weight:700;color:var(--ink-faint);
+  padding:.55rem .1rem;transition:var(--ease);
+}
+.spiega>summary::-webkit-details-marker{display:none}
+.spiega>summary::after{content:'›';font-size:.95rem;line-height:1;transition:var(--ease)}
+.spiega[open]>summary::after{transform:rotate(90deg)}
+.spiega>summary:active{transform:scale(.98)}
+.spiega p{font-size:.76rem;color:var(--ink-faint);line-height:1.55;margin:.1rem 0 .5rem}
+
 /* ── il cielo della giornata ──────────────────────────────────────
    Il meteo non e' un riquadro appoggiato sopra l'intestazione: e' LO
    SFONDO dell'intestazione. Un riquadro, per quanto curato, resta un
@@ -1652,9 +1675,19 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
     <div class="page" id="tickets">
       <div class="card"><div class="card-head"><div class="card-h">Aggiungi biglietto</div></div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-green" style="flex:1;min-width:31%" onclick="openScanner()">Scansiona</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="document.getElementById('tkImgInp').click()">Foto o PDF</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="openTicketSheet()">A mano</button></div>
+        <!-- Tre modi per fare la stessa identica cosa: tre tasti uguali. Uno
+             pieno e due vuoti dicevano che il primo conta piu' degli altri, e
+             non e' vero - dipende da dove ce l'hai, il biglietto. -->
+        <div style="display:flex;gap:.5rem"><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="openScanner()"><span>📷</span>Scansiona</button><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="document.getElementById('tkImgInp').click()"><span>🖼</span>Foto o PDF</button><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="openTicketSheet()"><span>✍️</span>A mano</button></div>
         <input type="file" id="tkImgInp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="ticketsFromImages(this)">
-        <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.<br><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p></div>
+        <!-- Sei righe di grigio prima di poter fare qualcosa erano il muro di
+             testo piu' alto dell'app. Sono cose vere e vale la pena averle -
+             soprattutto quella sul codice che non si consuma, che e' la paura
+             di chiunque - ma si leggono una volta, non a ogni apertura. -->
+        <details class="spiega"><summary>Come funziona la lettura</summary>
+          <p>QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.</p>
+          <p><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p>
+        </details></div>
       <div id="tkWhoBar"></div>
       <div id="ticketsList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -2731,8 +2764,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'DELETE','Chiave anon public':'Anon public key','privacy di GeppGo':'GeppGo’s privacy policy',
     'es. Vacanza estiva':'e.g. Summer holiday','Cena al ristorante':'Dinner out',
     'Allega un PDF':'Attach a PDF','Codice / URL':'Code / URL','qualsiasi cosa':'anything',
-    '🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro',
-    '📷 Scansiona':'📷 Scan','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
+    '📷 Scansiona':'📷 Scan','🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
     '🖼️ Foto o PDF':'🖼️ Photo or PDF','🎫 Biglietto':'🎫 Ticket','🎫 Prenotazione':'🎫 Booking',
     '🎒 Lista bagagli':'🎒 Packing list','🧭 Naviga':'🧭 Navigate','🧭 Autopilota':'🧭 Autopilot',
     '🧭 Il giro di oggi':'🧭 Today’s route','📸 Che cos’è?':'📸 What is it?','📸 Che cos\'è?':'📸 What is it?',
@@ -2795,8 +2827,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'ELIMINAR','Chiave anon public':'Clave anon public','privacy di GeppGo':'la privacidad de GeppGo',
     'es. Vacanza estiva':'p. ej. Vacaciones de verano','Cena al ristorante':'Cena fuera',
     'Allega un PDF':'Adjuntar un PDF','Codice / URL':'Código / URL','qualsiasi cosa':'cualquier cosa',
-    '🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro',
-    '📷 Scansiona':'📷 Escanear','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
+    '📷 Scansiona':'📷 Escanear','🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
     '🖼️ Foto o PDF':'🖼️ Foto o PDF','🎫 Biglietto':'🎫 Billete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de equipaje','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 La ruta de hoy','📸 Che cos’è?':'📸 ¿Qué es?','📸 Che cos\'è?':'📸 ¿Qué es?',
@@ -2859,8 +2890,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'SUPPRIMER','Chiave anon public':'Clé anon public','privacy di GeppGo':'la confidentialité de GeppGo',
     'es. Vacanza estiva':'ex. Vacances d’été','Cena al ristorante':'Dîner au restaurant',
     'Allega un PDF':'Joindre un PDF','Codice / URL':'Code / URL','qualsiasi cosa':'n’importe quoi',
-    '🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro',
-    '📷 Scansiona':'📷 Scanner','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
+    '📷 Scansiona':'📷 Scanner','🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
     '🖼️ Foto o PDF':'🖼️ Photo ou PDF','🎫 Biglietto':'🎫 Billet','🎫 Prenotazione':'🎫 Réservation',
     '🎒 Lista bagagli':'🎒 Liste de bagages','🧭 Naviga':'🧭 Guider','🧭 Autopilota':'🧭 Pilote automatique',
     '🧭 Il giro di oggi':'🧭 Le tour du jour','📸 Che cos’è?':'📸 Qu’est-ce que c’est ?','📸 Che cos\'è?':'📸 Qu’est-ce que c’est ?',
@@ -2923,8 +2953,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'ELIMINAR','Chiave anon public':'Chave anon public','privacy di GeppGo':'a privacidade do GeppGo',
     'es. Vacanza estiva':'p. ex. Férias de verão','Cena al ristorante':'Jantar fora',
     'Allega un PDF':'Anexar um PDF','Codice / URL':'Código / URL','qualsiasi cosa':'qualquer coisa',
-    '🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro',
-    '📷 Scansiona':'📷 Digitalizar','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
+    '📷 Scansiona':'📷 Digitalizar','🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
     '🖼️ Foto o PDF':'🖼️ Foto ou PDF','🎫 Biglietto':'🎫 Bilhete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de bagagem','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 O percurso de hoje','📸 Che cos’è?':'📸 O que é?','📸 Che cos\'è?':'📸 O que é?',
@@ -5265,10 +5294,35 @@ const DIZIONARIO_FRESCO={
 };
 Object.keys(DIZIONARIO_FRESCO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_FRESCO[l]));
 
+/* I biglietti: tre modi per aggiungerne uno, e come si raggruppano. */
+const DIZIONARIO_BIGLIETTI={
+  en:{
+    'Come funziona la lettura':'How the reading works',
+    'Non collegati a una tappa':'Not linked to a stop',
+    'I tuoi biglietti':'Your tickets',
+  },
+  es:{
+    'Come funziona la lettura':'Cómo funciona la lectura',
+    'Non collegati a una tappa':'Sin parada asociada',
+    'I tuoi biglietti':'Tus billetes',
+  },
+  fr:{
+    'Come funziona la lettura':'Comment marche la lecture',
+    'Non collegati a una tappa':'Sans étape associée',
+    'I tuoi biglietti':'Tes billets',
+  },
+  pt:{
+    'Come funziona la lettura':'Como funciona a leitura',
+    'Non collegati a una tappa':'Sem paragem associada',
+    'I tuoi biglietti':'Os teus bilhetes',
+  }
+};
+Object.keys(DIZIONARIO_BIGLIETTI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_BIGLIETTI[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=978;
+const FRASI_IN_TUTTO=981;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -7334,7 +7388,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
-- Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti salvati. In cima c'e' una tendina con i nomi dei viaggiatori: si guardano i biglietti di una persona alla volta (di suo parte dai tuoi), e quello che aggiungi mentre stai guardando una persona viene intestato a lei. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
+- Hotel: gli alloggi. In cima c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti delle ATTRAZIONI - l'ingresso a un castello, un museo, una torre - e i voucher. In cima ci sono tre tasti uguali, che sono tre modi per fare la stessa cosa: "Scansiona" (col codice davanti), "Foto o PDF" (se ce l'hai gia' nel telefono) e "A mano". Di fianco, la scritta "Come funziona la lettura" si apre toccandola. L'elenco parte da TUTTI i biglietti del viaggio, non solo dai tuoi: un ingresso preso per il gruppo non e' di nessuno in particolare. Se le persone sono piu' di una, sopra l'elenco c'e' una tendina per guardare i biglietti di una persona alla volta; da li' si torna a tutti con un tasto, e quello che aggiungi mentre stai guardando una persona viene intestato a lei. I biglietti stanno sotto l'attrazione a cui servono, e il titolo del gruppo dice anche quando ci vai: giorno, data e ora. Quelli non attaccati a nessuna tappa stanno insieme, sotto un titolo loro. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
@@ -10358,10 +10412,17 @@ function switchTicketBig(actId,curId,val){
    tendina in cima si guardano i biglietti di una persona alla volta: si parte
    dai propri, che e' quello che si cerca nove volte su dieci. Il voucher si
    vede sempre, perche' non e' di nessuno in particolare. */
+/* Si parte da TUTTI, non da te. Partire da te sembrava un riguardo ed era
+   un inganno: i biglietti sono per le attrazioni - un ingresso al castello
+   preso per il gruppo non e' "di" nessuno in particolare - e quasi mai uno
+   si ferma a dire di chi e' ciascuno. Cosi' aprendo la sezione si leggeva
+   "Nessun biglietto intestato a Gepp" mentre il viaggio i biglietti ce li
+   aveva, e l'unico appiglio era una scritta grigia da dodici pixel.
+   Il filtro per persona resta: serve a chi il viaggio lo ha diviso davvero.
+   Ma e' un affinamento, non la porta d'ingresso. */
 function tkWhoVal(t){
   if(app.tkWho!=null)return String(app.tkWho);
-  const me=(t.participants||[]).find(p=>p.isMe);
-  return (me&&(t.participants||[]).length>1)?String(me.id):'tutti';
+  return 'tutti';
 }
 function setTkWho(v){app.tkWho=String(v);save();renderTickets();}
 function personaFiltrata(t){
@@ -10400,18 +10461,30 @@ function renderTickets(){
   const groups=[],seen=new Set();
   t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{
     const list=mostrati.filter(tk=>tk.actId===a.id);
-    if(list.length){groups.push({act:a,tickets:list});list.forEach(tk=>seen.add(tk.id));}
+    if(list.length){groups.push({act:a,tickets:list,d,di});list.forEach(tk=>seen.add(tk.id));}
   });});
   const loose=mostrati.filter(tk=>!seen.has(tk.id));
   let html='';
   groups.forEach(g=>{
     const nb=g.tickets.filter(tk=>!eVoucher(tk)).length,nv=g.tickets.length-nb;
-    html+=`<div class="card"><div class="card-head"><div><div class="card-h" style="font-size:1rem">${esc(g.act.name)}</div><div class="card-sub">${nb} bigliett${nb===1?'o':'i'}${nv?' · '+nv+' voucher':''}</div></div></div>`;
+    /* Un biglietto e' di un'attrazione, ma anche di un MOMENTO: sapere che
+       il castello e' martedi' alle undici e' meta' dell'informazione, e
+       prima non c'era. */
+    const qd=g.d?new Date(g.d.date):null;
+    const quando=(qd&&!isNaN(qd.getTime()))
+      ? tv('Giorno {1} · {2}',g.di+1,qd.toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'}))+(g.act.time?' · '+g.act.time:'')
+      : '';
+    html+=`<div class="card"><div class="card-head"><div><div class="card-h" style="font-size:1.05rem">${esc(g.act.name)}</div><div class="card-sub">${quando?esc(quando)+' · ':''}${nb} bigliett${nb===1?'o':'i'}${nv?' · '+nv+' voucher':''}</div></div></div>`;
     let n=0;
     g.tickets.forEach(tk=>{html+=ticketCardHtml(tk,eVoucher(tk)?null:('Biglietto '+(++n)));});
     html+='</div>';
   });
-  loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
+  /* Quelli non attaccati a nessuna tappa non restano orfani in fondo senza
+     dire chi sono: hanno un titolo anche loro. */
+  if(loose.length){
+    html+=`<div class="section-label">${groups.length?tv('Non collegati a una tappa'):tv('I tuoi biglietti')}</div>`;
+    loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
+  }
   c.innerHTML=html;
   mostrati.forEach(tk=>drawTicketCode(tk));
   hydrateTicketImgs();
