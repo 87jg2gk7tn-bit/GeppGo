@@ -250,7 +250,7 @@ const oreFinte = (data) => {
   /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
      una grata che si muove, non pioggia. Quello che mancava non era la
      velocità, era la VARIETÀ. */
-  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce === 26, pioggia.gocce + ' gocce');
+  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce > 12, pioggia.gocce + ' gocce');
   /* Contare quante sono DIVERSE era un metro sbagliato: le lunghezze sono
      numeri interi in un intervallo stretto, quindi i doppioni sono
      inevitabili e il conteggio diceva "poca varietà" anche quando ce n'era
@@ -290,17 +290,36 @@ const oreFinte = (data) => {
      pioggia.inchiostroChip);
   await page.close();
 
-  /* Piove forte: le gocce si infittiscono. È la differenza fra
-     «pioviggina» e «prendi l'ombrello», e si deve vedere. */
-  page = await apri(stato({ [oggi]: wx(65, 14, 9, 22) }));
-  const forte = await page.evaluate(() => {
-    const hh = document.querySelector('.hh');
-    const g = document.querySelectorAll('.hh-velo .cl-g');
-    return { classe: hh.className.includes('forte'), quante: g.length };
-  });
-  ok('quando piove forte le gocce sono di più',
-     forte.classe === true && forte.quante === 44, forte.quante + ' gocce');
-  await page.close();
+  /* QUANTA pioggia si vede dipende da quanta ne cade, e non a due gradini:
+     era un interruttore sopra/sotto gli otto millimetri, e due posizioni non
+     sono il tempo che fa. Fra una pioggerella da mezzo millimetro e un
+     diluvio da venticinque uno distingue guardando fuori dalla finestra, e
+     la schermata deve distinguere anche lei. */
+  const quanteCon = async (mm) => {
+    const p2 = await apri(stato({ [oggi]: wx(mm > 2 ? 65 : 51, 14, 9, mm) }));
+    const n = await p2.evaluate(() => document.querySelectorAll('.hh-velo .cl-g').length);
+    await p2.close();
+    return n;
+  };
+  const scala = [];
+  for (const mm of [0.3, 2, 6, 14, 25]) scala.push({ mm, n: await quanteCon(mm) });
+  const dettaglio = scala.map(x => x.mm + 'mm→' + x.n).join('  ');
+  /* Cresce sempre: più millimetri, più gocce. Nessun gradino all'indietro. */
+  let sempreSu = true;
+  for (let i = 1; i < scala.length; i++) if (scala[i].n <= scala[i - 1].n) sempreSu = false;
+  ok('più millimetri cadono, più gocce si vedono — senza mai tornare indietro',
+     sempreSu === true, dettaglio);
+  /* E la differenza fra poco e tanto si deve VEDERE, non essere una
+     sfumatura: da mezzo millimetro a venticinque le gocce devono almeno
+     triplicare. */
+  ok('e fra una pioggerella e un diluvio la differenza si vede',
+     scala[scala.length - 1].n >= scala[0].n * 3, dettaglio);
+  /* Un codice di pioggia con zero millimetri capita — le pioggerelle che non
+     bagnano. Qualcosa si deve vedere lo stesso: se no la schermata dice
+     "pioggia" e non piove. */
+  const zero = await quanteCon(0);
+  ok('e se il codice dice pioggia ma i millimetri sono zero, qualcosa si vede',
+     zero >= 4 && zero <= 10, zero + ' gocce');
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
   const neve = await page.evaluate(() => ({

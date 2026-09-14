@@ -6173,7 +6173,27 @@ function cieloNotte(w,date){
    velocita', a farla sembrare pioggia.
    I numeri sono sparsi ma sempre gli stessi: presi a caso davvero, a ogni
    ridisegno della home la pioggia salterebbe di posto. */
-function gocceDiPioggia(quante){
+/* Quanta pioggia disegnare, dai millimetri veri. Era un interruttore a due
+   posizioni - sopra o sotto gli otto millimetri - e due posizioni non sono
+   il tempo che fa: fra una pioggerella da mezzo millimetro e un diluvio da
+   venti ce ne stanno dieci di diverse, e uno le distingue guardando fuori
+   dalla finestra.
+   La curva e' una radice e non una retta perche' la pioggia e' sbilanciata:
+   fra 0 e 2 mm c'e' tutta la differenza che passa fra "esco senza niente" e
+   "prendo l'ombrello", mentre fra 20 e 30 non cambia piu' molto. La radice
+   da' spazio dove serve.
+   Il fondo e' sei gocce: se il codice dice pioggia ma i millimetri sono
+   zero - succede, con le pioggerelle che non bagnano - qualcosa si deve
+   vedere lo stesso, se no la schermata dice "pioggia" e non piove. */
+function quanteGocce(mm){
+  const q=Math.max(0,+mm||0);
+  return Math.round(6+48*Math.min(1,Math.sqrt(q/28)));
+}
+function gocceDiPioggia(mm){
+  const quante=quanteGocce(mm);
+  /* Quanto e' forte, da 0 a 1: la stessa curva, riusata per far cadere piu'
+     in fretta la pioggia forte. Un acquazzone non e' solo piu' fitto. */
+  const forza=Math.min(1,Math.sqrt(Math.max(0,+mm||0)/28));
   /* Numeri sparsi, ma sempre gli stessi. Con Math.random() la pioggia
      cambierebbe posto a ogni ridisegno della home - e la home si ridisegna
      spesso - quindi si vedrebbe saltare. Questo e' il vecchio trucco del
@@ -6192,7 +6212,7 @@ function gocceDiPioggia(quante){
     const opa=(0.2+r(i,93.989)*0.55).toFixed(2);
     /* Mezzo secondo scarso, e le lontane (piu' sbiadite) un filo piu'
        lente: e' cosi' che si legge la profondita' senza rallentare tutto. */
-    const dur=(0.88-opa*0.42+r(i,27.61)*0.16).toFixed(2); /* 0,40 - 0,88 s */
+    const dur=((0.88-opa*0.42+r(i,27.61)*0.16)*(1.1-0.25*forza)).toFixed(2); /* 0,34 - 0,97 s */
     const rit=(-r(i,51.317)*1.4).toFixed(2);
     out+=`<span class="cl-g" style="left:${sx}%;--h:${lung};--w:${larg};--o:${opa};animation-duration:${dur}s;animation-delay:${rit}s"></span>`;
   }
@@ -6212,7 +6232,7 @@ function cieloScena(w,date){
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
   const forte=!!(w&&w.precipitation>8);
   if(k==='c-pioggia'||k==='c-tempo'){
-    p.push(gocceDiPioggia(forte?44:26));
+    p.push(gocceDiPioggia(w?w.precipitation:0));
   }
   if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');
