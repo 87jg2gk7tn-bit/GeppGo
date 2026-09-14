@@ -609,6 +609,33 @@ va rifatto vedere.
     momento, e prima quella metà non c'era. E i biglietti non attaccati a
     nessuna tappa hanno un titolo loro invece di restare orfani in fondo.
 
+    **Fatto — Hotel non diceva quali notti hai coperto.** Un viaggio dal 14
+    al 18 ha **quattro** notti. Se un albergo copre il 14-16 e un altro il
+    17-18, la notte del 16 non ce l'ha nessuno — e la schermata mostrava due
+    schede piatte con le loro date, lasciando la sottrazione a chi guardava.
+    È la domanda per cui una pagina di alloggi si apre, e non aveva risposta.
+
+    Adesso in cima c'è la **striscia delle notti**: una casella per notte,
+    piena se un letto c'è e tratteggiata se manca, e sotto una riga che dice
+    quale notte manca *col suo nome* e il tasto che porta sulla ricerca. Con
+    tutto coperto la riga lo dice piano e il tasto sparisce: un tasto che non
+    serve è rumore. Senza nessun alloggio la riga dice «Nessuna delle 4 notti
+    ha un letto» — non «mancano 4 su 4», che è un conto inutile — e il tasto
+    diventa quello pieno, perché lì è l'unica cosa da fare. Il cartello
+    «Nessun hotel: cercalo qui sopra» — un cartello che indicava in su —
+    non c'è più: resta solo nei viaggi **senza date**, dove di notti non ce
+    n'è nessuna da disegnare, e lì ha l'azione accanto.
+
+    E due cose che c'erano e non si vedevano: **quanto costa** l'albergo e se
+    è **ancora da pagare** stavano nel viaggio da sempre, nella spesa
+    collegata, ma per saperlo bisognava andare in Spese a cercare la riga.
+    Adesso sono due targhette sulla scheda, insieme a quante notti copre.
+    Il tasto pieno «Portami qui» compare **solo sull'albergo di stanotte**
+    (prima di sera, su nessuno): ripetuto su ogni scheda faceva urlare tutte
+    le sere insieme, e la strada serve per il letto di adesso. E i due
+    tondini senza nome in alto a destra adesso hanno un nome per chi non
+    vede le icone.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
     per forza) e gli altri stati vuoti che sono ancora cartelli senza
@@ -731,6 +758,17 @@ qualcuno che risponde".
   nessuno — cioè quasi tutti — apriva la sezione e leggeva «nessun biglietto»
   con tre biglietti dentro. Un valore di partenza che *toglie* roba dalla
   vista va scelto col caso normale in testa, non col caso ordinato.
+- **Una schermata che mostra i pezzi e non il totale lascia il conto a chi
+  guarda.** Hotel mostrava due schede con le loro date — 14-16 e 17-18 — e
+  la notte del 16, che non ce l'aveva nessuno, la doveva trovare l'utente
+  sottraendo a mente. Ogni schermata che elenca cose che coprono un periodo
+  (le notti, le assicurazioni, i trasporti) deve dire **quanto del periodo
+  è coperto e quanto no**, prima di elencare i pezzi: è la domanda per cui
+  quella schermata si apre.
+- **Un dato salvato e mai mostrato non esiste.** Il costo dell'albergo e se
+  fosse pagato stavano nel viaggio da sempre, nella spesa collegata, e in
+  Hotel non si vedevano: per saperlo si andava in Spese a cercare la riga.
+  Quando si aggiunge un campo, si guarda anche **dove lo si legge**.
 - **⚠️ Non cancellare voci di dizionario con un regex.** Le voci stanno
   parecchie per riga: un `'📷 Scansiona':'…',` tolto da una riga si porta via
   il contesto delle altre, e soprattutto può essere una voce che serviva a un
