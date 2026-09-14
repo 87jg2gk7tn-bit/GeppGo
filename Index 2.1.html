@@ -1045,6 +1045,29 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-trip:active{transform:scale(.95)}
 .hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+/* Tre modi per fare la stessa cosa. L'emoji va sopra e la parola sotto:
+   andando a capo da sole, le tre etichette si spezzavano ognuna a modo suo e
+   la riga sembrava sciatta. Se il capo e' voluto, e' un incolonnamento. */
+.tk-modo{
+  display:grid;place-items:center;gap:.28rem;padding:.72rem .3rem;
+  line-height:1.15;font-size:.82rem;white-space:normal;
+}
+.tk-modo>span{font-size:1.2rem;line-height:1}
+
+/* Una spiegazione che serve una volta sola non deve stare aperta per
+   sempre: si legge, e poi si richiude da sé la volta dopo. */
+.spiega{margin-top:.6rem}
+.spiega>summary{
+  list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;
+  font-size:.76rem;font-weight:700;color:var(--ink-faint);
+  padding:.55rem .1rem;transition:var(--ease);
+}
+.spiega>summary::-webkit-details-marker{display:none}
+.spiega>summary::after{content:'›';font-size:.95rem;line-height:1;transition:var(--ease)}
+.spiega[open]>summary::after{transform:rotate(90deg)}
+.spiega>summary:active{transform:scale(.98)}
+.spiega p{font-size:.76rem;color:var(--ink-faint);line-height:1.55;margin:.1rem 0 .5rem}
+
 /* ── il cielo della giornata ──────────────────────────────────────
    Il meteo non e' un riquadro appoggiato sopra l'intestazione: e' LO
    SFONDO dell'intestazione. Un riquadro, per quanto curato, resta un
@@ -1652,9 +1675,19 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     </div>
     <div class="page" id="tickets">
       <div class="card"><div class="card-head"><div class="card-h">Aggiungi biglietto</div></div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-green" style="flex:1;min-width:31%" onclick="openScanner()">Scansiona</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="document.getElementById('tkImgInp').click()">Foto o PDF</button><button class="btn btn-soft" style="flex:1;min-width:31%" onclick="openTicketSheet()">A mano</button></div>
+        <!-- Tre modi per fare la stessa identica cosa: tre tasti uguali. Uno
+             pieno e due vuoti dicevano che il primo conta piu' degli altri, e
+             non e' vero - dipende da dove ce l'hai, il biglietto. -->
+        <div style="display:flex;gap:.5rem"><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="openScanner()"><span>📷</span>Scansiona</button><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="document.getElementById('tkImgInp').click()"><span>🖼</span>Foto o PDF</button><button class="btn btn-soft tk-modo" style="flex:1;min-width:0" onclick="openTicketSheet()"><span>✍️</span>A mano</button></div>
         <input type="file" id="tkImgInp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="ticketsFromImages(this)">
-        <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.<br><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p></div>
+        <!-- Sei righe di grigio prima di poter fare qualcosa erano il muro di
+             testo piu' alto dell'app. Sono cose vere e vale la pena averle -
+             soprattutto quella sul codice che non si consuma, che e' la paura
+             di chiunque - ma si leggono una volta, non a ogni apertura. -->
+        <details class="spiega"><summary>Come funziona la lettura</summary>
+          <p>QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.</p>
+          <p><b>Leggere un codice qui non lo consuma.</b> La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l'ha venduto. Unica accortezza: non mostrare i codici a estranei.</p>
+        </details></div>
       <div id="tkWhoBar"></div>
       <div id="ticketsList"></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
@@ -2731,8 +2764,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'DELETE','Chiave anon public':'Anon public key','privacy di GeppGo':'GeppGo’s privacy policy',
     'es. Vacanza estiva':'e.g. Summer holiday','Cena al ristorante':'Dinner out',
     'Allega un PDF':'Attach a PDF','Codice / URL':'Code / URL','qualsiasi cosa':'anything',
-    '🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro',
-    '📷 Scansiona':'📷 Scan','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
+    '📷 Scansiona':'📷 Scan','🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
     '🖼️ Foto o PDF':'🖼️ Photo or PDF','🎫 Biglietto':'🎫 Ticket','🎫 Prenotazione':'🎫 Booking',
     '🎒 Lista bagagli':'🎒 Packing list','🧭 Naviga':'🧭 Navigate','🧭 Autopilota':'🧭 Autopilot',
     '🧭 Il giro di oggi':'🧭 Today’s route','📸 Che cos’è?':'📸 What is it?','📸 Che cos\'è?':'📸 What is it?',
@@ -2795,8 +2827,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'ELIMINAR','Chiave anon public':'Clave anon public','privacy di GeppGo':'la privacidad de GeppGo',
     'es. Vacanza estiva':'p. ej. Vacaciones de verano','Cena al ristorante':'Cena fuera',
     'Allega un PDF':'Adjuntar un PDF','Codice / URL':'Código / URL','qualsiasi cosa':'cualquier cosa',
-    '🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro',
-    '📷 Scansiona':'📷 Escanear','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
+    '📷 Scansiona':'📷 Escanear','🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
     '🖼️ Foto o PDF':'🖼️ Foto o PDF','🎫 Biglietto':'🎫 Billete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de equipaje','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 La ruta de hoy','📸 Che cos’è?':'📸 ¿Qué es?','📸 Che cos\'è?':'📸 ¿Qué es?',
@@ -2859,8 +2890,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'SUPPRIMER','Chiave anon public':'Clé anon public','privacy di GeppGo':'la confidentialité de GeppGo',
     'es. Vacanza estiva':'ex. Vacances d’été','Cena al ristorante':'Dîner au restaurant',
     'Allega un PDF':'Joindre un PDF','Codice / URL':'Code / URL','qualsiasi cosa':'n’importe quoi',
-    '🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro',
-    '📷 Scansiona':'📷 Scanner','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
+    '📷 Scansiona':'📷 Scanner','🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
     '🖼️ Foto o PDF':'🖼️ Photo ou PDF','🎫 Biglietto':'🎫 Billet','🎫 Prenotazione':'🎫 Réservation',
     '🎒 Lista bagagli':'🎒 Liste de bagages','🧭 Naviga':'🧭 Guider','🧭 Autopilota':'🧭 Pilote automatique',
     '🧭 Il giro di oggi':'🧭 Le tour du jour','📸 Che cos’è?':'📸 Qu’est-ce que c’est ?','📸 Che cos\'è?':'📸 Qu’est-ce que c’est ?',
@@ -2923,8 +2953,7 @@ const DIZIONARIO_SCHERMATE={
     'ELIMINA':'ELIMINAR','Chiave anon public':'Chave anon public','privacy di GeppGo':'a privacidade do GeppGo',
     'es. Vacanza estiva':'p. ex. Férias de verão','Cena al ristorante':'Jantar fora',
     'Allega un PDF':'Anexar um PDF','Codice / URL':'Código / URL','qualsiasi cosa':'qualquer coisa',
-    '🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro',
-    '📷 Scansiona':'📷 Digitalizar','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
+    '📷 Scansiona':'📷 Digitalizar','🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
     '🖼️ Foto o PDF':'🖼️ Foto ou PDF','🎫 Biglietto':'🎫 Bilhete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de bagagem','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 O percurso de hoje','📸 Che cos’è?':'📸 O que é?','📸 Che cos\'è?':'📸 O que é?',
@@ -5265,10 +5294,35 @@ const DIZIONARIO_FRESCO={
 };
 Object.keys(DIZIONARIO_FRESCO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_FRESCO[l]));
 
+/* I biglietti: tre modi per aggiungerne uno, e come si raggruppano. */
+const DIZIONARIO_BIGLIETTI={
+  en:{
+    'Come funziona la lettura':'How the reading works',
+    'Non collegati a una tappa':'Not linked to a stop',
+    'I tuoi biglietti':'Your tickets',
+  },
+  es:{
+    'Come funziona la lettura':'Cómo funciona la lectura',
+    'Non collegati a una tappa':'Sin parada asociada',
+    'I tuoi biglietti':'Tus billetes',
+  },
+  fr:{
+    'Come funziona la lettura':'Comment marche la lecture',
+    'Non collegati a una tappa':'Sans étape associée',
+    'I tuoi biglietti':'Tes billets',
+  },
+  pt:{
+    'Come funziona la lettura':'Como funciona a leitura',
+    'Non collegati a una tappa':'Sem paragem associada',
+    'I tuoi biglietti':'Os teus bilhetes',
+  }
+};
+Object.keys(DIZIONARIO_BIGLIETTI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_BIGLIETTI[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=978;
+const FRASI_IN_TUTTO=981;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -10358,10 +10412,17 @@ function switchTicketBig(actId,curId,val){
    tendina in cima si guardano i biglietti di una persona alla volta: si parte
    dai propri, che e' quello che si cerca nove volte su dieci. Il voucher si
    vede sempre, perche' non e' di nessuno in particolare. */
+/* Si parte da TUTTI, non da te. Partire da te sembrava un riguardo ed era
+   un inganno: i biglietti sono per le attrazioni - un ingresso al castello
+   preso per il gruppo non e' "di" nessuno in particolare - e quasi mai uno
+   si ferma a dire di chi e' ciascuno. Cosi' aprendo la sezione si leggeva
+   "Nessun biglietto intestato a Gepp" mentre il viaggio i biglietti ce li
+   aveva, e l'unico appiglio era una scritta grigia da dodici pixel.
+   Il filtro per persona resta: serve a chi il viaggio lo ha diviso davvero.
+   Ma e' un affinamento, non la porta d'ingresso. */
 function tkWhoVal(t){
   if(app.tkWho!=null)return String(app.tkWho);
-  const me=(t.participants||[]).find(p=>p.isMe);
-  return (me&&(t.participants||[]).length>1)?String(me.id):'tutti';
+  return 'tutti';
 }
 function setTkWho(v){app.tkWho=String(v);save();renderTickets();}
 function personaFiltrata(t){
@@ -10400,18 +10461,30 @@ function renderTickets(){
   const groups=[],seen=new Set();
   t.days.forEach((d,di)=>{(d.activities||[]).forEach(a=>{
     const list=mostrati.filter(tk=>tk.actId===a.id);
-    if(list.length){groups.push({act:a,tickets:list});list.forEach(tk=>seen.add(tk.id));}
+    if(list.length){groups.push({act:a,tickets:list,d,di});list.forEach(tk=>seen.add(tk.id));}
   });});
   const loose=mostrati.filter(tk=>!seen.has(tk.id));
   let html='';
   groups.forEach(g=>{
     const nb=g.tickets.filter(tk=>!eVoucher(tk)).length,nv=g.tickets.length-nb;
-    html+=`<div class="card"><div class="card-head"><div><div class="card-h" style="font-size:1rem">${esc(g.act.name)}</div><div class="card-sub">${nb} bigliett${nb===1?'o':'i'}${nv?' · '+nv+' voucher':''}</div></div></div>`;
+    /* Un biglietto e' di un'attrazione, ma anche di un MOMENTO: sapere che
+       il castello e' martedi' alle undici e' meta' dell'informazione, e
+       prima non c'era. */
+    const qd=g.d?new Date(g.d.date):null;
+    const quando=(qd&&!isNaN(qd.getTime()))
+      ? tv('Giorno {1} · {2}',g.di+1,qd.toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'}))+(g.act.time?' · '+g.act.time:'')
+      : '';
+    html+=`<div class="card"><div class="card-head"><div><div class="card-h" style="font-size:1.05rem">${esc(g.act.name)}</div><div class="card-sub">${quando?esc(quando)+' · ':''}${nb} bigliett${nb===1?'o':'i'}${nv?' · '+nv+' voucher':''}</div></div></div>`;
     let n=0;
     g.tickets.forEach(tk=>{html+=ticketCardHtml(tk,eVoucher(tk)?null:('Biglietto '+(++n)));});
     html+='</div>';
   });
-  loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
+  /* Quelli non attaccati a nessuna tappa non restano orfani in fondo senza
+     dire chi sono: hanno un titolo anche loro. */
+  if(loose.length){
+    html+=`<div class="section-label">${groups.length?tv('Non collegati a una tappa'):tv('I tuoi biglietti')}</div>`;
+    loose.forEach(tk=>{html+=ticketCardHtml(tk,null);});
+  }
   c.innerHTML=html;
   mostrati.forEach(tk=>drawTicketCode(tk));
   hydrateTicketImgs();
