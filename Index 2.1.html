@@ -1142,10 +1142,11 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    forma: era la VARIETA'. La pioggia vera non ha due gocce uguali - una
    e' lunga e vicina, quella dietro e' corta e sbiadita, e nessuna delle
    due cade come l'altra.
-   Quindi non c'e' piu' una piastrella ripetuta: ci sono venti gocce, una
-   per una, ognuna con la sua lunghezza, il suo spessore, la sua
-   trasparenza e la sua velocita'. E vanno piano: una goccia attraversa
-   l'intestazione in due o tre secondi, non in mezzo. */
+   Quindi non c'e' piu' una piastrella ripetuta: ci sono diciotto gocce,
+   una per una - trenta quando piove forte - ognuna con la sua lunghezza,
+   il suo spessore, la sua trasparenza e la sua velocita'. E vanno piano:
+   una goccia attraversa l'intestazione in due o tre secondi, non in
+   mezzo. */
 .cl-g{
   top:0;border-radius:999px;
   height:calc(var(--h)*1px*var(--s));
@@ -1155,6 +1156,9 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
      svanisce, non come un bastoncino con due estremita' nette. */
   background:linear-gradient(180deg,transparent 0,var(--cl-goccia) 85%,var(--cl-goccia) 100%);
   rotate:7deg;
+  /* Mezzo pixel di sfocatura: una goccia che cade la vedi sfocata perche'
+     si muove, e senza questo sono bastoncini col bordo netto. */
+  filter:blur(calc(.45px*var(--s)));
   animation-name:cl-cade;animation-timing-function:linear;animation-iteration-count:infinite;
 }
 /* Scende anche di lato, di poco: la pioggia a piombo non esiste.
