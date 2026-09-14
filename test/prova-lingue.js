@@ -108,9 +108,9 @@ async function apri(browser, lingua, linguaTelefono) {
      barraEn.join(' · '));
   ok('e il meteo non è più una voce della barra',
      !barraEn.includes('Weather') && !barraEn.includes('Meteo'), barraEn.join(' · '));
-  ok('ma il riquadro del cielo lo dice nella lingua giusta',
-     await en.evaluate(() => (document.querySelector('.hh-cielo') || {}).title) === 'Weather for the trip',
-     await en.evaluate(() => (document.querySelector('.hh-cielo') || {}).title || 'non c\'è'));
+  ok('ma la porta del meteo in cima lo dice nella lingua giusta',
+     await en.evaluate(() => (document.querySelector('.hh-grado') || {}).title) === 'Weather for the trip',
+     await en.evaluate(() => (document.querySelector('.hh-grado') || {}).title || 'non c\'è'));
   ok('e anche le etichette per chi non vede', await en.evaluate(() =>
      document.querySelector('.nav-item[data-p="money"]').getAttribute('aria-label')) === 'Expenses');
   ok('la pagina dichiara la lingua che sta usando',

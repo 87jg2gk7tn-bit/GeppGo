@@ -944,15 +944,18 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-empty-t{font-size:.86rem;color:var(--ink-faint)}
 .hh-empty-a{font-size:.92rem;font-weight:800;color:var(--green-deep)}
 
-/* ── riga dei viaggi aperti, col cielo del giorno all'altro capo ──
+/* ── riga dei viaggi aperti, e in fondo la temperatura ────────────
    Il "+" stava fermo all'estremo destro, staccato da tutto. Adesso sta
-   in coda ai viaggi, dove uno lo cerca: e' l'ultima cosa della lista,
-   non un tasto per conto suo. Lo spazio che lascia libero non e' vuoto,
-   ci sta il cielo della giornata. */
+   in coda ai viaggi, dove uno lo cerca. All'altro capo c'e' solo la
+   temperatura, senza scatola intorno: il cielo che la spiega e' gia'
+   dietro, dipinto sull'intestazione. */
 .hh-tripbar{position:relative;display:flex;align-items:center;gap:.55rem;margin-bottom:.95rem}
 .hh-trips{
   display:flex;align-items:center;gap:.35rem;overflow-x:auto;scrollbar-width:none;
-  flex:1;min-width:0;padding:.15rem 0;
+  /* Non cresce: si stringe soltanto. Cosi' il "+" resta appiccicato ai
+     nomi anche quando i viaggi sono due, invece di essere spinto
+     all'altro capo della riga. Lo spazio lo prende .hh-vuoto. */
+  flex:0 1 auto;min-width:0;padding:.15rem 0;
   /* Stessa cura della barra in basso: dove la fila continua le voci
      svaniscono, dove finisce il bordo resta netto. Un nome tagliato a
      meta' sembra un difetto; un nome che sfuma dice "scorri". */
@@ -981,158 +984,205 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-trip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
 /* ── il cielo della giornata ──────────────────────────────────────
-   Una fotografia vera del meteo vorrebbe dire chiamare un servizio di
-   immagini a ogni giornata: un altro nome nella privacy, un'altra cosa
-   che smette di funzionare quando il telefono e' senza rete. Cosi' il
-   cielo e' disegnato - sfumatura, sole o luna, nuvole che passano,
-   pioggia che scende - e cambia davvero col tempo che fa, anche in
-   aereo.
-   Le stesse classi vestono il riquadro piccolo in cima alla home e
-   quello grande dentro la tendina: dentro e' tutto in "em", quindi per
-   ingrandire la scena intera basta cambiare il font-size di chi la
-   contiene. */
+   Il meteo non e' un riquadro appoggiato sopra l'intestazione: e' LO
+   SFONDO dell'intestazione. Un riquadro, per quanto curato, resta un
+   oggetto in piu' su una schermata gia' piena; il cielo invece e' la
+   cosa che sta gia' li' dietro il titolo, e non chiede spazio a
+   nessuno.
+   Ed e' disegnato, non scaricato. Una fotografia vera vorrebbe dire
+   chiamare un servizio di immagini a ogni giornata: un altro nome nella
+   privacy, e un'altra cosa che smette di funzionare quando il telefono
+   e' senza rete - cioe' in viaggio, cioe' quando serve.
+   Le stesse classi vestono l'intestazione della home e il riquadro
+   grande dentro la tendina. Le misure sono in pixel per una ragione
+   precisa: una goccia di pioggia e' una goccia, non diventa otto volte
+   piu' grande perche' la finestra e' piu' grande. Quello che cambia e'
+   --s, e sposta di poco: 1 in home, 0.62 nella tendina. */
 .cielo{
-  position:relative;overflow:hidden;isolation:isolate;
+  --s:1;
+  --cl-alto:#8FB6D6;
   --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
-  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.55);
-  --cl-nuv:rgba(255,255,255,.88);
+  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.5);
+  --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.9);
   --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
 }
-.cielo::before{content:'';position:absolute;inset:0;background:var(--cl-g)}
-.cielo>span{position:absolute;pointer-events:none}
-.cielo.c-sereno {--cl-g:linear-gradient(168deg,#3D8FD8 0%,#7CBEEA 52%,#C9E5F7 100%)}
-.cielo.c-velato {--cl-g:linear-gradient(168deg,#62A2D6 0%,#9DC9E7 55%,#D9E9F3 100%)}
-.cielo.c-nuvolo {--cl-g:linear-gradient(168deg,#77889A 0%,#A7B4BE 55%,#D3D9DD 100%)}
-.cielo.c-nebbia {--cl-g:linear-gradient(168deg,#99A2A5 0%,#C4C8C3 60%,#E3E1D7 100%)}
-.cielo.c-pioggia{--cl-g:linear-gradient(168deg,#4C5E6E 0%,#788C9A 55%,#AAB8C1 100%)}
-.cielo.c-neve   {--cl-g:linear-gradient(168deg,#8196AB 0%,#BACCDB 55%,#E9F1F7 100%)}
-.cielo.c-tempo  {--cl-g:linear-gradient(168deg,#2E3540 0%,#515B69 55%,#838D9A 100%)}
-.cielo.c-ignoto {--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
-/* Di notte cambia tutto: il sole diventa luna, le nuvole si spengono e
-   la scritta passa da scura a chiara. */
-.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.3);
-  --cl-nuv:rgba(188,202,219,.42);--cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
-.cielo.notte.c-sereno {--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
-.cielo.notte.c-velato {--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
-.cielo.notte.c-nuvolo {--cl-g:linear-gradient(168deg,#1B222B 0%,#333E4B 60%,#55606D 100%)}
-.cielo.notte.c-nebbia {--cl-g:linear-gradient(168deg,#232A2E 0%,#3E464A 60%,#646A69 100%)}
-.cielo.notte.c-pioggia{--cl-g:linear-gradient(168deg,#141D26 0%,#2A3A48 60%,#4A5D6C 100%)}
-.cielo.notte.c-neve   {--cl-g:linear-gradient(168deg,#1A2534 0%,#334458 60%,#5D7186 100%)}
-.cielo.notte.c-tempo  {--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
-.cielo.notte.c-ignoto {--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
+/* Due colori per ogni cielo: --cl-alto e' quello che tinge l'alto
+   dell'intestazione e poi si scioglie nella carta della pagina;
+   --cl-g e' la sfumatura intera, che serve al riquadro della tendina. */
+.cielo.c-sereno {--cl-alto:#4C9BDF;--cl-g:linear-gradient(168deg,#3D8FD8 0%,#7CBEEA 52%,#C9E5F7 100%)}
+.cielo.c-velato {--cl-alto:#77AFDC;--cl-g:linear-gradient(168deg,#62A2D6 0%,#9DC9E7 55%,#D9E9F3 100%)}
+.cielo.c-nuvolo {--cl-alto:#8B9AA8;--cl-g:linear-gradient(168deg,#77889A 0%,#A7B4BE 55%,#D3D9DD 100%)}
+.cielo.c-nebbia {--cl-alto:#A6AEB0;--cl-g:linear-gradient(168deg,#99A2A5 0%,#C4C8C3 60%,#E3E1D7 100%)}
+.cielo.c-pioggia{--cl-alto:#54687A;--cl-g:linear-gradient(168deg,#4C5E6E 0%,#788C9A 55%,#AAB8C1 100%)}
+.cielo.c-neve   {--cl-alto:#7C93AB;--cl-g:linear-gradient(168deg,#8196AB 0%,#BACCDB 55%,#E9F1F7 100%)}
+.cielo.c-tempo  {--cl-alto:#333B47;--cl-g:linear-gradient(168deg,#2E3540 0%,#515B69 55%,#838D9A 100%)}
+.cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
+/* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
+.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.28);
+  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(210,226,244,.75);
+  --cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
+.cielo.notte.c-sereno {--cl-alto:#0F2039;--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
+.cielo.notte.c-velato {--cl-alto:#182942;--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
+.cielo.notte.c-nuvolo {--cl-alto:#222A34;--cl-g:linear-gradient(168deg,#1B222B 0%,#333E4B 60%,#55606D 100%)}
+.cielo.notte.c-nebbia {--cl-alto:#2C3438;--cl-g:linear-gradient(168deg,#232A2E 0%,#3E464A 60%,#646A69 100%)}
+.cielo.notte.c-pioggia{--cl-alto:#1B2733;--cl-g:linear-gradient(168deg,#141D26 0%,#2A3A48 60%,#4A5D6C 100%)}
+.cielo.notte.c-neve   {--cl-alto:#233042;--cl-g:linear-gradient(168deg,#1A2534 0%,#334458 60%,#5D7186 100%)}
+.cielo.notte.c-tempo  {--cl-alto:#12171E;--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
+.cielo.notte.c-ignoto {--cl-alto:#252B30;--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
 
-/* Il sole (o la luna): un disco con l'alone intorno. */
-.cl-astro{
-  top:.13em;left:.15em;width:.29em;height:.29em;border-radius:50%;
-  background:var(--cl-astro);
-  box-shadow:0 0 .12em .07em var(--cl-alone),0 0 .34em .16em var(--cl-alone);
+.cl-astro,.cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
+  position:absolute;pointer-events:none;
 }
-/* La luna e' lo stesso disco con un morso d'ombra: niente immagine in
-   piu', e il morso e' scuro e trasparente insieme, cosi' lascia vedere
-   il cielo che ha dietro qualunque esso sia. */
+/* Il sole (o la luna): un disco con due aloni, uno stretto e uno largo. */
+/* Sta in alto a DESTRA, sopra la riga dei viaggi. A sinistra finiva
+   dietro il primo nome, e un sole mezzo coperto da una pillola non
+   sembra un sole: sembra uno sbaglio. */
+.cl-astro{
+  top:calc(-4px*var(--s));right:16%;
+  width:calc(60px*var(--s));height:calc(60px*var(--s));border-radius:50%;
+  background:var(--cl-astro);
+  box-shadow:0 0 calc(26px*var(--s)) calc(15px*var(--s)) var(--cl-alone),
+             0 0 calc(78px*var(--s)) calc(38px*var(--s)) var(--cl-alone);
+}
+/* La luna e' lo stesso disco con un morso d'ombra: nessuna immagine in
+   piu', e il morso lascia intravedere il cielo che ha dietro. */
 .cielo.notte .cl-astro::after{
   content:'';position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(circle at 122% 24%,rgba(10,16,28,.92) 52%,transparent 62%);
+  background:radial-gradient(circle at 122% 24%,rgba(9,15,26,.93) 52%,transparent 62%);
 }
-/* Le nuvole: un cuscino con due gobbe sopra, tre profondita' diverse. */
+/* Le nuvole: masse sfocate, non sagome. Sfocate perche' una nuvola non
+   ha un bordo, e perche' cosi' si fondono con la sfumatura invece di
+   starci sopra come adesivi. */
 .cl-nuv{
-  height:.075em;border-radius:.05em;background:var(--cl-nuv);
-  animation:cl-passa 34s linear infinite;
+  border-radius:50%;background:var(--cl-nuv);
+  filter:blur(calc(11px*var(--s)));
+  animation:cl-passa 44s linear infinite;
 }
-.cl-nuv::before,.cl-nuv::after{content:'';position:absolute;background:inherit;border-radius:50%}
-.cl-nuv::before{width:.15em;height:.15em;left:16%;top:-.085em}
-.cl-nuv::after {width:.105em;height:.105em;left:52%;top:-.05em}
-/* Le nuvole stanno in percentuale sulla larghezza e in em sull'altezza:
-   il riquadro in cima e' un francobollo, quello nella tendina e' largo
-   tre volte tanto, e le nuvole devono spargersi in tutti e due invece di
-   ammucchiarsi nell'angolo. */
-.cl-nuv.n1{width:.38em;top:.30em;left:-4%;opacity:.95;animation-duration:38s}
-.cl-nuv.n2{width:.27em;top:.15em;left:44%;opacity:.7;transform:scale(.9);animation-duration:52s;animation-delay:-14s}
-.cl-nuv.n3{width:.45em;top:.47em;left:16%;opacity:.85;animation-duration:29s;animation-delay:-7s}
-@keyframes cl-passa{from{translate:-.75em 0}to{translate:1.5em 0}}
+.cl-nuv.n1{width:calc(165px*var(--s));height:calc(58px*var(--s));left:-8%;top:calc(4px*var(--s));opacity:.9}
+.cl-nuv.n2{width:calc(120px*var(--s));height:calc(46px*var(--s));left:40%;top:calc(-10px*var(--s));opacity:.65;animation-duration:62s;animation-delay:-20s}
+.cl-nuv.n3{width:calc(200px*var(--s));height:calc(66px*var(--s));left:16%;top:calc(34px*var(--s));opacity:.8;animation-duration:34s;animation-delay:-9s}
+@keyframes cl-passa{from{translate:calc(-46px*var(--s)) 0}to{translate:calc(66px*var(--s)) 0}}
 
-/* Pioggia e neve: una piastrella con una goccia dentro, che scorre di
-   esattamente una piastrella - cosi' il giro si chiude e non si vede
-   il salto. */
-.cl-pio,.cl-nev{inset:-14% -12%;opacity:.75}
+/* La pioggia: una piastrella con dentro una goccia lunga, che scorre di
+   esattamente una piastrella - cosi' il giro si chiude e il salto non
+   si vede. Due strati a velocita' diverse, uno dietro piu' spento: e'
+   quello che le da' profondita' invece di farla sembrare una grata. */
+.cl-pio,.cl-nev{inset:calc(-18% - 20px) -16%;}
 .cl-pio{
-  background-image:radial-gradient(ellipse .008em .05em at 50% 40%,rgba(255,255,255,.95),transparent 70%);
-  background-size:.115em .3em;
-  rotate:13deg;animation:cl-piove .55s linear infinite;
+  background-image:radial-gradient(ellipse calc(1.1px*var(--s)) calc(14px*var(--s)) at 50% 40%,var(--cl-goccia),transparent 72%);
+  background-size:calc(16px*var(--s)) calc(66px*var(--s));
+  rotate:14deg;opacity:.8;
+  animation:cl-piove .62s linear infinite;
 }
+.cl-pio.dietro{
+  background-size:calc(27px*var(--s)) calc(48px*var(--s));
+  rotate:10deg;opacity:.34;animation-duration:1.05s;
+}
+/* Quando piove forte le gocce sono piu' fitte e piu' lunghe, e cadono
+   piu' in fretta: e' la differenza fra "pioviggina" e "prendi l'ombrello". */
+.cl-pio.forte{
+  background-image:radial-gradient(ellipse calc(1.3px*var(--s)) calc(19px*var(--s)) at 50% 40%,var(--cl-goccia),transparent 74%);
+  background-size:calc(12px*var(--s)) calc(74px*var(--s));
+  rotate:16deg;opacity:.95;animation-duration:.44s;
+}
+@keyframes cl-piove{from{background-position:0 0}to{background-position:0 100%}}
 .cl-nev{
-  background-image:radial-gradient(circle .022em at 50% 50%,rgba(255,255,255,.95),transparent 70%);
-  background-size:.17em .34em;
-  animation:cl-nevica 3.4s linear infinite;
+  background-image:radial-gradient(circle calc(3.2px*var(--s)) at 50% 50%,#fff,transparent 66%);
+  background-size:calc(21px*var(--s)) calc(42px*var(--s));
+  opacity:1;animation:cl-nevica 4.6s linear infinite;
 }
-@keyframes cl-piove {from{background-position:0 0}to{background-position:0 .3em}}
-@keyframes cl-nevica{from{background-position:0 0}to{background-position:0 .34em}}
-/* La nebbia: due strisce chiare che passano piano, una sopra l'altra. */
+/* Scende scivolando di lato di esattamente una piastrella: il giro si
+   chiude lo stesso, e la neve non cade a piombo come la pioggia. */
+@keyframes cl-nevica{from{background-position:0 0}to{background-position:100% 100%}}
 .cl-neb{
   inset:0;
   background:
-    linear-gradient(transparent 34%,rgba(255,255,255,.5) 44% 54%,transparent 64%),
-    linear-gradient(transparent 62%,rgba(255,255,255,.38) 70% 78%,transparent 86%);
-  animation:cl-nebbia 16s ease-in-out infinite alternate;
+    linear-gradient(transparent 6%,rgba(255,255,255,.5) 18% 32%,transparent 44%),
+    linear-gradient(transparent 38%,rgba(255,255,255,.36) 50% 62%,transparent 74%);
+  animation:cl-nebbia 18s ease-in-out infinite alternate;
 }
-@keyframes cl-nebbia{from{translate:-.06em 0;opacity:.75}to{translate:.06em 0;opacity:1}}
-/* Il lampo: quasi sempre spento, un guizzo ogni tanto. Se fosse
-   frequente diventerebbe una lucina che lampeggia, cioe' un difetto. */
+@keyframes cl-nebbia{from{translate:calc(-20px*var(--s)) 0;opacity:.7}to{translate:calc(20px*var(--s)) 0;opacity:1}}
+/* Il lampo: quasi sempre spento. Il bagliore riempie il cielo, la saetta
+   e' la scintilla. Se fossero frequenti sarebbero una lucina che
+   lampeggia, cioe' un difetto - una volta ogni sette secondi e' un
+   temporale. */
 .cl-lampo{
-  inset:0;background:linear-gradient(180deg,rgba(255,255,255,.92),transparent 62%);
-  opacity:0;animation:cl-tuono 8s linear infinite;
+  inset:0;background:linear-gradient(180deg,rgba(255,255,255,.92),transparent 58%);
+  opacity:0;animation:cl-tuono 7s linear infinite;
 }
-@keyframes cl-tuono{0%,4%,100%{opacity:0}1%{opacity:.85}2%{opacity:.1}3%{opacity:.55}}
-/* Le stelle, solo quando il cielo e' sgombro: puntini fermi. */
+.cl-saetta{
+  top:calc(4px*var(--s));right:19%;
+  width:calc(38px*var(--s));height:calc(104px*var(--s));
+  background:linear-gradient(180deg,#FFFBE4,#FFD84D);
+  clip-path:polygon(60% 0,17% 54%,45% 54%,25% 100%,84% 41%,53% 41%,80% 0);
+  filter:drop-shadow(0 0 calc(11px*var(--s)) rgba(255,222,104,.9));
+  opacity:0;animation:cl-tuono 7s linear infinite;
+}
+@keyframes cl-tuono{0%,4%,100%{opacity:0}.7%{opacity:.95}1.6%{opacity:.12}2.6%{opacity:.7}3.4%{opacity:0}}
 .cl-stelle{
-  inset:0;opacity:.85;
+  inset:0;opacity:.9;
   background-image:
-    radial-gradient(circle .009em at 22% 22%,#fff,transparent),
-    radial-gradient(circle .007em at 61% 13%,#fff,transparent),
-    radial-gradient(circle .008em at 82% 31%,#fff,transparent),
-    radial-gradient(circle .006em at 44% 38%,#fff,transparent),
-    radial-gradient(circle .007em at 12% 47%,#fff,transparent),
-    radial-gradient(circle .009em at 91% 9%,#fff,transparent);
-}
-/* La temperatura sta dentro la scena, quindi non puo' contare su un
-   fondo di un colore solo: l'alone dietro e' quello che la tiene
-   leggibile tanto sul sereno quanto sul temporale. */
-.cl-t{
-  right:.115em;bottom:.03em;font-family:'Fraunces',serif;font-weight:600;
-  font-size:.315em;line-height:1.1;color:var(--cl-ink);
-  text-shadow:0 .02em .06em var(--cl-ombra);letter-spacing:-.02em;
-}
-.cl-att{
-  left:.11em;right:.11em;bottom:.07em;font-weight:700;font-size:.21em;
-  line-height:1.15;color:var(--cl-ink);text-shadow:0 .03em .09em var(--cl-ombra);
-  text-align:right;letter-spacing:-.01em;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;
+    radial-gradient(circle calc(1.1px*var(--s)) at 22% 16%,#fff,transparent),
+    radial-gradient(circle calc(.9px*var(--s)) at 61% 9%,#fff,transparent),
+    radial-gradient(circle calc(1px*var(--s))   at 82% 22%,#fff,transparent),
+    radial-gradient(circle calc(.8px*var(--s)) at 44% 27%,#fff,transparent),
+    radial-gradient(circle calc(.9px*var(--s)) at 12% 33%,#fff,transparent),
+    radial-gradient(circle calc(1.1px*var(--s)) at 91% 6%,#fff,transparent),
+    radial-gradient(circle calc(.8px*var(--s)) at 34% 5%,#fff,transparent),
+    radial-gradient(circle calc(1px*var(--s))   at 70% 31%,#fff,transparent);
 }
 @media (prefers-reduced-motion:reduce){
-  .cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo{animation:none}
-  .cl-lampo{opacity:0}
+  .cl-nuv,.cl-pio,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta{animation:none}
+  .cl-lampo,.cl-saetta{opacity:0}
 }
 
-/* Il riquadro in cima alla home. Il font-size non e' un refuso: e' la
-   misura della scena, tutto il resto e' in em. */
-.hh-cielo{
-  flex:0 0 auto;width:120px;height:54px;font-size:54px;
-  border:none;padding:0;background:transparent;border-radius:15px;cursor:pointer;
-  box-shadow:0 3px 11px rgba(20,30,26,.18),inset 0 0 0 1px rgba(255,255,255,.3);
+/* ── il cielo dentro l'intestazione della home ───────────────────── */
+/* Il tono dell'intestazione lo decide il tempo che fa, e si scioglie
+   nella carta della pagina esattamente dove si scioglieva prima: cambia
+   il colore in alto, non il modo in cui finisce. */
+.hh.cielo{background:linear-gradient(180deg,var(--cl-alto) 0%,var(--cielo-b) 82%)}
+/* Il tondo chiaro decorativo sparisce quando c'e' un cielo vero: due
+   soli, uno finto e uno disegnato, sono uno di troppo. */
+.hh.cielo::after{display:none}
+.hh-velo{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;--s:1;
+  /* Sfuma verso il basso invece di finire con un taglio: e' la
+     differenza fra un cielo e un'immagine incollata sopra. */
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.34) 52%,transparent 76%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.34) 52%,transparent 76%);
+}
+/* Quando il cielo in alto e' scuro, quello che ci sta sopra deve
+   schiarirsi: le pillole dei viaggi erano inchiostro tenue su un fondo
+   chiaro, e su un temporale non si leggerebbero piu'. */
+.hh.cl-buio .hh-trip{color:rgba(255,255,255,.88);border-color:rgba(255,255,255,.32)}
+.hh.cl-buio .hh-trip.on{background:rgba(255,255,255,.94);color:#17212C;border-color:transparent}
+.hh.cl-buio .hh-trip-add{color:#fff;border-color:rgba(255,255,255,.46)}
+.hh.cl-buio .hh-grado{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.45)}
+.hh.cl-buio .hh-eyebrow{color:rgba(255,255,255,.9)}
+
+/* La temperatura non ha una scatola intorno: sta sul cielo come ci sta
+   il titolo. Era il numero dentro un riquadro, e il riquadro era la
+   cosa di troppo. */
+.hh-grado{
+  flex:0 0 auto;background:none;border:none;padding:0;cursor:pointer;
+  position:relative;font-family:'Fraunces',serif;font-weight:600;
+  font-size:1.6rem;line-height:1;letter-spacing:-.03em;color:var(--ink);
   transition:var(--ease);
 }
-.hh-cielo:active{transform:scale(.96)}
-@media(max-width:359px){.hh-cielo{width:96px;height:48px;font-size:48px}}
+.hh-grado:active{transform:scale(.94)}
+.hh-vuoto{flex:1 1 auto;min-width:.4rem;align-self:stretch}
+
 
 /* ── la tendina del meteo ─────────────────────────────────────────
    Scende dall'alto perche' viene dall'alto: la si apre col dito sul
    riquadro in cima, e la cosa che si apre deve arrivare da dove hai
    toccato, non dal lato opposto dello schermo. */
 .mt-hero{
-  position:relative;height:176px;font-size:176px;border-radius:var(--r-lg);
-  margin-bottom:.9rem;
+  position:relative;height:176px;overflow:hidden;isolation:isolate;--s:.62;
+  border-radius:var(--r-lg);margin-bottom:.9rem;
   box-shadow:0 8px 24px rgba(20,30,26,.22),inset 0 0 0 1px rgba(255,255,255,.24);
 }
+.mt-hero::before{content:'';position:absolute;inset:0;background:var(--cl-g)}
 .mt-txt{
   position:absolute;left:1.05rem;right:1.05rem;bottom:.9rem;z-index:2;
   display:flex;align-items:flex-end;justify-content:space-between;gap:.7rem;
@@ -1292,13 +1342,14 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 .ibtn,.edit-ic,.seg-btn,.gps-pill,.th-btn,.ad-x{position:relative}
 .nav-item::after,.hh-act::after,.hh-day::after,.hh-trip::after,
 .hh-trip-add::after,.hh-add::after,.ibtn::after,.edit-ic::after,.seg-btn::after,
-.gps-pill::after,.th-btn::after,.ad-x::after{content:'';position:absolute}
+.gps-pill::after,.th-btn::after,.ad-x::after,.hh-grado::after{content:'';position:absolute}
 
 .nav-item::after   {inset:-3px 0}      /* 41 → 47 di altezza */
 .hh-act::after     {inset:-9px -2px}   /* 27 → 45 */
 .hh-day::after     {inset:-7px -2px}   /* 31 → 45 */
 .hh-trip::after    {inset:-9px -2px}   /* 27 → 45 */
 .hh-trip-add::after{inset:-4px}        /* 36 → 44 */
+.hh-grado::after   {inset:-10px -12px} /* 26 → 46 */
 .hh-add::after     {inset:-7px}        /* 30 → 44 */
 .ibtn::after       {inset:-3px}        /* 38 → 44 */
 .edit-ic::after    {inset:-5px}        /* 34 → 44 */
@@ -5939,29 +5990,39 @@ function cieloScena(w,date){
   /* Niente sole quando il cielo e' coperto (dietro tre nuvole non lo
      vedresti) e nemmeno quando il meteo non si sa: un sole disegnato su
      una previsione che non abbiamo e' una bugia, non una decorazione. */
-  if(k!=='c-nuvolo'&&k!=='c-tempo'&&k!=='c-pioggia'&&k!=='c-ignoto')p.push('<span class="cl-astro"></span>');
+  if(k!=='c-nuvolo'&&k!=='c-tempo'&&k!=='c-pioggia'&&k!=='c-neve'&&k!=='c-ignoto')p.push('<span class="cl-astro"></span>');
   const nuvole=k==='c-sereno'?0:(k==='c-nuvolo'||k==='c-tempo')?3:2;
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
-  if(k==='c-pioggia'||k==='c-tempo')p.push('<span class="cl-pio"></span>');
-  if(k==='c-tempo')p.push('<span class="cl-lampo"></span>');
+  if(k==='c-pioggia'||k==='c-tempo'){
+    /* Due strati: quello dietro piu' rado e piu' lento, quello davanti
+       fitto. E' quello che fa sembrare pioggia una cosa che altrimenti
+       sarebbe una grata di righe. */
+    p.push('<span class="cl-pio dietro"></span>');
+    p.push(`<span class="cl-pio${(w&&w.precipitation>8)?' forte':''}"></span>`);
+  }
+  if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');
   if(k==='c-nebbia')p.push('<span class="cl-neb"></span>');
-  return{classi:`cielo ${k}${notte?' notte':''}`,dentro:p.join('')};
+  /* Se l'alto del cielo e' scuro, quello che ci scrivi sopra va
+     schiarito: e' l'unica cosa che il disegno impone al testo. */
+  const buio=notte||k==='c-pioggia'||k==='c-tempo';
+  return{classi:`cielo ${k}${notte?' notte':''}`,dentro:p.join(''),buio:buio};
 }
-/* Il riquadro in cima alla home. Quando il meteo non c'e' ancora non
-   resta vuoto: dice quando arrivera', che e' l'unica cosa vera che si
-   possa dire di un giorno oltre le previsioni. */
-function cieloRiquadro(t,day){
+/* Il cielo dell'intestazione. Quando la previsione non c'e' - un
+   viaggio fra un mese - non si disegna niente: l'intestazione resta
+   quella di sempre. Mettere un cielo finto, o scrivere fra quanti giorni
+   arrivera' la previsione, vorrebbe dire riempire di parole il posto
+   dove doveva esserci un'immagine. E quanti giorni mancano l'app lo dice
+   gia' poco piu' sotto, nell'anello della prossima tappa. */
+function cieloVestito(t,day){
   const w=day?(t.weather||{})[day.date]:null;
-  const s=cieloScena(w,day?day.date:'');
-  let scritta;
-  if(w)scritta=`<span class="cl-t">${Math.round(w.tempMax)}°</span>`;
-  else{
-    const oggi=new Date();oggi.setHours(0,0,0,0);
-    const da=day?Math.round((new Date(day.date)-oggi)/864e5):null;
-    scritta=`<span class="cl-att">${(da!=null&&da>16)?tv('fra {1} gg',da-16):tv('Meteo')}</span>`;
-  }
-  return `<button class="hh-cielo ${s.classi}" onclick="apriMeteo()" title="${tv('Meteo del viaggio')}" aria-label="${tv('Meteo del viaggio')}">${s.dentro}${scritta}</button>`;
+  if(!w)return{classi:'',velo:'',grado:''};
+  const s=cieloScena(w,day.date);
+  return{
+    classi:' '+s.classi+(s.buio?' cl-buio':''),
+    velo:`<div class="hh-velo" aria-hidden="true">${s.dentro}</div>`,
+    grado:`<button class="hh-grado" onclick="apriMeteo()" title="${tv('Meteo del viaggio')}" aria-label="${tv('Meteo del viaggio')}">${Math.round(w.tempMax)}°</button>`
+  };
 }
 /* Se il giorno in vista e' dentro le previsioni ma il meteo non c'e'
    ancora, se lo prende da solo: un riquadro che dovrebbe dire che tempo
@@ -6109,10 +6170,10 @@ function renderHomeHero(){
      All'altro capo c'e' il cielo della giornata: prima era spazio vuoto,
      adesso e' l'unica porta del meteo. */
   const aperti=app.trips.filter(x=>x.status!=='closed');
-  const barraViaggi=g=>`<div class="hh-tripbar" onclick="meteoDaBarra(event)">
+  const barraViaggi=v=>`<div class="hh-tripbar" onclick="meteoDaBarra(event)">
     <div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>
     <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-    ${cieloRiquadro(t,g)}
+    <div class="hh-vuoto"></div>${v.grado}
   </div>`;
   /* Qui restano solo le cose che servono mentre si e' in giro, e sono in
      quest'ordine per un motivo: prima le tre ricerche di cosa c'e' qui intorno,
@@ -6138,7 +6199,8 @@ function renderHomeHero(){
     <button class="hh-act" onclick="openShare()">Condividi</button>
   </div>`;
   if(!t.days||!t.days.length){
-    paint(`<div class="hh">${barraViaggi(null)}
+    const vNiente=cieloVestito(t,null);
+    paint(`<div class="hh">${vNiente.velo}${barraViaggi(vNiente)}
       <div class="hh-eyebrow hh-tap" onclick="openTripZoom(${t.id})">${esc(String(t.name||'').toUpperCase())} <span class="hh-chev">›</span></div>
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
@@ -6158,7 +6220,8 @@ function renderHomeHero(){
   const nx=homeNext(t,day),acts=homeActs(day);
   const avOf=a=>(a.who||[]).slice(0,4).map(id=>{const p=(t.participants||[]).find(pp=>pp.id===id);return p?`<div class="hh-av">${esc(String(p.name||'?').charAt(0).toUpperCase())}</div>`:'';}).join('');
   cieloChiediSeManca(t,day);
-  paint(`<div class="hh">${barraViaggi(day)}
+  const vestito=cieloVestito(t,day);
+  paint(`<div class="hh${vestito.classi}">${vestito.velo}${barraViaggi(vestito)}
     <div class="hh-eyebrow hh-tap" onclick="openDay(${i})">${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span></div>
     <div class="hh-city" onclick="openDay(${i})">${esc(city)}</div>
     ${mood?`<div class="hh-mood">${esc(mood)}</div>`:''}
@@ -7954,7 +8017,7 @@ function meteoDaBarra(ev){
   /* Nella riga in cima ci sono tre cose che rispondono al dito - i
      viaggi, il "+", il cielo - e in mezzo dello spazio. Quello spazio
      non e' un buco: e' ancora la striscia del meteo. */
-  if(ev&&ev.target&&ev.target.closest&&ev.target.closest('.hh-trip,.hh-trip-add,.hh-cielo'))return;
+  if(ev&&ev.target&&ev.target.closest&&ev.target.closest('.hh-trip,.hh-trip-add,.hh-grado'))return;
   apriMeteo();
 }
 function apriMeteo(){

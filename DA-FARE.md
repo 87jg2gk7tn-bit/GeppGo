@@ -333,12 +333,42 @@ va rifatto vedere.
     fotografia vera vorrebbe dire chiamare un servizio di immagini a ogni
     giornata — un altro nome nella privacy, un'altra cosa che smette di
     funzionare in aereo. Così è tutto CSS: sfumatura per il tipo di cielo,
-    sole o luna con l'alone, nuvole che passano, pioggia che scende, il lampo
-    ogni tanto nel temporale, le stelle quando è sereno di notte. Costa
-    niente, funziona senza rete, e cambia davvero col tempo che fa. La scena è
-    scritta tutta in `em`: lo stesso pezzo di CSS veste il francobollo in cima
-    (54 px) e il riquadro grande della tendina (176 px), e per ingrandirla
-    basta cambiare il `font-size` di chi la contiene.
+    sole o luna con l'alone, nuvole sfocate che passano, pioggia su due
+    strati, il bagliore e la saetta nel temporale, le stelle quando è sereno
+    di notte. Costa niente, funziona senza rete, e cambia davvero col tempo
+    che fa.
+
+    **Rifatto lo stesso giorno: il primo tentativo era un riquadro, ed era
+    sbagliato.** Avevo messo il cielo dentro una card da 120×54 in fondo alla
+    riga dei viaggi, con dentro la temperatura e — quando la previsione non
+    c'era ancora — la scritta «fra 9 gg». Giacomo l'ha guardata e ha detto che
+    era brutta: *deve esserci un'immagine bella grande fusa con lo sfondo*, e
+    quanti giorni mancano lo dice già l'anello della prossima tappa poco più
+    sotto. Aveva ragione su tutt'e due le cose. Un riquadro, per quanto
+    curato, resta un oggetto in più su una schermata già piena; e riempire di
+    parole il posto dove doveva esserci un'immagine è il contrario di quello
+    che serviva.
+
+    Adesso il meteo **è lo sfondo dell'intestazione**: il colore in alto lo
+    decide il tempo che fa e si scioglie nella carta della pagina esattamente
+    dove si scioglieva prima — cambia il colore, non il modo in cui finisce.
+    Sopra ci passa un velo con la scena, che svanisce verso il basso invece di
+    finire con un taglio (un taglio si vede, ed è quello che fa sembrare
+    un'immagine incollata). Non chiede spazio a niente, perché sta dove il
+    fondo stava già. La temperatura resta, **senza scatola intorno**, in fondo
+    alla riga dei viaggi. Se la previsione non c'è, non c'è nulla: nessun
+    cielo finto, nessuna scritta, l'intestazione di sempre.
+
+    Le misure della scena sono in **pixel**, non in `em`, e c'è un motivo: una
+    goccia di pioggia è una goccia, non diventa otto volte più grande perché
+    la finestra è più grande. Quello che cambia è `--s`, e sposta di poco: 1
+    nell'intestazione, 0,62 nel riquadro della tendina.
+
+    Una cosa che il disegno impone al testo: quando il cielo in alto è scuro
+    (pioggia, temporale, notte) l'intestazione prende la classe `cl-buio` e i
+    nomi dei viaggi passano all'inchiostro chiaro. Inchiostro tenue su un
+    temporale non si legge, e non è un dettaglio estetico: è la riga con cui
+    si cambia viaggio.
 
     **Il «+» si è spostato di fianco ai viaggi.** Stava all'estremo destro
     della riga, staccato dai nomi a cui appartiene. Adesso gli sta appiccicato,
@@ -544,6 +574,27 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Una cosa curata dentro un riquadro resta un riquadro.** Il primo cielo era
+  una card da 120×54 in cima alla home: disegnata bene, con l'ombra giusta, e
+  brutta lo stesso — perché era un oggetto in più su una schermata già piena.
+  La versione buona non aggiunge niente: **ridipinge quello che c'era già**,
+  cioè lo sfondo dell'intestazione. Prima di curare un elemento nuovo, conviene
+  chiedersi se la cosa può stare dentro un elemento che c'è di già.
+- **Un'immagine che finisce di netto si vede che è appiccicata.** Il velo del
+  meteo svanisce verso il basso con una maschera: senza, il bordo inferiore
+  taglia e l'occhio legge «riquadro» invece di «cielo». Vale anche per il
+  colore: la sfumatura dell'intestazione cambia solo la tinta in alto e
+  continua a sciogliersi nella carta della pagina esattamente dove si
+  scioglieva prima.
+- **Una scena disegnata non si scala tutta insieme.** Le misure sono in pixel,
+  non in `em`: una goccia di pioggia è una goccia, non diventa otto volte più
+  grande perché la finestra è più grande. Con l'`em` il riquadro da 54 px e
+  l'intestazione da 430 volevano due densità opposte, e nessuna delle due
+  stava bene con l'altra.
+- **Un fondo scuro obbliga il testo che ci sta sopra.** Con pioggia, temporale
+  o notte l'intestazione prende `cl-buio` e i nomi dei viaggi passano
+  all'inchiostro chiaro. Non è estetica: quella è la riga con cui si cambia
+  viaggio, e inchiostro tenue su un temporale non si legge.
 - **Il valore di una proprietà CSS personalizzata torna com'è scritto.**
   `getPropertyValue('--cl-g')` restituisce `linear-gradient(168deg,#3D8FD8…)`
   con i colori in esadecimale: il browser non li normalizza in `rgb()` come fa
