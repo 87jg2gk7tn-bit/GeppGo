@@ -738,6 +738,15 @@ qualcuno che risponde".
   «aggiungi attività», e toglierlo l'avrebbe lasciato in italiano nelle
   quattro lingue. Se ne accorge solo `prova-lingue` — o nessuno. Prima di
   togliere una chiave, si cerca **dove è usata**, non dove è scritta.
+- **`MAPPA_APP` invecchia in silenzio.** È il foglio che l'assistente ha
+  davanti quando qualcuno gli chiede dov'è una cosa: se la schermata cambia e
+  il foglio no, l'assistente risponde una cosa e l'app ne fa un'altra, e
+  nessuno se ne accorge finché non è un utente a farlo notare. È successo coi
+  biglietti: il filtro è passato a «tutti» e la mappa continuava a dire «di
+  suo parte dai tuoi». Ora `prova-biglietti` mette le due cose una contro
+  l'altra e misura se dicono lo stesso. **Dove si cambia un valore di
+  partenza o un percorso, si aggiunge una prova di questo tipo:** la mappa è
+  una promessa, e una promessa senza prova scade da sola.
 
 - **Un dato che non scade è un dato che mente.** Il meteo si scaricava una
   volta e restava lì: una previsione per domani presa una settimana prima

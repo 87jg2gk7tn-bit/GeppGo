@@ -197,6 +197,32 @@ const TRE = [
   ok('e i biglietti si vedono tutti lo stesso', daSoli.quanti === 3, daSoli.quanti + ' biglietti');
   await page.close();
 
+  /* ══ e la mappa che l'assistente legge dice la stessa cosa ══════════════
+     MAPPA_APP è quello che l'assistente dell'app ha davanti quando qualcuno
+     gli chiede «da dove si vedono i biglietti». Nessuno controllava che
+     fosse ancora vero, e infatti cambiando il filtro la mappa è rimasta a
+     dire «di suo parte dai tuoi» per un po': l'assistente avrebbe risposto
+     una cosa e la schermata ne avrebbe fatta un'altra. Qui le due si
+     misurano una contro l'altra, così la prossima volta se ne accorge la
+     prova e non l'utente. */
+  page = await apri(stato(TRE));
+  const mappa = await page.evaluate(() => {
+    const m = typeof MAPPA_APP === 'string' ? MAPPA_APP : '';
+    const bigl = (m.split(/Biglietti:/)[1] || '').split(/\n/)[0];
+    return {
+      cè: !!bigl,
+      diceTutti: /parte da TUTTI/i.test(bigl),
+      diceTuoi: /parte dai tuoi/i.test(bigl),
+      filtroVero: tkWhoVal(T())
+    };
+  });
+  ok('la mappa dell\'assistente parla dei biglietti', mappa.cè === true);
+  ok('e dice da dove parte l\'elenco così come parte davvero',
+     (mappa.filtroVero === 'tutti') === (mappa.diceTutti && !mappa.diceTuoi),
+     'mappa: ' + (mappa.diceTutti ? 'tutti' : mappa.diceTuoi ? 'tuoi' : 'non lo dice')
+       + ' · schermata: ' + mappa.filtroVero);
+  await page.close();
+
   await browser.close();
   for (const e of err) r.push(' FALLITO  ' + e);
   const passati = r.filter(x => x.startsWith('  OK')).length;
