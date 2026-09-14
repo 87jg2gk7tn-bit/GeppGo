@@ -251,7 +251,16 @@ const stato = (titoloGiorno) => ({
   if (!fuoriOrario && adesso.cè) {
     ok('e sta all\'ora giusta, non a occhio',
        Math.abs(adesso.top - adesso.atteso) < 2, `${Math.round(adesso.top)}px contro ${Math.round(adesso.atteso)}px`);
-    ok('e lo scrive', adesso.scritta === adesso.oraVera, adesso.scritta + ' / ' + adesso.oraVera);
+    /* La targhetta viene scritta quando la riga si disegna, e l'ora si
+       rilegge un attimo dopo: se nel mezzo scatta il minuto, «23:15» e
+       «23:16» sono giuste tutt'e due, e su CI è successo. Un minuto di
+       tolleranza non ammorbidisce niente — un'etichetta sbagliata sarebbe
+       lontana ben più di un minuto — e toglie la prova dalle mani del
+       caso. */
+    const inMinuti = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim()); return m ? +m[1] * 60 + +m[2] : null; };
+    const a = inMinuti(adesso.scritta), b = inMinuti(adesso.oraVera);
+    const lontano = (a == null || b == null) ? 9999 : Math.min(Math.abs(a - b), 1440 - Math.abs(a - b));
+    ok('e lo scrive', lontano <= 1, adesso.scritta + ' / ' + adesso.oraVera);
     ok('senza rubare il tocco alle tappe che ci passano sotto',
        adesso.nonRubaIlTocco === true);
     /* Ridisegnare tutta la time-table ogni minuto costerebbe caro e farebbe

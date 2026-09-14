@@ -787,6 +787,13 @@ qualcuno che risponde".
   fosse pagato stavano nel viaggio da sempre, nella spesa collegata, e in
   Hotel non si vedevano: per saperlo si andava in Spese a cercare la riga.
   Quando si aggiunge un campo, si guarda anche **dove lo si legge**.
+- **Confrontare due letture dell'orologio è una monetina.** La targhetta
+  della riga «adesso» viene scritta quando la riga si disegna; la prova
+  rileggeva l'ora un attimo dopo e pretendeva che fossero identiche. A
+  cavallo del minuto — su CI, alle 23:15 — sono giuste tutt'e due. Un
+  minuto di tolleranza non ammorbidisce niente (un'etichetta sbagliata è
+  lontana ben di più: verificato spostandola di cinque minuti, e infatti
+  diventa rossa) e toglie la prova dalle mani del caso.
 - **Una prova non deve misurare come un numero è scritto, ma che ci sia.**
   `/2[.,]400/` passava qui e cadeva su CI, dove lo stesso importo si scrive
   `2400,00`: le migliaia le raggruppa la lingua della macchina. Si tolgono
