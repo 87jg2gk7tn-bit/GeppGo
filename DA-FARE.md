@@ -636,12 +636,30 @@ va rifatto vedere.
     tondini senza nome in alto a destra adesso hanno un nome per chi non
     vede le icone.
 
+    **Fatto — gli ultimi stati vuoti, guardati uno per uno.** Guardarli era
+    la parte importante, e ha dato tre risposte diverse:
+
+    - **«Nessun luogo salvato»** e **«Niente in time-table, per ora»**, i due
+      riquadri in fondo a Scopri: erano cartelli davvero. Per il primo
+      l'azione — la ricerca — sta in cima alla *stessa* pagina, ma dopo una
+      schermata intera di scorrimento, e «a un centimetro» lì non valeva; per
+      il secondo l'azione sta proprio in un'altra schermata. Adesso hanno
+      «Cerca un posto» (che riporta sulla ricerca e ci mette il cursore) e
+      «Apri la time-table».
+    - **La time-table vuota** non prende niente: la griglia *è* la cosa, e il
+      «+» che la riempie è già lì in fondo a destra. Un riquadro «niente qui»
+      sopra uno strumento che funziona sarebbe solo rumore.
+    - **«Nessuna voce ancora» nei bagagli** quasi non si vede mai: la lista
+      arriva già scritta, generata da durata, meteo e attività. Lasciato
+      com'è.
+
+    `test/prova-vuoti.js` tiene ferme tutt'e tre le risposte, compresa quella
+    negativa: la prova fallisce anche se qualcuno aggiunge un cartello alla
+    time-table vuota.
+
     **Quello che resta di questo punto:** le attese (oggi l'app dice «Cerco…»
     a parole, che è onesto e leggibile — non serve metterci scheletri sopra
-    per forza) e gli altri stati vuoti che sono ancora cartelli senza
-    un'azione vicina («Nessun luogo salvato», «Niente in time-table»,
-    «Nessuna voce ancora» nei bagagli) — **da guardare uno per uno prima di
-    toccarli.** Il passaggio fra una schermata e l'altra è stato misurato ed è
+    per forza). Il passaggio fra una schermata e l'altra è stato misurato ed è
     già a posto: è un'`animation`, che a differenza di una `transition` parte
     anche su un elemento appena mostrato.
 15. **Poi l'app nativa, e non prima.** Prima si mette a posto tutto sul link —
@@ -769,6 +787,11 @@ qualcuno che risponde".
   fosse pagato stavano nel viaggio da sempre, nella spesa collegata, e in
   Hotel non si vedevano: per saperlo si andava in Spese a cercare la riga.
   Quando si aggiunge un campo, si guarda anche **dove lo si legge**.
+- **Una prova non deve misurare come un numero è scritto, ma che ci sia.**
+  `/2[.,]400/` passava qui e cadeva su CI, dove lo stesso importo si scrive
+  `2400,00`: le migliaia le raggruppa la lingua della macchina. Si tolgono
+  le cifre dal resto (`.replace(/\D/g,'')`) e si cerca `2400`. Vale per date,
+  orari e valute: **il fatto, non la punteggiatura.**
 - **⚠️ Non cancellare voci di dizionario con un regex.** Le voci stanno
   parecchie per riga: un `'📷 Scansiona':'…',` tolto da una riga si porta via
   il contesto delle altre, e soprattutto può essere una voce che serviva a un
@@ -786,6 +809,30 @@ qualcuno che risponde".
   partenza o un percorso, si aggiunge una prova di questo tipo:** la mappa è
   una promessa, e una promessa senza prova scade da sola.
 
+- **L'orologio del telefono è quello di chi guarda, non quello del posto.**
+  Il meteo lo chiediamo con `timezone=auto`, quindi alba e tramonto tornano
+  *in ora locale del posto* — e l'app li confrontava con `new Date()
+  .getHours()`, cioè con l'ora di casa. Da Milano il Giappone è avanti di
+  sette ore: alle due del pomeriggio qui a Tokyo sono le nove di sera, e
+  l'app disegnava il sole sopra la notte. Lo stesso su «sera piovosa» (la
+  sera tua, la pioggia loro) e sulla casella «adesso» della fila oraria,
+  che sono ore del posto. Lo scarto **era già nella risposta**
+  (`utc_offset_seconds`) e finiva nel cestino: ora si salva come `scarto` e
+  ci passa tutto da `adessoNelPosto(w)`. **Ogni volta che si mette insieme
+  un'ora del telefono e un dato di un altro posto, ci si ferma e si guarda
+  di che fuso è ciascuno.**
+- **Un cielo disegnato può ripiegare, una frase no.** Senza lo scarto il
+  cielo continua a usare l'orologio del telefono — è un'impressione, e
+  sbagliarla costa poco. Ma la riga scritta «a Tokyo sono le 02:00» è
+  un'affermazione, e senza il fuso vero **non si scrive affatto**. Dove un
+  ripiego è accettabile per il disegno non lo è per il testo.
+- **Una prova sull'ora non deve dipendere dall'ora.** `prova-fuso` mette
+  due posti con lo *stesso* sole e due fusi diversi, scelti perché in uno
+  siano le 14:00 e nell'altro le 02:00 *nel momento in cui gira*. Se l'app
+  guarda il fuso, i due rispondono diverso; se guarda l'orologio della
+  macchina rispondono per forza uguale, qualunque ora sia. La riga è rossa
+  sul codice vecchio **sempre**, non a metà delle esecuzioni — che è la
+  differenza fra una prova e una monetina.
 - **Un dato che non scade è un dato che mente.** Il meteo si scaricava una
   volta e restava lì: una previsione per domani presa una settimana prima
   aveva lo stesso aspetto di una presa adesso. È peggio di un dato mancante,
