@@ -226,19 +226,28 @@ const oreFinte = (data) => {
   await page.close();
 
   // ══ e cambia davvero col tempo che fa, misurato ══════════════════════
-  page = await apri(stato({ [oggi]: wx(63, 13, 8, 14) }));
+  /* Quattro millimetri: pioggia normale. Il caso "forte" viene subito
+     dopo, con ventidue, e le due cose devono vedersi diverse. */
+  page = await apri(stato({ [oggi]: wx(63, 13, 8, 4) }));
   const pioggia = await page.evaluate(([luce]) => {
     const hh = document.querySelector('.hh');
     const chip = document.querySelector('.hh-trip:not(.on)');
     return { classi: hh.className, luce: eval(luce)(hh),
-             strati: document.querySelectorAll('.hh-velo .cl-pio').length,
-             forte: !!document.querySelector('.hh-velo .cl-pio.forte'),
+             vetro: !!document.querySelector('.hh-velo .cl-vetro'),
+             gocce: document.querySelectorAll('.hh-velo .cl-riga').length,
+             sfocate: getComputedStyle(document.querySelector('.hh-velo .cl-vetro') || document.body).filter,
              sole: !!document.querySelector('.hh-velo .cl-astro'),
              inchiostroChip: getComputedStyle(chip).color };
   }, [LUCE]);
   ok('con la pioggia il cielo è di pioggia', /c-pioggia/.test(pioggia.classi), pioggia.classi);
-  ok('e la pioggia è disegnata su due strati, per darle profondità',
-     pioggia.strati === 2, pioggia.strati + ' strati');
+  /* La pioggia si guarda da dietro un vetro, non in mezzo alla strada:
+     tante gocce ferme appoggiate, e poche che scivolano. Prima erano
+     trattini tutti uguali che scendevano alla stessa velocità - una grata
+     che si muove, non pioggia. */
+  ok('il vetro è bagnato: le gocce ferme ci sono', pioggia.vetro === true);
+  ok('e ce ne sono alcune che scivolano, non tutte', pioggia.gocce === 4, pioggia.gocce + ' gocce');
+  ok('e sono sfocate, se no sembrano cerchi disegnati col compasso',
+     /blur/.test(pioggia.sfocate || ''), pioggia.sfocate);
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
   ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
      `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
@@ -253,11 +262,14 @@ const oreFinte = (data) => {
      «pioviggina» e «prendi l'ombrello», e si deve vedere. */
   page = await apri(stato({ [oggi]: wx(65, 14, 9, 22) }));
   const forte = await page.evaluate(() => {
-    const f = document.querySelector('.hh-velo .cl-pio.forte');
-    const n = document.querySelector('.hh-velo .cl-pio:not(.forte):not(.dietro)');
-    return { cè: !!f, passo: f ? getComputedStyle(f).backgroundSize : '', normale: n ? 1 : 0 };
+    const hh = document.querySelector('.hh');
+    const g = document.querySelectorAll('.hh-velo .cl-riga');
+    return { classe: hh.className.includes('forte'), quante: g.length,
+             vel: parseFloat(getComputedStyle(hh).getPropertyValue('--vel')) };
   });
-  ok('quando piove forte le gocce si infittiscono', forte.cè === true, forte.passo);
+  ok('quando piove forte le gocce che scivolano sono di più',
+     forte.classe === true && forte.quante === 6, forte.quante + ' gocce');
+  ok('e ci mettono meno ad arrivare in fondo', forte.vel < 1, 'velocità ' + forte.vel);
   await page.close();
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
@@ -275,7 +287,7 @@ const oreFinte = (data) => {
     classi: document.querySelector('.hh').className,
     bagliore: !!document.querySelector('.hh-velo .cl-lampo'),
     saetta: !!document.querySelector('.hh-velo .cl-saetta'),
-    pioggia: !!document.querySelector('.hh-velo .cl-pio')
+    pioggia: !!document.querySelector('.hh-velo .cl-vetro')
   }));
   ok('col temporale il cielo è di temporale', /c-tempo/.test(tempo.classi), tempo.classi);
   ok('e ci sono il bagliore, la saetta e la pioggia',

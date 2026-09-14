@@ -20,13 +20,20 @@ const { apriBrowser, APP } = require('./browser');
 /* Le classi che si toccano più spesso in tutta l'app. Non è un elenco
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
 const CLASSI = ['nav-item', 'hh-act', 'hh-day', 'hh-trip', 'hh-trip-add', 'hh-add', 'hh-grado',
+  'tt-az', 'tt-costruisci',
                 'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'th-btn', 'ad-x'];
 
 const stato = { trips: [
   { id: 1, name: 'Giappone', destination: 'Tokyo', currency: 'JPY', status: 'open',
     start: '2026-09-01', end: '2026-09-05',
     participants: [{ id: 1, name: 'Gepp', isMe: true }, { id: 2, name: 'Luca' }],
-    suggested: [], pois: [], tickets: [], weather: {}, expenses: [],
+    suggested: [], pois: [], tickets: [], expenses: [],
+    /* Senza meteo la temperatura in cima alla home non si disegna, e il
+       controllo "la prova ha davvero guardato i tasti che dice" starebbe
+       guardando il vuoto proprio su quello. */
+    weather: Object.fromEntries([1, 2, 3, 4, 5].map(i => ['2026-09-0' + i,
+      { code: 3, tempMax: 21, tempMin: 13, precipitation: 0, windSpeed: 7,
+        sunset: '2026-09-0' + i + 'T19:40', sunrise: '2026-09-0' + i + 'T06:40', luogo: 'Tokyo' }])),
     days: [1, 2, 3, 4, 5].map(i => ({ id: i, date: '2026-09-0' + i, title: '', activities: [] })),
     createdAt: 1 },
   { id: 2, name: 'Lisbona', destination: 'Lisbona', currency: 'EUR', status: 'open',
@@ -179,7 +186,13 @@ const stato = { trips: [
   await page.evaluate(() => { openPacking(); });
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 600)));
   const bagagli = await guarda(null);
-  for (const m of [lista, bagagli]) {
+  await page.evaluate(() => { closeSheet('mPacking'); openTimetable(); });
+  await page.evaluate(() => new Promise(r2 => setTimeout(r2, 700)));
+  /* La time-table non si apre con go(): ci si arriva da openTimetable(), e
+     per questo il giro qui sopra non la vedeva. È una schermata intera coi
+     suoi tasti, e i suoi tasti sono nuovi. */
+  const timetable = await guarda(null);
+  for (const m of [lista, bagagli, timetable]) {
     tutti.piccoli.push(...m.piccoli); tutti.rubati.push(...m.rubati); tutti.visti.push(...m.visti);
   }
   await page.evaluate(() => closeSheet('mPacking'));

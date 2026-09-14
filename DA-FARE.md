@@ -370,6 +370,20 @@ va rifatto vedere.
     temporale non si legge, e non è un dettaglio estetico: è la riga con cui
     si cambia viaggio.
 
+    **La pioggia, rifatta una terza volta: è sul vetro.** I primi due
+    tentativi erano trattini che scendevano in fretta, tutti uguali e tutti
+    alla stessa velocità — una grata che si muove, non pioggia. L'errore era
+    a monte: **il temporale non lo guardi in mezzo alla strada, lo guardi da
+    dietro un vetro**, e su un vetro la pioggia sta quasi ferma. Adesso c'è
+    uno strato di goccioline appoggiate — ognuna è un **anello**, perché su
+    un vetro è il bordo della goccia che prende la luce e il centro lascia
+    vedere quello che c'è dietro — e sopra quattro o sei gocce che scivolano
+    giù **a scatti**, fermandosi due volte per strada come fanno quelle vere.
+    Mezzo pixel di sfocatura è quello che separa «gocce viste attraverso un
+    vetro» da «cerchi disegnati col compasso»: senza, sembravano bolle di
+    sapone (provato, guardato, corretto). Quando piove forte le gocce che
+    corrono passano da quattro a sei e ci mettono meno ad arrivare in fondo.
+
     **Il «+» si è spostato di fianco ai viaggi.** Stava all'estremo destro
     della riga, staccato dai nomi a cui appartiene. Adesso gli sta appiccicato,
     e resta **fuori** dallo scorrevole apposta: se scorresse insieme ai nomi,
@@ -410,11 +424,38 @@ va rifatto vedere.
     *adesso* se è oggi e siamo in mezzo alla giornata, con un'ora di griglia
     sopra per capire che è una linea del tempo e non un elenco.
 
-    **Da guardare insieme:** i quattro tasti fra la mappa e la giornata
-    («Ordina il giro con l'IA», «Chiedi all'assistente», «Autopilota»,
-    «Naviga la giornata») sono quattro inviti in tre stili diversi, uno
-    accanto all'altro, e spingono la giornata più in basso. Non è un difetto
-    da correggere di nascosto: è una scelta su cosa conta di più.
+    **Risolto il 14 settembre — i quattro tasti erano due cose diverse.**
+    Erano quattro inviti in tre stili diversi, uno accanto all'altro, e
+    spingevano la giornata sotto la piega. La domanda giusta non era «quali
+    tolgo» ma «quali si usano quando»: Giacomo ha risposto che **«Naviga la
+    giornata» e «Chiedi all'assistente» si usano camminando**, mentre
+    **«Ordina il giro con l'IA» e «Autopilota» si usano in fase di
+    prenotazione e costruzione del viaggio**. Quindi i due da strada restano
+    in vista, uguali fra loro e larghi uguale — un invito solo, in due modi —
+    e i due da tavolino stanno dietro «Costruisci la giornata», dove ognuno
+    ha una riga che dice cosa fa (perché «Autopilota» da solo non lo sa
+    nessuno).
+
+    **Rifatta l'aria della Time Table.** Era l'unico posto dell'app rimasto
+    coi rettangoli color sabbia e il bordo di un pixel, mentre tutto il resto
+    è passato a schede bianche con l'ombra morbida: sembrava una schermata di
+    un'altra app, più vecchia. Adesso le tappe sono schede come le altre, col
+    nome nel serif con cui l'app scrive i nomi e una **bandella d'oro** sul
+    fianco che le fa leggere come una fila anche quando sono lontane fra
+    loro. La riga dell'ora parte **dopo** la colonna delle ore, così il numero
+    non ha più bisogno di un rettangolo bianco dietro per tagliarla — ed era
+    quel rettangolo, più di ogni altra cosa, a farla sembrare una tabella di
+    vent'anni fa. Le targhette dei tratti hanno perso il bordo tratteggiato.
+    E la testata prende la forma della home: occhiello piccolo, e grande **la
+    data**, perché la cosa di cui parla la schermata è il giorno — «Time
+    Table» lo si legge quando ci si è già dentro.
+
+    **E adesso dice a che punto della giornata sei.** Una riga color mattone
+    attraversa la griglia all'ora che è adesso, con l'orario scritto nella
+    colonna, e **si sposta da sola** ogni minuto — spostando solo la riga, non
+    ridisegnando la giornata: un ridisegno ogni minuto farebbe saltare un
+    trascinamento a metà. Su un giorno che non è oggi non compare: una riga
+    che non vuol dire niente uno la legge lo stesso.
 
     **Fatto l'8 settembre — i fogli salgono davvero.** Era il difetto più
     longevo del progetto: la salita era scritta nel CSS dal primo giorno,
@@ -574,6 +615,34 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Un'animazione sbagliata quasi sempre è una metafora sbagliata.** La
+  pioggia è stata rifatta tre volte, e le prime due erano varianti della
+  stessa idea: gocce che cadono davanti agli occhi. Cambiando la domanda —
+  *da dove la sta guardando, questa persona?* — la risposta è venuta da sola:
+  da dietro un vetro, e su un vetro la pioggia sta quasi ferma. Prima di
+  rimettere mano ai numeri di un'animazione, conviene chiedersi se la scena
+  è quella giusta.
+- **La forma di una cosa disegnata conta più della sua dimensione.** Le gocce
+  come puntini pieni sembravano polvere; ingrandite, sembravano bolle di
+  sapone. Come anelli — bordo chiaro, centro trasparente — si leggono per
+  quello che sono a qualunque misura. E mezzo pixel di sfocatura fa la
+  differenza fra «visto attraverso un vetro» e «disegnato col compasso».
+- **Quattro tasti in fila non sono sempre un problema di spazio.** Sulla Time
+  Table erano quattro inviti in tre stili, e la tentazione era nasconderne
+  due a caso. La domanda giusta era «quali si usano CAMMINANDO e quali da
+  fermi», e la risposta l'aveva solo chi l'app la usa in viaggio. Due
+  restano, due vanno dietro una porta che dice cosa c'è dentro.
+- **Un rettangolo bianco dietro un numero invecchia una schermata di
+  vent'anni.** Nella Time Table la riga dell'ora attraversava la colonna
+  delle ore, e il numero aveva un fondo pieno per «tagliarla». Bastava far
+  partire la riga dopo la colonna. Era la cosa più vecchia della pagina, e
+  costava una proprietà CSS.
+- **Una prova che si schianta dice meno di una che elenca.** `prova-giornata`
+  al primo giro moriva con un `TypeError` sul codice vecchio: dimostrava che
+  qualcosa mancava, ma non cosa. Con i controlli protetti sui pezzi che
+  possono non esserci, adesso stampa venti righe rosse che dicono
+  esattamente cosa non c'era — compreso il vecchio colore sabbia,
+  `rgb(242, 230, 204)`.
 - **Una cosa curata dentro un riquadro resta un riquadro.** Il primo cielo era
   una card da 120×54 in cima alla home: disegnata bene, con l'ombra giusta, e
   brutta lo stesso — perché era un oggetto in più su una schermata già piena.
