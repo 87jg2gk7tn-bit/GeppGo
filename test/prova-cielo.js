@@ -221,6 +221,33 @@ const oreFinte = (data) => {
   ok('e svanisce verso il basso, invece di finire con un taglio', sfondo.veloSvanisce === true);
   ok('col sereno c\'è il sole e non ci sono nuvole davanti',
      sfondo.sole === true && sfondo.nuvole === 0, `sole ${sfondo.sole}, nuvole ${sfondo.nuvole}`);
+  /* Il sole sta SOTTO il bordo, non a cavallo. Partiva quattro pixel sopra
+     l'inizio del velo e la linea in alto lo tagliava di netto — insieme
+     all'alone, che è la parte che lo fa sembrare luce. E non deve finire
+     addosso né alle pillole dei viaggi né alla temperatura: un sole mezzo
+     coperto da un'altra cosa non sembra un sole, sembra uno sbaglio. */
+  const astro = await page.evaluate(() => {
+    const velo = document.querySelector('.hh-velo');
+    const sole = document.querySelector('.hh-velo .cl-astro');
+    const chip = document.querySelector('.hh-trip'), grado = document.querySelector('.hh-grado');
+    if (!velo || !sole) return { cè: false };
+    const v = velo.getBoundingClientRect(), s2 = sole.getBoundingClientRect();
+    const c = chip && chip.getBoundingClientRect(), g = grado && grado.getBoundingClientRect();
+    return {
+      cè: true,
+      ariaSopra: Math.round(s2.top - v.top),
+      ariaSotto: c ? Math.round(c.top - s2.bottom) : null,
+      distanzaGrado: g ? Math.round(g.left - s2.right) : null,
+      largo: Math.round(s2.width)
+    };
+  });
+  ok('il sole sta tutto dentro, non a cavallo della linea in alto',
+     astro.cè === true && astro.ariaSopra >= 4, astro.ariaSopra + 'px d\'aria sopra');
+  ok('e non finisce addosso ai nomi dei viaggi',
+     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px prima delle pillole');
+  ok('né addosso alla temperatura',
+     astro.distanzaGrado !== null && astro.distanzaGrado >= 12,
+     astro.distanzaGrado + 'px dalla temperatura');
   ok('e il tondo decorativo si spegne', sfondo.tondoSpento === true);
   const luceSereno = sfondo.luce;
   await page.close();
@@ -241,6 +268,8 @@ const oreFinte = (data) => {
              lunghezze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).height)).size,
              trasparenze: new Set([...document.querySelectorAll('.hh-velo .cl-g')].map(x => getComputedStyle(x).opacity)).size,
              velocita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).animationDuration)),
+             altezze: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).height)),
+             opacita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).opacity)),
              sole: !!document.querySelector('.hh-velo .cl-astro'),
              inchiostroChip: getComputedStyle(chip).color };
   }, [LUCE]);
@@ -248,18 +277,36 @@ const oreFinte = (data) => {
   /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
      una grata che si muove, non pioggia. Quello che mancava non era la
      velocità, era la VARIETÀ. */
-  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce === 18, pioggia.gocce + ' gocce');
-  /* Non tutte diverse al pixel — le lunghezze sono numeri interi, qualche
-     doppione capita — ma la gran parte sì: è quello che rompe la griglia. */
-  ok('e quasi nessuna è uguale all\'altra: lunghezze diverse',
-     pioggia.lunghezze >= Math.round(pioggia.gocce * 0.7),
-     pioggia.lunghezze + ' lunghezze diverse su ' + pioggia.gocce + ' gocce');
-  ok('trasparenze diverse, che è come si legge la profondità',
-     pioggia.trasparenze >= pioggia.gocce - 2, pioggia.trasparenze + ' trasparenze');
-  /* E piano: due secondi buoni per attraversare l'intestazione. La prima
-     versione ci metteva quattro decimi. */
-  ok('e scendono piano, nessuna sotto il secondo e mezzo',
-     Math.min(...pioggia.velocita) >= 1.5, 'la più veloce ' + Math.min(...pioggia.velocita) + 's');
+  ok('la pioggia è fatta di gocce, una per una', pioggia.gocce > 12, pioggia.gocce + ' gocce');
+  /* Contare quante sono DIVERSE era un metro sbagliato: le lunghezze sono
+     numeri interi in un intervallo stretto, quindi i doppioni sono
+     inevitabili e il conteggio diceva "poca varietà" anche quando ce n'era
+     parecchia. Quello che conta è l'AMPIEZZA: fra la goccia più corta e la
+     più lunga ci deve essere una differenza che si vede. */
+  const spanH = Math.max(...pioggia.altezze) - Math.min(...pioggia.altezze);
+  ok('e non ce n\'è una uguale all\'altra: lunghezze sparse su tutto l\'intervallo',
+     pioggia.lunghezze >= 10 && spanH >= 12,
+     pioggia.lunghezze + ' lunghezze diverse, da ' + Math.min(...pioggia.altezze) +
+     ' a ' + Math.max(...pioggia.altezze) + 'px');
+  const opa = pioggia.opacita;
+  ok('e trasparenze sparse, che è come si legge la profondità',
+     pioggia.trasparenze >= 15 && (Math.max(...opa) - Math.min(...opa)) >= 0.35,
+     pioggia.trasparenze + ' trasparenze, da ' + Math.min(...opa).toFixed(2) +
+     ' a ' + Math.max(...opa).toFixed(2));
+  /* Sulla velocità ci si è sbagliati due volte, in due direzioni opposte:
+     prima troppo veloci e tutte uguali (una grata che si muove), poi troppo
+     lente per correggere — strisce lunghe che scendevano adagio, cioè stelle
+     cadenti. La pioggia vera è VELOCE: mezzo secondo per attraversare
+     l'intestazione. Quello che le impedisce di sembrare una grata non è la
+     lentezza, è che non ce n'è una uguale all'altra — ed è il controllo qui
+     sopra a tenerlo fermo. */
+  ok('e scendono come scende la pioggia, né a scatti né come stelle cadenti',
+     Math.min(...pioggia.velocita) >= 0.3 && Math.max(...pioggia.velocita) <= 1.1,
+     'da ' + Math.min(...pioggia.velocita) + 's a ' + Math.max(...pioggia.velocita) + 's');
+  /* Una striscia lunga che scende adagio è una stella cadente. La lunghezza
+     va con la velocità, non contro: corte. */
+  ok('e sono strisce corte, non scie',
+     pioggia.altezze.every(h => h <= 30), 'la più lunga ' + Math.max(...pioggia.altezze) + 'px');
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
   ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
      `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
@@ -270,17 +317,36 @@ const oreFinte = (data) => {
      pioggia.inchiostroChip);
   await page.close();
 
-  /* Piove forte: le gocce si infittiscono. È la differenza fra
-     «pioviggina» e «prendi l'ombrello», e si deve vedere. */
-  page = await apri(stato({ [oggi]: wx(65, 14, 9, 22) }));
-  const forte = await page.evaluate(() => {
-    const hh = document.querySelector('.hh');
-    const g = document.querySelectorAll('.hh-velo .cl-g');
-    return { classe: hh.className.includes('forte'), quante: g.length };
-  });
-  ok('quando piove forte le gocce sono di più',
-     forte.classe === true && forte.quante === 30, forte.quante + ' gocce');
-  await page.close();
+  /* QUANTA pioggia si vede dipende da quanta ne cade, e non a due gradini:
+     era un interruttore sopra/sotto gli otto millimetri, e due posizioni non
+     sono il tempo che fa. Fra una pioggerella da mezzo millimetro e un
+     diluvio da venticinque uno distingue guardando fuori dalla finestra, e
+     la schermata deve distinguere anche lei. */
+  const quanteCon = async (mm) => {
+    const p2 = await apri(stato({ [oggi]: wx(mm > 2 ? 65 : 51, 14, 9, mm) }));
+    const n = await p2.evaluate(() => document.querySelectorAll('.hh-velo .cl-g').length);
+    await p2.close();
+    return n;
+  };
+  const scala = [];
+  for (const mm of [0.3, 2, 6, 14, 25]) scala.push({ mm, n: await quanteCon(mm) });
+  const dettaglio = scala.map(x => x.mm + 'mm→' + x.n).join('  ');
+  /* Cresce sempre: più millimetri, più gocce. Nessun gradino all'indietro. */
+  let sempreSu = true;
+  for (let i = 1; i < scala.length; i++) if (scala[i].n <= scala[i - 1].n) sempreSu = false;
+  ok('più millimetri cadono, più gocce si vedono — senza mai tornare indietro',
+     sempreSu === true, dettaglio);
+  /* E la differenza fra poco e tanto si deve VEDERE, non essere una
+     sfumatura: da mezzo millimetro a venticinque le gocce devono almeno
+     triplicare. */
+  ok('e fra una pioggerella e un diluvio la differenza si vede',
+     scala[scala.length - 1].n >= scala[0].n * 3, dettaglio);
+  /* Un codice di pioggia con zero millimetri capita — le pioggerelle che non
+     bagnano. Qualcosa si deve vedere lo stesso: se no la schermata dice
+     "pioggia" e non piove. */
+  const zero = await quanteCon(0);
+  ok('e se il codice dice pioggia ma i millimetri sono zero, qualcosa si vede',
+     zero >= 4 && zero <= 10, zero + ' gocce');
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
   const neve = await page.evaluate(() => ({
@@ -558,6 +624,109 @@ const oreFinte = (data) => {
      conTappe.coord.map(c => c.lat.toFixed(3) + ',' + c.lng.toFixed(3)).join(' | '));
   ok('e si dice che è un\'approssimazione, non una certezza',
      conTappe.dove.vicino === true, 'vicino=' + conTappe.dove.vicino);
+
+  // ══ QUANTO DURA UNA PREVISIONE ═══════════════════════════════════════
+  /* Il difetto piu' silenzioso che il meteo abbia avuto: una volta
+     scaricata, una previsione non si aggiornava MAI piu' — solo cambiando le
+     tappe o premendo il tasto a mano. Cosi' una previsione per domani presa
+     una settimana fa restava a schermo con l'aria di essere fresca, e uno ci
+     fa la valigia. */
+  async function conPrevisione(vecchiaDiOre) {
+    const page2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page2.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    const chiamate = [];
+    await page2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await page2.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    await page2.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());
+    await page2.route(/api\.open-meteo\.com/, ro => {
+      chiamate.push(ro.request().url());
+      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        daily: { time: [oggi], weather_code: [0], temperature_2m_max: [26], temperature_2m_min: [15],
+                 precipitation_sum: [0], wind_speed_10m_max: [6],
+                 sunset: [oggi + 'T20:30'], sunrise: [oggi + 'T06:20'] } }) });
+    });
+    const st = stato({ [oggi]: { code: 61, tempMax: 9, tempMin: 3, precipitation: 5, windSpeed: 12,
+      sunset: oggi + 'T20:30', sunrise: oggi + 'T06:20', luogo: 'Praga',
+      preso: Date.now() - vecchiaDiOre * 3600 * 1000 } });
+    await page2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), st);
+    await page2.goto(APP, { waitUntil: 'domcontentloaded' });
+    await page2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
+    await page2.waitForTimeout(1400);
+    const dopo = await page2.evaluate(() => {
+      const t = T(), k = Object.keys(t.weather)[0];
+      /* Se la funzione non c'è — il codice di prima non ce l'aveva — la prova
+         deve DIRLO, non schiantarsi: un elenco spiega cosa manca. */
+      const sc = (typeof meteoScaduto === 'function') ? meteoScaduto(t.weather[k], k) : 'manca meteoScaduto';
+      return { temp: (t.weather[k] || {}).tempMax, scaduta: sc };
+    });
+    await page2.close();
+    return { chiamate: chiamate.length, dopo };
+  }
+
+  /* Presa dieci minuti fa: va benissimo, non si tocca. Chiedere di nuovo
+     sarebbe una chiamata sprecata a un'API che non e' nostra. */
+  const fresca = await conPrevisione(0.17);
+  ok('una previsione appena presa non si richiede', fresca.chiamate === 0,
+     fresca.chiamate + ' chiamate');
+  ok('e resta quella che c\'era', fresca.dopo.temp === 9, fresca.dopo.temp + '°');
+
+  /* Presa sei ore fa, per OGGI: vecchia. Si rifa' da sola, senza che
+     nessuno prema niente. */
+  const vecchia = await conPrevisione(6);
+  ok('una previsione di sei ore fa per oggi è scaduta e si rifà da sola',
+     vecchia.chiamate > 0, vecchia.chiamate + ' chiamate');
+  ok('e a schermo finisce quella nuova, non quella vecchia',
+     vecchia.dopo.temp === 26, vecchia.dopo.temp + '° (la vecchia era 9°)');
+  ok('e dopo non è più scaduta', vecchia.dopo.scaduta === false);
+
+  /* Quanto regge dipende da quanto è vicino il giorno: per oggi tre ore sono
+     tante, per fra dieci giorni mezza giornata va benissimo — più in là si
+     guarda, meno cambia da un'ora all'altra. */
+  /* Una pagina nuova: quella di prima l'ha chiusa la sezione precedente. */
+  page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
+  const durate = await page.evaluate(() => {
+    if (typeof meteoScaduto !== 'function')
+      return { oggiDueOre: null, oggiMezzOra: null, lontanoSeiOre: null,
+               lontanoUnGiorno: null, senzaOra: null };
+    const oggiD = new Date(); oggiD.setHours(0, 0, 0, 0);
+    const giorno = n => new Date(oggiD.getTime() + n * 864e5).toISOString().slice(0, 10);
+    const con = (ore, quandoFra) => meteoScaduto({ preso: Date.now() - ore * 3600 * 1000 }, giorno(quandoFra));
+    return {
+      oggiDueOre: con(2, 0),      // per oggi, due ore fa → vecchia
+      oggiMezzOra: con(0.5, 0),   // per oggi, mezz'ora fa → buona
+      lontanoSeiOre: con(6, 10),  // per fra dieci giorni, sei ore fa → buona
+      lontanoUnGiorno: con(24, 10),
+      senzaOra: meteoScaduto({ tempMax: 20 }, giorno(0))
+    };
+  });
+  ok('per oggi una previsione di due ore fa è già vecchia', durate.oggiDueOre === true);
+  ok('ma una di mezz\'ora va benissimo', durate.oggiMezzOra === false);
+  ok('per un giorno lontano sei ore vanno bene', durate.lontanoSeiOre === false);
+  ok('e un giorno intero no', durate.lontanoUnGiorno === true);
+  /* Le previsioni salvate prima che segnassimo l'ora non hanno una data:
+     si rifanno, invece di restare li' per sempre. */
+  ok('e una previsione senza l\'ora in cui è stata presa si rifà', durate.senzaOra === true);
+
+  /* Coordinate che non vogliono dire niente. Zero-zero è un punto
+     nell'oceano al largo della Guinea, ed è quello che esce da una tappa
+     salvata male: il meteo di lì è vero, ma non è il tuo. */
+  const punti = await page.evaluate(() => {
+    if (typeof puntoSensato !== 'function')
+      return { zeroZero: 'manca', fuoriScala: 'manca', testo: 'manca', niente: 'manca', buono: null };
+    return {
+      zeroZero: puntoSensato({ lat: 0, lng: 0 }),
+      fuoriScala: puntoSensato({ lat: 91, lng: 12 }),
+      testo: puntoSensato({ lat: 'boh', lng: 12 }),
+      niente: puntoSensato(null),
+      buono: puntoSensato({ lat: 35.0116, lng: 135.7681 })
+    };
+  });
+  ok('zero-zero non è un posto: è l\'oceano al largo della Guinea', punti.zeroZero === null);
+  ok('e nemmeno una latitudine oltre il polo', punti.fuoriScala === null);
+  ok('né delle coordinate che non sono numeri', punti.testo === null && punti.niente === null);
+  ok('mentre Kyoto passa', !!punti.buono && Math.abs(punti.buono.lat - 35.0116) < 0.001);
+  await page.close();
 
   // ══ la barra in basso ha una voce in meno ════════════════════════════
   page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));

@@ -364,6 +364,18 @@ va rifatto vedere.
     la finestra è più grande. Quello che cambia è `--s`, e sposta di poco: 1
     nell'intestazione, 0,62 nel riquadro della tendina.
 
+    **Il sole stava a cavallo del bordo.** Misurato: il disco partiva quattro
+    pixel sopra l'inizio del velo, e la linea in alto lo tagliava di netto —
+    insieme all'alone, che è proprio la parte che lo fa sembrare luce e non un
+    cerchio giallo. Fra l'inizio del velo e la riga dei viaggi ci sono 72 px,
+    quindi lo spazio c'era: adesso è un disco da 52 con **9 px d'aria sopra e
+    11 prima delle pillole**. E l'alone è diventato **doppio** — uno stretto e
+    denso attaccato al disco, uno largo e molto più tenue — perché uno solo,
+    largo 78 px e alla stessa intensità del nucleo, arrivava fin sotto la
+    temperatura e si leggeva come una macchia gialla addosso al numero. Tre
+    controlli geometrici lo tengono fermo: tutto dentro, lontano dalle pillole,
+    lontano dalla temperatura.
+
     Una cosa che il disegno impone al testo: quando il cielo in alto è scuro
     (pioggia, temporale, notte) l'intestazione prende la classe `cl-buio` e i
     nomi dei viaggi passano all'inchiostro chiaro. Inchiostro tenue su un
@@ -391,9 +403,35 @@ va rifatto vedere.
 
     **Sulla fonte:** 3B Meteo non ha un'API pubblica gratuita, servirebbe una
     licenza commerciale. Open-Meteo, che usiamo già, è gratuito, senza chiave,
-    e per il Giappone instrada sul modello **JMA** — il servizio
-    meteorologico nazionale giapponese, cioè la stessa fonte che qualunque
-    altro servizio rivenderebbe. Il problema non era la fonte.
+    e instrada da solo sul modello nazionale del posto — per il Giappone
+    **JMA**, il servizio meteorologico giapponese, cioè la stessa fonte che
+    qualunque altro servizio rivenderebbe. Il problema non era la fonte.
+
+    **⚠️ E il secondo difetto, più silenzioso del primo: una previsione non
+    si aggiornava mai.** Una volta scaricata restava lì per sempre — si
+    rifaceva solo cambiando le tappe o premendo il tasto a mano. Quindi una
+    previsione per domani presa una settimana fa stava a schermo con l'aria
+    di essere fresca, e uno ci fa la valigia. **Peggiore del primo proprio
+    perché non si vede**: col Giappone almeno il numero era strano, qui è
+    plausibile e sbagliato.
+
+    Ora ogni previsione porta l'ora in cui è stata presa (`preso`), e **scade
+    da sola**: per oggi e domani dopo un'ora, entro tre giorni dopo tre ore,
+    più in là dopo dodici — più lontano si guarda, meno cambia da un'ora
+    all'altra. Quando è scaduta si rifà senza che nessuno prema niente, al
+    massimo una volta ogni venti minuti per non martellare un'API che non è
+    nostra. Le previsioni salvate prima di questa modifica non hanno l'ora:
+    contano come scadute e si rifanno una volta, quindi si sistema da sé.
+
+    E di fianco al nome del viaggio, nella tendina, c'è scritto **da quanto
+    sta lì** («vista 20 min fa»): è l'unico modo di accorgersene senza doversi
+    fidare.
+
+    **Coordinate che non vogliono dire niente.** Zero-zero è un punto
+    nell'oceano al largo della Guinea, ed è quello che esce da una tappa
+    salvata male o da un geocodificatore che non ha trovato niente. Adesso
+    ogni punto passa da un controllo prima di diventare una domanda al meteo:
+    numeri finiti, latitudine entro il polo, e non lo zero-zero.
 
     **La pioggia, rifatta tre volte.** Il primo tentativo erano trattini
     fitti tutti alla stessa velocità: una grata che si muove, non pioggia. Il
@@ -403,14 +441,23 @@ va rifatto vedere.
     due gocce uguali — una è lunga e vicina, quella dietro è corta e
     sbiadita, e nessuna delle due cade come l'altra.
 
-    Adesso non c'è più una piastrella ripetuta: ci sono **diciotto gocce (o
-    trenta se piove forte), una per una**, ognuna con la sua lunghezza, il suo
-    spessore, la sua trasparenza e la sua velocità. Le sbiadite sono le
-    lontane e cadono più piano, ed è così che l'occhio legge la profondità in
-    una scena piatta. E vanno **piano**: due o tre secondi per attraversare
-    l'intestazione, non mezzo. I numeri sono sparsi ma sempre gli stessi (il
-    vecchio trucco del seno): con `Math.random()` la pioggia salterebbe di
-    posto a ogni ridisegno della home.
+    Adesso non c'è più una piastrella ripetuta: ci sono **ventisei gocce (o
+    quarantaquattro se piove forte), una per una**, ognuna con la sua
+    lunghezza, il suo spessore, la sua trasparenza e la sua velocità. Le
+    sbiadite sono le lontane e cadono un filo più piano, ed è così che
+    l'occhio legge la profondità in una scena piatta. I numeri sono sparsi ma
+    sempre gli stessi (il vecchio trucco del seno): con `Math.random()` la
+    pioggia salterebbe di posto a ogni ridisegno della home.
+
+    **Sulla velocità ci si è sbagliati due volte, in due direzioni opposte.**
+    Prima troppo veloce e tutte uguali: una grata che si muove. Poi, per
+    correggere, l'ho fatta lenta — due, tre secondi per goccia — e Giacomo:
+    *«hai mai visto una pioggia così lenta? Sembrano stelle cadenti»*. Aveva
+    ragione. **Quello che impedisce alla pioggia di sembrare una grata non è
+    la lentezza, è che non ce n'è una uguale all'altra.** Ora sta a mezzo
+    secondo scarso, e le strisce sono corte: una striscia lunga che scende
+    adagio non è pioggia, è una stella cadente — la lunghezza va con la
+    velocità, non contro.
 
     Una cosa contata, non guardata a occhio: la caduta arriva a 330 px e non
     a 600, perché **su ventisei gocce ne arrivava UNA** nella fascia in cui
@@ -479,9 +526,13 @@ va rifatto vedere.
     non ha più bisogno di un rettangolo bianco dietro per tagliarla — ed era
     quel rettangolo, più di ogni altra cosa, a farla sembrare una tabella di
     vent'anni fa. Le targhette dei tratti hanno perso il bordo tratteggiato.
-    E la testata prende la forma della home: occhiello piccolo, e grande **la
-    data**, perché la cosa di cui parla la schermata è il giorno — «Time
-    Table» lo si legge quando ci si è già dentro.
+    Sulla testata avevo provato a fare come la home — occhiello piccolo e
+    grande **la data**, perché la cosa di cui parla la schermata è il giorno —
+    e **Giacomo l'ha bocciata**: il titolo è tornato «Time Table», con la data
+    sotto. La ragione regge: alla time-table ci si arriva anche da un link o
+    dopo aver messo giù il telefono, e «Lunedì 14 settembre» da solo non dice
+    in che parte dell'app sei finito. Il nome della schermata non è un
+    doppione, è un appiglio.
 
     **E adesso dice a che punto della giornata sei.** Una riga color mattone
     attraversa la griglia all'ora che è adesso, con l'orario scritto nella
@@ -647,6 +698,29 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Un dato che non scade è un dato che mente.** Il meteo si scaricava una
+  volta e restava lì: una previsione per domani presa una settimana prima
+  aveva lo stesso aspetto di una presa adesso. È peggio di un dato mancante,
+  perché un buco si vede e un numero vecchio no. Qualunque cosa venga da
+  fuori e cambi nel tempo deve portarsi dietro **quando è stata presa**, e
+  avere una scadenza proporzionata a quanto in fretta cambia.
+- **La freschezza va anche mostrata, non solo gestita.** «Vista 20 min fa»
+  accanto al tasto di aggiornamento costa una riga e toglie di mezzo la
+  domanda «ma sarà aggiornato?». Se un dato ha una scadenza, chi lo guarda ha
+  diritto di sapere a che punto è.
+
+- **Correggere un difetto tirando la leva opposta lo sposta, non lo toglie.**
+  La pioggia sembrava una grata perché le gocce erano tutte uguali; l'ho
+  rallentata, e sono diventate stelle cadenti. La leva giusta era la varietà,
+  non la velocità — e finché non l'ho capito ho fatto due giri in direzioni
+  opposte senza avvicinarmi. Quando una correzione peggiora le cose da
+  un'altra parte, di solito si sta muovendo la leva sbagliata.
+- **Contare quanti valori sono diversi non misura la varietà.** Due controlli
+  della pioggia contavano le lunghezze distinte: con numeri interi in un
+  intervallo stretto i doppioni sono inevitabili, e il conteggio diceva «poca
+  varietà» proprio mentre ce n'era parecchia. Quello che conta è
+  l'**ampiezza**: quanto c'è fra il minimo e il massimo.
 
 - **Un paese non è un posto.** Cercando «Giappone», «Francia» o «Spagna», il
   geocodificatore risponde col **centroide del paese** — per il Giappone le

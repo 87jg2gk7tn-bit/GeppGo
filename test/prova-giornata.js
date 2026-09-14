@@ -147,34 +147,36 @@ const stato = (titoloGiorno) => ({
      `${parte.uno.chiamato}, foglio aperto ${parte.uno.foglio}`);
   ok('e «Autopilota» apre l\'Autopilota', parte.due.chiamato === 'autopilota', parte.due.chiamato);
 
-  // ══ la testata: la data grande, come il nome della città in home ═════
+  // ══ la testata ══════════════════════════════════════════════════════
   const testata = await page.evaluate(() => {
-    const tt = document.getElementById('ttTitolo'), so = document.getElementById('dayTt');
+    const tt = document.querySelector('.tt-title'), so = document.getElementById('dayTt');
     return {
-      titolo: tt ? tt.textContent : (document.querySelector('.tt-title') || {}).textContent,
+      titolo: tt ? tt.textContent.trim() : '',
       serif: !!tt && /Fraunces/.test(getComputedStyle(tt).fontFamily),
       occhiello: (document.getElementById('ttEyebrow') || {}).textContent.replace(/\s+/g, ' ').trim(),
-      sottoVisibile: !!so && getComputedStyle(so).display !== 'none'
+      sotto: so ? so.textContent.trim() : ''
     };
   });
-  ok('il titolo della schermata è il giorno, non il nome della sezione',
-     /\d/.test(testata.titolo || '') && !/Time Table/.test(testata.titolo || ''), testata.titolo);
-  ok('ed è scritto col serif dell\'app, come il nome della città in home', testata.serif === true);
-  ok('l\'occhiello dice ancora di che viaggio e di che giorno si tratta',
+  /* Il titolo dice in che schermata sei. Avevo provato a metterci la data
+     in grande, come la home fa col nome della città, ed era stato bocciato:
+     alla time-table ci si arriva anche da un link o dopo aver messo giù il
+     telefono, e una data da sola non dice in che parte dell'app sei. */
+  ok('il titolo dice in che schermata sei', testata.titolo === 'Time Table', testata.titolo);
+  ok('ed è scritto col serif dell\'app', testata.serif === true);
+  ok('l\'occhiello dice di che viaggio e di che giorno si tratta',
      /PRAGA/.test(testata.occhiello) && /1/.test(testata.occhiello), testata.occhiello);
-  /* Senza un nome dato alla giornata la riga sotto sparisce, invece di
-     lasciare un vuoto che sembra un pezzo mancante. */
-  ok('e se la giornata non ha un nome suo, sotto non resta una riga vuota',
-     testata.sottoVisibile === false);
+  ok('e sotto c\'è la data del giorno che stai guardando',
+     /\d/.test(testata.sotto) && /settembre|ottobre|novembre|dicembre|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto/.test(testata.sotto),
+     testata.sotto);
   await page.close();
 
   page = await apri(stato('Il giorno del castello'));
   const conNome = await page.evaluate(() => {
     const so = document.getElementById('dayTt');
-    return { sotto: so ? so.textContent : '', visibile: !!so && getComputedStyle(so).display !== 'none' };
+    return { sotto: so ? so.textContent.trim() : '' };
   });
-  ok('ma se glielo hai dato, il nome della giornata si legge sotto la data',
-     conNome.visibile === true && conNome.sotto === 'Il giorno del castello', conNome.sotto);
+  ok('e se alla giornata hai dato un nome, quello viene prima della data',
+     /^Il giorno del castello · /.test(conNome.sotto), conNome.sotto);
   await page.close();
 
   // ══ la griglia: schede come tutte le altre dell'app ══════════════════

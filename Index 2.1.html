@@ -517,7 +517,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .ts-s{display:block;font-size:.8rem;color:var(--ink-soft);line-height:1.45;margin-top:.2rem}
 
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
-.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.7rem,7.4vw,2.3rem);line-height:1;letter-spacing:-.02em;color:var(--ink);margin-top:.25rem}
+.tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
 .tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
 .tt-daynav{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
 .tt-daynav .x{flex-shrink:0}
@@ -1064,7 +1064,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   --s:1;
   --cl-alto:#8FB6D6;
   --cl-g:linear-gradient(168deg,#8FB6D6,#CBDFEC);
-  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.5);
+  --cl-astro:#FFE7A3;--cl-alone:rgba(255,231,163,.42);--cl-alone2:rgba(255,231,163,.17);
   --cl-nuv:rgba(255,255,255,.9);--cl-goccia:rgba(255,255,255,.92);--vel:1;
   --cl-ink:#0E1D29;--cl-ombra:rgba(255,255,255,.5);
 }
@@ -1085,8 +1085,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.notte.forte{--cl-goccia:rgba(226,240,255,.92)}
 .cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
 /* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
-.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.28);
-  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);
+.cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.26);
+  --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);--cl-alone2:rgba(228,238,248,.1);
   --cl-ink:#EDF2F7;--cl-ombra:rgba(0,0,0,.45)}
 .cielo.notte.c-sereno {--cl-alto:#0F2039;--cl-g:linear-gradient(168deg,#0A1730 0%,#1B2F50 60%,#3B4F6C 100%)}
 .cielo.notte.c-velato {--cl-alto:#182942;--cl-g:linear-gradient(168deg,#122036 0%,#243A57 60%,#485C77 100%)}
@@ -1102,14 +1102,23 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 /* Il sole (o la luna): un disco con due aloni, uno stretto e uno largo. */
 /* Sta in alto a DESTRA, sopra la riga dei viaggi. A sinistra finiva
-   dietro il primo nome, e un sole mezzo coperto da una pillola non
-   sembra un sole: sembra uno sbaglio. */
+   dietro il primo nome, e un sole mezzo coperto da una pillola non sembra
+   un sole: sembra uno sbaglio.
+   E sta SOTTO il bordo, non a cavallo: misurato, il disco partiva quattro
+   pixel sopra l'inizio del velo e la linea in alto lo tagliava di netto -
+   insieme all'alone, che e' la parte che lo fa sembrare luce. Fra l'inizio
+   del velo e la riga dei viaggi ci sono settantadue pixel: un disco da
+   cinquantadue con nove di aria sopra ci sta intero, e ne restano undici
+   prima delle pillole.
+   L'alone e' DUE aloni, uno stretto e uno largo molto piu' tenue. Uno solo,
+   alla stessa intensita', arrivava fin sotto la temperatura: una macchia
+   gialla, non una luce. */
 .cl-astro{
-  top:calc(-4px*var(--s));right:16%;
-  width:calc(60px*var(--s));height:calc(60px*var(--s));border-radius:50%;
+  top:calc(9px*var(--s));right:21%;
+  width:calc(52px*var(--s));height:calc(52px*var(--s));border-radius:50%;
   background:var(--cl-astro);
-  box-shadow:0 0 calc(26px*var(--s)) calc(15px*var(--s)) var(--cl-alone),
-             0 0 calc(78px*var(--s)) calc(38px*var(--s)) var(--cl-alone);
+  box-shadow:0 0 calc(16px*var(--s)) calc(5px*var(--s)) var(--cl-alone),
+             0 0 calc(54px*var(--s)) calc(20px*var(--s)) var(--cl-alone2);
 }
 /* La luna e' lo stesso disco con un morso d'ombra: nessuna immagine in
    piu', e il morso lascia intravedere il cielo che ha dietro. */
@@ -1142,11 +1151,15 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    forma: era la VARIETA'. La pioggia vera non ha due gocce uguali - una
    e' lunga e vicina, quella dietro e' corta e sbiadita, e nessuna delle
    due cade come l'altra.
-   Quindi non c'e' piu' una piastrella ripetuta: ci sono diciotto gocce,
-   una per una - trenta quando piove forte - ognuna con la sua lunghezza,
-   il suo spessore, la sua trasparenza e la sua velocita'. E vanno piano:
-   una goccia attraversa l'intestazione in due o tre secondi, non in
-   mezzo. */
+   Quindi non c'e' piu' una piastrella ripetuta: ci sono ventisei gocce,
+   una per una - quarantaquattro quando piove forte - ognuna con la sua
+   lunghezza, il suo spessore, la sua trasparenza e la sua velocita'.
+   SULLA VELOCITA' ci si e' sbagliati due volte, in due direzioni opposte.
+   Prima troppo veloci e tutte uguali: una grata che si muove. Poi, per
+   correggere, troppo lente: strisce lunghe che scendevano adagio, cioe'
+   stelle cadenti. La pioggia vera e' VELOCE - mezzo secondo per
+   attraversare l'intestazione - e quello che le impedisce di sembrare una
+   grata non e' la lentezza, e' che non ce n'e' una uguale all'altra. */
 .cl-g{
   top:0;border-radius:999px;
   height:calc(var(--h)*1px*var(--s));
@@ -1167,8 +1180,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    tenerle accese dove non si vedono. Contate: su ventisei gocce ne
    arrivava UNA nella fascia in cui si guardano. */
 @keyframes cl-cade{
-  from{transform:translate(calc(16px*var(--s)),calc(-60px*var(--s)))}
-  to  {transform:translate(calc(-18px*var(--s)),calc(330px*var(--s)))}
+  from{transform:translate(calc(9px*var(--s)),calc(-40px*var(--s)))}
+  to  {transform:translate(calc(-10px*var(--s)),calc(330px*var(--s)))}
 }
 
 .cl-nev{inset:calc(-18% - 20px) -16%;}
@@ -1716,13 +1729,14 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="page" id="mDay"><div class="tt-sheet">
   <div class="tt-head">
     <div style="min-width:0">
-      <!-- Come la home: occhiello piccolo, e poi grande la cosa di cui parla
-           la schermata. Qui la cosa e' il GIORNO, non il nome della sezione:
-           "Time Table" lo si legge quando ci si e' gia' dentro, e la data no.
-           Il nome che uno si e' dato per quella giornata, se c'e', sta sotto. -->
+      <!-- Il titolo dice in che schermata sei, e la data sta sotto. Avevo
+           provato il contrario - data grande, come la home fa col nome della
+           citta' - ma il nome della sezione serve: ci si arriva anche da un
+           link o dopo aver messo giu' il telefono, e "Lunedi' 14 settembre"
+           da solo non dice in che parte dell'app sei finito. -->
       <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="openTripZoom(T().id)">Viaggio · Giorno <span class="hh-chev">›</span></div>
-      <div class="tt-title" id="ttTitolo">Time Table</div>
-      <div class="tt-sub" id="dayTt"></div>
+      <div class="tt-title">Time Table</div>
+      <div class="tt-sub" id="dayTt">Giorno</div>
     </div>
     <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home">✕</button>
   </div>
@@ -5222,10 +5236,39 @@ const DIZIONARIO_DOVE={
 };
 Object.keys(DIZIONARIO_DOVE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DOVE[l]));
 
+/* Da quanto sta li' la previsione che stai guardando. */
+const DIZIONARIO_FRESCO={
+  en:{
+    'vista adesso':'seen just now',
+    'vista {1} min fa':'seen {1} min ago',
+    'vista {1}h fa':'seen {1}h ago',
+    'vista {1}g fa':'seen {1}d ago'
+  },
+  es:{
+    'vista adesso':'vista ahora',
+    'vista {1} min fa':'vista hace {1} min',
+    'vista {1}h fa':'vista hace {1}h',
+    'vista {1}g fa':'vista hace {1} d'
+  },
+  fr:{
+    'vista adesso':'vue à l’instant',
+    'vista {1} min fa':'vue il y a {1} min',
+    'vista {1}h fa':'vue il y a {1}h',
+    'vista {1}g fa':'vue il y a {1} j'
+  },
+  pt:{
+    'vista adesso':'vista agora',
+    'vista {1} min fa':'vista há {1} min',
+    'vista {1}h fa':'vista há {1}h',
+    'vista {1}g fa':'vista há {1} d'
+  }
+};
+Object.keys(DIZIONARIO_FRESCO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_FRESCO[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=974;
+const FRASI_IN_TUTTO=978;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6168,7 +6211,27 @@ function cieloNotte(w,date){
    velocita', a farla sembrare pioggia.
    I numeri sono sparsi ma sempre gli stessi: presi a caso davvero, a ogni
    ridisegno della home la pioggia salterebbe di posto. */
-function gocceDiPioggia(quante){
+/* Quanta pioggia disegnare, dai millimetri veri. Era un interruttore a due
+   posizioni - sopra o sotto gli otto millimetri - e due posizioni non sono
+   il tempo che fa: fra una pioggerella da mezzo millimetro e un diluvio da
+   venti ce ne stanno dieci di diverse, e uno le distingue guardando fuori
+   dalla finestra.
+   La curva e' una radice e non una retta perche' la pioggia e' sbilanciata:
+   fra 0 e 2 mm c'e' tutta la differenza che passa fra "esco senza niente" e
+   "prendo l'ombrello", mentre fra 20 e 30 non cambia piu' molto. La radice
+   da' spazio dove serve.
+   Il fondo e' sei gocce: se il codice dice pioggia ma i millimetri sono
+   zero - succede, con le pioggerelle che non bagnano - qualcosa si deve
+   vedere lo stesso, se no la schermata dice "pioggia" e non piove. */
+function quanteGocce(mm){
+  const q=Math.max(0,+mm||0);
+  return Math.round(6+48*Math.min(1,Math.sqrt(q/28)));
+}
+function gocceDiPioggia(mm){
+  const quante=quanteGocce(mm);
+  /* Quanto e' forte, da 0 a 1: la stessa curva, riusata per far cadere piu'
+     in fretta la pioggia forte. Un acquazzone non e' solo piu' fitto. */
+  const forza=Math.min(1,Math.sqrt(Math.max(0,+mm||0)/28));
   /* Numeri sparsi, ma sempre gli stessi. Con Math.random() la pioggia
      cambierebbe posto a ogni ridisegno della home - e la home si ridisegna
      spesso - quindi si vedrebbe saltare. Questo e' il vecchio trucco del
@@ -6178,13 +6241,17 @@ function gocceDiPioggia(quante){
   let out='';
   for(let i=0;i<quante;i++){
     const sx=(r(i,12.9898)*98+1).toFixed(1);
-    const lung=(18+r(i,78.233)*34).toFixed(0);        /* 18 - 52 px */
-    const larg=(0.9+r(i,43.111)*0.9).toFixed(2);      /* 0,9 - 1,8 px */
+    /* Corte. Una striscia lunga che scende adagio non e' pioggia, e' una
+       stella cadente: la lunghezza va con la velocita', non contro. */
+    const lung=(9+r(i,78.233)*17).toFixed(0);        /* 9 - 26 px */
+    const larg=(0.8+r(i,43.111)*0.8).toFixed(2);      /* 0,8 - 1,6 px */
     /* Le sbiadite sono quelle lontane, e cadono piu' piano: e' cosi' che
        l'occhio legge la profondita' anche in una scena piatta. */
     const opa=(0.2+r(i,93.989)*0.55).toFixed(2);
-    const dur=(3.5-opa*2.1+r(i,27.61)*0.7).toFixed(2); /* 1,9 - 3,4 s */
-    const rit=(-r(i,51.317)*4).toFixed(2);
+    /* Mezzo secondo scarso, e le lontane (piu' sbiadite) un filo piu'
+       lente: e' cosi' che si legge la profondita' senza rallentare tutto. */
+    const dur=((0.88-opa*0.42+r(i,27.61)*0.16)*(1.1-0.25*forza)).toFixed(2); /* 0,34 - 0,97 s */
+    const rit=(-r(i,51.317)*1.4).toFixed(2);
     out+=`<span class="cl-g" style="left:${sx}%;--h:${lung};--w:${larg};--o:${opa};animation-duration:${dur}s;animation-delay:${rit}s"></span>`;
   }
   return out;
@@ -6203,7 +6270,7 @@ function cieloScena(w,date){
   for(let i=1;i<=nuvole;i++)p.push(`<span class="cl-nuv n${i}"></span>`);
   const forte=!!(w&&w.precipitation>8);
   if(k==='c-pioggia'||k==='c-tempo'){
-    p.push(gocceDiPioggia(forte?30:18));
+    p.push(gocceDiPioggia(w?w.precipitation:0));
   }
   if(k==='c-tempo')p.push('<span class="cl-lampo"></span><span class="cl-saetta"></span>');
   if(k==='c-neve')p.push('<span class="cl-nev"></span>');
@@ -6233,14 +6300,23 @@ function cieloVestito(t,day){
    ancora, se lo prende da solo: un riquadro che dovrebbe dire che tempo
    fa e non lo dice e' peggio di niente. Una volta per giornata, che
    l'API e' di qualcun altro. */
-const CIELO_CHIESTO=new Set();
+/* Quando si e' chiesto l'ultima volta, per non chiederlo in continuazione.
+   Non e' un "una volta e basta": e' un "non piu' di una volta ogni venti
+   minuti", che e' diverso - il primo impedirebbe per sempre di accorgersi
+   che la previsione e' invecchiata. */
+const CIELO_CHIESTO={};
 function cieloChiediSeManca(t,day){
-  if(!t||!day||(t.weather||{})[day.date])return;
+  if(!t||!day)return;
+  const w=(t.weather||{})[day.date];
+  /* Manca, oppure c'e' ma e' vecchia. Una previsione vecchia a schermo e'
+     peggio di nessuna previsione: sembra fresca e non lo e'. */
+  if(w&&!meteoScaduto(w,day.date))return;
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(day.date)-oggi)/864e5);
   if(da<0||da>16)return;
-  const k=t.id+'|'+day.date;if(CIELO_CHIESTO.has(k))return;
-  CIELO_CHIESTO.add(k);
+  const k=t.id+'|'+day.date,ora=Date.now();
+  if(CIELO_CHIESTO[k]&&(ora-CIELO_CHIESTO[k])<20*60*1000)return;
+  CIELO_CHIESTO[k]=ora;
   Promise.resolve().then(()=>fetchDayWx(t,day))
     .then(ok=>{if(ok){renderHomeHero();renderWeather();}}).catch(()=>{});
 }
@@ -8343,7 +8419,12 @@ function renderWeather(){
   /* La destinazione si aggiunge solo se dice qualcosa in piu' del nome:
      un viaggio che si chiama "Praga" e va a Praga leggeva "Praga · Praga". */
   const dest=t&&t.destination&&t.destination.trim().toLowerCase()!==String(t.name||'').trim().toLowerCase()?' · '+t.destination:'';
-  document.getElementById('wxTripName').textContent=t?(t.name+dest):'—';
+  /* Di fianco al nome, da quanto sta li' la previsione che stai guardando.
+     Una previsione vecchia sembra fresca, e questa riga e' l'unico modo di
+     accorgersene senza fidarsi. */
+  const dScelto=t?meteoGiornoScelto(t):null;
+  const quando=dScelto?meteoQuandoPreso((t.weather||{})[dScelto.date]):'';
+  document.getElementById('wxTripName').textContent=t?(t.name+dest+(quando?' · '+quando:'')):'—';
   renderMeteoHero(t);
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">🌤️</div><div class="empty-t">Nessun viaggio</div></div>`;return;}
   if(!t.days.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗓️</div><div class="empty-t">Aggiungi giorni al viaggio</div></div>`;return;}
@@ -12096,13 +12177,7 @@ function openTimetable(){
 function openDay(i){
   const t=T();if(!t||!t.days[i])return;ttDay=i;
   const d=t.days[i],ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
-  /* La data e' il titolo, in grande. Il nome che uno ha dato alla giornata
-     ("giorno del castello") sta sotto, e se non c'e' la riga sparisce
-     invece di lasciare un vuoto. */
-  document.getElementById('ttTitolo').textContent=ds.charAt(0).toUpperCase()+ds.slice(1);
-  const sotto=document.getElementById('dayTt');
-  sotto.textContent=d.title||'';
-  sotto.style.display=d.title?'':'none';
+  document.getElementById('dayTt').textContent=(d.title?d.title+' · ':'')+ds;
   document.getElementById('ttEyebrow').innerHTML=`${tv('{1} · GIORNO {2} DI {3}',esc(String(t.name||'').toUpperCase()),i+1,t.days.length)} <span class="hh-chev">›</span>`;
   document.getElementById('dayChips').innerHTML=t.days.map((x,j)=>{
     const dt=new Date(x.date),wx=wxEmo(t.weather[x.date]);
@@ -15248,10 +15323,22 @@ async function nomeLuogo(t,g){
    Tokyo ce ne sono venti.
    Un paese non e' un posto: se la destinazione e' un paese intero, non la si
    usa e basta. */
+/* Coordinate che non vogliono dire niente. Zero-zero e' un punto
+   nell'oceano al largo della Guinea, ed e' quello che esce da una tappa
+   salvata male o da un geocodificatore che non ha trovato niente: il meteo
+   di quel punto e' vero, ma non e' il tuo. */
+function puntoSensato(l){
+  if(!l)return null;
+  const la=+l.lat,lo=+l.lng;
+  if(!isFinite(la)||!isFinite(lo))return null;
+  if(Math.abs(la)>90||Math.abs(lo)>180)return null;
+  if(Math.abs(la)<0.01&&Math.abs(lo)<0.01)return null;
+  return{lat:la,lng:lo};
+}
 function destPuntuale(t){
   if(!t||!t.destLoc)return null;
   if(t.destTipo==='country'||(t.destRank!=null&&t.destRank<=5))return null;
-  return t.destLoc;
+  return puntoSensato(t.destLoc);
 }
 /* E prima di rinunciare: se questa giornata non ha ancora tappe, il posto
    piu' vicino al vero sono le tappe delle giornate INTORNO. Se il 3 non hai
@@ -15264,13 +15351,43 @@ function postoDaVicino(t,day){
   const cand=[];
   t.days.forEach(d=>{
     if(!d||d.date===day.date)return;
-    const g=luoghiDelGiorno(t,d);
+    const g=luoghiDelGiorno(t,d).map(puntoSensato).filter(Boolean);
     if(g.length)cand.push({d:Math.abs(new Date(d.date).getTime()-qui),loc:g[0]});
   });
-  (t.hotels||[]).forEach(h=>{if(h&&h.lat)cand.push({d:9e12,loc:{lat:h.lat,lng:h.lng}});});
-  (t.cities||[]).forEach(c=>{if(c&&c.lat)cand.push({d:8e12,loc:{lat:c.lat,lng:c.lng}});});
+  (t.hotels||[]).forEach(h=>{const q=puntoSensato(h);if(q)cand.push({d:9e12,loc:q});});
+  (t.cities||[]).forEach(c=>{const q=puntoSensato(c);if(q)cand.push({d:8e12,loc:q});});
   cand.sort((a,b)=>a.d-b.d);
   return cand.length?cand[0].loc:null;
+}
+/* ===== QUANTO DURA UNA PREVISIONE =====
+   Il difetto piu' silenzioso che il meteo abbia avuto: una volta scaricata,
+   una previsione non si aggiornava MAI piu' - solo cambiando le tappe o
+   premendo il tasto a mano. Cosi' una previsione per domani presa una
+   settimana fa restava a schermo con l'aria di essere fresca, e uno ci fa la
+   valigia.
+   Quanto regge dipende da quanto e' vicino il giorno: per oggi e domani una
+   previsione di tre ore fa e' gia' vecchia, per la settimana prossima mezza
+   giornata va benissimo - piu' in la' si guarda, meno cambia da un'ora
+   all'altra. */
+function meteoScaduto(w,date){
+  if(!w)return true;
+  if(!w.preso)return true;          /* presa prima che segnassimo l'ora: si rifa' */
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(date)-oggi)/864e5);
+  const ore=da<=1?1:(da<=3?3:12);
+  return (Date.now()-w.preso)>ore*3600*1000;
+}
+/* Da quanto sta li' quella previsione. Scritto piccolo di fianco al tasto
+   che la aggiorna, perche' e' li' che uno guarda quando si chiede se sia
+   ancora buona. */
+function meteoQuandoPreso(w){
+  if(!w||!w.preso)return '';
+  const min=Math.round((Date.now()-w.preso)/60000);
+  if(min<2)return tv('vista adesso');
+  if(min<60)return tv('vista {1} min fa',min);
+  const ore=Math.round(min/60);
+  if(ore<24)return tv('vista {1}h fa',ore);
+  return tv('vista {1}g fa',Math.round(ore/24));
 }
 /* Perche' per questa giornata il meteo non c'e'. Dirlo vale piu' che
    mostrare un numero preso da un posto sbagliato. */
@@ -15294,7 +15411,7 @@ async function fetchDayWx(t,day){
   try{
     /* 1. Prima di tutto le tappe: sono la cosa piu' vera che ci sia su dove
           passi la giornata, e non c'e' da dichiararlo. */
-    const gr=luoghiDelGiorno(t,day);
+    const gr=luoghiDelGiorno(t,day).map(puntoSensato).filter(Boolean);
     if(gr.length){
       const multi={};let ordine=0;
       for(const g of gr){
@@ -15305,7 +15422,7 @@ async function fetchDayWx(t,day){
       const ks=Object.keys(multi);
       if(ks.length){
         t.weather[day.date]=Object.assign({},multi[ks[0]],
-          ks.length>1?{multi}:{},{luogo:ks[0],dedotto:true,sig:firmaLuoghi(gr)});
+          ks.length>1?{multi}:{},{luogo:ks[0],dedotto:true,sig:firmaLuoghi(gr),preso:Date.now()});
         save();return true;
       }
     }
@@ -15321,20 +15438,20 @@ async function fetchDayWx(t,day){
         if(w)multi[nm]=w;
       }
       const ks=Object.keys(multi);
-      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
+      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0],preso:Date.now()});save();return true;}
     }
     /* 3. E se non c'e' neanche quella: l'hotel di quella notte; poi le tappe
           delle giornate intorno, che sono un'approssimazione onesta; e solo
           per ultima la destinazione del viaggio, ma SOLO se e' un posto vero
           e non un paese intero. */
-    const preciso=dayLoc(t,day);
+    const preciso=puntoSensato(dayLoc(t,day));
     const vicino=preciso?null:postoDaVicino(t,day);
     const loc=preciso||vicino||destPuntuale(t);
     if(!loc)return false;
     const w=await one(loc);
     if(w){
       const nome=(await nomeLuogo(t,loc))||(t.destination||'').split(',')[0].trim();
-      t.weather[day.date]=Object.assign({},w,{luogo:nome},vicino?{vicino:true}:{});save();return true;
+      t.weather[day.date]=Object.assign({},w,{luogo:nome,preso:Date.now()},vicino?{vicino:true}:{});save();return true;
     }
     return false;
   }catch(e){return false;}
@@ -15350,7 +15467,9 @@ function meteoSeguiLeTappe(t,day){
   if(da<0||da>16)return;
   const gr=luoghiDelGiorno(t,day);if(!gr.length)return;
   const w=t.weather[day.date];
-  if(w&&w.sig===firmaLuoghi(gr))return;
+  /* Si rifa' se i posti non sono piu' quelli, ma anche se la previsione e'
+     semplicemente invecchiata: sono due modi diversi di essere sbagliata. */
+  if(w&&w.sig===firmaLuoghi(gr)&&!meteoScaduto(w,day.date))return;
   wxAutoBusy=true;
   fetchDayWx(t,day)
     .then(ok=>{wxAutoBusy=false;if(ok){renderDayWx();renderWeather();}})
