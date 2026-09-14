@@ -5227,10 +5227,39 @@ const DIZIONARIO_DOVE={
 };
 Object.keys(DIZIONARIO_DOVE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DOVE[l]));
 
+/* Da quanto sta li' la previsione che stai guardando. */
+const DIZIONARIO_FRESCO={
+  en:{
+    'vista adesso':'seen just now',
+    'vista {1} min fa':'seen {1} min ago',
+    'vista {1}h fa':'seen {1}h ago',
+    'vista {1}g fa':'seen {1}d ago'
+  },
+  es:{
+    'vista adesso':'vista ahora',
+    'vista {1} min fa':'vista hace {1} min',
+    'vista {1}h fa':'vista hace {1}h',
+    'vista {1}g fa':'vista hace {1} d'
+  },
+  fr:{
+    'vista adesso':'vue à l’instant',
+    'vista {1} min fa':'vue il y a {1} min',
+    'vista {1}h fa':'vue il y a {1}h',
+    'vista {1}g fa':'vue il y a {1} j'
+  },
+  pt:{
+    'vista adesso':'vista agora',
+    'vista {1} min fa':'vista há {1} min',
+    'vista {1}h fa':'vista há {1}h',
+    'vista {1}g fa':'vista há {1} d'
+  }
+};
+Object.keys(DIZIONARIO_FRESCO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_FRESCO[l]));
+
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=974;
+const FRASI_IN_TUTTO=978;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6262,14 +6291,23 @@ function cieloVestito(t,day){
    ancora, se lo prende da solo: un riquadro che dovrebbe dire che tempo
    fa e non lo dice e' peggio di niente. Una volta per giornata, che
    l'API e' di qualcun altro. */
-const CIELO_CHIESTO=new Set();
+/* Quando si e' chiesto l'ultima volta, per non chiederlo in continuazione.
+   Non e' un "una volta e basta": e' un "non piu' di una volta ogni venti
+   minuti", che e' diverso - il primo impedirebbe per sempre di accorgersi
+   che la previsione e' invecchiata. */
+const CIELO_CHIESTO={};
 function cieloChiediSeManca(t,day){
-  if(!t||!day||(t.weather||{})[day.date])return;
+  if(!t||!day)return;
+  const w=(t.weather||{})[day.date];
+  /* Manca, oppure c'e' ma e' vecchia. Una previsione vecchia a schermo e'
+     peggio di nessuna previsione: sembra fresca e non lo e'. */
+  if(w&&!meteoScaduto(w,day.date))return;
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(day.date)-oggi)/864e5);
   if(da<0||da>16)return;
-  const k=t.id+'|'+day.date;if(CIELO_CHIESTO.has(k))return;
-  CIELO_CHIESTO.add(k);
+  const k=t.id+'|'+day.date,ora=Date.now();
+  if(CIELO_CHIESTO[k]&&(ora-CIELO_CHIESTO[k])<20*60*1000)return;
+  CIELO_CHIESTO[k]=ora;
   Promise.resolve().then(()=>fetchDayWx(t,day))
     .then(ok=>{if(ok){renderHomeHero();renderWeather();}}).catch(()=>{});
 }
@@ -8372,7 +8410,12 @@ function renderWeather(){
   /* La destinazione si aggiunge solo se dice qualcosa in piu' del nome:
      un viaggio che si chiama "Praga" e va a Praga leggeva "Praga · Praga". */
   const dest=t&&t.destination&&t.destination.trim().toLowerCase()!==String(t.name||'').trim().toLowerCase()?' · '+t.destination:'';
-  document.getElementById('wxTripName').textContent=t?(t.name+dest):'—';
+  /* Di fianco al nome, da quanto sta li' la previsione che stai guardando.
+     Una previsione vecchia sembra fresca, e questa riga e' l'unico modo di
+     accorgersene senza fidarsi. */
+  const dScelto=t?meteoGiornoScelto(t):null;
+  const quando=dScelto?meteoQuandoPreso((t.weather||{})[dScelto.date]):'';
+  document.getElementById('wxTripName').textContent=t?(t.name+dest+(quando?' · '+quando:'')):'—';
   renderMeteoHero(t);
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">🌤️</div><div class="empty-t">Nessun viaggio</div></div>`;return;}
   if(!t.days.length){c.innerHTML=`<div class="empty"><div class="empty-ic">🗓️</div><div class="empty-t">Aggiungi giorni al viaggio</div></div>`;return;}
@@ -15271,10 +15314,22 @@ async function nomeLuogo(t,g){
    Tokyo ce ne sono venti.
    Un paese non e' un posto: se la destinazione e' un paese intero, non la si
    usa e basta. */
+/* Coordinate che non vogliono dire niente. Zero-zero e' un punto
+   nell'oceano al largo della Guinea, ed e' quello che esce da una tappa
+   salvata male o da un geocodificatore che non ha trovato niente: il meteo
+   di quel punto e' vero, ma non e' il tuo. */
+function puntoSensato(l){
+  if(!l)return null;
+  const la=+l.lat,lo=+l.lng;
+  if(!isFinite(la)||!isFinite(lo))return null;
+  if(Math.abs(la)>90||Math.abs(lo)>180)return null;
+  if(Math.abs(la)<0.01&&Math.abs(lo)<0.01)return null;
+  return{lat:la,lng:lo};
+}
 function destPuntuale(t){
   if(!t||!t.destLoc)return null;
   if(t.destTipo==='country'||(t.destRank!=null&&t.destRank<=5))return null;
-  return t.destLoc;
+  return puntoSensato(t.destLoc);
 }
 /* E prima di rinunciare: se questa giornata non ha ancora tappe, il posto
    piu' vicino al vero sono le tappe delle giornate INTORNO. Se il 3 non hai
@@ -15287,13 +15342,43 @@ function postoDaVicino(t,day){
   const cand=[];
   t.days.forEach(d=>{
     if(!d||d.date===day.date)return;
-    const g=luoghiDelGiorno(t,d);
+    const g=luoghiDelGiorno(t,d).map(puntoSensato).filter(Boolean);
     if(g.length)cand.push({d:Math.abs(new Date(d.date).getTime()-qui),loc:g[0]});
   });
-  (t.hotels||[]).forEach(h=>{if(h&&h.lat)cand.push({d:9e12,loc:{lat:h.lat,lng:h.lng}});});
-  (t.cities||[]).forEach(c=>{if(c&&c.lat)cand.push({d:8e12,loc:{lat:c.lat,lng:c.lng}});});
+  (t.hotels||[]).forEach(h=>{const q=puntoSensato(h);if(q)cand.push({d:9e12,loc:q});});
+  (t.cities||[]).forEach(c=>{const q=puntoSensato(c);if(q)cand.push({d:8e12,loc:q});});
   cand.sort((a,b)=>a.d-b.d);
   return cand.length?cand[0].loc:null;
+}
+/* ===== QUANTO DURA UNA PREVISIONE =====
+   Il difetto piu' silenzioso che il meteo abbia avuto: una volta scaricata,
+   una previsione non si aggiornava MAI piu' - solo cambiando le tappe o
+   premendo il tasto a mano. Cosi' una previsione per domani presa una
+   settimana fa restava a schermo con l'aria di essere fresca, e uno ci fa la
+   valigia.
+   Quanto regge dipende da quanto e' vicino il giorno: per oggi e domani una
+   previsione di tre ore fa e' gia' vecchia, per la settimana prossima mezza
+   giornata va benissimo - piu' in la' si guarda, meno cambia da un'ora
+   all'altra. */
+function meteoScaduto(w,date){
+  if(!w)return true;
+  if(!w.preso)return true;          /* presa prima che segnassimo l'ora: si rifa' */
+  const oggi=new Date();oggi.setHours(0,0,0,0);
+  const da=Math.round((new Date(date)-oggi)/864e5);
+  const ore=da<=1?1:(da<=3?3:12);
+  return (Date.now()-w.preso)>ore*3600*1000;
+}
+/* Da quanto sta li' quella previsione. Scritto piccolo di fianco al tasto
+   che la aggiorna, perche' e' li' che uno guarda quando si chiede se sia
+   ancora buona. */
+function meteoQuandoPreso(w){
+  if(!w||!w.preso)return '';
+  const min=Math.round((Date.now()-w.preso)/60000);
+  if(min<2)return tv('vista adesso');
+  if(min<60)return tv('vista {1} min fa',min);
+  const ore=Math.round(min/60);
+  if(ore<24)return tv('vista {1}h fa',ore);
+  return tv('vista {1}g fa',Math.round(ore/24));
 }
 /* Perche' per questa giornata il meteo non c'e'. Dirlo vale piu' che
    mostrare un numero preso da un posto sbagliato. */
@@ -15317,7 +15402,7 @@ async function fetchDayWx(t,day){
   try{
     /* 1. Prima di tutto le tappe: sono la cosa piu' vera che ci sia su dove
           passi la giornata, e non c'e' da dichiararlo. */
-    const gr=luoghiDelGiorno(t,day);
+    const gr=luoghiDelGiorno(t,day).map(puntoSensato).filter(Boolean);
     if(gr.length){
       const multi={};let ordine=0;
       for(const g of gr){
@@ -15328,7 +15413,7 @@ async function fetchDayWx(t,day){
       const ks=Object.keys(multi);
       if(ks.length){
         t.weather[day.date]=Object.assign({},multi[ks[0]],
-          ks.length>1?{multi}:{},{luogo:ks[0],dedotto:true,sig:firmaLuoghi(gr)});
+          ks.length>1?{multi}:{},{luogo:ks[0],dedotto:true,sig:firmaLuoghi(gr),preso:Date.now()});
         save();return true;
       }
     }
@@ -15344,20 +15429,20 @@ async function fetchDayWx(t,day){
         if(w)multi[nm]=w;
       }
       const ks=Object.keys(multi);
-      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0]});save();return true;}
+      if(ks.length){t.weather[day.date]=Object.assign({},multi[ks[0]],{multi,luogo:ks[0],preso:Date.now()});save();return true;}
     }
     /* 3. E se non c'e' neanche quella: l'hotel di quella notte; poi le tappe
           delle giornate intorno, che sono un'approssimazione onesta; e solo
           per ultima la destinazione del viaggio, ma SOLO se e' un posto vero
           e non un paese intero. */
-    const preciso=dayLoc(t,day);
+    const preciso=puntoSensato(dayLoc(t,day));
     const vicino=preciso?null:postoDaVicino(t,day);
     const loc=preciso||vicino||destPuntuale(t);
     if(!loc)return false;
     const w=await one(loc);
     if(w){
       const nome=(await nomeLuogo(t,loc))||(t.destination||'').split(',')[0].trim();
-      t.weather[day.date]=Object.assign({},w,{luogo:nome},vicino?{vicino:true}:{});save();return true;
+      t.weather[day.date]=Object.assign({},w,{luogo:nome,preso:Date.now()},vicino?{vicino:true}:{});save();return true;
     }
     return false;
   }catch(e){return false;}
@@ -15373,7 +15458,9 @@ function meteoSeguiLeTappe(t,day){
   if(da<0||da>16)return;
   const gr=luoghiDelGiorno(t,day);if(!gr.length)return;
   const w=t.weather[day.date];
-  if(w&&w.sig===firmaLuoghi(gr))return;
+  /* Si rifa' se i posti non sono piu' quelli, ma anche se la previsione e'
+     semplicemente invecchiata: sono due modi diversi di essere sbagliata. */
+  if(w&&w.sig===firmaLuoghi(gr)&&!meteoScaduto(w,day.date))return;
   wxAutoBusy=true;
   fetchDayWx(t,day)
     .then(ok=>{wxAutoBusy=false;if(ok){renderDayWx();renderWeather();}})

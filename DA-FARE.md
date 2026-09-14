@@ -391,9 +391,35 @@ va rifatto vedere.
 
     **Sulla fonte:** 3B Meteo non ha un'API pubblica gratuita, servirebbe una
     licenza commerciale. Open-Meteo, che usiamo già, è gratuito, senza chiave,
-    e per il Giappone instrada sul modello **JMA** — il servizio
-    meteorologico nazionale giapponese, cioè la stessa fonte che qualunque
-    altro servizio rivenderebbe. Il problema non era la fonte.
+    e instrada da solo sul modello nazionale del posto — per il Giappone
+    **JMA**, il servizio meteorologico giapponese, cioè la stessa fonte che
+    qualunque altro servizio rivenderebbe. Il problema non era la fonte.
+
+    **⚠️ E il secondo difetto, più silenzioso del primo: una previsione non
+    si aggiornava mai.** Una volta scaricata restava lì per sempre — si
+    rifaceva solo cambiando le tappe o premendo il tasto a mano. Quindi una
+    previsione per domani presa una settimana fa stava a schermo con l'aria
+    di essere fresca, e uno ci fa la valigia. **Peggiore del primo proprio
+    perché non si vede**: col Giappone almeno il numero era strano, qui è
+    plausibile e sbagliato.
+
+    Ora ogni previsione porta l'ora in cui è stata presa (`preso`), e **scade
+    da sola**: per oggi e domani dopo un'ora, entro tre giorni dopo tre ore,
+    più in là dopo dodici — più lontano si guarda, meno cambia da un'ora
+    all'altra. Quando è scaduta si rifà senza che nessuno prema niente, al
+    massimo una volta ogni venti minuti per non martellare un'API che non è
+    nostra. Le previsioni salvate prima di questa modifica non hanno l'ora:
+    contano come scadute e si rifanno una volta, quindi si sistema da sé.
+
+    E di fianco al nome del viaggio, nella tendina, c'è scritto **da quanto
+    sta lì** («vista 20 min fa»): è l'unico modo di accorgersene senza doversi
+    fidare.
+
+    **Coordinate che non vogliono dire niente.** Zero-zero è un punto
+    nell'oceano al largo della Guinea, ed è quello che esce da una tappa
+    salvata male o da un geocodificatore che non ha trovato niente. Adesso
+    ogni punto passa da un controllo prima di diventare una domanda al meteo:
+    numeri finiti, latitudine entro il polo, e non lo zero-zero.
 
     **La pioggia, rifatta tre volte.** Il primo tentativo erano trattini
     fitti tutti alla stessa velocità: una grata che si muove, non pioggia. Il
@@ -660,6 +686,17 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Un dato che non scade è un dato che mente.** Il meteo si scaricava una
+  volta e restava lì: una previsione per domani presa una settimana prima
+  aveva lo stesso aspetto di una presa adesso. È peggio di un dato mancante,
+  perché un buco si vede e un numero vecchio no. Qualunque cosa venga da
+  fuori e cambi nel tempo deve portarsi dietro **quando è stata presa**, e
+  avere una scadenza proporzionata a quanto in fretta cambia.
+- **La freschezza va anche mostrata, non solo gestita.** «Vista 20 min fa»
+  accanto al tasto di aggiornamento costa una riga e toglie di mezzo la
+  domanda «ma sarà aggiornato?». Se un dato ha una scadenza, chi lo guarda ha
+  diritto di sapere a che punto è.
 
 - **Correggere un difetto tirando la leva opposta lo sposta, non lo toglie.**
   La pioggia sembrava una grata perché le gocce erano tutte uguali; l'ho

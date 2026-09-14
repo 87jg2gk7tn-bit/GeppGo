@@ -598,6 +598,109 @@ const oreFinte = (data) => {
   ok('e si dice che è un\'approssimazione, non una certezza',
      conTappe.dove.vicino === true, 'vicino=' + conTappe.dove.vicino);
 
+  // ══ QUANTO DURA UNA PREVISIONE ═══════════════════════════════════════
+  /* Il difetto piu' silenzioso che il meteo abbia avuto: una volta
+     scaricata, una previsione non si aggiornava MAI piu' — solo cambiando le
+     tappe o premendo il tasto a mano. Cosi' una previsione per domani presa
+     una settimana fa restava a schermo con l'aria di essere fresca, e uno ci
+     fa la valigia. */
+  async function conPrevisione(vecchiaDiOre) {
+    const page2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page2.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    const chiamate = [];
+    await page2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await page2.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    await page2.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());
+    await page2.route(/api\.open-meteo\.com/, ro => {
+      chiamate.push(ro.request().url());
+      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        daily: { time: [oggi], weather_code: [0], temperature_2m_max: [26], temperature_2m_min: [15],
+                 precipitation_sum: [0], wind_speed_10m_max: [6],
+                 sunset: [oggi + 'T20:30'], sunrise: [oggi + 'T06:20'] } }) });
+    });
+    const st = stato({ [oggi]: { code: 61, tempMax: 9, tempMin: 3, precipitation: 5, windSpeed: 12,
+      sunset: oggi + 'T20:30', sunrise: oggi + 'T06:20', luogo: 'Praga',
+      preso: Date.now() - vecchiaDiOre * 3600 * 1000 } });
+    await page2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), st);
+    await page2.goto(APP, { waitUntil: 'domcontentloaded' });
+    await page2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
+    await page2.waitForTimeout(1400);
+    const dopo = await page2.evaluate(() => {
+      const t = T(), k = Object.keys(t.weather)[0];
+      /* Se la funzione non c'è — il codice di prima non ce l'aveva — la prova
+         deve DIRLO, non schiantarsi: un elenco spiega cosa manca. */
+      const sc = (typeof meteoScaduto === 'function') ? meteoScaduto(t.weather[k], k) : 'manca meteoScaduto';
+      return { temp: (t.weather[k] || {}).tempMax, scaduta: sc };
+    });
+    await page2.close();
+    return { chiamate: chiamate.length, dopo };
+  }
+
+  /* Presa dieci minuti fa: va benissimo, non si tocca. Chiedere di nuovo
+     sarebbe una chiamata sprecata a un'API che non e' nostra. */
+  const fresca = await conPrevisione(0.17);
+  ok('una previsione appena presa non si richiede', fresca.chiamate === 0,
+     fresca.chiamate + ' chiamate');
+  ok('e resta quella che c\'era', fresca.dopo.temp === 9, fresca.dopo.temp + '°');
+
+  /* Presa sei ore fa, per OGGI: vecchia. Si rifa' da sola, senza che
+     nessuno prema niente. */
+  const vecchia = await conPrevisione(6);
+  ok('una previsione di sei ore fa per oggi è scaduta e si rifà da sola',
+     vecchia.chiamate > 0, vecchia.chiamate + ' chiamate');
+  ok('e a schermo finisce quella nuova, non quella vecchia',
+     vecchia.dopo.temp === 26, vecchia.dopo.temp + '° (la vecchia era 9°)');
+  ok('e dopo non è più scaduta', vecchia.dopo.scaduta === false);
+
+  /* Quanto regge dipende da quanto è vicino il giorno: per oggi tre ore sono
+     tante, per fra dieci giorni mezza giornata va benissimo — più in là si
+     guarda, meno cambia da un'ora all'altra. */
+  /* Una pagina nuova: quella di prima l'ha chiusa la sezione precedente. */
+  page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
+  const durate = await page.evaluate(() => {
+    if (typeof meteoScaduto !== 'function')
+      return { oggiDueOre: null, oggiMezzOra: null, lontanoSeiOre: null,
+               lontanoUnGiorno: null, senzaOra: null };
+    const oggiD = new Date(); oggiD.setHours(0, 0, 0, 0);
+    const giorno = n => new Date(oggiD.getTime() + n * 864e5).toISOString().slice(0, 10);
+    const con = (ore, quandoFra) => meteoScaduto({ preso: Date.now() - ore * 3600 * 1000 }, giorno(quandoFra));
+    return {
+      oggiDueOre: con(2, 0),      // per oggi, due ore fa → vecchia
+      oggiMezzOra: con(0.5, 0),   // per oggi, mezz'ora fa → buona
+      lontanoSeiOre: con(6, 10),  // per fra dieci giorni, sei ore fa → buona
+      lontanoUnGiorno: con(24, 10),
+      senzaOra: meteoScaduto({ tempMax: 20 }, giorno(0))
+    };
+  });
+  ok('per oggi una previsione di due ore fa è già vecchia', durate.oggiDueOre === true);
+  ok('ma una di mezz\'ora va benissimo', durate.oggiMezzOra === false);
+  ok('per un giorno lontano sei ore vanno bene', durate.lontanoSeiOre === false);
+  ok('e un giorno intero no', durate.lontanoUnGiorno === true);
+  /* Le previsioni salvate prima che segnassimo l'ora non hanno una data:
+     si rifanno, invece di restare li' per sempre. */
+  ok('e una previsione senza l\'ora in cui è stata presa si rifà', durate.senzaOra === true);
+
+  /* Coordinate che non vogliono dire niente. Zero-zero è un punto
+     nell'oceano al largo della Guinea, ed è quello che esce da una tappa
+     salvata male: il meteo di lì è vero, ma non è il tuo. */
+  const punti = await page.evaluate(() => {
+    if (typeof puntoSensato !== 'function')
+      return { zeroZero: 'manca', fuoriScala: 'manca', testo: 'manca', niente: 'manca', buono: null };
+    return {
+      zeroZero: puntoSensato({ lat: 0, lng: 0 }),
+      fuoriScala: puntoSensato({ lat: 91, lng: 12 }),
+      testo: puntoSensato({ lat: 'boh', lng: 12 }),
+      niente: puntoSensato(null),
+      buono: puntoSensato({ lat: 35.0116, lng: 135.7681 })
+    };
+  });
+  ok('zero-zero non è un posto: è l\'oceano al largo della Guinea', punti.zeroZero === null);
+  ok('e nemmeno una latitudine oltre il polo', punti.fuoriScala === null);
+  ok('né delle coordinate che non sono numeri', punti.testo === null && punti.niente === null);
+  ok('mentre Kyoto passa', !!punti.buono && Math.abs(punti.buono.lat - 35.0116) < 0.001);
+  await page.close();
+
   // ══ la barra in basso ha una voce in meno ════════════════════════════
   page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
   const barra = await page.evaluate(() => ({
