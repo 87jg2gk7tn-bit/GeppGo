@@ -1788,6 +1788,15 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
              porta di servizio per chi vuole far girare GeppGo sul proprio
              Supabase. Piccolo e in fondo, dove non da' fastidio. -->
         <div style="text-align:center;margin-top:.9rem"><button onclick="openCloudCfg()" style="background:none;border:none;font-family:inherit;font-size:.74rem;color:var(--ink-faint);cursor:pointer;text-decoration:underline">Usa un cloud tuo</button></div></div>
+      <!-- Non c'era modo di sapere che versione si stava usando. Quando una
+           cosa nuova non si vede, la domanda e' sempre la stessa - "e'
+           arrivata o sto guardando quella di ieri?" - e senza una riga da
+           leggere si tira a indovinare. Qui c'e' la data della versione e
+           il tasto che butta via la copia tenuta da parte e ricarica. -->
+      <div class="card"><div class="card-h" style="margin-bottom:.3rem">🔄 Versione</div>
+        <div class="card-sub" id="verRiga">—</div>
+        <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="forzaAggiornamento()">Cerca la versione più recente</button>
+        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">L'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.</p></div>
       <!-- Il contatto pubblicato: chi ospita contenuti caricati dalle persone
            deve avere un modo per essere raggiunto, ed e' anche una delle
            quattro cose che l'App Store pretende alla linea guida 1.2 (le
@@ -4383,7 +4392,7 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'No saved places',
     'Nessuna spesa ancora':'No expenses yet',
     'Niente in time-table, per ora':'Nothing in the timetable yet',
-    'È giorno':'It’s daytime','È notte':'It’s night','a {1} sono le {2}':'in {1} it’s {2}','sono le {1}':'it’s {1}','Cerca un posto':'Find a place','Apri la time-table':'Open the timetable','Nessun alloggio ancora':'No place to stay yet','Cerca un hotel':'Find a hotel','Cercane uno':'Find one',
+    'È giorno':'It’s daytime','È notte':'It’s night','a {1} sono le {2}':'in {1} it’s {2}','sono le {1}':'it’s {1}','Versione del {1}':'Version of {1}','Cerca la versione più recente':'Check for the latest version','Cerco…':'Checking…','Cerca un posto':'Find a place','Apri la time-table':'Open the timetable','Nessun alloggio ancora':'No place to stay yet','Cerca un hotel':'Find a hotel','Cercane uno':'Find one',
     'La notte del viaggio ha un letto':'The one night of the trip has a bed','Tutte le {1} notti hanno un letto':'All {1} nights have a bed',
     'La notte del viaggio non ha un letto':'The one night of the trip has no bed','Nessuna delle {1} notti ha un letto':'None of the {1} nights has a bed',
     'Manca il letto per la notte di {1}':'No bed for the night of {1}','Manca il letto per le notti di {1}':'No bed for the nights of {1}',
@@ -4440,7 +4449,7 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Ningún lugar guardado',
     'Nessuna spesa ancora':'Aún ningún gasto',
     'Niente in time-table, per ora':'Nada en el horario, por ahora',
-    'È giorno':'Es de día','È notte':'Es de noche','a {1} sono le {2}':'en {1} son las {2}','sono le {1}':'son las {1}','Cerca un posto':'Busca un lugar','Apri la time-table':'Abre la time-table','Nessun alloggio ancora':'Aún no hay alojamiento','Cerca un hotel':'Busca un hotel','Cercane uno':'Busca uno',
+    'È giorno':'Es de día','È notte':'Es de noche','a {1} sono le {2}':'en {1} son las {2}','sono le {1}':'son las {1}','Versione del {1}':'Versión del {1}','Cerca la versione più recente':'Busca la versión más reciente','Cerco…':'Buscando…','Cerca un posto':'Busca un lugar','Apri la time-table':'Abre la time-table','Nessun alloggio ancora':'Aún no hay alojamiento','Cerca un hotel':'Busca un hotel','Cercane uno':'Busca uno',
     'La notte del viaggio ha un letto':'La única noche del viaje tiene cama','Tutte le {1} notti hanno un letto':'Las {1} noches tienen cama',
     'La notte del viaggio non ha un letto':'La única noche del viaje no tiene cama','Nessuna delle {1} notti ha un letto':'Ninguna de las {1} noches tiene cama',
     'Manca il letto per la notte di {1}':'Falta cama para la noche del {1}','Manca il letto per le notti di {1}':'Falta cama para las noches del {1}',
@@ -4497,7 +4506,7 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Aucun lieu enregistré',
     'Nessuna spesa ancora':'Aucune dépense pour l’instant',
     'Niente in time-table, per ora':'Rien dans le programme, pour l’instant',
-    'È giorno':'Il fait jour','È notte':'Il fait nuit','a {1} sono le {2}':'à {1} il est {2}','sono le {1}':'il est {1}','Cerca un posto':'Cherche un lieu','Apri la time-table':'Ouvre la time-table','Nessun alloggio ancora':'Pas encore de logement','Cerca un hotel':'Cherche un hôtel','Cercane uno':'Cherches-en un',
+    'È giorno':'Il fait jour','È notte':'Il fait nuit','a {1} sono le {2}':'à {1} il est {2}','sono le {1}':'il est {1}','Versione del {1}':'Version du {1}','Cerca la versione più recente':'Cherche la version la plus récente','Cerco…':'Je cherche…','Cerca un posto':'Cherche un lieu','Apri la time-table':'Ouvre la time-table','Nessun alloggio ancora':'Pas encore de logement','Cerca un hotel':'Cherche un hôtel','Cercane uno':'Cherches-en un',
     'La notte del viaggio ha un letto':'La seule nuit du voyage a un lit','Tutte le {1} notti hanno un letto':'Les {1} nuits ont un lit',
     'La notte del viaggio non ha un letto':'La seule nuit du voyage n’a pas de lit','Nessuna delle {1} notti ha un letto':'Aucune des {1} nuits n’a de lit',
     'Manca il letto per la notte di {1}':'Pas de lit pour la nuit du {1}','Manca il letto per le notti di {1}':'Pas de lit pour les nuits du {1}',
@@ -4554,7 +4563,7 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Nenhum lugar guardado',
     'Nessuna spesa ancora':'Ainda nenhuma despesa',
     'Niente in time-table, per ora':'Nada no horário, por agora',
-    'È giorno':'É de dia','È notte':'É de noite','a {1} sono le {2}':'em {1} são {2}','sono le {1}':'são {1}','Cerca un posto':'Procura um sítio','Apri la time-table':'Abre a time-table','Nessun alloggio ancora':'Ainda sem alojamento','Cerca un hotel':'Procura um hotel','Cercane uno':'Procura um',
+    'È giorno':'É de dia','È notte':'É de noite','a {1} sono le {2}':'em {1} são {2}','sono le {1}':'são {1}','Versione del {1}':'Versão de {1}','Cerca la versione più recente':'Procura a versão mais recente','Cerco…':'A procurar…','Cerca un posto':'Procura um sítio','Apri la time-table':'Abre a time-table','Nessun alloggio ancora':'Ainda sem alojamento','Cerca un hotel':'Procura um hotel','Cercane uno':'Procura um',
     'La notte del viaggio ha un letto':'A única noite da viagem tem cama','Tutte le {1} notti hanno un letto':'As {1} noites têm cama',
     'La notte del viaggio non ha un letto':'A única noite da viagem não tem cama','Nessuna delle {1} notti ha un letto':'Nenhuma das {1} noites tem cama',
     'Manca il letto per la notte di {1}':'Falta cama para a noite de {1}','Manca il letto per le notti di {1}':'Falta cama para as noites de {1}',
@@ -5364,6 +5373,8 @@ const DIZIONARIO_BIGLIETTI={
   en:{
     'Come funziona la lettura':'How the reading works',
     'Come funziona la ricerca':'How the search works',
+    '🔄 Versione':'🔄 Version',
+    'L\'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c\'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.':'The app keeps a copy of itself so it works without signal. If you’ve just heard there’s something new and you don’t see it here, this button throws the copy away and downloads it again.',
     'Non collegati a una tappa':'Not linked to a stop',
     'I tuoi biglietti':'Your tickets',
     'Modifica':'Edit',
@@ -5371,6 +5382,8 @@ const DIZIONARIO_BIGLIETTI={
   es:{
     'Come funziona la lettura':'Cómo funciona la lectura',
     'Come funziona la ricerca':'Cómo funciona la búsqueda',
+    '🔄 Versione':'🔄 Versión',
+    'L\'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c\'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.':'La app guarda una copia de sí misma para funcionar sin cobertura. Si acabas de saber que hay una novedad y aquí no la ves, este botón tira la copia y la vuelve a descargar.',
     'Non collegati a una tappa':'Sin parada asociada',
     'I tuoi biglietti':'Tus billetes',
     'Modifica':'Editar',
@@ -5378,6 +5391,8 @@ const DIZIONARIO_BIGLIETTI={
   fr:{
     'Come funziona la lettura':'Comment marche la lecture',
     'Come funziona la ricerca':'Comment marche la recherche',
+    '🔄 Versione':'🔄 Version',
+    'L\'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c\'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.':'L’app garde une copie d’elle-même pour marcher sans réseau. Si tu viens d’apprendre qu’il y a du nouveau et que tu ne le vois pas ici, ce bouton jette la copie et retélécharge.',
     'Non collegati a una tappa':'Sans étape associée',
     'I tuoi biglietti':'Tes billets',
     'Modifica':'Modifier',
@@ -5385,6 +5400,8 @@ const DIZIONARIO_BIGLIETTI={
   pt:{
     'Come funziona la lettura':'Como funciona a leitura',
     'Come funziona la ricerca':'Como funciona a procura',
+    '🔄 Versione':'🔄 Versão',
+    'L\'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c\'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.':'A app guarda uma cópia de si própria para funcionar sem rede. Se acabaste de saber que há uma novidade e aqui não a vês, este botão deita fora a cópia e volta a descarregar.',
     'Non collegati a una tappa':'Sem paragem associada',
     'I tuoi biglietti':'Os teus bilhetes',
     'Modifica':'Editar',
@@ -7499,6 +7516,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
+- In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -16822,9 +16840,10 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · build r91</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · ${esc(VERSIONE_APP)}</div></div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Recupero</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
   tessereMostraStato();
+  versioneMostra();
   mostraLingua();
 }
 function mostraLingua(){
@@ -16850,6 +16869,41 @@ function tessereMostraStato(){
     const mb=byte?(byte/1048576):0;
     b.textContent=`${quante} pezzi di mappa da parte`+(mb?` · ${mb.toFixed(1)} MB`:'');
   });
+}
+/* ===== CHE VERSIONE STO USANDO =====
+   Si cambia a mano a ogni cosa nuova che vale la pena vedere. Non c'e' un
+   passaggio di compilazione che possa scriverla da solo, e una data finta
+   sarebbe peggio di nessuna data: questa riga ha senso solo se e' vera. */
+const VERSIONE_APP='2026-09-15';
+function versioneMostra(){
+  const el=document.getElementById('verRiga');if(!el)return;
+  let d=VERSIONE_APP;
+  try{d=new Date(VERSIONE_APP+'T12:00').toLocaleDateString(loc(),{day:'numeric',month:'long',year:'numeric'});}catch(e){}
+  el.textContent=tv('Versione del {1}',d);
+}
+/* Butta via la copia tenuta da parte e ricarica. Il service worker prende
+   gia' la rete per prima sull'HTML, quindi di solito basta riaprire - ma
+   quando non basta (una copia rimasta incastrata, l'app aggiunta alla
+   schermata) questo e' il modo di uscirne senza disinstallare niente.
+   I dati del viaggio non si toccano: stanno in un'altra parte del
+   telefono, e quella non la sfioriamo. */
+async function forzaAggiornamento(){
+  toast(tv('Cerco…'));
+  try{
+    if(window.caches){
+      const k=await caches.keys();
+      await Promise.all(k.map(x=>caches.delete(x)));
+    }
+  }catch(e){}
+  try{
+    if(navigator.serviceWorker){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+  }catch(e){}
+  /* Il cancelletto in coda serve a non farsi servire la pagina dalla
+     memoria del browser, che e' un'altra cache ancora. */
+  location.replace(location.pathname+'?v='+Date.now()+location.hash);
 }
 function tessereSvuota(){
   confirmDo('Liberare lo spazio della mappa?',
