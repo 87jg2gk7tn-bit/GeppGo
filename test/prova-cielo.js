@@ -120,24 +120,31 @@ const oreFinte = (data) => {
     return Math.round(l.reduce((a, b) => a + b, 0) / l.length);
   })`;
 
-  // ══ la riga in cima: i nomi, il "+", il cielo ═════════════════════════
+  // ══ la riga in cima: i nomi, il "+", la temperatura ══════════════════
   let page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
   const riga = await page.evaluate(() => {
     const barra = document.querySelector('.hh-tripbar');
     const fila = document.querySelector('.hh-trips');
     const piu = document.querySelector('.hh-trip-add');
-    const cielo = document.querySelector('.hh-cielo');
+    const grado = document.querySelector('.hh-grado');
     const b = x => x ? x.getBoundingClientRect() : null;
-    const rb = b(barra), rf = b(fila), rp = b(piu), rc = b(cielo);
+    const rb = b(barra), rf = b(fila), rp = b(piu), rg = b(grado);
+    const st = grado ? getComputedStyle(grado) : null;
     return {
-      cielaCè: !!cielo, tag: cielo && cielo.tagName,
+      gradoCè: !!grado, tag: grado && grado.tagName, testo: grado && grado.textContent.trim(),
+      /* Il riquadro non deve tornare: era la cosa di troppo. */
+      niente_riquadro: !document.querySelector('.hh-cielo'),
+      senzaScatola: !!st && st.borderTopWidth === '0px' &&
+                    (st.backgroundImage === 'none') &&
+                    /rgba\(0, 0, 0, 0\)|transparent/.test(st.backgroundColor),
       piuCè: !!piu,
       piuDentroLoScorrevole: !!(piu && fila && fila.contains(piu)),
       piuDopoINomi: !!(rp && rf && rp.left >= rf.right - 1),
-      piuPrimaDelCielo: !!(rp && rc && rp.right <= rc.left + 1),
-      piuNellaBarra: !!(rp && rb && rp.left >= rb.left - .5 && rp.right <= rb.right + .5),
-      cieloAlBordo: !!(rc && rb && Math.abs(rc.right - rb.right) < 1.5),
-      altoCielo: Math.round(rc.height), largoCielo: Math.round(rc.width),
+      piuPrimaDelGrado: !!(rp && rg && rp.right <= rg.left + 1),
+      /* Il "+" deve restare attaccato ai nomi, non finire all'altro capo:
+         è l'ultima cosa della lista, non un tasto per conto suo. */
+      piuAttaccatoAiNomi: !!(rp && rf && rp.left - rf.right < 24),
+      gradoAlBordo: !!(rg && rb && Math.abs(rg.right - rb.right) < 2),
       quantiViaggi: document.querySelectorAll('.hh-trip').length,
       filaScorre: getComputedStyle(fila).overflowX,
       maschera: getComputedStyle(fila).maskImage || getComputedStyle(fila).webkitMaskImage || '',
@@ -145,26 +152,25 @@ const oreFinte = (data) => {
       vdx: parseFloat(getComputedStyle(fila).getPropertyValue('--vdx')) || 0
     };
   });
-  ok('il riquadro del cielo c\'è, in cima alla home', riga.cielaCè === true);
+  ok('la temperatura c\'è, in cima alla home', riga.gradoCè === true);
   ok('ed è un tasto vero, non un cartello', riga.tag === 'BUTTON', String(riga.tag));
+  ok('dice la temperatura di quel giorno', riga.testo === '24°', riga.testo);
+  /* Il punto della modifica chiesta: il riquadro non c'è più, il numero sta
+     sul cielo come ci sta il titolo. */
+  ok('e non è dentro un riquadro: niente bordo, niente fondo', riga.senzaScatola === true);
+  ok('il riquadro di prima non c\'è più', riga.niente_riquadro === true);
   ok('il "+" c\'è ancora', riga.piuCè === true);
-  /* Il punto della modifica: il "+" stava all'estremo destro, staccato dai
-     nomi a cui appartiene. Adesso gli sta appiccicato. */
   ok('il "+" sta subito dopo i nomi dei viaggi', riga.piuDopoINomi === true);
-  ok('e prima del cielo, non dall\'altra parte', riga.piuPrimaDelCielo === true);
-  /* E resta fuori dallo scorrevole apposta: se scorresse coi nomi, con tre
+  ok('e gli resta attaccato, invece di finire all\'altro capo della riga',
+     riga.piuAttaccatoAiNomi === true);
+  ok('e prima della temperatura', riga.piuPrimaDelGrado === true);
+  /* Resta fuori dallo scorrevole apposta: se scorresse coi nomi, con tre
      viaggi in lista non lo vedresti mai. */
   ok('il "+" non scorre insieme ai nomi', riga.piuDentroLoScorrevole === false);
-  ok('con tre viaggi in lista si vede lo stesso', riga.quantiViaggi === 3 && riga.piuNellaBarra === true,
-     riga.quantiViaggi + ' viaggi');
-  /* Quanto sono grandi sotto il dito lo misura prova-tocchi, che tiene
-     conto dell'area invisibile intorno e di dove viene tagliata. Qui basta
-     che il cielo sia alto di suo: non ha bisogno di allargamenti. */
-  ok('il cielo è alto abbastanza per un dito senza trucchi', riga.altoCielo >= 44, riga.altoCielo + ' px');
-  ok('il cielo sta all\'altro capo della riga', riga.cieloAlBordo === true);
-  ok('ed è largo abbastanza da guardarlo', riga.largoCielo >= 90, riga.largoCielo + ' px');
-  /* I nomi si tagliavano di netto contro il "+": un nome mozzato sembra un
-     difetto, un nome che sfuma dice "scorri". */
+  ok('con tre viaggi in lista si vede lo stesso', riga.quantiViaggi === 3, riga.quantiViaggi + ' viaggi');
+  ok('la temperatura sta all\'altro capo della riga', riga.gradoAlBordo === true);
+  /* I nomi si tagliavano di netto: un nome mozzato sembra un difetto, un
+     nome che sfuma dice «scorri». */
   ok('i nomi scorrono', riga.filaScorre === 'auto', riga.filaScorre);
   ok('e dove la fila continua svaniscono, invece di essere tagliati',
      riga.vdx > 8 && riga.vsx === 0, `sinistra ${riga.vsx}px, destra ${riga.vdx}px`);
@@ -180,48 +186,100 @@ const oreFinte = (data) => {
   ok('arrivati in fondo la sfumatura si ribalta', inFondo.sx > 8 && inFondo.dx === 0,
      `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px`);
 
-  // ══ il cielo segue il tempo che fa, misurato ══════════════════════════
-  const cielo = await page.evaluate(([luce]) => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, luce: eval(luce)(el), testo: el.innerText.trim(),
-             sole: !!el.querySelector('.cl-astro'), nuvole: el.querySelectorAll('.cl-nuv').length,
-             pioggia: !!el.querySelector('.cl-pio') };
+  // ══ il cielo È lo sfondo, non un'immagine appoggiata sopra ═══════════
+  const sfondo = await page.evaluate(([luce]) => {
+    const hh = document.querySelector('.hh'), velo = document.querySelector('.hh-velo');
+    const sv = velo ? getComputedStyle(velo) : null;
+    const rh = hh.getBoundingClientRect(), rv = velo ? velo.getBoundingClientRect() : null;
+    return {
+      classi: hh.className,
+      luce: eval(luce)(hh),
+      /* Lo sfondo dell'intestazione deve essere davvero cambiato: è quello
+         che vuol dire «fuso», invece di un rettangolo appiccicato sopra. */
+      sfumaturaVera: /gradient/.test(getComputedStyle(hh).backgroundImage),
+      veloCè: !!velo,
+      veloCopreTutto: !!(rv && Math.round(rv.width) === Math.round(rh.width) &&
+                              Math.round(rv.height) === Math.round(rh.height)),
+      /* Non deve rubare i tocchi a niente di quello che ci sta sopra. */
+      veloNonTocca: !!sv && sv.pointerEvents === 'none',
+      /* E deve svanire verso il basso: se finisse di netto si vedrebbe il
+         bordo dell'immagine, ed è esattamente quello che non deve sembrare. */
+      veloSvanisce: !!sv && /gradient/.test(sv.maskImage || sv.webkitMaskImage || ''),
+      sole: !!document.querySelector('.hh-velo .cl-astro'),
+      nuvole: document.querySelectorAll('.hh-velo .cl-nuv').length,
+      /* Il tondo chiaro decorativo si toglie: due soli, uno finto e uno
+         disegnato, sono uno di troppo. */
+      tondoSpento: getComputedStyle(hh, '::after').display === 'none'
+    };
   }, [LUCE]);
-  ok('col sole il cielo è sereno', /c-sereno/.test(cielo.classi), cielo.classi);
-  ok('e c\'è il sole disegnato, senza nuvole davanti',
-     cielo.sole === true && cielo.nuvole === 0, `sole ${cielo.sole}, nuvole ${cielo.nuvole}`);
-  ok('e dice la temperatura di quel giorno', cielo.testo === '24°', cielo.testo);
-  const luceSereno = cielo.luce;
+  ok('col sole l\'intestazione è un cielo sereno', /c-sereno/.test(sfondo.classi), sfondo.classi);
+  ok('e il cielo è lo sfondo dell\'intestazione, non un riquadro sopra',
+     sfondo.sfumaturaVera === true);
+  ok('c\'è il velo disegnato', sfondo.veloCè === true);
+  ok('e copre tutta l\'intestazione', sfondo.veloCopreTutto === true);
+  ok('senza rubare un solo tocco a quello che ci sta sopra', sfondo.veloNonTocca === true);
+  ok('e svanisce verso il basso, invece di finire con un taglio', sfondo.veloSvanisce === true);
+  ok('col sereno c\'è il sole e non ci sono nuvole davanti',
+     sfondo.sole === true && sfondo.nuvole === 0, `sole ${sfondo.sole}, nuvole ${sfondo.nuvole}`);
+  ok('e il tondo decorativo si spegne', sfondo.tondoSpento === true);
+  const luceSereno = sfondo.luce;
   await page.close();
 
+  // ══ e cambia davvero col tempo che fa, misurato ══════════════════════
   page = await apri(stato({ [oggi]: wx(63, 13, 8, 14) }));
   const pioggia = await page.evaluate(([luce]) => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, luce: eval(luce)(el),
-             pioggia: !!el.querySelector('.cl-pio'), sole: !!el.querySelector('.cl-astro') };
+    const hh = document.querySelector('.hh');
+    const chip = document.querySelector('.hh-trip:not(.on)');
+    return { classi: hh.className, luce: eval(luce)(hh),
+             strati: document.querySelectorAll('.hh-velo .cl-pio').length,
+             forte: !!document.querySelector('.hh-velo .cl-pio.forte'),
+             sole: !!document.querySelector('.hh-velo .cl-astro'),
+             inchiostroChip: getComputedStyle(chip).color };
   }, [LUCE]);
   ok('con la pioggia il cielo è di pioggia', /c-pioggia/.test(pioggia.classi), pioggia.classi);
-  ok('e la pioggia è disegnata', pioggia.pioggia === true);
+  ok('e la pioggia è disegnata su due strati, per darle profondità',
+     pioggia.strati === 2, pioggia.strati + ' strati');
   ok('e il sole non c\'è: dietro le nuvole non lo vedresti', pioggia.sole === false);
   ok('e il cielo è più scuro di quando c\'è il sole', pioggia.luce < luceSereno - 15,
      `pioggia ${pioggia.luce}, sereno ${luceSereno}`);
+  /* Se il cielo in alto si fa scuro, quello che ci sta sopra deve
+     schiarirsi: inchiostro tenue su un temporale non si legge più. */
+  ok('e i nomi dei viaggi passano all\'inchiostro chiaro',
+     /cl-buio/.test(pioggia.classi) && /255, 255, 255/.test(pioggia.inchiostroChip),
+     pioggia.inchiostroChip);
+  await page.close();
+
+  /* Piove forte: le gocce si infittiscono. È la differenza fra
+     «pioviggina» e «prendi l'ombrello», e si deve vedere. */
+  page = await apri(stato({ [oggi]: wx(65, 14, 9, 22) }));
+  const forte = await page.evaluate(() => {
+    const f = document.querySelector('.hh-velo .cl-pio.forte');
+    const n = document.querySelector('.hh-velo .cl-pio:not(.forte):not(.dietro)');
+    return { cè: !!f, passo: f ? getComputedStyle(f).backgroundSize : '', normale: n ? 1 : 0 };
+  });
+  ok('quando piove forte le gocce si infittiscono', forte.cè === true, forte.passo);
   await page.close();
 
   page = await apri(stato({ [oggi]: wx(73, 1, -5, 6) }));
-  const neve = await page.evaluate(() => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, fiocchi: !!el.querySelector('.cl-nev') };
-  });
+  const neve = await page.evaluate(() => ({
+    classi: document.querySelector('.hh').className,
+    fiocchi: !!document.querySelector('.hh-velo .cl-nev'),
+    sole: !!document.querySelector('.hh-velo .cl-astro')
+  }));
   ok('con la neve il cielo è di neve', /c-neve/.test(neve.classi) && neve.fiocchi === true, neve.classi);
+  ok('e non c\'è un sole sopra la neve che scende', neve.sole === false);
   await page.close();
 
   page = await apri(stato({ [oggi]: wx(95, 20, 15, 22) }));
-  const tempo = await page.evaluate(() => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, lampo: !!el.querySelector('.cl-lampo'), pioggia: !!el.querySelector('.cl-pio') };
-  });
+  const tempo = await page.evaluate(() => ({
+    classi: document.querySelector('.hh').className,
+    bagliore: !!document.querySelector('.hh-velo .cl-lampo'),
+    saetta: !!document.querySelector('.hh-velo .cl-saetta'),
+    pioggia: !!document.querySelector('.hh-velo .cl-pio')
+  }));
   ok('col temporale il cielo è di temporale', /c-tempo/.test(tempo.classi), tempo.classi);
-  ok('e ci sono il lampo e la pioggia', tempo.lampo === true && tempo.pioggia === true);
+  ok('e ci sono il bagliore, la saetta e la pioggia',
+     tempo.bagliore === true && tempo.saetta === true && tempo.pioggia === true);
   await page.close();
 
   // ══ di notte ═════════════════════════════════════════════════════════
@@ -229,34 +287,44 @@ const oreFinte = (data) => {
      ora sia, il sole è già sceso. */
   page = await apri(stato({ [oggi]: wx(0, 24, 14, 0, '00:01', '00:00') }));
   const notte = await page.evaluate(([luce]) => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, luce: eval(luce)(el), stelle: !!el.querySelector('.cl-stelle') };
+    const hh = document.querySelector('.hh');
+    return { classi: hh.className, luce: eval(luce)(hh),
+             stelle: !!document.querySelector('.hh-velo .cl-stelle'),
+             luna: !!document.querySelector('.hh-velo .cl-astro') };
   }, [LUCE]);
   ok('dopo il tramonto il cielo è di notte', /\bnotte\b/.test(notte.classi), notte.classi);
-  ok('e di notte è scuro davvero, non solo di nome', notte.luce < 90,
+  ok('e di notte è scuro davvero, non solo di nome',
+     typeof notte.luce === 'number' && notte.luce < 90,
      `luce ${notte.luce} contro ${luceSereno} di giorno`);
-  ok('e ci sono le stelle', notte.stelle === true);
+  ok('e ci sono le stelle e la luna', notte.stelle === true && notte.luna === true);
   await page.close();
 
   /* Un giorno futuro non è mai notte: l'ora di adesso non dice niente su
      giovedì, e disegnarci la luna sopra sarebbe una bugia. */
   page = await apri(stato({ [domani]: wx(0, 22, 12, 0, '00:01', '00:00') },
     [{ id: 'd1', date: domani, title: '', activities: [] }]));
-  const futuro = await page.evaluate(() => document.querySelector('.hh-cielo').className);
+  const futuro = await page.evaluate(() => document.querySelector('.hh').className);
   ok('su un giorno futuro non è mai notte, a qualunque ora si guardi',
      !/\bnotte\b/.test(futuro), futuro);
   await page.close();
 
   // ══ quando la previsione non c'è ═════════════════════════════════════
+  /* Niente cielo finto e nessuna scritta: quanti giorni mancano l'app lo
+     dice già poco più sotto, nell'anello della prossima tappa. Riempire di
+     parole il posto dove doveva esserci un'immagine era il difetto. */
   page = await apri(stato({}, [{ id: 'd1', date: lontano, title: '', activities: [] }]));
   const vuoto = await page.evaluate(() => {
-    const el = document.querySelector('.hh-cielo');
-    return { classi: el.className, testo: el.innerText.trim(), sole: !!el.querySelector('.cl-astro') };
+    const hh = document.querySelector('.hh');
+    return { classi: hh.className, velo: !!document.querySelector('.hh-velo'),
+             grado: !!document.querySelector('.hh-grado'),
+             testo: hh.innerText.replace(/\s+/g, ' ') };
   });
-  ok('oltre le previsioni il riquadro dice fra quanto arrivano',
-     /^fra \d+ gg$/.test(vuoto.testo), vuoto.testo);
-  ok('e non si inventa il sole su un tempo che non sa',
-     vuoto.sole === false && /c-ignoto/.test(vuoto.classi), vuoto.classi);
+  ok('senza previsione l\'intestazione resta quella di sempre',
+     vuoto.classi.trim() === 'hh' && vuoto.velo === false, vuoto.classi);
+  ok('e non c\'è nessuna temperatura da mostrare', vuoto.grado === false);
+  ok('e soprattutto nessuna scritta «fra tot giorni» in cima',
+     !/fra \d+ ?g/i.test(vuoto.testo) && !/in \d+ ?d/i.test(vuoto.testo),
+     vuoto.testo.slice(0, 70));
   await page.close();
 
   // ══ aprire il meteo ══════════════════════════════════════════════════
@@ -267,16 +335,16 @@ const oreFinte = (data) => {
     const tocca = el => { const b = el.getBoundingClientRect();
       const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); if (e) e.click(); };
     const out = {};
-    tocca(document.querySelector('.hh-cielo'));
-    await attendi(400); out.colCielo = aperta();
+    tocca(document.querySelector('.hh-grado'));
+    await attendi(400); out.colGrado = aperta();
     closeSheet('mMeteo'); await attendi(500);
-    /* Lo spazio fra il "+" e il cielo non è un buco: è ancora la striscia
-       del meteo, e toccandolo si apre. */
+    /* Lo spazio fra il "+" e la temperatura non è un buco: è ancora la
+       striscia del meteo, e toccandolo si apre. */
     const barra = document.querySelector('.hh-tripbar'),
-          piu = document.querySelector('.hh-trip-add'), ci = document.querySelector('.hh-cielo');
-    const bp = piu.getBoundingClientRect(), bc = ci.getBoundingClientRect(), bb = barra.getBoundingClientRect();
-    out.cèSpazio = bc.left - bp.right > 6;
-    const e = document.elementFromPoint((bp.right + bc.left) / 2, bb.top + bb.height / 2);
+          piu = document.querySelector('.hh-trip-add'), g = document.querySelector('.hh-grado');
+    const bp = piu.getBoundingClientRect(), bg = g.getBoundingClientRect(), bb = barra.getBoundingClientRect();
+    out.cèSpazio = bg.left - bp.right > 6;
+    const e = document.elementFromPoint((bp.right + bg.left) / 2, bb.top + bb.height / 2);
     if (e) e.click();
     await attendi(400); out.colVuoto = aperta();
     closeSheet('mMeteo'); await attendi(500);
@@ -287,13 +355,14 @@ const oreFinte = (data) => {
     out.viaggioCambiato = T().id !== 1;
     return out;
   });
-  ok('toccando il cielo si apre il meteo', apertura.colCielo === true);
-  ok('fra il "+" e il cielo c\'è dello spazio', apertura.cèSpazio === true);
+  ok('toccando la temperatura si apre il meteo', apertura.colGrado === true);
+  ok('fra il "+" e la temperatura c\'è dello spazio', apertura.cèSpazio === true);
   ok('e toccando quello spazio si apre lo stesso', apertura.colVuoto === true);
   ok('mentre toccando un nome di viaggio si cambia viaggio, non si apre il meteo',
      apertura.colNome === false && apertura.viaggioCambiato === true,
      `aperto ${apertura.colNome}, cambiato ${apertura.viaggioCambiato}`);
   await page.close();
+
 
   // ══ dentro la tendina ════════════════════════════════════════════════
   page = await apri(stato({ [oggi]: wx(61, 18, 9, 6), [domani]: wx(0, 23, 12, 0), [terzo]: wx(73, 2, -3, 4) }));
@@ -394,10 +463,16 @@ const oreFinte = (data) => {
   ok('e la barra è scesa a otto voci', barra.voci.length === 8, barra.voci.length + ' voci');
   ok('la vecchia pagina del meteo non c\'è più', barra.paginaMeteo === false);
   ok('ma il meteo c\'è, nella tendina', barra.tendina === true);
-  /* Il pezzo che tiene in piedi il resto: se un giorno sparisse anche il
-     riquadro, al meteo non ci si arriverebbe più da nessuna parte. */
-  ok('e l\'unica porta per arrivarci è il riquadro in cima',
-     await page.evaluate(() => !!document.querySelector('.hh-cielo[onclick*="apriMeteo"]')));
+  /* Il pezzo che tiene in piedi il resto: la barra in basso non ha più una
+     voce per il meteo, quindi se sparisse anche la porta in cima al meteo
+     non ci si arriverebbe più da nessuna parte. */
+  const porta = await page.evaluate(() => ({
+    grado: !!document.querySelector('.hh-grado[onclick*="apriMeteo"]'),
+    striscia: !!document.querySelector('.hh-tripbar[onclick*="meteoDaBarra"]')
+  }));
+  ok('e la porta per arrivarci è in cima alla home, sulla striscia del cielo',
+     porta.grado === true && porta.striscia === true,
+     `temperatura ${porta.grado}, striscia ${porta.striscia}`);
   await page.close();
 
   await browser.close();
