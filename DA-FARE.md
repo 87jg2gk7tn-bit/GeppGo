@@ -863,6 +863,31 @@ qualcuno che risponde".
   ci passa tutto da `adessoNelPosto(w)`. **Ogni volta che si mette insieme
   un'ora del telefono e un dato di un altro posto, ci si ferma e si guarda
   di che fuso è ciascuno.**
+- **⚠️⚠️ Un ripiego può essere il difetto peggiore di tutti.** Quando la
+  previsione non portava il fuso — e non lo portava su nessuno dei
+  telefoni che avevano già l'app — l'ora del posto ripiegava
+  sull'**orologio di chi guarda**. Per una destinazione dall'altra parte
+  del mondo quella non è un'approssimazione: è il contrario. In Giappone
+  erano le dieci del mattino, qui le tre di notte, e l'app disegnava la
+  luna. Il ripiego l'avevo scritto io e l'avevo pure commentato come
+  «onesto»: non lo era, ed è rimasto invisibile finché la notte valeva
+  solo per «oggi». **Quando si scrive un ripiego, si guarda il caso
+  peggiore, non quello comodo** — qui il caso peggiore è il mezzo mondo di
+  distanza, cioè esattamente il motivo per cui l'app esiste.
+  Ora il ripiego è la **longitudine**: ogni quindici gradi un'ora, che è
+  l'ora solare del posto. Tokyo 139.8 → UTC+9. Funziona ovunque, senza
+  rete e senza aspettare un riscaricamento. Il telefono resta solo per il
+  caso in cui non si sappia nemmeno dov'è il posto — e allora il meteo non
+  c'è proprio.
+  Tre cose insieme, perché una sola non bastava: la previsione **si porta
+  dietro le coordinate**, chi disegna il cielo **riceve il posto** dal
+  viaggio, e una previsione senza fuso **conta come scaduta** così si
+  rifà da sola.
+- **Stimare va bene per disegnare, non per scrivere.** La longitudine può
+  sbagliare di un'ora dove il fuso politico non segue il sole (Spagna,
+  Cina). Basta e avanza per decidere se disegnare il sole o la luna; non
+  basta per scrivere «a Tokyo sono le 10:09». `adessoNelPosto` torna due
+  bandiere distinte, `delPosto` e `esatto`, e la frase guarda `esatto`.
 - **La luce segue adesso, il tempo che fa segue la giornata che guardi.**
   Il cielo disegnato si faceva notturno *solo* sul giorno che lì era oggi:
   su una giornata futura, dicevo, l'ora di adesso non vuol dire niente. Il
