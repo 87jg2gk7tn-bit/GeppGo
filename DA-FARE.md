@@ -787,6 +787,41 @@ qualcuno che risponde".
   fosse pagato stavano nel viaggio da sempre, nella spesa collegata, e in
   Hotel non si vedevano: per saperlo si andava in Spese a cercare la riga.
   Quando si aggiunge un campo, si guarda anche **dove lo si legge**.
+- **⚠️ Un numero di versione scritto a mano mente dopo la seconda volta.**
+  In Profilo c'era `GeppGo · build r91`, una stringa messa lì una volta e
+  mai più toccata: dopo decine di modifiche diceva ancora r91. Il costo si
+  paga quando una cosa nuova non si vede e la domanda diventa «è arrivata,
+  o sto guardando quella di ieri?» — senza una riga vera si tira a
+  indovinare. Ora c'è **una** costante `VERSIONE_APP` (una data) e tutti i
+  posti che la mostrano leggono quella. **Va cambiata a mano a ogni cosa
+  nuova che vale la pena vedere, e va cambiata insieme a `CACHE_NAME` in
+  `sw.js`.** `prova-versione` controlla che i due posti dicano la stessa
+  cosa e che il nome della copia sia cambiato.
+- **Perché si può restare indietro di un deploy.** Tre memorie diverse, e
+  vanno svuotate tutte: la copia del service worker (`caches`), la
+  registrazione del service worker stesso, e la memoria del browser — che
+  non si svuota, si aggira ricaricando con un indirizzo diverso
+  (`?v=<adesso>`). È quello che fa «Cerca la versione più recente» in
+  Profilo. Il **cancelletto in coda va conservato**: i link d'invito ci
+  passano dentro, e un aggiornamento che se lo mangia manda la persona su
+  un'app vuota senza farle capire perché.
+- **Le date del viaggio finto vanno costruite col calendario del BROWSER.**
+  `prova-cielo` le costruiva in Node all'avvio e la pagina si apriva un
+  istante dopo: una corsa partita alle 23:58 e finita alle 00:05 ha visto
+  il meteo «di oggi» arrivare in pagina già datato ieri, e tre righe sono
+  andate rosse per niente. Ora `metti(page, st)` riscrive le date dentro
+  `addInitScript`, con l'oggi del browser — **in una passata sola, con una
+  tabella**: sostituendone una per volta la seconda si mangia quello che
+  ha appena scritto la prima (oggi→domani, poi domani→dopodomani).
+- **Una prova che dipende dall'ora, a certe ore non prova niente.** «La
+  fila delle ore è scorsa su adesso» controllava `scrollLeft > 0`: a
+  mezzanotte «adesso» è la prima casella, la fila giusta ha `scrollLeft`
+  zero, e la riga cadeva pur essendo tutto a posto. Peggio: alle nove di
+  sera sarebbe passata anche su un'app che non scorre affatto. Adesso si
+  misura la promessa vera — *«adesso» sta dentro la finestra* — e l'ora
+  del posto la fissa la prova stessa, col fuso, alle 17:00. Verificata
+  togliendo lo scorrimento dall'app: la casella finisce a 1006px su 353 di
+  finestra, e la riga diventa rossa.
 - **Confrontare due letture dell'orologio è una monetina.** La targhetta
   della riga «adesso» viene scritta quando la riga si disegna; la prova
   rileggeva l'ora un attimo dopo e pretendeva che fossero identiche. A

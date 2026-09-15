@@ -17,8 +17,31 @@ const fs = require('fs');
 
 const oggi = new Date().toISOString().slice(0, 10);
 const domani = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+
+/* Le date del viaggio finto le costruisce Node, ma a guardarle è il
+   browser un istante dopo: a cavallo della mezzanotte sono due giorni
+   diversi, e il viaggio «di oggi» arriva in pagina già datato ieri. Non è
+   teoria — su CI, in una corsa partita alle 23:58 e finita alle 00:05, il
+   meteo di oggi è diventato il meteo di ieri e tre righe sono andate
+   rosse per niente.
+   Qui l'oggi di Node viene riscritto con l'oggi del BROWSER al momento in
+   cui lo stato entra nel telefono finto: le due date non possono più
+   scollarsi. Si usa la data locale, che è quella con cui l'app ragiona. */
 const terzo = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
 const lontano = new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10);
+/* Una passata sola, con una tabella: sostituendo una data per volta la
+   seconda sostituzione si mangerebbe quello che ha appena scritto la
+   prima (oggi diventa domani, e poi domani diventa dopodomani). */
+const metti = (page, st) => page.addInitScript(([s, quali]) => {
+  const g = n => {
+    const d = new Date(Date.now() + n * 864e5);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  };
+  const tab = {};
+  quali.forEach(([vecchia, quanti]) => { tab[vecchia] = g(quanti); });
+  localStorage.setItem('geppgo2',
+    JSON.stringify(s).replace(/\d{4}-\d{2}-\d{2}/g, d => tab[d] || d));
+}, [st, [[oggi, 0], [domani, 1], [terzo, 2], [lontano, 40]]]);
 
 const wx = (code, mx, mn, pr, tramonto, alba) => ({
   code, tempMax: mx, tempMin: mn, precipitation: pr, windSpeed: 8,
@@ -91,7 +114,7 @@ const oreFinte = (data) => {
       const d = (u.match(/start_date=(\d{4}-\d{2}-\d{2})/) || [])[1] || oggi;
       ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ hourly: oreFinte(d) }) });
     });
-    await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), st);
+    await metti(page, st);
     await page.goto(APP, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await page.waitForTimeout(700);
@@ -490,7 +513,18 @@ const oreFinte = (data) => {
 
 
   // ══ dentro la tendina ════════════════════════════════════════════════
-  page = await apri(stato({ [oggi]: wx(61, 18, 9, 6), [domani]: wx(0, 23, 12, 0), [terzo]: wx(73, 2, -3, 4) }));
+  /* Il posto è messo alle 17:00 con lo scarto del fuso, e non è un
+     capriccio: a mezzanotte «adesso» è la prima casella della fila e non
+     c'è niente da scorrere, quindi la riga che controlla lo scorrimento
+     passerebbe anche su un'app che non scorre affatto. Fissando l'ora del
+     posto la prova dice qualcosa a qualunque ora giri. */
+  const alleCinque = (() => {
+    const o = new Date();
+    return Math.round((17 - (o.getUTCHours() + o.getUTCMinutes() / 60 + o.getUTCSeconds() / 3600)) * 3600);
+  })();
+  page = await apri(stato({
+    [oggi]: Object.assign(wx(61, 18, 9, 6), { scarto: alleCinque }),
+    [domani]: wx(0, 23, 12, 0), [terzo]: wx(73, 2, -3, 4) }));
   const dentro = await page.evaluate(async () => {
     const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
     apriMeteo();
@@ -510,7 +544,18 @@ const oreFinte = (data) => {
       quanteRighe: document.querySelectorAll('.wcard').length,
       quanteOre: celle.length,
       cèAdesso: !!adesso,
-      scorsoSuAdesso: !!(fila && adesso && fila.scrollLeft > 0),
+      /* La promessa non è «la fila è scorsa»: è che «adesso» si VEDA
+         senza doverlo cercare. A mezzanotte adesso è la prima casella e
+         non c'è niente da scorrere - la fila giusta ha scrollLeft 0 - e
+         alle 23 la fila è già in fondo e non può scorrere oltre. In
+         tutt'e due i casi la cosa che conta è la stessa: la casella sta
+         dentro la finestra. */
+      adessoSiVede: (() => {
+        if (!fila || !adesso) return null;
+        const f = fila.getBoundingClientRect(), x = adesso.getBoundingClientRect();
+        return { dentro: x.left >= f.left - 2 && x.right <= f.right + 2,
+                 dove: Math.round(x.left - f.left), largo: Math.round(f.width) };
+      })(),
       pioveNelPomeriggio: celle.some(c => /🌧|🌦/.test(c.innerText)),
       colonnine: document.querySelectorAll('.mt-o-b').length
     };
@@ -525,8 +570,9 @@ const oreFinte = (data) => {
   ok('le ore ci sono, tutte e ventiquattro', dentro.quanteOre === 24, dentro.quanteOre + ' ore');
   ok('ognuna con la sua colonnina di pioggia', dentro.colonnine === 24, dentro.colonnine + ' colonnine');
   ok('l\'ora di adesso è segnata', dentro.cèAdesso === true);
-  ok('e la fila ci è scorsa sopra, invece di partire da mezzanotte',
-     dentro.scorsoSuAdesso === true);
+  ok('e «adesso» si vede senza doverlo cercare',
+     !!(dentro.adessoSiVede && dentro.adessoSiVede.dentro),
+     dentro.adessoSiVede ? `a ${dentro.adessoSiVede.dove}px dal bordo, su ${dentro.adessoSiVede.largo}px` : 'manca');
   ok('e le ore seguono il tempo che fa, non sono tutte uguali',
      dentro.pioveNelPomeriggio === true);
 
@@ -610,7 +656,7 @@ const oreFinte = (data) => {
                  precipitation_sum: [4], wind_speed_10m_max: [9],
                  sunset: [dd + 'T17:40'], sunrise: [dd + 'T06:30'] } }) });
     });
-    await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), {
+    await metti(page, {
       trips: [Object.assign({
         id: 1, name: 'Giappone 26', destination: 'Giappone', currency: 'JPY', status: 'open',
         start: oggi, end: domani, participants: [{ id: 1, name: 'Gepp', isMe: true }],
@@ -686,7 +732,7 @@ const oreFinte = (data) => {
     const st = stato({ [oggi]: { code: 61, tempMax: 9, tempMin: 3, precipitation: 5, windSpeed: 12,
       sunset: oggi + 'T20:30', sunrise: oggi + 'T06:20', luogo: 'Praga',
       preso: Date.now() - vecchiaDiOre * 3600 * 1000 } });
-    await page2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), st);
+    await metti(page2, st);
     await page2.goto(APP, { waitUntil: 'domcontentloaded' });
     await page2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await page2.waitForTimeout(1400);
