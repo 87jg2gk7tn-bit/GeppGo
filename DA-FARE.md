@@ -863,6 +863,23 @@ qualcuno che risponde".
   ci passa tutto da `adessoNelPosto(w)`. **Ogni volta che si mette insieme
   un'ora del telefono e un dato di un altro posto, ci si ferma e si guarda
   di che fuso è ciascuno.**
+- **La luce segue adesso, il tempo che fa segue la giornata che guardi.**
+  Il cielo disegnato si faceva notturno *solo* sul giorno che lì era oggi:
+  su una giornata futura, dicevo, l'ora di adesso non vuol dire niente. Il
+  ragionamento filava e il risultato era sbagliato — un viaggio a Parigi
+  fra tre giorni, aperto alle due di notte, mostrava un **sole pieno**.
+  Chi guarda lo guarda *adesso*, e fuori dalla finestra anche le nuvole di
+  giovedì sono scure. Le due metà si decidono separate: la luce dall'ora
+  del posto, la pioggia dalla giornata mostrata. Vale ovunque si disegni
+  un ambiente attorno a un dato futuro.
+- **Una fascia oraria senza la notte.** `homeMood` aveva mattina,
+  pomeriggio e sera: alle 02:30, sotto una luna, si leggeva «mattina
+  limpida». Quando si divide la giornata in fasce, **la notte è una
+  fascia** — e sono due pezzi, prima dell'alba e dopo le dieci di sera.
+- **Una versione con la sola data non distingue due pubblicazioni dello
+  stesso giorno**, e qui di giri in un giorno se ne fanno tre o quattro.
+  `VERSIONE_APP` porta anche l'ora. Se ne pubblichi due nello stesso
+  minuto, quella riga torna a mentire: allora cambia anche il minuto.
 - **Un cielo disegnato può ripiegare, una frase no.** Senza lo scarto il
   cielo continua a usare l'orologio del telefono — è un'impressione, e
   sbagliarla costa poco. Ma la riga scritta «a Tokyo sono le 02:00» è

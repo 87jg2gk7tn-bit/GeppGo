@@ -140,6 +140,65 @@ const stato = (scarto, extra) => ({
   ok('e di giorno dice giorno', /giorno/i.test(diGiorno) && !/notte/i.test(diGiorno), diGiorno);
   await page.close();
 
+  // ══ «mattina limpida» alle due e mezza di notte ══════════════════════
+  /* La frase sotto il nome della città prendeva la fascia del giorno
+     dall'ora, ma le fasce erano tre — mattina, pomeriggio, sera — e la
+     notte non c'era. Risultato: alle 02:30, sotto una luna disegnata, si
+     leggeva «mattina limpida». */
+  page = await apri(stato(notteFonda));
+  const frase = await page.evaluate(() => {
+    const t = T();
+    const w = t.weather[Object.keys(t.weather)[0]];
+    return { mood: homeMood(w.code, w), ora: adessoNelPosto(w).hhmm };
+  });
+  ok('alle due di notte la frase dice notte, non mattina',
+     /^notte /.test(frase.mood), frase.mood + ' (lì sono le ' + frase.ora + ')');
+
+  await page.close();
+
+  page = await apri(stato(mezzogiorno));
+  const fraseGiorno = await page.evaluate(() => {
+    const t = T();
+    const w = t.weather[Object.keys(t.weather)[0]];
+    return { mood: homeMood(w.code, w), ora: adessoNelPosto(w).hhmm };
+  });
+  /* E la fascia non è diventata «notte» sempre: alle due del pomeriggio
+     resta pomeriggio. */
+  ok('e alle due del pomeriggio dice pomeriggio',
+     /^pomeriggio /.test(fraseGiorno.mood), fraseGiorno.mood + ' (lì sono le ' + fraseGiorno.ora + ')');
+  await page.close();
+
+  // ══ il cielo di una giornata FUTURA, guardata di notte ═══════════════
+  /* Il difetto che ha fatto nascere tutto questo: un viaggio a Parigi fra
+     tre giorni, aperto alle due di notte, mostrava un sole pieno. La
+     regola era «notte solo sul giorno che lì è oggi», e su una giornata
+     futura non scattava mai. */
+  page = await apri(stato(notteFonda));
+  const futuro = await page.evaluate(async ([dom]) => {
+    const t = T();
+    /* Si mette il meteo su DOMANI, con lo stesso fuso, e si guarda quella
+       giornata: è il caso del viaggio che deve ancora cominciare. */
+    t.weather[dom] = Object.assign({}, t.weather[Object.keys(t.weather)[0]]);
+    save(); renderAll();
+    await new Promise(x => setTimeout(x, 400));
+    return { notte: cieloNotte(t.weather[dom], dom), oggi: adessoNelPosto(t.weather[dom]).data };
+  }, [domaniUTC]);
+  ok('di notte è notte anche su una giornata che deve ancora arrivare',
+     futuro.notte === true, 'giorno guardato ' + domaniUTC + ', lì è il ' + futuro.oggi);
+  await page.close();
+
+  page = await apri(stato(mezzogiorno));
+  const futuroGiorno = await page.evaluate(async ([dom]) => {
+    const t = T();
+    t.weather[dom] = Object.assign({}, t.weather[Object.keys(t.weather)[0]]);
+    save(); renderAll();
+    await new Promise(x => setTimeout(x, 400));
+    return cieloNotte(t.weather[dom], dom);
+  }, [domaniUTC]);
+  ok('e di giorno resta giorno, sulla stessa giornata futura',
+     futuroGiorno === false);
+  await page.close();
+
   // ══ quello che NON si dice ═══════════════════════════════════════════
   /* Senza il fuso l'app avrebbe solo l'orologio di chi guarda: scrivere
      «a Tokyo sono le 14:10» prendendo l'ora da Milano sarebbe inventare.
