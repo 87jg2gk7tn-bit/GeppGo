@@ -447,13 +447,49 @@ const oreFinte = (data) => {
   ok('e ci sono le stelle e la luna', notte.stelle === true && notte.luna === true);
   await page.close();
 
-  /* Un giorno futuro non è mai notte: l'ora di adesso non dice niente su
-     giovedì, e disegnarci la luna sopra sarebbe una bugia. */
-  page = await apri(stato({ [domani]: wx(0, 22, 12, 0, '00:01', '00:00') },
-    [{ id: 'd1', date: domani, title: '', activities: [] }]));
-  const futuro = await page.evaluate(() => document.querySelector('.hh').className);
-  ok('su un giorno futuro non è mai notte, a qualunque ora si guardi',
-     !/\bnotte\b/.test(futuro), futuro);
+  /* QUESTA PROVA CONTENEVA LA SCELTA SBAGLIATA, e andava cambiata, non
+     aggirata. Diceva: «su un giorno futuro non è mai notte», perché l'ora
+     di adesso non dice niente su giovedì. Il ragionamento filava e il
+     risultato era sbagliato: un viaggio a Parigi fra tre giorni, aperto
+     alle due di notte, mostrava un sole pieno in cima allo schermo. Chi
+     guarda lo guarda ADESSO.
+     Adesso la regola è: la luce segue l'ora del posto, il tempo che fa
+     segue la giornata che stai guardando. Le due cose si misurano
+     separate, perché è proprio la loro combinazione che prima non
+     esisteva. Il posto è messo a mezzanotte e mezza col fuso, così la
+     prova dice la stessa cosa a qualunque ora giri. */
+  const mezzanotteEMezza = (() => {
+    const o = new Date();
+    return Math.round((0.5 - (o.getUTCHours() + o.getUTCMinutes() / 60 + o.getUTCSeconds() / 3600)) * 3600);
+  })();
+  page = await apri(stato({
+    [domani]: Object.assign(wx(61, 22, 12, 6, '20:05', '07:15'), { scarto: mezzanotteEMezza })
+  }, [{ id: 'd1', date: domani, title: '', activities: [] }]));
+  const futuro = await page.evaluate(() => ({
+    classi: document.querySelector('.hh').className,
+    oraLì: adessoNelPosto(T().weather[Object.keys(T().weather)[0]]).hhmm
+  }));
+  ok('di notte il cielo è notturno anche su una giornata futura',
+     /\bnotte\b/.test(futuro.classi), futuro.classi + ' · lì sono le ' + futuro.oraLì);
+  /* E la metà che NON deve seguire l'orologio: che piova lo dice la
+     giornata che guardi, non l'ora che è. */
+  ok('e il tempo che fa resta quello di quella giornata',
+     /c-pioggia/.test(futuro.classi), futuro.classi);
+  await page.close();
+
+  /* Lo stesso giorno futuro, ma con il posto in pieno pomeriggio: il
+     cielo torna diurno. Senza questa riga la prova di sopra passerebbe
+     anche su un'app che disegna sempre la notte. */
+  const pomeriggio = (() => {
+    const o = new Date();
+    return Math.round((15 - (o.getUTCHours() + o.getUTCMinutes() / 60 + o.getUTCSeconds() / 3600)) * 3600);
+  })();
+  page = await apri(stato({
+    [domani]: Object.assign(wx(61, 22, 12, 6, '20:05', '07:15'), { scarto: pomeriggio })
+  }, [{ id: 'd1', date: domani, title: '', activities: [] }]));
+  const futuroGiorno = await page.evaluate(() => document.querySelector('.hh').className);
+  ok('e di pomeriggio, sulla stessa giornata, torna diurno',
+     !/\bnotte\b/.test(futuroGiorno), futuroGiorno);
   await page.close();
 
   // ══ quando la previsione non c'è ═════════════════════════════════════
