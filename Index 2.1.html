@@ -6329,8 +6329,8 @@ function homeAdd(){
 /* «Sera piovosa» prendeva la sera dal telefono e la pioggia dal posto:
    due meta' di due giornate diverse cucite insieme. L'ora e' quella di
    la', come il tempo che fa. */
-function homeMood(code,w){
-  const h=adessoNelPosto(w).hh;
+function homeMood(code,w,loc){
+  const h=adessoNelPosto(w,loc).hh;
   /* La notte mancava del tutto: alle due e mezza si leggeva «mattina
      limpida» sotto una luna. Le fasce sono quelle con cui si parla, non
      quelle dell'orologio - prima delle cinque è ancora notte, e dopo le
@@ -6384,13 +6384,44 @@ function oraDi(x){const m=String(x||'').match(/T(\d{2}):(\d{2})/);return m?(+m[1
    Lo scarto non c'e' bisogno di calcolarlo: Open-Meteo lo dice nella
    stessa risposta, perche' le previsioni gliele chiediamo gia' con
    timezone=auto. Bastava portarselo dietro. */
-function adessoNelPosto(w){
-  const s=(w&&typeof w.scarto==='number'&&isFinite(w.scarto))?w.scarto:null;
+/* IL RIPIEGO NON PUO' ESSERE L'OROLOGIO DEL TELEFONO. Era, ed era la cosa
+   piu' sbagliata possibile: per una destinazione dall'altra parte del
+   mondo l'ora di casa non e' un'approssimazione, e' il contrario. In
+   Giappone erano le dieci del mattino e l'app disegnava la luna, perche'
+   qui erano le tre di notte e quella previsione - salvata prima che lo
+   scarto esistesse - non se lo portava dietro.
+   Quando lo scarto vero non c'e', si guarda la LONGITUDINE del posto:
+   ogni quindici gradi e' un'ora, ed e' l'ora solare di li' - per sapere
+   se c'e' il sole in cielo va bene quanto il fuso politico, e a volte
+   meglio. Tokyo sta a 139.8: 139.8/15 fa 9, cioe' UTC+9. Giusto.
+   Solo se non abbiamo nemmeno un punto sulla mappa si torna al telefono,
+   ed e' un caso che in pratica non capita: senza un posto il meteo non
+   c'e' proprio.
+   "esatto" distingue le due cose, e serve: la stima puo' sbagliare di
+   un'ora dove il fuso politico non segue il sole (la Spagna, la Cina),
+   quindi va bene per DISEGNARE un cielo e non per SCRIVERE un orario. */
+/* Dove sta il posto di quella previsione. Prima si guarda la previsione
+   stessa - da oggi se le porta dietro, le sue coordinate - e poi il
+   giorno del viaggio, che e' come le previsioni gia' salvate si
+   rimettono in riga senza aspettare di essere riscaricate. */
+function luogoDelMeteo(t,day,w){
+  if(w&&isFinite(+w.lat)&&isFinite(+w.lng))return{lat:+w.lat,lng:+w.lng};
+  try{
+    const l=(t&&day)?dayLoc(t,day):null;
+    if(l&&isFinite(+l.lng))return l;
+    if(t&&t.destLoc&&isFinite(+t.destLoc.lng))return t.destLoc;
+  }catch(e){}
+  return null;
+}
+function scartoDelPosto(w,loc){
+  if(w&&typeof w.scarto==='number'&&isFinite(w.scarto))return{s:w.scarto,esatto:true};
+  const lo=(w&&isFinite(+w.lng))?+w.lng:((loc&&isFinite(+loc.lng))?+loc.lng:null);
+  if(lo!=null&&Math.abs(lo)<=180)return{s:Math.round(lo/15)*3600,esatto:false};
+  return{s:null,esatto:false};
+}
+function adessoNelPosto(w,loc){
+  const {s,esatto}=scartoDelPosto(w,loc);
   const o=new Date();
-  /* Senza scarto si resta sull'orologio del telefono: e' un ripiego, ed e'
-     quello che l'app faceva prima dappertutto. Chi lo usa per SCRIVERE
-     qualcosa deve guardare "suo" e stare zitto se e' falso: un cielo
-     disegnato e' un'impressione, una frase e' un'affermazione. */
   const q=s==null?o:new Date(o.getTime()+o.getTimezoneOffset()*60000+s*1000);
   const due=n=>String(n).padStart(2,'0');
   return {
@@ -6398,7 +6429,10 @@ function adessoNelPosto(w){
     ora:q.getHours()+q.getMinutes()/60,
     hh:q.getHours(),
     hhmm:due(q.getHours())+':'+due(q.getMinutes()),
-    suo:s!=null
+    /* vero quando l'ora e' quella del POSTO, per stima o per certezza */
+    delPosto:s!=null,
+    /* vero solo con lo scarto vero: e' questo che autorizza a scriverla */
+    esatto:esatto
   };
 }
 /* LA LUCE SEGUE ADESSO, IL TEMPO SEGUE IL GIORNO CHE GUARDI.
@@ -6417,9 +6451,9 @@ function adessoNelPosto(w){
    spostano di qualche minuto, e qualche minuto qui non cambia niente. Se
    non ci fossero si tira a indovinare con orari comuni, ma e' un
    ripiego. */
-function cieloNotte(w,date){
+function cieloNotte(w,date,loc){
   if(!date)return false;
-  const q=adessoNelPosto(w);
+  const q=adessoNelPosto(w,loc);
   const tramonto=oraDi(w&&w.sunset)||20.5;
   const alba=oraDi(w&&w.sunrise)||6.5;
   return q.ora>=tramonto||q.ora<alba;
@@ -6479,8 +6513,8 @@ function gocceDiPioggia(mm){
 /* La scena: quali pezzi disegnare sopra la sfumatura. Il sole sparisce
    quando il cielo e' coperto - un sole dietro tre nuvole non lo vedresti
    comunque, e disegnarlo lo farebbe sembrare una giornata bella. */
-function cieloScena(w,date){
-  const k=cieloCodice(w?w.code:null),notte=cieloNotte(w,date),p=[];
+function cieloScena(w,date,loc){
+  const k=cieloCodice(w?w.code:null),notte=cieloNotte(w,date,loc),p=[];
   if(notte&&(k==='c-sereno'||k==='c-velato'))p.push('<span class="cl-stelle"></span>');
   /* Niente sole quando il cielo e' coperto (dietro tre nuvole non lo
      vedresti) e nemmeno quando il meteo non si sa: un sole disegnato su
@@ -6509,7 +6543,8 @@ function cieloScena(w,date){
 function cieloVestito(t,day){
   const w=day?(t.weather||{})[day.date]:null;
   if(!w)return{classi:'',velo:'',grado:''};
-  const s=cieloScena(w,day.date);
+  const dove=luogoDelMeteo(t,day,w);
+  const s=cieloScena(w,day.date,dove);
   return{
     classi:' '+s.classi+(s.buio?' cl-buio':''),
     velo:`<div class="hh-velo" aria-hidden="true">${s.dentro}</div>`,
@@ -6713,7 +6748,7 @@ function renderHomeHero(){
   if(!day){box.innerHTML='';return;}
   const w=(t.weather||{})[day.date];
   const city=cittaDelGiorno(t,day);
-  const mood=w?homeMood(w.code,w):'';
+  const mood=w?homeMood(w.code,w,luogoDelMeteo(t,day,w)):'';
   const bits=[];
   if(w)bits.push(`${Math.round(w.tempMax)}° ${wxShort(w.code)}`);
   const ss=homeSunset(w);if(ss)bits.push(tv('tramonto {1}',ss));
@@ -7555,7 +7590,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima, prima di tutto, c'e' la striscia delle NOTTI del viaggio: una casella per notte, piena se quella notte un letto ce l'hai e vuota tratteggiata se non ce l'hai, e sotto una riga che dice quali mancano e il tasto per cercarne uno. Un viaggio dal 14 al 18 ha quattro notti, non cinque: la notte si conta da dove si dorme, e l'ultimo giorno si torna a casa. Un albergo con check-in il 14 e check-out il 16 copre le notti del 14 e del 15. Ogni scheda dice quante notti copre quell'albergo, quanto costa e se e' ancora da pagare (il costo e' la spesa collegata, quella che si vede anche in Spese). Il tasto pieno "Portami qui, e' stanotte" compare solo sull'albergo dove si dorme stanotte; sugli altri il tasto c'e' lo stesso, ma piu' piano. Poi c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti delle ATTRAZIONI - l'ingresso a un castello, un museo, una torre - e i voucher. In cima ci sono tre tasti uguali, che sono tre modi per fare la stessa cosa: "Scansiona" (col codice davanti), "Foto o PDF" (se ce l'hai gia' nel telefono) e "A mano". Di fianco, la scritta "Come funziona la lettura" si apre toccandola. L'elenco parte da TUTTI i biglietti del viaggio, non solo dai tuoi: un ingresso preso per il gruppo non e' di nessuno in particolare. Se le persone sono piu' di una, sopra l'elenco c'e' una tendina per guardare i biglietti di una persona alla volta; da li' si torna a tutti con un tasto, e quello che aggiungi mentre stai guardando una persona viene intestato a lei. I biglietti stanno sotto l'attrazione a cui servono, e il titolo del gruppo dice anche quando ci vai: giorno, data e ora. Quelli non attaccati a nessuna tappa stanno insieme, sotto un titolo loro. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
-- Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
+- Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. L'ora del posto NON viene mai dall'orologio del telefono: se la previsione non porta il fuso - perche' e' stata salvata prima - si ricava dalla longitudine del posto, che e' la sua ora solare (ogni quindici gradi un'ora). Cosi' funziona in tutto il mondo anche prima che la previsione si riscarichi. L'orario scritto a parole invece compare solo col fuso vero, perche' la stima puo' sbagliare di un'ora dove il fuso politico non segue il sole. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple, Google o quello di GeppGo). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
@@ -8567,7 +8602,7 @@ function renderMeteoHero(t){
   const box=document.getElementById('mtHero');if(!box)return;
   const d=meteoGiornoScelto(t);
   if(!d){box.innerHTML='';return;}
-  const w=(t.weather||{})[d.date],s=cieloScena(w,d.date);
+  const w=(t.weather||{})[d.date],dove2=luogoDelMeteo(t,d,w),s=cieloScena(w,d.date,dove2);
   const i=t.days.indexOf(d);
   const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
   /* Il "circa" non e' un vezzo: quel meteo viene dalle tappe di un altro
@@ -8584,9 +8619,9 @@ function renderMeteoHero(t){
      giovedi' non vorrebbe dire niente - e solo quando il fuso ce l'abbiamo
      davvero: senza, staremmo raccontando l'orologio di chi guarda
      spacciandolo per quello del posto. */
-  const q=adessoNelPosto(w);
-  const notte=cieloNotte(w,d.date);
-  const adessoLi=(w&&q.suo&&q.data===d.date)
+  const q=adessoNelPosto(w,dove2);
+  const notte=cieloNotte(w,d.date,dove2);
+  const adessoLi=(w&&q.esatto&&q.data===d.date)
     ? `<div class="mt-li">${notte?'🌙':'☀️'} <b>${esc(tv(notte?'È notte':'È giorno'))}</b> · ${esc(dove?tv('a {1} sono le {2}',dove,q.hhmm):tv('sono le {1}',q.hhmm))}</div>`
     : '';
   box.innerHTML=`<div class="${s.classi} mt-hero">${s.dentro}
@@ -8641,7 +8676,7 @@ function meteoOreMostra(){
        del telefono voleva dire mettere la bandierina sette caselle piu' in
        la' del punto in cui sta il sole. */
     const w=(t.weather||{})[d.date];
-    const qq=adessoNelPosto(w);
+    const qq=adessoNelPosto(w,luogoDelMeteo(t,d,w));
     const adesso=(qq.data===d.date)?qq.hh:-1;
     /* Alba e tramonto sono di quel posto e di quel giorno: le ore prima
        dell'una e dopo l'altro sono buie, e sopra un'ora buia il sole non
@@ -15650,6 +15685,12 @@ function postoDaVicino(t,day){
 function meteoScaduto(w,date){
   if(!w)return true;
   if(!w.preso)return true;          /* presa prima che segnassimo l'ora: si rifa' */
+  /* Presa prima che ci portassimo dietro il fuso del posto: si rifa' una
+     volta e poi basta. Il contrassegno dice "salvata dal codice che il
+     fuso lo chiede", non "il fuso c'e'": se un giorno la risposta non lo
+     contenesse, guardare il campo vuoto vorrebbe dire richiederla ogni
+     venti minuti per sempre. */
+  if(w.v!==2)return true;
   const oggi=new Date();oggi.setHours(0,0,0,0);
   const da=Math.round((new Date(date)-oggi)/864e5);
   const ore=da<=1?1:(da<=3?3:12);
@@ -15686,7 +15727,7 @@ async function fetchDayWx(t,day){
   const one=async loc=>{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&daily=${F}&timezone=auto&start_date=${day.date}&end_date=${day.date}`;
     const r=await fetch(u);const d2=await r.json();
-    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0],sunset:(d2.daily.sunset&&d2.daily.sunset[0])||null,sunrise:(d2.daily.sunrise&&d2.daily.sunrise[0])||null,fuso:d2.timezone||null,scarto:(typeof d2.utc_offset_seconds==='number')?d2.utc_offset_seconds:null};
+    if(d2.daily&&d2.daily.time&&d2.daily.time.length)return{code:d2.daily.weather_code[0],tempMax:d2.daily.temperature_2m_max[0],tempMin:d2.daily.temperature_2m_min[0],precipitation:d2.daily.precipitation_sum[0],windSpeed:d2.daily.wind_speed_10m_max[0],sunset:(d2.daily.sunset&&d2.daily.sunset[0])||null,sunrise:(d2.daily.sunrise&&d2.daily.sunrise[0])||null,fuso:d2.timezone||null,scarto:(typeof d2.utc_offset_seconds==='number')?d2.utc_offset_seconds:null,lat:+loc.lat,lng:+loc.lng,v:2};
     return null;
   };
   try{
@@ -16925,7 +16966,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-15 02:50';
+const VERSIONE_APP='2026-09-15 03:20';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

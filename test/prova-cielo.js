@@ -763,10 +763,19 @@ const oreFinte = (data) => {
       ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
         daily: { time: [oggi], weather_code: [0], temperature_2m_max: [26], temperature_2m_min: [15],
                  precipitation_sum: [0], wind_speed_10m_max: [6],
-                 sunset: [oggi + 'T20:30'], sunrise: [oggi + 'T06:20'] } }) });
+                 sunset: [oggi + 'T20:30'], sunrise: [oggi + 'T06:20'] },
+               /* La risposta vera li porta sempre, perche' la chiediamo con
+                  timezone=auto: la finta deve somigliarle. */
+               timezone: 'Europe/Prague', utc_offset_seconds: 7200 }) });
     });
+    /* Lo scarto c'e' perche' ce l'hanno le previsioni vere da quando le
+       salviamo col fuso del posto. Senza, la previsione conterebbe come
+       scaduta a prescindere - ed e' giusto che sia cosi', ma qui si sta
+       misurando un'altra cosa: se una previsione FRESCA venga richiesta
+       di nuovo per sbaglio. */
     const st = stato({ [oggi]: { code: 61, tempMax: 9, tempMin: 3, precipitation: 5, windSpeed: 12,
       sunset: oggi + 'T20:30', sunrise: oggi + 'T06:20', luogo: 'Praga',
+      scarto: 7200, fuso: 'Europe/Prague', lat: 50.0755, lng: 14.4378, v: 2,
       preso: Date.now() - vecchiaDiOre * 3600 * 1000 } });
     await metti(page2, st);
     await page2.goto(APP, { waitUntil: 'domcontentloaded' });
@@ -810,19 +819,35 @@ const oreFinte = (data) => {
                lontanoUnGiorno: null, senzaOra: null };
     const oggiD = new Date(); oggiD.setHours(0, 0, 0, 0);
     const giorno = n => new Date(oggiD.getTime() + n * 864e5).toISOString().slice(0, 10);
-    const con = (ore, quandoFra) => meteoScaduto({ preso: Date.now() - ore * 3600 * 1000 }, giorno(quandoFra));
+    /* Lo scarto c'e' perche' ce l'hanno le previsioni vere: senza, una
+       previsione conta come scaduta a prescindere - regola voluta, ma qui
+       si stanno misurando le DURATE, e mescolare le due cose vorrebbe
+       dire non misurare piu' niente. */
+    const con = (ore, quandoFra) => meteoScaduto(
+      { preso: Date.now() - ore * 3600 * 1000, scarto: 7200, v: 2 }, giorno(quandoFra));
     return {
       oggiDueOre: con(2, 0),      // per oggi, due ore fa → vecchia
       oggiMezzOra: con(0.5, 0),   // per oggi, mezz'ora fa → buona
       lontanoSeiOre: con(6, 10),  // per fra dieci giorni, sei ore fa → buona
       lontanoUnGiorno: con(24, 10),
-      senzaOra: meteoScaduto({ tempMax: 20 }, giorno(0))
+      senzaOra: meteoScaduto({ tempMax: 20 }, giorno(0)),
+      /* E la regola nuova: senza il fuso del posto si rifa', per quanto
+         appena presa. E' cosi' che le previsioni gia' sui telefoni si
+         rimettono in riga da sole. */
+      senzaFuso: meteoScaduto({ preso: Date.now() }, giorno(0)),
+      /* E il rovescio: una salvata dal codice nuovo non si rifa' in
+         eterno nemmeno se il fuso, per qualunque motivo, mancasse. */
+      nuovaSenzaScarto: meteoScaduto({ preso: Date.now(), v: 2 }, giorno(0))
     };
   });
   ok('per oggi una previsione di due ore fa è già vecchia', durate.oggiDueOre === true);
   ok('ma una di mezz\'ora va benissimo', durate.oggiMezzOra === false);
   ok('per un giorno lontano sei ore vanno bene', durate.lontanoSeiOre === false);
   ok('e un giorno intero no', durate.lontanoUnGiorno === true);
+  ok('una previsione senza il fuso del posto si rifà, per quanto fresca',
+     durate.senzaFuso === true);
+  ok('ma non si rifà in eterno: una salvata dal codice nuovo vale',
+     durate.nuovaSenzaScarto === false);
   /* Le previsioni salvate prima che segnassimo l'ora non hanno una data:
      si rifanno, invece di restare li' per sempre. */
   ok('e una previsione senza l\'ora in cui è stata presa si rifà', durate.senzaOra === true);

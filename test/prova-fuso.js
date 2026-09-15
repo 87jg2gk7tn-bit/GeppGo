@@ -33,7 +33,9 @@ function scartoPer(H) {
 
 const sole = { sunrise: oggiUTC + 'T06:00', sunset: oggiUTC + 'T20:00' };
 
-const stato = (scarto, extra) => ({
+/* «punto» sono le coordinate che la previsione si porta dietro da quando
+   le salviamo: servono a ricavare l'ora del posto anche senza lo scarto. */
+const stato = (scarto, punto, extra) => ({
   trips: [{
     id: 1, name: 'Giappone', destination: 'Tokyo', currency: 'JPY', status: 'open',
     start: oggiUTC, end: domaniUTC,
@@ -43,7 +45,7 @@ const stato = (scarto, extra) => ({
       [oggiUTC]: Object.assign({
         code: 0, tempMax: 22, tempMin: 15, precipitation: 0, windSpeed: 6,
         luogo: 'Tokyo', preso: Date.now(), fuso: 'Asia/Tokyo'
-      }, sole, scarto === null ? {} : { scarto }, extra || {})
+      }, sole, scarto === null ? {} : { scarto }, punto || {}, extra || {})
     },
     days: [
       { id: 'd1', date: oggiUTC, title: '', activities: [
@@ -197,6 +199,96 @@ const stato = (scarto, extra) => ({
   }, [domaniUTC]);
   ok('e di giorno resta giorno, sulla stessa giornata futura',
      futuroGiorno === false);
+  await page.close();
+
+  // ══ IL GIAPPONE ALLE DIECI DEL MATTINO, E QUI SONO LE TRE ════════════
+  /* IL DIFETTO PIÙ GRAVE DI TUTTI, e l'ha trovato una persona usandola.
+     Quando la previsione non porta lo scarto — perché è stata salvata
+     prima che lo scarto esistesse, cioè su tutti i telefoni che avevano
+     già l'app — si ripiegava sull'orologio DEL TELEFONO. Per una
+     destinazione dall'altra parte del mondo quella non è
+     un'approssimazione: è il contrario. In Giappone erano le dieci del
+     mattino, qui le tre di notte, e l'app disegnava la luna.
+
+     Adesso il ripiego è la LONGITUDINE: ogni quindici gradi un'ora, che è
+     l'ora solare del posto. Tokyo sta a 139.8 → UTC+9.
+
+     Si misura senza dipendere dall'ora in cui la prova gira: qualunque
+     istante sia, l'ora che l'app attribuisce a Tokyo deve essere quella
+     di UTC+9. Se ripiegasse sul telefono sarebbe l'ora della macchina, e
+     su CI le due sono a nove ore di distanza. */
+  const TOKYO = { lat: 35.7148, lng: 139.7967 };
+  const attesaTokyo = () => {
+    const o = new Date();
+    return (o.getUTCHours() + 9) % 24;
+  };
+
+  page = await apri(stato(null, TOKYO));
+  const senzaScarto = await page.evaluate(([lo]) => {
+    const t = T(), d = Object.keys(t.weather)[0], w = t.weather[d];
+    const q = adessoNelPosto(w);
+    return { ora: q.hh, hhmm: q.hhmm, delPosto: q.delPosto, esatto: q.esatto,
+             oraMacchina: new Date().getHours(), lng: lo };
+  }, [TOKYO.lng]);
+  ok('senza lo scarto, l\'ora di Tokyo si ricava dalla longitudine',
+     senzaScarto.ora === attesaTokyo(),
+     'l\'app dice ' + senzaScarto.hhmm + ', UTC+9 dice ' + attesaTokyo());
+  /* La riga che smaschera il ripiego sbagliato: se guardasse il telefono,
+     questa sarebbe l'ora della macchina. */
+  ok('e NON è l\'ora di chi sta guardando',
+     senzaScarto.ora !== senzaScarto.oraMacchina,
+     'posto ' + senzaScarto.ora + ', macchina ' + senzaScarto.oraMacchina);
+  ok('è l\'ora del posto, ma stimata: non esatta',
+     senzaScarto.delPosto === true && senzaScarto.esatto === false);
+  /* E il cielo segue quell'ora: alle dieci del mattino a Tokyo c'è il
+     sole anche se chi guarda è nel pieno della notte. */
+  const cielo = await page.evaluate(() => {
+    const t = T(), d = Object.keys(t.weather)[0], w = t.weather[d];
+    return { notte: cieloNotte(w, d), classi: document.querySelector('.hh').className };
+  });
+  const tokyoDiNotte = attesaTokyo() >= 20 || attesaTokyo() < 6;
+  ok('e il cielo segue il sole di Tokyo, non quello di casa',
+     cielo.notte === tokyoDiNotte,
+     'a Tokyo sono le ' + attesaTokyo() + ', cielo ' + (cielo.notte ? 'notturno' : 'diurno'));
+  /* La frase sotto il nome della città viene dalla stessa ora. */
+  const fraseTokyo = await page.evaluate(() => {
+    const t = T(), d = Object.keys(t.weather)[0], w = t.weather[d];
+    return homeMood(w.code, w);
+  });
+  const fasciaAttesa = (() => { const h = attesaTokyo();
+    return h < 5 ? 'notte' : h < 12 ? 'mattina' : h < 18 ? 'pomeriggio' : h < 22 ? 'sera' : 'notte'; })();
+  ok('e anche la frase sotto il nome della città',
+     fraseTokyo.indexOf(fasciaAttesa) === 0, fraseTokyo + ' (attesa: ' + fasciaAttesa + ')');
+  await page.close();
+
+  /* Una stima non autorizza a SCRIVERE un orario: dove il fuso politico
+     non segue il sole — la Spagna, la Cina — può sbagliare di un'ora, e
+     «a Tokyo sono le 10:09» dev'essere vero o non esserci. */
+  page = await apri(stato(null, TOKYO));
+  const stimaNonSiScrive = await page.evaluate(async () => {
+    apriMeteo();
+    await new Promise(x => setTimeout(x, 700));
+    return !!document.querySelector('#mtHero .mt-li');
+  });
+  ok('ma una stima non basta per scrivere che ora è lì', stimaNonSiScrive === false);
+  await page.close();
+
+  /* E una previsione senza scarto conta come scaduta: si rifà da sola e
+     al giro dopo l'ora è quella vera, non più stimata. Così i telefoni
+     che avevano già l'app si rimettono in riga senza che nessuno faccia
+     niente. */
+  page = await apri(stato(null, TOKYO));
+  const daRifare = await page.evaluate(([d]) => {
+    const w = T().weather[d];
+    /* «v: 2» è il contrassegno che dice «salvata dal codice che il fuso lo
+       chiede». Si guarda quello e non il campo del fuso: se un giorno la
+       risposta non lo contenesse, guardare il campo vuoto vorrebbe dire
+       richiedere la previsione ogni venti minuti per sempre. */
+    return { senza: meteoScaduto(w, d),
+             con: meteoScaduto(Object.assign({}, w, { scarto: 32400, v: 2 }), d) };
+  }, [oggiUTC]);
+  ok('una previsione senza il fuso conta come scaduta', daRifare.senza === true);
+  ok('e una salvata dal codice nuovo, appena presa, no', daRifare.con === false);
   await page.close();
 
   // ══ quello che NON si dice ═══════════════════════════════════════════
