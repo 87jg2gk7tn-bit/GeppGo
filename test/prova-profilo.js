@@ -17,7 +17,55 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   // la barra
   const barra = await p.evaluate(()=>[...document.querySelectorAll('.nav-item')].map(x=>x.dataset.p));
   ok('la sezione Impostazioni non è più nella barra', !barra.includes('settings'), barra.join(' · '));
-  ok('il Profilo è l\'ultima voce', barra[barra.length-1]==='trips', barra.join(' · '));
+  /* IL PROFILO NON È PIÙ UNA VOCE DELLA BARRA. La barra in basso è per i
+     posti dove si va camminando; nel Profilo ci si va da fermi, una volta
+     ogni tanto, e si portava via un ottavo di una barra che già scorreva.
+     Adesso sta in fondo al cassetto delle tre righine. */
+  ok('il Profilo non è più una voce della barra in basso', !barra.includes('trips'), barra.join(' · '));
+  ok('e la barra è scesa a sette voci', barra.length===7, barra.length+' voci');
+
+  // ── e ci si arriva, dal cassetto, con un dito vero ───────────────────
+  /* Togliere una voce dalla barra è mezzo lavoro: l'altra metà è che al
+     Profilo ci si arrivi lo stesso. E si preme con `elementFromPoint`,
+     non con .click(): il click salta il controllo di chi sta davvero
+     sotto il dito, e l'ultima volta ha fatto passare una prova su un
+     tasto che dal vivo era sepolto sotto il cassetto. */
+  await p.evaluate(()=>{ go('plan'); });
+  await p.waitForTimeout(400);
+  const dito = await p.evaluate(async ()=>{
+    const attendi = ms => new Promise(r2=>setTimeout(r2, ms));
+    /* Il dito atterra su un punto e preme quello che quel punto comanda:
+       spesso è il disegno dentro il tasto, e il tasto è chi lo contiene. */
+    const premi = (el, dentro) => {
+      const c = el.getBoundingClientRect();
+      const sotto = document.elementFromPoint(c.left+c.width/2, c.top+c.height/2);
+      const suo = sotto && sotto.closest(dentro);
+      if(!suo) return 'sotto il dito c\'era: '+(sotto?(sotto.getAttribute('class')||sotto.tagName):'niente');
+      suo.click();
+      return null;
+    };
+    try{
+      const righine = document.getElementById('menuViaggi');
+      if(!righine) return { errore:'le tre righine non ci sono' };
+      const g1 = premi(righine, '#menuViaggi');
+      if(g1) return { errore:'sulle righine, '+g1 };
+      await attendi(600);
+      const voce = document.querySelector('#mViaggi .vg-profilo');
+      if(!voce) return { errore:'nel cassetto non c\'è il Profilo' };
+      const g2 = premi(voce, '.vg-profilo');
+      if(g2) return { errore:'sul Profilo, '+g2 };
+      await attendi(600);
+      return {
+        pagina: document.getElementById('trips').classList.contains('active'),
+        cassettoChiuso: !document.getElementById('mViaggi').classList.contains('active')
+      };
+    }catch(e){ return { errore:'è saltato tutto: '+e.message }; }
+  });
+  ok('dalle tre righine si arriva al Profilo premendolo davvero',
+     dito.pagina===true, dito.errore || ('pagina attiva: '+dito.pagina));
+  /* Se il cassetto restasse aperto, la pagina si aprirebbe dietro una cosa
+     che la copre: si sarebbe premuto e non sarebbe successo niente. */
+  ok('e il cassetto si richiude dietro di sé', dito.cassettoChiuso===true, dito.errore||'');
   /* Impostazioni e Meteo avevano tutt'e due un sole per icona, e nella
      barra si leggeva come un doppione. Impostazioni è sparita dentro il
      Profilo, il Meteo è diventato il riquadro del cielo in cima alla home:

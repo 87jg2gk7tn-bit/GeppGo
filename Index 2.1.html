@@ -445,6 +445,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   background:var(--surface);
   width:min(86vw,360px);height:100%;
   padding:calc(1.3rem + env(safe-area-inset-top)) 1.15rem calc(1.3rem + env(safe-area-inset-bottom));
+  /* In colonna perche' il Profilo in fondo si appoggi al bordo di sotto
+     invece di stare appiccicato all'ultimo viaggio: con un viaggio solo
+     resterebbe a mezz'aria in cima. Con tanti viaggi il cassetto scorre e
+     il Profilo torna in coda alla lista, che e' giusto lo stesso. */
+  display:flex;flex-direction:column;
   overflow-y:auto;
   border-radius:0 var(--r-xl) var(--r-xl) 0;
   box-shadow:var(--sh-lg);
@@ -1474,7 +1479,14 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cerca-nota{font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem}
 .vg-voce.qui{border-color:var(--green-soft);background:var(--green-tint)}
 .vg-qui{font-size:.68rem;font-weight:700;color:var(--green-deep);flex-shrink:0;text-align:right;line-height:1.25;max-width:38%}
-.vg-nuovo{margin-top:.9rem}
+.vg-nuovo{margin-top:.9rem;flex-shrink:0}
+/* Il piede del cassetto: il margine automatico lo spinge in fondo quando
+   c'e' spazio, e la riga sopra dice che da li' in giu' non si parla piu' di
+   viaggi. */
+.cass-piede{margin-top:auto;padding-top:1.1rem;flex-shrink:0}
+.vg-profilo{border-color:var(--line)}
+.vg-ic{width:26px;flex-shrink:0;display:grid;place-items:center;color:var(--ink-soft)}
+.vg-ic svg{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
 .hh-acts{position:relative;display:flex;flex-wrap:wrap;gap:.35rem;margin-top:1rem}
 .hh-act{
@@ -1699,7 +1711,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></div>
     <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></div>
     <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></div>
-    <div class="nav-item" data-p="trips" onclick="go('trips')" title="Profilo" aria-label="Profilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></div>
+    <!-- Il Profilo non sta piu' qui: sta in fondo al cassetto delle tre
+         righine. La barra in basso e' per i posti dove si va camminando, e
+         nel Profilo non ci si va camminando: ci si va una volta ogni tanto,
+         per l'account o per una impostazione. Occupava un ottavo di una
+         barra che gia' scorreva. -->
   </div></div>
   <div class="scroll">
     <div class="page active" id="plan">
@@ -2063,6 +2079,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   </div>
   <div class="vg-lista" id="vgLista"></div>
   <button class="btn btn-soft btn-block vg-nuovo" onclick="closeSheet('mViaggi');openNewTrip()">+ Aggiungi viaggio</button>
+  <!-- Il Profilo sta in FONDO, staccato dai viaggi e spinto giu' dal bordo:
+       e' quello che c'e' sotto tutto il resto, non un viaggio fra i viaggi.
+       Ed e' anche dove il pollice arriva senza spostare la mano. -->
+  <div class="cass-piede">
+    <button class="vg-voce vg-profilo" onclick="apriProfilo()">
+      <span class="vg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg></span>
+      <span class="vg-txt"><b>Profilo</b><i>Account, impostazioni, viaggi conclusi</i></span>
+      <span class="cerca-freccia">›</span>
+    </button>
+  </div>
 </div></div>
 <!-- Cosa c'e' qui intorno. L'ordine non e' alfabetico ne' casuale: e' quello
      con cui le cose servono in viaggio. Prima come ci si muove - treno, metro,
@@ -4534,6 +4560,7 @@ const DIZIONARIO_COMPOSTE={
     'sei qui':'you’re here',
     'Cosa cerchi':'What are you looking for',
     'I tuoi viaggi':'Your trips',
+    'Account, impostazioni, viaggi conclusi':'Account, settings, past trips',
     '+ Aggiungi viaggio':'+ Add a trip',
     'Stazione dei treni':'Train station',
     'Anche le fermate piccole':'Small stops too',
@@ -4611,6 +4638,7 @@ const DIZIONARIO_COMPOSTE={
     'sei qui':'estás aquí',
     'Cosa cerchi':'Qué buscas',
     'I tuoi viaggi':'Tus viajes',
+    'Account, impostazioni, viaggi conclusi':'Cuenta, ajustes, viajes terminados',
     '+ Aggiungi viaggio':'+ Añade un viaje',
     'Stazione dei treni':'Estación de tren',
     'Anche le fermate piccole':'También los apeaderos',
@@ -4688,6 +4716,7 @@ const DIZIONARIO_COMPOSTE={
     'sei qui':'tu es ici',
     'Cosa cerchi':'Tu cherches quoi',
     'I tuoi viaggi':'Tes voyages',
+    'Account, impostazioni, viaggi conclusi':'Compte, réglages, voyages terminés',
     '+ Aggiungi viaggio':'+ Ajoute un voyage',
     'Stazione dei treni':'Gare',
     'Anche le fermate piccole':'Les petites haltes aussi',
@@ -4765,6 +4794,7 @@ const DIZIONARIO_COMPOSTE={
     'sei qui':'estás aqui',
     'Cosa cerchi':'O que procuras',
     'I tuoi viaggi':'As tuas viagens',
+    'Account, impostazioni, viaggi conclusi':'Conta, definições, viagens terminadas',
     '+ Aggiungi viaggio':'+ Adiciona uma viagem',
     'Stazione dei treni':'Estação de comboios',
     'Anche le fermate piccole':'Também os apeadeiros',
@@ -6126,7 +6156,12 @@ function navAvvia(){
 function go(p){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelector(`[data-p="${p}"]`).classList.add('active');
+  /* Non tutte le pagine hanno una voce nella barra: il Profilo si apre dal
+     cassetto e nella barra non c'e' piu'. Prima questa riga dava per
+     scontato che la voce esistesse, e senza di lei go() si fermava a meta'
+     - la pagina non si apriva nemmeno. */
+  const voce=document.querySelector(`[data-p="${p}"]`);
+  if(voce)voce.classList.add('active');
   document.getElementById(p).classList.add('active');
   navPortaInVista();navBordi();
   if(p==='plan'&&map)setTimeout(()=>map.invalidateSize(),120);
@@ -6396,6 +6431,13 @@ function scegliViaggio(id){
   /* Se si tocca quello che si sta gia' guardando non succede niente, e va
      bene cosi': la tendina si chiude, che e' quello che uno voleva. */
   go('plan');
+}
+/* Il Profilo si apre da qui e da nessun'altra parte: nella barra in basso
+   non c'e' piu'. Il cassetto si chiude prima, se no la pagina si apre
+   dietro una cosa che la copre e sembra che non sia successo niente. */
+function apriProfilo(){
+  closeSheet('mViaggi');
+  go('trips');
 }
 function apriCerca(){openSheet('mCerca');}
 /* Quanto ci metti a piedi da dove sei alla prossima tappa. Passo a 4,5 km/h
@@ -7826,8 +7868,8 @@ function sembraUnComando(s){
    preciso, non un consiglio di viaggio. Qui c'e' la mappa, tenuta corta perche'
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
-- La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica, Profilo. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home, di fianco ai nomi dei viaggi. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
-- Si cambia viaggio dalle TRE RIGHINE in alto a sinistra, di fianco al logo: si aprono i viaggi in corso, si tocca quello che si vuole, e in fondo c'e' "+ Aggiungi viaggio". In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
+- La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
+- Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
 - Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sul cielo, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
@@ -7844,7 +7886,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
-- Profilo (ultima voce della barra): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
+- Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -17314,7 +17356,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-18 17:18';
+const VERSIONE_APP='2026-09-18 18:05';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
