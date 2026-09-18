@@ -1440,6 +1440,23 @@ qualcuno che risponde".
   due cose che si aprono da fermi, una ogni tanto. Il Meteo è diventato il
   riquadro del cielo in cima alla home, il Profilo il fondo del cassetto: da
   nove voci a sette, e su un telefono largo adesso la barra non scorre più.
+- **⚠️ La schermata d'avvio copre tutto, e sulla macchina delle prove se ne va
+  più tardi.** `#bootSplash` è `inset:0` con `z-index:99999` e si toglie da
+  sola sette decimi dopo l'avvio. Una prova che aspetta `typeof go ===
+  'function'` non sta aspettando lei: `go` esiste appena il file è letto,
+  molto prima. Qui la prova era verde perché i caratteri di Google non si
+  scaricano e l'avvio arriva subito; in CI si scaricano davvero, l'avvio
+  arriva più tardi, e **il dito atterrava sulla schermata nera**. Chi preme
+  con `elementFromPoint` aspetta il segnale certo:
+  `waitForFunction(() => !document.getElementById('bootSplash'))`.
+  Chi usa `.click()` o `go()` non se ne accorge, ed è il motivo per cui il
+  difetto è comparso solo adesso.
+- **Un messaggio d'errore che dice il tipo e non il nome fa perdere un giro.**
+  La riga rossa diceva «sotto il dito c'era: DIV» — vero e inutile, perché
+  prendeva `class || tagName` e quel div una classe non ce l'ha. Con l'id il
+  messaggio dice «#bootSplash» e il difetto si legge dalla riga. Quando si
+  scrive il testo di un fallimento si mette **quello che identifica la cosa**,
+  non quello che la descrive.
 
 ---
 

@@ -10,7 +10,15 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   await p.addInitScript(s=>localStorage.setItem('geppgo2',JSON.stringify(s)), stato);
   await p.goto(APP,{waitUntil:'domcontentloaded'});
   await p.waitForFunction(()=>typeof window.go==='function',{timeout:15000});
-  await p.waitForTimeout(1500);
+  /* La schermata d'avvio copre TUTTO (`inset:0`, `z-index:99999`) e se ne va
+     da sola sette decimi dopo l'avvio. `go` invece esiste appena il file è
+     letto, cioè molto prima: aspettare lei e poi contare fino a mille e
+     cinque non è aspettare la schermata. Qui era verde e sulla macchina
+     delle prove rossa, perché lì i caratteri veri si scaricano davvero e
+     l'avvio arriva più tardi — e il dito atterrava sulla schermata nera.
+     Si aspetta il segnale certo: che non ci sia più. */
+  await p.waitForFunction(()=>!document.getElementById('bootSplash'),{timeout:20000});
+  await p.waitForTimeout(600);
 
   const r=[]; const ok=(n,c,e='')=>r.push(`${c?'  OK  ':' FALLITO '} ${n}${e?' — '+e:''}`);
 
@@ -40,7 +48,11 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
       const c = el.getBoundingClientRect();
       const sotto = document.elementFromPoint(c.left+c.width/2, c.top+c.height/2);
       const suo = sotto && sotto.closest(dentro);
-      if(!suo) return 'sotto il dito c\'era: '+(sotto?(sotto.getAttribute('class')||sotto.tagName):'niente');
+      /* Il nome serve a capire CHI c'era, non che tipo di cosa era: la
+         prima volta questa riga ha detto «DIV» e basta, e quel DIV era la
+         schermata d'avvio, che un id ce l'ha. */
+      const chi = n => n ? (n.id ? '#'+n.id : (n.getAttribute('class') || n.tagName)) : 'niente';
+      if(!suo) return 'sotto il dito c\'era: '+chi(sotto);
       suo.click();
       return null;
     };
