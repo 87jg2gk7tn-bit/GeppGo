@@ -1440,6 +1440,23 @@ qualcuno che risponde".
   due cose che si aprono da fermi, una ogni tanto. Il Meteo è diventato il
   riquadro del cielo in cima alla home, il Profilo il fondo del cassetto: da
   nove voci a sette, e su un telefono largo adesso la barra non scorre più.
+- **⚠️ Centrare una fila che può strabordare la rende irraggiungibile.**
+  `justify-content:center` su un contenitore che scorre taglia il contenuto
+  dai DUE capi, e il capo di sinistra finisce a coordinate negative: lì non
+  si scorre, quindi quella voce non la si raggiunge più. La parola che
+  salva è **`safe`** — `justify-content:safe center` — che centra finché ci
+  sta tutto e torna ad allineare a sinistra appena straborda. Un browser
+  che non la conosce butta via la riga e resta allineato a sinistra, cioè
+  comunque raggiungibile. Vale per qualunque fila che scorre, non solo per
+  questa barra.
+- **Una fila che sborda di quattro pixel è peggio di una che sborda di
+  cento.** Con sette voci la barra ci stava quasi: quattro pixel di troppo
+  su un telefono da 390, che però accendevano la sfumatura e lasciavano
+  scorrere la pillola — cioè promettevano altre voci che non esistevano.
+  Sei pixel di padding in meno per voce (da `.7rem` a `.64rem`, tasto da 49
+  a 47 di larghezza, sempre sopra i 44 che servono a un dito) e ci sta
+  tutto. Quando qualcosa sborda di pochissimo, la risposta giusta di solito
+  non è farlo scorrere meglio: è **farcelo stare**.
 - **⚠️⚠️ DUE COSE COPRONO TUTTO LO SCHERMO, e tutte e due si mangiano i
   tocchi solo sulla macchina delle prove.** Premere con `elementFromPoint`
   è l'unico modo di sapere cosa tocca un dito vero — e per lo stesso motivo

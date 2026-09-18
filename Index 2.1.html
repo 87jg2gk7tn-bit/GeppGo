@@ -860,6 +860,18 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
    fondo, quel lato torna netto ed e' l'unico modo per sapere che e' finita. */
 .nav-track{
   display:flex; align-items:center; gap:.1rem;
+  /* La pista prende tutta la pillola, se no si stringe sul suo contenuto e
+     si appoggia a sinistra: da quando le voci sono sette ci stanno tutte, e
+     restava un vuoto storto in fondo a destra. */
+  flex:1; min-width:0;
+  /* "safe" e' la parola che regge tutto. Centrare una fila che straborda la
+     taglia dalla parte sbagliata: la prima voce finisce fuori PRIMA
+     dell'inizio, dove non si scorre e non si torna. Con "safe" il centro
+     vale solo finche' ci stanno tutte; appena strabordano si torna ad
+     allineare a sinistra, che e' l'unico modo di poterle raggiungere. Un
+     browser che non conosce "safe" butta via la riga e resta come prima:
+     a sinistra, cioe' comunque raggiungibili. */
+  justify-content:safe center;
   overflow-x:auto; overflow-y:hidden;
   scrollbar-width:none;
   -webkit-overflow-scrolling:touch;
@@ -1532,7 +1544,12 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
    A riposo si vedono le cinque del mock (mappa, lente, +, €, persona);
    le altre cinque restano raggiungibili scorrendo la pillola. */
 .nav{align-items:center;gap:0}
-.nav-item{display:grid;place-items:center;padding:.55rem .7rem;color:var(--ink-faint)}
+/* Sei pixel in meno ai fianchi, e su un telefono da 390 le sette voci ci
+   stanno tutte: prima sbordavano di quattro, cioe' la sfumatura restava
+   accesa e la pillola scorreva per il nulla, promettendo roba che non
+   c'era. Il tasto scende da 49 a 47 di larghezza - sopra i 44 che servono a
+   un dito, che e' il numero da non toccare; l'altezza non cambia. */
+.nav-item{display:grid;place-items:center;padding:.55rem .64rem;color:var(--ink-faint)}
 /* Da 23 a 27: a 23 px, in mezzo a una strada e con una mano sola, l'icona si
    guarda due volte prima di riconoscerla. */
 .nav-item svg{width:27px;height:27px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -17356,7 +17373,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-18 18:05';
+const VERSIONE_APP='2026-09-18 19:10';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
