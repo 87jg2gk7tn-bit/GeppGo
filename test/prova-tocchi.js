@@ -283,15 +283,25 @@ const stato = { trips: [
   ok('toccandolo si aggiunge la tappa', vuoto.chiamato === true);
   ok('ed è grande abbastanza da non poterlo sbagliare', vuoto.alto >= 44, vuoto.alto + ' px');
 
-  /* ── arrivare al Profilo ──────────────────────────────────────────────
-     Le voci della pillola chiedono più spazio di quanto ce ne sia: su un
-     iPhone da 390 la pillola è larga 361 px. Tolto il Meteo, che adesso si
-     apre dal riquadro del cielo in cima alla home, ne sono rimaste otto — e
-     non bastano ancora: il Profilo resta fuori su OGNI telefono, anche sul più grande
-     — e dentro il Profilo ci sono l'account, la lingua, i ripristini e la
-     scheda del viaggio. La pillola scorreva già, ma non lo diceva a nessuno:
-     scrollbar nascosta, nessun bordo sfumato, e nessuno portava in vista la
-     voce dove sei andato. Stringere le icone non si può, sono già a 44,8. */
+  /* ── arrivare in fondo alla barra ─────────────────────────────────────
+     Le voci della pillola chiedevano più spazio di quanto ce ne fosse: su un
+     iPhone da 390 la pillola è larga 361 px, e con nove voci l'ultima
+     restava fuori su OGNI telefono. La pillola scorreva già, ma non lo
+     diceva a nessuno: scrollbar nascosta, nessun bordo sfumato, e nessuno
+     portava in vista la voce dove sei andato. Stringere le icone non si
+     può, sono già a 44,8.
+     Adesso le voci sono sette — il Meteo si apre dal riquadro del cielo, il
+     Profilo dal cassetto delle tre righine — e su un telefono largo ci
+     stanno TUTTE. Quindi la sfumatura non si pretende sempre: si pretende
+     che dica la verità. C'è dell'altro di là? Allora si sfuma di là. Non
+     c'è? Bordo netto. Prima questa prova diceva «all'avvio l'ombra dice che
+     a destra c'è dell'altro» e basta, e su uno schermo dove ci sta tutto
+     sarebbe diventata rossa pur essendo l'app a comportarsi bene. */
+  /* Se un giorno la barra ci stesse su tutti gli schermi, i controlli qui
+     sotto passerebbero senza guardare niente: la sfumatura non si
+     pretenderebbe da nessuna parte. Si tiene il conto, e alla fine si
+     pretende che almeno uno schermo l'abbia messa alla prova. */
+  let haStrabordato = false;
   for (const largo of [320, 390, 430]) {
     const p2 = await browser.newPage({ viewport: { width: largo, height: 844 } });
     p2.on('pageerror', e => err.push(`PAGEERROR(barra ${largo}): ` + e.message));
@@ -318,40 +328,48 @@ const stato = { trips: [
                  dx: parseFloat(st.getPropertyValue('--dx')) || 0,
                  maschera: (st.maskImage || st.webkitMaskImage || '') };
       };
+      /* L'ultima voce della barra: il Profilo se n'e' andato nel cassetto
+         delle tre righine, e adesso in fondo c'e' Identifica. Quello che si
+         controlla qui non e' QUALE sia, e' che quella in fondo si riesca a
+         vederla. */
+      /* Il fatto da cui dipende tutto il resto: la fila ci sta o no. */
+      const straborda = pista.scrollWidth - pista.clientWidth > 1;
       const allAvvio = {
-        profiloSiVede: dentro('[data-p="trips"]'),
+        ultimaSiVede: dentro('[data-p="identify"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
         ombraSinistra: barra.classList.contains('altro-a-sinistra'),
         sfuma: sfuma(),
         pistaScorre: getComputedStyle(pista).overflowX,
         pillolaNonScorre: getComputedStyle(barra).overflowX
       };
-      go('trips');
+      go('identify');
       await attendi(700);
-      const suProfilo = {
-        profiloSiVede: dentro('[data-p="trips"]'),
+      const inFondo = {
+        ultimaSiVede: dentro('[data-p="identify"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
         ombraSinistra: barra.classList.contains('altro-a-sinistra'),
         sfuma: sfuma()
       };
       go('plan');
       await attendi(700);
-      return { allAvvio, suProfilo, homeSiVede: dentro('[data-p="plan"]') };
+      return { straborda, allAvvio, inFondo, homeSiVede: dentro('[data-p="plan"]') };
     });
 
-    /* Il punto: se vai nel Profilo, il Profilo lo devi vedere. */
-    ok(`a ${largo}px, andando nel Profilo la pillola lo porta in vista`,
-       d.suProfilo.profiloSiVede === true);
+    /* Il punto: se vai sull'ultima voce, quella voce la devi vedere. */
+    ok(`a ${largo}px, andando sull'ultima voce la pillola la porta in vista`,
+       d.inFondo.ultimaSiVede === true);
     ok(`a ${largo}px, e tornando in Home riporta la Home`,
        d.homeSiVede === true);
     /* E l'ombra dice da che parte c'è dell'altro, invece di lasciare
-       un'icona tagliata a metà che sembra un difetto. */
-    ok(`a ${largo}px, all'avvio l'ombra dice che a destra c'è dell'altro`,
-       d.allAvvio.ombraDestra === true && d.allAvvio.ombraSinistra === false,
+       un'icona tagliata a metà che sembra un difetto. Dove ci sta tutto
+       non c'è niente da dire, e l'ombra deve stare zitta: un bordo sfumato
+       su una fila intera è una promessa di roba che non esiste. */
+    ok(`a ${largo}px, all'avvio l'ombra dice la verità${d.straborda ? '' : ' (ci sta tutto)'}`,
+       d.allAvvio.ombraDestra === d.straborda && d.allAvvio.ombraSinistra === false,
        `destra ${d.allAvvio.ombraDestra}, sinistra ${d.allAvvio.ombraSinistra}`);
-    ok(`a ${largo}px, arrivati in fondo l'ombra passa a sinistra`,
-       d.suProfilo.ombraSinistra === true && d.suProfilo.ombraDestra === false,
-       `destra ${d.suProfilo.ombraDestra}, sinistra ${d.suProfilo.ombraSinistra}`);
+    ok(`a ${largo}px, arrivati in fondo l'ombra si ribalta${d.straborda ? '' : ' (ci sta tutto)'}`,
+       d.inFondo.ombraSinistra === d.straborda && d.inFondo.ombraDestra === false,
+       `destra ${d.inFondo.ombraDestra}, sinistra ${d.inFondo.ombraSinistra}`);
     /* Il vetro non si dissolve insieme alle voci: a scorrere e' la pista
        dentro la pillola, non la pillola. Se un giorno qualcuno rimettesse
        l'overflow sulla pillola, la maschera si mangerebbe anche la cornice. */
@@ -362,16 +380,19 @@ const stato = { trips: [
        a destra, arrivati in fondo a sinistra. E' l'unico modo che ha una
        persona per sapere che di la' la fila continua — e per sapere quando e'
        finita. */
-    ok(`a ${largo}px, all'avvio le voci svaniscono a destra e il bordo sinistro è netto`,
-       d.allAvvio.sfuma.dx > 8 && d.allAvvio.sfuma.sx === 0,
+    ok(`a ${largo}px, all'avvio le voci svaniscono dalla parte giusta`,
+       (d.straborda ? d.allAvvio.sfuma.dx > 8 : d.allAvvio.sfuma.dx === 0) && d.allAvvio.sfuma.sx === 0,
        `sinistra ${d.allAvvio.sfuma.sx}px, destra ${d.allAvvio.sfuma.dx}px`);
     ok(`a ${largo}px, in fondo si ribalta`,
-       d.suProfilo.sfuma.sx > 8 && d.suProfilo.sfuma.dx === 0,
-       `sinistra ${d.suProfilo.sfuma.sx}px, destra ${d.suProfilo.sfuma.dx}px`);
+       (d.straborda ? d.inFondo.sfuma.sx > 8 : d.inFondo.sfuma.sx === 0) && d.inFondo.sfuma.dx === 0,
+       `sinistra ${d.inFondo.sfuma.sx}px, destra ${d.inFondo.sfuma.dx}px`);
     ok(`a ${largo}px, ed è una sfumatura, non un taglio netto`,
        /gradient/.test(d.allAvvio.sfuma.maschera), d.allAvvio.sfuma.maschera.slice(0, 60));
+    haStrabordato = haStrabordato || d.straborda;
     await p2.close();
   }
+  ok('e su almeno uno schermo la fila straborda davvero, se no qui sopra non si è provato niente',
+     haStrabordato === true);
 
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;

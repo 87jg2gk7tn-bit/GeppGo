@@ -959,7 +959,9 @@ const oreFinte = (data) => {
   }));
   ok('il meteo non è più una voce della barra in basso',
      !barra.voci.includes('weather'), barra.voci.join(' '));
-  ok('e la barra è scesa a otto voci', barra.voci.length === 8, barra.voci.length + ' voci');
+  /* Sette, non più otto: anche il Profilo se n'è andato dalla barra, in
+     fondo al cassetto delle tre righine. */
+  ok('e la barra è scesa a sette voci', barra.voci.length === 7, barra.voci.length + ' voci');
   ok('la vecchia pagina del meteo non c\'è più', barra.paginaMeteo === false);
   ok('ma il meteo c\'è, nella tendina', barra.tendina === true);
   /* Il pezzo che tiene in piedi il resto: la barra in basso non ha più una

@@ -1411,6 +1411,61 @@ qualcuno che risponde".
   (`prova-tocchi`) che misura i pixel: va provato da solo, non in mezzo ad
   altro. Nel frattempo, **le pagine si riusano**: quello che si può chiedere a
   una pagina già aperta non merita di aprirne un'altra.
+- **Una prova che pretende sempre lo stesso diventa rossa quando l'app
+  migliora.** La barra in basso aveva più voci di quante ne entrassero, e
+  una prova chiedeva «all'avvio l'ombra dice che a destra c'è dell'altro».
+  Tolto il Profilo dalla barra, su un telefono largo ci stanno tutte: nessuna
+  ombra, giustamente — e la prova è diventata rossa con l'app che si
+  comportava bene. Quella prova non descriveva un fatto, descriveva una
+  conseguenza di com'era fatta l'app in quel momento. Adesso misura il fatto
+  («la fila straborda?») e pretende che l'ombra gli dia ragione, in tutti e
+  due i versi. E siccome così su uno schermo largo non proverebbe più niente,
+  c'è una riga in fondo che pretende che **almeno uno schermo** l'abbia messa
+  alla prova: un controllo che può diventare vuoto va sempre accompagnato da
+  uno che se ne accorge.
+- **Una riga che dà per scontato un pezzo dell'interfaccia si porta giù tutto
+  il resto.** `go()` faceva `document.querySelector('[data-p="..."]')
+  .classList.add('active')` senza guardare se quella voce esistesse. Finché
+  ogni pagina aveva la sua voce nella barra andava bene; tolto il Profilo
+  dalla barra, `go('trips')` si fermava su quella riga — e la riga DOPO, che
+  era quella che apriva la pagina, non veniva mai eseguita. Il Profilo
+  sarebbe rimasto irraggiungibile, e l'errore non si vedeva da nessuna parte
+  se non in console. Quando si toglie un pezzo dall'interfaccia, si cerca
+  **chi lo dava per scontato**, non solo chi lo disegnava.
+- **La barra in basso è per i posti dove si va camminando.** Ci stavano nove
+  voci, poi otto, e ogni volta la risposta era «scorre». Ma una barra che
+  scorre è una barra dove metà delle voci non le vede nessuno. Il criterio
+  non è quanto sono importanti le sezioni: è **con che frequenza ci si va, e
+  in che situazione**. Meteo e Profilo erano lì per importanza — e sono le
+  due cose che si aprono da fermi, una ogni tanto. Il Meteo è diventato il
+  riquadro del cielo in cima alla home, il Profilo il fondo del cassetto: da
+  nove voci a sette, e su un telefono largo adesso la barra non scorre più.
+- **⚠️⚠️ DUE COSE COPRONO TUTTO LO SCHERMO, e tutte e due si mangiano i
+  tocchi solo sulla macchina delle prove.** Premere con `elementFromPoint`
+  è l'unico modo di sapere cosa tocca un dito vero — e per lo stesso motivo
+  è l'unico modo di finirci contro. `.click()` e `go()` le attraversano e
+  non se ne accorgono. **Prima di premere qualunque cosa servono tutte e
+  due queste righe**, e questa lezione è costata due giri di CI:
+  1. `skipAuth: true` nello stato salvato. Senza, l'app apre «accedi o crea
+     account» a tutto schermo (`#authGate`). Qui non si vede, perché la
+     libreria di Supabase sta su una CDN che da questa macchina non si
+     raggiunge e il pannello non si apre proprio; in CI la rete c'è.
+  2. `await p.waitForFunction(() => !document.getElementById('bootSplash'))`.
+     La schermata d'avvio è `inset:0` con `z-index:99999` e si toglie da sola
+     sette decimi **dopo l'avvio**. Aspettare `typeof go === 'function'` non
+     è aspettare lei: `go` esiste appena il file è letto, molto prima. In CI
+     i caratteri di Google si scaricano davvero, l'avvio arriva più tardi, e
+     il dito atterra sulla schermata nera.
+  Il punto 1 era già scritto qui sotto e dentro `prova-undo.js`, e ci sono
+  ricascato lo stesso: una lezione scritta in prosa si legge dopo aver
+  sbagliato. Per questo adesso sono **due righe da copiare**, non un
+  racconto.
+- **Un messaggio d'errore che dice il tipo e non il nome fa perdere un giro.**
+  La riga rossa diceva «sotto il dito c'era: DIV» — vero e inutile, perché
+  prendeva `class || tagName` e quel div una classe non ce l'ha. Con l'id il
+  messaggio dice «#bootSplash» e il difetto si legge dalla riga. Quando si
+  scrive il testo di un fallimento si mette **quello che identifica la cosa**,
+  non quello che la descrive.
 
 ---
 
