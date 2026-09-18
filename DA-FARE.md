@@ -1440,17 +1440,26 @@ qualcuno che risponde".
   due cose che si aprono da fermi, una ogni tanto. Il Meteo è diventato il
   riquadro del cielo in cima alla home, il Profilo il fondo del cassetto: da
   nove voci a sette, e su un telefono largo adesso la barra non scorre più.
-- **⚠️ La schermata d'avvio copre tutto, e sulla macchina delle prove se ne va
-  più tardi.** `#bootSplash` è `inset:0` con `z-index:99999` e si toglie da
-  sola sette decimi dopo l'avvio. Una prova che aspetta `typeof go ===
-  'function'` non sta aspettando lei: `go` esiste appena il file è letto,
-  molto prima. Qui la prova era verde perché i caratteri di Google non si
-  scaricano e l'avvio arriva subito; in CI si scaricano davvero, l'avvio
-  arriva più tardi, e **il dito atterrava sulla schermata nera**. Chi preme
-  con `elementFromPoint` aspetta il segnale certo:
-  `waitForFunction(() => !document.getElementById('bootSplash'))`.
-  Chi usa `.click()` o `go()` non se ne accorge, ed è il motivo per cui il
-  difetto è comparso solo adesso.
+- **⚠️⚠️ DUE COSE COPRONO TUTTO LO SCHERMO, e tutte e due si mangiano i
+  tocchi solo sulla macchina delle prove.** Premere con `elementFromPoint`
+  è l'unico modo di sapere cosa tocca un dito vero — e per lo stesso motivo
+  è l'unico modo di finirci contro. `.click()` e `go()` le attraversano e
+  non se ne accorgono. **Prima di premere qualunque cosa servono tutte e
+  due queste righe**, e questa lezione è costata due giri di CI:
+  1. `skipAuth: true` nello stato salvato. Senza, l'app apre «accedi o crea
+     account» a tutto schermo (`#authGate`). Qui non si vede, perché la
+     libreria di Supabase sta su una CDN che da questa macchina non si
+     raggiunge e il pannello non si apre proprio; in CI la rete c'è.
+  2. `await p.waitForFunction(() => !document.getElementById('bootSplash'))`.
+     La schermata d'avvio è `inset:0` con `z-index:99999` e si toglie da sola
+     sette decimi **dopo l'avvio**. Aspettare `typeof go === 'function'` non
+     è aspettare lei: `go` esiste appena il file è letto, molto prima. In CI
+     i caratteri di Google si scaricano davvero, l'avvio arriva più tardi, e
+     il dito atterra sulla schermata nera.
+  Il punto 1 era già scritto qui sotto e dentro `prova-undo.js`, e ci sono
+  ricascato lo stesso: una lezione scritta in prosa si legge dopo aver
+  sbagliato. Per questo adesso sono **due righe da copiare**, non un
+  racconto.
 - **Un messaggio d'errore che dice il tipo e non il nome fa perdere un giro.**
   La riga rossa diceva «sotto il dito c'era: DIV» — vero e inutile, perché
   prendeva `class || tagName` e quel div una classe non ce l'ha. Con l'id il

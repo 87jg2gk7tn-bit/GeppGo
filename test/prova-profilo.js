@@ -1,6 +1,13 @@
 const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
 const fs = require('fs');
-const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',currency:'JPY',status:'open',start:'2026-09-01',end:'2026-09-02',participants:[{id:'p1',name:'Gepp'}],suggested:[],pois:[],expenses:[],tickets:[],hotels:[],weather:{},createdAt:1,days:[{id:'d1',date:new Date().toISOString().split('T')[0],title:'',activities:[]}]}],currentTripId:1730000000001,settings:{proxRadius:200},myName:'Gepp'};
+const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',currency:'JPY',status:'open',start:'2026-09-01',end:'2026-09-02',participants:[{id:'p1',name:'Gepp'}],suggested:[],pois:[],expenses:[],tickets:[],hotels:[],weather:{},createdAt:1,days:[{id:'d1',date:new Date().toISOString().split('T')[0],title:'',activities:[]}]}],currentTripId:1730000000001,settings:{proxRadius:200},myName:'Gepp',
+  /* Senza questo l'app apre il pannello "accedi o crea account" a tutto
+     schermo, e quel pannello si mangia i tocchi. Qui non si vedeva, perche'
+     la libreria di Supabase arriva da una CDN che da questa macchina non si
+     raggiunge e il pannello non si apriva proprio; sul server delle prove la
+     rete c'e', il pannello si apriva, e il dito atterrava su di lui. E' gia'
+     scritto in DA-FARE.md e in prova-undo.js: ci sono ricascato lo stesso. */
+  skipAuth:true};
 (async () => {
   const b = await apriBrowser();
   const p = await b.newPage({ viewport:{width:390,height:844}, deviceScaleFactor:2 });
