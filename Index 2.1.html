@@ -432,6 +432,37 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .locate-fab{position:absolute;right:.6rem;bottom:.6rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1rem;cursor:pointer;box-shadow:var(--sh-sm);z-index:400;display:flex;align-items:center;justify-content:center}
 .locate-fab.on{background:var(--green-tint);color:var(--green-deep);border-color:transparent}
 .locate-fab:active{transform:scale(.92)}
+/* ── il cassetto dei viaggi ───────────────────────────────────────
+   Non una tendina dal basso: un pannello che esce da SINISTRA, alto
+   quanto la pagina, e che rientrando si riassorbe da dove e' venuto.
+   E' il movimento che corrisponde alle tre righine: stanno in alto a
+   sinistra, e quello che aprono arriva da li'. Una tendina dal basso
+   avrebbe detto «un foglio in piu'», che e' un'altra cosa.
+   Non prende tutta la larghezza apposta: la striscia che resta scoperta
+   e' il modo di chiuderlo senza cercare la X. */
+.modal-lato{align-items:stretch;justify-content:flex-start}
+.cassetto{
+  background:var(--surface);
+  width:min(86vw,360px);height:100%;
+  padding:calc(1.3rem + env(safe-area-inset-top)) 1.15rem calc(1.3rem + env(safe-area-inset-bottom));
+  overflow-y:auto;
+  border-radius:0 var(--r-xl) var(--r-xl) 0;
+  box-shadow:var(--sh-lg);
+  transform:translateX(-100%);
+  transition:transform .32s var(--spring);
+}
+.modal-lato.active .cassetto{transform:translateX(0)}
+/* L'intestazione del cassetto: le righine dove stanno sulla pagina, il
+   titolo di fianco. Niente X in fondo - il tasto che l'ha aperto e' lo
+   stesso che lo chiude, e la striscia scoperta a destra pure. */
+.cass-head{display:flex;align-items:center;gap:.5rem}
+.cass-head .sheet-t{flex:1;min-width:0}
+.cass-head .menu-btn{margin-left:-.35rem;margin-right:0}
+/* Chi ha chiesto meno movimento non lo vuole nemmeno qui: il pannello
+   c'e' e non c'e', senza scivolare. */
+@media (prefers-reduced-motion:reduce){
+  .cassetto{transition:none}
+}
 .modal-top{align-items:flex-start}
 .sheet-top{border-radius:0 0 var(--r-xl) var(--r-xl);transform:translateY(-100%)}
 .modal-top.active .sheet-top{transform:translateY(0)}
@@ -2019,8 +2050,17 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <!-- I viaggi aperti, e il tasto per farne uno. Si apre dalle tre righine
      in alto a sinistra: e' l'unico posto da cui si cambia viaggio, e sta
      dove la mano lo cerca. -->
-<div class="modal" id="mViaggi"><div class="sheet">
-  <div class="sheet-head"><div class="sheet-t">I tuoi viaggi</div><button class="x x-close" onclick="closeSheet('mViaggi')">✕</button></div>
+<div class="modal modal-lato" id="mViaggi"><div class="cassetto">
+  <!-- Le righine stanno anche QUI, nello stesso punto in cui stanno sulla
+       pagina: col cassetto fuori, quelle della pagina ci finiscono sotto, e
+       chi le ritocca per richiuderlo toccherebbe il titolo. Sono lo stesso
+       tasto visto da due stati diversi, e chiudono. -->
+  <div class="sheet-head cass-head">
+    <button class="menu-btn x-close" onclick="closeSheet('mViaggi')" title="Chiudi" aria-label="Chiudi i viaggi">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="sheet-t">I tuoi viaggi</div>
+  </div>
   <div class="vg-lista" id="vgLista"></div>
   <button class="btn btn-soft btn-block vg-nuovo" onclick="closeSheet('mViaggi');openNewTrip()">+ Aggiungi viaggio</button>
 </div></div>
@@ -4486,10 +4526,12 @@ const DIZIONARIO_COMPOSTE={
     'Nessuna spesa ancora':'No expenses yet',
     'Niente in time-table, per ora':'Nothing in the timetable yet',
     'È giorno':'It’s daytime','È notte':'It’s night','a {1} sono le {2}':'in {1} it’s {2}','sono le {1}':'it’s {1}','Versione del {1}':'Version of {1}','Cerca la versione più recente':'Check for the latest version','Cerco…':'Checking…','Cerca un posto':'Find a place',
+    'Chiudi':'Close',
+    'Chiudi i viaggi':'Close your trips',
     'Area fumatori':'Smoking area',
     'Bancomat':'Cash machine',
     'Cosa cerchi qui intorno?':'What are you looking for?',
-    'stai guardando questo':'you’re looking at this one',
+    'sei qui':'you’re here',
     'Cosa cerchi':'What are you looking for',
     'I tuoi viaggi':'Your trips',
     '+ Aggiungi viaggio':'+ Add a trip',
@@ -4561,10 +4603,12 @@ const DIZIONARIO_COMPOSTE={
     'Nessuna spesa ancora':'Aún ningún gasto',
     'Niente in time-table, per ora':'Nada en el horario, por ahora',
     'È giorno':'Es de día','È notte':'Es de noche','a {1} sono le {2}':'en {1} son las {2}','sono le {1}':'son las {1}','Versione del {1}':'Versión del {1}','Cerca la versione più recente':'Busca la versión más reciente','Cerco…':'Buscando…','Cerca un posto':'Busca un lugar',
+    'Chiudi':'Cerrar',
+    'Chiudi i viaggi':'Cierra tus viajes',
     'Area fumatori':'Zona de fumadores',
     'Bancomat':'Cajero',
     'Cosa cerchi qui intorno?':'¿Qué buscas por aquí?',
-    'stai guardando questo':'estás viendo este',
+    'sei qui':'estás aquí',
     'Cosa cerchi':'Qué buscas',
     'I tuoi viaggi':'Tus viajes',
     '+ Aggiungi viaggio':'+ Añade un viaje',
@@ -4636,10 +4680,12 @@ const DIZIONARIO_COMPOSTE={
     'Nessuna spesa ancora':'Aucune dépense pour l’instant',
     'Niente in time-table, per ora':'Rien dans le programme, pour l’instant',
     'È giorno':'Il fait jour','È notte':'Il fait nuit','a {1} sono le {2}':'à {1} il est {2}','sono le {1}':'il est {1}','Versione del {1}':'Version du {1}','Cerca la versione più recente':'Cherche la version la plus récente','Cerco…':'Je cherche…','Cerca un posto':'Cherche un lieu',
+    'Chiudi':'Fermer',
+    'Chiudi i viaggi':'Ferme tes voyages',
     'Area fumatori':'Espace fumeurs',
     'Bancomat':'Distributeur',
     'Cosa cerchi qui intorno?':'Tu cherches quoi dans le coin ?',
-    'stai guardando questo':'c’est celui que tu regardes',
+    'sei qui':'tu es ici',
     'Cosa cerchi':'Tu cherches quoi',
     'I tuoi viaggi':'Tes voyages',
     '+ Aggiungi viaggio':'+ Ajoute un voyage',
@@ -4711,10 +4757,12 @@ const DIZIONARIO_COMPOSTE={
     'Nessuna spesa ancora':'Ainda nenhuma despesa',
     'Niente in time-table, per ora':'Nada no horário, por agora',
     'È giorno':'É de dia','È notte':'É de noite','a {1} sono le {2}':'em {1} são {2}','sono le {1}':'são {1}','Versione del {1}':'Versão de {1}','Cerca la versione più recente':'Procura a versão mais recente','Cerco…':'A procurar…','Cerca un posto':'Procura um sítio',
+    'Chiudi':'Fechar',
+    'Chiudi i viaggi':'Fecha as tuas viagens',
     'Area fumatori':'Zona de fumadores',
     'Bancomat':'Multibanco',
     'Cosa cerchi qui intorno?':'O que procuras por aqui?',
-    'stai guardando questo':'estás a ver esta',
+    'sei qui':'estás aqui',
     'Cosa cerchi':'O que procuras',
     'I tuoi viaggi':'As tuas viagens',
     '+ Aggiungi viaggio':'+ Adiciona uma viagem',
@@ -6323,7 +6371,12 @@ function homeSwitchTrip(id){
 /* I viaggi dietro le tre righine. Si disegna all'apertura e non una volta
    per tutte: i viaggi si aggiungono, si concludono e si rinominano, e una
    tendina che racconta quelli di ieri e' peggio che non averla. */
+/* Le tre righine sono un interruttore: se il cassetto e' gia' fuori,
+   ritoccarle lo rimanda dentro. Un tasto che apre e basta costringe a
+   cercare la X per una cosa che si e' aperta per sbaglio. */
 function apriViaggi(){
+  const m=document.getElementById('mViaggi');
+  if(m&&m.classList.contains('active')){closeSheet(m);return;}
   const box=document.getElementById('vgLista');
   const aperti=app.trips.filter(x=>x.status!=='closed');
   if(box)box.innerHTML=aperti.length?aperti.map(x=>{
@@ -6332,7 +6385,7 @@ function apriViaggi(){
                 (x.start&&x.end)?fmtRange(x.start,x.end):''].filter(Boolean).join(' · ');
     return `<button class="vg-voce${qui?' qui':''}" onclick="scegliViaggio(${x.id})">
       <span class="vg-txt"><b>${esc(x.name||'')}</b>${dove?`<i>${esc(dove)}</i>`:''}</span>
-      ${qui?`<span class="vg-qui">${esc(tv('stai guardando questo'))}</span>`:'<span class="cerca-freccia">›</span>'}
+      ${qui?`<span class="vg-qui">${esc(tv('sei qui'))}</span>`:'<span class="cerca-freccia">›</span>'}
     </button>`;
   }).join(''):`<div class="empty" style="padding:1.2rem 0"><div class="empty-t">${esc(tv('Nessun viaggio in corso'))}</div></div>`;
   openSheet('mViaggi');
@@ -17231,7 +17284,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-18 15:55';
+const VERSIONE_APP='2026-09-18 16:56';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
