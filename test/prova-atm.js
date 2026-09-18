@@ -57,33 +57,47 @@ const stato = {
     });
     return { chiavi: Object.keys(VICINI), mancanti };
   });
-  ok('c\'è la voce atm accanto a bagno e fumo', forma.chiavi.join(',') === 'bagno,fumo,atm', forma.chiavi.join(','));
+  /* Adesso le ricerche sono sei e l'ordine della tabella non e' quello in
+     cui compaiono a schermo: quello lo decide il foglio «Cosa cerchi», e
+     si controlla li' sotto. Qui basta che la voce ci sia. */
+  ok('c\'è la voce atm insieme alle altre ricerche',
+     forma.chiavi.indexOf('atm') >= 0 && forma.chiavi.length >= 6, forma.chiavi.join(','));
   ok('e nessuna delle tre ha campi mancanti', Object.values(forma.mancanti).every(x => x.length === 0), JSON.stringify(forma.mancanti));
 
-  // ── il tasto in Home ─────────────────────────────────────────────────
-  const tasto = await page.evaluate(() => {
-    const b = [...document.querySelectorAll('.hh-act')].find(x => /Bancomat/.test(x.textContent));
+  // ── dove si arriva al Bancomat ───────────────────────────────────────
+  /* In home non c'e' piu' una pillola per ricerca: c'era una fila di sei
+     tasti con l'emoji davanti, e cinque di quei sei facevano la stessa
+     identica cosa - cercare qualcosa qui intorno. Adesso c'e' un tasto
+     solo che chiede «cosa cerchi», e le sei risposte stanno dentro. */
+  const porta = await page.evaluate(() => {
+    const b = document.querySelector('#homeHero .hh-cerca');
     return b ? { testo: b.textContent.trim(), onclick: b.getAttribute('onclick') } : null;
   });
-  ok('il tasto Bancomat c\'è in Home', !!tasto, tasto ? tasto.testo : 'non trovato');
-  ok('e chiama la ricerca giusta', tasto && tasto.onclick === 'cercaAtm()', tasto ? tasto.onclick : '');
+  ok('in home c\'è il tasto che chiede cosa cerchi', !!porta, porta ? porta.testo : 'non trovato');
+  ok('e apre l\'elenco', porta && porta.onclick === 'apriCerca()', porta ? porta.onclick : '');
 
-  // sta in fila con le altre due ricerche di cosa c'è qui intorno
-  const fila = await page.evaluate(() =>
-    [...document.querySelectorAll('.hh-acts .hh-act')].map(x => x.textContent.trim()));
-  const iFumo = fila.findIndex(x => /Area fumatori/.test(x));
-  const iAtm = fila.findIndex(x => /Bancomat/.test(x));
-  ok('viene subito dopo "Area fumatori", con le altre ricerche', iFumo >= 0 && iAtm === iFumo + 1, fila.join(' | '));
-
-  // com'è la home con il tasto al suo posto (aspettando che lo splash se ne vada)
-  await page.waitForFunction(() => {
-    const b = [...document.querySelectorAll('.hh-acts .hh-act')].find(x => /Bancomat/.test(x.textContent));
-    if (!b) return false;
-    const r = b.getBoundingClientRect();
-    return r.width > 0 && r.height > 0 && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-  }, { timeout: 15000 });
-  await page.waitForTimeout(400);
+  const fila = await page.evaluate(async () => {
+    apriCerca();
+    await new Promise(r2 => setTimeout(r2, 500));
+    return [...document.querySelectorAll('#mCerca .cerca-voce')].map(x => ({
+      testo: (x.querySelector('b') || {}).textContent || '',
+      onclick: x.getAttribute('onclick') || ''
+    }));
+  });
+  const iAtm = fila.findIndex(x => /Bancomat/.test(x.testo));
+  ok('il Bancomat è nell\'elenco', iAtm >= 0, fila.map(x => x.testo).join(' | '));
+  ok('e chiama la ricerca giusta', iAtm >= 0 && /cercaAtm\(\)/.test(fila[iAtm].onclick),
+     iAtm >= 0 ? fila[iAtm].onclick : '');
+  /* L'ordine e' quello con cui le cose servono in viaggio: prima come ci
+     si muove, poi i bisogni. Il bancomat sta in fondo perche' e' l'unico
+     che si puo' risolvere anche in un altro modo. */
+  ok('l\'elenco parte dai trasporti e finisce col bancomat',
+     fila.map(x => x.testo).join('|') === ['Stazione dei treni', 'Metropolitana', 'Fermata del bus',
+       'Bagno pubblico', 'Area fumatori', 'Bancomat'].join('|'),
+     fila.map(x => x.testo).join(' | '));
   await page.screenshot({ path: `${OUT}/atm-home.png` });
+  await page.evaluate(() => closeSheet('mCerca'));
+  await page.waitForTimeout(400);
 
   // ── la ricerca vera ──────────────────────────────────────────────────
   await page.evaluate(() => cercaAtm());

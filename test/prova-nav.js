@@ -184,7 +184,7 @@ const viaggio = (activities, travelMode) => ({
     const trova = sel => [...document.querySelectorAll(sel)].find(x => /Naviga la giornata/.test(x.textContent));
     /* Non e' piu' una .chip in fila con altre tre: e' uno dei due tasti
         che si usano camminando, e si chiama .tt-az. */
-    const h = trova('.hh-acts .hh-act'), tt = trova('#mDay .tt-az');
+    const h = trova('#homeHero button'), tt = trova('#mDay .tt-az');
     return { home: h ? h.getAttribute('onclick') : null, tt: tt ? tt.getAttribute('onclick') : null };
   });
   ok('il tasto sta nella time-table', tasti.tt === 'navigaGiornata()', String(tasti.tt));

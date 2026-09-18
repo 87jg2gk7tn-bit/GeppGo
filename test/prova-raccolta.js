@@ -84,25 +84,38 @@ const stato = {
   });
 
   // ── il tasto: chi lo vede e chi no ──────────────────────────────────────
+  /* Il tasto non e' piu' in home: sta nella scheda del viaggio, insieme
+     alle altre cose che si fanno una volta per viaggio. La home era
+     diventata una fila di sei pillole, e «A raccolta» la vede solo chi
+     organizza un viaggio di gruppo - cioe' quasi nessuno, quasi mai. Si
+     apre e si richiude la scheda a ogni controllo, perche' e' li' che il
+     tasto adesso vive. */
   const tasto = await page.evaluate(() => {
-    const c = () => !!document.querySelector('#homeHero .hh-act-forte');
+    const c = () => {
+      openTripZoom(T().id);
+      const v = !!document.querySelector('#mTripZoom .pill-forte');
+      closeSheet('mTripZoom');
+      return v;
+    };
     const fatti = {};
     fatti.daAdmin = c();
     // da non-admin sparisce
-    const t = T(); t._admin = false; renderHomeHero(); fatti.daCompagno = c();
+    const t = T(); t._admin = false; fatti.daCompagno = c();
     t._admin = true;
     // da soli non ha senso: non c'è nessuno da chiamare
-    const soli = t.participants.slice(1); const tutti = t.participants;
-    t.participants = [tutti[0]]; renderHomeHero(); fatti.daSolo = c();
+    const tutti = t.participants;
+    t.participants = [tutti[0]]; fatti.daSolo = c();
     t.participants = tutti;
     // e un viaggio mai andato nel cloud non ha modo di avvisare nessuno
-    const cid = t.cid; t.cid = null; renderHomeHero(); fatti.senzaCloud = c();
-    t.cid = cid; renderHomeHero();
+    const cid = t.cid; t.cid = null; fatti.senzaCloud = c();
+    t.cid = cid;
     fatti.tornato = c();
-    fatti.testo = (document.querySelector('#homeHero .hh-act-forte') || {}).textContent || '';
+    openTripZoom(t.id);
+    fatti.testo = (document.querySelector('#mTripZoom .pill-forte') || {}).textContent || '';
+    closeSheet('mTripZoom');
     return fatti;
   });
-  ok('chi organizza vede il tasto in home', tasto.daAdmin === true);
+  ok('chi organizza vede il tasto nella scheda del viaggio', tasto.daAdmin === true);
   ok('e si chiama "A raccolta"', /A raccolta/.test(tasto.testo), tasto.testo);
   ok('un compagno che non è admin non lo vede', tasto.daCompagno === false);
   ok('in un viaggio da soli non compare', tasto.daSolo === false);
