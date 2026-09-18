@@ -151,17 +151,15 @@ const oreFinte = (data) => {
      e allora le sfumature sono spente tutte e due: la prova dice «0px,
      0px» senza che niente sia rotto. Su un runner lento è successo
      davvero, e su un altro identico no. */
-  await page.waitForFunction(() => {
-    const f = document.querySelector('.hh-trips');
-    return f && f.scrollWidth - f.clientWidth > 1;
-  }, { timeout: 8000 }).catch(() => {});
+  /* I NOMI DEI VIAGGI NON SONO PIÙ QUI, e questo blocco l'ho riscritto
+     invece di aggirarlo. C'era una fila di pillole scorrevoli con le
+     sfumature ai bordi, il "+" in coda e la temperatura all'altro capo:
+     una riga intera, quarantaquattro pixel più i margini, per una cosa
+     che si fa una volta ogni tanto. A pagarla era la mappa, che restava
+     sotto la piega. Adesso i viaggi stanno dietro le tre righine in alto
+     a sinistra, e in cima alla home resta la sola temperatura. */
   const riga = await page.evaluate(() => {
-    const barra = document.querySelector('.hh-tripbar');
-    const fila = document.querySelector('.hh-trips');
-    const piu = document.querySelector('.hh-trip-add');
     const grado = document.querySelector('.hh-grado');
-    const b = x => x ? x.getBoundingClientRect() : null;
-    const rb = b(barra), rf = b(fila), rp = b(piu), rg = b(grado);
     const st = grado ? getComputedStyle(grado) : null;
     return {
       gradoCè: !!grado, tag: grado && grado.tagName, testo: grado && grado.textContent.trim(),
@@ -170,19 +168,16 @@ const oreFinte = (data) => {
       senzaScatola: !!st && st.borderTopWidth === '0px' &&
                     (st.backgroundImage === 'none') &&
                     /rgba\(0, 0, 0, 0\)|transparent/.test(st.backgroundColor),
-      piuCè: !!piu,
-      piuDentroLoScorrevole: !!(piu && fila && fila.contains(piu)),
-      piuDopoINomi: !!(rp && rf && rp.left >= rf.right - 1),
-      piuPrimaDelGrado: !!(rp && rg && rp.right <= rg.left + 1),
-      /* Il "+" deve restare attaccato ai nomi, non finire all'altro capo:
-         è l'ultima cosa della lista, non un tasto per conto suo. */
-      piuAttaccatoAiNomi: !!(rp && rf && rp.left - rf.right < 24),
-      gradoAlBordo: !!(rg && rb && Math.abs(rg.right - rb.right) < 2),
-      quantiViaggi: document.querySelectorAll('.hh-trip').length,
-      filaScorre: getComputedStyle(fila).overflowX,
-      maschera: getComputedStyle(fila).maskImage || getComputedStyle(fila).webkitMaskImage || '',
-      vsx: parseFloat(getComputedStyle(fila).getPropertyValue('--vsx')) || 0,
-      vdx: parseFloat(getComputedStyle(fila).getPropertyValue('--vdx')) || 0
+      /* Le pillole non devono tornare: erano la riga che costava la mappa. */
+      nienteFila: !document.querySelector('#homeHero .hh-trip, #homeHero .hh-trips'),
+      menuCè: !!document.querySelector('#menuViaggi'),
+      menuASinistra: (() => {
+        const m = document.getElementById('menuViaggi');
+        if (!m) return false;
+        const r = m.getBoundingClientRect();
+        const b = document.querySelector('.brand');
+        return r.left < 20 && (!b || r.right <= b.getBoundingClientRect().left + 1);
+      })()
     };
   });
   ok('la temperatura c\'è, in cima alla home', riga.gradoCè === true);
@@ -192,37 +187,43 @@ const oreFinte = (data) => {
      sul cielo come ci sta il titolo. */
   ok('e non è dentro un riquadro: niente bordo, niente fondo', riga.senzaScatola === true);
   ok('il riquadro di prima non c\'è più', riga.niente_riquadro === true);
-  ok('il "+" c\'è ancora', riga.piuCè === true);
-  ok('il "+" sta subito dopo i nomi dei viaggi', riga.piuDopoINomi === true);
-  ok('e gli resta attaccato, invece di finire all\'altro capo della riga',
-     riga.piuAttaccatoAiNomi === true);
-  ok('e prima della temperatura', riga.piuPrimaDelGrado === true);
-  /* Resta fuori dallo scorrevole apposta: se scorresse coi nomi, con tre
-     viaggi in lista non lo vedresti mai. */
-  ok('il "+" non scorre insieme ai nomi', riga.piuDentroLoScorrevole === false);
-  ok('con tre viaggi in lista si vede lo stesso', riga.quantiViaggi === 3, riga.quantiViaggi + ' viaggi');
-  ok('la temperatura sta all\'altro capo della riga', riga.gradoAlBordo === true);
-  /* I nomi si tagliavano di netto: un nome mozzato sembra un difetto, un
-     nome che sfuma dice «scorri». */
-  ok('i nomi scorrono', riga.filaScorre === 'auto', riga.filaScorre);
-  ok('e dove la fila continua svaniscono, invece di essere tagliati',
-     riga.vdx > 8 && riga.vsx === 0, `sinistra ${riga.vsx}px, destra ${riga.vdx}px`);
-  ok('ed è una sfumatura, non un taglio', /gradient/.test(riga.maschera), riga.maschera.slice(0, 40));
-  /* Si chiama a mano chi decide le sfumature, invece di lanciare un evento
-     e sperare che qualcuno lo raccolga entro un decimo di secondo:
-     l'aspettare era metà del ballo. */
-  const inFondo = await page.evaluate(() => {
-    const fila = document.querySelector('.hh-trips');
-    const resta = fila.scrollWidth - fila.clientWidth;
-    fila.scrollLeft = resta;
-    viaggiBordi();
-    const st = getComputedStyle(fila);
-    return { sx: parseFloat(st.getPropertyValue('--vsx')) || 0,
-             dx: parseFloat(st.getPropertyValue('--vdx')) || 0,
-             sborda: Math.round(resta), fermaA: Math.round(fila.scrollLeft) };
+  ok('la fila dei nomi dei viaggi non è più in home', riga.nienteFila === true);
+  ok('e al suo posto ci sono le tre righine, in alto a sinistra',
+     riga.menuCè === true && riga.menuASinistra === true);
+
+  /* La tendina: tutti i viaggi in corso, quello che stai guardando
+     segnato, e il modo di farne uno nuovo. Se mancasse una delle tre
+     cose, dei viaggi non si saprebbe più come uscire. */
+  const tendina = await page.evaluate(async () => {
+    document.getElementById('menuViaggi').click();
+    await new Promise(r2 => setTimeout(r2, 500));
+    const m = document.getElementById('mViaggi');
+    const voci = [...document.querySelectorAll('#vgLista .vg-voce')];
+    return {
+      aperta: !!m && m.classList.contains('active'),
+      quanti: voci.length,
+      nomi: voci.map(x => (x.querySelector('b') || {}).textContent || ''),
+      segnati: voci.filter(x => x.classList.contains('qui')).length,
+      nuovo: !!document.querySelector('#mViaggi .vg-nuovo')
+    };
   });
-  ok('arrivati in fondo la sfumatura si ribalta', inFondo.sx > 8 && inFondo.dx === 0,
-     `sinistra ${inFondo.sx}px, destra ${inFondo.dx}px · la fila sborda di ${inFondo.sborda}px, ferma a ${inFondo.fermaA}px`);
+  ok('le tre righine aprono i viaggi', tendina.aperta === true);
+  ok('e ci sono tutti e tre', tendina.quanti === 3, tendina.quanti + ': ' + tendina.nomi.join(' | '));
+  ok('quello che stai guardando è segnato, uno solo', tendina.segnati === 1, tendina.segnati + ' segnati');
+  ok('e da lì si aggiunge un viaggio', tendina.nuovo === true);
+  /* Toccare un viaggio deve cambiare viaggio davvero, non solo chiudere
+     la tendina: e' l'unica strada rimasta per passare da uno all'altro. */
+  const cambiato = await page.evaluate(async () => {
+    const altro = [...document.querySelectorAll('#vgLista .vg-voce')].find(x => !x.classList.contains('qui'));
+    if (!altro) return null;
+    altro.click();
+    await new Promise(r2 => setTimeout(r2, 600));
+    return { id: T().id, chiusa: !document.getElementById('mViaggi').classList.contains('active') };
+  });
+  ok('toccandone uno si cambia viaggio', !!cambiato && cambiato.id !== 1, cambiato ? 'viaggio ' + cambiato.id : 'nessuna voce');
+  ok('e la tendina si chiude', !!cambiato && cambiato.chiusa === true);
+  await page.close();
+  page = await apri(stato({ [oggi]: wx(0, 24, 14, 0) }));
 
   // ══ il cielo È lo sfondo, non un'immagine appoggiata sopra ═══════════
   const sfondo = await page.evaluate(([luce]) => {
@@ -267,22 +268,26 @@ const oreFinte = (data) => {
   const astro = await page.evaluate(() => {
     const velo = document.querySelector('.hh-velo');
     const sole = document.querySelector('.hh-velo .cl-astro');
-    const chip = document.querySelector('.hh-trip'), grado = document.querySelector('.hh-grado');
+    const grado = document.querySelector('.hh-grado');
+    const occhiello = document.querySelector('.hh-eyebrow');
     if (!velo || !sole) return { cè: false };
     const v = velo.getBoundingClientRect(), s2 = sole.getBoundingClientRect();
-    const c = chip && chip.getBoundingClientRect(), g = grado && grado.getBoundingClientRect();
+    const o = occhiello && occhiello.getBoundingClientRect(), g = grado && grado.getBoundingClientRect();
     return {
       cè: true,
       ariaSopra: Math.round(s2.top - v.top),
-      ariaSotto: c ? Math.round(c.top - s2.bottom) : null,
+      /* Le pillole dei viaggi non ci sono più: sotto il sole adesso c'è
+         l'occhiello col nome del viaggio, ed è quello a non doversi
+         prendere il sole in faccia. */
+      ariaSotto: o ? Math.round(o.top - s2.bottom) : null,
       distanzaGrado: g ? Math.round(g.left - s2.right) : null,
       largo: Math.round(s2.width)
     };
   });
   ok('il sole sta tutto dentro, non a cavallo della linea in alto',
      astro.cè === true && astro.ariaSopra >= 4, astro.ariaSopra + 'px d\'aria sopra');
-  ok('e non finisce addosso ai nomi dei viaggi',
-     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px prima delle pillole');
+  ok('e non finisce addosso al nome del viaggio',
+     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px prima dell\'occhiello');
   ok('né addosso alla temperatura',
      astro.distanzaGrado !== null && astro.distanzaGrado >= 12,
      astro.distanzaGrado + 'px dalla temperatura');
@@ -295,7 +300,9 @@ const oreFinte = (data) => {
   page = await apri(stato({ [oggi]: wx(63, 13, 8, 4) }));
   const pioggia = await page.evaluate(([luce]) => {
     const hh = document.querySelector('.hh');
-    const chip = document.querySelector('.hh-trip:not(.on)');
+    /* Le pillole dei viaggi non ci sono più: quello che sta sul cielo e
+       deve restare leggibile adesso è il tasto della ricerca. */
+    const sopra = document.querySelector('#homeHero .hh-cerca');
     return { classi: hh.className, luce: eval(luce)(hh),
              gocce: document.querySelectorAll('.hh-velo .cl-g').length,
              /* La pioggia vera non ha due gocce uguali. Se lunghezze,
@@ -308,7 +315,7 @@ const oreFinte = (data) => {
              altezze: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).height)),
              opacita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).opacity)),
              sole: !!document.querySelector('.hh-velo .cl-astro'),
-             inchiostroChip: getComputedStyle(chip).color };
+             inchiostroSopra: sopra ? getComputedStyle(sopra).color : '' };
   }, [LUCE]);
   ok('con la pioggia il cielo è di pioggia', /c-pioggia/.test(pioggia.classi), pioggia.classi);
   /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
@@ -373,9 +380,9 @@ const oreFinte = (data) => {
      `notte ${tavolozza.serenoNotte}, giorno ${tavolozza.sereno}`);
   /* Se il cielo in alto si fa scuro, quello che ci sta sopra deve
      schiarirsi: inchiostro tenue su un temporale non si legge più. */
-  ok('e i nomi dei viaggi passano all\'inchiostro chiaro',
-     /cl-buio/.test(pioggia.classi) && /255, 255, 255/.test(pioggia.inchiostroChip),
-     pioggia.inchiostroChip);
+  ok('e quello che ci sta sopra passa all\'inchiostro chiaro',
+     /cl-buio/.test(pioggia.classi) && /255, 255, 255/.test(pioggia.inchiostroSopra),
+     pioggia.inchiostroSopra);
   await page.close();
 
   /* QUANTA pioggia si vede dipende da quanta ne cade, e non a due gradini:
@@ -524,27 +531,26 @@ const oreFinte = (data) => {
     closeSheet('mMeteo'); await attendi(500);
     /* Lo spazio fra il "+" e la temperatura non è un buco: è ancora la
        striscia del meteo, e toccandolo si apre. */
-    const barra = document.querySelector('.hh-tripbar'),
-          piu = document.querySelector('.hh-trip-add'), g = document.querySelector('.hh-grado');
-    const bp = piu.getBoundingClientRect(), bg = g.getBoundingClientRect(), bb = barra.getBoundingClientRect();
-    out.cèSpazio = bg.left - bp.right > 6;
-    const e = document.elementFromPoint((bp.right + bg.left) / 2, bb.top + bb.height / 2);
-    if (e) e.click();
-    await attendi(400); out.colVuoto = aperta();
+    /* La striscia dei nomi non c'è più, e con lei lo spazio vuoto che si
+       poteva toccare: resta la temperatura, e la sua riga. */
+    const riga = document.querySelector('.hh-grado-solo');
+    out.cèRiga = !!riga;
+    if (riga) {
+      const br = riga.getBoundingClientRect();
+      const e = document.elementFromPoint(br.left + 12, br.top + br.height / 2);
+      if (e) e.click();
+      await attendi(400);
+    }
+    out.colVuoto = aperta();
     closeSheet('mMeteo'); await attendi(500);
-    /* E toccando un nome si cambia viaggio, non si apre il meteo. */
-    const altro = [...document.querySelectorAll('.hh-trip')].find(x => !x.classList.contains('on'));
-    tocca(altro); await attendi(500);
-    out.colNome = aperta();
-    out.viaggioCambiato = T().id !== 1;
     return out;
   });
   ok('toccando la temperatura si apre il meteo', apertura.colGrado === true);
-  ok('fra il "+" e la temperatura c\'è dello spazio', apertura.cèSpazio === true);
-  ok('e toccando quello spazio si apre lo stesso', apertura.colVuoto === true);
-  ok('mentre toccando un nome di viaggio si cambia viaggio, non si apre il meteo',
-     apertura.colNome === false && apertura.viaggioCambiato === true,
-     `aperto ${apertura.colNome}, cambiato ${apertura.viaggioCambiato}`);
+  ok('la temperatura ha una riga sua', apertura.cèRiga === true);
+  ok('e toccandola di fianco si apre lo stesso', apertura.colVuoto === true);
+  /* Il controllo «toccando un nome si cambia viaggio, non si apre il
+     meteo» non ha più un soggetto: in cima i nomi non ci sono. Che
+     toccarne uno cambi viaggio lo prova adesso la tendina, qui sopra. */
   await page.close();
 
 
@@ -889,11 +895,11 @@ const oreFinte = (data) => {
      non ci si arriverebbe più da nessuna parte. */
   const porta = await page.evaluate(() => ({
     grado: !!document.querySelector('.hh-grado[onclick*="apriMeteo"]'),
-    striscia: !!document.querySelector('.hh-tripbar[onclick*="meteoDaBarra"]')
+    striscia: !!document.querySelector('.hh-grado-solo[onclick*="apriMeteo"]')
   }));
-  ok('e la porta per arrivarci è in cima alla home, sulla striscia del cielo',
+  ok('e la porta per arrivarci è in cima alla home, sul cielo',
      porta.grado === true && porta.striscia === true,
-     `temperatura ${porta.grado}, striscia ${porta.striscia}`);
+     `temperatura ${porta.grado}, riga ${porta.striscia}`);
   await page.close();
 
   await browser.close();

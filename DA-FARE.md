@@ -863,6 +863,21 @@ qualcuno che risponde".
   ci passa tutto da `adessoNelPosto(w)`. **Ogni volta che si mette insieme
   un'ora del telefono e un dato di un altro posto, ci si ferma e si guarda
   di che fuso è ciascuno.**
+- **Cinque tasti che fanno la stessa cosa sono UNA cosa travestita da
+  cinque.** La home aveva sei pillole con l'emoji davanti, su due righe:
+  Bagno, Area fumatori, Bancomat, Bagagli, Condividi, A raccolta. Cinque
+  di quelle sei erano la stessa mossa — *cerca qualcosa qui intorno* — e
+  messe in fila diventavano un muro da leggere tutto prima di capire che
+  nessuna serviva adesso. Adesso c'è **un tasto che fa la domanda**,
+  «Cosa cerchi qui intorno?», e la scelta arriva dopo. Quando in una
+  schermata compaiono più di tre azioni della stessa famiglia, la domanda
+  non è quale togliere: è **qual è la domanda che le contiene tutte.**
+- **Una fila che non si usa ogni giorno costa la piega dello schermo.**
+  I nomi dei viaggi stavano in cima alla home: una riga intera, 44 px più
+  i margini, per una cosa che si fa una volta ogni tanto — e a pagarla era
+  la mappa, che restava tagliata dalla barra in fondo. Sono andati dietro
+  le tre righine in alto a sinistra. **Quello che si usa di rado va messo
+  dove si cerca quando serve, non dove si vede sempre.**
 - **⚠️⚠️ Un ripiego può essere il difetto peggiore di tutti.** Quando la
   previsione non portava il fuso — e non lo portava su nessuno dei
   telefoni che avevano già l'app — l'ora del posto ripiegava

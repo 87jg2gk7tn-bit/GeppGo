@@ -19,7 +19,7 @@ const { apriBrowser, APP } = require('./browser');
 
 /* Le classi che si toccano più spesso in tutta l'app. Non è un elenco
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
-const CLASSI = ['nav-item', 'hh-act', 'hh-day', 'hh-trip', 'hh-trip-add', 'hh-add', 'hh-grado',
+const CLASSI = ['nav-item', 'hh-cerca', 'menu-btn', 'hh-day', 'hh-add', 'hh-grado',
   'tt-az', 'tt-costruisci',
                 'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'th-btn', 'ad-x'];
 
@@ -223,13 +223,19 @@ const stato = { trips: [
   await page.evaluate(() => go('plan'));
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 400)));
   const aspetto = await page.evaluate(() => {
-    const a = document.querySelector('.hh-act'), n = document.querySelector('.nav-item');
+    const a = document.querySelector('.hh-cerca'), n = document.querySelector('.nav-item');
     return { scorciatoia: Math.round(a.getBoundingClientRect().height),
              barra: Math.round(n.getBoundingClientRect().height),
              icona: Math.round(document.querySelector('.nav-item svg').getBoundingClientRect().width) };
   });
-  ok('le scorciatoie della home restano piccole a vedersi, come sono sempre state',
-     aspetto.scorciatoia < 34, aspetto.scorciatoia + ' px');
+  /* QUESTO CONTROLLO DESCRIVEVA LE PILLOLE DI PRIMA e andava cambiato,
+     non aggirato. Diceva «le scorciatoie restano piccole»: erano sei
+     pillole in fila, e piccole dovevano stare per entrarci tutte. Adesso
+     e' un tasto solo, largo quanto la riga, e deve essere comodo da
+     premere come tutto il resto - il minimo dei 44 px lo controlla la
+     riga qui sopra. Qui resta l'altra meta': che non si mangi lo schermo. */
+  ok('il tasto della ricerca è comodo ma non ingombrante',
+     aspetto.scorciatoia >= 44 && aspetto.scorciatoia <= 56, aspetto.scorciatoia + ' px');
   ok('le icone della barra invece si vedono, senza gonfiare la pillola',
      aspetto.icona >= 26 && aspetto.barra >= 44 && aspetto.barra <= 52,
      'icona ' + aspetto.icona + ' px, tasto ' + aspetto.barra + ' px');

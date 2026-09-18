@@ -11,18 +11,18 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   await p.route('**/tile.openstreetmap.org/**', r=>r.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
   await p.addInitScript(s=>localStorage.setItem('geppgo2',JSON.stringify(s)), stato);
   await p.goto(APP,{waitUntil:'domcontentloaded'});
-  await p.waitForFunction(()=>document.querySelector('.hh-acts'),{timeout:15000});
+  await p.waitForFunction(()=>document.querySelector('.hh-cerca'),{timeout:15000});
   await p.waitForTimeout(1200);
 
   const r=[]; const ok=(n,c,e='')=>r.push(`${c?'  OK  ':' FALLITO '} ${n}${e?' — '+e:''}`);
 
-  const home = await p.evaluate(()=>[...document.querySelectorAll('.hh-acts .hh-act')].map(x=>x.textContent.trim()));
-  // Cinque perché questo è un viaggio da soli e non condiviso: chi organizza
-  // un viaggio di gruppo ne vede un sesto, "📣 A raccolta", ed è giusto così
-  // (lo prova prova-raccolta.js). Qui si tiene ferma la home di tutti gli altri.
-  ok('in home restano cinque tasti, in un viaggio da soli', home.length===5, home.length+': '+home.join(' | '));
-  ok('e sono nell\'ordine giusto',
-     home.join('|')==='🚻 Bagno vicino|🚬 Area fumatori|🏧 Bancomat|🎒 Bagagli|Condividi', home.join(' | '));
+  /* Erano cinque pillole in fila (sei per chi organizza un viaggio di
+     gruppo). Adesso e' UN tasto solo: le cinque ricerche stanno dietro la
+     domanda «cosa cerchi», e Condividi, Bagagli e A raccolta si usano una
+     volta per viaggio e vivono nel Profilo. */
+  const home = await p.evaluate(()=>[...document.querySelectorAll('#homeHero .hh-cerca')].map(x=>x.textContent.trim()));
+  ok('in home c\'è un tasto solo, non una fila di pillole', home.length===1, home.length+': '+home.join(' | '));
+  ok('e chiede cosa cerchi', /[Cc]osa cerchi/.test(home[0]||''), home[0]||'');
   const via=['Concludi','Rinomina','Giorni','Persone','Consigli','Salvato','Naviga la giornata','concludere'];
   via.forEach(v=>ok(`"${v}" non è più in home`, !home.some(x=>new RegExp(v,'i').test(x))));
 

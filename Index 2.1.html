@@ -257,6 +257,17 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .scan-line{position:absolute;left:6%;right:6%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 10px var(--green);animation:scan 2s linear infinite}
 @keyframes scan{0%{top:8%}50%{top:92%}100%{top:8%}}
 .hist-card{display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--line-soft);box-shadow:var(--sh-xs);margin-bottom:.7rem;cursor:pointer;transition:var(--ease)}
+/* Il quadrettino del condividi sulla riga del viaggio. Tocco suo, non
+   della riga: la riga apre la scheda, lui apre il pannello di condivisione. */
+.hist-share{
+  flex-shrink:0;width:36px;height:36px;display:grid;place-items:center;
+  border-radius:var(--r-md);border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;
+  transition:var(--ease);
+}
+.hist-share svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hist-share:active{transform:scale(.92)}
+.pill-forte{background:var(--grad-clay);color:#fff;border-color:transparent}
 .hist-card:active{transform:scale(.98)}
 .hist-ic{width:46px;height:46px;border-radius:var(--r-md);background:var(--grad-warm);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
 .hist-body{flex:1;min-width:0}
@@ -1383,6 +1394,57 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 /* ── scorciatoie del viaggio, sotto al titolo in home ──────────────
    Vanno a capo invece di scorrere: sono poche e vanno viste tutte,
    erano introvabili quando stavano solo dentro la scheda del viaggio. */
+/* ── le tre righine, il tasto della ricerca, la tendina dei viaggi ──
+   Meno oggetti, piu' aria. La home aveva sei pillole con l'emoji davanti
+   su due righe: tolte, resta un tasto solo che fa una domanda. */
+.menu-btn{
+  /* 44x44, che e' il minimo sotto cui un tasto si sbaglia a premere. Il
+     disegno dentro resta di venti pixel: e' l'area a crescere, non l'icona. */
+  flex-shrink:0;width:44px;height:44px;margin-right:-.2rem;margin-left:-.35rem;
+  display:grid;place-items:center;border-radius:var(--r-md);
+  background:none;border:none;cursor:pointer;color:var(--ink);
+  transition:var(--ease);
+}
+.menu-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.menu-btn:active{transform:scale(.92);background:var(--line-soft)}
+
+/* Il tasto della ricerca non e' una pillola fra tante: e' una riga larga
+   quanto il testo sopra, che si legge come una domanda. */
+.hh-cerca{
+  position:relative;display:flex;align-items:center;gap:.5rem;width:100%;
+  margin-top:1rem;padding:.85rem .9rem;min-height:44px;
+  border-radius:var(--r-lg);border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-soft);
+  font-family:inherit;font-size:.9rem;text-align:left;cursor:pointer;
+  box-shadow:var(--sh-xs);transition:var(--ease);
+}
+.hh-cerca svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.6}
+.hh-cerca:active{transform:scale(.99)}
+.hh.cl-buio .hh-cerca{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.hh.cl-buio .hh-cerca svg{opacity:.85}
+
+/* La temperatura resta sola all'angolo, dov'era la fila dei viaggi. */
+.hh-grado-solo{position:relative;display:flex;justify-content:flex-end;margin-bottom:.5rem;cursor:pointer}
+
+.cerca-lista,.vg-lista{display:flex;flex-direction:column;gap:.35rem}
+.cerca-voce,.vg-voce{
+  display:flex;align-items:center;gap:.7rem;width:100%;
+  padding:.8rem .85rem;border-radius:var(--r-md);
+  border:1px solid var(--line-soft);background:var(--surface);
+  font-family:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  transition:var(--ease);
+}
+.cerca-voce:active,.vg-voce:active{transform:scale(.99);background:var(--paper)}
+.cerca-ic{font-size:1.25rem;line-height:1;flex-shrink:0;width:26px;text-align:center}
+.cerca-txt,.vg-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1rem}
+.cerca-txt b,.vg-txt b{font-weight:700;font-size:.92rem}
+.cerca-txt i,.vg-txt i{font-style:normal;font-size:.76rem;color:var(--ink-faint);line-height:1.35}
+.cerca-freccia{color:var(--ink-faint);font-size:1.1rem;flex-shrink:0}
+.cerca-nota{font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem}
+.vg-voce.qui{border-color:var(--green-soft);background:var(--green-tint)}
+.vg-qui{font-size:.68rem;font-weight:700;color:var(--green-deep);flex-shrink:0;text-align:right;line-height:1.25;max-width:38%}
+.vg-nuovo{margin-top:.9rem}
+
 .hh-acts{position:relative;display:flex;flex-wrap:wrap;gap:.35rem;margin-top:1rem}
 .hh-act{
   cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;
@@ -1568,6 +1630,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="app">
   <div class="topbar">
     <div class="topbar-row">
+      <!-- Il viaggio si cambia da qui. Prima i nomi stavano tutti in fila in
+           cima alla home: con tre viaggi occupavano una riga intera per una
+           cosa che si fa una volta ogni tanto, e quella riga la pagava la
+           mappa, che finiva sotto la piega. -->
+      <button class="menu-btn" id="menuViaggi" onclick="apriViaggi()" title="I tuoi viaggi" aria-label="I tuoi viaggi">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <div class="brand">
         <svg class="brand-logo" viewBox="0 0 48 48" fill="none">
           <circle cx="24" cy="24" r="23" fill="#C9962C"/>
@@ -1946,6 +2015,30 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg" id="savePOIHourWrap" style="display:none"><label>A che ora? <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><input type="time" id="savePOIHour"></div>
   <div id="wxPreview"></div>
   <button class="btn btn-green btn-block" onclick="confirmSavePOI()">✓ Salva</button>
+</div></div>
+<!-- I viaggi aperti, e il tasto per farne uno. Si apre dalle tre righine
+     in alto a sinistra: e' l'unico posto da cui si cambia viaggio, e sta
+     dove la mano lo cerca. -->
+<div class="modal" id="mViaggi"><div class="sheet">
+  <div class="sheet-head"><div class="sheet-t">I tuoi viaggi</div><button class="x x-close" onclick="closeSheet('mViaggi')">✕</button></div>
+  <div class="vg-lista" id="vgLista"></div>
+  <button class="btn btn-soft btn-block vg-nuovo" onclick="closeSheet('mViaggi');openNewTrip()">+ Aggiungi viaggio</button>
+</div></div>
+<!-- Cosa c'e' qui intorno. L'ordine non e' alfabetico ne' casuale: e' quello
+     con cui le cose servono in viaggio. Prima come ci si muove - treno, metro,
+     bus - perche' quando uno le cerca di solito ha una coincidenza da
+     prendere; poi i bisogni, che possono aspettare trenta secondi. -->
+<div class="modal" id="mCerca"><div class="sheet">
+  <div class="sheet-head"><div class="sheet-t">Cosa cerchi</div><button class="x x-close" onclick="closeSheet('mCerca')">✕</button></div>
+  <div class="cerca-lista">
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaTreno()"><span class="cerca-ic">🚉</span><span class="cerca-txt"><b>Stazione dei treni</b><i>Anche le fermate piccole</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaMetro()"><span class="cerca-ic">🚇</span><span class="cerca-txt"><b>Metropolitana</b><i>L'entrata più vicina, non il centro della stazione</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaBus()"><span class="cerca-ic">🚌</span><span class="cerca-txt"><b>Fermata del bus</b><i>Con le linee che ci passano, quando si sanno</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaBagno()"><span class="cerca-ic">🚻</span><span class="cerca-txt"><b>Bagno pubblico</b><i>Orari e se si paga</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaFumo()"><span class="cerca-ic">🚬</span><span class="cerca-txt"><b>Area fumatori</b><i>Dove fumare è permesso</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaAtm()"><span class="cerca-ic">🏧</span><span class="cerca-txt"><b>Bancomat</b><i>Anche quelli dentro i negozi</i></span><span class="cerca-freccia">›</span></button>
+  </div>
+  <p class="cerca-nota">Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c'è niente, allarga il giro da sé.</p>
 </div></div>
 <div class="modal" id="mPlaceInfo"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -4392,7 +4485,25 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'No saved places',
     'Nessuna spesa ancora':'No expenses yet',
     'Niente in time-table, per ora':'Nothing in the timetable yet',
-    'È giorno':'It’s daytime','È notte':'It’s night','a {1} sono le {2}':'in {1} it’s {2}','sono le {1}':'it’s {1}','Versione del {1}':'Version of {1}','Cerca la versione più recente':'Check for the latest version','Cerco…':'Checking…','Cerca un posto':'Find a place','Apri la time-table':'Open the timetable','Nessun alloggio ancora':'No place to stay yet','Cerca un hotel':'Find a hotel','Cercane uno':'Find one',
+    'È giorno':'It’s daytime','È notte':'It’s night','a {1} sono le {2}':'in {1} it’s {2}','sono le {1}':'it’s {1}','Versione del {1}':'Version of {1}','Cerca la versione più recente':'Check for the latest version','Cerco…':'Checking…','Cerca un posto':'Find a place',
+    'Area fumatori':'Smoking area',
+    'Bancomat':'Cash machine',
+    'Cosa cerchi qui intorno?':'What are you looking for?',
+    'stai guardando questo':'you’re looking at this one',
+    'Cosa cerchi':'What are you looking for',
+    'I tuoi viaggi':'Your trips',
+    '+ Aggiungi viaggio':'+ Add a trip',
+    'Stazione dei treni':'Train station',
+    'Anche le fermate piccole':'Small stops too',
+    'Metropolitana':'Underground',
+    'L\'entrata più vicina, non il centro della stazione':'The nearest entrance, not the middle of the station',
+    'Fermata del bus':'Bus stop',
+    'Con le linee che ci passano, quando si sanno':'With the lines that stop there, when they’re known',
+    'Bagno pubblico':'Public toilet',
+    'Orari e se si paga':'Opening hours, and whether you pay',
+    'Dove fumare è permesso':'Where smoking is allowed',
+    'Anche quelli dentro i negozi':'Including the ones inside shops',
+    'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Searches around where you are, using GPS, on the OpenStreetMap map. If there’s nothing nearby, it widens the circle by itself.','Apri la time-table':'Open the timetable','Nessun alloggio ancora':'No place to stay yet','Cerca un hotel':'Find a hotel','Cercane uno':'Find one',
     'La notte del viaggio ha un letto':'The one night of the trip has a bed','Tutte le {1} notti hanno un letto':'All {1} nights have a bed',
     'La notte del viaggio non ha un letto':'The one night of the trip has no bed','Nessuna delle {1} notti ha un letto':'None of the {1} nights has a bed',
     'Manca il letto per la notte di {1}':'No bed for the night of {1}','Manca il letto per le notti di {1}':'No bed for the nights of {1}',
@@ -4449,7 +4560,25 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Ningún lugar guardado',
     'Nessuna spesa ancora':'Aún ningún gasto',
     'Niente in time-table, per ora':'Nada en el horario, por ahora',
-    'È giorno':'Es de día','È notte':'Es de noche','a {1} sono le {2}':'en {1} son las {2}','sono le {1}':'son las {1}','Versione del {1}':'Versión del {1}','Cerca la versione più recente':'Busca la versión más reciente','Cerco…':'Buscando…','Cerca un posto':'Busca un lugar','Apri la time-table':'Abre la time-table','Nessun alloggio ancora':'Aún no hay alojamiento','Cerca un hotel':'Busca un hotel','Cercane uno':'Busca uno',
+    'È giorno':'Es de día','È notte':'Es de noche','a {1} sono le {2}':'en {1} son las {2}','sono le {1}':'son las {1}','Versione del {1}':'Versión del {1}','Cerca la versione più recente':'Busca la versión más reciente','Cerco…':'Buscando…','Cerca un posto':'Busca un lugar',
+    'Area fumatori':'Zona de fumadores',
+    'Bancomat':'Cajero',
+    'Cosa cerchi qui intorno?':'¿Qué buscas por aquí?',
+    'stai guardando questo':'estás viendo este',
+    'Cosa cerchi':'Qué buscas',
+    'I tuoi viaggi':'Tus viajes',
+    '+ Aggiungi viaggio':'+ Añade un viaje',
+    'Stazione dei treni':'Estación de tren',
+    'Anche le fermate piccole':'También los apeaderos',
+    'Metropolitana':'Metro',
+    'L\'entrata più vicina, non il centro della stazione':'La entrada más cercana, no el centro de la estación',
+    'Fermata del bus':'Parada de autobús',
+    'Con le linee che ci passano, quando si sanno':'Con las líneas que pasan, cuando se saben',
+    'Bagno pubblico':'Baño público',
+    'Orari e se si paga':'Horarios y si se paga',
+    'Dove fumare è permesso':'Donde se puede fumar',
+    'Anche quelli dentro i negozi':'También los de dentro de las tiendas',
+    'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Busca alrededor de donde estás, con el GPS, en el mapa de OpenStreetMap. Si cerca no hay nada, amplía el círculo solo.','Apri la time-table':'Abre la time-table','Nessun alloggio ancora':'Aún no hay alojamiento','Cerca un hotel':'Busca un hotel','Cercane uno':'Busca uno',
     'La notte del viaggio ha un letto':'La única noche del viaje tiene cama','Tutte le {1} notti hanno un letto':'Las {1} noches tienen cama',
     'La notte del viaggio non ha un letto':'La única noche del viaje no tiene cama','Nessuna delle {1} notti ha un letto':'Ninguna de las {1} noches tiene cama',
     'Manca il letto per la notte di {1}':'Falta cama para la noche del {1}','Manca il letto per le notti di {1}':'Falta cama para las noches del {1}',
@@ -4506,7 +4635,25 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Aucun lieu enregistré',
     'Nessuna spesa ancora':'Aucune dépense pour l’instant',
     'Niente in time-table, per ora':'Rien dans le programme, pour l’instant',
-    'È giorno':'Il fait jour','È notte':'Il fait nuit','a {1} sono le {2}':'à {1} il est {2}','sono le {1}':'il est {1}','Versione del {1}':'Version du {1}','Cerca la versione più recente':'Cherche la version la plus récente','Cerco…':'Je cherche…','Cerca un posto':'Cherche un lieu','Apri la time-table':'Ouvre la time-table','Nessun alloggio ancora':'Pas encore de logement','Cerca un hotel':'Cherche un hôtel','Cercane uno':'Cherches-en un',
+    'È giorno':'Il fait jour','È notte':'Il fait nuit','a {1} sono le {2}':'à {1} il est {2}','sono le {1}':'il est {1}','Versione del {1}':'Version du {1}','Cerca la versione più recente':'Cherche la version la plus récente','Cerco…':'Je cherche…','Cerca un posto':'Cherche un lieu',
+    'Area fumatori':'Espace fumeurs',
+    'Bancomat':'Distributeur',
+    'Cosa cerchi qui intorno?':'Tu cherches quoi dans le coin ?',
+    'stai guardando questo':'c’est celui que tu regardes',
+    'Cosa cerchi':'Tu cherches quoi',
+    'I tuoi viaggi':'Tes voyages',
+    '+ Aggiungi viaggio':'+ Ajoute un voyage',
+    'Stazione dei treni':'Gare',
+    'Anche le fermate piccole':'Les petites haltes aussi',
+    'Metropolitana':'Métro',
+    'L\'entrata più vicina, non il centro della stazione':'L’entrée la plus proche, pas le centre de la station',
+    'Fermata del bus':'Arrêt de bus',
+    'Con le linee che ci passano, quando si sanno':'Avec les lignes qui y passent, quand on les connaît',
+    'Bagno pubblico':'Toilettes publiques',
+    'Orari e se si paga':'Horaires, et si c’est payant',
+    'Dove fumare è permesso':'Où il est permis de fumer',
+    'Anche quelli dentro i negozi':'Y compris ceux dans les commerces',
+    'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Cherche autour de toi, avec le GPS, sur la carte OpenStreetMap. S’il n’y a rien tout près, le cercle s’élargit tout seul.','Apri la time-table':'Ouvre la time-table','Nessun alloggio ancora':'Pas encore de logement','Cerca un hotel':'Cherche un hôtel','Cercane uno':'Cherches-en un',
     'La notte del viaggio ha un letto':'La seule nuit du voyage a un lit','Tutte le {1} notti hanno un letto':'Les {1} nuits ont un lit',
     'La notte del viaggio non ha un letto':'La seule nuit du voyage n’a pas de lit','Nessuna delle {1} notti ha un letto':'Aucune des {1} nuits n’a de lit',
     'Manca il letto per la notte di {1}':'Pas de lit pour la nuit du {1}','Manca il letto per le notti di {1}':'Pas de lit pour les nuits du {1}',
@@ -4563,7 +4710,25 @@ const DIZIONARIO_COMPOSTE={
     'Nessun luogo salvato':'Nenhum lugar guardado',
     'Nessuna spesa ancora':'Ainda nenhuma despesa',
     'Niente in time-table, per ora':'Nada no horário, por agora',
-    'È giorno':'É de dia','È notte':'É de noite','a {1} sono le {2}':'em {1} são {2}','sono le {1}':'são {1}','Versione del {1}':'Versão de {1}','Cerca la versione più recente':'Procura a versão mais recente','Cerco…':'A procurar…','Cerca un posto':'Procura um sítio','Apri la time-table':'Abre a time-table','Nessun alloggio ancora':'Ainda sem alojamento','Cerca un hotel':'Procura um hotel','Cercane uno':'Procura um',
+    'È giorno':'É de dia','È notte':'É de noite','a {1} sono le {2}':'em {1} são {2}','sono le {1}':'são {1}','Versione del {1}':'Versão de {1}','Cerca la versione più recente':'Procura a versão mais recente','Cerco…':'A procurar…','Cerca un posto':'Procura um sítio',
+    'Area fumatori':'Zona de fumadores',
+    'Bancomat':'Multibanco',
+    'Cosa cerchi qui intorno?':'O que procuras por aqui?',
+    'stai guardando questo':'estás a ver esta',
+    'Cosa cerchi':'O que procuras',
+    'I tuoi viaggi':'As tuas viagens',
+    '+ Aggiungi viaggio':'+ Adiciona uma viagem',
+    'Stazione dei treni':'Estação de comboios',
+    'Anche le fermate piccole':'Também os apeadeiros',
+    'Metropolitana':'Metro',
+    'L\'entrata più vicina, non il centro della stazione':'A entrada mais próxima, não o centro da estação',
+    'Fermata del bus':'Paragem de autocarro',
+    'Con le linee che ci passano, quando si sanno':'Com as linhas que ali param, quando se sabem',
+    'Bagno pubblico':'Casa de banho pública',
+    'Orari e se si paga':'Horários e se se paga',
+    'Dove fumare è permesso':'Onde é permitido fumar',
+    'Anche quelli dentro i negozi':'Também os que estão dentro das lojas',
+    'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Procura à volta de onde estás, com o GPS, no mapa do OpenStreetMap. Se ali perto não houver nada, alarga o círculo sozinho.','Apri la time-table':'Abre a time-table','Nessun alloggio ancora':'Ainda sem alojamento','Cerca un hotel':'Procura um hotel','Cercane uno':'Procura um',
     'La notte del viaggio ha un letto':'A única noite da viagem tem cama','Tutte le {1} notti hanno un letto':'As {1} noites têm cama',
     'La notte del viaggio non ha un letto':'A única noite da viagem não tem cama','Nessuna delle {1} notti ha un letto':'Nenhuma das {1} noites tem cama',
     'Manca il letto per la notte di {1}':'Falta cama para a noite de {1}','Manca il letto per le notti di {1}':'Falta cama para as noites de {1}',
@@ -6044,7 +6209,7 @@ function renderTripZoomBody(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.35rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button>${raccoltaPossibile(t)?`<button class="pill-ghost pill-forte" onclick="closeSheet('mTripZoom');apriRaccolta()">📣 ${esc(tv('A raccolta'))}</button>`:''}<button class="pill-ghost" onclick="openRestore()">✓ ${lastSnapLabel()}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
   <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
     <button class="btn btn-soft" style="flex:1" onclick="toggleStatus()">🏁 Concludi viaggio</button>
     <!-- "Elimina" è TEMPORANEO, solo per i test: quando avremo Premium, qui
@@ -6155,6 +6320,31 @@ function homeSwitchTrip(id){
   const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
   save();renderAll();
 }
+/* I viaggi dietro le tre righine. Si disegna all'apertura e non una volta
+   per tutte: i viaggi si aggiungono, si concludono e si rinominano, e una
+   tendina che racconta quelli di ieri e' peggio che non averla. */
+function apriViaggi(){
+  const box=document.getElementById('vgLista');
+  const aperti=app.trips.filter(x=>x.status!=='closed');
+  if(box)box.innerHTML=aperti.length?aperti.map(x=>{
+    const qui=x.id===app.currentTripId;
+    const dove=[x.destination&&String(x.destination).trim().toLowerCase()!==String(x.name||'').trim().toLowerCase()?x.destination:'',
+                (x.start&&x.end)?fmtRange(x.start,x.end):''].filter(Boolean).join(' · ');
+    return `<button class="vg-voce${qui?' qui':''}" onclick="scegliViaggio(${x.id})">
+      <span class="vg-txt"><b>${esc(x.name||'')}</b>${dove?`<i>${esc(dove)}</i>`:''}</span>
+      ${qui?`<span class="vg-qui">${esc(tv('stai guardando questo'))}</span>`:'<span class="cerca-freccia">›</span>'}
+    </button>`;
+  }).join(''):`<div class="empty" style="padding:1.2rem 0"><div class="empty-t">${esc(tv('Nessun viaggio in corso'))}</div></div>`;
+  openSheet('mViaggi');
+}
+function scegliViaggio(id){
+  closeSheet('mViaggi');
+  homeSwitchTrip(id);
+  /* Se si tocca quello che si sta gia' guardando non succede niente, e va
+     bene cosi': la tendina si chiude, che e' quello che uno voleva. */
+  go('plan');
+}
+function apriCerca(){openSheet('mCerca');}
 /* Quanto ci metti a piedi da dove sei alla prossima tappa. Passo a 4,5 km/h
    (75 m al minuto), che è l'andatura di uno che cammina in città guardandosi
    intorno. Oltre gli 8 km il tempo a piedi non dice più niente di utile e si
@@ -6705,12 +6895,12 @@ function renderHomeHero(){
      scorresse coi nomi, con tre viaggi non lo vedresti mai.
      All'altro capo c'e' il cielo della giornata: prima era spazio vuoto,
      adesso e' l'unica porta del meteo. */
-  const aperti=app.trips.filter(x=>x.status!=='closed');
-  const barraViaggi=v=>`<div class="hh-tripbar" onclick="meteoDaBarra(event)">
-    <div class="hh-trips">${aperti.map(x=>`<button class="hh-trip${x.id===t.id?' on':''}" onclick="homeSwitchTrip(${x.id})">${esc(x.name||'')}</button>`).join('')}</div>
-    <button class="hh-trip-add" onclick="openNewTrip()" title="Nuovo viaggio" aria-label="Nuovo viaggio"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-    <div class="hh-vuoto"></div>${v.grado}
-  </div>`;
+  /* La fila dei nomi non c'e' piu': i viaggi stanno dietro le tre righine
+     in alto a sinistra. Quella riga costava quarantaquattro pixel piu' i
+     margini a una cosa che si fa una volta ogni tanto, e a pagarli era la
+     mappa, che restava tagliata dalla barra in fondo. Resta la
+     temperatura, sola, all'angolo: e' l'unica porta del meteo. */
+  const barraViaggi=v=>v.grado?`<div class="hh-grado-solo" onclick="apriMeteo()">${v.grado}</div>`:'';
   /* Qui restano solo le cose che servono mentre si e' in giro, e sono in
      quest'ordine per un motivo: prima le tre ricerche di cosa c'e' qui intorno,
      che sono la stessa mossa con tre risposte diverse, poi le due cose del
@@ -6723,17 +6913,18 @@ function renderHomeHero(){
      il nome): niente e' diventato irraggiungibile.
      "Naviga la giornata" e' andato in time-table e basta, che e' il posto dove
      si guarda la giornata. */
-  /* "A raccolta" sta per primo, e solo per chi organizza un viaggio in
-     gruppo: e' l'unica cosa qui dentro che si usa mentre della gente ti sta
-     aspettando, e cercarla fra le altre sarebbe il momento sbagliato. */
-  const actsBar=`<div class="hh-acts">
-    ${raccoltaPossibile(t)?'<button class="hh-act hh-act-forte" onclick="apriRaccolta()">📣 A raccolta</button>':''}
-    <button class="hh-act" onclick="cercaBagno()">🚻 Bagno vicino</button>
-    <button class="hh-act" onclick="cercaFumo()">🚬 Area fumatori</button>
-    <button class="hh-act" onclick="cercaAtm()">🏧 Bancomat</button>
-    <button class="hh-act" onclick="openPacking()">🎒 Bagagli</button>
-    <button class="hh-act" onclick="openShare()">Condividi</button>
-  </div>`;
+  /* Erano sei pillole con l'emoji davanti, su due righe. Sei tasti in fila
+     non sono una scelta: sono un muro da leggere tutto prima di capire che
+     nessuno di quelli serve adesso. E cinque delle sei facevano la stessa
+     identica cosa - cercare qualcosa qui intorno - quindi erano UNA cosa
+     travestita da cinque.
+     Adesso e' un tasto solo che fa la domanda giusta, "cosa cerchi", e la
+     scelta arriva dopo, quando serve davvero. Condividi e A raccolta si
+     usano una volta per viaggio e stanno nel Profilo; i bagagli erano gia'
+     nella scheda del viaggio. */
+  const actsBar=`<button class="hh-cerca" onclick="apriCerca()">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
+    <span>${esc(tv('Cosa cerchi qui intorno?'))}</span></button>`;
   if(!t.days||!t.days.length){
     const vNiente=cieloVestito(t,null);
     paint(`<div class="hh">${vNiente.velo}${barraViaggi(vNiente)}
@@ -7583,7 +7774,8 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica, Profilo. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home, di fianco ai nomi dei viaggi. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. Il Profilo e' l'ultimo: la sezione Impostazioni non esiste piu' come voce a se', il suo contenuto sta dentro il Profilo.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio i tasti rapidi, in quest'ordine: "Bagno vicino", "Area fumatori" e "Bancomat" (cercano intorno a dove sei, col GPS, sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa), poi "Bagagli" - la lista bagagli sta li' - e "Condividi". Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Si cambia viaggio dalle TRE RIGHINE in alto a sinistra, di fianco al logo: si aprono i viaggi in corso, si tocca quello che si vuole, e in fondo c'e' "+ Aggiungi viaggio". In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sul cielo, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -9383,15 +9575,20 @@ function disegnaQr(id,testo){
   const scuro=document.body.classList.contains('dark');
   try{QRCode.toCanvas(cv,testo,{width:168,margin:1,color:{dark:scuro?'#F0E9DC':'#1E1A12',light:scuro?'#1B1710':'#FFFFFF'}},()=>{});}catch(e){}
 }
-async function openShare(){
-  const t=T();if(!t){toast('Crea prima un viaggio');return;}
+/* Con un id condivide QUEL viaggio, senza l'id quello che si sta
+   guardando. Serve all'elenco in Profilo: li' si condivide il viaggio
+   della riga che si tocca, e passare prima a quel viaggio - solo per
+   condividerlo - sposterebbe l'app sotto i piedi di chi guarda. */
+async function openShare(id){
+  const t=id?app.trips.find(x=>x.id===id):T();
+  if(!t){toast('Crea prima un viaggio');return;}
   if(sb&&session){
     const box=document.getElementById('shareBody');
     if(!t.cid){
       box.innerHTML='<p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6">Salvo il viaggio nel cloud...</p>';
       openSheet('mShare');
       const res=await cloudCreate(t);
-      if(t.cid){openShare();return;}
+      if(t.cid){openShare(id);return;}
       box.innerHTML=`<p style="font-size:.9rem;color:var(--red);line-height:1.6">Il cloud ha rifiutato il salvataggio${res&&res.error?': <b>'+esc(res.error)+'</b>':''}.</p>${/row-level security/i.test((res&&res.error)||'')?`<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem"><b>È il problema dei permessi del database:</b> incolla lo schema (supabase-schema.sql, nella cartella dell'app) nel SQL Editor di Supabase, premi Run, poi riprova qui.</p>`:``}<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Controlla Impostazioni → Account di essere connesso, poi riprova. In alternativa:</p><button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openShareLocal()">Condividi versione locale</button>`;
       return;
     }
@@ -9461,7 +9658,7 @@ function renderTripsList(){
     let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
     // In corso: ci si passa sopra e si apre la scheda del viaggio (era quello
     // che facevano i quadrati in home). Concluso: resta il riepilogo in sola lettura.
-    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${tv('{1} · {2} giorni · {3}',dates||tv('Senza date'),t.days.length,fmtMoney(spent,cur))}</div></div><div style="color:var(--ink-faint)">›</div></div>`;
+    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${tv('{1} · {2} giorni · {3}',dates||tv('Senza date'),t.days.length,fmtMoney(spent,cur))}</div></div>${isClosed?'':`<button class="hist-share" onclick="event.stopPropagation();openShare(${t.id})" title="${esc(tv('Condividi'))}" aria-label="${esc(tv('Condividi'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5"/><path d="m8.2 7.3 3.8-3.8 3.8 3.8"/><path d="M5.5 12.6v6.4a1.4 1.4 0 0 0 1.4 1.4h10.2a1.4 1.4 0 0 0 1.4-1.4v-6.4"/></svg></button>`}<div style="color:var(--ink-faint)">›</div></div>`;
   };
   document.getElementById('openTrips').innerHTML=open.length?open.map(t=>card(t,false)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio in corso</div></div>`;
   document.getElementById('closedTrips').innerHTML=closed.length?closed.map(t=>card(t,true)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio concluso</div></div>`;
@@ -10903,7 +11100,72 @@ const PAROLE_BAGNO='bagn|toilet|tualet|туалет|τουαλ|(^|[^a-z])wc([^a-
    ristoranti. "fumo" da solo nemmeno, che sta dentro "profumeria". Si tengono le
    forme che nelle varie lingue vogliono dire solo quello. */
 const PAROLE_FUMO='smoking|fumat|fumeur|fumoir|fumador|fumante|raucher|rook|rök|røyk|rygning|tupakoin|palarni|palenie|dohányz|sigara|курени|курилк|καπν|喫煙|吸烟|抽烟|흡연|บุหรี่|تدخين|עישון|धूम्रपान';
+/* I trasporti. Qui le etichette di OpenStreetMap sono buone quasi ovunque -
+   una stazione la mappano tutti - quindi la rete di sicurezza sul nome serve
+   meno che per i bagni, ma resta: in mezzo mondo la fermata ha solo il nome. */
+const PAROLE_TRENO='stazione|station|gare|bahnhof|estaci[oó]n|esta[çc][ãa]o|hovedbaneg|centraal|nádraž|dworzec|gara|vasútállom|järnvägsstation|rautatieasema|вокзал|станц|σταθμ|駅|车站|車站|역|สถานีรถไฟ|محطة';
+const PAROLE_METRO='metro|metrô|métro|subway|underground|tube|u-bahn|metropolitana|мetro|метро|地下鉄|地铁|지하철|รถไฟฟ้า|مترو';
+const PAROLE_BUS='(^|[^a-z])bus([^a-z]|$)|autobus|autobús|ônibus|onibus|pullman|corriere|haltestelle|arrêt|parada|paragem|przystanek|zastávka|hållplats|pysäkki|остановк|автобус|στάση|バス|公交|버스|ป้ายรถ|حافلة';
 const VICINI={
+  treno:{
+    ic:'🚉', titolo:'Stazione dei treni più vicina', cosa:'stazione dei treni', manca:'la stazione più vicina',
+    /* railway=station è la stazione vera; railway=halt è la fermata piccola,
+       quella senza biglietteria - e in campagna spesso e' l'unica che c'e'.
+       Le stazioni della metropolitana sono ANCHE railway=station, ma con
+       station=subway: si tolgono, se no le due ricerche danno la stessa cosa
+       e chi cerca il treno si ritrova davanti una fermata del metro. */
+    q:(r,lat,lng)=>ovAttorno(['["railway"="station"]["station"!="subway"]','["railway"="halt"]','["public_transport"="station"]["train"="yes"]'],r,lat,lng),
+    parole:PAROLE_TRENO,
+    nome:t=>t.name||t.official_name||t.operator||'Stazione',
+    extra:t=>[
+      t.railway==='halt'?'fermata piccola':'',
+      /* Da quale porta si entra e chi ci passa: in stazione la differenza
+         fra alta velocita' e regionale e' quella fra salirci e aspettare. */
+      t.train==='yes'?'':(t.railway!=='station'&&t.railway!=='halt'?'trovata dal nome · da controllare':''),
+      t.operator?'gestita da '+t.operator:'',
+      t.wheelchair==='yes'?'accessibile':'',
+      t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:'')
+    ],
+    vuoto:'Nel raggio di 5 km non risulta nessuna stazione dei treni sulla mappa.<br><br>Se sei in centro città può voler dire che la stazione è più lontana di così: prova la metropolitana o il bus per arrivarci.'
+  },
+  metro:{
+    ic:'🚇', titolo:'Metropolitana più vicina', cosa:'fermata della metro', manca:'la fermata della metro più vicina',
+    /* L'ENTRATA, non il centro della stazione. Una stazione della metro è
+       lunga trecento metri e ha cinque bocche: il puntino al centro manda
+       in mezzo alla piazza sbagliata, mentre subway_entrance è la scala per
+       cui si scende davvero. Si cercano tutte e due e vince la più vicina. */
+    q:(r,lat,lng)=>ovAttorno(['["railway"="subway_entrance"]','["station"="subway"]','["public_transport"="station"]["subway"="yes"]'],r,lat,lng),
+    parole:PAROLE_METRO,
+    nome:t=>t.name||t.official_name||t.operator||'Metropolitana',
+    extra:t=>[
+      t.railway==='subway_entrance'?'entrata':'stazione',
+      (t.railway!=='subway_entrance'&&t.station!=='subway'&&t.subway!=='yes')?'trovata dal nome · da controllare':'',
+      t.wheelchair==='yes'?'accessibile':'',
+      t.entrance==='yes'&&t.wheelchair==='no'?'solo scale':''
+    ],
+    vuoto:'Nel raggio di 5 km non risulta nessuna metropolitana sulla mappa.<br><br>Molte città non ce l\'hanno affatto: prova il bus o il treno.'
+  },
+  bus:{
+    ic:'🚌', titolo:'Fermata del bus più vicina', cosa:'fermata del bus', manca:'la fermata del bus più vicina',
+    /* highway=bus_stop e' la palina sul marciapiede, amenity=bus_station
+       l'autostazione con le banchine. La terza è la forma nuova, quella che
+       le città stanno adottando adesso: senza, in mezza Europa non si trova
+       niente. */
+    q:(r,lat,lng)=>ovAttorno(['["highway"="bus_stop"]','["amenity"="bus_station"]','["public_transport"="platform"]["bus"="yes"]'],r,lat,lng),
+    parole:PAROLE_BUS,
+    nome:t=>t.name||t.ref||t.operator||'Fermata',
+    extra:t=>[
+      t.amenity==='bus_station'?'autostazione':'',
+      /* Quali linee ci passano: e' la prima cosa che si guarda sulla palina,
+         e spesso OSM ce l'ha. */
+      t.route_ref?'linee '+String(t.route_ref).split(';').slice(0,6).join(', '):'',
+      (t.highway!=='bus_stop'&&t.amenity!=='bus_station'&&t.bus!=='yes')?'trovata dal nome · da controllare':'',
+      t.shelter==='yes'?'con pensilina':'',
+      t.bench==='yes'?'con panchina':'',
+      t.departures_board||t.passenger_information_display==='yes'?'con display degli arrivi':''
+    ],
+    vuoto:'Nel raggio di 5 km non risulta nessuna fermata del bus sulla mappa.<br><br>Le fermate sono la cosa peggio mappata di OpenStreetMap: quasi sempre ci sono, ma nessuno le ha ancora segnate.'
+  },
   bagno:{
     ic:'🚻', titolo:'Bagno più vicino', cosa:'bagno pubblico', manca:'il bagno più vicino',
     q:(r,lat,lng)=>ovAttorno(['["amenity"="toilets"]','["toilets"="yes"]','["building"="toilets"]'],r,lat,lng), parole:PAROLE_BAGNO,
@@ -11014,6 +11276,9 @@ function osmVai(cosa){
     : `https://www.openstreetmap.org/#map=18/${lat.toFixed(5)}/${lng.toFixed(5)}`;
   window.open(u,'_blank','noopener');
 }
+function cercaTreno(){cercaVicino('treno');}
+function cercaMetro(){cercaVicino('metro');}
+function cercaBus(){cercaVicino('bus');}
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
 function cercaAtm(){cercaVicino('atm');}
@@ -16966,7 +17231,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-15 03:20';
+const VERSIONE_APP='2026-09-18 15:55';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
