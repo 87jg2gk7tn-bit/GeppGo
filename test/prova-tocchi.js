@@ -334,13 +334,37 @@ const stato = { trips: [
          vederla. */
       /* Il fatto da cui dipende tutto il resto: la fila ci sta o no. */
       const straborda = pista.scrollWidth - pista.clientWidth > 1;
+      /* Quanto vuoto resta ai due capi della fila, dentro la pillola.
+         Si misura dal VETRO, non dalla pista: e' il vetro che la persona
+         vede, e il vuoto storto si legge rispetto a lui. */
+      const bordi = () => {
+        const voci = [...pista.querySelectorAll('.nav-item')];
+        const rb = barra.getBoundingClientRect();
+        const pad = parseFloat(getComputedStyle(barra).paddingLeft) || 0;
+        const a1 = voci[0].getBoundingClientRect();
+        const z1 = voci[voci.length - 1].getBoundingClientRect();
+        return { sx: Math.round(a1.left - rb.left - pad),
+                 dx: Math.round(rb.right - pad - z1.right) };
+      };
+      /* E la prova che il centro non si sia mangiato l'inizio: con la fila
+         riportata a zero, la prima voce dev'essere TUTTA dentro. Centrando
+         una fila che straborda, la prima finisce fuori prima dell'inizio —
+         dove non si scorre, quindi non la si raggiunge piu'. */
+      pista.scrollLeft = 0;
+      await attendi(120);
+      const primaIntera = (() => {
+        const v = pista.querySelector('.nav-item').getBoundingClientRect();
+        const rp = pista.getBoundingClientRect();
+        return v.left >= rp.left - 0.5;
+      })();
       const allAvvio = {
         ultimaSiVede: dentro('[data-p="identify"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
         ombraSinistra: barra.classList.contains('altro-a-sinistra'),
         sfuma: sfuma(),
         pistaScorre: getComputedStyle(pista).overflowX,
-        pillolaNonScorre: getComputedStyle(barra).overflowX
+        pillolaNonScorre: getComputedStyle(barra).overflowX,
+        bordi: bordi()
       };
       go('identify');
       await attendi(700);
@@ -352,7 +376,7 @@ const stato = { trips: [
       };
       go('plan');
       await attendi(700);
-      return { straborda, allAvvio, inFondo, homeSiVede: dentro('[data-p="plan"]') };
+      return { straborda, primaIntera, allAvvio, inFondo, homeSiVede: dentro('[data-p="plan"]') };
     });
 
     /* Il punto: se vai sull'ultima voce, quella voce la devi vedere. */
@@ -388,6 +412,32 @@ const stato = { trips: [
        `sinistra ${d.inFondo.sfuma.sx}px, destra ${d.inFondo.sfuma.dx}px`);
     ok(`a ${largo}px, ed è una sfumatura, non un taglio netto`,
        /gradient/.test(d.allAvvio.sfuma.maschera), d.allAvvio.sfuma.maschera.slice(0, 60));
+    /* ── le voci stanno in mezzo alla pillola ────────────────────────────
+       Da quando sono sette ci stanno tutte, e la pista si stringeva sul suo
+       contenuto appoggiandosi a sinistra: restava un vuoto storto in fondo
+       a destra, dentro un vetro simmetrico. Si pretende il pareggio, non
+       un numero: la pillola cambia larghezza con lo schermo. */
+    if (!d.straborda) {
+      const scarto = Math.abs(d.allAvvio.bordi.sx - d.allAvvio.bordi.dx);
+      ok(`a ${largo}px, dove ci stanno tutte le voci stanno in mezzo`,
+         scarto <= 2 && d.allAvvio.bordi.sx > 2,
+         `vuoto a sinistra ${d.allAvvio.bordi.sx}px, a destra ${d.allAvvio.bordi.dx}px`);
+    } else {
+      /* Dove strabordano il centro NON si vuole: centrare una fila piu'
+         lunga del suo contenitore la taglia dai due capi, e il capo di
+         sinistra non si raggiunge scorrendo. Qui si pretende che parta
+         attaccata a sinistra. */
+      /* Il valore assoluto, non «minore di due»: un vuoto NEGATIVO vuol dire
+         che la fila comincia PRIMA del bordo, cioe' esattamente il difetto
+         che questa riga dovrebbe cogliere. Scritta come «<= 2» la riga
+         diceva OK con -36, che e' il caso peggiore di tutti. */
+      ok(`a ${largo}px, dove non ci stanno restano attaccate a sinistra`,
+         Math.abs(d.allAvvio.bordi.sx) <= 2, `vuoto a sinistra ${d.allAvvio.bordi.sx}px`);
+    }
+    /* Vale in tutti e due i casi, ed è il controllo che protegge dal modo
+       sbagliato di centrare: la prima voce si deve poter raggiungere. */
+    ok(`a ${largo}px, e la prima voce si raggiunge tornando indietro`,
+       d.primaIntera === true);
     haStrabordato = haStrabordato || d.straborda;
     await p2.close();
   }
