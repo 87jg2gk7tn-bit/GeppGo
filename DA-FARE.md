@@ -863,6 +863,19 @@ qualcuno che risponde".
   ci passa tutto da `adessoNelPosto(w)`. **Ogni volta che si mette insieme
   un'ora del telefono e un dato di un altro posto, ci si ferma e si guarda
   di che fuso è ciascuno.**
+- **Quanto lontano vale la pena cercare dipende da COSA si cerca.** Le
+  ricerche «qui intorno» si allargavano tutte fino a cinque chilometri e
+  poi si arrendevano. Per un bagno è giusto — uno a venti chilometri non
+  serve a nessuno, e «non c'è» è la risposta vera — ma per la
+  **metropolitana** no: se stai in un paese fuori città il metro sta in
+  città, a quindici chilometri, ed è esattamente quello che volevi sapere.
+  Cercando da lì l'app diceva «non risulta niente» avendo la risposta a
+  portata di un giro in più. Ora la scala è per tipo (`raggi` nella voce di
+  `VICINI`): treni e metro fino a 20 km, bus fino a 10, bisogni entro 5. Ci
+  si ferma al primo scalino che trova qualcosa, e c'è un tetto di tempo
+  complessivo — sei giri a nove secondi l'uno farebbero un minuto di
+  clessidra. **Quando si mette un limite, si guarda per chi quel limite è
+  sbagliato.**
 - **Cinque tasti che fanno la stessa cosa sono UNA cosa travestita da
   cinque.** La home aveva sei pillole con l'emoji davanti, su due righe:
   Bagno, Area fumatori, Bancomat, Bagagli, Condividi, A raccolta. Cinque

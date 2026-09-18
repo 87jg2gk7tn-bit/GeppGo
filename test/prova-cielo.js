@@ -211,6 +211,78 @@ const oreFinte = (data) => {
   ok('e ci sono tutti e tre', tendina.quanti === 3, tendina.quanti + ': ' + tendina.nomi.join(' | '));
   ok('quello che stai guardando è segnato, uno solo', tendina.segnati === 1, tendina.segnati + ' segnati');
   ok('e da lì si aggiunge un viaggio', tendina.nuovo === true);
+
+  /* NON È UNA TENDINA DAL BASSO: è un pannello che esce da sinistra, alto
+     quanto la pagina. Si misura il movimento vero — dove sta il bordo
+     sinistro prima e dopo — perché una classe si può mettere anche su un
+     foglio che continua a salire dal fondo. */
+  const movimento = await page.evaluate(async () => {
+    closeSheet('mViaggi');
+    await new Promise(r2 => setTimeout(r2, 500));
+    const c = () => document.querySelector('#mViaggi .cassetto');
+    const fermo = c() ? c().getBoundingClientRect() : null;
+    document.getElementById('menuViaggi').click();
+    await new Promise(r2 => setTimeout(r2, 60));
+    const meta = c().getBoundingClientRect();
+    await new Promise(r2 => setTimeout(r2, 600));
+    const fine = c().getBoundingClientRect();
+    return {
+      partivaDaFuori: !!fermo && Math.round(fermo.width) === 0,
+      /* Mentre esce il bordo sinistro si sta ancora muovendo verso lo zero:
+         se salisse dal basso, il bordo sinistro non cambierebbe affatto. */
+      inMovimento: Math.abs(Math.round(meta.left)) > 2 || Math.abs(Math.round(meta.top)) > 2,
+      sxFinale: Math.round(fine.left),
+      alto: Math.round(fine.height),
+      schermo: Math.round(innerHeight),
+      /* Non prende tutta la larghezza: la striscia scoperta è il modo di
+         chiuderlo senza cercare niente. */
+      largo: Math.round(fine.width)
+    };
+  });
+  ok('il pannello parte da fuori schermo', movimento.partivaDaFuori === true);
+  ok('e si muove entrando, invece di salire dal basso', movimento.inMovimento === true);
+  ok('arriva attaccato al bordo sinistro', movimento.sxFinale === 0, movimento.sxFinale + 'px');
+  ok('ed è alto quanto la pagina', Math.abs(movimento.alto - movimento.schermo) <= 2,
+     movimento.alto + ' su ' + movimento.schermo);
+  ok('ma non larga quanto la pagina: resta una striscia da toccare',
+     movimento.largo > 200 && movimento.largo < 380, movimento.largo + 'px');
+
+  /* IL DIFETTO CHE QUESTA RIGA HA TROVATO, e che una prova scritta male non
+     avrebbe visto: col pannello fuori, le tre righine della PAGINA ci
+     finiscono sotto. Premendole da codice — menuViaggi.click() — si chiude
+     lo stesso, perché il click non passa dal dito; premendole davvero si
+     tocca quello che sta sopra, cioè il titolo, e il pannello resta lì.
+     Quindi non si chiede «esiste il tasto»: si chiede CHI C'È SOTTO IL
+     DITO, e si preme quello. */
+  const ritocco = await page.evaluate(async () => {
+    const m = document.getElementById('menuViaggi').getBoundingClientRect();
+    const sotto = document.elementFromPoint(m.left + m.width / 2, m.top + m.height / 2);
+    const chi = sotto ? (sotto.closest('button') || sotto) : null;
+    if (chi && chi.click) chi.click();
+    await new Promise(r2 => setTimeout(r2, 600));
+    return { chiuso: !document.getElementById('mViaggi').classList.contains('active'),
+             cosaCera: chi ? (chi.getAttribute('aria-label') || chi.className || chi.tagName) : 'niente' };
+  });
+  ok('ritoccando le righine il pannello si riassorbe',
+     ritocco.chiuso === true, 'sotto il dito c\'era: ' + ritocco.cosaCera);
+
+  /* E toccando fuori dal pannello, sulla striscia di pagina che resta. */
+  const fuori = await page.evaluate(async () => {
+    document.getElementById('menuViaggi').click();
+    await new Promise(r2 => setTimeout(r2, 600));
+    const m = document.getElementById('mViaggi');
+    const r = m.getBoundingClientRect();
+    const e = document.elementFromPoint(r.right - 18, r.top + r.height / 2);
+    if (e) e.click();
+    await new Promise(r2 => setTimeout(r2, 600));
+    return !m.classList.contains('active');
+  });
+  ok('e toccando fuori si riassorbe lo stesso', fuori === true);
+
+  await page.evaluate(async () => {
+    document.getElementById('menuViaggi').click();
+    await new Promise(r2 => setTimeout(r2, 500));
+  });
   /* Toccare un viaggio deve cambiare viaggio davvero, non solo chiudere
      la tendina: e' l'unica strada rimasta per passare da uno all'altro. */
   const cambiato = await page.evaluate(async () => {
