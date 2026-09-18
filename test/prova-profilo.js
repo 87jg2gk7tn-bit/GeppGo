@@ -66,6 +66,56 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   /* Se il cassetto restasse aperto, la pagina si aprirebbe dietro una cosa
      che la copre: si sarebbe premuto e non sarebbe successo niente. */
   ok('e il cassetto si richiude dietro di sé', dito.cassettoChiuso===true, dito.errore||'');
+
+  // ── e con tanti viaggi il cassetto scorre, invece di schiacciarli ────
+  /* Il Profilo sta in fondo con un margine automatico, e per farlo il
+     cassetto è diventato una colonna flessibile. È proprio lì che queste
+     cose si rompono senza dire niente: se un giorno la lista dei viaggi
+     prendesse `flex:1`, le righe si schiaccerebbero l'una sull'altra per
+     far entrare tutto — e sembrerebbe un difetto del disegno, non del
+     modo in cui il cassetto è messo insieme. Sedici viaggi non ci stanno
+     su nessun telefono: deve scorrere, e le righe devono restare alte
+     come con due viaggi. */
+  const tanti = await p.evaluate(async ()=>{
+    const attendi = ms => new Promise(r2=>setTimeout(r2, ms));
+    try{
+      const uno = app.trips[0];
+      /* Il metro di paragone si prende col cassetto APERTO: a cassetto
+         chiuso le righe sono alte zero, e un confronto con zero lo passa
+         qualunque cosa — la prova direbbe di sì guardando il niente. */
+      apriViaggi();
+      await attendi(600);
+      const primo = document.querySelector('#vgLista .vg-voce');
+      const altezzaConPochi = primo ? Math.round(primo.getBoundingClientRect().height) : 0;
+      if(altezzaConPochi < 44) return { errore:'il metro di paragone non regge: riga alta '+altezzaConPochi+'px' };
+      closeSheet('mViaggi');
+      await attendi(400);
+      for(let i=2;i<=16;i++) app.trips.push(Object.assign({}, uno, {
+        id: 1730000009000+i, name:'Viaggio numero '+i, days:[], createdAt:i }));
+      apriViaggi();
+      await attendi(700);
+      const c = document.querySelector('#mViaggi .cassetto');
+      const righe = [...document.querySelectorAll('#vgLista .vg-voce')]
+        .map(x=>Math.round(x.getBoundingClientRect().height));
+      c.scrollTop = c.scrollHeight;
+      await attendi(300);
+      const v = document.querySelector('.vg-profilo').getBoundingClientRect();
+      closeSheet('mViaggi');
+      return { scorre: c.scrollHeight > c.clientHeight+1, quante: righe.length,
+               schiacciate: righe.filter(h=>h < altezzaConPochi-2),
+               altezzaConPochi,
+               profiloArrivabile: v.top >= 0 && v.bottom <= innerHeight+1 };
+    }catch(e){ return { errore:'è saltato tutto: '+e.message }; }
+  });
+  ok('con sedici viaggi il cassetto scorre', tanti.scorre===true,
+     tanti.errore || (tanti.quante+' righe'));
+  ok('e le righe non si schiacciano per farceli stare',
+     tanti.schiacciate && tanti.schiacciate.length===0,
+     tanti.errore || ('erano alte '+tanti.altezzaConPochi+'px, adesso: '+(tanti.schiacciate||[]).join(', ')));
+  /* Scorrendo fino in fondo il Profilo si vede: se restasse fuori dal
+     bordo, con tanti viaggi non ci si arriverebbe più. */
+  ok('e scorrendo fino in fondo il Profilo si vede', tanti.profiloArrivabile===true, tanti.errore||'');
+
   /* Impostazioni e Meteo avevano tutt'e due un sole per icona, e nella
      barra si leggeva come un doppione. Impostazioni è sparita dentro il
      Profilo, il Meteo è diventato il riquadro del cielo in cima alla home:
