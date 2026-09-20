@@ -84,7 +84,20 @@ const stato = { trips: [
       return !c || (b.left >= c.left - 1 && b.right <= c.right + 1);
     };
     const num = v => Math.abs(parseFloat(v) || 0);
-    const piccoli = [], rubati = [], visti = [], aree = [];
+    /* Sta nel piano che galleggia? La barra in basso e' `position:fixed` e
+       passa SOPRA la pagina: e' fatta cosi' apposta. Un pezzo di pagina che
+       le finisce sotto non e' un vicino che ruba il tocco, e' una cosa
+       coperta da un piano davanti — un'altra domanda, con un'altra
+       risposta giusta, che si controlla piu' sotto. */
+    const galleggia = el => {
+      let n = el;
+      while (n && n !== document.body) {
+        if (getComputedStyle(n).position === 'fixed') return true;
+        n = n.parentElement;
+      }
+      return false;
+    };
+    const piccoli = [], rubati = [], coperti = [], visti = [], aree = [];
     /* Con un foglio aperto, tutto quello che sta dietro è coperto: chiedere
        "chi risponde qui?" restituirebbe il foglio, e sembrerebbe un furto di
        tocchi quando invece è solo un foglio davanti. Si guarda dentro il
@@ -109,7 +122,7 @@ const stato = { trips: [
         visti.push(c);
         if (h < 44 || w < 44) piccoli.push(`${c} ${w}×${h}`);
         if (des - sin < 4 || basso - alto < 4) continue;
-        aree.push({ el, c, sin, des, alto, basso });
+        aree.push({ el, c, sin, des, alto, basso, fisso: galleggia(el) });
       }
     }
     /* Le aree non si devono sovrapporre. Lo si misura sulla geometria, non
@@ -127,14 +140,31 @@ const stato = { trips: [
         if (A.el.contains(B.el) || B.el.contains(A.el)) continue;
         const sovraX = Math.min(A.des, B.des) - Math.max(A.sin, B.sin);
         const sovraY = Math.min(A.basso, B.basso) - Math.max(A.alto, B.alto);
-        if (sovraX > 1 && sovraY > 1)
-          rubati.push(`${A.c} "${(A.el.textContent || '').trim().slice(0, 10)}" e ${B.c} "${(B.el.textContent || '').trim().slice(0, 10)}" per ${Math.round(sovraX)}x${Math.round(sovraY)} px`);
+        if (!(sovraX > 1 && sovraY > 1)) continue;
+        const dire = (X, Y) => `${X.c} "${(X.el.textContent || '').trim().slice(0, 10)}" e ${Y.c} "${(Y.el.textContent || '').trim().slice(0, 10)}" per ${Math.round(sovraX)}x${Math.round(sovraY)} px`;
+        /* Uno galleggia e l'altro no: e' un pezzo di pagina finito sotto la
+           barra. Non si conta come furto — si segna, e piu' sotto si
+           pretende che lo si possa scorrere fuori. */
+        if (A.fisso !== B.fisso) { coperti.push(A.fisso ? B : A); continue; }
+        rubati.push(dire(A, B));
       }
     }
-    return { piccoli: [...new Set(piccoli)], rubati: [...new Set(rubati)], visti: [...new Set(visti)] };
+    /* Quello che sta sotto la barra si deve poter portare fuori scorrendo.
+       E' la promessa che fa `.scroll` col suo spazio in fondo, e finora non
+       la controllava nessuno: si misura quanto manca da scorrere e quanto
+       c'e' ancora da scorrere. */
+    const sc = document.querySelector('.scroll');
+    const restaDaScorrere = sc ? sc.scrollHeight - sc.clientHeight - sc.scrollTop : 0;
+    const barra = document.querySelector('.nav');
+    const cimaBarra = barra ? barra.getBoundingClientRect().top : Infinity;
+    const bloccati = coperti
+      .filter(x => (x.basso - cimaBarra) > restaDaScorrere + 1)
+      .map(x => `${x.c} "${(x.el.textContent || '').trim().slice(0, 10)}" resterebbe sotto la barra: servono ${Math.round(x.basso - cimaBarra)}px di scorrimento e ce ne sono ${Math.round(restaDaScorrere)}`);
+    return { piccoli: [...new Set(piccoli)], rubati: [...new Set(rubati)],
+             bloccati: [...new Set(bloccati)], visti: [...new Set(visti)] };
   }, { CLASSI, pagina });
 
-  const tutti = { piccoli: [], rubati: [], visti: [] };
+  const tutti = { piccoli: [], rubati: [], bloccati: [], visti: [] };
   /* Due larghezze, non una. Su uno schermo stretto la barra in basso scorre
      di più e le voci ai bordi sporgono: è la condizione in cui una prova
      scritta con leggerezza dà risposte sbagliate, ed è anche un telefono
@@ -163,6 +193,7 @@ const stato = { trips: [
       const dove = ' (a ' + largo + (fontLarghi ? ', font larghi' : '') + ')';
       tutti.piccoli.push(...m.piccoli.map(x => x + dove));
       tutti.rubati.push(...m.rubati.map(x => x + dove));
+      tutti.bloccati.push(...m.bloccati.map(x => x + dove));
       tutti.visti.push(...m.visti);
     }
   }
@@ -193,17 +224,29 @@ const stato = { trips: [
      suoi tasti, e i suoi tasti sono nuovi. */
   const timetable = await guarda(null);
   for (const m of [lista, bagagli, timetable]) {
-    tutti.piccoli.push(...m.piccoli); tutti.rubati.push(...m.rubati); tutti.visti.push(...m.visti);
+    tutti.piccoli.push(...m.piccoli); tutti.rubati.push(...m.rubati);
+    tutti.bloccati.push(...m.bloccati); tutti.visti.push(...m.visti);
   }
   await page.evaluate(() => closeSheet('mPacking'));
   tutti.piccoli = [...new Set(tutti.piccoli)];
   tutti.rubati = [...new Set(tutti.rubati)];
+  tutti.bloccati = [...new Set(tutti.bloccati)];
   tutti.visti = [...new Set(tutti.visti)];
 
   ok('tutto quello che si tocca arriva a 44×44',
      tutti.piccoli.length === 0, tutti.piccoli.join(', '));
   ok('e nessun tasto ruba il tocco a quello accanto',
      tutti.rubati.length === 0, tutti.rubati.join(' | '));
+  /* La barra in basso galleggia SOPRA la pagina: che un pezzo di pagina le
+     finisca sotto non e' un difetto, e' come e' fatta. Il difetto sarebbe
+     che ci restasse — che non lo si potesse portare fuori scorrendo. E'
+     la promessa che fa lo spazio in fondo a `.scroll`, e fino a oggi non
+     la controllava nessuno: la regola di qui sopra parlava di due tasti
+     VICINI, e applicata alla barra rispondeva alla domanda sbagliata.
+     Provato togliendo quello spazio: questa riga diventa rossa e dice
+     quanti pixel mancano. */
+  ok('e quello che finisce sotto la barra si porta fuori scorrendo',
+     tutti.bloccati.length === 0, tutti.bloccati.join(' | '));
   /* Se un giorno qualcuno rinominasse le classi, la prova continuerebbe a
      passare guardando il vuoto. Qui si pretende di averne viste quasi tutte. */
   ok('e la prova ha davvero guardato i tasti che dice',

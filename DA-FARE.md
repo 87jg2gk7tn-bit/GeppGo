@@ -1466,6 +1466,27 @@ qualcuno che risponde".
   allargava in giù e finiva addosso al numero. Due colonne di una riga vera
   non possono toccarsi nemmeno volendo, e costano lo stesso spazio. Il
   galleggiamento va bene solo su una cosa che non può crescere.
+- **Una regola giusta applicata alla cosa sbagliata da' una risposta
+  sbagliata.** `prova-tocchi` dice «nessun tasto ruba il tocco a quello
+  accanto», e su due tasti vicini e' la domanda giusta. La barra in basso
+  pero' non e' un vicino: e' `position:fixed` e passa SOPRA la pagina,
+  apposta. Alzando la home, il tasto «Rimuovi con Premium» e' finito nella
+  sua fascia e la prova ha gridato al furto — ma la risposta giusta li' non
+  e' «non devono sovrapporsi», e' **«lo si deve poter portare fuori
+  scorrendo»**, che e' la promessa dello spazio in fondo a `.scroll` e che
+  fino a oggi non controllava nessuno. Adesso la prova distingue i due piani
+  e fa tutte e due le domande: e' piu' forte di prima, non piu' debole.
+  Quando una prova diventa rossa, prima di cambiare il codice vale la pena
+  chiedersi **se sta facendo la domanda giusta a quella cosa li'**.
+- **La finestra in cui una cosa finisce sotto la barra dipende da quanto e'
+  alta la pagina, quindi dai font.** Qui i caratteri di Google non si
+  scaricano e la home e' circa duecento pixel piu' bassa che in CI. Prima
+  l'inserzione cadeva SOTTO il bordo dello schermo (invisibile, non
+  misurata); alzando la pagina e' entrata nella fascia della barra. Non e'
+  un difetto nato adesso: e' una finestra larga un'ottantina di pixel in cui
+  qualunque contenuto puo' cadere. Inseguirla spostando i pixel la sposta
+  solo su un altro telefono — si risolve garantendo che da li' si esca
+  scorrendo.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si
