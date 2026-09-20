@@ -1449,6 +1449,29 @@ qualcuno che risponde".
   che non la conosce butta via la riga e resta allineato a sinistra, cioè
   comunque raggiungibile. Vale per qualunque fila che scorre, non solo per
   questa barra.
+- **⚠️ Quando un pezzo trasloca, le misure che lo circondavano restano lì a
+  non fare niente.** È successo tre volte di fila, sempre per la fila dei
+  nomi dei viaggi che è andata dietro le tre righine. (1) Il cielo teneva
+  `padding-top:4.2rem` — settanta pixel di vuoto — che erano lo spazio
+  della fila. (2) I gradi avevano una riga tutta loro, trentasei pixel per
+  due cifre, perché prima stavano *accanto* alla fila. (3) Il sole è
+  posizionato rispetto a quella fila, e il commento nel CSS lo dice ancora.
+  Tutto questo spingeva giù la home e lasciava la mappa tagliata dalla
+  barra. **Quando si sposta qualcosa, si cerca chi era misurato a partire
+  da lui** — non basta togliere il pezzo.
+- **Far galleggiare una cosa nell'angolo funziona finché il testo accanto è
+  corto.** Per recuperare la riga dei gradi li avevo messi
+  `position:absolute` in alto a destra: perfetto con "Parigi 26", e con
+  "Viaggio di nozze in Giappone e Corea 2026" la scritta andava a capo, si
+  allargava in giù e finiva addosso al numero. Due colonne di una riga vera
+  non possono toccarsi nemmeno volendo, e costano lo stesso spazio. Il
+  galleggiamento va bene solo su una cosa che non può crescere.
+- **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
+  La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
+  `getBoundingClientRect` di scritta, gradi e sole e dice quali si
+  sovrappongono. Con un nome corto tutte le versioni sembravano giuste. Una
+  prova di layout che guarda i margini nel CSS non avrebbe visto niente:
+  i margini erano scritti bene.
 - **Una fila che sborda di quattro pixel è peggio di una che sborda di
   cento.** Con sette voci la barra ci stava quasi: quattro pixel di troppo
   su un telefono da 390, che però accendevano la sfumatura e lasciavano
