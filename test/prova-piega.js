@@ -107,7 +107,39 @@ const stato = nome => ({
        stanno a due pixel di distanza: se i gradi tornassero a prendersi una
        riga loro, questa diventerebbe falsa. */
     const stessaRiga = (eb && grado) ? (eb.top < grado.bottom - 2 && grado.top < eb.bottom - 2) : null;
+
+    /* DOVE STA DAVVERO L'INCHIOSTRO. Il nome della citta' ha interlinea .88,
+       cioe' piu' STRETTA delle lettere: il riquadro della riga e' piu'
+       piccolo di quello che ci sta scritto dentro, e la coda della g di
+       "Parigi" esce di sotto. I riquadri non lo dicono - dicono che le due
+       righe non si toccano - e infatti il difetto si e' visto solo a
+       occhio, su una fotografia. Qui l'inchiostro si chiede al font:
+       quanto scende davvero sotto la riga di base quel testo li'. */
+    const cv = document.createElement('canvas').getContext('2d');
+    const inchiostro = el => {
+      if (!el) return null;
+      const st = getComputedStyle(el), rc = el.getBoundingClientRect();
+      cv.font = `${st.fontStyle} ${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+      const t = (el.textContent || '').trim();
+      if (!t) return null;
+      const mm = cv.measureText(t);
+      const fa = mm.fontBoundingBoxAscent, fd = mm.fontBoundingBoxDescent;
+      if (!isFinite(fa) || !isFinite(fd)) return null;
+      /* line-height:normal non e' un numero: li' l'interlinea e' quella
+         naturale del font, cioe' ascendente + discendente. */
+      const lh = isFinite(parseFloat(st.lineHeight)) ? parseFloat(st.lineHeight) : (fa + fd);
+      /* Il browser centra il font dentro l'interlinea, meta' sopra e meta'
+         sotto: da li' si ricava dove cade la riga di base. */
+      const base = rc.top + (lh - (fa + fd)) / 2 + fa;
+      return { alto: base - mm.actualBoundingBoxAscent,
+               basso: base + mm.actualBoundingBoxDescent };
+    };
+    const aria = (a, b) => { const x = inchiostro(a), y = inchiostro(b);
+      return (x && y) ? Math.round(y.alto - x.basso) : null; };
+
     return {
+      ariaCittaFrase: aria(q('.hh-city'), q('.hh-mood')),
+      ariaFraseRiga: aria(q('.hh-mood'), q('.hh-meta')),
       mappaC: mappa ? Math.round(mappa.top) : null,
       mappaF: mappa ? Math.round(mappa.bottom) : null,
       pillola: pillola ? Math.round(pillola.top) : null,
@@ -170,6 +202,38 @@ const stato = nome => ({
      m.mappaF != null && m.pillola != null && m.mappaF <= m.pillola,
      m.mappaF != null ? `mappa fino a ${m.mappaF}, barra da ${m.pillola}` : 'la mappa non c\'è');
   await page.close();
+
+  // ══ le due righe grosse non si toccano ═══════════════════════════════
+  /* IL DIFETTO: la coda della g di "Parigi" entrava dentro "sera velata".
+     Si misura a tre larghezze perche' il titolo cambia misura con lo
+     schermo (clamp 3rem…15vw…4.4rem) e la coda cresce con lui: l'aria
+     infatti va da 13 a 17 pixel, non e' la stessa dappertutto.
+     Detto onesto: lo spazio nel foglio di stile e' scritto in em perche'
+     resti proporzionato al titolo, ma queste tre righe NON lo dimostrano —
+     provato, scritto in pixel passerebbero lo stesso, perche' fra 320 e
+     430 il titolo va da 48 a 64 pixel e un valore fisso ci sta dentro. Le
+     tre larghezze servono a vedere che l'aria c'e' su tutti i telefoni,
+     non a bocciare i pixel.
+     La citta' e' "Parigi" e non per caso: senza una lettera con la coda
+     (g, p, q, y) non c'e' niente che possa scendere, e la prova passerebbe
+     su un'app rotta. */
+  for (const largo of [320, 390, 430]) {
+    const pg = await apri(largo, 844);
+    const mm = await misura(pg);
+    /* Non "non si toccano" ma "c'e' dell'aria in mezzo": il font vero
+       (Fraunces) da qui non si scarica e ha la coda piu' lunga del ripiego
+       con cui si misura, quindi zero qui vuol dire sovrapposte sul
+       telefono. Otto pixel di margine coprono la differenza. */
+    ok(`a ${largo}px la coda del nome della città non entra nella frase sotto`,
+       mm.ariaCittaFrase != null && mm.ariaCittaFrase >= 8,
+       mm.ariaCittaFrase == null ? 'non misurabile' : mm.ariaCittaFrase + 'px d\'aria');
+    /* La frase sotto ha le code anche lei ("mattina piovosa"), e la riga
+       che segue non deve finirci dentro per lo stesso motivo. */
+    ok(`a ${largo}px, e nemmeno la frase entra nella riga dopo`,
+       mm.ariaFraseRiga != null && mm.ariaFraseRiga >= 8,
+       mm.ariaFraseRiga == null ? 'non misurabile' : mm.ariaFraseRiga + 'px d\'aria');
+    await pg.close();
+  }
 
   await browser.close();
   for (const e of err) r.push(' FALLITO  ' + e);
