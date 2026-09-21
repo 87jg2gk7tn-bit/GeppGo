@@ -205,16 +205,23 @@ function proveDb() {
 // ── e la sintassi dell'app, che è la prova più veloce che ci sia ────────────
 function proveSintassi() {
   titolo("La sintassi dell'app");
-  const file = path.join(QUI, '..', 'Index 2.1.html');
-  const html = fs.readFileSync(file, 'utf8');
-  const blocchi = [...html.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/g)];
-  let rotti = 0;
-  blocchi.forEach((b, i) => {
-    try { new Function(b[1]); }
-    catch (e) { rotti++; console.log(`      ${G}blocco ${i}: ${e.message}${Z}`); }
-  });
-  riga('Index 2.1.html', rotti ? 'male' : 'ok',
-    rotti ? `${rotti} blocchi con errori` : `${blocchi.length} blocchi, nessun errore`);
+  /* Le app del repo sono due, e vanno guardate tutte e due. Un errore di
+     sintassi si vedrebbe comunque, ma qui si vede subito e dice a che riga:
+     nelle prove vere diventa «la pagina non si apre», che è la stessa cosa
+     detta molto peggio. */
+  for (const nome of ['Index 2.1.html', 'libri/index.html']) {
+    const file = path.join(QUI, '..', nome);
+    if (!fs.existsSync(file)) continue;
+    const html = fs.readFileSync(file, 'utf8');
+    const blocchi = [...html.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/g)];
+    let rotti = 0;
+    blocchi.forEach((b, i) => {
+      try { new Function(b[1]); }
+      catch (e) { rotti++; console.log(`      ${G}blocco ${i}: ${e.message}${Z}`); }
+    });
+    riga(nome, rotti ? 'male' : 'ok',
+      rotti ? `${rotti} blocchi con errori` : `${blocchi.length} blocchi, nessun errore`);
+  }
 }
 
 /* ── e che nessuna prova sappia a memoria dov'è il progetto ────────────────

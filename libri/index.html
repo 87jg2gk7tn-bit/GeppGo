@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>libri</title>
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="libri">
+<meta name="theme-color" content="#1C1815">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icona.svg">
+<style>
+:root{
+  --fondo:#14110E; --fondo-alto:#1C1815; --carta:#241F1A;
+  --inchiostro:#F0E7D8; --inchiostro-lieve:#B5A894; --inchiostro-fioco:#7D7365;
+  --linea:#332C25; --oro:#C9A227; --oro-scuro:#9C7C15; --oro-velo:#2E2717;
+  --rosso:#C4593F;
+  --r-sm:10px; --r-md:16px; --r-lg:24px;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --alto:env(safe-area-inset-top); --basso:env(safe-area-inset-bottom);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--fondo);color:var(--inchiostro);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button,input,select,textarea{font-family:inherit;color:inherit}
+.app{max-width:560px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative}
+
+/* ── barra in alto ───────────────────────────────────────────────────────── */
+.barra{
+  display:flex;align-items:center;gap:.6rem;
+  padding:calc(var(--alto) + .9rem) 1rem .8rem;
+  background:var(--fondo-alto);border-bottom:1px solid var(--linea);flex-shrink:0
+}
+.barra h1{font-family:Georgia,'Iowan Old Style',serif;font-size:1.35rem;font-weight:600;letter-spacing:.01em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tondo{
+  width:38px;height:38px;flex-shrink:0;border:none;background:var(--carta);color:var(--inchiostro-lieve);
+  border-radius:50%;font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s var(--ease)
+}
+.tondo:active{transform:scale(.9)}
+
+/* ── schermi ─────────────────────────────────────────────────────────────── */
+.scorri{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.schermo{display:none;padding:1rem 1rem calc(var(--basso) + 7rem)}
+.schermo.attiva{display:block;animation:entra .3s var(--ease)}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── libreria ────────────────────────────────────────────────────────────── */
+.vuoto{text-align:center;padding:3.5rem 1.5rem;color:var(--inchiostro-fioco)}
+.vuoto b{display:block;font-family:Georgia,serif;font-size:1.15rem;color:var(--inchiostro-lieve);margin-bottom:.5rem;font-weight:600}
+.vuoto p{font-size:.9rem;line-height:1.55}
+.libro-riga{
+  display:flex;gap:.85rem;align-items:center;background:var(--carta);border:1px solid var(--linea);
+  border-radius:var(--r-md);padding:.75rem;margin-bottom:.7rem;cursor:pointer;transition:.15s var(--ease);width:100%;text-align:left
+}
+.libro-riga:active{transform:scale(.985)}
+.cop{width:52px;height:74px;flex-shrink:0;border-radius:6px;object-fit:cover;background:var(--oro-velo);
+  display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;color:var(--oro);font-size:1.4rem}
+.libro-testo{flex:1;min-width:0}
+.libro-testo b{display:block;font-family:Georgia,serif;font-size:1rem;font-weight:600;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.libro-testo small{display:block;color:var(--inchiostro-fioco);font-size:.78rem;margin-top:.25rem}
+.avanzamento{height:3px;background:var(--linea);border-radius:2px;margin-top:.5rem;overflow:hidden}
+.avanzamento i{display:block;height:100%;background:var(--oro);border-radius:2px}
+
+/* ── tasti ───────────────────────────────────────────────────────────────── */
+.tasto{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;
+  border:none;background:var(--oro);color:#1A1509;font-weight:700;font-size:.95rem;
+  padding:.9rem 1rem;border-radius:var(--r-md);cursor:pointer;transition:.15s var(--ease)
+}
+.tasto:active{transform:scale(.97)}
+.tasto[disabled]{opacity:.45;pointer-events:none}
+.tasto.piano{background:var(--carta);color:var(--inchiostro);border:1px solid var(--linea)}
+.tasto.rossa{background:transparent;color:var(--rosso);border:1px solid var(--linea)}
+
+/* ── scheda del libro ────────────────────────────────────────────────────── */
+.testata{display:flex;gap:1rem;margin-bottom:1.2rem}
+.testata .cop{width:96px;height:140px;font-size:2rem}
+.testata h2{font-family:Georgia,serif;font-size:1.25rem;font-weight:600;line-height:1.25}
+.testata p{color:var(--inchiostro-fioco);font-size:.85rem;margin-top:.3rem}
+.etichetta{font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--inchiostro-fioco);margin:1.5rem .2rem .6rem}
+.cap{
+  display:flex;align-items:center;gap:.75rem;padding:.75rem .8rem;border-radius:var(--r-sm);
+  border:1px solid transparent;cursor:pointer;transition:.15s var(--ease)
+}
+.cap:active{background:var(--carta)}
+.cap.qui{background:var(--oro-velo);border-color:var(--oro-scuro)}
+.pallino{width:9px;height:9px;border-radius:50%;background:var(--linea);flex-shrink:0}
+.pallino.pronto{background:var(--oro)}
+.pallino.parziale{background:var(--oro-scuro)}
+.cap-testo{flex:1;min-width:0}
+.cap-testo b{display:block;font-size:.9rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cap-testo small{color:var(--inchiostro-fioco);font-size:.74rem}
+.cap-azione{border:none;background:transparent;color:var(--inchiostro-fioco);font-size:1.1rem;padding:.3rem .4rem;cursor:pointer}
+
+/* ── impostazioni ────────────────────────────────────────────────────────── */
+.campo{margin-bottom:1rem}
+.campo label{display:block;font-size:.82rem;font-weight:600;color:var(--inchiostro-lieve);margin-bottom:.4rem}
+.campo input[type=text],.campo input[type=password],.campo select{
+  width:100%;background:var(--carta);border:1px solid var(--linea);border-radius:var(--r-sm);
+  padding:.75rem .85rem;font-size:.95rem
+}
+.campo input:focus,.campo select:focus{outline:none;border-color:var(--oro-scuro)}
+/* «nota» era scritta come `.campo .nota` e quindi valeva solo dentro un
+   campo: le stesse due righe di spiegazione messe sotto un tasto uscivano
+   grandi come il testo normale e in pieno bianco, cioè urlavano più del
+   tasto che dovevano spiegare. */
+.nota{font-size:.76rem;color:var(--inchiostro-fioco);margin-top:.35rem;line-height:1.5}
+.cursore{display:flex;align-items:center;gap:.8rem}
+.cursore input[type=range]{flex:1;accent-color:var(--oro)}
+.cursore b{font-variant-numeric:tabular-nums;font-size:.85rem;width:3ch;text-align:right;color:var(--inchiostro-lieve)}
+.interruttore{display:flex;align-items:flex-start;gap:.7rem;margin-bottom:1rem;cursor:pointer}
+.interruttore input{margin-top:.15rem;accent-color:var(--oro);width:18px;height:18px;flex-shrink:0}
+.interruttore span{font-size:.86rem;line-height:1.5}
+.interruttore span i{display:block;font-style:normal;font-size:.76rem;color:var(--inchiostro-fioco);margin-top:.15rem}
+.avviso{background:var(--carta);border:1px solid var(--linea);border-left:3px solid var(--oro-scuro);
+  border-radius:var(--r-sm);padding:.85rem;font-size:.82rem;line-height:1.6;color:var(--inchiostro-lieve);margin-bottom:1.2rem}
+.avviso b{color:var(--inchiostro)}
+
+/* ── lettore ─────────────────────────────────────────────────────────────── */
+.mini{
+  position:absolute;left:0;right:0;bottom:0;z-index:40;
+  background:var(--fondo-alto);border-top:1px solid var(--linea);
+  padding:.6rem .8rem calc(var(--basso) + .6rem);
+  display:none;align-items:center;gap:.7rem;cursor:pointer
+}
+.mini.c-e{display:flex}
+.mini .cop{width:40px;height:40px;border-radius:8px;font-size:1rem}
+.mini-testo{flex:1;min-width:0}
+.mini-testo b{display:block;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-testo small{display:block;color:var(--inchiostro-fioco);font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.lettore{
+  position:absolute;inset:0;z-index:60;background:var(--fondo);
+  display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s var(--ease);
+  padding-top:var(--alto)
+}
+.lettore.aperto{transform:none}
+.lettore-barra{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem}
+.lettore-barra div{flex:1;min-width:0;text-align:center}
+.lettore-barra b{display:block;font-size:.82rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lettore-barra small{color:var(--inchiostro-fioco);font-size:.72rem}
+.pagina{
+  flex:1;overflow-y:auto;padding:1rem 1.35rem 2rem;
+  font-family:Georgia,'Iowan Old Style',serif;font-size:1.07rem;line-height:1.75;color:var(--inchiostro-lieve)
+}
+.pagina p{margin-bottom:1.05rem;transition:color .3s var(--ease);cursor:pointer}
+.pagina p.ora{color:var(--inchiostro);background:var(--oro-velo);box-shadow:0 0 0 .55rem var(--oro-velo);border-radius:3px}
+.comandi{padding:.8rem 1.2rem calc(var(--basso) + 1.1rem);background:var(--fondo-alto);border-top:1px solid var(--linea)}
+.riga-tempo{display:flex;align-items:center;gap:.7rem;font-size:.72rem;color:var(--inchiostro-fioco);font-variant-numeric:tabular-nums}
+.riga-tempo input[type=range]{flex:1;accent-color:var(--oro)}
+.bottoni{display:flex;align-items:center;justify-content:center;gap:1.3rem;margin-top:.7rem}
+.bt{background:none;border:none;color:var(--inchiostro-lieve);font-size:1.15rem;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:.1rem;transition:.15s var(--ease);min-width:44px}
+.bt:active{transform:scale(.9)}
+.bt small{font-size:.6rem;color:var(--inchiostro-fioco)}
+.bt[disabled]{opacity:.3;pointer-events:none}
+.bt.grosso{width:62px;height:62px;border-radius:50%;background:var(--oro);color:#1A1509;font-size:1.5rem;justify-content:center}
+.velocita{display:flex;justify-content:center;gap:.4rem;margin-top:.7rem}
+.velocita button{background:var(--carta);border:1px solid var(--linea);color:var(--inchiostro-fioco);
+  font-size:.72rem;font-weight:700;padding:.28rem .6rem;border-radius:100px;cursor:pointer}
+.velocita button.scelta{background:var(--oro-velo);border-color:var(--oro-scuro);color:var(--oro)}
+
+/* ── stato del lavoro ────────────────────────────────────────────────────── */
+.lavoro{
+  position:absolute;left:0;right:0;bottom:0;z-index:50;background:var(--oro-velo);
+  border-top:1px solid var(--oro-scuro);padding:.65rem .9rem calc(var(--basso) + .65rem);
+  display:none;align-items:center;gap:.7rem;font-size:.8rem
+}
+.lavoro.c-e{display:flex}
+.lavoro span{flex:1;min-width:0;color:var(--inchiostro-lieve);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lavoro button{background:none;border:none;color:var(--rosso);font-weight:700;font-size:.8rem;cursor:pointer;flex-shrink:0}
+.giro{width:15px;height:15px;border:2px solid var(--oro-scuro);border-top-color:transparent;border-radius:50%;
+  animation:gira .8s linear infinite;flex-shrink:0}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+#avviso{
+  position:fixed;left:50%;bottom:calc(var(--basso) + 5.5rem);transform:translateX(-50%) translateY(1rem);
+  background:var(--carta);border:1px solid var(--linea);color:var(--inchiostro);
+  padding:.7rem 1.1rem;border-radius:100px;font-size:.84rem;z-index:200;
+  opacity:0;pointer-events:none;transition:.25s var(--ease);max-width:88vw;text-align:center
+}
+#avviso.c-e{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="barra" id="barra">
+    <button class="tondo" id="btIndietro" onclick="indietro()" style="display:none">&#8592;</button>
+    <h1 id="titoloBarra">libri</h1>
+    <button class="tondo" id="btImpostazioni" onclick="mostra('impostazioni')">&#9881;</button>
+  </div>
+
+  <div class="scorri">
+
+    <!-- ── libreria ──────────────────────────────────────────────────────── -->
+    <section class="schermo attiva" id="scLibreria">
+      <div id="elencoLibri"></div>
+      <label class="tasto" style="margin-top:.5rem">
+        <input type="file" accept=".epub,application/epub+zip" id="scegliFile" style="display:none">
+        &#43; Aggiungi un EPUB
+      </label>
+    </section>
+
+    <!-- ── un libro ──────────────────────────────────────────────────────── -->
+    <section class="schermo" id="scLibro">
+      <div class="testata">
+        <div class="cop" id="libroCop"></div>
+        <div style="flex:1;min-width:0">
+          <h2 id="libroTitolo"></h2>
+          <p id="libroAutore"></p>
+          <p id="libroMisura" style="margin-top:.5rem"></p>
+        </div>
+      </div>
+      <button class="tasto" id="btRiprendi" onclick="riprendi()">Inizia ad ascoltare</button>
+      <button class="tasto piano" style="margin-top:.6rem" onclick="preparaTutto()">Prepara tutto il libro</button>
+      <div class="nota" style="margin-top:.4rem;text-align:center">Da fare a casa,
+        prima di uscire: è quello che rende l’ascolto a schermo bloccato
+        davvero continuo.</div>
+      <div class="etichetta">Capitoli</div>
+      <div id="elencoCapitoli"></div>
+      <button class="tasto rossa" style="margin-top:1.5rem" onclick="scordaLibro()">Togli questo libro</button>
+    </section>
+
+    <!-- ── impostazioni ──────────────────────────────────────────────────── -->
+    <section class="schermo" id="scImpostazioni">
+      <div class="avviso">
+        <b>Cosa esce da questo telefono.</b> Il testo dei capitoli che fai leggere
+        viene mandato a ElevenLabs, che restituisce l'audio: è l'unico servizio
+        con cui l'app parla. I libri, l'audio già pronto, la chiave e il punto in
+        cui sei restano qui dentro, in IndexedDB. Non c'è nessun server mio.
+      </div>
+
+      <div class="campo">
+        <label for="inChiave">Chiave di ElevenLabs</label>
+        <input type="password" id="inChiave" autocomplete="off" placeholder="sk_...">
+        <div class="nota">Resta su questo telefono. Se apri l'app su un altro
+          dispositivo va rimessa lì.</div>
+      </div>
+
+      <div class="campo">
+        <label for="inVoce">La voce</label>
+        <select id="inVoce"><option value="">— nessuna voce scelta —</option></select>
+        <div class="nota" id="notaVoce">Metti la chiave e tocca «Carica le voci»
+          per scegliere la tua voce clonata.</div>
+      </div>
+      <button class="tasto piano" onclick="caricaVoci()" style="margin-bottom:1rem">Carica le voci</button>
+
+      <div class="campo">
+        <label for="inModello">Il modello</label>
+        <select id="inModello">
+          <option value="eleven_multilingual_v2">Multilingual v2 — il più fedele</option>
+          <option value="eleven_turbo_v2_5">Turbo v2.5 — metà prezzo, un filo meno preciso</option>
+          <option value="eleven_flash_v2_5">Flash v2.5 — il più veloce ed economico</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Costanza della voce <span class="nota" style="display:inline">(stability)</span></label>
+        <div class="cursore">
+          <input type="range" id="inStabilita" min="0" max="1" step="0.05">
+          <b id="vStabilita"></b>
+        </div>
+        <div class="nota">Bassa: più espressiva e più imprevedibile. Alta: più
+          monotona ma sempre uguale a sé stessa. Per un libro intero conviene
+          stare in mezzo.</div>
+      </div>
+
+      <div class="campo">
+        <label>Somiglianza <span class="nota" style="display:inline">(similarity)</span></label>
+        <div class="cursore">
+          <input type="range" id="inSomiglianza" min="0" max="1" step="0.05">
+          <b id="vSomiglianza"></b>
+        </div>
+      </div>
+
+      <label class="interruttore">
+        <input type="checkbox" id="inUnisci">
+        <span>Unisci i capitoli in un audio solo
+          <i>Attacca in coda i capitoli già pronti e li fa suonare come un file
+          unico. A schermo bloccato è l'unico modo perché la lettura vada avanti
+          da sola: quando un file finisce e ne deve partire un altro, iOS spesso
+          non lo fa partire.</i></span>
+      </label>
+
+      <label class="interruttore">
+        <input type="checkbox" id="inAvanti">
+        <span>Prepara il capitolo dopo mentre ascolti
+          <i>Costa caratteri anche se poi non lo ascolti.</i></span>
+      </label>
+
+      <div class="etichetta">Lo spazio</div>
+      <div id="spazio" class="nota" style="color:var(--inchiostro-lieve);font-size:.84rem;line-height:1.6"></div>
+      <button class="tasto piano" style="margin-top:.8rem" onclick="svuotaAudio()">Butta via tutto l'audio già pronto</button>
+      <div class="nota" style="margin-top:.4rem">I libri restano. L'audio si
+        rigenera, e si ripaga.</div>
+
+      <div class="etichetta">Il credito</div>
+      <div id="credito" class="nota" style="color:var(--inchiostro-lieve);font-size:.84rem">—</div>
+      <button class="tasto piano" style="margin-top:.8rem" onclick="leggiCredito()">Guarda quanto credito resta</button>
+
+      <p class="nota" style="margin-top:2rem;text-align:center" id="versione"></p>
+    </section>
+
+  </div>
+
+  <!-- ── quello che sta girando ─────────────────────────────────────────── -->
+  <div class="lavoro" id="lavoro">
+    <div class="giro"></div>
+    <span id="lavoroTesto"></span>
+    <button onclick="fermaLavoro()">Ferma</button>
+  </div>
+
+  <!-- ── la barretta in fondo ───────────────────────────────────────────── -->
+  <div class="mini" id="mini" onclick="apriLettore()">
+    <div class="cop" id="miniCop"></div>
+    <div class="mini-testo">
+      <b id="miniTitolo"></b>
+      <small id="miniCap"></small>
+    </div>
+    <button class="tondo" id="miniPlay" onclick="event.stopPropagation();alternaPlay()">&#9654;</button>
+  </div>
+
+  <!-- ── il lettore ─────────────────────────────────────────────────────── -->
+  <div class="lettore" id="lettore">
+    <div class="lettore-barra">
+      <button class="tondo" onclick="chiudiLettore()">&#8595;</button>
+      <div>
+        <b id="letTitolo"></b>
+        <small id="letCap"></small>
+      </div>
+      <button class="tondo" onclick="vaiAlLibro()">&#9776;</button>
+    </div>
+
+    <div class="pagina" id="pagina"></div>
+
+    <div class="comandi">
+      <div class="riga-tempo">
+        <span id="tOra">0:00</span>
+        <input type="range" id="barraTempo" min="0" max="1000" value="0">
+        <span id="tTot">0:00</span>
+      </div>
+      <div class="bottoni">
+        <button class="bt" id="btPrec" onclick="cambiaCapitolo(-1)">&#9198;<small>cap.</small></button>
+        <button class="bt" onclick="salta(-15)">&#8630;<small>15s</small></button>
+        <button class="bt grosso" id="btPlay" onclick="alternaPlay()">&#9654;</button>
+        <button class="bt" onclick="salta(30)">&#8631;<small>30s</small></button>
+        <button class="bt" id="btSucc" onclick="cambiaCapitolo(1)">&#9197;<small>cap.</small></button>
+      </div>
+      <div class="velocita" id="velocita"></div>
+    </div>
+  </div>
+
+</div>
+
+<audio id="suono" preload="auto" playsinline></audio>
+<div id="avviso"></div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════════════════════════════════
+   libri — un lettore di EPUB che li legge ad alta voce con la mia voce.
+
+   Uso personale, un solo utente, nessun server: i libri, l'audio già generato
+   e il punto in cui sono arrivato stanno in IndexedDB su questo telefono.
+   L'unica cosa che esce è il testo da leggere, che va a ElevenLabs e torna
+   indietro come audio.
+
+   ─── La decisione che spiega quasi tutto il file ─────────────────────────
+   A schermo bloccato, su iPhone, un'app web può continuare a suonare un file
+   che è già partito, ma quando quel file finisce e ne deve partire un altro
+   quasi sempre non parte: per Safari quello è un «play» nuovo, e senza
+   qualcuno che tocchi lo schermo non lo concede.
+
+   Da qui due scelte:
+
+   1. Un capitolo si genera TUTTO PRIMA di farlo partire. Niente pezzetti che
+      si susseguono mentre si ascolta: sarebbero un cambio di file ogni due
+      minuti, cioè il guasto di sopra ogni due minuti.
+
+   2. I capitoli già pronti si attaccano in coda l'uno all'altro e si fanno
+      suonare come UN FILE SOLO. Gli MP3 si concatenano davvero: un MP3 è una
+      fila di fotogrammi, e metterne due di seguito dà un MP3 più lungo che
+      tutti i browser suonano. Così il cambio di capitolo, a schermo bloccato,
+      semplicemente non esiste — non è un altro file, è più avanti nello
+      stesso file.
+
+   Media Source Extensions — che sarebbe il modo «giusto» di cucire insieme
+   un flusso continuo — qui non serve a niente, ed è l'unica cosa che vale la
+   pena aver verificato prima di scriverlo: Safari su iPhone non supporta MSE
+   con audio/mpeg (e nemmeno ManagedMediaSource, che vuole MP4 frammentato,
+   formato che ElevenLabs non produce). Avrebbe funzionato su Chrome, dove il
+   problema non c'è, e non su iPhone, dove c'è. Il file unico invece funziona
+   in tutti e due i posti e costa cento righe in meno.
+
+   Quello che resta, e di cui non si scappa: quando finisce l'ultimo capitolo
+   attaccato, per andare avanti bisogna sbloccare e ripremere play. Unendone
+   sei alla volta capita una volta ogni qualche ora invece che ogni venti
+   minuti.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const VERSIONE = '0.1.0';
+
+const SRC_JSZIP  = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+const SRC_EPUBJS = 'https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js';
+
+const API = 'https://api.elevenlabs.io';
+
+/* L'audio si chiede sempre in MP3 a 128 kbps costanti. Il bitrate costante
+   non è un vezzo: è quello che rende esatto il conto «quanti byte = quanti
+   secondi», e quel conto serve per sapere dove comincia ogni capitolo dentro
+   il file unico senza doverlo decodificare. */
+const FORMATO = 'mp3_44100_128';
+const BYTE_AL_SECONDO = 128000 / 8;
+
+/* Quanto testo si manda in una volta. Il limite di ElevenLabs è molto più
+   alto, ma pezzi piccoli vogliono dire: barra di avanzamento che si muove,
+   e - soprattutto - un errore a metà capitolo che fa ributtare via un pezzo
+   solo invece di venti minuti di audio già pagato. */
+const PEZZO_MAX = 1500;
+
+/* Quanti capitoli al massimo si attaccano in un file unico, e per quanto.
+   Il tetto sul tempo conta più di quello sul numero: sei capitoli di un
+   saggio sono venti minuti, sei di un romanzo possono essere tre ore, e un
+   blob da trecento mega su un telefono non è una buona idea. */
+const UNISCI_MAX_CAPITOLI = 6;
+const UNISCI_MAX_SECONDI = 90 * 60;
+
+/* Quanti capitoli si preparano avanti mentre si ascolta. Uno solo non basta,
+   e il motivo è che i capitoli si possono attaccare soltanto se sono già
+   pronti QUANDO si comincia: su un libro appena importato, preparando solo il
+   prossimo, a ogni fine capitolo ce n'è esattamente uno da attaccare — cioè
+   nessuno — e si torna a un cambio di file per capitolo, che è il guasto da
+   cui si stava scappando. Con due avanti il file unito cresce da sé mentre si
+   ascolta. Chi vuole la continuità piena prepara il libro prima di uscire. */
+const AVANTI_QUANTI = 2;
+
+const VELOCITA = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
+
+// ═══ IndexedDB ══════════════════════════════════════════════════════════════
+/* Cinque cassetti, e la ragione per cui sono cinque e non uno:
+
+   libri        la scheda del libro: titolo, autore, copertina, i capitoli.
+                Deve restare leggera, perché si legge tutta per fare l'elenco.
+   testi        il testo di un capitolo, uno per riga. Sta a parte apposta:
+                un libro sono megabyte di testo, e l'elenco non deve tirarseli
+                dietro a ogni apertura.
+   audio        la scheda dell'audio di un capitolo con una certa voce.
+   pezzi        i singoli spezzoni MP3, finché il capitolo non è finito. Sono
+                separati perché vengono scritti uno alla volta: tenerli dentro
+                la scheda vorrebbe dire riscrivere tutto l'audio già fatto a
+                ogni pezzo nuovo, e a venti pezzi sono centinaia di mega
+                riscritti per niente.
+   stato        dove sono arrivato, libro per libro.
+   scelte       la chiave, la voce, le preferenze. */
+const DB_NOME = 'libri';
+const DB_VER = 1;
+let _db = null;
+
+function db() {
+  if (_db) return Promise.resolve(_db);
+  return new Promise((ok, no) => {
+    const r = indexedDB.open(DB_NOME, DB_VER);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('libri'))  d.createObjectStore('libri');
+      if (!d.objectStoreNames.contains('testi'))  d.createObjectStore('testi');
+      if (!d.objectStoreNames.contains('audio'))  d.createObjectStore('audio');
+      if (!d.objectStoreNames.contains('pezzi'))  d.createObjectStore('pezzi');
+      if (!d.objectStoreNames.contains('stato'))  d.createObjectStore('stato');
+      if (!d.objectStoreNames.contains('scelte')) d.createObjectStore('scelte');
+    };
+    r.onsuccess = () => { _db = r.result; ok(_db); };
+    r.onerror = () => no(r.error);
+  });
+}
+
+function att(richiesta) {
+  return new Promise((ok, no) => {
+    richiesta.onsuccess = () => ok(richiesta.result);
+    richiesta.onerror = () => no(richiesta.error);
+  });
+}
+
+async function prendi(cassetto, chiave) {
+  const d = await db();
+  return att(d.transaction(cassetto, 'readonly').objectStore(cassetto).get(chiave));
+}
+async function metti(cassetto, valore, chiave) {
+  const d = await db();
+  const t = d.transaction(cassetto, 'readwrite');
+  const p = att(t.objectStore(cassetto).put(valore, chiave));
+  return new Promise((ok, no) => {
+    t.oncomplete = () => p.then(ok, no);
+    t.onerror = () => no(t.error);
+    t.onabort = () => no(t.error || new Error('scrittura interrotta'));
+  });
+}
+async function togli(cassetto, chiave) {
+  const d = await db();
+  return att(d.transaction(cassetto, 'readwrite').objectStore(cassetto).delete(chiave));
+}
+async function tutte(cassetto) {
+  const d = await db();
+  return att(d.transaction(cassetto, 'readonly').objectStore(cassetto).getAll());
+}
+async function chiaviCon(cassetto, prefisso) {
+  const d = await db();
+  const raggio = IDBKeyRange.bound(prefisso, prefisso + '￿');
+  return att(d.transaction(cassetto, 'readonly').objectStore(cassetto).getAllKeys(raggio));
+}
+async function togliCon(cassetto, prefisso) {
+  const chiavi = await chiaviCon(cassetto, prefisso);
+  for (const c of chiavi) await togli(cassetto, c);
+  return chiavi.length;
+}
+
+// ═══ le scelte ══════════════════════════════════════════════════════════════
+const SCELTE_PRE = {
+  chiave: '', voce: '', voceNome: '',
+  modello: 'eleven_multilingual_v2',
+  stabilita: 0.5, somiglianza: 0.85, stile: 0, altoparlante: true,
+  velocita: 1, unisci: true, avanti: true
+};
+let scelte = Object.assign({}, SCELTE_PRE);
+
+async function leggiScelte() {
+  const s = await prendi('scelte', 'uniche');
+  scelte = Object.assign({}, SCELTE_PRE, s || {});
+}
+async function salvaScelte() { await metti('scelte', scelte, 'uniche'); }
+
+/* La firma della voce entra nella chiave dell'audio salvato. Serve perché
+   cambiare voce o modello e ritrovarsi il capitolo vecchio letto da un altro
+   è il genere di guasto che sembra un guasto dell'app, mentre è solo una
+   cache che non sapeva di essere diventata vecchia. Con la firma dentro la
+   chiave, l'audio di prima resta lì - se si torna indietro si riascolta senza
+   ripagarlo - e quello nuovo si genera a parte. */
+function firmaVoce() {
+  return [scelte.voce, scelte.modello, scelte.stabilita, scelte.somiglianza,
+          scelte.stile, scelte.altoparlante ? 1 : 0].join('~');
+}
+function chiaveAudio(libro, cap) { return libro + '|' + cap + '|' + firmaVoce(); }
+
+// ═══ utilità ════════════════════════════════════════════════════════════════
+const $ = (id) => document.getElementById(id);
+
+function avvisa(testo, quanto = 2600) {
+  const e = $('avviso');
+  e.textContent = testo;
+  e.classList.add('c-e');
+  clearTimeout(avvisa._t);
+  avvisa._t = setTimeout(() => e.classList.remove('c-e'), quanto);
+}
+
+function attendi(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function orologio(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), q = Math.floor(s % 60);
+  return h ? h + ':' + String(m).padStart(2, '0') + ':' + String(q).padStart(2, '0')
+           : m + ':' + String(q).padStart(2, '0');
+}
+
+function durataUmana(s) {
+  if (!isFinite(s) || s <= 0) return '—';
+  const m = Math.round(s / 60);
+  if (m < 60) return m + ' min';
+  return Math.floor(m / 60) + ' h ' + (m % 60 ? (m % 60) + ' min' : '').trim();
+}
+
+function mega(byte) {
+  if (!byte) return '0 MB';
+  return (byte / 1048576).toFixed(byte < 10485760 ? 1 : 0) + ' MB';
+}
+
+/* Una stima dei SECONDI di lettura a partire dai caratteri: serve a dare un
+   ordine di grandezza prima di spendere. ~14 caratteri al secondo è quello
+   che viene fuori leggendo prosa italiana a voce alta e a velocità normale.
+
+   Restituiva secondi e si chiamava «minutiStimati»: chi la usava moltiplicava
+   per 60 in buona fede, e un libro da un'ora e mezza diventava «100 h 21 min»
+   in ogni schermata. Il nome di una funzione che dichiara un'unità sbagliata
+   non è un dettaglio di stile. */
+function secondiStimati(caratteri) { return caratteri / 14; }
+
+function caricaScript(src) {
+  return new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => ok();
+    s.onerror = () => no(new Error('Non riesco a caricare ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+/* Le due librerie che leggono gli EPUB si caricano solo quando servono
+   davvero, cioè quando si importa un libro. Un libro già importato ha il
+   testo in IndexedDB e non ne ha più bisogno: aprire l'app per ascoltare non
+   deve aspettare duecento kilobyte di roba che non si userà. */
+let _librerie = null;
+function librerie() {
+  if (!_librerie) {
+    _librerie = (async () => {
+      if (!window.JSZip) await caricaScript(SRC_JSZIP);
+      if (!window.ePub) await caricaScript(SRC_EPUBJS);
+    })().catch(e => { _librerie = null; throw e; });
+  }
+  return _librerie;
+}
+
+// ═══ leggere un EPUB ════════════════════════════════════════════════════════
+/* textContent da solo non basta: <p>uno</p><p>due</p> diventa «unodue», e la
+   voce legge una frase che nel libro non c'è. Qui si cammina sull'albero e si
+   va a capo dove il libro va a capo, che è anche l'unico modo per avere dei
+   paragrafi veri da mostrare e su cui saltare. */
+const SALTA = new Set(['SCRIPT', 'STYLE', 'HEAD', 'NOSCRIPT', 'SVG', 'IMG', 'AUDIO', 'VIDEO']);
+const BLOCCHI = new Set(['P', 'DIV', 'LI', 'UL', 'OL', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+                         'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'TR', 'TABLE', 'FIGURE',
+                         'FIGCAPTION', 'HR', 'PRE', 'BODY', 'ASIDE', 'HEADER', 'FOOTER']);
+
+function testoDaDocumento(radice) {
+  let fuori = '';
+  (function gira(n) {
+    if (n.nodeType === 3) { fuori += n.nodeValue.replace(/\s+/g, ' '); return; }
+    if (n.nodeType !== 1) return;
+    const tag = String(n.tagName || '').toUpperCase();
+    if (SALTA.has(tag)) return;
+    if (tag === 'BR') { fuori += '\n'; return; }
+    const blocco = BLOCCHI.has(tag);
+    if (blocco && !/\n$/.test(fuori)) fuori += '\n';
+    for (let f = n.firstChild; f; f = f.nextSibling) gira(f);
+    if (blocco) fuori += '\n';
+  })(radice);
+  return fuori
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+}
+
+function paragrafiDa(testo) {
+  return testo.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+}
+
+/* Un paragrafo più lungo del pezzo massimo si taglia alla fine di una frase,
+   mai in mezzo a una parola: la voce prende fiato dove prenderebbe fiato un
+   lettore, e il punto di attacco fra due richieste non si sente. */
+function spezzaLungo(par, max) {
+  if (par.length <= max) return [par];
+  const frasi = par.match(/[^.!?…;:]+[.!?…;:]*[\s]*/g) || [par];
+  const fuori = [];
+  let cur = '';
+  for (const f of frasi) {
+    if (cur && (cur + f).length > max) { fuori.push(cur.trim()); cur = ''; }
+    if (f.length > max) {
+      // Una frase sola più lunga del massimo: si taglia agli spazi.
+      const parole = f.split(' ');
+      for (const p of parole) {
+        if (cur && (cur + ' ' + p).length > max) { fuori.push(cur.trim()); cur = ''; }
+        cur += (cur ? ' ' : '') + p;
+      }
+    } else cur += f;
+  }
+  if (cur.trim()) fuori.push(cur.trim());
+  return fuori;
+}
+
+function inPezzi(paragrafi, max) {
+  const pezzi = [];
+  let testo = '', indici = [];
+  for (let i = 0; i < paragrafi.length; i++) {
+    const p = paragrafi[i];
+    if (testo && testo.length + 2 + p.length > max) {
+      pezzi.push({ testo, indici });
+      testo = ''; indici = [];
+    }
+    testo += (testo ? '\n\n' : '') + p;
+    indici.push(i);
+  }
+  if (testo) pezzi.push({ testo, indici });
+  return pezzi;
+}
+
+function etichetteDalIndice(libro) {
+  /* L'indice di un EPUB punta a un file, a volte con un'ancora dentro.
+     spine.get() di epub.js sa già sciogliere tutti e due i casi: farlo a mano
+     confrontando stringhe funziona su metà dei libri e sull'altra metà no. */
+  const mappa = new Map();
+  const giro = (voci) => {
+    for (const v of (voci || [])) {
+      try {
+        const sez = libro.spine.get(v.href);
+        if (sez && sez.index != null && !mappa.has(sez.index)) {
+          mappa.set(sez.index, String(v.label || '').trim());
+        }
+      } catch (e) {}
+      if (v.subitems && v.subitems.length) giro(v.subitems);
+    }
+  };
+  giro(libro.navigation && libro.navigation.toc);
+  return mappa;
+}
+
+async function importaEpub(file, segnala) {
+  segnala = segnala || (() => {});
+  segnala('Apro il file…');
+  await librerie();
+
+  const dati = await file.arrayBuffer();
+  const libro = window.ePub(dati);
+  await libro.opened;
+  await libro.ready;
+
+  const meta = (libro.packaging && libro.packaging.metadata) || {};
+  const titolo = String(meta.title || file.name.replace(/\.epub$/i, '')).trim();
+  const autore = String(meta.creator || '').trim();
+
+  const etichette = etichetteDalIndice(libro);
+  const sezioni = libro.spine.spineItems || [];
+
+  const capitoli = [], testi = [];
+  for (let i = 0; i < sezioni.length; i++) {
+    segnala('Leggo il capitolo ' + (i + 1) + ' di ' + sezioni.length + '…');
+    const sez = sezioni[i];
+    let testo = '';
+    try {
+      const doc = await sez.load(libro.load.bind(libro));
+      testo = testoDaDocumento(doc);
+    } catch (e) {
+      testo = '';
+    }
+    try { sez.unload(); } catch (e) {}
+
+    /* Le pagine da niente — la copertina, il colophon, una pagina bianca —
+       si buttano. Non è pignoleria: restando nell'elenco diventano capitoli
+       da tre secondi che a schermo bloccato fanno un cambio di file ogni
+       tre secondi, cioè esattamente la cosa che quest'app cerca di evitare. */
+    if (testo.replace(/\s/g, '').length < 140) continue;
+
+    capitoli.push({
+      titolo: etichette.get(sez.index) || ('Capitolo ' + (capitoli.length + 1)),
+      href: sez.href,
+      caratteri: testo.length
+    });
+    testi.push(testo);
+  }
+
+  if (!capitoli.length) {
+    /* Un EPUB comprato in libreria può essere protetto: il testo dentro lo
+       zip c'è ma è cifrato, e quello che si legge sono byte a caso. Senza
+       questa riga il messaggio sarebbe «non ho trovato testo da leggere», che
+       manda a cercare un difetto nell'app per un libro che non si può
+       proprio aprire. */
+    let protetto = false;
+    try {
+      protetto = !!(libro.archive && libro.archive.zip &&
+                    libro.archive.zip.file('META-INF/encryption.xml'));
+    } catch (e) {}
+    throw new Error(protetto
+      ? 'Questo EPUB è protetto: il testo dentro è cifrato e non riesco a leggerlo.'
+      : 'In questo EPUB non ho trovato testo da leggere.');
+  }
+
+  let copertina = null;
+  try {
+    const url = await libro.coverUrl();
+    if (url) {
+      copertina = await (await fetch(url)).blob();
+      URL.revokeObjectURL(url);
+    }
+  } catch (e) {}
+
+  try { libro.destroy(); } catch (e) {}
+
+  const id = 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const scheda = {
+    id, titolo, autore, copertina, capitoli,
+    caratteri: capitoli.reduce((s, c) => s + c.caratteri, 0),
+    aggiunto: Date.now(), ultimoAperto: Date.now()
+  };
+
+  segnala('Salvo…');
+  for (let i = 0; i < testi.length; i++) await metti('testi', { testo: testi[i] }, id + '|' + i);
+  await metti('libri', scheda, id);
+  return scheda;
+}
+
+// ═══ ElevenLabs ═════════════════════════════════════════════════════════════
+async function erroreDa(res) {
+  let dettaglio = '';
+  try {
+    const j = await res.json();
+    dettaglio = (j && j.detail && (j.detail.message || j.detail.status)) || (j && j.message) || '';
+  } catch (e) {}
+  if (res.status === 401) return new Error('La chiave non è buona' + (dettaglio ? ' (' + dettaglio + ')' : '') + '.');
+  if (res.status === 429) return new Error('ElevenLabs sta chiedendo di rallentare.');
+  return new Error('ElevenLabs ha risposto ' + res.status + (dettaglio ? ': ' + dettaglio : '') + '.');
+}
+
+/* Un errore di rete o un «rallenta» non sono un guasto: si riprova, con
+   attese che raddoppiano. Un 401 o un 422 invece sono una risposta vera e si
+   riportano subito, senza far aspettare nessuno per un motivo che non
+   cambierà riprovando. */
+async function chiedi(url, opz, tentativi = 3) {
+  let ultimo = null;
+  for (let k = 0; k < tentativi; k++) {
+    let res;
+    try {
+      res = await fetch(url, opz);
+    } catch (e) {
+      if (opz && opz.signal && opz.signal.aborted) throw e;
+      /* Una chiamata che non parte può essere la rete, oppure il browser che
+         la blocca perché arriva da un indirizzo diverso (CORS). Da fuori si
+         vede lo stesso identico errore, e dire solo «non c'è rete» a chi la
+         rete ce l'ha manda a cercare dalla parte sbagliata. */
+      ultimo = new Error(navigator.onLine
+        ? 'ElevenLabs non risponde. Se succede sempre e la chiave è giusta, ' +
+          'può essere il browser che blocca la chiamata da questo indirizzo.'
+        : 'Sei senza rete.');
+      await attendi(900 * Math.pow(2, k));
+      continue;
+    }
+    if (res.ok) return res;
+    if (res.status === 429 || res.status >= 500) {
+      ultimo = await erroreDa(res);
+      await attendi(1500 * Math.pow(2, k));
+      continue;
+    }
+    throw await erroreDa(res);
+  }
+  throw ultimo || new Error('ElevenLabs non risponde.');
+}
+
+function daBase64(b64) {
+  const grezzo = atob(b64);
+  const buf = new Uint8Array(grezzo.length);
+  for (let i = 0; i < grezzo.length; i++) buf[i] = grezzo.charCodeAt(i);
+  return buf;
+}
+
+/* Si usa l'indirizzo «with-timestamps», che oltre all'audio restituisce il
+   momento esatto in cui viene pronunciato ogni singolo carattere.
+
+   Costa gli stessi caratteri di quello normale, e va chiesto ADESSO: i tempi
+   si possono ricavare solo insieme all'audio, e se un domani si volessero
+   avere bisognerebbe rigenerare tutto il libro, cioè ripagarlo. Con i tempi
+   in mano si illumina il paragrafo che la voce sta leggendo e si può toccare
+   un paragrafo per saltarci sopra. */
+async function parla(testo, contesto, segnale) {
+  if (!scelte.chiave) throw new Error('Manca la chiave di ElevenLabs.');
+  if (!scelte.voce) throw new Error('Non hai ancora scelto la voce.');
+
+  const url = API + '/v1/text-to-speech/' + encodeURIComponent(scelte.voce) +
+              '/with-timestamps?output_format=' + FORMATO;
+
+  const corpo = {
+    text: testo,
+    model_id: scelte.modello,
+    voice_settings: {
+      stability: Number(scelte.stabilita),
+      similarity_boost: Number(scelte.somiglianza),
+      style: Number(scelte.stile),
+      use_speaker_boost: !!scelte.altoparlante
+    }
+  };
+  /* Il testo prima e dopo non viene letto: serve solo perché la voce sappia
+     da dove viene e dove sta andando. Senza, ogni pezzo ricomincia con
+     l'intonazione di un inizio, e il capitolo suona come venti letture
+     attaccate. previous_request_ids fa la stessa cosa, meglio, quando
+     ElevenLabs ci lascia leggere l'intestazione con l'id della richiesta. */
+  if (contesto.prima) corpo.previous_text = contesto.prima;
+  if (contesto.dopo) corpo.next_text = contesto.dopo;
+  if (contesto.ids && contesto.ids.length) corpo.previous_request_ids = contesto.ids.slice(-3);
+
+  const res = await chiedi(url, {
+    method: 'POST',
+    headers: { 'xi-api-key': scelte.chiave, 'content-type': 'application/json' },
+    body: JSON.stringify(corpo),
+    signal: segnale
+  });
+
+  const j = await res.json();
+  const byte = daBase64(j.audio_base64);
+  const all = j.alignment || j.normalized_alignment || null;
+  const id = res.headers.get('request-id') || res.headers.get('x-request-id') || '';
+  return { byte, all, id };
+}
+
+async function elencoVoci() {
+  const res = await chiedi(API + '/v1/voices', { headers: { 'xi-api-key': scelte.chiave } });
+  const j = await res.json();
+  return (j.voices || []).map(v => ({ id: v.voice_id, nome: v.name, tipo: v.category || '' }));
+}
+
+async function credito() {
+  const res = await chiedi(API + '/v1/user/subscription', { headers: { 'xi-api-key': scelte.chiave } });
+  const j = await res.json();
+  return { usati: j.character_count || 0, tetto: j.character_limit || 0 };
+}
+
+// ═══ generare l'audio di un capitolo ════════════════════════════════════════
+/* Le richieste si fanno una alla volta, in fila. Non è una limitazione
+   tecnica: è che ogni richiesta costa, e due generazioni in parallelo che si
+   accavallano sono il modo migliore per pagare due volte lo stesso capitolo
+   senza accorgersene. */
+let catena = Promise.resolve();
+const inCorso = new Map();
+let fermata = null;
+
+function chiaviTempi(all) {
+  if (!all) return null;
+  const c = all.characters;
+  const da = all.character_start_times_seconds || all.characterStartTimesSeconds;
+  const a  = all.character_end_times_seconds   || all.characterEndTimesSeconds;
+  if (!c || !da || !a || c.length !== da.length) return null;
+  return { c, da, a };
+}
+
+/* I tempi dei paragrafi dentro un pezzo.
+
+   Quando i caratteri che ci tornano indietro sono esattamente quelli che
+   abbiamo mandato, il conto è esatto: si prende il tempo del primo carattere
+   del paragrafo e quello dell'ultimo. Quando non combaciano - può succedere,
+   la voce normalizza numeri e abbreviazioni - si ripiega sulla proporzione,
+   che sbaglia di qualche secondo ma non sbaglia paragrafo. */
+function tempiDeiParagrafi(pezzo, paragrafi, all, durata) {
+  const t = chiaviTempi(all);
+  const esatto = t && t.c.length === pezzo.testo.length;
+  const fuori = [];
+  let scorri = 0;
+  for (const i of pezzo.indici) {
+    const lung = paragrafi[i].length;
+    let inizio, fine;
+    if (esatto) {
+      inizio = t.da[scorri];
+      fine = t.a[Math.min(scorri + lung - 1, t.a.length - 1)];
+    } else {
+      inizio = durata * scorri / pezzo.testo.length;
+      fine = durata * (scorri + lung) / pezzo.testo.length;
+    }
+    fuori.push({ p: i, inizio, fine });
+    scorri += lung + 2; // il '\n\n' con cui sono stati attaccati
+  }
+  return fuori;
+}
+
+async function generaCapitolo(libroId, cap, segnala) {
+  segnala = segnala || (() => {});
+  const chiave = chiaveAudio(libroId, cap);
+
+  let scheda = await prendi('audio', chiave);
+  if (scheda && scheda.completo) return scheda;
+
+  const riga = await prendi('testi', libroId + '|' + cap);
+  if (!riga) throw new Error('Il testo di questo capitolo non c’è più.');
+
+  const paragrafi = paragrafiDa(riga.testo);
+  const normali = [];
+  for (const p of paragrafi) for (const q of spezzaLungo(p, PEZZO_MAX)) normali.push(q);
+  const pezzi = inPezzi(normali, PEZZO_MAX);
+
+  if (!scheda) {
+    scheda = {
+      libro: libroId, capitolo: cap, firma: firmaVoce(),
+      fatti: 0, totale: pezzi.length, paragrafi: [], tempi: [],
+      durata: 0, byte: 0, ids: [], completo: false, creato: Date.now()
+    };
+  }
+  /* Se il testo o i pezzi sono cambiati da sotto (un libro reimportato), non
+     si riprende da metà: si ricomincia, perché riprendere vorrebbe dire
+     attaccare l'audio di un libro all'audio di un altro. */
+  if (scheda.totale !== pezzi.length) {
+    await togliCon('pezzi', chiave + '|');
+    scheda.fatti = 0; scheda.totale = pezzi.length;
+    scheda.paragrafi = []; scheda.tempi = []; scheda.durata = 0; scheda.byte = 0; scheda.ids = [];
+  }
+
+  fermata = new AbortController();
+  const segnale = fermata.signal;
+
+  for (let k = scheda.fatti; k < pezzi.length; k++) {
+    segnala({ fase: 'genera', fatti: k, totale: pezzi.length, cap });
+    const pezzo = pezzi[k];
+    const contesto = {
+      prima: k > 0 ? pezzi[k - 1].testo.slice(-400) : '',
+      dopo: k + 1 < pezzi.length ? pezzi[k + 1].testo.slice(0, 400) : '',
+      ids: scheda.ids
+    };
+
+    const r = await parla(pezzo.testo, contesto, segnale);
+
+    /* La durata del pezzo si prende dai byte, non dai tempi dei caratteri.
+       I due numeri sono quasi uguali ma non identici - l'MP3 finisce con un
+       filo di silenzio che nessun carattere occupa - e quello che serve qui
+       è dove comincia il pezzo DOPO dentro il file attaccato, cioè quanto è
+       lungo questo file, non quanto dura l'ultima parola. Con un bitrate
+       costante i byte danno la risposta esatta. */
+    const durata = r.byte.byteLength / BYTE_AL_SECONDO;
+
+    const tempi = tempiDeiParagrafi(pezzo, normali, r.all, durata);
+    for (const t of tempi) {
+      scheda.tempi.push({ p: t.p, inizio: scheda.durata + t.inizio, fine: scheda.durata + t.fine });
+    }
+
+    await metti('pezzi', { byte: r.byte.buffer }, chiave + '|' + String(k).padStart(4, '0'));
+
+    scheda.durata += durata;
+    scheda.byte += r.byte.byteLength;
+    scheda.fatti = k + 1;
+    if (r.id) scheda.ids.push(r.id);
+    /* Si salva dopo ogni pezzo. Se l'app si chiude, se il telefono muore, se
+       la rete cade: al giro dopo si riparte da qui invece di ripagare da
+       capo quello che era già stato generato. È l'unica ragione per cui i
+       pezzi stanno in un cassetto separato. */
+    await metti('audio', scheda, chiave);
+  }
+
+  segnala({ fase: 'monta', cap });
+
+  const parti = [];
+  const chiavi = await chiaviCon('pezzi', chiave + '|');
+  chiavi.sort();
+  for (const c of chiavi) {
+    const p = await prendi('pezzi', c);
+    if (p) parti.push(p.byte);
+  }
+  scheda.suono = new Blob(parti, { type: 'audio/mpeg' });
+  scheda.paragrafi = normali;
+  scheda.completo = true;
+  await metti('audio', scheda, chiave);
+  await togliCon('pezzi', chiave + '|');
+
+  return scheda;
+}
+
+/* Chiedere l'audio di un capitolo: se è già lì si prende, se qualcuno lo sta
+   già facendo ci si mette in attesa dello stesso lavoro invece di farne un
+   secondo uguale, altrimenti si accoda. */
+function chiediAudio(libroId, cap, segnala) {
+  const chiave = chiaveAudio(libroId, cap);
+  if (inCorso.has(chiave)) return inCorso.get(chiave);
+  const p = catena
+    .then(() => generaCapitolo(libroId, cap, segnala))
+    .finally(() => { inCorso.delete(chiave); });
+  catena = p.catch(() => {});
+  inCorso.set(chiave, p);
+  return p;
+}
+
+function fermaLavoro() {
+  if (fermata) fermata.abort();
+  avvisa('Fermato. Quello che era già pronto resta.');
+  mostraLavoro(null);
+}
+
+async function audioPronto(libroId, cap) {
+  const s = await prendi('audio', chiaveAudio(libroId, cap));
+  return s && s.completo ? s : null;
+}
+
+// ═══ il flusso: uno o più capitoli attaccati in un file solo ════════════════
+/* Qui si fa la cosa descritta in cima al file. Si parte dal capitolo chiesto
+   e si va avanti finché i capitoli dopo sono già pronti, fermandosi al tetto
+   dei capitoli o a quello del tempo. Ne esce un MP3 unico e un elenco di
+   segmenti che dice, per ogni capitolo, da che secondo comincia: è quello
+   che permette di sapere «dove sono» dentro un file che il lettore vede come
+   una cosa sola. */
+async function montaFlusso(libroId, capitolo) {
+  const primo = await audioPronto(libroId, capitolo);
+  if (!primo) return null;
+
+  const scheda = await prendi('libri', libroId);
+  const quanti = scheda ? scheda.capitoli.length : capitolo + 1;
+
+  const parti = [primo.suono];
+  const segmenti = [{ cap: capitolo, inizio: 0, durata: primo.durata, tempi: primo.tempi }];
+  let totale = primo.durata;
+
+  if (scelte.unisci) {
+    for (let c = capitolo + 1; c < quanti && segmenti.length < UNISCI_MAX_CAPITOLI; c++) {
+      const s = await audioPronto(libroId, c);
+      if (!s) break;
+      if (totale + s.durata > UNISCI_MAX_SECONDI) break;
+      parti.push(s.suono);
+      segmenti.push({ cap: c, inizio: totale, durata: s.durata, tempi: s.tempi });
+      totale += s.durata;
+    }
+  }
+
+  return { suono: new Blob(parti, { type: 'audio/mpeg' }), segmenti, durata: totale };
+}
+
+// ═══ il lettore ═════════════════════════════════════════════════════════════
+const suono = $('suono');
+
+const ora = {
+  libro: null,       // la scheda del libro
+  segmenti: [],      // i capitoli dentro il file che sta suonando
+  indice: 0,         // quale segmento stiamo ascoltando
+  url: null,         // il blob url in uso, da buttare quando si cambia
+  durata: 0,         // la durata del file unito, in secondi
+  fattore: 1,        // correzione dei tempi rispetto alla durata vera
+  paragrafi: [],     // i paragrafi del capitolo che si sta ascoltando
+  parQui: -1
+};
+
+function segmentoDi(t) {
+  for (let i = ora.segmenti.length - 1; i >= 0; i--) {
+    if (t >= ora.segmenti[i].inizio - 0.001) return i;
+  }
+  return 0;
+}
+
+async function apriCapitolo(libroId, cap, secondi, parti) {
+  const scheda = await prendi('libri', libroId);
+  if (!scheda || !scheda.capitoli[cap]) return;
+
+  let pronto = await audioPronto(libroId, cap);
+  if (!pronto) {
+    mostraLavoro('Preparo «' + scheda.capitoli[cap].titolo + '»…');
+    try {
+      pronto = await chiediAudio(libroId, cap, statoLavoro);
+    } catch (e) {
+      mostraLavoro(null);
+      if (e && e.name === 'AbortError') return;
+      avvisa(e.message || 'Non ci sono riuscito.');
+      return;
+    }
+    mostraLavoro(null);
+  }
+
+  const flusso = await montaFlusso(libroId, cap);
+  if (!flusso) { avvisa('L’audio non c’è.'); return; }
+
+  const vecchio = ora.url;
+  ora.libro = scheda;
+  ora.segmenti = flusso.segmenti;
+  ora.durata = flusso.durata;
+  ora.fattore = 1;
+  ora.url = URL.createObjectURL(flusso.suono);
+
+  suono.src = ora.url;
+  suono.playbackRate = scelte.velocita;
+  if (vecchio) URL.revokeObjectURL(vecchio);
+
+  /* Il salto al secondo giusto si fa quando il browser ha capito che file è.
+     Scritto subito dopo il src non succede niente: currentTime su un audio
+     senza durata viene ignorato in silenzio, e il segnalibro sembrava non
+     funzionare quando invece non era mai stato applicato. */
+  const seg = flusso.segmenti[0];
+  const dove = Math.max(0, Math.min(secondi || 0, Math.max(0, seg.durata - 1)));
+  if (dove > 0) {
+    suono.addEventListener('loadedmetadata',
+      () => { try { suono.currentTime = dove; } catch (e) {} }, { once: true });
+  }
+  ora.indice = 0;
+  await caricaParagrafi(libroId, cap);
+
+  scheda.ultimoAperto = Date.now();
+  await metti('libri', scheda, libroId);
+
+  disegnaLettore();
+  aggiornaMediaSession();
+  if (parti !== false) provaASuonare();
+  preparaIlProssimo();
+}
+
+async function caricaParagrafi(libroId, cap) {
+  const s = await prendi('audio', chiaveAudio(libroId, cap));
+  ora.paragrafi = (s && s.paragrafi) || [];
+  ora.parQui = -1;
+  disegnaPagina();
+}
+
+/* Lo sblocco dell'audio, e senza questo su iPhone non suonerebbe mai niente.
+
+   Safari lascia partire l'audio solo dentro un tocco. Qui fra il tocco su un
+   capitolo e il momento in cui parte ci possono stare minuti di generazione:
+   quando finalmente si chiama play(), il tocco è passato da un pezzo e la
+   richiesta viene rifiutata. Però la regola vale per l'ELEMENTO, non per la
+   riproduzione: un elemento che ha suonato una volta dentro un tocco resta
+   libero anche dopo. Quindi al primo tocco sullo schermo, qualunque sia, si
+   fa suonare un terzo di secondo di silenzio e lo si ferma. Da quel momento
+   l'elemento è sbloccato per sempre, e tutto il resto può prendersi il tempo
+   che vuole. */
+let sbloccato = false;
+function sbloccaAudio() {
+  if (sbloccato) return;
+  sbloccato = true;
+  if (suono.src) return; // sta già suonando qualcosa: è già libero
+  const campioni = 2400;              // 0,3 secondi a 8000 Hz
+  const buf = new Uint8Array(44 + campioni).fill(128);
+  const dv = new DataView(buf.buffer);
+  const scrivi = (dove, testo) => { for (let i = 0; i < testo.length; i++) buf[dove + i] = testo.charCodeAt(i); };
+  scrivi(0, 'RIFF'); dv.setUint32(4, 36 + campioni, true); scrivi(8, 'WAVEfmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true);
+  dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+  scrivi(36, 'data'); dv.setUint32(40, campioni, true);
+
+  const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  suono.src = url;
+  const p = suono.play();
+  const chiudi = () => {
+    URL.revokeObjectURL(url);
+    if (ora.libro) return;            // nel frattempo è partito un libro vero
+    suono.pause();
+    suono.removeAttribute('src');
+    suono.load();
+  };
+  if (p && p.then) p.then(chiudi).catch(chiudi); else setTimeout(chiudi, 400);
+}
+document.addEventListener('touchend', sbloccaAudio, { capture: true, once: true });
+document.addEventListener('click', sbloccaAudio, { capture: true, once: true });
+
+function provaASuonare() {
+  const p = suono.play();
+  if (p && p.catch) p.catch(() => {
+    /* Il browser non fa partire l'audio senza un tocco. Non è un errore da
+       segnalare: la barretta in fondo mostra già il tasto play, e quello è
+       il tocco che serve. */
+  });
+}
+
+function alternaPlay() {
+  if (!ora.libro) return;
+  if (suono.paused) provaASuonare(); else suono.pause();
+}
+
+function salta(secondi) {
+  if (!ora.libro) return;
+  suono.currentTime = Math.max(0, Math.min(suono.currentTime + secondi, durataVera() - 0.3));
+}
+
+function durataVera() {
+  return isFinite(suono.duration) && suono.duration > 0 ? suono.duration : ora.durata;
+}
+
+async function cambiaCapitolo(verso) {
+  if (!ora.libro) return;
+  const capOra = ora.segmenti[ora.indice].cap;
+  const nuovo = capOra + verso;
+  if (nuovo < 0 || nuovo >= ora.libro.capitoli.length) return;
+
+  /* Se il capitolo è già dentro il file che sta suonando, non si ricarica
+     niente: ci si sposta e basta. È la ragione per cui si attaccano. */
+  const dentro = ora.segmenti.findIndex(s => s.cap === nuovo);
+  if (dentro >= 0) {
+    suono.currentTime = ora.segmenti[dentro].inizio + 0.05;
+    return;
+  }
+  await apriCapitolo(ora.libro.id, nuovo, 0, true);
+}
+
+/* Mentre si ascolta si preparano già i capitoli dopo. Si parte dall'ultimo
+   ATTACCATO, non da quello che si sta ascoltando: preparare qualcosa che è
+   già lì vorrebbe dire non preparare niente. */
+async function preparaIlProssimo() {
+  if (!scelte.avanti || !ora.libro) return;
+  const ultimo = ora.segmenti[ora.segmenti.length - 1].cap;
+  for (let c = ultimo + 1; c <= ultimo + AVANTI_QUANTI; c++) {
+    if (c >= ora.libro.capitoli.length) return;
+    if (await audioPronto(ora.libro.id, c)) continue;
+    chiediAudio(ora.libro.id, c, statoLavoro).then(() => {
+      mostraLavoro(null);
+      disegnaCapitoli();
+    }).catch(() => { mostraLavoro(null); });
+  }
+}
+
+// ── il punto in cui sono arrivato ──────────────────────────────────────────
+let ultimoSalvato = 0;
+async function salvaSegnalibro() {
+  if (!ora.libro) return;
+  const seg = ora.segmenti[ora.indice];
+  if (!seg) return;
+  await metti('stato', {
+    capitolo: seg.cap,
+    secondi: Math.max(0, suono.currentTime - seg.inizio),
+    quando: Date.now()
+  }, ora.libro.id);
+}
+
+// ── Media Session: i comandi sulla schermata di blocco ─────────────────────
+let urlCopertina = null;
+function aggiornaMediaSession() {
+  if (!('mediaSession' in navigator) || !ora.libro) return;
+  const seg = ora.segmenti[ora.indice];
+  const cap = ora.libro.capitoli[seg.cap];
+
+  const arte = [];
+  if (ora.libro.copertina) {
+    if (urlCopertina) URL.revokeObjectURL(urlCopertina);
+    urlCopertina = URL.createObjectURL(ora.libro.copertina);
+    arte.push({ src: urlCopertina, type: ora.libro.copertina.type || 'image/jpeg' });
+  }
+
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: cap ? cap.titolo : 'Capitolo ' + (seg.cap + 1),
+    artist: ora.libro.autore || 'libri',
+    album: ora.libro.titolo,
+    artwork: arte
+  });
+
+  /* I comandi vanno registrati tutti, anche quelli che sembrano scontati: se
+     manca «play», sulla schermata di blocco il tasto non compare proprio, e
+     quando iOS mette in pausa da solo non c'è più modo di ripartire senza
+     riaprire l'app. */
+  const comandi = {
+    play: () => provaASuonare(),
+    pause: () => suono.pause(),
+    previoustrack: () => cambiaCapitolo(-1),
+    nexttrack: () => cambiaCapitolo(1),
+    seekbackward: (d) => salta(-(d && d.seekOffset ? d.seekOffset : 15)),
+    seekforward: (d) => salta(d && d.seekOffset ? d.seekOffset : 30),
+    seekto: (d) => { if (d && d.seekTime != null) suono.currentTime = d.seekTime; },
+    stop: () => { suono.pause(); salvaSegnalibro(); }
+  };
+  for (const [nome, fn] of Object.entries(comandi)) {
+    try { navigator.mediaSession.setActionHandler(nome, fn); } catch (e) {}
+  }
+  aggiornaPosizione();
+}
+
+function aggiornaPosizione() {
+  if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+  const d = durataVera();
+  if (!isFinite(d) || d <= 0) return;
+  try {
+    navigator.mediaSession.setPositionState({
+      duration: d,
+      position: Math.min(suono.currentTime, d),
+      playbackRate: suono.playbackRate || 1
+    });
+  } catch (e) {}
+}
+
+// ── quello che succede mentre suona ────────────────────────────────────────
+suono.addEventListener('loadedmetadata', () => {
+  /* La durata vera del file attaccato può scostarsi di qualche decimo da
+     quella che abbiamo sommato pezzo per pezzo. Si corregge in blocco, e
+     solo se lo scarto è piccolo: se è grosso vuol dire che è il browser a
+     non aver capito il file, e fidarsi di lui peggiorerebbe le cose. */
+  const vera = suono.duration;
+  if (isFinite(vera) && vera > 0 && ora.durata > 0) {
+    const f = vera / ora.durata;
+    ora.fattore = (f > 0.9 && f < 1.1) ? f : 1;
+  }
+  disegnaLettore();
+  aggiornaPosizione();
+});
+
+suono.addEventListener('timeupdate', () => {
+  const t = suono.currentTime;
+
+  const i = segmentoDi(t);
+  if (i !== ora.indice) {
+    ora.indice = i;
+    if (ora.libro) caricaParagrafi(ora.libro.id, ora.segmenti[i].cap);
+    aggiornaMediaSession();
+    disegnaLettore();
+    preparaIlProssimo();
+  }
+
+  illuminaParagrafo(t);
+  disegnaTempo();
+
+  if (Date.now() - ultimoSalvato > 4000) { ultimoSalvato = Date.now(); salvaSegnalibro(); }
+});
+
+suono.addEventListener('play', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  disegnaPlay();
+  aggiornaPosizione();
+});
+suono.addEventListener('pause', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  disegnaPlay();
+  salvaSegnalibro();
+});
+
+suono.addEventListener('ended', async () => {
+  await salvaSegnalibro();
+  if (!ora.libro) return;
+  const ultimo = ora.segmenti[ora.segmenti.length - 1].cap;
+  const prossimo = ultimo + 1;
+  if (prossimo >= ora.libro.capitoli.length) { avvisa('Il libro è finito.'); return; }
+  /* Qui siamo nel caso che non si può evitare: il file è finito e il
+     capitolo dopo è un altro file. Se lo schermo è sbloccato parte da solo;
+     se è bloccato, iOS quasi sempre non lo fa partire e bisognerà sbloccare
+     e toccare play. Provarci non costa niente e nel caso buono funziona. */
+  await apriCapitolo(ora.libro.id, prossimo, 0, true);
+});
+
+suono.addEventListener('ratechange', () => aggiornaPosizione());
+
+/* Quando l'app torna in primo piano il segnalibro si salva subito: l'evento
+   «pause» non arriva se il telefono si spegne mentre suona. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') salvaSegnalibro();
+});
+
+// ═══ disegnare ══════════════════════════════════════════════════════════════
+let schermo = 'libreria';
+let libroAperto = null;
+
+function mostra(quale, dati) {
+  schermo = quale;
+  for (const s of document.querySelectorAll('.schermo')) s.classList.remove('attiva');
+  $('scLibreria').classList.toggle('attiva', quale === 'libreria');
+  $('scLibro').classList.toggle('attiva', quale === 'libro');
+  $('scImpostazioni').classList.toggle('attiva', quale === 'impostazioni');
+
+  $('btIndietro').style.display = quale === 'libreria' ? 'none' : 'flex';
+  $('btImpostazioni').style.display = quale === 'impostazioni' ? 'none' : 'flex';
+  $('titoloBarra').textContent =
+    quale === 'libreria' ? 'libri' :
+    quale === 'impostazioni' ? 'Impostazioni' :
+    (dati && dati.titolo) || 'Libro';
+
+  document.querySelector('.scorri').scrollTop = 0;
+  if (quale === 'libreria') disegnaLibreria();
+  if (quale === 'impostazioni') { riempiImpostazioni(); contaSpazio(); }
+}
+
+function indietro() {
+  if (schermo === 'libro') mostra('libreria');
+  else if (schermo === 'impostazioni') mostra(libroAperto ? 'libro' : 'libreria', libroAperto);
+  else mostra('libreria');
+}
+
+/* La copertina si rifà sempre da zero al posto di quella che c'era. Provare a
+   riusare l'elemento sembrava più furbo e non lo era: un <img> a cui si
+   assegna del testo resta un <img> rotto, e passando da un libro con la
+   copertina a uno senza restava lì l'icona dell'immagine mancante. */
+function copertinaIn(elemento, libro) {
+  const haCopertina = !!(libro && libro.copertina);
+  const nuovo = document.createElement(haCopertina ? 'img' : 'div');
+  nuovo.className = 'cop';
+  if (elemento.id) nuovo.id = elemento.id;
+  if (haCopertina) {
+    nuovo.alt = '';
+    nuovo.src = URL.createObjectURL(libro.copertina);
+    nuovo.addEventListener('load', () => URL.revokeObjectURL(nuovo.src), { once: true });
+  } else {
+    nuovo.textContent = libro ? String(libro.titolo || '?').trim().charAt(0).toUpperCase() : '?';
+  }
+  elemento.replaceWith(nuovo);
+  return nuovo;
+}
+
+async function disegnaLibreria() {
+  const e = $('elencoLibri');
+  const libri = (await tutte('libri')).sort((a, b) => b.ultimoAperto - a.ultimoAperto);
+  if (!libri.length) {
+    e.innerHTML = '<div class="vuoto"><b>Ancora niente</b>' +
+      '<p>Aggiungi un EPUB e te lo leggo io. La prima volta ci vuole un minuto ' +
+      'per preparare l’audio del capitolo; dopo resta qui e parte subito.</p></div>';
+    return;
+  }
+  e.innerHTML = '';
+  for (const l of libri) {
+    const st = await prendi('stato', l.id);
+    const fatto = st ? (st.capitolo + 1) / l.capitoli.length : 0;
+    const riga = document.createElement('button');
+    riga.className = 'libro-riga';
+    riga.onclick = () => apriLibro(l.id);
+    riga.innerHTML =
+      '<div class="cop"></div>' +
+      '<div class="libro-testo">' +
+        '<b></b>' +
+        '<small></small>' +
+        (st ? '<div class="avanzamento"><i style="width:' + Math.round(fatto * 100) + '%"></i></div>' : '') +
+      '</div>';
+    riga.querySelector('.libro-testo b').textContent = l.titolo;
+    riga.querySelector('.libro-testo small').textContent =
+      (l.autore ? l.autore + ' · ' : '') + l.capitoli.length + ' capitoli · ' +
+      durataUmana(secondiStimati(l.caratteri));
+    e.appendChild(riga);
+    copertinaIn(riga.querySelector('.cop'), l);
+  }
+}
+
+async function apriLibro(id) {
+  const l = await prendi('libri', id);
+  if (!l) return;
+  libroAperto = l;
+  mostra('libro', l);
+  copertinaIn($('libroCop'), l);
+  $('libroTitolo').textContent = l.titolo;
+  $('libroAutore').textContent = l.autore || '';
+  $('libroMisura').textContent =
+    l.capitoli.length + ' capitoli · circa ' + durataUmana(secondiStimati(l.caratteri)) +
+    ' · ' + l.caratteri.toLocaleString('it-IT') + ' caratteri';
+
+  const st = await prendi('stato', id);
+  const ripreso = st && l.capitoli[st.capitolo];
+  $('btRiprendi').textContent = ripreso
+    ? 'Riprendi da «' + ripreso.titolo + '»'
+    : 'Inizia ad ascoltare';
+  await disegnaCapitoli();
+}
+
+async function disegnaCapitoli() {
+  const l = libroAperto;
+  if (!l || schermo !== 'libro') return;
+  const e = $('elencoCapitoli');
+  const st = await prendi('stato', l.id);
+  e.innerHTML = '';
+  for (let i = 0; i < l.capitoli.length; i++) {
+    const c = l.capitoli[i];
+    const a = await prendi('audio', chiaveAudio(l.id, i));
+    const stato = a && a.completo ? 'pronto' : (a && a.fatti ? 'parziale' : '');
+    const qui = st && st.capitolo === i;
+
+    const riga = document.createElement('div');
+    riga.className = 'cap' + (qui ? ' qui' : '');
+    riga.innerHTML =
+      '<div class="pallino ' + stato + '"></div>' +
+      '<div class="cap-testo"><b></b><small></small></div>' +
+      '<button class="cap-azione"></button>';
+    riga.querySelector('b').textContent = c.titolo;
+    riga.querySelector('small').textContent =
+      (a && a.completo ? orologio(a.durata) + ' pronti'
+       : a && a.fatti ? 'a metà (' + a.fatti + ' di ' + a.totale + ')'
+       : 'circa ' + durataUmana(secondiStimati(c.caratteri)) + ' · ' +
+         c.caratteri.toLocaleString('it-IT') + ' caratteri');
+    riga.onclick = () => apriCapitolo(l.id, i, 0, true).then(() => apriLettore());
+
+    const az = riga.querySelector('.cap-azione');
+    az.innerHTML = a && a.completo ? '&#128465;' : '&#8595;';
+    az.title = a && a.completo ? 'Butta via l’audio' : 'Prepara l’audio adesso';
+    az.onclick = async (ev) => {
+      ev.stopPropagation();
+      if (a && a.completo) {
+        await togli('audio', chiaveAudio(l.id, i));
+        avvisa('Audio buttato.');
+      } else {
+        mostraLavoro('Preparo «' + c.titolo + '»…');
+        try { await chiediAudio(l.id, i, statoLavoro); avvisa('Pronto.'); }
+        catch (err) { if (err.name !== 'AbortError') avvisa(err.message || 'Non ci sono riuscito.'); }
+        mostraLavoro(null);
+      }
+      disegnaCapitoli();
+    };
+    e.appendChild(riga);
+  }
+}
+
+async function riprendi() {
+  if (!libroAperto) return;
+  const st = await prendi('stato', libroAperto.id);
+  /* Il segnalibro potrebbe puntare a un capitolo che non c'è più, se il
+     libro è stato reimportato con un'altra suddivisione. Si torna all'inizio
+     invece di non far succedere niente al tocco del tasto. */
+  const dentro = st && libroAperto.capitoli[st.capitolo];
+  await apriCapitolo(libroAperto.id, dentro ? st.capitolo : 0, dentro ? st.secondi : 0, true);
+  apriLettore();
+}
+
+/* Preparare il libro intero, in un colpo, sapendo prima quanto costa.
+
+   È il modo per cui questa app è fatta: con tutti i capitoli pronti se ne
+   attaccano sei alla volta, e a schermo bloccato non c'è più un cambio di
+   file da nessuna parte per ore. La domanda dice i caratteri, perché i
+   caratteri sono quello che si paga, e non c'è nessun altro posto in cui
+   quel numero si vedrebbe prima di spenderlo. */
+async function preparaTutto() {
+  const l = libroAperto;
+  if (!l) return;
+
+  const mancano = [];
+  let caratteri = 0;
+  for (let i = 0; i < l.capitoli.length; i++) {
+    const a = await prendi('audio', chiaveAudio(l.id, i));
+    if (a && a.completo) continue;
+    mancano.push(i);
+    // Un capitolo lasciato a metà costa solo quello che gli manca.
+    const fatto = a && a.totale ? a.fatti / a.totale : 0;
+    caratteri += Math.round(l.capitoli[i].caratteri * (1 - fatto));
+  }
+
+  if (!mancano.length) { avvisa('È già tutto pronto.'); return; }
+  if (!confirm('Preparo ' + mancano.length + ' capitoli: circa ' +
+               caratteri.toLocaleString('it-IT') + ' caratteri, ' +
+               durataUmana(secondiStimati(caratteri)) + ' di ascolto.\n\n' +
+               'Ci vorrà un po’ e si può fermare quando si vuole: quello che ' +
+               'è già pronto resta.')) return;
+
+  for (let k = 0; k < mancano.length; k++) {
+    const i = mancano[k];
+    try {
+      await chiediAudio(l.id, i, (st) => {
+        if (st && st.fase === 'genera') {
+          mostraLavoro('Capitolo ' + (k + 1) + ' di ' + mancano.length +
+                       ' · pezzo ' + (st.fatti + 1) + ' di ' + st.totale);
+        } else mostraLavoro('Metto insieme il capitolo…');
+      });
+    } catch (e) {
+      mostraLavoro(null);
+      if (e && e.name === 'AbortError') { await disegnaCapitoli(); return; }
+      avvisa(e.message || 'Non ci sono riuscito.');
+      await disegnaCapitoli();
+      return;
+    }
+    await disegnaCapitoli();
+  }
+  mostraLavoro(null);
+  avvisa('Il libro è pronto.');
+}
+
+async function scordaLibro() {
+  if (!libroAperto) return;
+  if (!confirm('Tolgo «' + libroAperto.titolo + '» e tutto l’audio che ha? ' +
+               'Il file EPUB sul telefono non si tocca.')) return;
+  const id = libroAperto.id;
+  if (ora.libro && ora.libro.id === id) {
+    suono.pause();
+    suono.removeAttribute('src');
+    suono.load();
+    if (ora.url) { URL.revokeObjectURL(ora.url); ora.url = null; }
+    ora.libro = null; ora.segmenti = []; ora.paragrafi = [];
+    disegnaLettore();
+    disegnaPagina();
+  }
+  await togliCon('testi', id + '|');
+  await togliCon('audio', id + '|');
+  await togliCon('pezzi', id + '|');
+  await togli('stato', id);
+  await togli('libri', id);
+  libroAperto = null;
+  mostra('libreria');
+  avvisa('Tolto.');
+}
+
+// ── il lettore ─────────────────────────────────────────────────────────────
+function disegnaLettore() {
+  const c = ora.libro;
+  $('mini').classList.toggle('c-e', !!c);
+  if (!c) return;
+
+  const seg = ora.segmenti[ora.indice] || { cap: 0 };
+  const cap = c.capitoli[seg.cap] || { titolo: '' };
+
+  $('miniTitolo').textContent = c.titolo;
+  $('miniCap').textContent = cap.titolo;
+  $('letTitolo').textContent = cap.titolo;
+  $('letCap').textContent = c.titolo +
+    ' · ' + (seg.cap + 1) + ' di ' + c.capitoli.length +
+    (ora.segmenti.length > 1 ? ' · ' + ora.segmenti.length + ' uniti' : '');
+  copertinaIn($('miniCop'), c);
+
+  $('btPrec').disabled = seg.cap === 0;
+  $('btSucc').disabled = seg.cap >= c.capitoli.length - 1;
+
+  disegnaPlay();
+  disegnaTempo();
+  disegnaVelocita();
+}
+
+function disegnaPlay() {
+  const segno = suono.paused ? '&#9654;' : '&#10073;&#10073;';
+  $('btPlay').innerHTML = segno;
+  $('miniPlay').innerHTML = segno;
+}
+
+let tempoInMano = false;
+function disegnaTempo() {
+  if (tempoInMano) return;
+  const d = durataVera();
+  const t = suono.currentTime;
+  $('tOra').textContent = orologio(t);
+  $('tTot').textContent = orologio(d);
+  $('barraTempo').value = d > 0 ? Math.round(t / d * 1000) : 0;
+}
+
+function disegnaVelocita() {
+  const e = $('velocita');
+  e.innerHTML = '';
+  for (const v of VELOCITA) {
+    const b = document.createElement('button');
+    b.textContent = (v === 1 ? '1' : String(v)) + '×';
+    b.className = Math.abs(v - scelte.velocita) < 0.001 ? 'scelta' : '';
+    b.onclick = async () => {
+      scelte.velocita = v;
+      suono.playbackRate = v;
+      await salvaScelte();
+      disegnaVelocita();
+    };
+    e.appendChild(b);
+  }
+}
+
+/* La pagina mostra i paragrafi veri del capitolo, non il testo tutto attaccato.
+   Toccarne uno ci salta sopra: i tempi carattere per carattere che ElevenLabs
+   ha restituito insieme all'audio rendono il salto esatto, e sono il motivo
+   per cui si è chiesto fin dall'inizio l'indirizzo «with-timestamps». */
+function disegnaPagina() {
+  const e = $('pagina');
+  e.innerHTML = '';
+  ora.paragrafi.forEach((testo, i) => {
+    const p = document.createElement('p');
+    p.textContent = testo;
+    p.dataset.i = String(i);
+    p.onclick = () => saltaAlParagrafo(i);
+    e.appendChild(p);
+  });
+  ora.parQui = -1;
+}
+
+function tempiDelCapitolo() {
+  const seg = ora.segmenti[ora.indice];
+  return seg && seg.tempi ? seg.tempi : [];
+}
+
+function saltaAlParagrafo(i) {
+  const seg = ora.segmenti[ora.indice];
+  if (!seg) return;
+  const t = tempiDelCapitolo().find(x => x.p === i);
+  if (!t) return;
+  suono.currentTime = seg.inizio + t.inizio * ora.fattore;
+  if (suono.paused) provaASuonare();
+}
+
+function illuminaParagrafo(t) {
+  const seg = ora.segmenti[ora.indice];
+  if (!seg) return;
+  const dentro = (t - seg.inizio) / (ora.fattore || 1);
+  const tempi = tempiDelCapitolo();
+
+  let quale = -1;
+  for (let k = 0; k < tempi.length; k++) {
+    if (dentro >= tempi[k].inizio - 0.15) quale = tempi[k].p; else break;
+  }
+  if (quale === ora.parQui) return;
+  ora.parQui = quale;
+
+  const pagina = $('pagina');
+  const vecchio = pagina.querySelector('p.ora');
+  if (vecchio) vecchio.classList.remove('ora');
+  if (quale < 0) return;
+  const nuovo = pagina.querySelector('p[data-i="' + quale + '"]');
+  if (!nuovo) return;
+  nuovo.classList.add('ora');
+  /* Si segue la lettura solo se il lettore è aperto: scorrere una pagina che
+     nessuno sta guardando ruba il posto a chi la stava leggendo con calma. */
+  if ($('lettore').classList.contains('aperto')) {
+    nuovo.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+$('barraTempo').addEventListener('input', () => { tempoInMano = true; });
+$('barraTempo').addEventListener('change', () => {
+  const d = durataVera();
+  suono.currentTime = d * ($('barraTempo').value / 1000);
+  tempoInMano = false;
+});
+
+function apriLettore() { if (ora.libro) $('lettore').classList.add('aperto'); }
+function chiudiLettore() { $('lettore').classList.remove('aperto'); }
+function vaiAlLibro() {
+  if (!ora.libro) return;
+  chiudiLettore();
+  apriLibro(ora.libro.id);
+}
+
+// ── la riga di quello che sta girando ──────────────────────────────────────
+function mostraLavoro(testo) {
+  $('lavoro').classList.toggle('c-e', !!testo);
+  if (testo) $('lavoroTesto').textContent = testo;
+}
+
+function statoLavoro(s) {
+  if (!s || typeof s === 'string') { mostraLavoro(s || null); return; }
+  if (s.fase === 'genera') {
+    mostraLavoro('Preparo l’audio: pezzo ' + (s.fatti + 1) + ' di ' + s.totale);
+  } else if (s.fase === 'monta') {
+    mostraLavoro('Metto insieme il capitolo…');
+  }
+}
+
+// ═══ impostazioni ═══════════════════════════════════════════════════════════
+function riempiImpostazioni() {
+  $('inChiave').value = scelte.chiave;
+  $('inModello').value = scelte.modello;
+  $('inStabilita').value = scelte.stabilita;
+  $('vStabilita').textContent = Number(scelte.stabilita).toFixed(2);
+  $('inSomiglianza').value = scelte.somiglianza;
+  $('vSomiglianza').textContent = Number(scelte.somiglianza).toFixed(2);
+  $('inUnisci').checked = !!scelte.unisci;
+  $('inAvanti').checked = !!scelte.avanti;
+  $('versione').textContent = 'libri ' + VERSIONE;
+
+  const sel = $('inVoce');
+  if (scelte.voce && !Array.from(sel.options).some(o => o.value === scelte.voce)) {
+    const o = document.createElement('option');
+    o.value = scelte.voce;
+    o.textContent = scelte.voceNome || scelte.voce;
+    sel.appendChild(o);
+  }
+  sel.value = scelte.voce;
+}
+
+function collega(id, campo, trasforma) {
+  const e = $(id);
+  const evento = e.type === 'checkbox' || e.tagName === 'SELECT' ? 'change' : 'input';
+  e.addEventListener(evento, async () => {
+    const v = e.type === 'checkbox' ? e.checked : e.value;
+    scelte[campo] = trasforma ? trasforma(v) : v;
+    if (id === 'inStabilita') $('vStabilita').textContent = Number(v).toFixed(2);
+    if (id === 'inSomiglianza') $('vSomiglianza').textContent = Number(v).toFixed(2);
+    if (id === 'inVoce') scelte.voceNome = e.options[e.selectedIndex] ? e.options[e.selectedIndex].textContent : '';
+    await salvaScelte();
+  });
+}
+
+async function caricaVoci() {
+  if (!scelte.chiave) { avvisa('Prima la chiave.'); return; }
+  $('notaVoce').textContent = 'Sto chiedendo…';
+  try {
+    const voci = await elencoVoci();
+    const sel = $('inVoce');
+    sel.innerHTML = '<option value="">— nessuna voce scelta —</option>';
+    /* Le voci clonate prima: in un elenco dove le trenta voci di serie
+       vengono per prime, la propria si trova scorrendo, e la propria è
+       l'unica che interessa. */
+    voci.sort((a, b) => (a.tipo === 'cloned' ? -1 : 1) - (b.tipo === 'cloned' ? -1 : 1));
+    for (const v of voci) {
+      const o = document.createElement('option');
+      o.value = v.id;
+      o.textContent = v.nome + (v.tipo === 'cloned' ? ' — la tua' : '');
+      sel.appendChild(o);
+    }
+    sel.value = scelte.voce;
+    $('notaVoce').textContent = voci.length + ' voci. Scegli la tua.';
+  } catch (e) {
+    $('notaVoce').textContent = e.message || 'Non ci sono riuscito.';
+  }
+}
+
+async function leggiCredito() {
+  if (!scelte.chiave) { avvisa('Prima la chiave.'); return; }
+  $('credito').textContent = 'Sto chiedendo…';
+  try {
+    const c = await credito();
+    const restano = Math.max(0, c.tetto - c.usati);
+    $('credito').textContent =
+      restano.toLocaleString('it-IT') + ' caratteri su ' + c.tetto.toLocaleString('it-IT') +
+      ' — circa ' + durataUmana(secondiStimati(restano)) + ' di lettura.';
+  } catch (e) {
+    $('credito').textContent = e.message || 'Non ci sono riuscito.';
+  }
+}
+
+async function contaSpazio() {
+  const schede = await tutte('audio');
+  const byte = schede.reduce((s, a) => s + (a.byte || 0), 0);
+  const pronti = schede.filter(a => a.completo).length;
+  const durata = schede.filter(a => a.completo).reduce((s, a) => s + a.durata, 0);
+  let riga = pronti + ' capitoli già pronti, ' + durataUmana(durata) + ', ' + mega(byte) + '.';
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const q = await navigator.storage.estimate();
+      if (q.quota) riga += ' Il telefono mi lascia usare ' + mega(q.quota) + '.';
+    } catch (e) {}
+  }
+  $('spazio').textContent = riga;
+}
+
+async function svuotaAudio() {
+  if (!confirm('Butto via tutto l’audio già generato? I libri restano, ' +
+               'ma rigenerarlo costa caratteri.')) return;
+  suono.pause();
+  const d = await db();
+  await new Promise((ok, no) => {
+    const t = d.transaction(['audio', 'pezzi'], 'readwrite');
+    t.objectStore('audio').clear();
+    t.objectStore('pezzi').clear();
+    t.oncomplete = ok; t.onerror = () => no(t.error);
+  });
+  ora.libro = null;
+  disegnaLettore();
+  await contaSpazio();
+  avvisa('Buttato.');
+}
+
+// ═══ importare ══════════════════════════════════════════════════════════════
+$('scegliFile').addEventListener('change', async (ev) => {
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  mostraLavoro('Apro il file…');
+  try {
+    const l = await importaEpub(file, (t) => mostraLavoro(t));
+    mostraLavoro(null);
+    avvisa('«' + l.titolo + '» è nella libreria.');
+    await disegnaLibreria();
+    apriLibro(l.id);
+  } catch (e) {
+    mostraLavoro(null);
+    avvisa(e.message || 'Questo file non riesco ad aprirlo.');
+  }
+});
+
+// ═══ avvio ══════════════════════════════════════════════════════════════════
+async function avvio() {
+  await leggiScelte();
+  suono.playbackRate = scelte.velocita;
+  riempiImpostazioni();
+  collega('inChiave', 'chiave');
+  collega('inVoce', 'voce');
+  collega('inModello', 'modello');
+  collega('inStabilita', 'stabilita', Number);
+  collega('inSomiglianza', 'somiglianza', Number);
+  collega('inUnisci', 'unisci');
+  collega('inAvanti', 'avanti');
+  await disegnaLibreria();
+  disegnaVelocita();
+
+  /* Si chiede al telefono di non buttare via i dati quando lo spazio
+     scarseggia. Senza, un'ora di audio pagata può sparire perché il sistema
+     ha deciso che la cache di un sito si può sacrificare — e questa non è
+     una cache, è roba comprata. */
+  if (navigator.storage && navigator.storage.persist) {
+    try { await navigator.storage.persist(); } catch (e) {}
+  }
+
+  if (!scelte.chiave || !scelte.voce) mostra('impostazioni');
+}
+
+avvio();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
+/* Quello che le prove hanno bisogno di chiamare da fuori. Non è
+   un'interfaccia per nessun altro: serve perché una prova possa importare un
+   EPUB finto e guardare com'è stato spezzato, invece di dedurlo dai pixel. */
+window.LIBRI = {
+  VERSIONE, PEZZO_MAX, BYTE_AL_SECONDO, UNISCI_MAX_CAPITOLI, AVANTI_QUANTI,
+  db, prendi, metti, togli, tutte, chiaviCon,
+  scelte: () => scelte, salvaScelte, firmaVoce, chiaveAudio,
+  testoDaDocumento, paragrafiDa, spezzaLungo, inPezzi, importaEpub,
+  generaCapitolo, chiediAudio, audioPronto, montaFlusso,
+  apriCapitolo, preparaTutto, ora, suono, orologio, secondiStimati, durataUmana,
+  imposta: async (nuove) => { Object.assign(scelte, nuove); await salvaScelte(); }
+};
+</script>
+</body>
+</html>

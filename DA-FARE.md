@@ -1530,6 +1530,128 @@ qualcuno che risponde".
 
 ---
 
+## «libri» — la seconda app che sta in questo repo
+
+Sta in **`libri/`** e non c'entra niente con i viaggi: è un lettore di EPUB
+che legge i libri ad alta voce con la voce clonata di Giacomo, per uso
+personale. Su Netlify risponde sotto **`/libri`**. Un file solo,
+`libri/index.html`, più il suo service worker, il suo manifesto e la sua
+icona.
+
+Sta in una **cartella sua**, e non è un dettaglio: il service worker di
+GeppGo è registrato alla radice, e due service worker che si contendono lo
+stesso indirizzo si sovrascrivono a vicenda — l'ultimo che si registra
+lascia l'altra app senza. Dentro `libri/` il raggio d'azione è `/libri/` e
+le due app non si vedono nemmeno.
+
+### La decisione che spiega quasi tutto il codice
+
+A schermo bloccato, su iPhone, un'app web può continuare a suonare un file
+già partito, ma quando quel file finisce e ne deve partire un altro quasi
+sempre non parte: per Safari quello è un «play» nuovo, e senza un dito sullo
+schermo non lo concede. Da qui:
+
+1. **Un capitolo si genera tutto prima di farlo partire.** Niente pezzetti che
+   si susseguono mentre si ascolta: sarebbero un cambio di file ogni due
+   minuti, cioè quel guasto ogni due minuti.
+2. **I capitoli già pronti si attaccano l'uno all'altro e si suonano come un
+   file solo.** Gli MP3 si concatenano davvero — un MP3 è una fila di
+   fotogrammi — e così il cambio di capitolo a schermo bloccato semplicemente
+   non esiste: non è un altro file, è più avanti nello stesso file. Sei
+   capitoli alla volta, o novanta minuti, quello che viene prima.
+
+**Media Source Extensions è stato valutato e scartato, ed è la cosa che vale
+la pena non riscoprire.** Sarebbe il modo «giusto» di cucire un flusso
+continuo, ma Safari su iPhone non supporta MSE con `audio/mpeg`; nemmeno
+`ManagedMediaSource`, che vuole MP4 frammentato — formato che ElevenLabs non
+produce (dà mp3, pcm, µ-law, opus). Avrebbe funzionato su Chrome, **dove il
+problema non c'è**, e non su iPhone, **dove c'è**. Il file unico funziona in
+tutti e due i posti e costa cento righe in meno.
+
+Quello che resta e di cui non si scappa: finito l'ultimo capitolo attaccato,
+per andare avanti bisogna sbloccare e ripremere play. È scritto nelle
+impostazioni, in chiaro, invece di farlo sembrare un guasto.
+
+**E c'è un punto facile da sbagliare, che infatti è stato sbagliato per
+mezz'ora: i capitoli si possono attaccare solo se sono già pronti QUANDO si
+comincia.** Su un libro appena importato non lo è nessuno, quindi preparando
+solo «il prossimo» a ogni fine capitolo ce n'è esattamente uno da attaccare
+— cioè nessuno — e si torna a un cambio di file per capitolo, che è
+esattamente il guasto da cui si stava scappando. Da qui due cose:
+
+- **se ne preparano due avanti, non uno** (`AVANTI_QUANTI`), così il file
+  unito cresce da sé mentre si ascolta;
+- c'è un tasto **«Prepara tutto il libro»** nella scheda del libro, con la
+  domanda che dice quanti caratteri costa prima di spenderli. È la cosa da
+  fare a casa prima di uscire, ed è il modo per cui l'app è pensata: con
+  tutti i capitoli pronti se ne attaccano sei alla volta e a schermo bloccato
+  non c'è più un cambio di file per ore.
+
+### Due scelte che sono soldi
+
+- **I tempi carattere per carattere si chiedono subito.** Si usa l'indirizzo
+  `with-timestamps`, che costa esattamente gli stessi caratteri di quello
+  normale e in più dice in che secondo viene pronunciato ogni carattere. Da
+  lì vengono il paragrafo che si illumina mentre la voce legge e il salto
+  toccando un paragrafo. **Va chiesto adesso o mai più**: i tempi si ricavano
+  solo insieme all'audio, e volerli domani vorrebbe dire rigenerare i libri,
+  cioè ripagarli.
+- **Un capitolo interrotto riprende da dove era.** Ogni spezzone generato si
+  salva da solo, e la scheda del capitolo dice a che punto era arrivata. È
+  l'unica ragione per cui gli spezzoni stanno in un cassetto separato da
+  quello delle schede: tenerli dentro vorrebbe dire riscrivere tutto l'audio
+  già fatto a ogni spezzone nuovo. C'è una prova che rompe apposta la seconda
+  richiesta, riprende, e **conta le richieste**: devono essere «i pezzi più
+  quella andata male», non il doppio.
+
+E una terza, che è lo stesso genere di problema: **la voce e il modello fanno
+parte della chiave dell'audio salvato**. Cambiare voce e ritrovarsi il
+capitolo letto da un altro sembrerebbe un guasto dell'app; così invece
+l'audio vecchio resta dov'è e tornando indietro si riascolta senza ripagarlo.
+
+### A che punto è
+
+C'è la struttura base, e funziona: importare un EPUB, tirarne fuori capitoli
+e testo con epub.js, generare e tenere da parte l'audio, il lettore con i
+comandi sulla schermata di blocco (Media Session), il segnalibro, la libreria.
+**63 prove** in `test/prova-libri.js`.
+
+Manca:
+
+- **⚠️ Da verificare al primo giro vero: che ElevenLabs accetti la chiamata
+  dal browser (CORS).** L'app è tutta lato telefono e chiama
+  `api.elevenlabs.io` direttamente; se un giorno rispondesse senza il permesso
+  per l'origine, il browser la bloccherebbe e servirebbe l'unica cosa che
+  questo progetto non ha — un pezzetto di server che gira la richiesta (una
+  funzione Netlify basterebbe). **Non è stato possibile provarlo qui**: la
+  rete di questa macchina lascia passare solo npm. Se succede, il messaggio
+  nell'app lo dice invece di parlare di rete assente, perché da fuori i due
+  guasti si vedono identici.
+- **La chiave di ElevenLabs si mette a mano nelle impostazioni.** Non c'è un
+  server, quindi non c'è nessun altro posto dove possa stare: resta in
+  IndexedDB su quel telefono. Su un dispositivo nuovo va rimessa.
+- **Una copertina non c'è se l'EPUB non ce l'ha**: si mostra l'iniziale del
+  titolo. Va bene così.
+- **L'app non è pubblicata e non ha una sua privacy policy.** Finché resta
+  personale non serve: non raccoglie niente, non manda niente a nessuno
+  tranne il testo da leggere a ElevenLabs, e questo è scritto dentro le
+  impostazioni. **Se un giorno la usa qualcun altro, quel testo va portato in
+  una pagina vera**, come `privacy.html` per GeppGo.
+- **Da provare sul telefono vero**, che è l'unico posto dove il punto qui
+  sopra si vede davvero: le prove girano su Chromium, dove il guasto di iOS
+  non esiste.
+
+### Quello che non si tocca
+
+- **L'audio già generato non si butta via da solo.** È roba comprata, non
+  cache: per questo all'avvio si chiede `navigator.storage.persist()`, e per
+  questo buttarlo via è un tasto che bisogna premere apposta.
+- **Le richieste a ElevenLabs si fanno una alla volta, in fila.** Non è un
+  limite tecnico: due generazioni in parallelo che si accavallano sono il modo
+  migliore per pagare due volte lo stesso capitolo senza accorgersene.
+
+---
+
 ## Come si lavora qui
 
 - **Tutto va su `main`**, senza chiedere: ramo `claude/geppgo-ripresa-*` → PR →

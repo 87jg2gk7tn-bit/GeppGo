@@ -4,5 +4,13 @@
 /privacy        /privacy.html   200
 /privacy.html   /privacy.html   200
 
+# «libri» sta in una cartella sua e ha il suo service worker: alla radice
+# c'è già quello di GeppGo, e due service worker sullo stesso indirizzo si
+# sovrascrivono a vicenda — l'ultimo che si registra lascia l'altra app senza.
+# Queste righe stanno qui sopra per lo stesso motivo della privacy: sotto c'è
+# una regola che prende tutto.
+/libri          /libri/index.html   200
+/libri/         /libri/index.html   200
+
 /   /Index%202.1.html   200
 /*  /Index%202.1.html   200

@@ -563,3 +563,51 @@ prove significherebbe provare l'app in inglese senza averlo deciso, ed è già
 successo una volta: due prove che non c'entravano niente sono diventate rosse
 perché il server delle prove parla inglese. Chi vuole un'altra lingua la
 chiede, e la sua scelta vince.
+
+## «libri», l'altra app
+
+`prova-libri.js` non prova GeppGo: prova `libri/`, il lettore di EPUB che sta
+in questo stesso repo. Si lancia con le altre (`npm test` le prende tutte:
+basta che il nome cominci per `prova-`), ma è fatta in modo diverso, e le tre
+differenze sono tutte obbligate.
+
+**Ha un server dentro.** È l'unica prova del repo che non apre un `file://`, e
+non è una preferenza: **IndexedDB su `file://` Chrome lo nega e basta**, e
+«libri» è fatto quasi tutto di IndexedDB — i libri, l'audio già pagato, il
+segnalibro. Senza un `http://` vero non si proverebbe niente. Il server sono
+venti righe di `http`, si accende su una porta a caso e si spegne alla fine.
+
+**Si costruisce l'EPUB da sola.** Un EPUB è uno zip, e fra le dipendenze non
+c'è niente per farne uno: c'è uno scrittore di zip senza compressione, tre
+intestazioni in fila. Meglio di un file di prova nel repo — l'EPUB si può
+cambiare mentre si scrive la prova, e ha dentro apposta due pagine che non
+sono capitoli (la copertina e una pagina bianca) per verificare che l'app le
+butti.
+
+⚠️ **I capitoli finti sono lunghi apposta, e ci sono già cascato.** Con
+capitoli corti ogni capitolo stava in un pezzo solo: le prove che contano le
+richieste e quella che interrompe la generazione a metà **passavano tutte
+senza aver provato niente**, perché non c'era una metà in cui fermarsi. Se un
+giorno questi capitoli si accorciano, tre prove diventano verdi e vuote.
+
+**ElevenLabs non viene mai chiamato davvero.** Costa soldi a carattere, e una
+prova che spende non la lancia più nessuno. Al suo posto c'è una finta dentro
+la pagina che restituisce **MP3 veri** — fotogrammi silenziosi, ma fotogrammi
+validi, `FF FB 90 C0`, 417 byte l'uno — perché metà di quello che c'è da
+provare è che il browser decodifica davvero i capitoli attaccati l'uno
+all'altro. Un MP3 finto che il browser rifiuta non proverebbe niente.
+
+E soprattutto la finta **conta quante volte è stata chiamata**. È l'unica
+prova che conta davvero: rompe apposta la seconda richiesta, riprende, e
+verifica che il totale sia «i pezzi più quella andata male» e non il doppio.
+Ogni pezzo rigenerato per niente è denaro, e in un'app a consumo questa è la
+differenza fra un difetto e una bolletta.
+
+⚠️ **L'intercettazione delle librerie va messa sul contesto, non sulla
+pagina.** `page.route` non vede le richieste fatte dal **service worker**, e
+il service worker di «libri» si attiva qualche decimo dopo l'apertura: da quel
+momento è lui a servire gli script della CDN, che dalla macchina delle prove
+non si raggiunge, e l'app si ritrova senza le librerie per leggere gli EPUB.
+Si vedeva solo se fra l'apertura e l'importazione passava abbastanza tempo —
+cioè a intermittenza, che è il modo peggiore di vedersi. Con
+`page.context().route(...)` passano anche quelle del service worker.

@@ -9,8 +9,10 @@
     "test:db": "node test/tutte.js --solo-db"
   },
   "devDependencies": {
-    "playwright-core": "^1.62.1",
+    "epubjs": "^0.3.93",
+    "jszip": "^3.10.1",
+    "leaflet": "^1.9.4",
     "playwright": "^1.62.1",
-    "leaflet": "^1.9.4"
+    "playwright-core": "^1.62.1"
   }
 }

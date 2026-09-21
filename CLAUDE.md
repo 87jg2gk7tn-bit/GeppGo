@@ -2,6 +2,12 @@
 
 App di viaggio per gruppi. Un solo file: `Index 2.1.html` (~12.000 righe).
 
+Nel repo c'è anche una **seconda app**, che non c'entra niente con i viaggi:
+`libri/` è un lettore di EPUB che legge ad alta voce con una voce clonata, a
+uso personale. Sta in una cartella sua perché ha un service worker suo — due
+service worker sullo stesso indirizzo si sovrascrivono a vicenda. Quello che
+serve sapere sta in `DA-FARE.md`, sezione «libri».
+
 ## Leggi prima di tutto
 
 **`DA-FARE.md`** — a che punto è il progetto, cosa manca, e le cose scoperte a
