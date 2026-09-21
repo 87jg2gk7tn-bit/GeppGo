@@ -1487,6 +1487,22 @@ qualcuno che risponde".
   qualunque contenuto puo' cadere. Inseguirla spostando i pixel la sposta
   solo su un altro telefono — si risolve garantendo che da li' si esca
   scorrendo.
+- **⚠️ Un'interlinea piu' stretta delle lettere fa uscire l'inchiostro dal
+  riquadro, e nessun rettangolo lo dice.** Il nome della citta' ha
+  `line-height:.88` — e' quello che lo fa sembrare un titolo di giornale —
+  ma .88 e' piu' stretto di quanto sia alta una lettera con la coda: la g di
+  "Parigi" esce sotto il riquadro e finisce dentro "sera velata", che
+  comincia esattamente dove il riquadro finisce. La prova che confronta i
+  `getBoundingClientRect` diceva «non si toccano» ed era vera: i riquadri
+  non si toccavano davvero. **L'inchiostro si chiede al font**, con
+  `measureText().actualBoundingBoxDescent` e la riga di base ricavata
+  dall'interlinea. Si e' visto a occhio su una fotografia, che e' il modo
+  peggiore di accorgersene.
+- **Il font di ripiego misura meno di quello vero.** Qui Fraunces non si
+  scarica e la coda del ripiego e' piu' corta: dove la prova legge zero, sul
+  telefono si sovrappongono gia'. Per questo la soglia non e' «non si
+  toccano» ma «c'e' dell'aria in mezzo» — otto pixel, che coprono la
+  differenza fra i due font.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

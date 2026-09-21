@@ -986,7 +986,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    puo' finire addosso al numero. Provato con "Viaggio di nozze in Giappone
    e Corea 2026", che a galleggiare ci finiva sopra. */
 .hh-riga1{
-  position:relative;display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;
+  /* Lo stacco sotto se n'e' andato dove serviva di piu': la citta' sale di
+     otto pixel e quegli otto pixel diventano aria fra lei e la frase. Sopra
+     ne restano quindici, che bastano; sotto ce n'erano zero. */
+  position:relative;display:flex;align-items:center;gap:.6rem;
 }
 .hh-riga1 .hh-eyebrow{flex:1;min-width:0;margin-bottom:0}
 .hh-riga1 .hh-grado-solo{flex-shrink:0;margin-bottom:0}
@@ -994,9 +997,19 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   position:relative;font-size:.68rem;font-weight:700;letter-spacing:.16em;
   text-transform:uppercase;color:var(--ink-soft);opacity:.85;margin-bottom:.5rem;
 }
+/* L'interlinea stretta (.88) e' quella che fa sembrare il nome della citta'
+   un titolo di giornale invece di una riga di testo, e resta. Ma un'interlinea
+   piu' stretta delle lettere vuol dire che il riquadro della riga e' PIU'
+   PICCOLO dell'inchiostro: la coda della g di "Parigi" esce sotto il riquadro
+   e finisce dentro la frase che segue, che comincia esattamente dove il
+   riquadro finisce. Nessun rettangolo lo dice - si vede e basta.
+   Lo spazio sotto rimette la coda dentro casa. E' in em, non in pixel,
+   perche' il titolo cambia misura con lo schermo e la coda cresce con lui:
+   scritto in pixel andrebbe bene su un telefono solo. */
 .hh-city{
   position:relative;font-family:'Fraunces',serif;font-weight:600;
   font-size:clamp(3rem,15vw,4.4rem);line-height:.88;letter-spacing:-.025em;
+  padding-bottom:.26em;
   color:var(--ink);cursor:pointer;
 }
 .hh-mood{
@@ -17398,7 +17411,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-20 18:40';
+const VERSIONE_APP='2026-09-21 12:20';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
