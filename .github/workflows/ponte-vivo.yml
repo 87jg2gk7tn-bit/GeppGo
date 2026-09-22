@@ -175,6 +175,16 @@ jobs:
                       nota = '  ← zero in Duomo, non torna'
                   elif not inUso:
                       nota = '  ← risponde bene: si puo\' valutare'
+                  # E QUANTO SONO VECCHI I DATI. Non e' un guasto — un
+                  # bancomat di due mesi fa e' quasi sempre ancora li' — ma
+                  # e' il motivo per cui un posto aperto ad agosto non si
+                  # trova, e senza guardarlo si cercherebbe nel posto
+                  # sbagliato.
+                  try:
+                      eta = (time.time() - time.mktime(time.strptime(str(quando)[:19], '%Y-%m-%dT%H:%M:%S'))) / 86400
+                      if eta > 7: nota += '  (dati vecchi di %d giorni)' % eta
+                  except Exception:
+                      pass
                   print('  %-28s %5.1fs  %4d posti  dati al %s%s' % (casa, time.time() - via, n, quando, nota))
                   if dd.get('remark'):
                       print('      remark: ' + str(dd['remark'])[:140])
