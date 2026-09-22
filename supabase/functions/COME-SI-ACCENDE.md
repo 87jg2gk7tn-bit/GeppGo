@@ -82,6 +82,15 @@ In fondo alla risposta c'è `"da":"overpass"` la prima volta e `"da":"memoria"`
 dalla seconda in poi. Se la seconda volta dice ancora `overpass`, la tabella
 non c'è o non è raggiungibile.
 
+Se invece risponde `"ancora":true`, vuol dire che la mappa sta arrancando: il
+ponte non si è arreso, sta cercando in sottofondo e **fra un minuto la stessa
+domanda risponde dalla memoria**. Rilanciando il comando si vede. È il
+comportamento giusto, non un guasto.
+
+Lo stesso si può chiedere senza computer: su GitHub, **Actions → «Il ponte
+risponde?» → Run workflow**. Chiede al ponte vero i bancomat in Duomo e il
+Colosseo, e risponde in italiano.
+
 ## Cosa NON fa
 
 - **Non è un Overpass aperto.** Accetta solo la forma esatta di domanda che

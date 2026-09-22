@@ -355,6 +355,85 @@ const stato = {
      page._ponte.length > 0, page._ponte.length + ' tentativi sul ponte');
   await page.close();
 
+  // ── 5. «STO ANCORA CERCANDO» NON È «SONO ROTTO» ─────────────────────
+  /* Il caso segnalato dal vivo: «non voglio che mi dica non ho trovato
+     niente riprova — deve riprovare lui». Quando la mappa arranca il ponte
+     non si arrende: continua a cercare in sottofondo, scrive la risposta
+     nella memoria comune, e intanto dice al telefono che sta ancora
+     cercando. Da qui devono seguire due cose, e sono la ragione di queste
+     righe:
+       - il ponte NON va messo in castigo: è vivo, sta lavorando, e metterlo
+         in castigo vorrebbe dire buttare via proprio il lavoro che sta
+         facendo per noi;
+       - l'app deve riprovare DA SOLA, perché fra qualche secondo la
+         risposta è lì pronta, e chiedere alla persona di premere un tasto
+         è chiederle di fare il lavoro dell'app. */
+  {
+    const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    pa.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    const alPonte = [];
+    await pa.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await pa.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    await pa.route('**/functions/v1/vicini', async route => {
+      alPonte.push(Date.now());
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ancora: true, errore: 'overpass lento', dopo: 50 }) });
+    });
+    /* E la mappa diretta è giù davvero: così la ricerca finisce a mani
+       vuote ed è il caso che interessa. */
+    await pa.route('**/api/interpreter', ro => ro.fulfill({ status: 504, body: 'gateway timeout' }));
+    await pa.addInitScript(([s, io]) => {
+      localStorage.setItem('geppgo2', JSON.stringify(s));
+      navigator.geolocation.getCurrentPosition = cb =>
+        cb({ coords: { latitude: io.lat, longitude: io.lng } });
+    }, [stato, IO]);
+    await pa.goto(APP, { waitUntil: 'domcontentloaded' });
+    await pa.waitForFunction(() => typeof window.cercaVicino === 'function', { timeout: 20000 });
+    await pa.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 20000 });
+
+    await pa.evaluate(() => {
+      localStorage.removeItem(VICINI_CACHE_CHIAVE);
+      myPos = null; myPosAt = 0; ponteRotto = 0; ponteAncora = 0;
+      cercaVicino('atm');
+    });
+    await pa.waitForFunction(
+      () => /riprovo da solo/i.test(document.getElementById('bagnoBody').innerText),
+      { timeout: 60000 }).catch(() => {});
+    const dice = await pa.evaluate(() => document.getElementById('bagnoBody').innerText.replace(/\s+/g, ' ').trim());
+    ok('quando il ponte sta ancora cercando, l\'app lo dice e non dà la colpa a nessuno',
+       /riprovo da solo/i.test(dice), dice.slice(0, 90));
+    /* Un numero che scende è la differenza fra «sta lavorando» e «è
+       bloccata»: senza, lo schermo resta fermo nove secondi. */
+    ok('e si vede quanto manca, invece di uno schermo fermo',
+       /fra \d+ second/i.test(dice), (dice.match(/fra \d+ second\w*/i) || [''])[0]);
+    ok('il ponte NON viene messo in castigo: è vivo, sta cercando',
+       await pa.evaluate(() => ponteRotto) === 0);
+
+    /* LA RIGA CHE LA PERSONA HA CHIESTO. Non si tocca niente e si aspetta:
+       la seconda richiesta al ponte deve partire DA SOLA. */
+    const primaDi = alPonte.length;
+    /* Si aspetta quanto l'APP dice di voler aspettare, non un numero
+       scritto qui: cambiandolo nell'app, una prova con la sua attesa
+       scritta a mano diventerebbe rossa senza che niente sia rotto. */
+    const quanto = await pa.evaluate(() => VICINI_RIPROVA_MS);
+    await pa.waitForFunction(n => window.__nonEsiste === n, primaDi, { timeout: quanto + 4000 })
+      .catch(() => {});
+    ok('e riprova DA SOLA, senza che nessuno prema niente',
+       alPonte.length > primaDi, `${primaDi} → ${alPonte.length} richieste al ponte`);
+    const riprove = await pa.evaluate(() => vicinoRiprove);
+    const tetto = await pa.evaluate(() => VICINI_RIPROVE_MAX);
+    ok('ma non all\'infinito: qualche riprova e poi si dice com\'è andata',
+       riprove <= tetto, `${riprove} riprove su un tetto di ${tetto}`);
+
+    /* E chiudendo la scheda si smette di aspettare: una riprova che
+       riapre un foglio appena chiuso è un'app che non ascolta. */
+    await pa.evaluate(() => { closeSheet('mBagno'); });
+    const fermi = await pa.evaluate(() => vicinoAttesa === null && vicinoConto === null);
+    ok('e chiudendo la scheda l\'app smette di aspettare', fermi === true);
+    await pa.close();
+  }
+
   await browser.close();
   for (const e of err) r.push(' FALLITO  ' + e);
   const passati = r.filter(x => x.startsWith('  OK')).length;
