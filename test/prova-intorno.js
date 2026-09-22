@@ -1,0 +1,264 @@
+/* «Cosa cerchi qui intorno»: quello che si deve trovare, quello che NON si
+   deve trovare, e cosa succede quando il servizio della mappa non risponde.
+
+   QUATTRO COSE SEGNALATE DAL VIVO, a Muggiò:
+   1. la metropolitana rispondeva «Non riesco a raggiungere la mappa»;
+   2. cercando la stazione dei treni usciva al primo posto, con la stellina,
+      la «Stazione Carabinieri Muggiò» a 195 metri — da lì non parte nessun
+      treno;
+   3. la fermata del bus a cento metri non veniva trovata;
+   4. il bancomat sotto casa nemmeno.
+
+   Ognuna aveva una causa diversa, e sono tutte qui sotto.
+
+   Il finto Overpass legge la domanda per davvero (test/overpass-finto.js):
+   tipo, raggio e TUTTI i filtri di ogni enunciato, comprese la presenza di
+   una chiave e la negazione. Senza quello, metà di queste righe passerebbe
+   anche sul codice rotto. */
+const { apriBrowser, APP, leafletJs } = require('./browser');
+const { rispondi } = require('./overpass-finto');
+const fs = require('fs');
+
+/* Muggiò, dove il difetto è stato visto. */
+const IO = { lat: 45.5920, lng: 9.2280 };
+/* Sposta un punto di tot metri verso nord: serve a mettere le cose a
+   distanze precise, che è quello che queste prove misurano. */
+const su = m => IO.lat + m / 111320;
+
+const stato = {
+  trips: [{
+    id: 't1', name: 'Prova', destination: 'Muggiò', currency: 'EUR', status: 'open',
+    start: '2026-09-01', end: '2026-09-02',
+    participants: [{ id: 'p1', name: 'Gepp' }],
+    suggested: [], pois: [], expenses: [], tickets: [], hotels: [], weather: {},
+    createdAt: Date.now(),
+    days: [{ id: 'd1', date: '2026-09-01', title: '', activities: [] }]
+  }],
+  currentTripId: 't1', settings: { proxRadius: 200 }, myName: 'Gepp', skipAuth: true
+};
+
+(async () => {
+  const browser = await apriBrowser();
+  const r = [];
+  const err = [];
+  const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
+
+  async function apri(mondo, opts = {}) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    page._chiamate = [];
+    await page.route('**/api/interpreter', async route => {
+      const q = decodeURIComponent(route.request().postData() || '').replace(/^data=/, '');
+      const n = page._chiamate.push({ q, host: new URL(route.request().url()).host });
+      /* «I primi tot tentativi vanno male»: è così che si mette in scena un
+         servizio che arranca, invece di sperare che arranchi. */
+      if (opts.fallisciPrime && n <= opts.fallisciPrime)
+        return route.fulfill({ status: 429, body: 'too many requests' });
+      let dentro;
+      try { dentro = rispondi(q, mondo); }
+      catch (e) { err.push('DOMANDA ILLEGGIBILE: ' + e.message); dentro = []; }
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ elements: dentro }) });
+    });
+    await page.addInitScript(([s, io]) => {
+      localStorage.setItem('geppgo2', JSON.stringify(s));
+      navigator.geolocation.getCurrentPosition = cb =>
+        cb({ coords: { latitude: io.lat, longitude: io.lng } });
+    }, [stato, IO]);
+    await page.goto(APP, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => typeof window.cercaVicino === 'function', { timeout: 20000 });
+    await page.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 20000 });
+    return page;
+  }
+
+  const cerca = async (page, kind) => {
+    page._chiamate = [];
+    await page.evaluate(k => {
+      /* Il nome della cache si chiede all'app: cambia apposta quando si
+         correggono le domande. */
+      localStorage.removeItem(VICINI_CACHE_CHIAVE);
+      myPos = null; myPosAt = 0;
+      closeSheet('mBagno');
+      cercaVicino(k);
+    }, kind);
+    await page.waitForFunction(
+      () => { const b = document.getElementById('bagnoBody'); return b && !/Cerco|ci riprovo/i.test(b.innerText); },
+      { timeout: 60000 }).catch(() => {});
+    return page.evaluate(() => document.getElementById('bagnoBody').innerText.replace(/\s+/g, ' ').trim());
+  };
+
+  // ══ 1. QUELLO CHE SI CHIAMA "STAZIONE" MA NON LO È ═══════════════════
+  /* Il caso vero: la caserma dei carabinieri al primo posto fra le stazioni
+     dei treni. La rete che cerca per NOME non guardava che cosa fosse la
+     cosa trovata — e «stazione» vuol dire dieci cose diverse, in italiano
+     come in inglese.
+     Insieme alla caserma ci sono tutti i parenti che la stessa parola si
+     porta dietro in giro per il mondo: sono i casi che un'app usata in
+     Giappone o in America incontra ogni giorno. */
+  let page = await apri([
+    /* la stazione vera, lontana, mappata come si deve */
+    { type: 'node', id: 1, lat: su(1700), lon: IO.lng,
+      tags: { railway: 'halt', name: 'Lissone-Muggiò', operator: 'Rete Ferroviaria Italiana' } },
+    /* e la corte dei falsi, tutti a due passi e tutti col nome giusto */
+    { type: 'node', id: 2, lat: su(195), lon: IO.lng,
+      tags: { amenity: 'police', name: 'Stazione Carabinieri Muggiò', operator: 'Arma dei Carabinieri' } },
+    { type: 'node', id: 3, lat: su(200), lon: IO.lng,
+      tags: { amenity: 'fuel', name: 'Stazione di Servizio Esso' } },
+    { type: 'node', id: 4, lat: su(205), lon: IO.lng,
+      tags: { amenity: 'fire_station', name: 'Fire Station' } },
+    { type: 'way', id: 5, center: { lat: su(210), lon: IO.lng },
+      tags: { highway: 'residential', name: 'Via della Stazione' } },
+    { type: 'node', id: 6, lat: su(215), lon: IO.lng,
+      tags: { place: 'hamlet', name: 'Frazione Stazione Nord' } },
+    { type: 'way', id: 7, center: { lat: su(220), lon: IO.lng },
+      tags: { power: 'plant', name: 'Power Station' } },
+    { type: 'node', id: 8, lat: su(225), lon: IO.lng,
+      tags: { tourism: 'hotel', name: 'Station Hotel' } },
+    { type: 'node', id: 9, lat: su(230), lon: IO.lng,
+      tags: { amenity: 'charging_station', name: 'Stazione di ricarica' } },
+    { type: 'node', id: 10, lat: su(235), lon: IO.lng,
+      tags: { amenity: 'recycling', name: 'Stazione ecologica' } },
+    /* E UNA CHE INVECE CI DEVE STARE: una stazione mappata male, solo come
+       edificio col nome sopra. Senza questa riga la prova direbbe di sì
+       anche a un'app che butta via tutto quello che trova per nome, e
+       allora nei paesi dove le etichette sono scarse non si troverebbe più
+       niente. È il rovescio, e conta quanto il resto. */
+    { type: 'way', id: 11, center: { lat: su(240), lon: IO.lng },
+      tags: { building: 'train_station', name: 'Vecchia Stazione di Muggiò' } }
+  ]);
+  let testo = await cerca(page, 'treno');
+  ok('la caserma dei Carabinieri non è più una stazione dei treni',
+     !/Carabinieri/.test(testo), testo.slice(0, 90));
+  const falsi = [['la stazione di servizio', /Servizio Esso/], ['i pompieri', /Fire Station/],
+                 ['la via che si chiama Stazione', /Via della Stazione/],
+                 ['la frazione che si chiama Stazione', /Frazione Stazione Nord/],
+                 ['la centrale elettrica', /Power Station/], ['l\'albergo Station Hotel', /Station Hotel/],
+                 ['la colonnina di ricarica', /di ricarica/], ['la piazzola ecologica', /ecologica/]];
+  falsi.forEach(([che, re]) => ok(`e nemmeno ${che}`, !re.test(testo), testo.slice(0, 90)));
+  ok('la stazione vera invece c\'è', /Lissone-Muggiò/.test(testo), testo.slice(0, 70));
+  /* Il rovescio: non si è buttato via tutto. */
+  ok('e una stazione mappata solo come edificio si trova lo stesso',
+     /Vecchia Stazione di Muggiò/.test(testo), testo.slice(0, 120));
+  ok('dichiarando che è presa dal nome e va controllata',
+     /da controllare/.test(testo));
+  await page.close();
+
+  // ══ 2. LA FERMATA DEL BUS A CENTO METRI ══════════════════════════════
+  /* La stessa palina sta sulla mappa in cinque modi, e chi mappa ne mette
+     quasi sempre uno solo. Qui ce n'è una per forma, ognuna mappata in un
+     modo diverso e nessuna col modo "classico": se l'app ne chiede solo
+     tre su cinque, di queste non ne trova nessuna. */
+  page = await apri([
+    { type: 'node', id: 20, lat: su(100), lon: IO.lng,
+      tags: { public_transport: 'stop_position', bus: 'yes', name: 'Via Fiume' } },
+    { type: 'node', id: 21, lat: su(140), lon: IO.lng,
+      tags: { highway: 'platform', bus: 'yes', name: 'Piazza Matteotti' } },
+    { type: 'node', id: 22, lat: su(180), lon: IO.lng,
+      tags: { public_transport: 'station', bus: 'yes', name: 'Autostazione Muggiò' } }
+  ]);
+  testo = await cerca(page, 'bus');
+  ok('la fermata mappata solo come punto di fermata si trova',
+     /Via Fiume/.test(testo), testo.slice(0, 90));
+  ok('e quella mappata come banchina vecchio stile',
+     /Piazza Matteotti/.test(testo), testo.slice(0, 90));
+  ok('e quella mappata come stazione degli autobus',
+     /Autostazione Muggiò/.test(testo), testo.slice(0, 90));
+  ok('la più vicina è la prima, con la stella',
+     testo.indexOf('Via Fiume') < testo.indexOf('Piazza Matteotti'), testo.slice(0, 60));
+  await page.close();
+
+  // ══ 3. UNA BANCA CHE DICE DI NON AVERE IL BANCOMAT ═══════════════════
+  /* `["atm"]` vuol dire «ha l'etichetta atm, qualunque valore abbia»:
+     comprende atm=no, cioè esattamente i posti che dichiarano di NON
+     averlo. Venivano offerti come bancomat.
+     Questa riga esiste solo perché il finto Overpass sa cos'è una
+     negazione: col finto di prima sarebbe passata anche sul codice
+     rotto, senza provare niente. */
+  page = await apri([
+    { type: 'node', id: 30, lat: su(50), lon: IO.lng,
+      tags: { amenity: 'bank', atm: 'no', name: 'Banca Senza Sportello' } },
+    { type: 'node', id: 31, lat: su(60), lon: IO.lng,
+      tags: { shop: 'convenience', atm: 'no', name: 'Alimentari Senza Sportello' } },
+    { type: 'node', id: 32, lat: su(300), lon: IO.lng,
+      tags: { amenity: 'atm', name: 'Bancomat di via Roma' } }
+  ]);
+  testo = await cerca(page, 'atm');
+  ok('una banca che dichiara di non avere il bancomat non viene offerta',
+     !/Banca Senza Sportello/.test(testo), testo.slice(0, 90));
+  ok('e nemmeno il negozio che lo dichiara',
+     !/Alimentari Senza Sportello/.test(testo), testo.slice(0, 90));
+  ok('mentre il bancomat vero si trova', /Bancomat di via Roma/.test(testo), testo.slice(0, 70));
+  await page.close();
+
+  // ══ 4. QUANDO IL SERVIZIO DELLA MAPPA NON RISPONDE ═══════════════════
+  /* IL DIFETTO DELLA PRIMA FOTOGRAFIA. La chiamata stava nuda dentro il
+     ciclo dei raggi: al primo intoppo l'errore saltava fuori dal ciclo e
+     l'app diceva «Non riesco a raggiungere la mappa» senza aver nemmeno
+     provato i raggi più larghi. Un singhiozzo di un momento diventava una
+     ricerca fallita — con un tasto «Riprova» da premere a mano. */
+  page = await apri([
+    { type: 'node', id: 40, lat: su(400), lon: IO.lng,
+      tags: { railway: 'subway_entrance', name: 'Metro Centrale' } }
+  ], { fallisciPrime: 3 });
+  testo = await cerca(page, 'metro');
+  ok('un intoppo all\'inizio non fa fallire tutta la ricerca',
+     /Metro Centrale/.test(testo), testo.slice(0, 90));
+  ok('e non compare il cartello «non riesco a raggiungere la mappa»',
+     !/non ha risposto|Non riesco a raggiungere/.test(testo), testo.slice(0, 90));
+  /* Ci ha riprovato DA SOLA: nessuno ha premuto niente. */
+  ok('ci ha riprovato da sola, senza chiedere di premere un tasto',
+     page._chiamate.length > 3, page._chiamate.length + ' richieste');
+  await page.close();
+
+  // ══ 5. E QUANDO NON RISPONDE DAVVERO, LO DICE SENZA MENTIRE ══════════
+  page = await apri([], { fallisciPrime: 999 });
+  testo = await cerca(page, 'bus');
+  ok('se non risponde nessuno lo dice, invece di dire che non c\'è niente',
+     /non ha risposto/.test(testo) && !/non risulta nessuna fermata/.test(testo),
+     testo.slice(0, 100));
+  /* Il numero dei tentativi non è a caso: senza un tetto, un servizio giù
+     verrebbe tempestato da un telefono che ci riprova all'infinito. */
+  /* Sul codice di prima queste costanti non esistono: si chiedono con
+     prudenza, se no la prova esplode invece di dire cosa manca — e una
+     prova che esplode non si legge. */
+  const conti = await page.evaluate(() => ({
+    tentativi: typeof VICINI_TENTATIVI === 'number' ? VICINI_TENTATIVI : null,
+    server: typeof OVERPASS !== 'undefined' ? OVERPASS.length : null }));
+  if (conti.tentativi == null) ok('l\'app sa quante volte riprovare da sola', false, 'VICINI_TENTATIVI non esiste');
+  ok('ma non ci riprova all\'infinito: c\'è un tetto',
+     conti.tentativi != null && page._chiamate.length <= conti.tentativi * conti.server + 2,
+     `${page._chiamate.length} richieste, tetto ${conti.tentativi}×${conti.server}`);
+  await page.close();
+
+  // ══ 6. IL TELEFONO NON MOLLA PRIMA DEL SERVER ════════════════════════
+  /* La domanda diceva a Overpass «prenditi 15 secondi» e il telefono si
+     arrendeva a 9: buttava via una risposta che stava arrivando e diceva
+     «non ci riesco» mentre il server stava ancora lavorando per noi.
+     I due numeri adesso escono dalla stessa costante, e questa riga è
+     quello che impedisce loro di tornare a litigare. */
+  page = await apri([{ type: 'node', id: 50, lat: su(80), lon: IO.lng,
+    tags: { amenity: 'atm', name: 'Bancomat' } }]);
+  await cerca(page, 'atm');
+  const tempi = await page.evaluate(() => ({
+    attesa: typeof VICINI_ATTESA_MS === 'number' ? VICINI_ATTESA_MS : null,
+    server: typeof VICINI_TIMEOUT_SERVER === 'number' ? VICINI_TIMEOUT_SERVER : null }));
+  const nellaDomanda = +((page._chiamate[0].q.match(/\[timeout:(\d+)\]/) || [])[1]);
+  ok('il telefono aspetta più a lungo di quanto concede al server',
+     tempi.attesa != null && tempi.server != null && tempi.attesa > tempi.server * 1000,
+     tempi.server == null ? `il numero del server è scritto a mano nella domanda (${nellaDomanda}s), non in una costante`
+                          : `telefono ${tempi.attesa}ms, server ${tempi.server}s`);
+  ok('e il numero nella domanda è lo stesso della costante, non un gemello',
+     tempi.server != null && nellaDomanda === tempi.server,
+     `nella domanda ${nellaDomanda}s, costante ${tempi.server}s`);
+  await page.close();
+
+  await browser.close();
+  for (const e of err) r.push(' FALLITO  ' + e);
+  const passati = r.filter(x => x.startsWith('  OK')).length;
+  console.log(r.join('\n'));
+  console.log(`\n${passati}/${r.length} passati`);
+  process.exit(passati === r.length ? 0 : 1);
+})();

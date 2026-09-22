@@ -1503,6 +1503,66 @@ qualcuno che risponde".
   telefono si sovrappongono gia'. Per questo la soglia non e' «non si
   toccano» ma «c'e' dell'aria in mezzo» — otto pixel, che coprono la
   differenza fra i due font.
+- **⚠️⚠️ Cercare per NOME senza guardare le etichette trova tutt'altro.** La
+  rete di sicurezza sul nome prendeva qualunque cosa si CHIAMASSE in un certo
+  modo, senza chiedersi cosa fosse. E «stazione» e' una delle parole piu'
+  ambigue che esistano: stazione dei carabinieri, di servizio, ecologica,
+  meteorologica, sciistica, di ricarica — e in inglese e' peggio, *police
+  station*, *fire station*, *gas station*, *power station*, *radio station*.
+  Segnalato dal vivo: cercando la stazione dei treni usciva al primo posto,
+  con la stellina, la «Stazione Carabinieri» a 195 metri. **Il rimedio non e'
+  un elenco di parole da evitare** — quello non finisce mai e cambia con la
+  lingua — ma guardare le etichette: la mappa dice gia' `amenity=police`. Le
+  etichette di OpenStreetMap sono le stesse in tutto il mondo, le parole no.
+  E ci vuole il rovescio: una stazione mappata solo come edificio deve
+  passare lo stesso, se no nei paesi dove le etichette scarseggiano non si
+  trova piu' niente.
+- **⚠️ Una chiamata nuda dentro un ciclo si porta giu' tutto il ciclo.** La
+  ricerca allarga il giro a scalini; la chiamata a Overpass stava li' dentro
+  senza un `try`. Al primo singhiozzo di rete l'errore saltava fuori dal
+  ciclo, e l'app diceva «non riesco a raggiungere la mappa» **senza aver
+  provato gli scalini piu' larghi**. Un momento di niente diventava una
+  ricerca fallita.
+- **Riprovare per ogni scalino moltiplica.** Correggendo il punto qui sopra
+  avevo messo tre tentativi su tre server dentro OGNI scalino: con la scala
+  del bus fanno **cinquantaquattro richieste** a un servizio tenuto su da
+  volontari, ed e' il modo di farsi bloccare. Il singhiozzo lo assorbe la
+  riprova; quando finisce anche quella il servizio e' giu' davvero, e si
+  smette. L'ha trovato la prova contando le richieste, non un ragionamento.
+- **Il telefono non deve arrendersi prima del server.** La domanda concedeva
+  a Overpass quindici secondi e il telefono mollava a nove: buttava via una
+  risposta in arrivo e diceva «non ci riesco» mentre il server stava ancora
+  lavorando per noi. Adesso i due numeri escono dalla stessa costante.
+- **`["chiave"]` in Overpass vuol dire «ha quella chiave, con qualunque
+  valore»** — compreso `atm=no`, cioe' proprio i posti che dichiarano di NON
+  avere il bancomat. Venivano offerti come bancomat. E correggere la domanda
+  non basta: la rete sul nome li rimetteva dentro dalla porta di servizio,
+  perche' «qui il bancomat non c'e'» e' una cosa che si sa del POSTO, non un
+  modo di cercarlo, e va controllata comunque sia arrivato.
+- **La stessa fermata sta sulla mappa in cinque modi, e chi mappa ne mette
+  uno solo.** `highway=bus_stop`, `amenity=bus_station`,
+  `public_transport=platform`, `public_transport=stop_position`,
+  `highway=platform`. Chiederne tre su cinque vuol dire non trovare la
+  fermata ogni volta che chi ha mappato ha usato una delle altre due — ed e'
+  successo con una fermata a cento metri. Vale per il metro allo stesso
+  modo: Londra, Parigi e mezza Asia mappano le stazioni come
+  `railway=station`+`subway=yes`, senza `station=subway`.
+- **⚠️ Un finto servizio che non sa leggere la domanda fa passare prove
+  vuote.** Il finto Overpass delle prove guardava la domanda con due
+  espressioni regolari e diceva «sì» se UNO qualunque dei filtri combaciava:
+  non sapeva che dentro una parentesi i filtri si SOMMANO, e non conosceva
+  ne' la presenza di una chiave ne' la negazione. Una prova sul filtro che
+  esclude `atm=no` sarebbe passata identica sul codice rotto. Adesso sta in
+  `test/overpass-finto.js` e la domanda la legge davvero — comprese le
+  parentesi quadre dentro le espressioni regolari (`ban[ckq]`), che una
+  regola ingenua taglia a meta'. Le 111 prove di prima passano tutte anche
+  col finto fedele: non stavano passando per il motivo sbagliato.
+- **Il nome della cache non si scrive nelle prove.** Sta in
+  `VICINI_CACHE_CHIAVE` e **cambia apposta** quando si corregge una domanda,
+  per far dimenticare ai telefoni le risposte prese con quella vecchia.
+  Scritto a mano nelle prove, un rinominamento le lascia a pulire una
+  casella che non esiste — e allora ogni caso legge la risposta del caso
+  prima. Va chiesto all'app.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

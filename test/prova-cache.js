@@ -42,7 +42,7 @@ const stato = {
     page.evaluate(([la, lo, k, rr]) => viciniOverpass(k, la, lo, rr, false), [lat, lng, kind, raggio]);
 
   // ── la prima volta si chiede davvero ─────────────────────────────────────
-  await page.evaluate(() => localStorage.removeItem('geppgo_vicini'));
+  await page.evaluate(() => localStorage.removeItem(VICINI_CACHE_CHIAVE));
   chiamate = 0;
   const primo = await cerca(35.6595, 139.7454);
   ok('la prima ricerca chiede a Overpass', chiamate === 1, chiamate + ' chiamate');
@@ -72,9 +72,9 @@ const stato = {
 
   // ── quando scade, si richiede ────────────────────────────────────────────
   const scaduta = await page.evaluate(() => {
-    const c = JSON.parse(localStorage.getItem('geppgo_vicini'));
+    const c = JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE));
     Object.keys(c).forEach(k => { c[k].quando = Date.now() - 25 * 3600 * 1000; });
-    localStorage.setItem('geppgo_vicini', JSON.stringify(c));
+    localStorage.setItem(VICINI_CACHE_CHIAVE, JSON.stringify(c));
     return Object.keys(c).length;
   });
   await cerca(35.6595, 139.7454);
@@ -82,7 +82,7 @@ const stato = {
 
   // ── "qui non c'è niente" si tiene per meno ───────────────────────────────
   const vuoto = await page.evaluate(() => {
-    localStorage.removeItem('geppgo_vicini');
+    localStorage.removeItem(VICINI_CACHE_CHIAVE);
     return true;
   });
   await page.unroute('**/api/interpreter');
@@ -96,9 +96,9 @@ const stato = {
   await cerca(35.9000, 139.9000);
   ok('e subito dopo non si rifà', vuote === 1, vuote + ' chiamate');
   await page.evaluate(() => {
-    const c = JSON.parse(localStorage.getItem('geppgo_vicini'));
+    const c = JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE));
     Object.keys(c).forEach(k => { c[k].quando = Date.now() - 2 * 3600 * 1000; });
-    localStorage.setItem('geppgo_vicini', JSON.stringify(c));
+    localStorage.setItem(VICINI_CACHE_CHIAVE, JSON.stringify(c));
   });
   await cerca(35.9000, 139.9000);
   ok('ma dopo un\'ora sì, perché "non c\'è niente" si ricontrolla volentieri',
@@ -106,14 +106,14 @@ const stato = {
 
   // ── la cache non cresce all'infinito ─────────────────────────────────────
   const tetto = await page.evaluate(async () => {
-    localStorage.removeItem('geppgo_vicini');
+    localStorage.removeItem(VICINI_CACHE_CHIAVE);
     for (let i = 0; i < 70; i++) viciniCacheScrivi('atm', 10 + i * 0.5, 10, 1500, false, [{ nome: 'x' }]);
-    return Object.keys(JSON.parse(localStorage.getItem('geppgo_vicini'))).length;
+    return Object.keys(JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE))).length;
   });
   ok('la cache non cresce oltre il tetto', tetto === 60, tetto + ' voci su 70 scritte');
 
   const vecchie = await page.evaluate(() => {
-    const c = JSON.parse(localStorage.getItem('geppgo_vicini'));
+    const c = JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE));
     // le prime scritte sono le più vecchie: devono essere quelle buttate
     const q = Object.values(c).map(x => x.lat).sort((a, b) => a - b);
     return { primaC: q.includes(10), ultimaC: q.includes(10 + 69 * 0.5) };
@@ -124,11 +124,11 @@ const stato = {
   // ── se la memoria è piena, la cache si fa da parte ───────────────────────
   const piena = await page.evaluate(() => {
     const vero = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = (k, v) => { if (k === 'geppgo_vicini') throw new Error('QuotaExceededError'); return vero(k, v); };
+    localStorage.setItem = (k, v) => { if (k === VICINI_CACHE_CHIAVE) throw new Error('QuotaExceededError'); return vero(k, v); };
     let esploso = false;
     try { viciniCacheScrivi('atm', 50, 50, 1500, false, [{ nome: 'y' }]); } catch (e) { esploso = true; }
     localStorage.setItem = vero;
-    return { esploso, restata: localStorage.getItem('geppgo_vicini') };
+    return { esploso, restata: localStorage.getItem(VICINI_CACHE_CHIAVE) };
   });
   ok('con la memoria piena non si rompe niente', piena.esploso === false);
   ok('e la cache si toglie di mezzo invece di rubare spazio ai viaggi',

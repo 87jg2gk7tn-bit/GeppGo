@@ -7925,7 +7925,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA, su tre server diversi, senza chiedere niente; solo se non risponde nessuno lo dice. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -11260,6 +11260,61 @@ function ovAttorno(filtri,r,lat,lng){
    espressione regolare anche sul NOME del tag, non solo sul valore: così con un
    filtro solo si guardano tutti e cinque. */
 function ovNome(parole){return `[~"^(name|brand|operator|official_name|short_name)$"~"${parole}",i]`;}
+/* ══ QUELLO CHE SI CHIAMA COSI' MA NON LO E' ═══════════════════════════════
+   La rete sul nome non guardava COSA fosse la cosa trovata: bastava che si
+   chiamasse in un certo modo. E "stazione" e' una delle parole piu' ambigue
+   che esistano - stazione dei carabinieri, di servizio, ecologica,
+   meteorologica, sciistica, di ricarica - e in inglese e' peggio: police
+   station, fire station, gas station, power station, radio station. Segnalato
+   dal vivo: cercando la stazione dei treni a Muggio' usciva la "Stazione
+   Carabinieri", a centonovantacinque metri, col primo posto e la stellina.
+   Da li' non parte nessun treno.
+   Il rimedio non e' un elenco di parole da evitare - quello non finisce mai e
+   cambia con la lingua - ma guardare le ETICHETTE: la mappa dice gia' che
+   quella e' una caserma (amenity=police). Vale in tutto il mondo, perche' le
+   etichette di OpenStreetMap sono le stesse ovunque mentre le parole no. */
+
+/* Cose che non sono un posto dove si va, in nessuna delle sei ricerche: un
+   paese che si chiama "Bagni di Lucca", una via che si chiama "Station Road"
+   o "Via della Stazione" (ce n'e' una in ogni citta' d'Europa), un confine. */
+function vicinoNonEUnPosto(t){
+  if(t.place||t.boundary||t.admin_level)return true;
+  if(t.highway&&!/^(bus_stop|platform)$/.test(t.highway))return true;
+  if(t.landuse||t.natural||t.waterway)return true;
+  return false;
+}
+/* Le etichette con cui una fermata e' una fermata, in qualunque paese. */
+const FERMATA_RAILWAY=/^(station|halt|stop|tram_stop|subway_entrance|platform|station_entrance)$/;
+function vicinoEUnaFermata(t){
+  return FERMATA_RAILWAY.test(t.railway||'')
+    || /^(station|stop_position|platform|stop_area)$/.test(t.public_transport||'')
+    || t.highway==='bus_stop' || t.amenity==='bus_station' || t.amenity==='ferry_terminal'
+    || !!t.aerialway || /^(subway|train|light_rail|tram)$/.test(t.station||'');
+}
+/* Le etichette che dicono "sono un'altra cosa". L'elenco e' lungo apposta:
+   ogni voce e' un posto che si puo' chiamare "stazione" e non lo e'. */
+const NON_FERMATA=/^(police|fire_station|fuel|charging_station|bank|atm|bureau_de_change|pharmacy|hospital|clinic|doctors|dentist|veterinary|school|college|university|kindergarten|library|restaurant|cafe|bar|pub|biergarten|fast_food|food_court|ice_cream|townhall|courthouse|prison|post_office|theatre|cinema|casino|nightclub|place_of_worship|grave_yard|funeral_hall|recycling|waste_disposal|waste_transfer_station|car_wash|car_rental|car_sharing|driving_school|shelter|toilets|drinking_water|bench|fountain|parking|parking_space|parking_entrance|bicycle_parking|motorcycle_parking|bicycle_rental|marketplace|social_facility|community_centre|childcare|studio|animal_shelter)$/;
+function vicinoFermataPlausibile(t){
+  if(vicinoEUnaFermata(t))return true;
+  /* Un binario o un passaggio a livello non sono una fermata: sono la
+     ferrovia. Chi cerca la stazione non ci sale. */
+  if(t.railway&&!FERMATA_RAILWAY.test(t.railway))return false;
+  if(NON_FERMATA.test(t.amenity||''))return false;
+  if(t.shop||t.office||t.craft||t.healthcare||t.emergency||t.military||t.power||t.man_made||t.aeroway)return false;
+  if(t.leisure||(t.tourism&&t.tourism!=='information'))return false;
+  /* Non si capisce cosa sia: passa, ma la riga lo dira' - "trovata dal nome
+     · da controllare". Una stazione mappata male esiste, e buttarla via
+     vorrebbe dire non trovare niente dove invece qualcosa c'e'. */
+  return true;
+}
+/* Il controllo si fa SOLO su quello che arriva dalla rete sul nome: la
+   ricerca per etichetta e' gia' precisa per costruzione, e passarla di qui
+   rischierebbe solo di buttare via roba buona. */
+function viciniAmmesso(kind,t){
+  if(vicinoNonEUnPosto(t))return false;
+  if(kind==='treno'||kind==='metro'||kind==='bus')return vicinoFermataPlausibile(t);
+  return true;
+}
 /* Le sigle. Un elenco di marchi è per sua natura incompleto, ma senza queste si
    perdono banche enormi: "BPM", "MPS", "HSBC" non contengono né "banca" né
    "bank", quindi nessuna regola generale le prende.
@@ -11287,7 +11342,14 @@ const VICINI={
        Le stazioni della metropolitana sono ANCHE railway=station, ma con
        station=subway: si tolgono, se no le due ricerche danno la stessa cosa
        e chi cerca il treno si ritrova davanti una fermata del metro. */
-    q:(r,lat,lng)=>ovAttorno(['["railway"="station"]["station"!="subway"]','["railway"="halt"]','["public_transport"="station"]["train"="yes"]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno([
+      '["railway"="station"]["station"!="subway"]',
+      '["railway"="halt"]',
+      '["public_transport"="station"]["train"="yes"]',
+      /* La fermata del treno mappata solo come punto di fermata: succede
+         sulle linee regionali, dove la "stazione" e' una pensilina. */
+      '["public_transport"="stop_position"]["train"="yes"]["subway"!="yes"]'
+    ],r,lat,lng),
     parole:PAROLE_TRENO,
     nome:t=>t.name||t.official_name||t.operator||'Stazione',
     extra:t=>[
@@ -11308,7 +11370,17 @@ const VICINI={
        lunga trecento metri e ha cinque bocche: il puntino al centro manda
        in mezzo alla piazza sbagliata, mentre subway_entrance è la scala per
        cui si scende davvero. Si cercano tutte e due e vince la più vicina. */
-    q:(r,lat,lng)=>ovAttorno(['["railway"="subway_entrance"]','["station"="subway"]','["public_transport"="station"]["subway"="yes"]'],r,lat,lng),
+    q:(r,lat,lng)=>ovAttorno([
+      '["railway"="subway_entrance"]',
+      '["station"="subway"]',
+      '["public_transport"="station"]["subway"="yes"]',
+      /* Moltissime reti mappano la stazione come railway=station con
+         subway=yes e NIENTE station=subway: Londra, Parigi, Berlino e mezza
+         Asia stanno cosi'. Senza questa riga in quelle citta' si trovavano
+         solo le bocche di risalita, e dove non sono mappate, niente. */
+      '["railway"="station"]["subway"="yes"]',
+      '["public_transport"="stop_position"]["subway"="yes"]'
+    ],r,lat,lng),
     parole:PAROLE_METRO,
     nome:t=>t.name||t.official_name||t.operator||'Metropolitana',
     extra:t=>[
@@ -11322,11 +11394,27 @@ const VICINI={
   bus:{
     raggi:VICINI_RAGGI_BUS,
     ic:'🚌', titolo:'Fermata del bus più vicina', cosa:'fermata del bus', manca:'la fermata del bus più vicina',
-    /* highway=bus_stop e' la palina sul marciapiede, amenity=bus_station
-       l'autostazione con le banchine. La terza è la forma nuova, quella che
-       le città stanno adottando adesso: senza, in mezza Europa non si trova
-       niente. */
-    q:(r,lat,lng)=>ovAttorno(['["highway"="bus_stop"]','["amenity"="bus_station"]','["public_transport"="platform"]["bus"="yes"]'],r,lat,lng),
+    /* LA STESSA PALINA STA SULLA MAPPA IN CINQUE MODI, e chi mappa ne mette
+       quasi sempre UNO SOLO. Segnalato dal vivo: una fermata a cento metri
+       che l'app non trovava.
+       - highway=bus_stop e' la palina sul marciapiede, la forma classica;
+       - amenity=bus_station l'autostazione con le banchine;
+       - public_transport=platform e' dove si aspetta, la forma nuova;
+       - public_transport=stop_position e' il punto sulla strada dove il bus
+         si ferma davvero, ed e' quello che in Italia compare da solo piu'
+         spesso, perche' e' quello che serve alle linee;
+       - highway=platform e' la banchina vecchio stile, ancora diffusa.
+       Chiederne tre su cinque vuol dire non trovare la fermata ogni volta
+       che chi ha mappato ha usato una delle altre due. Costa una domanda
+       sola: sono tutte dentro la stessa parentesi. */
+    q:(r,lat,lng)=>ovAttorno([
+      '["highway"="bus_stop"]',
+      '["amenity"="bus_station"]',
+      '["public_transport"="platform"]["bus"="yes"]',
+      '["public_transport"="stop_position"]["bus"="yes"]',
+      '["public_transport"="station"]["bus"="yes"]',
+      '["highway"="platform"]["bus"="yes"]'
+    ],r,lat,lng),
     parole:PAROLE_BUS,
     nome:t=>t.name||t.ref||t.operator||'Fermata',
     extra:t=>[
@@ -11394,7 +11482,10 @@ const VICINI={
        allora nessuna ricerca "per tipo" la trova, mentre il nome ce l'ha
        scritto in faccia. Vale anche fuori dall'Italia: 銀行 è "banca" in
        giapponese, e lì i bancomat delle filiali sono quelli che si usano. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"]','["amenity"="bank"]','["office"="financial"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]'],r,lat,lng), parole:PAROLE_BANCA,
+    /* ["atm"] da solo vuol dire "ha l'etichetta atm, qualunque valore abbia" -
+       compreso atm=no, cioe' proprio i posti che dichiarano di NON avere il
+       bancomat. Venivano mostrati come bancomat. */
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"]["atm"!="no"]','["amenity"="bank"]["atm"!="no"]','["office"="financial"]["atm"!="no"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]'],r,lat,lng), parole:PAROLE_BANCA,
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
@@ -11494,13 +11585,14 @@ async function viciniIntorno(lat,lng){
   const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
   vicinoBusy=true;
   try{
-    let trovati=[],andataBene=false;
+    let trovati=[],andataBene=false,giu=false;
     const aggiungi=n=>{if(!vicinoDoppione(trovati,n.lat,n.lng,n.nome))trovati.push(n);};
     /* Prima si cerca per tipo: sono le etichette che Overpass tiene in un
        indice, e la risposta arriva in un attimo anche su cinque chilometri.
        Questa è la ricerca che risolve quasi tutti i casi. */
     const scala=raggiDi(vicinoKind);
     const iniziato=Date.now();
+    const dillo=t=>{body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
     for(const r of scala){
       /* il giro largo si fa solo a mani vuote: se qualcosa c'è, roba più
          lontana non serve a chi la cerca adesso */
@@ -11508,10 +11600,34 @@ async function viciniIntorno(lat,lng){
       /* e non si allarga all'infinito: finito il tempo si risponde con
          quello che si ha, invece di far girare la clessidra */
       if(r>scala[0]&&Date.now()-iniziato>VICINI_BUDGET_MS)break;
-      body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...</div>`;
-      const nuovi=await viciniOverpass(vicinoKind,lat,lng,r);
-      andataBene=true;
-      nuovi.forEach(aggiungi);
+      dillo(`Cerco nel raggio di ${r<1000?r+' m':(r/1000)+' km'}...`);
+      /* UN GIRO CHE NON RIESCE NON DEVE PORTARSI GIU' GLI ALTRI. Prima
+         questa chiamata stava nuda dentro il ciclo: al primo intoppo di
+         rete l'errore saltava fuori dal ciclo e finiva nel catch in fondo,
+         e l'app diceva «non riesco a raggiungere la mappa» senza aver
+         nemmeno provato i raggi piu' larghi. Un singhiozzo di un momento
+         diventava una ricerca fallita.
+         E i giri sono uno dentro l'altro - tre chilometri contengono un
+         chilometro - quindi un giro piu' largo che riesce copre anche
+         quello che il giro stretto non ha potuto chiedere: non si perde
+         niente ad andare avanti. */
+      try{
+        const nuovi=await viciniOverpass(vicinoKind,lat,lng,r,false,i=>dillo(`Il servizio della mappa non risponde, ci riprovo (${i} di ${VICINI_TENTATIVI})...`));
+        andataBene=true;
+        nuovi.forEach(aggiungi);
+      }catch(e){
+        /* QUI DENTRO CI SI E' GIA' PROVATI TRE VOLTE SU TRE SERVER. Se dopo
+           nove richieste non ha risposto nessuno, il servizio e' giu': non
+           e' piu' un singhiozzo. Andare avanti coi raggi piu' larghi
+           vorrebbe dire rifare nove richieste per ognuno - con la scala del
+           bus sono cinquantaquattro richieste a un servizio tenuto su da
+           volontari, che e' esattamente il modo di farsi bloccare. E chi
+           guarda lo schermo aspetterebbe tutto quel giro per leggere lo
+           stesso messaggio che poteva leggere subito.
+           Il singhiozzo lo assorbe la riprova qui sopra; quando finisce
+           anche quella, si smette. */
+        giu=true;break;
+      }
       if(trovati.length>=VICINI_POCHI)break;
     }
     /* La rete di sicurezza sul nome si tira SOLO se per tipo non è venuto fuori
@@ -11520,10 +11636,13 @@ async function viciniIntorno(lat,lng){
        farla ogni volta significava aspettare sempre per un caso che capita di
        rado. Ora si paga quel prezzo solo quando serve davvero, e se salta si
        tiene comunque quello che si era già trovato. */
-    if(trovati.length<VICINI_POCHI){
-      body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} Cerco anche per nome...</div>`;
+    /* Se il servizio e' giu' non si prova nemmeno la rete sul nome: sono
+       altre nove richieste a un servizio che non risponde. */
+    if(trovati.length<VICINI_POCHI&&!giu){
+      dillo('Cerco anche per nome...');
       try{
-        const perNome=await viciniOverpass(vicinoKind,lat,lng,raggiDi(vicinoKind)[0],true);
+        const perNome=await viciniOverpass(vicinoKind,lat,lng,raggiDi(vicinoKind)[0],true,
+          i=>dillo(`Il servizio della mappa non risponde, ci riprovo (${i} di ${VICINI_TENTATIVI})...`));
         andataBene=true;
         perNome.forEach(aggiungi);
       }catch(e){}
@@ -11557,8 +11676,11 @@ async function viciniIntorno(lat,lng){
     `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>
      <button class="btn btn-soft btn-block" style="margin-top:.6rem;font-size:.82rem" onclick="apriOsmQui(${lat},${lng})">Manca qualcosa? Guarda questa zona sulla mappa</button>`;
   }catch(e){
-    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Non riesco a raggiungere la mappa. Controlla la connessione e riprova.</div>
-      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
+    /* Si dice che ci si e' provati, e quante volte: se uno legge
+       «riprova» dopo un tentativo solo pensa che l'app si sia arresa
+       subito, e ha ragione di pensarlo. */
+    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>Di solito è passeggero. Se hai campo, fra un minuto va.</div>
+      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova adesso</button>`;
   }finally{vicinoBusy=false;}
 }
 
@@ -11581,7 +11703,22 @@ const OVERPASS=[
    Overpass quando sta bene: se non ha risposto in nove secondi, non è la
    richiesta a essere lenta, è il server a essere sotto sforzo, e il prossimo
    farà prima. */
-const VICINI_ATTESA_MS=9000;
+/* IL SERVER E IL CLIENTE DEVONO ESSERE D'ACCORDO. La domanda dice a Overpass
+   "prenditi fino a tot secondi"; se il telefono molla PRIMA, butta via una
+   risposta che stava arrivando e dice "non ci riesco" mentre il server sta
+   ancora lavorando per noi. Era esattamente cosi': la domanda concedeva
+   quindici secondi e il telefono si arrendeva a nove. Adesso i due numeri
+   escono dalla stessa costante e non possono piu' litigare. */
+const VICINI_TIMEOUT_SERVER=10;
+const VICINI_ATTESA_MS=(VICINI_TIMEOUT_SERVER+1)*1000;
+/* Quante volte l'app ci riprova DA SOLA prima di dire che non ce l'ha fatta.
+   Overpass e' un servizio di volontari: risponde "troppe richieste" o non
+   risponde affatto con una certa regolarita', e quasi sempre basta chiedere
+   di nuovo un attimo dopo. Mettere un tasto "Riprova" e lasciare che sia la
+   persona a premerlo e' scaricare su di lei un lavoro che deve fare l'app:
+   lei ha chiesto dov'e' la metropolitana, non di amministrare i server. */
+const VICINI_TENTATIVI=3;
+const VICINI_PAUSA_MS=700;
 /* Dopo quanto si smette di sperare nel primo e si chiedono anche gli altri. */
 const VICINI_PAZIENZA_MS=2500;
 /* Si parte da quello che ha risposto l'ultima volta. Se dopo due secondi e mezzo
@@ -11591,27 +11728,49 @@ const VICINI_PAZIENZA_MS=2500;
    sommava e si arrivava a mezzo minuto prima di dire "non ci riesco". Così nel
    caso normale parte una richiesta sola, e nel caso peggiore si aspetta il più
    veloce dei tre invece dei tre uno dopo l'altro. */
-function overpassChiedi(q){
+function overpassUnGiro(q){
   const lista=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS.slice();
   return new Promise((risolvi,rifiuta)=>{
-    let lanciati=0,falliti=0,errore=null,fatto=false;
+    let prossimo=0,falliti=0,errore=null,fatto=false;
     const stop=new AbortController();
     const scaduto=setTimeout(()=>{if(!fatto){fatto=true;stop.abort();rifiuta(errore||new Error('overpass lento'));}},VICINI_ATTESA_MS);
     const chiudi=()=>{fatto=true;clearTimeout(scaduto);};
     const lancia=url=>{
-      lanciati++;
       fetch(url,{method:'POST',signal:stop.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)})
         .then(res=>{if(!res.ok)throw new Error('overpass '+res.status);return res.json();})
         .then(dati=>{if(fatto)return;chiudi();overpassBuono=url;stop.abort();risolvi(dati);})
         .catch(e=>{
           errore=errore||e;falliti++;
-          /* si molla solo quando sono stati provati tutti e hanno fallito tutti */
-          if(!fatto&&lanciati===lista.length&&falliti===lanciati){chiudi();rifiuta(errore);}
+          /* UN SERVER CHE CADE SUBITO NON DEVE FAR ASPETTARE. Prima il
+             secondo indirizzo partiva a tempo, dopo due secondi e mezzo,
+             anche se il primo era gia' morto dopo duecento millisecondi:
+             due secondi e tre decimi buttati a guardare il vuoto. Adesso
+             chi cade lascia il posto al prossimo all'istante. Non e' una
+             richiesta in piu' - e' la stessa, fatta a un altro. */
+          if(!fatto)avanti();
+          if(!fatto&&falliti>=lista.length){chiudi();rifiuta(errore);}
         });
     };
-    lancia(lista[0]);
-    setTimeout(()=>{if(!fatto)lista.slice(1).forEach(lancia);},VICINI_PAZIENZA_MS);
+    const avanti=()=>{if(prossimo<lista.length)lancia(lista[prossimo++]);};
+    avanti();
+    /* Se invece il primo non e' caduto ma ci mette, si chiedono anche gli
+       altri e vince chi arriva prima. Qui la richiesta in piu' si paga
+       davvero, e per questo si aspetta: Overpass lo tengono su dei
+       volontari e tempestarlo non e' educato. */
+    setTimeout(()=>{while(!fatto&&prossimo<lista.length)avanti();},VICINI_PAZIENZA_MS);
   });
+}
+/* E se tutti e tre non rispondono, si riprova da soli. Vedi VICINI_TENTATIVI:
+   la persona ha chiesto dov'e' il bancomat, non di fare il turno di guardia
+   ai server. */
+function attendi(ms){return new Promise(r=>setTimeout(r,ms));}
+async function overpassChiedi(q,avvisa){
+  let ultimo=null;
+  for(let i=1;i<=VICINI_TENTATIVI;i++){
+    if(i>1){ if(avvisa)avvisa(i); await attendi(VICINI_PAUSA_MS*(i-1)); }
+    try{ return await overpassUnGiro(q); }catch(e){ ultimo=e; }
+  }
+  throw ultimo||new Error('overpass');
 }
 let overpassBuono=null;
 /* Due righe sono lo stesso posto se stanno praticamente sopra, o se hanno lo
@@ -11647,7 +11806,14 @@ function vicinoDoppione(lista,la,lo,nome){
    Chi non trova niente si tiene da parte per meno tempo: "qui non c'e'
    niente" e' una risposta che uno rifa' volentieri poco dopo, e tenerla per
    un giorno intero sarebbe scortese. */
-const VICINI_CACHE_CHIAVE='geppgo_vicini';
+/* IL NUMERO IN FONDO E' IMPORTANTE. Le risposte si tengono da parte fino a
+   un giorno, e quelle vuote un'ora: giusto, finche' le domande restano le
+   stesse. Ma se si corregge una domanda - come qui, che le fermate del bus si
+   cercano in cinque modi invece di tre - i telefoni che hanno gia' cercato si
+   terrebbero il "non c'e' niente" preso con la domanda sbagliata, e la
+   correzione non si vedrebbe. Cambiando il numero la roba vecchia smette di
+   essere letta. Va cambiato ogni volta che si tocca una domanda. */
+const VICINI_CACHE_CHIAVE='geppgo_vicini_2';
 const VICINI_CACHE_ORE=24;
 const VICINI_CACHE_ORE_VUOTO=1;
 const VICINI_CACHE_MAX=60;
@@ -11698,7 +11864,7 @@ function viciniCacheScrivi(kind,lat,lng,raggio,soloNome,lista){
   }
 }
 
-async function viciniOverpass(kind,lat,lng,raggio,soloNome){
+async function viciniOverpass(kind,lat,lng,raggio,soloNome,avvisa){
   const gia=viciniCacheLeggi(kind,lat,lng,raggio,soloNome);
   if(gia)return gia;
   const v=VICINI[kind];
@@ -11706,13 +11872,23 @@ async function viciniOverpass(kind,lat,lng,raggio,soloNome){
      distanza, quindi in centro città un tetto basso può buttare via proprio
      quello sotto casa e lasciare dentro uno dall'altra parte del quartiere. */
   const dentro=soloNome?ovAttorno([ovNome(v.parole)],raggio,lat,lng):v.q(raggio,lat,lng);
-  const q=`[out:json][timeout:15];(${dentro});out center 150;`;
-  const d=await overpassChiedi(q);
+  const q=`[out:json][timeout:${VICINI_TIMEOUT_SERVER}];(${dentro});out center 150;`;
+  const d=await overpassChiedi(q,avvisa);
   const out=[];
   (d.elements||[]).forEach(e=>{
     const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);
     if(la==null||lo==null)return;
     const t=e.tags||{},nome=v.nome(t);
+    /* Quando la mappa dice esplicitamente di NO, si ascolta. atm=no vuol
+       dire che qualcuno e' passato di li' e ha segnato che il bancomat non
+       c'e': offrirlo lo stesso e' mandare a vuoto chi ha bisogno di
+       contanti. Vale comunque sia arrivato - per etichetta o per nome -
+       perche' e' una cosa che si sa del posto, non un modo di cercarlo:
+       correggendo solo la domanda, la rete sul nome lo rimetteva dentro
+       dalla porta di servizio. */
+    if(kind==='atm'&&t.atm==='no')return;
+    /* Vedi viciniAmmesso: la "Stazione Carabinieri" si ferma qui. */
+    if(soloNome&&!viciniAmmesso(kind,t))return;
     /* Cercando in più modi la stessa cosa torna più volte: la banca esce come
        punto "bancomat" e come edificio "banca". Due righe per lo stesso posto
        fanno solo perdere tempo a chi legge. Stesso nome e a due passi, oppure
@@ -17411,7 +17587,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-21 12:20';
+const VERSIONE_APP='2026-09-22 14:30';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
