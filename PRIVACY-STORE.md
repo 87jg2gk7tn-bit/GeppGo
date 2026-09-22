@@ -42,7 +42,8 @@ La posizione **viene usata ma non conservata da noi**: si prende quando serve
 (cercare un bagno, un bancomat, il meteo, avvisare che sei vicino a una
 tappa), si manda ai servizi che rispondono, e finisce lì.
 
-**Una cosa è cambiata e va detta.** Le ricerche «qui intorno» non partono più
+**Una cosa è cambiata e va detta.** Le ricerche «qui intorno» **e la ricerca
+degli indirizzi** (alberghi, città, luoghi) non partono più
 dal telefono verso OpenStreetMap: passano da una funzione nostra su Supabase,
 che le gira alla mappa una volta sola per tutti e tiene da parte la risposta.
 È stato necessario perché i servizi di OpenStreetMap sono tenuti su da
@@ -52,8 +53,13 @@ telefono — con l'app sullo store si sarebbe rotta per tutti.
 Quindi una posizione **passa** da un server nostro. Non la tua, però, e la
 differenza è sostanziale per la classificazione degli store:
 
-- il telefono **arrotonda il punto a una griglia di circa 200 metri** prima di
-  mandare la domanda: arriva il quadretto, non la persona dentro al quadretto;
+- la maggior parte delle domande **non contiene nessuna posizione**: cercare
+  «Colosseo, Roma» o il nome di un albergo è testo, uguale per chiunque al
+  mondo;
+- quando la posizione c'è, il telefono la **arrotonda a una griglia di circa
+  200 metri** prima di mandarla, e il ponte **rifiuta** le domande con una
+  posizione non arrotondata invece di inoltrarle: arriva il quadretto, non la
+  persona dentro al quadretto;
 - non viaggia **nessun identificativo** — né email, né account, né id del
   dispositivo;
 - nel database resta **solo la risposta della mappa** (dati pubblici di

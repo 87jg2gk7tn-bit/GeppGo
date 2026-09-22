@@ -1672,6 +1672,28 @@ qualcuno che risponde".
   buttata dopo trenta giorni — ma passa, e va scritto. La differenza fra
   «non passa» e «passa cosi'» e' esattamente quello che gli store chiedono di
   dichiarare.
+- **⚠️ Nominatim era il piu' esposto, non Overpass.** Diciassette punti
+  nell'app — la ricerca degli alberghi, gli indirizzi, la citta' di ogni
+  viaggio, la valuta — contro UNA richiesta al secondo e l'uso da app diffuse
+  esplicitamente sconsigliato. Sullo store sarebbe stato il primo a chiudersi,
+  e con lui se ne andava la ricerca degli hotel. Adesso passa dallo stesso
+  ponte (`supabase/functions/geo`).
+- **Per gli indirizzi la memoria condivisa vale ancora di piu' che per i
+  luoghi vicini.** Una ricerca vicina e' legata a un posto; un indirizzo no:
+  «Colosseo, Roma» e' la stessa domanda per chiunque al mondo, oggi e fra un
+  mese. La prima persona che lo cerca lo cerca per tutte le altre — e un
+  albergo non si sposta, quindi le risposte si tengono trenta giorni invece
+  di sette.
+- **Ventun chiamate da spostare: si sposta l'INVOLUCRO, non le chiamate.**
+  `fetchGeo` si usa esattamente come `fetch`, quindi i ventun punti sono
+  rimasti come erano e la sostituzione e' stata meccanica. Rimaneggiarne
+  ventuno a mano, ognuno coi suoi parametri, e' il modo di infilare un
+  difetto proprio in quello che non si riguarda.
+- **Il ponte non si fida del telefono.** L'app arrotonda la posizione prima di
+  mandarla; il ponte **ricontrolla** e rifiuta quelle non arrotondate. Se un
+  domani qualcuno togliesse l'arrotondamento dall'app, la posizione esatta
+  non arriverebbe comunque a Nominatim. Una promessa sulla privacy che sta in
+  un posto solo e' una promessa che si puo' perdere senza accorgersene.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

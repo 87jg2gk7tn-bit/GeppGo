@@ -70,6 +70,44 @@ const stato = {
   cattive.forEach(([che, q]) =>
     ok(`e ${che} viene respinta`, typeof domandaAmmessa(q) === 'string', String(domandaAmmessa(q))));
 
+  // ══ IL PONTE DEGLI INDIRIZZI (Nominatim, Photon) ═════════════════════
+  /* E' il piu' urgente dei due: Nominatim e' usato in DICIASSETTE punti
+     dell'app — la ricerca degli hotel, gli indirizzi, la città di ogni
+     viaggio, la valuta — e permette UNA richiesta al secondo, sconsigliando
+     l'uso da app diffuse. Sullo store sarebbe il primo a chiudersi, e con
+     lui se ne andrebbe la ricerca degli alberghi. */
+  const geo = await import('../supabase/functions/geo/domanda.mjs');
+  const buoni = [
+    'https://nominatim.openstreetmap.org/search?q=Colosseo&format=json&limit=1',
+    'https://nominatim.openstreetmap.org/reverse?lat=45.592&lon=9.228&format=json',
+    'https://photon.komoot.io/api/?q=Roma&limit=5'
+  ];
+  buoni.forEach(u => ok('l\'app può chiedere ' + new URL(u).pathname,
+    geo.indirizzoAmmesso(u) === null, String(geo.indirizzoAmmesso(u))));
+  const cattivi = [
+    ['un sito qualunque', 'https://esempio.invalid/rubami'],
+    ['una strada non prevista dello stesso servizio',
+     'https://nominatim.openstreetmap.org/status.php?format=json'],
+    ['senza cifratura', 'http://nominatim.openstreetmap.org/search?q=a&format=json'],
+    ['con credenziali infilate dentro',
+     'https://tizio:caio@nominatim.openstreetmap.org/search?q=a&format=json'],
+    ['che si sceglie il formato che vuole',
+     'https://nominatim.openstreetmap.org/search?q=a&format=xml'],
+    ['che chiede di scaricare mezzo paese',
+     'https://nominatim.openstreetmap.org/search?q=a&format=json&limit=500'],
+    ['lunghissimo', 'https://nominatim.openstreetmap.org/search?format=json&q=' + 'a'.repeat(900)]
+  ];
+  cattivi.forEach(([che, u]) => ok(`e ${che} viene respinto`,
+    typeof geo.indirizzoAmmesso(u) === 'string', String(geo.indirizzoAmmesso(u))));
+  /* LA RIGA CHE TIENE IN PIEDI LA PROMESSA. Il telefono arrotonda la
+     posizione prima di mandarla; il ponte NON si fida e ricontrolla. Se un
+     domani l'app smettesse di arrotondare, il ponte rifiuterebbe invece di
+     inoltrare la posizione esatta a Nominatim. */
+  ok('e una posizione NON arrotondata viene respinta dal ponte',
+     geo.posizioneArrotondata('https://nominatim.openstreetmap.org/reverse?lat=45.59217&lon=9.22839&format=json') === false);
+  ok('mentre quella sulla griglia passa',
+     geo.posizioneArrotondata('https://nominatim.openstreetmap.org/reverse?lat=45.592&lon=9.228&format=json') === true);
+
   // ══ L'APP E IL PONTE ═════════════════════════════════════════════════
   async function apri({ ponte }) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -192,6 +230,47 @@ const stato = {
      pagina2._ponte[0] === chiesto ? 'una sola risposta serve a tutti e due'
        : (pagina2._ponte[0] || '').slice(0, 60) + ' ≠ ' + chiesto.slice(0, 60));
   await pagina2.close();
+
+  // ── 3-bis. GLI INDIRIZZI PASSANO DAVVERO DAL PONTE ──────────────────
+  /* I ventun punti dell'app non chiamano più Nominatim: chiamano `fetchGeo`,
+     che si usa come `fetch` ed è quello che li ha fatti passare tutti dal
+     ponte senza rimaneggiarne ventuno a mano — che è il modo di introdurre
+     un difetto proprio in quello che non si guarda. */
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  pg._geo = []; pg._nominatim = [];
+  await pg.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+  await pg.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+  await pg.route('**/functions/v1/geo', async route => {
+    pg._geo.push(JSON.parse(route.request().postData() || '{}').url || '');
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ dati: [{ lat: '41.89', lon: '12.49', display_name: 'Colosseo dal ponte' }], da: 'memoria' }) });
+  });
+  await pg.route(/nominatim\.openstreetmap\.org/, async route => {
+    pg._nominatim.push(route.request().url());
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+  await pg.addInitScript(s2 => localStorage.setItem('geppgo2', JSON.stringify(s2)), stato);
+  await pg.goto(APP, { waitUntil: 'domcontentloaded' });
+  await pg.waitForFunction(() => typeof window.fetchGeo === 'function', { timeout: 20000 });
+  await pg.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 20000 });
+
+  const risposta = await pg.evaluate(async () => {
+    const r = await fetchGeo('https://nominatim.openstreetmap.org/search?q=Colosseo&format=json&limit=1');
+    return (await r.json())[0];
+  });
+  ok('una ricerca di indirizzo passa dal ponte',
+     risposta && /Colosseo dal ponte/.test(risposta.display_name || ''), JSON.stringify(risposta).slice(0, 60));
+  ok('e Nominatim non viene chiamato direttamente',
+     pg._nominatim.length === 0, pg._nominatim.length + ' chiamate dirette');
+
+  /* E anche qui la posizione si arrotonda prima di partire: «dov'è questo
+     punto» è una domanda che contiene dove sei. */
+  await pg.evaluate(() => fetchGeo('https://nominatim.openstreetmap.org/reverse?lat=45.59217&lon=9.22839&format=json').then(r => r.json()));
+  const inverso = pg._geo.find(u => /reverse/.test(u)) || '';
+  ok('e una domanda «dov\'è questo punto» parte arrotondata',
+     /lat=45\.592(&|$)/.test(inverso) && !/45\.59217/.test(inverso), inverso.slice(-60));
+  await pg.close();
 
   // ── 4. ponte rotto ≠ app rotta ──────────────────────────────────────
   page = await apri({ ponte: false });

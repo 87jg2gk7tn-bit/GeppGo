@@ -38,7 +38,14 @@ Con la CLI di Supabase, dalla radice del progetto:
 
 ```
 supabase functions deploy vicini
+supabase functions deploy geo
 ```
+
+Sono **due** funzioni e condividono la stessa tabella: `vicini` per le
+ricerche «qui intorno» (Overpass), `geo` per gli indirizzi (Nominatim e
+Photon). La seconda è la più urgente: Nominatim è usato in diciassette punti
+dell'app — fra cui la ricerca degli alberghi — e permette una richiesta al
+secondo.
 
 `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **ci sono già** dentro le Edge
 Functions: non vanno messe a mano da nessuna parte, e soprattutto **non vanno
@@ -71,15 +78,26 @@ non c'è o non è raggiungibile.
   account, nessun identificativo, e non si scrive nessun registro di chi ha
   chiesto cosa.
 
+## Quanto costa
+
+**Niente.** Il ponte non sostituisce i servizi gratuiti con servizi a
+pagamento: li rende sostenibili mettendoci davanti una memoria condivisa. Sta
+tutto dentro il piano gratuito di Supabase — funzioni e database che ci sono
+già.
+
+Il tetto da tenere d'occhio, quando gli utenti cresceranno, è il numero di
+**invocazioni delle Edge Functions** (500.000 al mese sul piano gratuito).
+Una ricerca = una invocazione, e quasi tutte vengono servite dalla memoria
+senza uscire: sono circa sedicimila ricerche al giorno prima di doversene
+preoccupare. La tabella pesa pochissimo — sono risposte di mappa, testo — e
+si pulisce da sola dopo trenta giorni.
+
 ## Quando questo non basterà più
 
-Il ponte riduce le chiamate di molto, ma resta appoggiato a servizi gratuiti.
-Le due cose che restano scoperte, in ordine di urgenza:
-
-1. **Nominatim** — 17 punti nell'app (ricerca hotel, indirizzi, geocodifica
-   delle destinazioni). Limite di una richiesta al secondo e uso da app
-   esplicitamente sconsigliato. È il prossimo da far passare di qui.
-2. **`tile.openstreetmap.org`** — lo sfondo della mappa. La loro politica
-   vieta le app ad alto traffico, e le tessere non si possono mettere in una
-   memoria condivisa come le risposte: lì la strada è un fornitore di tessere
-   (Protomaps, MapTiler, Stadia) o le tessere proprie.
+Resta scoperto **`tile.openstreetmap.org`**, lo sfondo della mappa: la loro
+politica vieta le app ad alto traffico, e le tessere **non** si possono
+mettere in una memoria condivisa come le risposte — sono immagini, tante, e
+le si scarica mentre si scorre. Lì la strada è un fornitore di tessere
+(Protomaps, MapTiler, Stadia): alcuni hanno un piano gratuito generoso, ma è
+l'unico punto dove prima o poi servirà una scelta diversa dal «gratis e
+basta».

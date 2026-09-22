@@ -6234,7 +6234,7 @@ async function detectCurrency(){
   const first=parseDestCities(dest)[0]||dest;
   box.innerHTML='<span style="font-size:.8rem;color:var(--ink-faint)">🔍 Rilevo la valuta...</span>';
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(first)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(first)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json();
     if(d.length){const cc=(d[0].address?.country_code||'').toUpperCase();const cur=C2C[cc]||'EUR';box.dataset.cur=cur;box.innerHTML=`<span class="cur-badge">💱 Valuta locale: ${cur} (${curSym(cur)})</span>`;}
     else{box.dataset.cur='EUR';box.innerHTML='<span style="font-size:.8rem;color:var(--ink-faint)">Valuta non rilevata, userò EUR</span>';}
@@ -7547,12 +7547,12 @@ async function geoSearch(fullQ,langHint){
     if(seen.has(k))return;seen.add(k);out.push(r);
   };
   try{
-    const r1=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQ)}&format=json&accept-language=it&limit=20`,{headers:{'Accept-Language':'it,en'}});
+    const r1=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQ)}&format=json&accept-language=it&limit=20`,{headers:{'Accept-Language':'it,en'}});
     ((await r1.json())||[]).forEach(add);
   }catch(e){}
   if(out.length<5){
     try{
-      const r2=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullQ)}&lang=it&limit=15`);
+      const r2=await fetchGeo(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullQ)}&lang=it&limit=15`);
       const d2=await r2.json();
       (d2.features||[]).forEach(f=>{
         const pr=f.properties||{},g=(f.geometry||{}).coordinates||[];
@@ -7568,7 +7568,7 @@ async function geoSearch(fullQ,langHint){
     try{tq=await translateQuery(fullQ,langHint);}catch(e){}
     if(tq){
       try{
-        const r3=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(tq)}&format=json&accept-language=it&limit=10`,{headers:{'Accept-Language':'it,en'}});
+        const r3=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(tq)}&format=json&accept-language=it&limit=10`,{headers:{'Accept-Language':'it,en'}});
         ((await r3.json())||[]).forEach(add);
       }catch(e){}
     }
@@ -7754,7 +7754,7 @@ async function fetchPlaceExtra(place){
   let extra={};
   if(place.lat!=null&&place.lng!=null){
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${place.lat}&lon=${place.lng}&format=json&extratags=1&addressdetails=1&accept-language=it`,{headers:{'Accept-Language':'it,en'}});
+      const r=await fetchGeo(`https://nominatim.openstreetmap.org/reverse?lat=${place.lat}&lon=${place.lng}&format=json&extratags=1&addressdetails=1&accept-language=it`,{headers:{'Accept-Language':'it,en'}});
       const d=await r.json();
       extra={
         hours:d.extratags?.opening_hours||'',
@@ -8129,7 +8129,7 @@ async function allegaPDF(inp,quale){
 async function aiAddPlace(name){
   toast('🔍 Cerco '+name);
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&accept-language=it&limit=1&addressdetails=1&extratags=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&accept-language=it&limit=1&addressdetails=1&extratags=1`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json();if(!d.length){toast('Non trovato, prova da Cerca');return;}
     const p=d[0];
     openSavePOI({name:p.display_name.split(',')[0],lat:parseFloat(p.lat),lng:parseFloat(p.lon),address:p.display_name.split(',').slice(1,4).join(',').trim(),type:p.type||'',hours:p.extratags?.opening_hours||'',website:p.extratags?.website||'',phone:p.extratags?.phone||''});
@@ -8682,7 +8682,7 @@ async function ensureDestLoc(t){
   if(t.destLoc||!t.destination)return;
   const q=(t.multiCity&&t.cities&&t.cities.length)?t.cities[0].name:t.destination;
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json();
     if(d.length){
       t.destLoc={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
@@ -11829,7 +11829,51 @@ function pontePerVicini(){
   if(!u||!k)return null;
   return {url:String(u).replace(/\/+$/,'')+'/functions/v1/vicini',chiave:k};
 }
-let ponteRotto=0;
+let ponteRotto=0,ponteGeoRotto=0;
+/* IL PONTE PER GLI INDIRIZZI. Nominatim e Photon sono usati in ventun punti
+   dell'app - la ricerca degli hotel, gli indirizzi, la citta' di ogni
+   viaggio, la valuta - e le regole di Nominatim sono piu' strette di quelle
+   di Overpass: UNA richiesta al secondo, e l'uso da app diffuse
+   sconsigliato. Con l'app sullo store sarebbe il primo a chiudersi, e con lui
+   se ne andrebbe la ricerca degli alberghi.
+   `fetchGeo` si usa esattamente come `fetch`: cosi' i ventun punti sono
+   rimasti come erano, e non c'e' stato da rimaneggiare ventun chiamate una
+   per una - che e' il modo di introdurre un difetto in quella che non si
+   guarda. */
+function fetchGeo(url,opzioni){
+  const dritto=()=>fetch(url,opzioni);
+  const p=pontePerVicini();
+  if(!p)return dritto();
+  if(Date.now()-ponteGeoRotto<60000)return dritto();
+  let pulito;
+  try{ pulito=geoArrotondaPosizione(String(url)); }catch(e){ return dritto(); }
+  return (async()=>{
+    try{
+      const res=await fetch(p.url.replace(/\/vicini$/,'/geo'),{method:'POST',
+        headers:{'Content-Type':'application/json','apikey':p.chiave,'Authorization':'Bearer '+p.chiave},
+        body:JSON.stringify({url:pulito})});
+      if(!res.ok)throw new Error('ponte geo '+res.status);
+      const d=await res.json();
+      if(d&&d.errore)throw new Error(d.errore);
+      /* Si restituisce qualcosa che si comporta come una risposta di fetch:
+         i ventun punti chiamano .json() e guardano .ok, e non devono sapere
+         da dove sia arrivata la roba. */
+      return {ok:true,status:200,json:async()=>d.dati,text:async()=>JSON.stringify(d.dati)};
+    }catch(e){ ponteGeoRotto=Date.now(); return dritto(); }
+  })();
+}
+/* La posizione si arrotonda PRIMA di partire, come per le ricerche vicine, e
+   per gli stessi due motivi: due persone nello stesso isolato fanno la stessa
+   domanda (e la memoria comune le serve tutte e due), e al ponte non arriva
+   mai dove sei di preciso. */
+function geoArrotondaPosizione(u){
+  const url=new URL(u);
+  ['lat','lon'].forEach(n=>{
+    const v=url.searchParams.get(n);
+    if(v!=null&&isFinite(+v))url.searchParams.set(n,String(suGrigliaVicini(+v)));
+  });
+  return url.toString();
+}
 async function overpassDalPonte(q){
   const p=pontePerVicini();
   if(!p)throw new Error('nessun ponte');
@@ -12737,7 +12781,7 @@ async function addAllPlaces(list){
   toast(`🔍 Aggiungo ${list.length} posti...`);let n=0;
   for(const q of list){
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1&addressdetails=1&extratags=1`,{headers:{'Accept-Language':'it,en'}});
+      const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1&addressdetails=1&extratags=1`,{headers:{'Accept-Language':'it,en'}});
       const d=await r.json();
       if(d.length){
         const p=d[0],nm=p.display_name.split(',')[0];
@@ -13266,7 +13310,7 @@ async function importTrip(){
       trip.days.push({id:uid(),date:g.data||'',title:g.titolo||'',activities:(g.attivita||[]).map(a=>({id:uid(),name:a.nome||'',time:a.ora||'',type:a.tipo||'any',notes:a.note||'',completed:false,booking:{needed:!!a.prenotazione,done:false,by:'',seats:1,url:''},poiId:null,lat:null,lng:null,priority:null,_geo:a.luogo||a.nome}))});
     });
     trip.days=trip.days.filter(d=>d.date);trip.days.sort((a,b)=>a.date.localeCompare(b.date));
-    if(trip.destination){try{const g=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trip.destination)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});const gd=await g.json();if(gd.length){const cc=(gd[0].address?.country_code||'').toUpperCase();trip.currency=C2C[cc]||'EUR';}}catch(e){}}
+    if(trip.destination){try{const g=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trip.destination)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});const gd=await g.json();if(gd.length){const cc=(gd[0].address?.country_code||'').toUpperCase();trip.currency=C2C[cc]||'EUR';}}catch(e){}}
     app.trips.push(trip);app.currentTripId=trip.id;save();renderAll();
     const nAct=trip.days.reduce((s,d)=>s+d.activities.length,0);
     box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.4rem">✅ ${esc(trip.name)}</div><div style="font-size:.86rem;color:var(--ink-soft);line-height:1.6">${trip.days.length} giorni · ${nAct} attività · valuta ${trip.currency}</div><button class="btn btn-grad btn-block" style="margin-top:.7rem" onclick="closeSheet('mImport');geoImported(${trip.id})">📍 Trova i luoghi sulla mappa</button></div>`;
@@ -13281,7 +13325,7 @@ async function geoImported(id){
   for(const a of todo){
     try{
       const q=t.destination&&!a._geo.toLowerCase().includes((t.destination.split(',')[0]||'').toLowerCase())?`${a._geo}, ${t.destination}`:a._geo;
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+      const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
       const d=await r.json();
       if(d.length){
         a.lat=parseFloat(d[0].lat);a.lng=parseFloat(d[0].lon);
@@ -14483,7 +14527,7 @@ async function applicaMossa(t,m){
     const d=t.days[m.giorno]||t.days[mosseGiorno];if(!d)return false;
     let lat=null,lng=null;
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(m.cerca||m.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+      const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(m.cerca||m.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
       const g=await r.json();
       if(g.length){lat=parseFloat(g[0].lat);lng=parseFloat(g[0].lon);}
     }catch(e){}
@@ -14884,7 +14928,7 @@ async function applicaItinerario(dove,stato){
       if(eUnCheckInScritto(a)){scartate++;continue;}
       let lat=null,lng=null;
       try{
-        const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a.cerca||a.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+        const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a.cerca||a.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
         const gd=await r.json();
         if(gd.length){lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);}
       }catch(e){}
@@ -15656,7 +15700,7 @@ async function refreshSuggestions(t){
     const out=[];
     for(const pl of (r.posti||[]).slice(0,5)){
       try{
-        const g=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(pl.query||pl.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+        const g=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(pl.query||pl.nome)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
         const gd=await g.json();
         if(gd.length)out.push({name:pl.nome||gd[0].display_name.split(',')[0],lat:parseFloat(gd[0].lat),lng:parseFloat(gd[0].lon)});
       }catch(e){}
@@ -16441,7 +16485,7 @@ async function nomeLuogo(t,g){
     const attesa=1100-(Date.now()-_revUltima);
     if(attesa>0)await new Promise(r=>setTimeout(r,attesa));
     _revUltima=Date.now();
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=it&lat=${g.lat}&lon=${g.lng}`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=it&lat=${g.lat}&lon=${g.lng}`,{headers:{'Accept-Language':'it,en'}});
     const d=await r.json(),ad=(d&&d.address)||{};
     const nome=ad.city||ad.town||ad.village||ad.municipality||ad.county||ad.state||(d&&d.name)||'';
     t.wxNomi[k]=nome;save();
@@ -16770,7 +16814,7 @@ function saveCities(){
 async function geocodeCities(t){
   for(const c of (t.cities||[])){
     if(c.lat)continue;
-    try{const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.name)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});const d=await r.json();if(d.length){c.lat=parseFloat(d[0].lat);c.lng=parseFloat(d[0].lon);save();}}catch(e){}
+    try{const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.name)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});const d=await r.json();if(d.length){c.lat=parseFloat(d[0].lat);c.lng=parseFloat(d[0].lon);save();}}catch(e){}
     await new Promise(r2=>setTimeout(r2,1100));
   }
 }
@@ -17025,14 +17069,14 @@ function pezziIndirizzo(q){
 async function nominatimQ(par){
   try{
     await nomiAttendi();
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?${par}&format=json&accept-language=it&limit=8&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?${par}&format=json&accept-language=it&limit=8&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
     return (await r.json())||[];
   }catch(e){return [];}
 }
 async function reverseNome(lat,lng){
   try{
     await nomiAttendi();
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=it&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=it&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
     return ((await r.json())||{}).display_name||'';
   }catch(e){return '';}
 }
@@ -17042,7 +17086,7 @@ async function geoAlloggio(s){
   const r=await nominatimQ('q='+encodeURIComponent(s));
   if(r.length)return r;
   try{
-    const p=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(s)}&lang=it&limit=8`);
+    const p=await fetchGeo(`https://photon.komoot.io/api/?q=${encodeURIComponent(s)}&lang=it&limit=8`);
     const d=await p.json();
     return (d.features||[]).map(f=>{
       const pr=f.properties||{},g=(f.geometry||{}).coordinates||[];
@@ -17587,7 +17631,7 @@ function cityAuto(inp,boxId){
   if(seg.length<2){box.innerHTML='';return;}
   cityT=setTimeout(async()=>{
     try{
-      const r=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(seg)}&limit=5&lang=it&osm_tag=place:city&osm_tag=place:town`);
+      const r=await fetchGeo(`https://photon.komoot.io/api/?q=${encodeURIComponent(seg)}&limit=5&lang=it&osm_tag=place:city&osm_tag=place:town`);
       const g=await r.json();
       const names=[...new Set((g.features||[]).map(f=>f.properties&&f.properties.name).filter(Boolean))];
       box.innerHTML=names.map(n=>`<button class="chip" style="margin:.25rem .25rem 0 0" onclick="pickCity('${boxId}',${jesc(n)})">${esc(n)}</button>`).join('');
@@ -17620,12 +17664,12 @@ async function importBulk(){
     st.textContent=`${i+1}/${names.length} · ${n}...`;
     let hit=null;
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination?n+', '+t.destination:n)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
+      const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.destination?n+', '+t.destination:n)}&format=json&accept-language=it&limit=1`,{headers:{'Accept-Language':'it,en'}});
       const d=await r.json();if(d.length)hit=d[0];
     }catch(e){}
     if(!hit){
       try{
-        const r2=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(t.destination?n+' '+t.destination:n)}&limit=1&lang=it`);
+        const r2=await fetchGeo(`https://photon.komoot.io/api/?q=${encodeURIComponent(t.destination?n+' '+t.destination:n)}&limit=1&lang=it`);
         const g=await r2.json();const f=(g.features||[])[0];
         if(f)hit={lat:String(f.geometry.coordinates[1]),lon:String(f.geometry.coordinates[0])};
       }catch(e){}
@@ -17789,7 +17833,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-22 21:15';
+const VERSIONE_APP='2026-09-22 23:30';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
