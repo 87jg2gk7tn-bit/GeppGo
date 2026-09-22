@@ -2,6 +2,7 @@
    Overpass non è raggiungibile da qui: si intercetta la chiamata, si legge la
    domanda che parte e si risponde come farebbe lui. */
 const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
+const { rispondi } = require('./overpass-finto');
 const fs = require('fs');
 
 const stato = {trips:[{id:1730000000001,name:'Casa',destination:'Milano',currency:'EUR',status:'open',start:'2026-09-01',end:'2026-09-02',participants:[{id:'p1',name:'Gepp'}],suggested:[],pois:[],expenses:[],tickets:[],hotels:[],weather:{},createdAt:1,days:[{id:'d1',date:new Date().toISOString().split('T')[0],title:'',activities:[]}]}],currentTripId:1730000000001,settings:{proxRadius:200},myName:'Gepp'};
@@ -36,39 +37,13 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
       const host = new URL(route.request().url()).host;
       chiamate.push({ q, host });
       if (opts.rompi && opts.rompi.includes(host)) return route.fulfill({ status: 429, body: 'too many requests' });
-      const raggio = parseInt((q.match(/around:(\d+)/) || [])[1] || '0', 10);
       const daUsare = dammiElementi ? dammiElementi() : elementi;
-      const dentro = daUsare.filter(el => {
-        const R = 6371000, dLa = (el.lat - IO.lat) * Math.PI / 180, dLo = (el.lon - IO.lng) * Math.PI / 180;
-        const a = Math.sin(dLa / 2) ** 2 + Math.cos(IO.lat * Math.PI / 180) * Math.cos(el.lat * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
-        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        if (d > raggio) return false;
-        // esce solo se la domanda chiede davvero il suo tipo e il suo tag
-        const tipoOk = new RegExp(`\\b${el.type}\\[`).test(q);
-        // filtri per valore esatto: ["amenity"="bank"]
-        let tagOk = Object.entries(el.tags).some(([k, val]) => q.includes(`["${k}"="${val}"]`));
-        // ["name"~"(banc|bank)",i] — espressione regolare sul valore
-        if (!tagOk) {
-          const re = /\["([a-z:_]+)"~"([^"]+)",i\]/g;
-          let m;
-          while ((m = re.exec(q))) {
-            const [, chiave, pattern] = m;
-            if (el.tags[chiave] && new RegExp(pattern, 'i').test(el.tags[chiave])) { tagOk = true; break; }
-          }
-        }
-        // [~"^(name|brand|operator)$"~"(banc|bank)",i] — espressione regolare
-        // anche sul NOME del tag: è così che si guardano più chiavi in un colpo
-        if (!tagOk) {
-          const re2 = /\[~"([^"]+)"~"([^"]+)",i\]/g;
-          let m;
-          while ((m = re2.exec(q))) {
-            const [, kPat, vPat] = m;
-            const kRe = new RegExp(kPat), vRe = new RegExp(vPat, 'i');
-            if (Object.entries(el.tags).some(([k, val]) => kRe.test(k) && vRe.test(val))) { tagOk = true; break; }
-          }
-        }
-        return tipoOk && tagOk;
-      });
+      /* La domanda si legge per davvero — tipo, raggio e TUTTI i filtri di
+         ogni enunciato, che devono valere insieme. Vedi test/overpass-finto.js:
+         il finto di prima rispondeva "sì" se UNO qualunque dei filtri
+         combaciava, e non sapeva cosa fossero la presenza di una chiave
+         e la negazione. */
+      const dentro = rispondi(q, daUsare);
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: dentro }) });
     });
 
@@ -86,7 +61,13 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
      risponderebbe con quello che aveva trovato nel caso precedente invece di
      chiedere di nuovo. Che la cache funzioni lo prova test/prova-cache.js. */
   const cerca = async (page, kind) => {
-    await page.evaluate(k => { localStorage.removeItem('geppgo_vicini'); myPos = null; myPosAt = 0; cercaVicino(k); }, kind);
+    /* Il nome della cache si chiede all'APP, non si scrive qui: sta in
+       VICINI_CACHE_CHIAVE e cambia apposta quando si correggono le domande,
+       per far dimenticare ai telefoni le risposte prese con quelle vecchie.
+       Scritto a mano, un rinominamento lascia la prova a pulire una casella
+       che non esiste — e allora ogni caso legge la risposta del caso prima,
+       che e' come l'ho scoperto. */
+    await page.evaluate(k => { localStorage.removeItem(VICINI_CACHE_CHIAVE); myPos = null; myPosAt = 0; cercaVicino(k); }, kind);
     await page.waitForFunction(() => !/Cerco/.test(document.getElementById('bagnoBody').innerText), { timeout: 15000 });
     await page.waitForTimeout(200);
     return page.evaluate(() => document.getElementById('bagnoBody').innerText);
