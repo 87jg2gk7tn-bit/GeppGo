@@ -1067,3 +1067,46 @@ exception
   when duplicate_object then null;
 end;
 $$;
+
+-- ────────────────────────────────────────────────────────────────────────────
+--  LA MEMORIA CONDIVISA DELLE RICERCHE «QUI INTORNO»
+-- ────────────────────────────────────────────────────────────────────────────
+--  Overpass e Nominatim sono tenuti su da volontari, e le loro regole dicono
+--  che un'app diffusa non deve chiamarli da ogni telefono. Con l'app sullo
+--  store sarebbero migliaia di telefoni alla stessa porta, e la porta si
+--  chiude — per tutti.
+--
+--  Qui si tiene la risposta UNA VOLTA SOLA, per tutti. Chi cerca un bagno a
+--  Muggiò dopo di te non fa nessuna chiamata: legge la tua. In una città dove
+--  l'app la usano in cento, le chiamate verso l'esterno non sono cento: una.
+--
+--  Dentro non c'è NIENTE di nessuno. La chiave è l'impronta della domanda, e
+--  la domanda arriva col centro già arrotondato a circa duecento metri dal
+--  telefono che la fa: non c'è chi ha chiesto, non c'è quando l'ha chiesto
+--  lui, non c'è dove fosse di preciso. È un pezzo di mappa pubblica messo da
+--  parte, non un registro di movimenti.
+create table if not exists public.vicini_cache (
+  chiave   text primary key,          -- impronta SHA-256 della domanda
+  risposta jsonb not null,            -- quello che ha risposto Overpass
+  quando   timestamptz not null default now()
+);
+
+--  Per fare pulizia delle righe vecchie senza leggere tutta la tabella.
+create index if not exists vicini_cache_quando on public.vicini_cache (quando);
+
+--  NESSUNO CI ARRIVA DA FUORI. Le regole sono accese e non c'è nessuna
+--  politica che permetta qualcosa: né chi non ha fatto l'accesso né chi l'ha
+--  fatto può leggere o scrivere qui. L'unica che ci entra è la funzione
+--  `vicini`, che gira sul server con la chiave di servizio e salta le regole
+--  per come è fatto Postgres.
+--  Il motivo non è il segreto — sono pezzi di mappa pubblica — è che una
+--  tabella scrivibile da fuori diventa il posto dove qualcuno scarica quello
+--  che vuole a spese nostre.
+alter table public.vicini_cache enable row level security;
+
+--  Le righe vecchie si buttano. Senza questo la tabella cresce per sempre, e
+--  una mappa di tre mesi fa non serve a nessuno.
+create or replace function public.pulisci_vicini_cache()
+returns void language sql security definer set search_path = public as $$
+  delete from public.vicini_cache where quando < now() - interval '30 days';
+$$;

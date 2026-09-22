@@ -11222,6 +11222,11 @@ const VICINI_RAGGI=[1500,5000];
    La scala e' a scalini fitti sotto e larghi sopra, e ci si ferma al primo
    che trova qualcosa: in centro il primo giro basta e gli altri non si
    fanno nemmeno. */
+/* Sei scalini: fitti sotto, larghi sopra. Ogni scalino e' un viaggio al
+   server, e per un po' li avevo ridotti a tre - ma col ponte e la memoria
+   condivisa (vedi PONTE_VICINI) quei viaggi quasi sempre non escono di
+   casa: li serve la memoria comune, e allora la precisione di sei scalini
+   si puo' tenere senza pagarla. */
 const VICINI_RAGGI_LONTANO=[1000,2000,3000,5000,10000,20000];
 /* Il bus si ferma prima: una fermata a venti chilometri non e' la tua
    fermata, e' la fermata di un altro paese. */
@@ -11808,6 +11813,43 @@ const VICINI_PAZIENZA_MS=2500;
    sommava e si arrivava a mezzo minuto prima di dire "non ci riesco". Così nel
    caso normale parte una richiesta sola, e nel caso peggiore si aspetta il più
    veloce dei tre invece dei tre uno dopo l'altro. */
+/* IL PONTE. Overpass e Nominatim li tengono su dei volontari, e le loro
+   regole dicono che un'app diffusa non deve chiamarli da ogni telefono: con
+   l'app sullo store sarebbero migliaia di telefoni alla stessa porta, e la
+   porta si chiude per tutti. In mezzo c'e' una funzione su Supabase che
+   tiene la risposta UNA VOLTA SOLA per tutti - chi cerca un bagno a Muggio'
+   dopo di te non fa nessuna chiamata, legge la tua - e che verso Overpass
+   si presenta con una identita' sola e un contatto, come chiedono loro.
+   Il codice sta in supabase/functions/vicini/.
+   SE IL PONTE NON C'E' O NON RISPONDE si va diretti come prima: l'app deve
+   funzionare anche a chi la apre senza cloud configurato, e un ponte rotto
+   non deve diventare un'app rotta. */
+function pontePerVicini(){
+  const u=window.GEPPGO_SUPA_URL,k=window.GEPPGO_SUPA_KEY;
+  if(!u||!k)return null;
+  return {url:String(u).replace(/\/+$/,'')+'/functions/v1/vicini',chiave:k};
+}
+let ponteRotto=0;
+async function overpassDalPonte(q){
+  const p=pontePerVicini();
+  if(!p)throw new Error('nessun ponte');
+  /* Se il ponte ha appena fallito non lo si tormenta: per un minuto si va
+     diretti, poi si riprova. Cosi' un guasto del ponte costa un secondo,
+     non tutte le ricerche dell'ora dopo. */
+  if(Date.now()-ponteRotto<60000)throw new Error('ponte appena caduto');
+  const stop=new AbortController();
+  const taglia=setTimeout(()=>stop.abort(),VICINI_ATTESA_MS);
+  try{
+    const res=await fetch(p.url,{method:'POST',signal:stop.signal,
+      headers:{'Content-Type':'application/json','apikey':p.chiave,'Authorization':'Bearer '+p.chiave},
+      body:JSON.stringify({q:q})});
+    if(!res.ok)throw new Error('ponte '+res.status);
+    const d=await res.json();
+    if(d&&d.errore)throw new Error('ponte: '+d.errore);
+    return d;
+  }catch(e){ponteRotto=Date.now();throw e;}
+  finally{clearTimeout(taglia);}
+}
 function overpassUnGiro(q){
   const ora=Date.now();
   /* Chi e' in castigo va in fondo, non si butta via: se sono in castigo
@@ -11861,6 +11903,10 @@ function attendi(ms){return new Promise(r=>setTimeout(r,ms));}
 async function overpassChiedi(q,avvisa){
   let ultimo=null;
   const inizio=Date.now();
+  /* Prima il ponte: e' una richiesta sola, e quasi sempre risponde dalla
+     memoria comune senza uscire. Se non c'e' o non risponde, si continua
+     come si e' sempre fatto. */
+  try{ return await overpassDalPonte(q); }catch(e){ ultimo=e; }
   for(let i=1;i<=VICINI_TENTATIVI;i++){
     if(i>1){
       /* Se il primo giro se n'e' andato in attesa, riprovare vuol dire far
@@ -11921,6 +11967,11 @@ const VICINI_CACHE_ORE=24;
 const VICINI_CACHE_ORE_VUOTO=1;
 const VICINI_CACHE_MAX=60;
 const VICINI_CACHE_METRI=150;
+/* Circa duecento metri: abbastanza fitta da non spostare il giro in modo
+   sensibile, abbastanza larga perche' un isolato intero cada nella stessa
+   casella e faccia una domanda sola per tutti. */
+const VICINI_GRIGLIA=0.002;
+function suGrigliaVicini(v){return +(Math.round(v/VICINI_GRIGLIA)*VICINI_GRIGLIA).toFixed(6);}
 
 function viciniFamiglia(kind,raggio,soloNome){
   return [kind,raggio,soloNome?'nome':'tipo'].join('|');
@@ -12003,8 +12054,27 @@ async function viciniOverpass(kind,lat,lng,raggio,soloNome,avvisa){
   /* 150 e non 30: il tetto taglia i risultati PRIMA che li si ordini per
      distanza, quindi in centro città un tetto basso può buttare via proprio
      quello sotto casa e lasciare dentro uno dall'altra parte del quartiere. */
-  const dentro=soloNome?ovAttorno([ovNome(v.parole)],raggio,lat,lng):v.q(raggio,lat,lng);
-  const q=`[out:json][timeout:${VICINI_TIMEOUT_SERVER}];(${dentro});out center 150;`;
+  /* LA DOMANDA SI FA SU UNA GRIGLIA, non sul punto esatto. Due motivi, e
+     tutti e due contano:
+     - due persone nello stesso isolato fanno cosi' la STESSA domanda, e la
+       seconda la trova gia' pronta nella memoria comune invece di far
+       ripartire una chiamata;
+     - il ponte non viene mai a sapere dove sei di preciso: gli arriva un
+       punto della griglia, non il tuo.
+     Le distanze restano giuste perche' si ricalcolano dopo, dalla posizione
+     vera: quello che si arrotonda e' il centro del giro, non il risultato.
+     Duecento metri su un giro che parte da mille sono dentro il margine. */
+  const qLat=suGrigliaVicini(lat),qLng=suGrigliaVicini(lng);
+  const dentro=soloNome?ovAttorno([ovNome(v.parole)],raggio,qLat,qLng):v.q(raggio,qLat,qLng);
+  /* IL TETTO CRESCE COL GIRO. Overpass taglia i risultati PRIMA che li si
+     ordini per distanza, e non li ordina lui: con un giro da venti
+     chilometri attorno a Milano le bocche del metro sono centinaia, e un
+     tetto di centocinquanta puo' buttare via proprio la piu' vicina
+     tenendo dentro quelle dall'altra parte della citta'. Sul giro largo si
+     alza. Restano oggetti piccoli: quattrocento sono un centinaio di
+     kilobyte, non un problema. */
+  const tetto=raggio>=10000?400:150;
+  const q=`[out:json][timeout:${VICINI_TIMEOUT_SERVER}];(${dentro});out center ${tetto};`;
   const d=await overpassChiedi(q,avvisa);
   const out=[];
   (d.elements||[]).forEach(e=>{
@@ -17719,7 +17789,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-22 18:40';
+const VERSIONE_APP='2026-09-22 21:15';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
