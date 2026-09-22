@@ -36,6 +36,23 @@ non ci entra nessuno. Lo schema si rilancia quante volte si vuole senza danni.
 
 Con la CLI di Supabase, dalla radice del progetto:
 
+**Dal telefono, senza terminale** — è il modo consigliato, e si fa una volta
+sola:
+
+1. Su **supabase.com** → in alto a destra la tua foto → **Account Tokens** →
+   *Generate new token*, chiamalo `GitHub`. Copialo: te lo mostra una volta.
+2. Su **github.com**, nel repo → **Settings** → *Secrets and variables* →
+   **Actions** → *New repository secret*. Nome: `SUPABASE_ACCESS_TOKEN`,
+   valore: il token. Salva.
+3. Sempre su GitHub → **Actions** → nella colonna a sinistra **Funzioni** →
+   **Run workflow**.
+
+Da quel momento le funzioni si ripubblicano **da sole** ogni volta che si
+tocca un file dentro `supabase/functions/`. Il token resta nei segreti di
+GitHub: non entra nel codice e non lo vede chi legge il repo.
+
+**Da computer**, se preferisci:
+
 ```
 supabase functions deploy vicini
 supabase functions deploy geo
