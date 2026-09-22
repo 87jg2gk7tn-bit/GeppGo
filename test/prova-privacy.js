@@ -52,12 +52,32 @@ const path = require('path');
   const chiamati = new Set();
   [...html.matchAll(/fetch\(\s*[`'"]?(https:\/\/[a-z0-9.-]+)/gi)].forEach(m => chiamati.add(m[1]));
   [...html.matchAll(/@import url\('(https:\/\/[a-z0-9.-]+)/gi)].forEach(m => chiamati.add(m[1]));
+  /* E OGNI INDIRIZZO SCRITTO IN UNA STRINGA, non solo quelli dentro a
+     `fetch(` con l'indirizzo in chiaro. Da quando le chiamate passano da
+     `fetchGeo(url)` e da liste come OVERPASS, il controllo qui sopra aveva
+     smesso di vedere Nominatim, Photon, il meteo e quattro server della
+     mappa su cinque — senza fallire: era diventato verde perché non
+     guardava più, che è il modo peggiore in cui una prova può rompersi.
+     Qui finiscono dentro anche indirizzi che l'app si limita ad APRIRE
+     (le mappe, l'editor di OpenStreetMap): a quelli non manda niente da
+     sola, e `nomeUmano` qui sotto sceglie di chi ci si deve occupare. */
+  [...html.matchAll(/['"`](https:\/\/[a-z0-9.-]+)[/'"`]/gi)].forEach(m => chiamati.add(m[1]));
   const nomeUmano = {
     'nominatim.openstreetmap.org': /OpenStreetMap/i, 'overpass-api.de': /Overpass/i,
     'photon.komoot.io': /Photon/i, 'api.open-meteo.com': /Open-Meteo/i,
     'router.project-osrm.org': /OSRM/i, 'it.wikipedia.org': /Wikipedia/i,
     'api.mymemory.translated.net': /MyMemory/i, 'open.er-api.com': /er-api/i,
-    'fonts.googleapis.com': /Google Fonts/i
+    'fonts.googleapis.com': /Google Fonts/i,
+    'commons.wikimedia.org': /Wikimedia/i, 'www.wikidata.org': /Wikidata/i,
+    'cdn.jsdelivr.net': /jsDelivr/i, 'unpkg.com': /unpkg/i,
+    /* LE COPIE DELLA MAPPA TENUTE SU DA ALTRI. Non sono un dettaglio
+       tecnico: quando il ponte non risponde è il TELEFONO a chiamarle, e
+       allora vedono l'indirizzo IP di chi usa l'app. Vanno nominate una per
+       una — «Overpass» al singolare lascerebbe credere che sia sempre
+       OpenStreetMap, e maps.mail.ru non lo è. */
+    'overpass.kumi.systems': /kumi\.systems/i,
+    'overpass.private.coffee': /private\.coffee/i,
+    'maps.mail.ru': /maps\.mail\.ru/i
   };
   const scordati = Object.entries(nomeUmano)
     .filter(([host, re]) => [...chiamati].some(c => c.includes(host)) && !re.test(pag))

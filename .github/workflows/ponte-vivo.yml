@@ -80,15 +80,19 @@ jobs:
           print('— le ricerche qui intorno (bancomat in Duomo, Milano)')
           if guaio:
               print('  NON RISPONDE:', guaio); guai += 1
-          elif d.get('errore'):
-              print('  risponde, ma dice di no:', d['errore']); guai += 1
+          # PRIMA `ancora`, POI `errore`: una risposta "sto ancora cercando"
+          # porta dentro anche il motivo, quindi ha tutti e due i campi. Con
+          # l'ordine al contrario la si scambiava per un guasto - ed e'
+          # successo, al primo lancio.
           elif d.get('ancora'):
               # Non e' un guasto: la mappa arranca e il ponte sta cercando in
               # sottofondo. Fra un minuto la stessa domanda risponde dalla
               # memoria - e se non lo fa, allora si' che c'e' un guaio.
               print('  sta ancora cercando (%s). Aspetto e richiedo...' % d.get('errore', ''))
-              time.sleep(40)
+              time.sleep(50)
               d, quanto, guaio = chiedi('vicini', {'q': q})
+          elif d.get('errore'):
+              print('  risponde, ma dice di no:', d['errore']); guai += 1
           if not guaio and d is not None and not d.get('errore') and not d.get('ancora'):
               quanti = len(d.get('elements') or [])
               print('  risponde in %.1fs, da «%s», %d posti trovati' % (quanto, d.get('da', '?'), quanti))
@@ -129,14 +133,26 @@ jobs:
           # una risposta sana e' una data recente.
           print()
           print('— i server della mappa, uno per uno (stessa domanda)')
-          SERVER = [
-              'https://overpass-api.de/api/interpreter',
-              'https://overpass.kumi.systems/api/interpreter',
-              'https://overpass.private.coffee/api/interpreter',
+          # Quelli che l'app usa davvero si leggono DALL'APP, cosi' questa
+          # lista non puo' divergere da quella vera.
+          # `dict.fromkeys` e non `set`: l'ordine conta, perche' e' l'ordine
+          # in cui l'app li chiede — e chi e' primo vince le corse.
+          IN_USO = list(dict.fromkeys(re.findall(r"'(https://[^']*interpreter)'", sorgente)))
+          # E dei CANDIDATI, che l'app non usa: si guarda come rispondono
+          # prima di fidarsi. E' il contrario di come erano entrati osm.ch e
+          # osm.jp — messi nella lista perche' esistevano, non perche' erano
+          # stati controllati, e uno dei due rispondeva il falso.
+          CANDIDATI = [
               'https://overpass.osm.jp/api/interpreter',
               'https://overpass.osm.ch/api/interpreter',
+              'https://overpass.openstreetmap.ru/api/interpreter',
           ]
-          for s in SERVER:
+          inUso = True
+          for s in IN_USO + ['CANDIDATI'] + CANDIDATI:
+              if s == 'CANDIDATI':
+                  inUso = False
+                  print('  — e questi l\'app NON li usa: si guarda come stanno —')
+                  continue
               casa = s.split('/')[2]
               richiesta = urllib.request.Request(
                   s, data=('data=' + urllib.parse.quote(q)).encode(),
@@ -150,9 +166,24 @@ jobs:
                   n = len(dd.get('elements') or [])
                   nota = ''
                   if not re.match(r'^\d{4}-\d{2}-\d{2}T', str(quando)):
-                      nota = '  ← NON È UNA DATA: database vuoto o rotto'; guai += 1
+                      nota = '  ← NON È UNA DATA: database vuoto o rotto'
+                      # Un candidato che mente non e' un guaio nostro: e' il
+                      # motivo per cui lo si guarda prima di adottarlo.
+                      if inUso: guai += 1
                   elif n == 0:
                       nota = '  ← zero in Duomo, non torna'
+                  elif not inUso:
+                      nota = '  ← risponde bene: si puo\' valutare'
+                  # E QUANTO SONO VECCHI I DATI. Non e' un guasto — un
+                  # bancomat di due mesi fa e' quasi sempre ancora li' — ma
+                  # e' il motivo per cui un posto aperto ad agosto non si
+                  # trova, e senza guardarlo si cercherebbe nel posto
+                  # sbagliato.
+                  try:
+                      eta = (time.time() - time.mktime(time.strptime(str(quando)[:19], '%Y-%m-%dT%H:%M:%S'))) / 86400
+                      if eta > 7: nota += '  (dati vecchi di %d giorni)' % eta
+                  except Exception:
+                      pass
                   print('  %-28s %5.1fs  %4d posti  dati al %s%s' % (casa, time.time() - via, n, quando, nota))
                   if dd.get('remark'):
                       print('      remark: ' + str(dd['remark'])[:140])

@@ -56,6 +56,10 @@ import { cheFarne, rispostaAttendibile, SEGNALE, PONTE_SOTTOFONDO_MS } from './m
    volta il server che si guasta sara' un altro. */
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
+  /* Secondo perche' e' l'unico che, interrogato, ha risposto con dati di un
+     minuto prima: private.coffee funziona ma ne serve di due mesi fa. Non e'
+     di OpenStreetMap, ed e' dichiarato a parte in privacy.html. */
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ];
@@ -103,14 +107,27 @@ async function unServer(url: string, q: string, attesa: number): Promise<unknown
  * chiamare da solo.
  */
 async function chiediAOverpass(q: string): Promise<unknown> {
-  let ultimo: unknown = null;
+  /* SI TIENE IL CONTO DI COSA HA DETTO OGNUNO, e non solo dell'ultimo
+     errore. Questa frase finisce nel «dettaglio:» che si legge sul telefono,
+     ed e' l'unica cosa che ha in mano chi segnala un guasto: «The signal has
+     been aborted» non dice niente a nessuno, «overpass-api.de 504,
+     kumi.systems tempo scaduto» dice tutto in una riga. */
+  const detti: string[] = [];
   const inizio = Date.now();
   for (const url of OVERPASS) {
-    if (Date.now() - inizio > PONTE_BUDGET_MS) break;
+    if (Date.now() - inizio > PONTE_BUDGET_MS) { detti.push('tempo finito'); break; }
     try { return await unServer(url, q, PONTE_ATTESA_SERVER_MS); }
-    catch (e) { ultimo = e; }
+    catch (e) { detti.push(perche(url, e)); }
   }
-  throw ultimo ?? new Error('nessun server della mappa ha risposto');
+  throw new Error(detti.join('; ') || 'nessun server della mappa ha risposto');
+}
+
+/* Il nome del server e cosa gli e' successo, in poche parole. */
+function perche(url: string, e: unknown): string {
+  const casa = new URL(url).host.replace(/^overpass\./, '');
+  const m = String((e as Error)?.message ?? e);
+  if (/abort/i.test(m)) return casa + ' tempo scaduto';
+  return casa + ' ' + m.replace(' da ' + new URL(url).host, '').slice(0, 40);
 }
 
 /* E QUANDO NON CE LA FA DENTRO QUEL TEMPO, NON SI LASCIA PERDERE.
@@ -134,7 +151,13 @@ function continuaInSottofondo(q: string, chiave: string, scrivi: (d: unknown) =>
                               dimentica: () => Promise<void>) {
   const lavoro = (async () => {
     let ultimo: unknown = null;
+    const inizio = Date.now();
     for (const url of OVERPASS) {
+      /* Anche qui un tetto: la funzione non vive per sempre dopo aver
+         risposto, e provare tre server da cinquanta secondi vorrebbe dire
+         farsi tagliare a meta' senza aver scritto niente — cioe' tornare
+         al punto di partenza. */
+      if (Date.now() - inizio > PONTE_SOTTOFONDO_MS * 2) break;
       try { await scrivi(await unServer(url, q, PONTE_SOTTOFONDO_MS)); return; }
       catch (e) { ultimo = e; }
     }
