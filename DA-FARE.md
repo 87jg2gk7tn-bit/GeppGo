@@ -1563,6 +1563,36 @@ qualcuno che risponde".
   Scritto a mano nelle prove, un rinominamento le lascia a pulire una
   casella che non esiste — e allora ogni caso legge la risposta del caso
   prima. Va chiesto all'app.
+- **⚠️⚠️ UNA CACHE PUO' ESSERE L'UNICA COSA CHE FA FUNZIONARE QUALCOSA, e
+  buttarla via lo scopre nel modo peggiore.** Dopo aver corretto le domande
+  ho cambiato il nome della cache — giusto in teoria, perche' le risposte
+  vecchie erano prese con domande sbagliate. Il risultato: «prima i bagni me
+  li trovava, adesso neanche quello». La ricerca dei bagni non era cambiata
+  di una virgola. Era cambiato che **rispondeva dalla memoria senza toccare
+  la rete**, e la rete per quel telefono gia' non andava: la cache stava
+  nascondendo il guasto, e togliendola l'ho scoperto tutto insieme. Prima di
+  invalidare una cache, chiedersi **cosa smettera' di funzionare quando non
+  c'e' piu'**.
+- **Quando il servizio non risponde, l'ultima risposta vale mille volte un
+  cartello d'errore.** Un bagno non si sposta: saperlo di ieri e' meglio che
+  non saperlo. Adesso il ripiego pesca in TUTTA la memoria — qualunque
+  raggio, anche le risposte scadute, anche le caselle con i nomi vecchi — e
+  lo dice («questo e' quello che avevo trovato tre giorni fa»), senza
+  spacciarlo per fresco. Le distanze si ricalcolano, quelle restano giuste.
+- **Riprovare di piu' puo' far funzionare di meno.** Overpass limita le
+  richieste per indirizzo IP. Tre tentativi su tre server = nove richieste
+  per ricerca fallita, e lanciarle tutte e tre in volo insieme e' piu' di
+  quante un IP ne abbia concesse: ci si fa 429 da soli, e a quel punto
+  fallisce anche quello che prima andava. Meno colpi (2), piu' distanziati
+  (1,5 s), al massimo due in volo, e chi risponde 429 va **in castigo** un
+  minuto e mezzo invece di essere richiamato subito.
+- **`throw new Error('overpass')` cancella l'unica cosa utile.** Il guasto
+  vero — 429, timeout, telefono senza rete — si perdeva dietro
+  un'etichetta generica, e una segnalazione diventava «non funziona» senza
+  un appiglio. Adesso il motivo vero arriva fino al messaggio, scritto
+  piccolo in fondo: `dettaglio: 429 da overpass-api.de`. Quando non si puo'
+  riprodurre un guasto (qui Overpass non e' raggiungibile), **il messaggio
+  d'errore e' lo strumento diagnostico**, e va scritto come tale.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

@@ -7925,7 +7925,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA, su tre server diversi, senza chiedere niente; solo se non risponde nessuno lo dice. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e': un bagno non si sposta, e saperlo di ieri e' meglio che non saperlo. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -11585,7 +11585,7 @@ async function viciniIntorno(lat,lng){
   const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
   vicinoBusy=true;
   try{
-    let trovati=[],andataBene=false,giu=false;
+    let trovati=[],andataBene=false,giu=false,ultimoGuasto=null;
     const aggiungi=n=>{if(!vicinoDoppione(trovati,n.lat,n.lng,n.nome))trovati.push(n);};
     /* Prima si cerca per tipo: sono le etichette che Overpass tiene in un
        indice, e la risposta arriva in un attimo anche su cinque chilometri.
@@ -11616,6 +11616,7 @@ async function viciniIntorno(lat,lng){
         andataBene=true;
         nuovi.forEach(aggiungi);
       }catch(e){
+        ultimoGuasto=e;
         /* QUI DENTRO CI SI E' GIA' PROVATI TRE VOLTE SU TRE SERVER. Se dopo
            nove richieste non ha risposto nessuno, il servizio e' giu': non
            e' piu' un singhiozzo. Andare avanti coi raggi piu' larghi
@@ -11649,7 +11650,12 @@ async function viciniIntorno(lat,lng){
     }
     /* Si dice "non c'è niente" solo se si è davvero riusciti a chiedere. Se non
        ha risposto nessuno, il messaggio giusto è un altro. */
-    if(!trovati.length&&!andataBene)throw new Error('overpass');
+    /* Si rilancia il guasto VERO, non un'etichetta generica: era
+       `new Error('overpass')` e cancellava l'unica cosa utile - se era un
+       429, un timeout o il telefono senza rete. Quel dettaglio finisce
+       sotto il messaggio d'errore, ed e' quello che permette di capire da
+       che parte guardare quando qualcuno segnala «non funziona». */
+    if(!trovati.length&&!andataBene)throw (ultimoGuasto||new Error('nessuna risposta'));
     if(!trovati.length){
       body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${v.vuoto}</div>
         <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
@@ -11676,10 +11682,38 @@ async function viciniIntorno(lat,lng){
     `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>
      <button class="btn btn-soft btn-block" style="margin-top:.6rem;font-size:.82rem" onclick="apriOsmQui(${lat},${lng})">Manca qualcosa? Guarda questa zona sulla mappa</button>`;
   }catch(e){
-    /* Si dice che ci si e' provati, e quante volte: se uno legge
-       «riprova» dopo un tentativo solo pensa che l'app si sia arresa
-       subito, e ha ragione di pensarlo. */
-    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>Di solito è passeggero. Se hai campo, fra un minuto va.</div>
+    /* PRIMA DI DIRE CHE NON SI PUO', SI GUARDA SE SI SAPEVA GIA'. Un bagno
+       non si sposta: l'ultima risposta vale mille volte un cartello
+       d'errore. Si mostra dicendo che e' vecchia, non spacciandola per
+       fresca. */
+    const vecchia=viciniCacheRipiego(vicinoKind,lat,lng);
+    if(vecchia&&vecchia.lista.length){
+      const gg=Math.floor((Date.now()-vecchia.quando)/86400000);
+      const quando=gg<1?'poco fa':(gg===1?'ieri':'circa '+gg+' giorni fa');
+      const righe=vecchia.lista.map(b=>Object.assign({},b,{dist:Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}))}))
+        .sort((a,b)=>a.dist-b.dist);
+      body.innerHTML=`<div style="font-size:.82rem;line-height:1.5;color:var(--ink-faint);background:var(--sand-tint);border-radius:var(--r-md);padding:.6rem .7rem;margin-bottom:.7rem">Il servizio della mappa non risponde adesso. Questo è quello che avevo trovato <b>${esc(quando)}</b>: le distanze sono giuste, ma qualcosa può essere cambiato.</div>`+
+        righe.slice(0,6).map((b,i)=>{
+          const min=Math.max(1,Math.round(b.dist/TRAVEL_SPEED_KMH.walk/1000*60));
+          const extra=(b.extra||[]).filter(Boolean).join(' · ');
+          return `<div class="ms-row" style="cursor:default;align-items:center">
+            <div style="flex:1;min-width:0">
+              <div class="ms-t">${i===0?'⭐ ':''}${esc(b.nome)}</div>
+              <div class="ms-w">${b.dist<1000?b.dist+' m':(b.dist/1000).toFixed(1)+' km'} · ${min} min a piedi${extra?' · '+esc(extra):''}</div>
+            </div>
+            <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
+          </div>`;}).join('')+
+        `<button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova adesso</button>`;
+      return;
+    }
+    /* Si dice che ci si e' provati, quante volte, e COSA e' andato storto:
+       "non risponde" nasconde la differenza fra essere senza campo ed
+       essere stati messi in castigo da Overpass, e quelle due cose si
+       risolvono in modi diversi. Senza questa riga, una segnalazione dice
+       solo "non funziona" e non si sa da che parte guardare. */
+    const perche=(e&&e.message)?String(e.message).slice(0,80):'nessuna risposta';
+    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>${navigator.onLine===false?'Il telefono risulta <b>senza rete</b>.':'Di solito è passeggero. Se hai campo, fra un minuto va.'}</div>
+      <div style="font-size:.7rem;color:var(--ink-faint);margin-top:.5rem">dettaglio: ${esc(perche)}</div>
       <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova adesso</button>`;
   }finally{vicinoBusy=false;}
 }
@@ -11717,8 +11751,19 @@ const VICINI_ATTESA_MS=(VICINI_TIMEOUT_SERVER+1)*1000;
    di nuovo un attimo dopo. Mettere un tasto "Riprova" e lasciare che sia la
    persona a premerlo e' scaricare su di lei un lavoro che deve fare l'app:
    lei ha chiesto dov'e' la metropolitana, non di amministrare i server. */
-const VICINI_TENTATIVI=3;
-const VICINI_PAUSA_MS=700;
+/* DUE, NON TRE, E CON UNA PAUSA PIU' LUNGA. Overpass limita le richieste per
+   indirizzo IP: quando dice "troppe richieste" (429), riprovare subito non e'
+   insistere, e' peggiorare - si viene messi in castigo piu' a lungo. Con tre
+   tentativi su tre server una ricerca fallita faceva NOVE richieste, e
+   provandone cinque di fila ci si bloccava da soli. Meno colpi, piu'
+   distanziati, e su server diversi: e' cosi' che si esce da un limite, non
+   bussando piu' forte. */
+const VICINI_TENTATIVI=2;
+const VICINI_PAUSA_MS=1500;
+/* Un server che ha detto "troppe richieste" resta in castigo per un po': non
+   ha senso richiamarlo subito, e ogni chiamata in piu' allunga il castigo. */
+const OVERPASS_CASTIGO_MS=90000;
+const overpassStanchi={};
 /* Dopo quanto si smette di sperare nel primo e si chiedono anche gli altri. */
 const VICINI_PAZIENZA_MS=2500;
 /* Si parte da quello che ha risposto l'ultima volta. Se dopo due secondi e mezzo
@@ -11729,7 +11774,12 @@ const VICINI_PAZIENZA_MS=2500;
    caso normale parte una richiesta sola, e nel caso peggiore si aspetta il più
    veloce dei tre invece dei tre uno dopo l'altro. */
 function overpassUnGiro(q){
-  const lista=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS.slice();
+  const ora=Date.now();
+  /* Chi e' in castigo va in fondo, non si butta via: se sono in castigo
+     tutti, meglio riprovare loro che non chiedere a nessuno. */
+  const sveglio=u=>!(overpassStanchi[u]>ora);
+  const ordine=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS.slice();
+  const lista=[...ordine.filter(sveglio),...ordine.filter(u=>!sveglio(u))];
   return new Promise((risolvi,rifiuta)=>{
     let prossimo=0,falliti=0,errore=null,fatto=false;
     const stop=new AbortController();
@@ -11737,7 +11787,15 @@ function overpassUnGiro(q){
     const chiudi=()=>{fatto=true;clearTimeout(scaduto);};
     const lancia=url=>{
       fetch(url,{method:'POST',signal:stop.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)})
-        .then(res=>{if(!res.ok)throw new Error('overpass '+res.status);return res.json();})
+        .then(res=>{
+          if(!res.ok){
+            /* 429 = "troppe richieste": e' un limite, non un guasto, e si
+               rispetta stando zitti un po' con QUESTO server. */
+            if(res.status===429||res.status===504)overpassStanchi[url]=Date.now()+OVERPASS_CASTIGO_MS;
+            const e=new Error(res.status+' da '+new URL(url).host);e.stato=res.status;throw e;
+          }
+          return res.json();
+        })
         .then(dati=>{if(fatto)return;chiudi();overpassBuono=url;stop.abort();risolvi(dati);})
         .catch(e=>{
           errore=errore||e;falliti++;
@@ -11753,11 +11811,12 @@ function overpassUnGiro(q){
     };
     const avanti=()=>{if(prossimo<lista.length)lancia(lista[prossimo++]);};
     avanti();
-    /* Se invece il primo non e' caduto ma ci mette, si chiedono anche gli
-       altri e vince chi arriva prima. Qui la richiesta in piu' si paga
-       davvero, e per questo si aspetta: Overpass lo tengono su dei
-       volontari e tempestarlo non e' educato. */
-    setTimeout(()=>{while(!fatto&&prossimo<lista.length)avanti();},VICINI_PAZIENZA_MS);
+    /* Se il primo non e' caduto ma ci mette, se ne chiede UN ALTRO - uno
+       solo. Prima si lanciavano tutti e tre insieme: tre richieste in volo
+       dallo stesso telefono sono piu' di quante Overpass ne conceda a un
+       indirizzo, e finiscono per farsi 429 a vicenda. Due in volo e' il
+       massimo che non si dia la zappa sui piedi. */
+    setTimeout(()=>{if(!fatto)avanti();},VICINI_PAZIENZA_MS);
   });
 }
 /* E se tutti e tre non rispondono, si riprova da soli. Vedi VICINI_TENTATIVI:
@@ -11828,6 +11887,35 @@ function viciniCacheTutta(){
 function viciniCacheScaduta(c){
   const ore=c.lista&&c.lista.length?VICINI_CACHE_ORE:VICINI_CACHE_ORE_VUOTO;
   return Date.now()-c.quando>ore*3600*1000;
+}
+/* IL RIPIEGO. Quando il servizio non risponde, l'ultima risposta che
+   avevamo vale mille volte piu' di un cartello d'errore: un bagno non si
+   sposta, e chi lo cerca adesso preferisce sapere dov'era ieri che non
+   sapere niente. Si mostra dicendo com'e' - presa da prima - senza
+   spacciarla per fresca.
+   Qui si guarda TUTTO: qualunque raggio, anche le risposte scadute, e
+   anche le caselle con i nomi vecchi. Quel nome cambia apposta quando si
+   corregge una domanda, ma buttare via il passato proprio nel momento in
+   cui la rete non c'e' vuol dire lasciare a mani vuote chi fino a ieri
+   trovava quello che cercava - ed e' esattamente quello che e' successo
+   dopo l'ultima correzione. Per il ripiego valgono anche quelle. */
+const VICINI_CACHE_VECCHIE=['geppgo_vicini'];
+function viciniCacheRipiego(kind,lat,lng){
+  let miglior=null,minDist=Infinity;
+  [VICINI_CACHE_CHIAVE,...VICINI_CACHE_VECCHIE].forEach(chiave=>{
+    let tutta={};
+    try{tutta=JSON.parse(localStorage.getItem(chiave)||'{}');}catch(e){}
+    Object.keys(tutta).forEach(k=>{
+      const c=tutta[k];
+      if(!c||!c.fam||String(c.fam).split('|')[0]!==kind)return;
+      if(!c.lista||!c.lista.length)return;
+      const d=calcDist(lat,lng,c.lat,c.lng);
+      /* piu' larghi che per la cache normale: meglio un bagno di ieri a
+         trecento metri da dove si era che nessun bagno */
+      if(d<=VICINI_CACHE_METRI*2&&d<minDist){minDist=d;miglior=c;}
+    });
+  });
+  return miglior?{lista:miglior.lista,quando:miglior.quando}:null;
 }
 function viciniCacheLeggi(kind,lat,lng,raggio,soloNome){
   const fam=viciniFamiglia(kind,raggio,soloNome);
@@ -17587,7 +17675,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-22 14:30';
+const VERSIONE_APP='2026-09-22 16:05';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
