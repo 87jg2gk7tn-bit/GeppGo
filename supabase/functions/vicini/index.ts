@@ -75,9 +75,13 @@ async function chiediAOverpass(q: string): Promise<unknown> {
        minuti, mentre il telefono lo aspettava ventuno. Cosi' il ponte
        perdeva SEMPRE quando la mappa arrancava - proprio il caso per cui
        esiste - e il telefono tornava a chiamare da solo.
-       Quello che si perde tenendo i tempi stretti si recupera: anche se il
-       telefono molla, questa funzione continua per conto suo e scrive la
-       risposta in memoria. La prossima persona la trova pronta. */
+       QUELLO CHE ANCORA NON VA: con i tempi stretti, se Overpass e' lento
+       davvero il ponte si arrende a diciotto secondi e non scrive niente in
+       memoria - quindi anche la persona dopo ripaga tutta l'attesa. La
+       risposta giusta e' lasciar finire la richiesta in sottofondo
+       (EdgeRuntime.waitUntil) e scrivere la memoria comunque, dicendo al
+       telefono "sto ancora cercando" invece di "sono rotto". Non c'e'
+       ancora. */
     if (Date.now() - inizio > PONTE_BUDGET_MS) break;
     try {
       const ctrl = new AbortController();
