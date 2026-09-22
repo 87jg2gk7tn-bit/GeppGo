@@ -1694,6 +1694,19 @@ qualcuno che risponde".
   domani qualcuno togliesse l'arrotondamento dall'app, la posizione esatta
   non arriverebbe comunque a Nominatim. Una promessa sulla privacy che sta in
   un posto solo e' una promessa che si puo' perdere senza accorgersene.
+- **⚠️⚠️ UN PONTE PIU' LENTO DELLA PAZIENZA DI CHI LO ASPETTA NON E' UN
+  PONTE.** Il ponte provava cinque server da venticinque secondi l'uno IN
+  FILA - fino a due minuti - mentre il telefono lo aspettava ventuno. Quando
+  la mappa arrancava il ponte perdeva **sempre**, per costruzione: il telefono
+  lo mollava, lo segnava rotto per un minuto e tornava a chiamare da solo.
+  Cioe' non serviva proprio nel caso per cui esiste. I due numeri vivevano in
+  due file diversi - uno nell'app, uno nella funzione - e non li confrontava
+  nessuno: adesso stanno in `domanda.mjs`, che la prova legge insieme alla
+  costante dell'app. **Quando due numeri devono stare in un certo rapporto e
+  abitano in file diversi, quel rapporto va scritto in una prova**, se no e'
+  solo una speranza.
+  Nota che consola: anche quando il telefono molla, la funzione va avanti per
+  conto suo e scrive la risposta in memoria. La persona dopo la trova pronta.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

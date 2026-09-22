@@ -12,6 +12,18 @@
  * non possono divergere. Una regola di sicurezza che non si riesce a provare
  * è una regola di cui non si sa niente. */
 
+/* I TEMPI DEL PONTE STANNO QUI, non dentro la funzione, per la stessa
+   ragione della regola di sicurezza: qui non c'è Deno, e questi numeri
+   devono poter essere confrontati con quelli dell'app da una prova.
+   L'INVARIANTE CHE CONTA: il ponte deve stare DENTRO la pazienza che il
+   telefono ha per lui. Era il contrario — cinque server da venticinque
+   secondi in fila, fino a due minuti, mentre il telefono si arrendeva a
+   ventuno — e allora il ponte perdeva sempre: il telefono lo mollava,
+   lo segnava rotto e tornava a chiamare la mappa da solo. Un ponte che
+   non fa in tempo non è un ponte. */
+export const PONTE_ATTESA_SERVER_MS = 6000;   /* per ogni server */
+export const PONTE_BUDGET_MS = 18000;         /* in tutto, tentativi compresi */
+
 export const RAGGIO_MAX = 25000;
 export const LUNGHEZZA_MAX = 2500;
 export const RICERCHE_MAX = 12;

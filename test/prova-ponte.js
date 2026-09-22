@@ -70,6 +70,38 @@ const stato = {
   cattive.forEach(([che, q]) =>
     ok(`e ${che} viene respinta`, typeof domandaAmmessa(q) === 'string', String(domandaAmmessa(q))));
 
+  // ══ IL PONTE DEVE STARE DENTRO LA PAZIENZA DEL TELEFONO ══════════════
+  /* IL DIFETTO, trovato dal vivo: il ponte provava cinque server da
+     venticinque secondi l'uno IN FILA — fino a due minuti — mentre il
+     telefono lo aspettava ventuno. Quando la mappa arrancava il ponte
+     perdeva sempre, per costruzione: il telefono lo mollava, lo segnava
+     rotto per un minuto e tornava a chiamare da solo. Cioè il ponte non
+     serviva proprio nel caso per cui esiste.
+     I due numeri vivono in due file diversi — uno nell'app, uno nella
+     funzione — e nessuno li confrontava. Adesso questa riga lo fa. */
+  const tempiPonte = await import('../supabase/functions/vicini/domanda.mjs');
+  {
+    const p0 = await browser.newPage();
+    /* Si blocca solo quello che uscirebbe davvero in rete, non tutto:
+       bloccando tutto la pagina non si carica e la costante si legge
+       `null` — cioè la prova diventa rossa per colpa sua. */
+    await p0.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await p0.route(/tile\.openstreetmap\.org|api\.interpreter|nominatim|photon/, ro => ro.abort());
+    await p0.goto(APP, { waitUntil: 'domcontentloaded' });
+    await p0.waitForFunction(() => typeof VICINI_ATTESA_MS === 'number', { timeout: 20000 });
+    const pazienza = await p0.evaluate(() => VICINI_ATTESA_MS);
+    ok('il ponte fa in tempo, prima che il telefono si stanchi di aspettarlo',
+       pazienza != null && tempiPonte.PONTE_BUDGET_MS < pazienza,
+       `ponte al massimo ${tempiPonte.PONTE_BUDGET_MS}ms, telefono aspetta ${pazienza}ms`);
+    /* E un server solo non si mangia tutto il budget: se no il secondo non
+       verrebbe mai provato, e avere cinque indirizzi non servirebbe. */
+    ok('e un server lento non si mangia tutto il tempo del ponte',
+       tempiPonte.PONTE_ATTESA_SERVER_MS * 2 <= tempiPonte.PONTE_BUDGET_MS,
+       `${tempiPonte.PONTE_ATTESA_SERVER_MS}ms per server su ${tempiPonte.PONTE_BUDGET_MS}ms`);
+    await p0.close();
+  }
+
   // ══ IL PONTE DEGLI INDIRIZZI (Nominatim, Photon) ═════════════════════
   /* E' il piu' urgente dei due: Nominatim e' usato in DICIASSETTE punti
      dell'app — la ricerca degli hotel, gli indirizzi, la città di ogni
