@@ -63,7 +63,9 @@ function metri(aLat, aLng, bLat, bLng) {
    niente. Si scorre la domanda a mano, tenendo il conto delle virgolette. */
 function enunciati(q) {
   const fuori = [];
-  const tipi = /(node|way|relation)/g;
+  /* `nwr` vuol dire tutti e tre insieme: l'app la usa per non chiedere la
+     stessa cosa tre volte, e il finto la deve capire. */
+  const tipi = /(nwr|node|way|relation)/g;
   let m;
   while ((m = tipi.exec(q))) {
     let i = m.index + m[1].length;
@@ -100,7 +102,7 @@ function rispondi(q, elementi) {
     const lo = el.lon != null ? el.lon : (el.center && el.center.lon);
     const tags = el.tags || {};
     return parti.some(p =>
-      p.tipo === el.type &&
+      (p.tipo === 'nwr' || p.tipo === el.type) &&
       metri(p.lat, p.lng, la, lo) <= p.raggio &&
       p.filtri.every(c => unFiltro(c, tags)));
   });

@@ -11252,7 +11252,14 @@ const VICINI_POCHI=3;
    (relation). Lo stesso bagno è un punto in un paese e un edificio in un altro:
    chiedendo solo i punti, in mezzo mondo non lo si vede. */
 function ovAttorno(filtri,r,lat,lng){
-  return filtri.map(f=>['node','way','relation'].map(tp=>`${tp}${f}(around:${r},${lat},${lng});`).join('')).join('');
+  /* `nwr` vuol dire "punti, contorni e insiemi di contorni" in una parola
+     sola. Prima si scrivevano tre righe per ogni filtro, e ogni riga e' una
+     ricerca sulla mappa a se': la domanda del bancomat ne faceva DICIOTTO.
+     Overpass le esegue una per una, e diciotto ricerche su un raggio di un
+     chilometro e mezzo su un server sotto carico non stanno in dieci
+     secondi - da qui «overpass lento», che e' il telefono che si arrende
+     mentre il server macina ancora. Con nwr sono un terzo. */
+  return filtri.map(f=>`nwr${f}(around:${r},${lat},${lng});`).join('');
 }
 /* Il nome di un posto non sta solo in "name": c'è "brand" (la catena) e
    "operator" (chi lo gestisce), e in mezzo mondo la filiale ha addosso solo il
@@ -11342,13 +11349,12 @@ const VICINI={
        Le stazioni della metropolitana sono ANCHE railway=station, ma con
        station=subway: si tolgono, se no le due ricerche danno la stessa cosa
        e chi cerca il treno si ritrova davanti una fermata del metro. */
+    /* Due sole ricerche invece di quattro: i valori della stessa chiave si
+       chiedono insieme, con una scelta fra parentesi. Stessa roba trovata,
+       meta' del lavoro per il server. */
     q:(r,lat,lng)=>ovAttorno([
-      '["railway"="station"]["station"!="subway"]',
-      '["railway"="halt"]',
-      '["public_transport"="station"]["train"="yes"]',
-      /* La fermata del treno mappata solo come punto di fermata: succede
-         sulle linee regionali, dove la "stazione" e' una pensilina. */
-      '["public_transport"="stop_position"]["train"="yes"]["subway"!="yes"]'
+      '["railway"~"^(station|halt)$"]["station"!="subway"]',
+      '["public_transport"~"^(station|stop_position)$"]["train"="yes"]["subway"!="yes"]'
     ],r,lat,lng),
     parole:PAROLE_TRENO,
     nome:t=>t.name||t.official_name||t.operator||'Stazione',
@@ -11371,15 +11377,13 @@ const VICINI={
        in mezzo alla piazza sbagliata, mentre subway_entrance è la scala per
        cui si scende davvero. Si cercano tutte e due e vince la più vicina. */
     q:(r,lat,lng)=>ovAttorno([
+      '["railway"~"^(subway_entrance|station)$"]["subway"="yes"]',
       '["railway"="subway_entrance"]',
       '["station"="subway"]',
-      '["public_transport"="station"]["subway"="yes"]',
       /* Moltissime reti mappano la stazione come railway=station con
          subway=yes e NIENTE station=subway: Londra, Parigi, Berlino e mezza
-         Asia stanno cosi'. Senza questa riga in quelle citta' si trovavano
-         solo le bocche di risalita, e dove non sono mappate, niente. */
-      '["railway"="station"]["subway"="yes"]',
-      '["public_transport"="stop_position"]["subway"="yes"]'
+         Asia stanno cosi'. */
+      '["public_transport"~"^(station|stop_position)$"]["subway"="yes"]'
     ],r,lat,lng),
     parole:PAROLE_METRO,
     nome:t=>t.name||t.official_name||t.operator||'Metropolitana',
@@ -11410,9 +11414,7 @@ const VICINI={
     q:(r,lat,lng)=>ovAttorno([
       '["highway"="bus_stop"]',
       '["amenity"="bus_station"]',
-      '["public_transport"="platform"]["bus"="yes"]',
-      '["public_transport"="stop_position"]["bus"="yes"]',
-      '["public_transport"="station"]["bus"="yes"]',
+      '["public_transport"~"^(platform|stop_position|station)$"]["bus"="yes"]',
       '["highway"="platform"]["bus"="yes"]'
     ],r,lat,lng),
     parole:PAROLE_BUS,
@@ -11455,7 +11457,10 @@ const VICINI={
     ic:'🚬', titolo:'Area fumatori più vicina', cosa:'area fumatori', manca:'l\'area fumatori più vicina',
     /* amenity=smoking_area è l'etichetta con cui le aree fumatori sono
        mappate; in Giappone, dove per strada non si fuma, sono segnate bene. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"="designated"]','["smoking"="isolated"]','["smoking"="separated"]'],r,lat,lng), parole:PAROLE_FUMO,
+    /* "smoking" e' una chiave comunissima - ogni bar la porta, smoking=no -
+       quindi chiederla e' una ricerca cara. Tre valori in una volta invece
+       che tre ricerche separate. */
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="smoking_area"]','["smoking"~"^(designated|isolated|separated)$"]'],r,lat,lng), parole:PAROLE_FUMO,
     nome:t=>t.name||t.operator||t.brand||'Area fumatori',
     extra:t=>[
       /* come per le altre due: quello che salta fuori solo dal nome non si sa
@@ -11485,7 +11490,12 @@ const VICINI={
     /* ["atm"] da solo vuol dire "ha l'etichetta atm, qualunque valore abbia" -
        compreso atm=no, cioe' proprio i posti che dichiarano di NON avere il
        bancomat. Venivano mostrati come bancomat. */
-    q:(r,lat,lng)=>ovAttorno(['["amenity"="atm"]','["atm"]["atm"!="no"]','["amenity"="bank"]["atm"!="no"]','["office"="financial"]["atm"!="no"]','["shop"="money_lender"]','["amenity"="bureau_de_change"]'],r,lat,lng), parole:PAROLE_BANCA,
+    q:(r,lat,lng)=>ovAttorno([
+      '["amenity"~"^(atm|bank|bureau_de_change)$"]["atm"!="no"]',
+      '["atm"]["atm"!="no"]',
+      '["office"="financial"]["atm"!="no"]',
+      '["shop"="money_lender"]'
+    ],r,lat,lng), parole:PAROLE_BANCA,
     nome:t=>t.name||t.operator||t.brand||(t.amenity==='bank'?'Banca':'Bancomat'),
     extra:t=>[
       /* Una banca che non dichiara il bancomat quasi sempre ce l'ha, ma
@@ -11637,9 +11647,18 @@ async function viciniIntorno(lat,lng){
        farla ogni volta significava aspettare sempre per un caso che capita di
        rado. Ora si paga quel prezzo solo quando serve davvero, e se salta si
        tiene comunque quello che si era già trovato. */
-    /* Se il servizio e' giu' non si prova nemmeno la rete sul nome: sono
-       altre nove richieste a un servizio che non risponde. */
-    if(trovati.length<VICINI_POCHI&&!giu){
+    /* LA RETE SUL NOME E' L'ULTIMA SPIAGGIA, NON UN CONTORNO. Cercare una
+       parola in venti lingue dentro cinque campi obbliga Overpass a
+       leggersi le etichette di tutto quello che c'e' nel raggio: e' di gran
+       lunga la domanda piu' cara delle sei. Partiva ogni volta che si
+       trovavano MENO DI TRE cose - cioe', in un paese, quasi sempre: si era
+       gia' trovato il bancomat, e si faceva aspettare venti secondi in piu'
+       per cercarne un terzo che probabilmente non c'e'. E quando il
+       servizio arranca, quei venti secondi diventano «overpass lento» e si
+       perde anche il bancomat che si era trovato.
+       Adesso parte solo a MANI COMPLETAMENTE VUOTE, che e' il caso per cui
+       era stata scritta. */
+    if(!trovati.length&&!giu){
       dillo('Cerco anche per nome...');
       try{
         const perNome=await viciniOverpass(vicinoKind,lat,lng,raggiDi(vicinoKind)[0],true,
@@ -11728,7 +11747,12 @@ async function viciniIntorno(lat,lng){
 const OVERPASS=[
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter'
+  'https://overpass.private.coffee/api/interpreter',
+  /* Uno in Giappone e uno in Svizzera: quando quello tedesco e' in coda
+     questi due spesso sono liberi, e per chi usa l'app dall'altra parte del
+     mondo sono anche piu' vicini. */
+  'https://overpass.osm.jp/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter'
 ];
 /* Quanto si aspetta un server prima di piantarlo lì e provare il prossimo.
    Senza questo, un server che non risponde tiene la richiesta appesa finché
@@ -11743,8 +11767,19 @@ const OVERPASS=[
    ancora lavorando per noi. Era esattamente cosi': la domanda concedeva
    quindici secondi e il telefono si arrendeva a nove. Adesso i due numeri
    escono dalla stessa costante e non possono piu' litigare. */
-const VICINI_TIMEOUT_SERVER=10;
+/* Venti secondi, non dieci. Overpass e' gratuito e spesso in coda: il tempo
+   che ci mette non e' la domanda che e' lenta, e' il suo turno che tarda.
+   A dieci secondi ci si arrendeva proprio mentre stava per rispondere -
+   «overpass lento» - e si buttava via il lavoro fatto. Venti sono tanti da
+   guardare, ma molto meno di non avere la risposta: e con le domande
+   alleggerite qui sopra, nel caso normale ne bastano due. */
+const VICINI_TIMEOUT_SERVER=20;
 const VICINI_ATTESA_MS=(VICINI_TIMEOUT_SERVER+1)*1000;
+/* Il tetto su TUTTA la ricerca, tentativi compresi. Senza, due tentativi da
+   ventun secondi diventerebbero quarantadue: nessuno aspetta quarantadue
+   secondi. Si riprova solo se il primo giro e' fallito in fretta - un
+   errore, non un'attesa - perche' li' la riprova costa poco e serve. */
+const VICINI_BUDGET_RETE_MS=26000;
 /* Quante volte l'app ci riprova DA SOLA prima di dire che non ce l'ha fatta.
    Overpass e' un servizio di volontari: risponde "troppe richieste" o non
    risponde affatto con una certa regolarita', e quasi sempre basta chiedere
@@ -11825,8 +11860,17 @@ function overpassUnGiro(q){
 function attendi(ms){return new Promise(r=>setTimeout(r,ms));}
 async function overpassChiedi(q,avvisa){
   let ultimo=null;
+  const inizio=Date.now();
   for(let i=1;i<=VICINI_TENTATIVI;i++){
-    if(i>1){ if(avvisa)avvisa(i); await attendi(VICINI_PAUSA_MS*(i-1)); }
+    if(i>1){
+      /* Se il primo giro se n'e' andato in attesa, riprovare vuol dire far
+         aspettare il doppio per la stessa attesa. Si riprova solo se c'e'
+         ancora tempo nel budget, cioe' solo se il giro di prima e' caduto
+         in fretta. */
+      if(Date.now()-inizio>VICINI_BUDGET_RETE_MS-VICINI_PAUSA_MS)break;
+      if(avvisa)avvisa(i);
+      await attendi(VICINI_PAUSA_MS*(i-1));
+    }
     try{ return await overpassUnGiro(q); }catch(e){ ultimo=e; }
   }
   throw ultimo||new Error('overpass');
@@ -17675,7 +17719,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-22 16:05';
+const VERSIONE_APP='2026-09-22 18:40';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

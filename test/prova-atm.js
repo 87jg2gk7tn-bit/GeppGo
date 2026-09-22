@@ -104,14 +104,24 @@ const stato = {
   await page.waitForFunction(() => /Seven Bank|FamilyMart|non risulta/.test(document.getElementById('bagnoBody').innerHTML), { timeout: 10000 });
   await page.waitForTimeout(300);
 
-  ok('la domanda a Overpass chiede gli sportelli a sé', /amenity"="atm"/.test(ultimaQuery));
+  /* Non "c'e' dentro questa stringa" ma "chiede questa cosa": i valori
+     della stessa chiave adesso si chiedono insieme - amenity~"^(atm|bank|
+     bureau_de_change)$" - e la vecchia riga diventava rossa pur cercando
+     esattamente le stesse cose. */
+  const chiede = (q, chiave, valore) =>
+    new RegExp('"' + chiave + '"\\s*=\\s*"' + valore + '"').test(q) ||
+    new RegExp('"' + chiave + '"\\s*~\\s*"[^"]*\\b' + valore + '\\b').test(q);
+  ok('la domanda a Overpass chiede gli sportelli a sé', chiede(ultimaQuery, 'amenity', 'atm'),
+     ultimaQuery.slice(0, 80));
   // il tag "atm" con QUALSIASI valore: esistono anche atm=only e atm=separate
   ok('e anche banche e negozi che ne hanno uno dentro', /\["atm"\]/.test(ultimaQuery));
   // le sigle vivono nella ricerca per nome, che ora è una richiesta a sé e parte
   // solo quando per tipo non si trova abbastanza: si controlla la fonte
   const sigle = await page.evaluate(() => PAROLE_BANCA);
   ok('e le banche note solo per sigla', /bpm/.test(sigle) && /hsbc/.test(sigle), sigle.slice(-60));
-  ok('cerca sia i punti sia gli edifici', /^.*node\[.*way\[/s.test(ultimaQuery));
+  ok('cerca sia i punti sia gli edifici',
+     /\bnwr\[/.test(ultimaQuery) || /node\[[\s\S]*way\[/.test(ultimaQuery),
+     ultimaQuery.slice(0, 60));
 
   const titolo = await page.evaluate(() => document.getElementById('bagnoTitle').textContent);
   ok('il titolo del pannello è quello del bancomat', /Bancomat/.test(titolo), titolo);
