@@ -100,11 +100,12 @@ const stato = {
      Insieme alla caserma ci sono tutti i parenti che la stessa parola si
      porta dietro in giro per il mondo: sono i casi che un'app usata in
      Giappone o in America incontra ogni giorno. */
+  /* NIENTE che si trovi per etichetta: così la rete sul nome parte davvero.
+     Se ci fosse una stazione vera la rete non partirebbe nemmeno — e allora
+     i falsi sarebbero assenti per il motivo sbagliato, e questa prova
+     direbbe di sì guardando il vuoto. */
   let page = await apri([
-    /* la stazione vera, lontana, mappata come si deve */
-    { type: 'node', id: 1, lat: su(1700), lon: IO.lng,
-      tags: { railway: 'halt', name: 'Lissone-Muggiò', operator: 'Rete Ferroviaria Italiana' } },
-    /* e la corte dei falsi, tutti a due passi e tutti col nome giusto */
+    /* la corte dei falsi, tutti a due passi e tutti col nome giusto */
     { type: 'node', id: 2, lat: su(195), lon: IO.lng,
       tags: { amenity: 'police', name: 'Stazione Carabinieri Muggiò', operator: 'Arma dei Carabinieri' } },
     { type: 'node', id: 3, lat: su(200), lon: IO.lng,
@@ -140,12 +141,59 @@ const stato = {
                  ['la centrale elettrica', /Power Station/], ['l\'albergo Station Hotel', /Station Hotel/],
                  ['la colonnina di ricarica', /di ricarica/], ['la piazzola ecologica', /ecologica/]];
   falsi.forEach(([che, re]) => ok(`e nemmeno ${che}`, !re.test(testo), testo.slice(0, 90)));
-  ok('la stazione vera invece c\'è', /Lissone-Muggiò/.test(testo), testo.slice(0, 70));
-  /* Il rovescio: non si è buttato via tutto. */
-  ok('e una stazione mappata solo come edificio si trova lo stesso',
+  /* Il rovescio, e conta quanto il resto: non si è buttato via tutto. */
+  ok('mentre una stazione mappata solo come edificio si trova lo stesso',
      /Vecchia Stazione di Muggiò/.test(testo), testo.slice(0, 120));
   ok('dichiarando che è presa dal nome e va controllata',
      /da controllare/.test(testo));
+  /* E che la rete sul nome sia partita per davvero: se non fosse partita,
+     tutte le righe qui sopra sarebbero verdi senza aver provato niente. */
+  ok('e la rete sul nome è partita davvero, se no qui sopra non si prova niente',
+     page._chiamate.some(c => /name\|brand\|operator/.test(c.q)),
+     page._chiamate.length + ' domande');
+  await page.close();
+
+  // ══ 1-bis. LA RICERCA PER NOME È L'ULTIMA SPIAGGIA, NON UN CONTORNO ══
+  /* È la domanda più cara delle sei: cercare una parola in venti lingue
+     dentro cinque campi obbliga Overpass a leggersi le etichette di tutto.
+     Partiva ogni volta che si trovavano MENO DI TRE cose — in un paese,
+     cioè quasi sempre: si era già trovata la stazione e si faceva aspettare
+     venti secondi per cercarne una terza che non c'è. E su un servizio in
+     coda quei venti secondi diventano «overpass lento», e si perde anche
+     quello che si era trovato.
+     Segnalato dal vivo: «dettaglio: overpass lento» su bancomat e aree
+     fumatori. */
+  page = await apri([
+    { type: 'node', id: 12, lat: su(300), lon: IO.lng,
+      tags: { railway: 'halt', name: 'Lissone-Muggiò', operator: 'Rete Ferroviaria Italiana' } }
+  ]);
+  testo = await cerca(page, 'treno');
+  ok('trovata la stazione, non si paga la ricerca per nome',
+     !page._chiamate.some(c => /name\|brand\|operator/.test(c.q)),
+     page._chiamate.length + ' domande: ' + page._chiamate.map(c => (c.q.match(/around:(\d+)/) || [])[1]).join(', '));
+  ok('e la stazione c\'è', /Lissone-Muggiò/.test(testo), testo.slice(0, 70));
+  await page.close();
+
+  // ══ 1-ter. QUANTO PESA UNA DOMANDA ═══════════════════════════════════
+  /* Ogni `(around:` è una ricerca sulla mappa a sé, che Overpass esegue una
+     per una. La domanda del bancomat ne faceva DICIOTTO — tre per filtro,
+     perché si chiedevano punti, contorni e insiemi separatamente — e
+     diciotto ricerche su un chilometro e mezzo, su un server in coda, non
+     stanno in dieci secondi. Con `nwr` e i valori della stessa chiave
+     chiesti insieme sono un quarto.
+     Questo non è un dettaglio di stile: è la differenza fra una risposta e
+     «overpass lento». */
+  page = await apri([]);
+  const pesi = await page.evaluate(() => {
+    const out = {};
+    Object.keys(VICINI).forEach(k => {
+      out[k] = (VICINI[k].q(1500, 45.59, 9.22).match(/\(around:/g) || []).length;
+    });
+    out.nome = (ovAttorno([ovNome(VICINI.atm.parole)], 1500, 45.59, 9.22).match(/\(around:/g) || []).length;
+    return out;
+  });
+  Object.entries(pesi).forEach(([k, n]) =>
+    ok(`la domanda "${k}" resta leggera`, n <= 5, n + ' ricerche sulla mappa'));
   await page.close();
 
   // ══ 2. LA FERMATA DEL BUS A CENTO METRI ══════════════════════════════

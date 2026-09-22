@@ -80,9 +80,19 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
   let testo = await cerca(page, 'atm');
   ok('la banca sotto casa ora si trova', /Banca Sotto Casa/.test(testo), testo.split('\n').slice(0, 2).join(' / '));
   ok('e dice onestamente che il bancomat è probabile, non certo', /molto probabile/.test(testo));
-  ok('la domanda chiede anche le banche', /amenity"="bank"/.test(chiamate[0].q));
-  ok('e i contorni disegnati, non solo i punti', /way\["amenity"="bank"\]/.test(chiamate[0].q));
-  ok('e gli insiemi di contorni', /relation\["amenity"="atm"\]/.test(chiamate[0].q));
+  /* Queste tre righe guardavano come e' SCRITTA la domanda - "c'e' dentro
+     la parola bank?", "c'e' scritto way[?" - e sono diventate rosse quando
+     la domanda e' stata alleggerita, pur trovando esattamente le stesse
+     cose. Descrivevano la forma, non il fatto. Adesso guardano il fatto:
+     la banca qui sopra e' un CONTORNO (type: 'way') e si trova, quindi la
+     domanda chiede le banche e chiede i contorni - altrimenti non sarebbe
+     li'. E che chieda tutte e tre le forme si controlla senza pretendere
+     come lo scriva: `nwr` le chiede tutte in una parola, tre righe
+     separate fanno lo stesso. */
+  ok('e la domanda chiede punti, contorni e insiemi',
+     /\bnwr\[/.test(chiamate[0].q) ||
+     (/\bnode\[/.test(chiamate[0].q) && /\bway\[/.test(chiamate[0].q) && /\brelation\[/.test(chiamate[0].q)),
+     chiamate[0].q.slice(0, 60));
   ok('il tetto ai risultati è alto', /out center 150/.test(chiamate[0].q), (chiamate[0].q.match(/out center \d+/) || [])[0]);
   await page.close();
 
@@ -309,7 +319,14 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
   ok('il bagno del parco a 500 m ora si trova', /Parco Sempione/.test(testo), testo.split('\n').slice(0, 2).join(' / '));
   ok('e si capisce di chi sono', /Bagni · Parco Sempione/.test(testo));
   ok('e che non è una casetta a sé', /dentro, non una casetta/.test(testo));
-  ok('per arrivarci ha allargato il giro oltre i 400 m', chiamate.length >= 2, chiamate.map(c => (c.q.match(/around:(\d+)/) || [])[1]).join(' → '));
+  /* Contava le CHIAMATE, e ce n'erano due solo perche' partiva anche la
+     ricerca per nome. Adesso quella parte solo a mani vuote, la chiamata e'
+     una, e il conto diceva la cosa sbagliata. Quello che conta e' il
+     RAGGIO: il parco sta a cinquecento metri, quindi il giro dev'essere
+     stato piu' largo di quattrocento. */
+  const raggiChiesti = chiamate.map(c => +((c.q.match(/around:(\d+)/) || [])[1] || 0));
+  ok('per arrivarci ha allargato il giro oltre i 400 m',
+     Math.max(...raggiChiesti) > 400, raggiChiesti.join(' → '));
   await page.close();
 
   // ── 3. non ci si ferma alla prima che si trova ───────────────────────

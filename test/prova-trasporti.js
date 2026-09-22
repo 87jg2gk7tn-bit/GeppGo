@@ -151,11 +151,20 @@ const METRO = [
   ok('la metro chiede le entrate, non solo il centro della stazione',
      /railway"="subway_entrance"/.test(domande.metro), 'entrate cercate');
   /* Il treno esclude le stazioni del metro: se no le due ricerche danno la
-     stessa cosa e chi cerca il treno si ritrova davanti una fermata. */
+     stessa cosa e chi cerca il treno si ritrova davanti una fermata.
+     Si chiede «la domanda chiede questo valore?», non «c'e' dentro questa
+     stringa esatta?»: i valori della stessa chiave adesso si chiedono
+     insieme — railway~"^(station|halt)$" — per non far fare al server tre
+     ricerche dove ne basta una, e la vecchia riga diventava rossa pur
+     cercando le stesse identiche cose. */
+  const chiede = (q, chiave, valore) =>
+    new RegExp('"' + chiave + '"\\s*=\\s*"' + valore + '"').test(q) ||
+    new RegExp('"' + chiave + '"\\s*~\\s*"[^"]*\\b' + valore + '\\b').test(q);
   ok('il treno esclude le stazioni della metropolitana',
-     /railway"="station"/.test(domande.treno) && /station"!="subway"/.test(domande.treno),
+     chiede(domande.treno, 'railway', 'station') && /station"!="subway"/.test(domande.treno),
      'esclusione presente');
-  ok('e prende anche le fermate piccole', /railway"="halt"/.test(domande.treno));
+  ok('e prende anche le fermate piccole', chiede(domande.treno, 'railway', 'halt'),
+     domande.treno.slice(0, 80));
   ok('il bus chiede le paline e le autostazioni',
      /highway"="bus_stop"/.test(domande.bus) && /amenity"="bus_station"/.test(domande.bus));
   await page.close();

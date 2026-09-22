@@ -1593,6 +1593,41 @@ qualcuno che risponde".
   piccolo in fondo: `dettaglio: 429 da overpass-api.de`. Quando non si puo'
   riprodurre un guasto (qui Overpass non e' raggiungibile), **il messaggio
   d'errore e' lo strumento diagnostico**, e va scritto come tale.
+- **⚠️⚠️ «overpass lento» vuol dire che la domanda e' troppo pesante, non
+  che il servizio e' rotto.** Ogni `(around:...)` e' una ricerca sulla mappa
+  a se', che Overpass esegue una per una. Scrivendo `node[...]`, `way[...]`
+  e `relation[...]` per ogni filtro, la domanda del bancomat ne faceva
+  **DICIOTTO** su un raggio di un chilometro e mezzo: su un server in coda
+  non stanno in dieci secondi. Due parole risolvono: **`nwr`** chiede punti,
+  contorni e insiemi in una volta (tre volte meno), e i valori della stessa
+  chiave si chiedono insieme con una scelta fra parentesi —
+  `railway~"^(station|halt)$"` invece di due filtri. Da 18 a 4.
+- **⚠️ La ricerca per NOME e' l'ultima spiaggia, non un contorno.** E' di
+  gran lunga la domanda piu' cara delle sei — una parola in venti lingue
+  dentro cinque campi, cioe' leggersi le etichette di tutto quello che c'e'
+  nel raggio. Partiva ogni volta che si trovavano **meno di tre** cose: in
+  un paese, cioe' quasi sempre. Si era gia' trovato il bancomat e si faceva
+  aspettare venti secondi per cercarne un terzo che non esiste — e quando il
+  servizio arranca quei venti secondi diventano «overpass lento» e si perde
+  anche il bancomat che si era trovato. Adesso parte solo a mani
+  completamente vuote.
+- **Un tetto d'attesa piu' corto del tempo che il server si prende butta via
+  le risposte in arrivo.** Overpass e' spesso in coda: il tempo che ci mette
+  non e' la domanda lenta, e' il suo turno che tarda. Dieci secondi erano
+  pochi. Venti sono tanti da guardare ma molto meno che non avere la
+  risposta — e con le domande alleggerite, nel caso normale ne bastano due.
+  Col tetto va pero' un **budget su tutta la ricerca**: due tentativi da
+  ventun secondi fanno quarantadue, e nessuno aspetta quarantadue secondi.
+  Si riprova solo se il giro di prima e' caduto in fretta.
+- **⚠️ Una prova che guarda com'e' SCRITTA la domanda diventa rossa quando la
+  domanda migliora.** Alleggerendo le domande sono diventate rosse sette
+  righe in tre file — `/amenity"="bank"/`, `/way\["amenity"="bank"\]/`,
+  `chiamate.length >= 2` — tutte vere prima, tutte inutili: le stesse cose
+  venivano trovate esattamente come prima. Descrivevano la forma, non il
+  fatto. Si chiede **«la domanda chiede questo valore?»** con una funzione
+  che accetta sia `="x"` sia `~"^(x|y)$"`, e dove si puo' si guarda il
+  RISULTATO: se la banca e' un contorno e si trova, la domanda chiede i
+  contorni — non serve leggere come l'ha scritto.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si
