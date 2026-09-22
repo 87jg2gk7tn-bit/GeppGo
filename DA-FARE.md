@@ -771,6 +771,24 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ Le prove parlavano col servizio VERO, e su questo computer non si
+  vedeva.** Da quando c'è il ponte, l'app prima della mappa chiede a
+  `cyolhqndurgwbivxcssf.supabase.co` — il servizio che risponde ai telefoni
+  delle persone. Le prove intercettavano Overpass e non il ponte. Qui dentro
+  la rete verso il ponte non passa: l'app ripiegava su Overpass, che era
+  intercettato, e tutto sembrava a posto. **Sul server delle prove
+  automatiche la rete c'è davvero**: il ponte rispondeva sul serio, con
+  quello che c'è intorno a quelle coordinate *oggi*, il finto Overpass non
+  veniva interrogato mai, e cinque prove diventavano rosse — una schiantandosi
+  su `chiamate[0]` che non esisteva. Il rosso era il meno: una prova che parla
+  col servizio vero non prova niente, e stava anche scrivendo nella memoria
+  condivisa vera. Adesso in `test/browser.js` c'è **il recinto**: passa solo
+  il guscio (pacchetti e caratteri delle CDN), tutto il resto o se lo
+  intercetta la prova o non succede, e le rotte della prova vincono perché
+  Playwright guarda prima l'ultima registrata. La regola generale:
+  **quando l'app comincia a chiamare un servizio nuovo, la prova che non lo
+  intercetta non fallisce — mente.** `prova-recinto` è il posto dove si
+  controlla che il recinto ci sia ancora.
 - **Un filtro con un valore di partenza può nascondere tutto quello che hai.**
   I biglietti partivano filtrati su «te», e chi non assegna i biglietti a
   nessuno — cioè quasi tutti — apriva la sezione e leggeva «nessun biglietto»
