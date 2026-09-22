@@ -11245,6 +11245,21 @@ const VICINI_BUDGET_MS=22000;
    vicina, ma se è l'unica mappata nel raggio stretto si finisce per non sapere
    che a due strade c'è di meglio. */
 const VICINI_POCHI=3;
+/* QUANDO IL PONTE STA ANCORA CERCANDO, SI RIPROVA DA SOLI.
+   «Non ho trovato niente, riprova» e' l'app che chiede alla persona di fare
+   il lavoro dell'app. E in quel momento non e' nemmeno vero che non c'e'
+   niente: il ponte sta cercando in sottofondo, e fra qualche secondo la
+   risposta sara' in memoria comune e arrivera' in un attimo. Quindi si
+   aspetta e si riprova, dicendo che lo si sta facendo.
+   Due riprove e basta: oltre, il problema non e' la lentezza di oggi, e
+   continuare vuol dire tenere accesa la clessidra a chi ha fretta. */
+const VICINI_RIPROVA_MS=9000;
+const VICINI_RIPROVE_MAX=2;
+let vicinoRiprove=0,vicinoAttesa=null,vicinoConto=null;
+function vicinoSmettiDiAspettare(){
+  if(vicinoAttesa){clearTimeout(vicinoAttesa);vicinoAttesa=null;}
+  if(vicinoConto){clearInterval(vicinoConto);vicinoConto=null;}
+}
 /* La stessa identica cosa sta sulla mappa in modi diversi, e cercarne uno solo
    vuol dire non trovarla. Un bancomat può essere lo sportello a sé
    (amenity=atm), il negozio che ne ha uno dentro (atm=yes), o la banca che non
@@ -11563,8 +11578,13 @@ function cercaBus(){cercaVicino('bus');}
 function cercaBagno(){cercaVicino('bagno');}
 function cercaFumo(){cercaVicino('fumo');}
 function cercaAtm(){cercaVicino('atm');}
-function cercaVicino(kind){
+/* `automatica` la mette solo la riprova che fa l'app da sola: serve a non
+   azzerare il conto delle riprove, che altrimenti ricomincerebbe da capo a
+   ogni giro e si andrebbe avanti all'infinito. */
+function cercaVicino(kind,automatica){
   if(vicinoBusy)return;
+  vicinoSmettiDiAspettare();
+  if(!automatica)vicinoRiprove=0;
   vicinoKind=VICINI[kind]?kind:'bagno';
   const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
   document.getElementById('bagnoTitle').textContent=v.ic+' '+v.titolo;
@@ -11735,6 +11755,26 @@ async function viciniIntorno(lat,lng){
        essere stati messi in castigo da Overpass, e quelle due cose si
        risolvono in modi diversi. Senza questa riga, una segnalazione dice
        solo "non funziona" e non si sa da che parte guardare. */
+    /* IL PONTE STA ANCORA CERCANDO: non e' un guasto, e non si fa premere un
+       tasto a nessuno. Si aspetta e si riprova da soli — fra qualche secondo
+       la risposta e' nella memoria comune e arriva in un attimo. Il conto
+       alla rovescia c'e' perche' uno schermo fermo per nove secondi sembra
+       bloccato, e perche' cosi' si vede che l'app sta facendo qualcosa. */
+    if(Date.now()-ponteAncora<VICINI_ATTESA_MS+VICINI_RIPROVA_MS&&vicinoRiprove<VICINI_RIPROVE_MAX){
+      vicinoRiprove++;
+      const mio=vicinoKind;
+      let restano=Math.round(VICINI_RIPROVA_MS/1000);
+      const scrivi=()=>{body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">La mappa oggi è lenta, ma la ricerca è partita e sta andando avanti.<br><br>Ci riprovo da solo fra <b>${restano}</b> second${restano===1?'o':'i'}.</div>
+        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${mio}')">Riprova adesso</button>`;};
+      scrivi();
+      /* Arrivato a zero il conto si spegne DA SOLO, non chiamando
+         `vicinoSmettiDiAspettare` — quella spegne anche la riprova, e la
+         riprova scatta nello stesso istante: il conto alla rovescia
+         cancellava proprio la cosa che stava annunciando. */
+      vicinoConto=setInterval(()=>{restano--;if(restano>0)return scrivi();clearInterval(vicinoConto);vicinoConto=null;},1000);
+      vicinoAttesa=setTimeout(()=>{vicinoSmettiDiAspettare();cercaVicino(mio,true);},VICINI_RIPROVA_MS);
+      return;
+    }
     const perche=(e&&e.message)?String(e.message).slice(0,80):'nessuna risposta';
     body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>${navigator.onLine===false?'Il telefono risulta <b>senza rete</b>.':'Di solito è passeggero. Se hai campo, fra un minuto va.'}</div>
       <div style="font-size:.7rem;color:var(--ink-faint);margin-top:.5rem">dettaglio: ${esc(perche)}</div>
@@ -11829,7 +11869,7 @@ function pontePerVicini(){
   if(!u||!k)return null;
   return {url:String(u).replace(/\/+$/,'')+'/functions/v1/vicini',chiave:k};
 }
-let ponteRotto=0,ponteGeoRotto=0;
+let ponteRotto=0,ponteGeoRotto=0,ponteAncora=0;
 /* IL PONTE PER GLI INDIRIZZI. Nominatim e Photon sono usati in ventun punti
    dell'app - la ricerca degli hotel, gli indirizzi, la citta' di ogni
    viaggio, la valuta - e le regole di Nominatim sono piu' strette di quelle
@@ -11889,9 +11929,16 @@ async function overpassDalPonte(q){
       body:JSON.stringify({q:q})});
     if(!res.ok)throw new Error('ponte '+res.status);
     const d=await res.json();
+    /* «STO ANCORA CERCANDO» NON E' «SONO ROTTO». Quando la mappa arranca il
+       ponte non si arrende: continua a cercare per conto suo e scrive la
+       risposta nella memoria comune. Qui si prende nota dell'ora, perche'
+       da questa differenza dipendono due cose diverse — non mettere il
+       ponte in castigo (e' vivo, sta lavorando) e riprovare da soli fra
+       qualche secondo invece di far premere un tasto alla persona. */
+    if(d&&d.ancora){ponteAncora=Date.now();const e=new Error('il ponte sta ancora cercando');e.ancora=true;throw e;}
     if(d&&d.errore)throw new Error('ponte: '+d.errore);
     return d;
-  }catch(e){ponteRotto=Date.now();throw e;}
+  }catch(e){if(!e.ancora)ponteRotto=Date.now();throw e;}
   finally{clearTimeout(taglia);}
 }
 function overpassUnGiro(q){
@@ -12602,6 +12649,10 @@ function openSheet(id){
 function closeSheet(id){
   const m=(typeof id==='string')?document.getElementById(id):id;
   if(!m)return;
+  /* Chiudendo la scheda del «qui intorno» si smette anche di aspettare: la
+     riprova da sola riaprirebbe un foglio che la persona ha appena chiuso,
+     e un'app che si riapre da sola e' un'app che non ascolta. */
+  if(m.id==='mBagno')vicinoSmettiDiAspettare();
   m.classList.remove('active');
   /* Si toglie dal layout solo quando ha finito di scendere. Il tempo e' un
      ripiego voluto, non una pigrizia: se la transizione non parte affatto —
@@ -17833,7 +17884,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-22 23:55';
+const VERSIONE_APP='2026-09-23 01:20';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

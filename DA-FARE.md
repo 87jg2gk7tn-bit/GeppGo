@@ -771,6 +771,16 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Un conto alla rovescia che cancella quello che sta annunciando.** Quando
+  il ponte dice «sto ancora cercando», l'app aspetta nove secondi e riprova
+  da sola, mostrando i secondi che scendono. Il conto, arrivato a zero,
+  chiamava la funzione che spegne l'attesa — e quella spegne *anche* la
+  riprova, che scattava nello stesso istante. Risultato: il messaggio
+  prometteva una riprova che non arrivava mai, e nessun errore da nessuna
+  parte. **Due timer che finiscono insieme vanno spenti uno per uno**: una
+  funzione «ferma tutto» chiamata da dentro uno dei due ferma anche l'altro.
+  L'ha trovato `prova-ponte`, che invece di guardare il messaggio aspetta e
+  conta le richieste che partono davvero.
 - **⚠️ Le prove parlavano col servizio VERO, e su questo computer non si
   vedeva.** Da quando c'è il ponte, l'app prima della mappa chiede a
   `cyolhqndurgwbivxcssf.supabase.co` — il servizio che risponde ai telefoni
