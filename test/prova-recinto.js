@@ -19,6 +19,7 @@
  * ricompare lo stesso guasto, in una prova che non c'entra niente.
  */
 const { apriBrowser, APP, leafletJs, fuoriFermate, FUORI_AMMESSI } = require('./browser');
+const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
 const stato = { trips: [{ id: 101, name: 'Prova', destination: 'Milano', currency: 'EUR', status: 'open',
@@ -55,9 +56,9 @@ const stato = { trips: [{ id: 101, name: 'Prova', destination: 'Milano', currenc
   await page.route('**/api/interpreter', ro => {
     interrogato++;
     risposteDellaProva.push(ro.request().url());
-    ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: [
+    ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass([
       { type: 'node', id: 1, lat: 45.4751, lon: 9.1901, tags: { amenity: 'atm', name: 'Bancomat del recinto' } }
-    ] }) });
+    ])) });
   });
 
   await page.addInitScript(s => {

@@ -16,7 +16,7 @@
    una chiave e la negazione. Senza quello, metà di queste righe passerebbe
    anche sul codice rotto. */
 const { apriBrowser, APP, leafletJs } = require('./browser');
-const { rispondi } = require('./overpass-finto');
+const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
 /* Muggiò, dove il difetto è stato visto. */
@@ -61,7 +61,7 @@ const stato = {
       try { dentro = rispondi(q, mondo); }
       catch (e) { err.push('DOMANDA ILLEGGIBILE: ' + e.message); dentro = []; }
       await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ elements: dentro }) });
+        body: JSON.stringify(comeOverpass(dentro)) });
     });
     await page.addInitScript(([s, io]) => {
       localStorage.setItem('geppgo2', JSON.stringify(s));

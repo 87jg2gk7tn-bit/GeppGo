@@ -20,6 +20,7 @@
  * da qui: qui non c'e' Deno, e una regola di sicurezza che non si riesce a
  * provare e' una regola di cui non si sa niente. */
 const { apriBrowser, APP, leafletJs } = require('./browser');
+const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
 const IO = { lat: 45.59217, lng: 9.22839 };   /* un punto qualunque, non tondo */
@@ -86,7 +87,7 @@ const stato = {
       status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await pq.route('**/api/interpreter', ro => {
       dette.push(decodeURIComponent(ro.request().postData() || '').replace(/^data=/, ''));
-      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: [] }) });
+      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass([])) });
     });
     await pq.addInitScript(s => {
       localStorage.setItem('geppgo2', JSON.stringify(s));
@@ -196,18 +197,18 @@ const stato = {
       page._ponte.push(corpo.q || '');
       if (!ponte) return route.abort();
       await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ elements: [
+        body: JSON.stringify(comeOverpass([
           { type: 'node', id: 1, lat: IO.lat + 0.0009, lon: IO.lng,
             tags: { amenity: 'atm', name: 'Bancomat dal ponte' } }
-        ], da: 'memoria' }) });
+        ], { da: 'memoria' })) });
     });
     await page.route('**/api/interpreter', async route => {
       page._diretto.push(decodeURIComponent(route.request().postData() || ''));
       await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ elements: [
+        body: JSON.stringify(comeOverpass([
           { type: 'node', id: 2, lat: IO.lat + 0.001, lon: IO.lng,
             tags: { amenity: 'atm', name: 'Bancomat diretto' } }
-        ] }) });
+        ])) });
     });
     await page.addInitScript(([s, io]) => {
       localStorage.setItem('geppgo2', JSON.stringify(s));
@@ -286,7 +287,7 @@ const stato = {
   await pagina2.route('**/functions/v1/vicini', async route => {
     pagina2._ponte.push(JSON.parse(route.request().postData() || '{}').q || '');
     await route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ elements: [], da: 'memoria' }) });
+      body: JSON.stringify(comeOverpass([], { da: 'memoria' })) });
   });
   await pagina2.route('**/api/interpreter', ro => ro.fulfill({
     status: 200, contentType: 'application/json', body: '{"elements":[]}' }));

@@ -108,4 +108,40 @@ function rispondi(q, elementi) {
   });
 }
 
-module.exports = { rispondi, enunciati, unFiltro, metri };
+/* UNA RISPOSTA COME LA FA OVERPASS, non solo la lista dei posti.
+ *
+ * Le prove rispondevano `{elements: [...]}` e basta, perché era l'unica cosa
+ * che l'app guardava. Poi si è scoperto che il resto conta: un server col
+ * database vuoto risponde 200, senza errori, con la lista vuota — e l'unica
+ * cosa che lo smaschera è `osm3s.timestamp_osm_base`, la data dei dati, che
+ * lì non era una data. Adesso l'app non crede a un «non c'è niente» che non
+ * sa dire di quando è, e quindi le prove devono rispondere come risponde
+ * Overpass davvero, non come faceva comodo.
+ *
+ * È la solita lezione: un finto che semplifica nasconde esattamente i guasti
+ * che vivono nella parte semplificata. */
+function comeOverpass(elements, extra) {
+  return Object.assign({
+    version: 0.6,
+    generator: 'Overpass API 0.7.62.4 (finto, test/overpass-finto.js)',
+    osm3s: {
+      timestamp_osm_base: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
+      copyright: 'The data included in this document is from www.openstreetmap.org.',
+    },
+    elements: elements || [],
+  }, extra || {});
+}
+
+/* E una risposta come la faceva il server rotto: 200, nessun errore, lista
+   vuota, e al posto della data un numero. Serve alle prove che controllano
+   che non le si creda. */
+function comeIlServerRotto() {
+  return {
+    version: 0.6,
+    generator: 'Overpass API 0.7.62.4 (finto rotto)',
+    osm3s: { timestamp_osm_base: '117204', copyright: 'The data included…' },
+    elements: [],
+  };
+}
+
+module.exports = { rispondi, enunciati, unFiltro, metri, comeOverpass, comeIlServerRotto };

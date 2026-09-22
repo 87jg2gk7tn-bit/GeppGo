@@ -41,14 +41,23 @@ import { domandaAmmessa, PONTE_ATTESA_SERVER_MS, PONTE_BUDGET_MS } from './doman
    lavorando» per una risposta vuota vorrebbe dire dire «non c'e' niente» a
    tutti per sei ore, senza nessun errore da nessuna parte. Vedi
    test/prova-memoria.js. */
-import { cheFarne, SEGNALE, PONTE_SOTTOFONDO_MS } from './memoria.mjs';
+import { cheFarne, rispostaAttendibile, SEGNALE, PONTE_SOTTOFONDO_MS } from './memoria.mjs';
 
+/* I SERVER DELLA MAPPA. Erano cinque; due sono stati tolti dopo averli
+   interrogati uno per uno (il workflow «Il ponte risponde?»):
+   - overpass.osm.ch rispondeva in sei decimi di secondo, senza errori, con
+     la lista VUOTA: il suo database era vuoto. Essendo il piu' veloce
+     vinceva ogni corsa, quindi la risposta che arrivava era sempre la sua —
+     «qui non c'e' niente», per qualunque cosa si cercasse;
+   - overpass.osm.jp ha un certificato che non si verifica, quindi da qui non
+     si raggiunge affatto.
+   Tenerli costava ricerche vere. Se un domani tornano a posto, si rimettono.
+   Il controllo su `rispostaAttendibile` resta comunque, perche' la prossima
+   volta il server che si guasta sara' un altro. */
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.osm.jp/api/interpreter',
-  'https://overpass.osm.ch/api/interpreter',
 ];
 
 /* Chi siamo, per chi ospita il servizio. Le regole di OpenStreetMap
@@ -76,7 +85,12 @@ async function unServer(url: string, q: string, attesa: number): Promise<unknown
       body: 'data=' + encodeURIComponent(q),
     });
     if (!res.ok) throw new Error(res.status + ' da ' + new URL(url).host);
-    return await res.json();
+    const d = await res.json();
+    /* Un «non c'e' niente» si crede solo a chi sa dire di quando sono i suoi
+       dati: vedi memoria.mjs. Chi non lo sa dire non ha risposto, ha solo
+       detto qualcosa — e si passa al prossimo. */
+    if (!rispostaAttendibile(d)) throw new Error('database vuoto su ' + new URL(url).host);
+    return d;
   } finally { clearTimeout(taglia); }
 }
 

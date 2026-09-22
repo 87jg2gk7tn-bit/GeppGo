@@ -771,6 +771,32 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️⚠️ UN SERVER PUÒ MENTIRE BENE, E ERA QUESTO.** «Il bancomat ce l'ho
+  davanti a casa e non lo trova», «la fermata dell'autobus a cento metri e
+  non la trova». Il colpevole era `overpass.osm.ch`: rispondeva **200, senza
+  nessun errore, in sei decimi di secondo, con la lista vuota** — il suo
+  database era vuoto. E siccome l'app chiede a più server in corsa e prende
+  il primo che risponde, **vinceva sempre lui**: essere rotto lo rendeva il
+  più veloce. Per qualunque ricerca, ovunque, la risposta era «qui non c'è
+  niente». Non c'era niente da guardare in quella risposta: nessun errore,
+  nessun `remark`. L'unica cosa che la smaschera è
+  `osm3s.timestamp_osm_base`, la data dei dati, che lì era `117204`.
+  La regola, adesso in due copie (l'app è un file solo e non può importare):
+  **un «non c'è niente» si crede solo a chi sa dire di quando sono i suoi
+  dati**; una risposta che contiene dei posti si prende comunque, così la
+  regola non può far peggio di prima. `prova-bugie` prova la regola, prova
+  che le due copie dicono le stesse cose, e rimette in piedi il caso vero —
+  tolta la regola, l'app torna a dire «non risulta nessun bancomat» con un
+  bancomat a cento metri.
+  Tre cose da portarsi via: **essere rotti può rendere un server il più
+  veloce, quindi il vincitore di una corsa è il più sospetto, non il più
+  affidabile**; un servizio che va giù e basta è il caso fortunato, quello
+  che risponde male è il caso difficile; e i finti delle prove che
+  semplificano nascondono esattamente i guasti che vivono nella parte
+  semplificata — `{elements: [...]}` senza il resto ha tenuto nascosto
+  questo per settimane. Il modo di scoprirlo è stato **chiedere a ogni
+  server, uno per uno, la stessa domanda** e guardare cosa risponde: è il
+  workflow «Il ponte risponde?».
 - **Un conto alla rovescia che cancella quello che sta annunciando.** Quando
   il ponte dice «sto ancora cercando», l'app aspetta nove secondi e riprova
   da sola, mostrando i secondi che scendono. Il conto, arrivato a zero,
