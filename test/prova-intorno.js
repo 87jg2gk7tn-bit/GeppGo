@@ -74,16 +74,18 @@ const stato = {
     return page;
   }
 
-  const cerca = async (page, kind) => {
+  /* `tieni` serve alle prove del ripiego: li' la memoria della ricerca di
+     prima E' il soggetto, e cancellarla vorrebbe dire provare il vuoto. */
+  const cerca = async (page, kind, tieni) => {
     page._chiamate = [];
-    await page.evaluate(k => {
+    await page.evaluate(([k, tieni]) => {
       /* Il nome della cache si chiede all'app: cambia apposta quando si
          correggono le domande. */
-      localStorage.removeItem(VICINI_CACHE_CHIAVE);
+      if (!tieni) localStorage.removeItem(VICINI_CACHE_CHIAVE);
       myPos = null; myPosAt = 0;
       closeSheet('mBagno');
       cercaVicino(k);
-    }, kind);
+    }, [kind, !!tieni]);
     await page.waitForFunction(
       () => { const b = document.getElementById('bagnoBody'); return b && !/Cerco|ci riprovo/i.test(b.innerText); },
       { timeout: 60000 }).catch(() => {});
@@ -231,6 +233,75 @@ const stato = {
   ok('ma non ci riprova all\'infinito: c\'è un tetto',
      conti.tentativi != null && page._chiamate.length <= conti.tentativi * conti.server + 2,
      `${page._chiamate.length} richieste, tetto ${conti.tentativi}×${conti.server}`);
+  await page.close();
+
+  // ══ 5-bis. SE NON RISPONDE, MOSTRA QUELLO CHE SAPEVA GIA' ════════════
+  /* LA SEGNALAZIONE PIÙ IMPORTANTE, e quella che mi ha fatto capire il
+     resto: «prima i bagni me li trovava, adesso neanche quello». La
+     ricerca dei bagni non era cambiata di una virgola — era cambiato che
+     avevo cambiato il nome della cache, e quelle ricerche rispondevano
+     DALLA MEMORIA senza toccare la rete. Buttando via la memoria ho tolto
+     la cosa che nascondeva una rete che già non andava.
+     Un bagno non si sposta: l'ultima risposta vale mille volte un cartello
+     d'errore. Qui si cerca una volta con la rete che va — così la memoria
+     si riempie — e poi si stacca tutto e si cerca di nuovo. */
+  page = await apri([
+    { type: 'node', id: 60, lat: su(120), lon: IO.lng,
+      tags: { amenity: 'toilets', name: 'Bagno del parco' } }
+  ]);
+  testo = await cerca(page, 'bagno');
+  ok('col servizio che risponde, il bagno si trova', /Bagno del parco/.test(testo), testo.slice(0, 70));
+  /* Adesso la rete non c'è più, e la memoria è VECCHIA: si invecchia di tre
+     giorni, che è oltre le ventiquattr'ore entro cui la cache normale
+     risponde da sola. Senza invecchiarla risponderebbe la cache — cosa
+     giusta, ma non è questo che si sta provando: qui si prova il ripiego,
+     cioè cosa succede quando anche la memoria è scaduta. */
+  await page.evaluate(() => {
+    const tutta = JSON.parse(localStorage.getItem(VICINI_CACHE_CHIAVE) || '{}');
+    Object.keys(tutta).forEach(k => { tutta[k].quando = Date.now() - 3 * 86400000; });
+    localStorage.setItem(VICINI_CACHE_CHIAVE, JSON.stringify(tutta));
+  });
+  await page.route('**/api/interpreter', ro => ro.abort());
+  testo = await cerca(page, 'bagno', true);
+  ok('col servizio giù mostra quello che aveva trovato prima, invece di niente',
+     /Bagno del parco/.test(testo), testo.slice(0, 110));
+  ok('e dice che è una risposta vecchia, senza spacciarla per fresca',
+     /non risponde adesso/.test(testo) && /avevo trovato/.test(testo), testo.slice(0, 110));
+  ok('con la distanza, che quella resta giusta', /120 m|1 min a piedi/.test(testo), testo.slice(0, 110));
+  await page.close();
+
+  /* E il rovescio: se non si sapeva niente, non si inventa niente. */
+  page = await apri([], { fallisciPrime: 999 });
+  testo = await cerca(page, 'bagno');
+  ok('ma se non c\'era niente da ricordare non inventa',
+     !/avevo trovato/.test(testo) && /non ha risposto/.test(testo), testo.slice(0, 90));
+  /* E dice cosa è andato storto: «non risponde» nasconde la differenza fra
+     l'essere senza campo e l'essere stati messi in castigo da Overpass, e
+     quelle due cose si risolvono in modi diversi. Senza questa riga una
+     segnalazione dice solo «non funziona». */
+  ok('e dice cosa è andato storto, non solo che è andato storto',
+     /dettaglio:/.test(testo) && /429/.test(testo), testo.slice(-80));
+  await page.close();
+
+  // ══ 5-ter. LA MEMORIA COL NOME VECCHIO VALE PER IL RIPIEGO ═══════════
+  /* Il nome della cache cambia apposta quando si corregge una domanda, per
+     non riproporre risposte prese con quella sbagliata. Giusto — ma per il
+     RIPIEGO no: buttare via il passato proprio nel momento in cui la rete
+     non c'è vuol dire lasciare a mani vuote chi fino a ieri trovava quello
+     che cercava. È esattamente quello che è successo. */
+  page = await apri([], { fallisciPrime: 999 });
+  await page.evaluate(io => {
+    const vecchio = {};
+    vecchio['bagno|1500|tipo@' + io.lat.toFixed(4) + ',' + io.lng.toFixed(4)] = {
+      fam: 'bagno|1500|tipo', lat: io.lat, lng: io.lng, quando: Date.now() - 3 * 86400000,
+      lista: [{ lat: io.lat + 0.0009, lng: io.lng, nome: 'Bagno di ieri', extra: [] }]
+    };
+    localStorage.setItem('geppgo_vicini', JSON.stringify(vecchio));
+  }, IO);
+  testo = await cerca(page, 'bagno', true);
+  ok('anche la memoria salvata col nome vecchio serve da ripiego',
+     /Bagno di ieri/.test(testo), testo.slice(0, 110));
+  ok('e dice quanto è vecchia', /giorni fa/.test(testo), testo.slice(0, 110));
   await page.close();
 
   // ══ 6. IL TELEFONO NON MOLLA PRIMA DEL SERVER ════════════════════════
