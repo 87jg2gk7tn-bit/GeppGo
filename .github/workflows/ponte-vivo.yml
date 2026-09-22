@@ -34,7 +34,7 @@ jobs:
       - name: Chiedi al ponte
         run: |
           python3 - <<'FINE'
-          import json, re, urllib.request, urllib.error, time
+          import json, re, time, urllib.request, urllib.error, urllib.parse
 
           sorgente = open('Index 2.1.html', encoding='utf-8').read()
           # Il primo che compare e' la casella vuota di partenza: si vuole
@@ -119,6 +119,45 @@ jobs:
               print('  risponde in %.1fs, da «%s»: %s' % (quanto, d.get('da', '?'), nome or 'niente'))
               if not nome:
                   print('  ma il Colosseo si trova sempre: qualcosa non torna.'); guai += 1
+
+          # ── e i server della mappa, uno per uno ──────────────────────
+          # SERVE PERCHE' UNO PUO' MENTIRE BENE. Un server con il database
+          # vuoto risponde 200, senza nessun errore, con la lista vuota:
+          # "qui non c'e' niente" detto con la faccia seria. E' la risposta
+          # peggiore che si possa ricevere, perche' e' indistinguibile da
+          # quella giusta - a meno di guardare `timestamp_osm_base`, che in
+          # una risposta sana e' una data recente.
+          print()
+          print('— i server della mappa, uno per uno (stessa domanda)')
+          SERVER = [
+              'https://overpass-api.de/api/interpreter',
+              'https://overpass.kumi.systems/api/interpreter',
+              'https://overpass.private.coffee/api/interpreter',
+              'https://overpass.osm.jp/api/interpreter',
+              'https://overpass.osm.ch/api/interpreter',
+          ]
+          for s in SERVER:
+              casa = s.split('/')[2]
+              richiesta = urllib.request.Request(
+                  s, data=('data=' + urllib.parse.quote(q)).encode(),
+                  headers={'Content-Type': 'application/x-www-form-urlencoded',
+                           'User-Agent': 'GeppGo/1.0 (controllo; merati.giacomo94@gmail.com)'})
+              via = time.time()
+              try:
+                  with urllib.request.urlopen(richiesta, timeout=40) as rr:
+                      dd = json.loads(rr.read().decode())
+                  quando = (dd.get('osm3s') or {}).get('timestamp_osm_base', '?')
+                  n = len(dd.get('elements') or [])
+                  nota = ''
+                  if not re.match(r'^\d{4}-\d{2}-\d{2}T', str(quando)):
+                      nota = '  ← NON È UNA DATA: database vuoto o rotto'; guai += 1
+                  elif n == 0:
+                      nota = '  ← zero in Duomo, non torna'
+                  print('  %-28s %5.1fs  %4d posti  dati al %s%s' % (casa, time.time() - via, n, quando, nota))
+                  if dd.get('remark'):
+                      print('      remark: ' + str(dd['remark'])[:140])
+              except Exception as e:
+                  print('  %-28s  non risponde: %s' % (casa, str(e)[:60]))
 
           print()
           if guai:
