@@ -1,0 +1,116 @@
+# Il ponte risponde? — si chiede da qui, anche dal telefono.
+#
+# PERCHE' SERVE. Il ponte e' l'unico pezzo di GeppGo che non sta dentro
+# l'app: gira su Supabase, e dall'app non si vede se e' su o giu'. Quando una
+# ricerca non trova niente la domanda e' sempre la stessa — «e' il ponte che
+# non risponde, o non c'e' davvero niente li' intorno?» — e senza un modo di
+# chiederlo si tira a indovinare, che e' il peggior modo di cercare un guasto.
+#
+# COME SI USA. Actions → «Il ponte risponde?» → Run workflow. Si fa dal
+# telefono, come per pubblicare le funzioni. Alla fine c'e' scritto in
+# italiano com'e' andata.
+#
+# PERCHE' NON STA DENTRO «prove». Le prove non devono parlare col servizio
+# vero: risponde il mondo e non il caso che si voleva provare, cambia da
+# un'ora all'altra, e una prova che dipende dalla rete diventa rossa per
+# colpa di qualcun altro. Questo invece PARLA apposta col servizio vero, e
+# percio' si lancia a mano quando serve saperlo.
+#
+# Niente segreti qui dentro: la chiave anonima e' pubblica per come e' fatta
+# — sta gia' dentro l'app, in chiaro, perche' il telefono deve poterla usare
+# — e si legge dall'app invece di riscriverla, cosi' non puo' divergere.
+
+name: Il ponte risponde?
+
+on:
+  workflow_dispatch:
+
+jobs:
+  chiedi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Chiedi al ponte
+        run: |
+          python3 - <<'FINE'
+          import json, re, urllib.request, urllib.error, time
+
+          sorgente = open('Index 2.1.html', encoding='utf-8').read()
+          # Il primo che compare e' la casella vuota di partenza: si vuole
+          # quello vero, che e' l'ultimo assegnato in chiaro.
+          def ultimo(nome):
+              v = [x for x in re.findall(r'window\.' + nome + r'\s*=\s*"([^"]*)"', sorgente) if x]
+              return v[-1] if v else ''
+
+          base = ultimo('GEPPGO_SUPA_URL').rstrip('/')
+          chiave = ultimo('GEPPGO_SUPA_KEY')
+          if not base or not chiave:
+              print("Nell'app non c'e' scritto a quale ponte parlare. Niente da chiedere.")
+              raise SystemExit(1)
+          print('Ponte:', base.split('//')[-1])
+          print()
+
+          def chiedi(strada, corpo):
+              richiesta = urllib.request.Request(
+                  base + '/functions/v1/' + strada,
+                  data=json.dumps(corpo).encode(),
+                  headers={'Content-Type': 'application/json',
+                           'apikey': chiave, 'Authorization': 'Bearer ' + chiave})
+              via = time.time()
+              try:
+                  with urllib.request.urlopen(richiesta, timeout=60) as r:
+                      return json.loads(r.read().decode()), time.time() - via, None
+              except urllib.error.HTTPError as e:
+                  return None, time.time() - via, str(e.code) + ' ' + e.read().decode()[:200]
+              except Exception as e:
+                  return None, time.time() - via, str(e)
+
+          guai = 0
+
+          # ── le ricerche qui intorno ──────────────────────────────────
+          # Una domanda della stessa forma di quelle dell'app, su una piazza
+          # dove i bancomat ci sono di sicuro: se non torna niente, il guasto
+          # e' nostro e non della mappa.
+          q = ('[out:json][timeout:20];('
+               'nwr["amenity"="atm"](around:1500,45.464,9.190);'
+               'nwr["amenity"="bank"](around:1500,45.464,9.190);'
+               ');out center 150;')
+          d, quanto, guaio = chiedi('vicini', {'q': q})
+          print('— le ricerche qui intorno (bancomat in Duomo, Milano)')
+          if guaio:
+              print('  NON RISPONDE:', guaio); guai += 1
+          elif d.get('errore'):
+              print('  risponde, ma dice di no:', d['errore']); guai += 1
+          else:
+              quanti = len(((d.get('dati') or {}).get('elements')) or d.get('elements') or [])
+              print('  risponde in %.1fs, da «%s», %d posti trovati' % (quanto, d.get('da', '?'), quanti))
+              if quanti == 0:
+                  print('  ma a zero posti in Duomo qualcosa non torna.'); guai += 1
+
+          # ── gli indirizzi ────────────────────────────────────────────
+          print()
+          print('— gli indirizzi e gli alberghi (Colosseo)')
+          u = 'https://nominatim.openstreetmap.org/search?q=Colosseo&format=json&limit=1'
+          d, quanto, guaio = chiedi('geo', {'url': u})
+          if guaio:
+              print('  NON RISPONDE:', guaio); guai += 1
+          elif d.get('errore'):
+              print('  risponde, ma dice di no:', d['errore']); guai += 1
+          else:
+              dati = d.get('dati') or []
+              nome = (dati[0].get('display_name', '') if dati else '')[:60]
+              print('  risponde in %.1fs, da «%s»: %s' % (quanto, d.get('da', '?'), nome or 'niente'))
+              if not nome:
+                  print('  ma il Colosseo si trova sempre: qualcosa non torna.'); guai += 1
+
+          print()
+          if guai:
+              print('IL PONTE NON STA FACENDO IL SUO LAVORO.')
+              print('L\'app continua a funzionare lo stesso — chiama la mappa da sola —')
+              print('ma senza la memoria condivisa, e con le chiamate contate a testa.')
+              raise SystemExit(1)
+          print('Il ponte risponde, tutto a posto.')
+          print('La prima volta dice «overpass» o «nominatim», dalla seconda «memoria»:')
+          print('vuol dire che la risposta se l\'e\' tenuta da parte per tutti.')
+          FINE

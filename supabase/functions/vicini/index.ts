@@ -35,7 +35,7 @@
    se', importato anche dalla prova: qui non c'e' Deno, e una regola di
    sicurezza che non si riesce a provare e' una regola di cui non si sa
    niente. Vedi test/prova-ponte.js. */
-import { domandaAmmessa } from './domanda.mjs';
+import { domandaAmmessa, PONTE_ATTESA_SERVER_MS, PONTE_BUDGET_MS } from './domanda.mjs';
 
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
@@ -68,10 +68,24 @@ async function impronta(q: string): Promise<string> {
    telefoni. */
 async function chiediAOverpass(q: string): Promise<unknown> {
   let ultimo: unknown = null;
+  const inizio = Date.now();
   for (const url of OVERPASS) {
+    /* IL PONTE DEVE STARE DENTRO LA PAZIENZA DEL TELEFONO. Prima provava
+       cinque server da venticinque secondi l'uno, in fila: fino a due
+       minuti, mentre il telefono lo aspettava ventuno. Cosi' il ponte
+       perdeva SEMPRE quando la mappa arrancava - proprio il caso per cui
+       esiste - e il telefono tornava a chiamare da solo.
+       QUELLO CHE ANCORA NON VA: con i tempi stretti, se Overpass e' lento
+       davvero il ponte si arrende a diciotto secondi e non scrive niente in
+       memoria - quindi anche la persona dopo ripaga tutta l'attesa. La
+       risposta giusta e' lasciar finire la richiesta in sottofondo
+       (EdgeRuntime.waitUntil) e scrivere la memoria comunque, dicendo al
+       telefono "sto ancora cercando" invece di "sono rotto". Non c'e'
+       ancora. */
+    if (Date.now() - inizio > PONTE_BUDGET_MS) break;
     try {
       const ctrl = new AbortController();
-      const taglia = setTimeout(() => ctrl.abort(), 25000);
+      const taglia = setTimeout(() => ctrl.abort(), PONTE_ATTESA_SERVER_MS);
       const res = await fetch(url, {
         method: 'POST',
         signal: ctrl.signal,

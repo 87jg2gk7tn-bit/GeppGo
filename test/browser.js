@@ -44,9 +44,62 @@ async function apriBrowser(opzioni = {}) {
      perche' il server delle prove parla inglese. Chi vuole un'altra lingua la
      chiede, e la sua scelta vince. */
   const nuovaPagina = browser.newPage.bind(browser);
-  browser.newPage = (opz = {}) => nuovaPagina(Object.assign({ locale: 'it-IT' }, opz));
+  browser.newPage = async (opz = {}) => await recinta(await nuovaPagina(Object.assign({ locale: 'it-IT' }, opz)));
   return browser;
 }
+
+/* IL RECINTO: dalle prove non si esce in rete.
+ *
+ * COM'E' ANDATA. Da quando c'e' il ponte, l'app prima di chiedere alla mappa
+ * chiede a noi - a cyolhqndurgwbivxcssf.supabase.co, il servizio VERO, quello
+ * che usano i telefoni delle persone. Le prove intercettavano Overpass e non
+ * il ponte: su questo computer la chiamata al ponte non passa (e allora l'app
+ * ripiegava su Overpass, che era intercettato, e le prove passavano), ma sul
+ * server delle prove automatiche la rete c'e' davvero. Li' il ponte
+ * rispondeva sul serio, con quello che c'e' davvero intorno a quelle
+ * coordinate, il finto Overpass non veniva interrogato mai, e cinque prove
+ * diventavano rosse - una schiantandosi su `chiamate[0]` che non esisteva,
+ * perche' nessuna chiamata era passata di li'.
+ *
+ * MA IL ROSSO ERA IL MENO. Una prova che parla col servizio vero non prova
+ * niente: risponde il mondo, non il caso che si voleva provare, e il
+ * risultato cambia da un'ora all'altra. E scriveva anche nella memoria
+ * condivisa vera, quella di chi usa l'app.
+ *
+ * COSA PASSA. Solo il guscio: i pacchetti e i caratteri delle CDN, che sono
+ * codice e non dati nostri. Tutto il resto - il ponte, Overpass, Nominatim,
+ * il meteo, le mattonelle - o se lo intercetta la prova, o non succede.
+ * Le rotte che la prova aggiunge dopo vincono su questa, perche' Playwright
+ * guarda prima l'ultima registrata: il recinto e' il ripiego, non un muro.
+ *
+ * Il ponte e' chiuso APPOSTA anche qui: cosi' le prove guardano la strada
+ * diretta, che e' quella che resta quando il ponte non c'e'. Che il ponte
+ * funzioni lo prova test/prova-ponte.js, che se lo intercetta da solo. */
+const FUORI_AMMESSI = new Set([
+  'unpkg.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'
+]);
+
+async function recinta(page) {
+  const fermate = [];
+  page.__fuori = fermate;
+  /* Si aspetta che la rotta sia davvero posata prima di restituire la
+     pagina: registrarla e andare avanti lascia aperta la finestra in cui la
+     prova naviga e il recinto non c'e' ancora. */
+  await page.route('**/*', route => {
+    const u = route.request().url();
+    let url;
+    try { url = new URL(u); } catch (e) { return route.continue(); }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return route.continue();
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return route.continue();
+    if (FUORI_AMMESSI.has(url.hostname)) return route.continue();
+    fermate.push(u);
+    return route.abort('blockedbyclient');
+  });
+  return page;
+}
+
+/* Quello che il recinto ha fermato, per chi lo vuole controllare. */
+function fuoriFermate(page) { return page.__fuori || []; }
 
 /* La mappa arriva da una CDN che qui non e' raggiungibile: le prove la
    servono dal pacchetto installato. Il percorso lo chiede Node, invece di
@@ -72,4 +125,4 @@ function cartellaFoto() {
   return dir;
 }
 
-module.exports = { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto };
+module.exports = { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto, fuoriFermate, FUORI_AMMESSI };

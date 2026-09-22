@@ -70,6 +70,80 @@ const stato = {
   cattive.forEach(([che, q]) =>
     ok(`e ${che} viene respinta`, typeof domandaAmmessa(q) === 'string', String(domandaAmmessa(q))));
 
+  // ══ E LE DOMANDE VERE, NON QUELLA SCRITTA QUI SOPRA ══════════════════
+  /* La riga qui sopra guarda una domanda scritta a mano, che somiglia a
+     quelle dell'app. Somigliare non basta: il giorno che una ricerca cambia
+     forma — un filtro nuovo, una parentesi in piu' — il controllo del ponte
+     la respingerebbe, il ponte direbbe di no a tutto, e il telefono
+     ripiegherebbe in silenzio sulla strada diretta. Cioe' il ponte sarebbe
+     spento senza che nessuno se ne accorga: nessun errore, solo l'app com'era
+     prima. Percio' qui le domande NON si scrivono: si fanno fare all'app,
+     tutte quelle di tutte le voci, e si passano al controllo vero. */
+  {
+    const pq = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const dette = [];
+    await pq.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await pq.route('**/api/interpreter', ro => {
+      dette.push(decodeURIComponent(ro.request().postData() || '').replace(/^data=/, ''));
+      ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: [] }) });
+    });
+    await pq.addInitScript(s => {
+      localStorage.setItem('geppgo2', JSON.stringify(s));
+      navigator.geolocation.getCurrentPosition = cb => cb({ coords: { latitude: 45.59217, longitude: 9.22839 } });
+    }, stato);
+    await pq.goto(APP, { waitUntil: 'domcontentloaded' });
+    await pq.waitForFunction(() => typeof window.cercaVicino === 'function', { timeout: 20000 });
+    /* Le voci si chiedono all'APP, non si elencano qui: una voce nuova
+       entrerebbe in app e questa prova continuerebbe a controllare le
+       vecchie, che e' il modo di avere una prova verde su un ponte rotto. */
+    const voci = await pq.evaluate(() => Object.keys(VICINI));
+    for (const k of voci) {
+      await pq.evaluate(kk => { localStorage.removeItem(VICINI_CACHE_CHIAVE); myPos = null; myPosAt = 0; cercaVicino(kk); }, k);
+      await pq.waitForFunction(() => !/Cerco/.test(document.getElementById('bagnoBody').innerText), { timeout: 90000 });
+    }
+    const uniche = [...new Set(dette)];
+    const respinte = uniche.map(q => [q, domandaAmmessa(q)]).filter(([, g]) => g);
+    ok('le voci da cercare si leggono dall\'app, non da qui', voci.length > 0, voci.join(' '));
+    ok('e OGNI domanda che l\'app fa davvero passa il controllo del ponte',
+       uniche.length > 0 && respinte.length === 0,
+       respinte.length ? `respinta (${respinte[0][1]}): ${respinte[0][0].slice(0, 90)}`
+                       : `${uniche.length} domande vere, nessuna respinta`);
+    await pq.close();
+  }
+
+  // ══ IL PONTE DEVE STARE DENTRO LA PAZIENZA DEL TELEFONO ══════════════
+  /* IL DIFETTO, trovato dal vivo: il ponte provava cinque server da
+     venticinque secondi l'uno IN FILA — fino a due minuti — mentre il
+     telefono lo aspettava ventuno. Quando la mappa arrancava il ponte
+     perdeva sempre, per costruzione: il telefono lo mollava, lo segnava
+     rotto per un minuto e tornava a chiamare da solo. Cioè il ponte non
+     serviva proprio nel caso per cui esiste.
+     I due numeri vivono in due file diversi — uno nell'app, uno nella
+     funzione — e nessuno li confrontava. Adesso questa riga lo fa. */
+  const tempiPonte = await import('../supabase/functions/vicini/domanda.mjs');
+  {
+    const p0 = await browser.newPage();
+    /* Si blocca solo quello che uscirebbe davvero in rete, non tutto:
+       bloccando tutto la pagina non si carica e la costante si legge
+       `null` — cioè la prova diventa rossa per colpa sua. */
+    await p0.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await p0.route(/tile\.openstreetmap\.org|api\.interpreter|nominatim|photon/, ro => ro.abort());
+    await p0.goto(APP, { waitUntil: 'domcontentloaded' });
+    await p0.waitForFunction(() => typeof VICINI_ATTESA_MS === 'number', { timeout: 20000 });
+    const pazienza = await p0.evaluate(() => VICINI_ATTESA_MS);
+    ok('il ponte fa in tempo, prima che il telefono si stanchi di aspettarlo',
+       pazienza != null && tempiPonte.PONTE_BUDGET_MS < pazienza,
+       `ponte al massimo ${tempiPonte.PONTE_BUDGET_MS}ms, telefono aspetta ${pazienza}ms`);
+    /* E un server solo non si mangia tutto il budget: se no il secondo non
+       verrebbe mai provato, e avere cinque indirizzi non servirebbe. */
+    ok('e un server lento non si mangia tutto il tempo del ponte',
+       tempiPonte.PONTE_ATTESA_SERVER_MS * 2 <= tempiPonte.PONTE_BUDGET_MS,
+       `${tempiPonte.PONTE_ATTESA_SERVER_MS}ms per server su ${tempiPonte.PONTE_BUDGET_MS}ms`);
+    await p0.close();
+  }
+
   // ══ IL PONTE DEGLI INDIRIZZI (Nominatim, Photon) ═════════════════════
   /* E' il piu' urgente dei due: Nominatim e' usato in DICIASSETTE punti
      dell'app — la ricerca degli hotel, gli indirizzi, la città di ogni
