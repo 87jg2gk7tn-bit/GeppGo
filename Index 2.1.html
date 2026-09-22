@@ -11792,12 +11792,18 @@ async function viciniIntorno(lat,lng){
 const OVERPASS=[
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  /* Uno in Giappone e uno in Svizzera: quando quello tedesco e' in coda
-     questi due spesso sono liberi, e per chi usa l'app dall'altra parte del
-     mondo sono anche piu' vicini. */
-  'https://overpass.osm.jp/api/interpreter',
-  'https://overpass.osm.ch/api/interpreter'
+  'https://overpass.private.coffee/api/interpreter'
+  /* C'ERANO ANCHE QUELLO GIAPPONESE E QUELLO SVIZZERO, e sono stati tolti
+     dopo averli interrogati uno per uno.
+     overpass.osm.ch rispondeva in SEI DECIMI di secondo, senza nessun
+     errore, con la lista vuota: il suo database era vuoto. E siccome qui
+     sotto i server corrono e vince il primo che risponde, vinceva sempre
+     lui — quindi la risposta che arrivava era «qui non c'e' niente», per
+     qualunque cosa si cercasse e ovunque si fosse. E' molto probabilmente
+     il bancomat davanti a casa che non si trovava.
+     overpass.osm.jp ha un certificato che non si verifica.
+     Il controllo qui sotto resta comunque: il prossimo a guastarsi sara' un
+     altro, e non ci sara' nessuno a interrogarli uno per uno. */
 ];
 /* Quanto si aspetta un server prima di piantarlo lì e provare il prossimo.
    Senza questo, un server che non risponde tiene la richiesta appesa finché
@@ -11937,9 +11943,37 @@ async function overpassDalPonte(q){
        qualche secondo invece di far premere un tasto alla persona. */
     if(d&&d.ancora){ponteAncora=Date.now();const e=new Error('il ponte sta ancora cercando');e.ancora=true;throw e;}
     if(d&&d.errore)throw new Error('ponte: '+d.errore);
+    /* Anche quello che arriva dal ponte passa dallo stesso controllo. Il
+       ponte filtra gia' — ma una risposta vecchia, presa in memoria prima
+       che il controllo esistesse, arriverebbe ancora avvelenata. */
+    if(!rispostaAttendibile(d))throw new Error('ponte: risposta senza data dei dati');
     return d;
   }catch(e){if(!e.ancora)ponteRotto=Date.now();throw e;}
   finally{clearTimeout(taglia);}
+}
+/* UN «NON C'È NIENTE» SI CREDE SOLO A CHI SA DIRE DI QUANDO SONO I SUOI DATI.
+ *
+ * Trovato dal vivo interrogando i server uno per uno. Uno di loro rispondeva
+ * 200, senza nessun errore, in sei decimi di secondo, con la lista vuota: il
+ * suo database era vuoto. Non c'e' nessun errore da guardare - l'unica cosa
+ * che lo smaschera e' la data dei dati, `osm3s.timestamp_osm_base`, che in
+ * una risposta sana e' una data recente e li' era `117204`.
+ *
+ * Una risposta che CONTIENE dei posti si prende comunque, qualunque cosa
+ * dica di se': i posti o ci sono o non ci sono, e non si butta via roba
+ * buona per un'etichetta storta. Cosi' questa regola non puo' far peggio di
+ * prima — puo' solo smettere di credere a un «niente» che non e' vero.
+ *
+ * LA STESSA REGOLA STA NEL PONTE, in supabase/functions/vicini/memoria.mjs.
+ * Sono due copie perche' l'app e' un file solo e non puo' importare niente;
+ * che non divergano lo controlla `prova-bugie`, che passa la stessa tabella
+ * di casi a tutte e due e pretende la stessa risposta. */
+function rispostaAttendibile(d){
+  if(!d||typeof d!=='object')return false;
+  if(!Array.isArray(d.elements))return false;
+  if(d.remark)return false;
+  if(d.elements.length)return true;
+  return /^\d{4}-\d{2}-\d{2}T/.test(String((d.osm3s||{}).timestamp_osm_base));
 }
 function overpassUnGiro(q){
   const ora=Date.now();
@@ -11963,6 +11997,13 @@ function overpassUnGiro(q){
             const e=new Error(res.status+' da '+new URL(url).host);e.stato=res.status;throw e;
           }
           return res.json();
+        })
+        .then(dati=>{
+          /* Chi non sa dire di quando sono i suoi dati non ha risposto: si
+             passa al prossimo, come se fosse caduto. E non lo si segna come
+             "quello buono", se no lo si richiederebbe per primo ogni volta. */
+          if(!rispostaAttendibile(dati))throw new Error('database vuoto su '+new URL(url).host);
+          return dati;
         })
         .then(dati=>{if(fatto)return;chiudi();overpassBuono=url;stop.abort();risolvi(dati);})
         .catch(e=>{
@@ -17884,7 +17925,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-23 01:20';
+const VERSIONE_APP='2026-09-23 02:40';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

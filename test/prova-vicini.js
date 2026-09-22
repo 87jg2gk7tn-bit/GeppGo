@@ -2,7 +2,7 @@
    Overpass non è raggiungibile da qui: si intercetta la chiamata, si legge la
    domanda che parte e si risponde come farebbe lui. */
 const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
-const { rispondi } = require('./overpass-finto');
+const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
 const stato = {trips:[{id:1730000000001,name:'Casa',destination:'Milano',currency:'EUR',status:'open',start:'2026-09-01',end:'2026-09-02',participants:[{id:'p1',name:'Gepp'}],suggested:[],pois:[],expenses:[],tickets:[],hotels:[],weather:{},createdAt:1,days:[{id:'d1',date:new Date().toISOString().split('T')[0],title:'',activities:[]}]}],currentTripId:1730000000001,settings:{proxRadius:200},myName:'Gepp'};
@@ -44,7 +44,7 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
          combaciava, e non sapeva cosa fossero la presenza di una chiave
          e la negazione. */
       const dentro = rispondi(q, daUsare);
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: dentro }) });
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass(dentro)) });
     });
 
     await page.addInitScript(s => {

@@ -18,6 +18,8 @@
  * per provarla. Cosi' la regola e' UNA: la usa il server, la prova Node, e
  * non possono divergere.
  */
+const { comeOverpass, comeIlServerRotto } = require('./overpass-finto');
+
 (async () => {
   const { cheFarne, eUnSegnale, SEGNALE, GIORNI, ORE_VUOTO, SEGNALE_VALE_MS, PONTE_SOTTOFONDO_MS }
     = await import('../supabase/functions/vicini/memoria.mjs');
@@ -29,8 +31,12 @@
   const ADESSO = Date.parse('2026-09-23T12:00:00Z');
   const fa = ms => new Date(ADESSO - ms).toISOString();
   const con = (risposta, quantoFa) => cheFarne({ risposta, quando: fa(quantoFa) }, ADESSO);
-  const posti = { elements: [{ type: 'node', id: 1, tags: { amenity: 'atm' } }] };
-  const nessunPosto = { elements: [] };
+  /* Le risposte si costruiscono come le fa Overpass davvero — con la data
+     dei dati dentro — e non come faceva comodo: da quando l'app non crede a
+     un «non c'è niente» che non sa dire di quando è, una risposta finta
+     senza data non è piu' una risposta. Vedi prova-bugie. */
+  const posti = comeOverpass([{ type: 'node', id: 1, tags: { amenity: 'atm' } }]);
+  const nessunPosto = comeOverpass([]);
 
   // ── il segnale non è una risposta ────────────────────────────────────
   /* La riga che conta. Senza, il segnale passa per «qui non c'è niente» e
@@ -72,6 +78,15 @@
   ok('e un «non c\'è niente» scade molto prima di una risposta piena',
      ORE_VUOTO * 3600000 < GIORNI * 86400000,
      `${ORE_VUOTO} ore contro ${GIORNI} giorni`);
+
+  // ── e una bugia già creduta una volta non si ripete ──────────────────
+  /* Le risposte del server col database vuoto sono finite in memoria, e da
+     lì sarebbero state servite a tutti per ore — con la stessa faccia seria,
+     ma molto più in fretta. Controllando anche in LETTURA, le righe già
+     avvelenate si curano da sole e nessuno deve andare a cancellarle. */
+  const avvelenata = con(comeIlServerRotto(), 60000);
+  ok('una risposta avvelenata già in memoria non viene servita',
+     avvelenata.usa === false && avvelenata.chiedi === true, JSON.stringify(avvelenata));
 
   // ── e quando in memoria non c'è niente ───────────────────────────────
   ok('senza niente in memoria si va a chiedere',

@@ -16,6 +16,7 @@
    Le domande a Overpass si guardano una per una: è l'unico modo di sapere
    che l'app ha davvero allargato il giro, invece di dirlo e basta. */
 const { apriBrowser, APP, cartellaFoto } = require('./browser');
+const { comeOverpass } = require('./overpass-finto');
 
 const stato = {
   trips: [{
@@ -55,7 +56,7 @@ const METRO = [
       const q = decodeURIComponent(route.request().postData() || '').replace(/^data=/, '');
       page._domande.push(q);
       await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ elements: risposta(q, page._domande.length) }) });
+        body: JSON.stringify(comeOverpass(risposta(q, page._domande.length))) });
     });
     await page.addInitScript(s => {
       localStorage.setItem('geppgo2', JSON.stringify(s));

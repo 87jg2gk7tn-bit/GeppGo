@@ -46,6 +46,38 @@ export function eUnSegnale(risposta) {
   return !!(risposta && risposta.inCorso === true);
 }
 
+/* QUANDO UNA RISPOSTA DI OVERPASS NON È UNA RISPOSTA.
+ *
+ * Trovato dal vivo, ed è probabilmente il motivo per cui «il bancomat ce l'ho
+ * davanti a casa e non lo trova». Uno dei server della mappa —
+ * `overpass.osm.ch` — rispondeva 200, senza nessun errore, in SEI DECIMI di
+ * secondo, con la lista vuota: «qui non c'è niente», detto con la faccia
+ * seria. Il suo database era vuoto. Ed essendo il più veloce di tutti vinceva
+ * ogni corsa fra i server, quindi la risposta che arrivava era sempre la sua.
+ *
+ * Non c'è nessun errore da guardare. L'unica cosa che lo smaschera è la data
+ * dei dati: `osm3s.timestamp_osm_base`, che in una risposta sana è una data
+ * recente e lì era `117204`. Quindi la regola è questa, e solo questa:
+ *
+ *   UN «NON C'È NIENTE» SI CREDE SOLO A CHI SA DIRE DI QUANDO SONO I SUOI
+ *   DATI.
+ *
+ * Una risposta che contiene dei posti si prende comunque, qualunque cosa dica
+ * di sé: i posti o ci sono o non ci sono, e non si butta via roba buona per
+ * via di un'etichetta storta. Così la regola non può far peggio di prima —
+ * può solo smettere di credere a un «niente» che non è vero.
+ *
+ * `remark` è il modo che ha Overpass di dire «non ce l'ho fatta» dentro una
+ * risposta riuscita: anche quello non è una risposta. */
+export function rispostaAttendibile(d) {
+  if (!d || typeof d !== 'object') return false;
+  if (!Array.isArray(d.elements)) return false;
+  if (d.remark) return false;
+  if (d.elements.length) return true;
+  const quando = (d.osm3s || {}).timestamp_osm_base;
+  return /^\d{4}-\d{2}-\d{2}T/.test(String(quando));
+}
+
 /* Cosa fare, data la riga che c'è in memoria (o niente) e che ora è.
  *
  *   usa         → rispondere con questa, senza chiedere fuori
@@ -63,6 +95,14 @@ export function cheFarne(riga, adesso = Date.now()) {
      risposta senza niente dentro, e verrebbe servito per sei ore. */
   if (eUnSegnale(riga.risposta))
     return { usa: false, chiedi: true, giaInCorso: eta < SEGNALE_VALE_MS };
+
+  /* E NON SI SERVE UNA BUGIA CHE SI È GIÀ CREDUTA UNA VOLTA. Le risposte
+     vuote del server col database vuoto sono finite in memoria, e da lì
+     sarebbero state servite a tutti per ore — con la stessa faccia seria,
+     ma molto più in fretta. Controllando anche in lettura, le righe già
+     avvelenate si curano da sole: nessuno deve andare a cancellarle. */
+  if (!rispostaAttendibile(riga.risposta))
+    return { usa: false, chiedi: true, giaInCorso: false };
 
   const quanti = (riga.risposta.elements || []).length;
   const scadenza = quanti ? GIORNI * 86400000 : ORE_VUOTO * 3600000;

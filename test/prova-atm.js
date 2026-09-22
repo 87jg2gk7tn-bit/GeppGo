@@ -1,4 +1,5 @@
 const { apriBrowser, APP, RADICE, cartellaFoto } = require('./browser');
+const { comeOverpass } = require('./overpass-finto');
 const OUT = cartellaFoto();
 
 const stato = {
@@ -25,15 +26,14 @@ const stato = {
     ultimaQuery = decodeURIComponent(route.request().postData() || '').replace(/^data=/, '');
     await route.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ elements: [
+      body: JSON.stringify(comeOverpass([
         { type: 'node', id: 1, lat: 35.6586, lon: 139.7454,
           tags: { amenity: 'atm', operator: 'Seven Bank', opening_hours: '24/7', fee: 'no' } },
         { type: 'way', id: 2, center: { lat: 35.6600, lon: 139.7470 },
           tags: { amenity: 'bank', atm: 'yes', name: 'MUFG Bank', wheelchair: 'yes' } },
         { type: 'node', id: 3, lat: 35.6700, lon: 139.7500,
           tags: { shop: 'convenience', atm: 'yes', name: 'FamilyMart', opening_hours: '24/7' } }
-      ] })
-    });
+      ])) });
   });
 
   await page.addInitScript(s => {

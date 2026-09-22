@@ -1,4 +1,5 @@
 const { apriBrowser, APP } = require('./browser');
+const { comeOverpass } = require('./overpass-finto');
 
 const stato = {
   trips: [{ id: 101, name: 'Prova', destination: 'Tokyo', currency: 'JPY', status: 'open',
@@ -22,10 +23,9 @@ const stato = {
     chiamate++;
     await route.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ elements: [
+      body: JSON.stringify(comeOverpass([
         { type: 'node', id: 1, lat: 35.6586, lon: 139.7454, tags: { amenity: 'atm', operator: 'Seven Bank' } }
-      ] })
-    });
+      ])) });
   });
 
   await page.addInitScript(s => {
@@ -89,7 +89,7 @@ const stato = {
   let vuote = 0;
   await page.route('**/api/interpreter', async route => {
     vuote++;
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ elements: [] }) });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass([])) });
   });
   await cerca(35.9000, 139.9000);
   ok('una ricerca a vuoto si fa una volta', vuote === 1, vuote + ' chiamate');
