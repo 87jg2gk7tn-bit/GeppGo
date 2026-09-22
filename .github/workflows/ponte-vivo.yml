@@ -82,11 +82,27 @@ jobs:
               print('  NON RISPONDE:', guaio); guai += 1
           elif d.get('errore'):
               print('  risponde, ma dice di no:', d['errore']); guai += 1
-          else:
-              quanti = len(((d.get('dati') or {}).get('elements')) or d.get('elements') or [])
+          elif d.get('ancora'):
+              # Non e' un guasto: la mappa arranca e il ponte sta cercando in
+              # sottofondo. Fra un minuto la stessa domanda risponde dalla
+              # memoria - e se non lo fa, allora si' che c'e' un guaio.
+              print('  sta ancora cercando (%s). Aspetto e richiedo...' % d.get('errore', ''))
+              time.sleep(40)
+              d, quanto, guaio = chiedi('vicini', {'q': q})
+          if not guaio and d is not None and not d.get('errore') and not d.get('ancora'):
+              quanti = len(d.get('elements') or [])
               print('  risponde in %.1fs, da «%s», %d posti trovati' % (quanto, d.get('da', '?'), quanti))
-              if quanti == 0:
-                  print('  ma a zero posti in Duomo qualcosa non torna.'); guai += 1
+              # QUANDO OVERPASS NON CE LA FA, RISPONDE 200 CON LA LISTA VUOTA
+              # e il motivo dentro `remark`. Senza guardarlo, "non ce l'ho
+              # fatta" si legge come "non c'e' niente" - che e' la bugia
+              # peggiore che questa app possa dire.
+              if d.get('remark'):
+                  print('  ATTENZIONE, Overpass dice: ' + str(d['remark'])[:200]); guai += 1
+              elif quanti == 0:
+                  print('  ma a zero posti in Duomo qualcosa non torna.')
+                  print('  risposta grezza: ' + json.dumps(d)[:300]); guai += 1
+          elif not guaio and d is not None and d.get('ancora'):
+              print('  dopo quaranta secondi sta ancora cercando: ' + str(d.get('errore'))[:120]); guai += 1
 
           # ── gli indirizzi ────────────────────────────────────────────
           print()
