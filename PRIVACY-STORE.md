@@ -40,8 +40,36 @@ il suo account). **Used for tracking**: **NO**.
 
 La posizione **viene usata ma non conservata da noi**: si prende quando serve
 (cercare un bagno, un bancomat, il meteo, avvisare che sei vicino a una
-tappa), si manda ai servizi che rispondono, e finisce lì. Sui server di GeppGo
-non arriva e non resta niente: nessuno storico di dove sei stato.
+tappa), si manda ai servizi che rispondono, e finisce lì.
+
+**Una cosa è cambiata e va detta.** Le ricerche «qui intorno» non partono più
+dal telefono verso OpenStreetMap: passano da una funzione nostra su Supabase,
+che le gira alla mappa una volta sola per tutti e tiene da parte la risposta.
+È stato necessario perché i servizi di OpenStreetMap sono tenuti su da
+volontari e le loro regole chiedono che un'app diffusa non li chiami da ogni
+telefono — con l'app sullo store si sarebbe rotta per tutti.
+
+Quindi una posizione **passa** da un server nostro. Non la tua, però, e la
+differenza è sostanziale per la classificazione degli store:
+
+- il telefono **arrotonda il punto a una griglia di circa 200 metri** prima di
+  mandare la domanda: arriva il quadretto, non la persona dentro al quadretto;
+- non viaggia **nessun identificativo** — né email, né account, né id del
+  dispositivo;
+- nel database resta **solo la risposta della mappa** (dati pubblici di
+  OpenStreetMap) con l'impronta della domanda come etichetta. **Non esiste una
+  colonna «chi»**: il dato non c'è, quindi non è collegabile a una persona;
+- le righe si buttano dopo **trenta giorni**.
+
+Nella lingua degli store: la posizione **esce** dal telefono, quindi va
+dichiarata (ed è dichiarata). Ma non è **linked to the user**, perché non
+esiste nessun identificativo con cui collegarla, e non è **used for
+tracking**, perché non lascia nessuno storico di dove sei stato — una
+coordinata arrotondata senza autore, in una tabella senza colonna «chi», non
+ricostruisce un percorso.
+
+Se il ponte non risponde, l'app torna a chiedere direttamente alla mappa: il
+comportamento di prima resta come rete di sicurezza.
 
 Una cosa resta **sul telefono e basta**: la cache delle ricerche vicine. Per
 non chiedere due volte alla stessa mappa cosa c'è intorno, l'app tiene per un

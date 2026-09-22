@@ -1628,6 +1628,50 @@ qualcuno che risponde".
   che accetta sia `="x"` sia `~"^(x|y)$"`, e dove si puo' si guarda il
   RISULTATO: se la banca e' un contorno e si trova, la domanda chiede i
   contorni — non serve leggere come l'ha scritto.
+- **⚠️⚠️ I SERVIZI GRATUITI SU CUI POGGIA L'APP NON REGGONO LO STORE, e non
+  e' un problema di ottimizzazione.** Nominatim (**17 punti** nell'app: hotel,
+  indirizzi, geocodifica dei viaggi) permette **una richiesta al secondo** e
+  sconsiglia esplicitamente l'uso da app; Overpass e' volontari senza
+  garanzie; `tile.openstreetmap.org` — lo sfondo della mappa — vieta le app ad
+  alto traffico; `router.project-osrm.org` e' dichiarato «non per produzione».
+  Alleggerire le domande fa guadagnare tempo ma non cambia il problema: **non
+  e' quanto pesa una chiamata, e' quante ne fanno diecimila telefoni.**
+- **La risposta e' un ponte con memoria condivisa, non un fornitore diverso.**
+  Una funzione su Supabase in mezzo: tiene la risposta **una volta sola per
+  tutti** (in una citta' con cento utenti le chiamate verso l'esterno sono
+  una, non cento), si presenta a Overpass con **una identita' e un contatto**
+  — cosa che da dentro un browser non si puo' nemmeno fare, perche' il
+  telefono non puo' scrivere il proprio `User-Agent` — e il giorno che si
+  passa a un fornitore a pagamento si riscrive quel file senza pubblicare una
+  versione nuova sugli store. Il codice sta in `supabase/functions/vicini/`,
+  le istruzioni in `COME-SI-ACCENDE.md`.
+- **La griglia serve a DUE cose insieme, ed e' il motivo per cui funziona.**
+  Il telefono arrotonda la posizione a ~200 m prima di scrivere la domanda:
+  cosi' due persone nello stesso isolato fanno la **stessa identica domanda**
+  (e la memoria comune li serve entrambi con una risposta sola) **e** al
+  ponte non arriva mai dove sei di preciso. Senza l'arrotondamento la memoria
+  condivisa non troverebbe mai niente, perche' ogni domanda sarebbe diversa
+  dalle altre. Le distanze restano giuste perche' si ricalcolano dalla
+  posizione vera: si arrotonda il centro del giro, non il risultato.
+- **Un ponte davanti a un servizio pubblico va difeso, o diventa un servizio
+  pubblico anche lui.** Senza controllo sulla domanda, chiunque ci passa una
+  richiesta che legge mezzo pianeta e a farsi bloccare siamo noi — con la
+  nostra identita', quella messa apposta per essere riconoscibili. Si accetta
+  **solo la forma esatta** che l'app produce, consumando la domanda pezzo per
+  pezzo: un'espressione regolare che cerca le cose vietate lascia sempre fuori
+  quella a cui non si e' pensato.
+- **Una regola di sicurezza che non si riesce a provare e' una regola di cui
+  non si sa niente.** Qui non c'e' Deno, quindi la Edge Function non si puo'
+  lanciare. Il controllo vive in `domanda.mjs`, importato **dalla funzione e
+  dalla prova**: una regola sola, usata da tutti e due, che non possono
+  divergere.
+- **Quando una promessa sulla privacy smette di essere vera, si riscrive lo
+  stesso giorno.** `PRIVACY-STORE.md` diceva «sui server di GeppGo non arriva
+  e non resta niente». Col ponte una posizione **passa** da un server nostro:
+  arrotondata, senza identificativi, in una tabella **senza colonna "chi"** e
+  buttata dopo trenta giorni — ma passa, e va scritto. La differenza fra
+  «non passa» e «passa cosi'» e' esattamente quello che gli store chiedono di
+  dichiarare.
 - **Due riquadri che si toccano si chiedono ai riquadri, non alle classi.**
   La collisione qui sopra l'ha trovata la prova, non l'occhio: confronta i
   `getBoundingClientRect` di scritta, gradi e sole e dice quali si

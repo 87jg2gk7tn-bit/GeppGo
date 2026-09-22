@@ -84,7 +84,21 @@ const METRO = [
     return { metro: d('metro'), treno: d('treno'), bus: d('bus'),
              bagno: d('bagno'), atm: d('atm') };
   });
+  /* QUELLO CHE CONTA E' DOVE ARRIVA, NON QUANTI SCALINI FA. La riga
+     pretendeva i sei raggi esatti; ma ogni scalino e' un viaggio andata e
+     ritorno al server, e cercando il metro da un paese dove non c'e' se ne
+     facevano sei in fila prima di trovarlo. Il requisito era «arrivare a
+     venti chilometri», e quello resta: ci si arriva in tre passi. Si
+     controlla il fatto - fin dove arriva, e che parta vicino - non l'elenco
+     dei numeri. */
   ok('la metropolitana si cerca fino a venti chilometri',
+     scale.metro[scale.metro.length - 1] === 20000, scale.metro.join(', '));
+  ok('partendo da vicino, non buttandosi subito a venti chilometri',
+     scale.metro[0] <= 2000, scale.metro.join(', '));
+  /* Sei scalini, fitti sotto e larghi sopra: costano sei viaggi al server
+     nel caso peggiore, e si tengono perche' col ponte e la memoria
+     condivisa quei viaggi quasi sempre non escono di casa. */
+  ok('a scalini fitti sotto e larghi sopra',
      scale.metro.join(',') === '1000,2000,3000,5000,10000,20000', scale.metro.join(', '));
   /* Stessa ragione, stesso problema: se il paese non ha la stazione, la
      stazione è quella della città. */
@@ -113,8 +127,9 @@ const METRO = [
     raggi: raggiChiesti(page._domande),
     testo: await page.evaluate(() => document.getElementById('bagnoBody').innerText.replace(/\s+/g, ' ').trim())
   };
-  ok('cercando da dove il metro non c\'è, il giro si allarga scalino per scalino',
-     lontano.raggi.slice(0, 6).join(',') === '1000,2000,3000,5000,10000,20000',
+  ok('cercando da dove il metro non c\'è, il giro si allarga fino in fondo',
+     lontano.raggi[lontano.raggi.length - 1] === 20000 &&
+     lontano.raggi.every((x, i) => i === 0 || x > lontano.raggi[i - 1]),
      lontano.raggi.join(' → '));
   ok('e a venti chilometri la trova, invece di dire che non c\'è niente',
      /Asakusa/.test(lontano.testo) && !/non risulta/i.test(lontano.testo),
@@ -132,7 +147,7 @@ const METRO = [
   await page.waitForTimeout(400);
   const vicino = raggiChiesti(page._domande);
   ok('ma se le trova subito si ferma al primo giro',
-     vicino.length === 1 && vicino[0] === 1000, vicino.join(' → ') || 'nessuna domanda');
+     vicino.length === 1 && vicino[0] === scale.metro[0], vicino.join(' → ') || 'nessuna domanda');
   await page.close();
 
   // ══ le domande giuste, per ciascuno dei tre ══════════════════════════

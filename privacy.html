@@ -168,6 +168,7 @@ serve per fare la sua parte.</p>
 <tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto</td><td>Database e archivio: è il cloud dell'app</td></tr>
 <tr><td>Il ponte IA di GeppGo, e da lì il fornitore del modello</td><td>Quello che scrivi all'assistente e le immagini che gli mostri</td><td>Rispondere, leggere i biglietti, proporre tappe</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass, OSRM</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino, i percorsi</td></tr>
+<tr><td>Il ponte delle ricerche «qui intorno», su Supabase</td><td>Un punto di una griglia di circa 200 metri — <b>non</b> dove sei di preciso — e cosa stai cercando (un bagno, un bancomat). Niente che dica chi sei.</td><td>Chiedere alla mappa una volta sola per tutti, invece che da ogni telefono</td></tr>
 <tr><td>Photon (Komoot)</td><td>Testo cercato e coordinate</td><td>Ricerca di indirizzi, quando l'altra non basta</td></tr>
 <tr><td>Open-Meteo</td><td>Coordinate</td><td>Il meteo dei giorni del viaggio, e ora per ora quello del giorno che stai guardando</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nome del luogo</td><td>Descrizione e foto dei posti</td></tr>
@@ -176,6 +177,32 @@ serve per fare la sua parte.</p>
 <tr><td>jsDelivr, unpkg</td><td>Indirizzo IP</td><td>Scaricare le librerie dell'app</td></tr>
 <tr><td>Google Fonts</td><td>Indirizzo IP</td><td>I caratteri dell'app</td></tr>
 </table>
+
+<h3>Le ricerche «qui intorno», nel dettaglio</h3>
+<p>Quando chiedi dov'è il bagno o il bancomat più vicino, la domanda non parte
+più dal tuo telefono verso la mappa di OpenStreetMap: passa da una funzione
+nostra su Supabase, che la gira alla mappa <b>una volta sola per tutti</b> e
+tiene da parte la risposta. Chi cerca la stessa cosa nella stessa zona dopo di
+te non fa partire nessuna chiamata: legge quella. Serve perché i servizi di
+OpenStreetMap li tengono su dei volontari, e le loro regole chiedono che
+un'app non li chiami da ogni telefono.</p>
+<p>Questo vuol dire che una posizione passa da un server nostro, e te lo
+diciamo chiaro. Però:</p>
+<ul>
+<li><b>Non è la tua posizione.</b> Il telefono arrotonda il punto a una
+griglia di circa duecento metri <i>prima</i> di mandare la domanda. A noi
+arriva il quadretto, non tu dentro al quadretto — ed è anche quello che fa
+combaciare la tua domanda con quella di chi abita nella tua via.</li>
+<li><b>Non c'è scritto chi sei.</b> Non viaggia nessun nome, nessuna email,
+nessun identificativo del telefono o dell'account.</li>
+<li><b>Non teniamo un registro di chi ha chiesto cosa.</b> Quello che resta
+nel database è la risposta della mappa — che è mappa pubblica — con
+l'impronta della domanda come etichetta. Non c'è una colonna «chi», perché
+non esiste il dato.</li>
+<li><b>Le risposte si buttano dopo trenta giorni.</b></li>
+</ul>
+<p>Se il ponte non risponde, l'app torna a chiedere direttamente alla mappa
+come faceva prima: non resta bloccata.</p>
 
 <p>Google Maps, Google Calendar e i siti dei musei si aprono solo quando sei
 tu a toccare un tasto: da quel momento in poi valgono le loro regole, non le
