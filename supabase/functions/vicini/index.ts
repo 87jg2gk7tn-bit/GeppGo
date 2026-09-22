@@ -56,6 +56,10 @@ import { cheFarne, rispostaAttendibile, SEGNALE, PONTE_SOTTOFONDO_MS } from './m
    volta il server che si guasta sara' un altro. */
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
+  /* Secondo perche' e' l'unico che, interrogato, ha risposto con dati di un
+     minuto prima: private.coffee funziona ma ne serve di due mesi fa. Non e'
+     di OpenStreetMap, ed e' dichiarato a parte in privacy.html. */
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ];

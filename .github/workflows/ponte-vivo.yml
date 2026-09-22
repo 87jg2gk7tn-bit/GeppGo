@@ -146,7 +146,6 @@ jobs:
               'https://overpass.osm.jp/api/interpreter',
               'https://overpass.osm.ch/api/interpreter',
               'https://overpass.openstreetmap.ru/api/interpreter',
-              'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
           ]
           inUso = True
           for s in IN_USO + ['CANDIDATI'] + CANDIDATI:

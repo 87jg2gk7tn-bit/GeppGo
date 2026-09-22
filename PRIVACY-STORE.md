@@ -263,7 +263,8 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni |
 | `geppgo-ai.merati-giacomo94.workers.dev` (e da lì il modello) | Testo scritto all'assistente, immagini dei biglietti |
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |
-| `overpass-api.de`, `overpass.kumi.systems`, `overpass.private.coffee` | Coordinate |
+| `overpass-api.de`, `overpass.kumi.systems`, `overpass.private.coffee` | Coordinate (su una griglia di ~200 m) |
+| `maps.mail.ru/osm/tools/overpass` (Russia) | Coordinate (su una griglia di ~200 m). **Non è di OpenStreetMap**: è una copia della mappa tenuta su da mail.ru, aggiunta perché è l'unica che risponda con dati aggiornati al giorno. Quando il ponte risponde, la richiesta parte dal nostro server; quando il ponte è giù parte dal telefono, e allora vede anche l'IP |
 | `photon.komoot.io` | Testo cercato, coordinate |
 | `router.project-osrm.org` | Coordinate |
 | `api.open-meteo.com` | Coordinate |
