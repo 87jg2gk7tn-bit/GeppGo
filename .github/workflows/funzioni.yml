@@ -1,0 +1,59 @@
+# Le due funzioni del ponte, pubblicate da sole.
+#
+# PERCHE' NON A MANO. Pubblicarle dal terminale vuol dire avere un computer
+# davanti, ricordarsi il comando e ricordarsi di lanciarlo — e la volta che ci
+# si dimentica è quella in cui il codice nel repo e quello che gira sul server
+# dicono due cose diverse. Che è il guasto peggiore di tutti, perché si cerca
+# nel posto sbagliato.
+#
+# Da qui in poi: si tocca un file dentro supabase/functions e la funzione
+# pubblicata si aggiorna da sola. Oppure si preme "Run workflow", che si fa
+# anche dal telefono.
+#
+# COSA SERVE, UNA VOLTA SOLA: un segreto chiamato SUPABASE_ACCESS_TOKEN nelle
+# impostazioni del repo (Settings → Secrets and variables → Actions). Si
+# genera su supabase.com, in Account → Access Tokens. Sta lì e non entra mai
+# nel codice: chi legge il repo non lo vede.
+#
+# La chiave di servizio del database NON è qui e non ci deve stare: dentro le
+# funzioni Supabase ce la mette da sola.
+
+name: Funzioni
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/funzioni.yml'
+  workflow_dispatch:
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa la CLI di Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Il numero del progetto non è un segreto: sta già dentro l'app, in
+      # chiaro, perché il telefono deve sapere a chi parlare. Il segreto è il
+      # token qui sotto, che è la cosa con cui si pubblica.
+      - name: Pubblica «vicini» — le ricerche qui intorno
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy vicini --project-ref cyolhqndurgwbivxcssf
+
+      - name: Pubblica «geo» — gli indirizzi e gli alberghi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy geo --project-ref cyolhqndurgwbivxcssf
+
+      - name: Dì com'è andata
+        run: |
+          echo "Fatto. Per controllare che rispondano, il comando curl sta in"
+          echo "supabase/functions/COME-SI-ACCENDE.md — la prima volta risponde"
+          echo '"da":"overpass", dalla seconda "da":"memoria".'
