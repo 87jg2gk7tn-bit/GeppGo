@@ -200,3 +200,34 @@ jobs:
           print('La prima volta dice «overpass» o «nominatim», dalla seconda «memoria»:')
           print('vuol dire che la risposta se l\'e\' tenuta da parte per tutti.')
           FINE
+
+      # ── E OGNI VOCE, CON LE DOMANDE CHE FA DAVVERO L'APP ────────────────
+      # Il passo sopra fa UNA domanda, scritta a mano, sui bancomat. Quando
+      # «funziona solo per stazione e metro» quella domanda non dice niente
+      # delle altre voci. Qui le domande le fa l'app — si apre davvero, voce
+      # per voce, e se ne catturano tutte — e si mandano al ponte e ai server
+      # veri una per una. Serve il browser, per questo i tre passi in piu'.
+      # `if: always()`: anche quando il passo sopra trova un guaio. E' proprio
+      # quando qualcosa non va che serve sapere com'e' ogni voce.
+      - uses: actions/setup-node@v4
+        if: always()
+        with:
+          node-version: '20'
+      - name: Le dipendenze
+        if: always()
+        run: npm install --no-audit --no-fund
+      - name: Il browser
+        if: always()
+        run: npx playwright install --with-deps chromium
+      - name: Ogni voce, dal ponte vero
+        if: always()
+        run: node test/domande-dal-vivo.js
+
+      # E LA COSA PIU' VICINA A UN TELEFONO VERO: l'app aperta senza recinto,
+      # il ponte e i server veri, le sei voci toccate in fila dal menu come fa
+      # una persona. «Funziona solo per stazione e metro» — che sono le prime
+      # due del menu: se il guasto sono le richieste che si esauriscono, qui
+      # si vede.
+      - name: Le sei voci in fila, come un telefono
+        if: always()
+        run: node test/come-un-telefono.js

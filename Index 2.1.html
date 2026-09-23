@@ -11534,7 +11534,18 @@ const VICINI={
     vuoto:'Nel raggio di 5 km non risulta nessun bancomat sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse fatte da persone diverse: un posto che su Google c\'è, qui può non esserci ancora. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
   }
 };
-let vicinoBusy=false,vicinoKind='bagno';
+/* UNA RICERCA NUOVA NON ASPETTA QUELLA VECCHIA: LA SOSTITUISCE.
+   Prima c'era `vicinoBusy`: finche' una ricerca era in corso, toccare
+   un'altra voce non faceva niente — si chiudeva il menu, la scheda non si
+   apriva, e sembrava che l'app chiudesse la finestra da sola. Il caso vero:
+   stazione e metro funzionano, poi si cerca il bus, e' lento, si chiude con
+   la ✕… e bagno, fumatori e bancomat non partono piu', perche' quella del
+   bus stava ancora salendo la sua scala di cinque giri in sottofondo.
+   Adesso ogni ricerca prende un numero; quando ne parte una nuova, o si
+   chiude la scheda, il numero cambia e la vecchia smette da sola al primo
+   passo — senza scrivere nella scheda di un'altra e senza continuare a
+   chiedere ai server una cosa che non interessa piu' a nessuno. */
+let vicinoGiro=0,vicinoKind='bagno';
 
 /* openstreetmap.org sulle coordinate di adesso: si vede subito se il posto che
    manca è assente dalla mappa o solo etichettato male, e nel primo caso lo si
@@ -11582,8 +11593,8 @@ function cercaAtm(){cercaVicino('atm');}
    azzerare il conto delle riprove, che altrimenti ricomincerebbe da capo a
    ogni giro e si andrebbe avanti all'infinito. */
 function cercaVicino(kind,automatica){
-  if(vicinoBusy)return;
   vicinoSmettiDiAspettare();
+  const giro=++vicinoGiro;
   if(!automatica)vicinoRiprove=0;
   vicinoKind=VICINI[kind]?kind:'bagno';
   const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
@@ -11593,19 +11604,19 @@ function cercaVicino(kind,automatica){
   /* Se il GPS è già acceso e la posizione è fresca si parte da lì, senza
      chiedere di nuovo: sono secondi di attesa in meno proprio nel momento in
      cui uno ha fretta. */
-  if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return viciniIntorno(myPos.lat,myPos.lng);
+  if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return viciniIntorno(myPos.lat,myPos.lng,giro);
   if(NATIVE&&nPlug('Geolocation')){
     const G=nPlug('Geolocation');
     G.getCurrentPosition({enableHighAccuracy:true})
-      .then(pos=>viciniIntorno(pos.coords.latitude,pos.coords.longitude))
-      .catch(()=>vicinoNienteGps());
+      .then(pos=>viciniIntorno(pos.coords.latitude,pos.coords.longitude,giro))
+      .catch(()=>{if(giro===vicinoGiro)vicinoNienteGps();});
     return;
   }
   if(!navigator.geolocation)return vicinoNienteGps();
   navigator.geolocation.getCurrentPosition(
     pos=>{myPos={lat:pos.coords.latitude,lng:pos.coords.longitude};myPosAt=Date.now();
-          viciniIntorno(pos.coords.latitude,pos.coords.longitude);},
-    ()=>vicinoNienteGps(),
+          viciniIntorno(pos.coords.latitude,pos.coords.longitude,giro);},
+    ()=>{if(giro===vicinoGiro)vicinoNienteGps();},
     {enableHighAccuracy:true,timeout:12000,maximumAge:30000}
   );
 }
@@ -11616,19 +11627,27 @@ function vicinoNienteGps(){
      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
 }
 
-async function viciniIntorno(lat,lng){
-  const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
-  vicinoBusy=true;
+async function viciniIntorno(lat,lng,giro){
+  /* La voce si fissa QUI, una volta: leggerla ogni volta da `vicinoKind`
+     vorrebbe dire che una ricerca partita per il bus, se nel frattempo se
+     n'e' aperta una per i bagni, continuerebbe a salire la scala chiedendo
+     bagni. */
+  const kind=vicinoKind;
+  const v=VICINI[kind],body=document.getElementById('bagnoBody');
+  /* Ancora la ricerca di adesso? Se no si smette in silenzio: la scheda e'
+     di un'altra, o e' stata chiusa. */
+  const miaAncora=()=>giro===undefined||giro===vicinoGiro;
   try{
     let trovati=[],andataBene=false,giu=false,ultimoGuasto=null;
     const aggiungi=n=>{if(!vicinoDoppione(trovati,n.lat,n.lng,n.nome))trovati.push(n);};
     /* Prima si cerca per tipo: sono le etichette che Overpass tiene in un
        indice, e la risposta arriva in un attimo anche su cinque chilometri.
        Questa è la ricerca che risolve quasi tutti i casi. */
-    const scala=raggiDi(vicinoKind);
+    const scala=raggiDi(kind);
     const iniziato=Date.now();
-    const dillo=t=>{body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
+    const dillo=t=>{if(miaAncora())body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
     for(const r of scala){
+      if(!miaAncora())return;
       /* il giro largo si fa solo a mani vuote: se qualcosa c'è, roba più
          lontana non serve a chi la cerca adesso */
       if(r>scala[0]&&trovati.length)break;
@@ -11647,7 +11666,8 @@ async function viciniIntorno(lat,lng){
          quello che il giro stretto non ha potuto chiedere: non si perde
          niente ad andare avanti. */
       try{
-        const nuovi=await viciniOverpass(vicinoKind,lat,lng,r,false,i=>dillo(`Il servizio della mappa non risponde, ci riprovo (${i} di ${VICINI_TENTATIVI})...`));
+        const nuovi=await viciniOverpass(kind,lat,lng,r,false,i=>dillo(`Il servizio della mappa non risponde, ci riprovo (${i} di ${VICINI_TENTATIVI})...`));
+        if(!miaAncora())return;
         andataBene=true;
         nuovi.forEach(aggiungi);
       }catch(e){
@@ -11683,10 +11703,10 @@ async function viciniIntorno(lat,lng){
        perde anche il bancomat che si era trovato.
        Adesso parte solo a MANI COMPLETAMENTE VUOTE, che e' il caso per cui
        era stata scritta. */
-    if(!trovati.length&&!giu){
+    if(!trovati.length&&!giu&&miaAncora()){
       dillo('Cerco anche per nome...');
       try{
-        const perNome=await viciniOverpass(vicinoKind,lat,lng,raggiDi(vicinoKind)[0],true,
+        const perNome=await viciniOverpass(kind,lat,lng,raggiDi(kind)[0],true,
           i=>dillo(`Il servizio della mappa non risponde, ci riprovo (${i} di ${VICINI_TENTATIVI})...`));
         andataBene=true;
         perNome.forEach(aggiungi);
@@ -11699,10 +11719,11 @@ async function viciniIntorno(lat,lng){
        429, un timeout o il telefono senza rete. Quel dettaglio finisce
        sotto il messaggio d'errore, ed e' quello che permette di capire da
        che parte guardare quando qualcuno segnala «non funziona». */
+    if(!miaAncora())return;
     if(!trovati.length&&!andataBene)throw (ultimoGuasto||new Error('nessuna risposta'));
     if(!trovati.length){
       body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${v.vuoto}</div>
-        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova</button>`;
+        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova</button>`;
       return;
     }
     trovati.forEach(b=>{b.dist=Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}));});
@@ -11726,11 +11747,14 @@ async function viciniIntorno(lat,lng){
     `<div style="font-size:.75rem;color:var(--ink-faint);margin-top:.5rem;line-height:1.45">Dati di OpenStreetMap: sono quelli che qualcuno ha mappato, quindi possono essere incompleti o non aggiornati.</div>
      <button class="btn btn-soft btn-block" style="margin-top:.6rem;font-size:.82rem" onclick="apriOsmQui(${lat},${lng})">Manca qualcosa? Guarda questa zona sulla mappa</button>`;
   }catch(e){
+    /* Una ricerca sostituita non ha niente da dire: ne' errori, ne' riprove
+       da sola — la scheda adesso e' di un'altra. */
+    if(!miaAncora())return;
     /* PRIMA DI DIRE CHE NON SI PUO', SI GUARDA SE SI SAPEVA GIA'. Un bagno
        non si sposta: l'ultima risposta vale mille volte un cartello
        d'errore. Si mostra dicendo che e' vecchia, non spacciandola per
        fresca. */
-    const vecchia=viciniCacheRipiego(vicinoKind,lat,lng);
+    const vecchia=viciniCacheRipiego(kind,lat,lng);
     if(vecchia&&vecchia.lista.length){
       const gg=Math.floor((Date.now()-vecchia.quando)/86400000);
       const quando=gg<1?'poco fa':(gg===1?'ieri':'circa '+gg+' giorni fa');
@@ -11747,7 +11771,7 @@ async function viciniIntorno(lat,lng){
             </div>
             <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
           </div>`;}).join('')+
-        `<button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova adesso</button>`;
+        `<button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`;
       return;
     }
     /* Si dice che ci si e' provati, quante volte, e COSA e' andato storto:
@@ -11762,7 +11786,7 @@ async function viciniIntorno(lat,lng){
        bloccato, e perche' cosi' si vede che l'app sta facendo qualcosa. */
     if(Date.now()-ponteAncora<VICINI_ATTESA_MS+VICINI_RIPROVA_MS&&vicinoRiprove<VICINI_RIPROVE_MAX){
       vicinoRiprove++;
-      const mio=vicinoKind;
+      const mio=kind;
       let restano=Math.round(VICINI_RIPROVA_MS/1000);
       const scrivi=()=>{body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">La mappa oggi è lenta, ma la ricerca è partita e sta andando avanti.<br><br>Ci riprovo da solo fra <b>${restano}</b> second${restano===1?'o':'i'}.</div>
         <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${mio}')">Riprova adesso</button>`;};
@@ -11778,8 +11802,8 @@ async function viciniIntorno(lat,lng){
     const perche=(e&&e.message)?String(e.message).slice(0,80):'nessuna risposta';
     body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>${navigator.onLine===false?'Il telefono risulta <b>senza rete</b>.':'Di solito è passeggero. Se hai campo, fra un minuto va.'}</div>
       <div style="font-size:.7rem;color:var(--ink-faint);margin-top:.5rem">dettaglio: ${esc(perche)}</div>
-      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">Riprova adesso</button>`;
-  }finally{vicinoBusy=false;}
+      <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`;
+  }
 }
 
 /* Overpass restituisce sia nodi (un punto) sia aree (un edificio): le aree
@@ -11855,7 +11879,26 @@ const VICINI_PAUSA_MS=1500;
 /* Un server che ha detto "troppe richieste" resta in castigo per un po': non
    ha senso richiamarlo subito, e ogni chiamata in piu' allunga il castigo. */
 const OVERPASS_CASTIGO_MS=90000;
+/* CHI TI HA CHIUSO LA PORTA NON SI RICHIAMA PER DIECI MINUTI.
+   Misurato dal vivo: overpass-api.de, dopo una raffica di richieste dalla
+   stessa connessione, smette di rispondere e manda un «406 Not
+   Acceptable» — senza le intestazioni che servono a un browser, per cui
+   sul telefono non arriva nemmeno il 406: arriva un errore di rete in tre
+   decimi di secondo. Era il motivo di «funziona solo per stazione e metro»:
+   sono le prime due del menu, spendevano le richieste, e dal bus in poi il
+   server non rispondeva piu'. E l'app continuava a bussare — riprova,
+   seconda riprova, riprova da sola — trattando un rifiuto come un momento
+   di lentezza, e allungandosi il castigo da sola.
+   Adesso un rifiuto vero (406, 403) o una caduta istantanea mette quel
+   server in fondo alla fila per dieci minuti, e si va dagli altri. Novanta
+   secondi restano per 429 e 504, che sono «sono pieno, torna fra poco». */
+const OVERPASS_RIFIUTO_MS=600000;
+const OVERPASS_CADUTA_ISTANTANEA_MS=1500;
 const overpassStanchi={};
+/* Tenuti a parte da quelli stanchi: uno stanco si mette in fondo e si
+   richiama se non c'e' altro; uno che ha rifiutato non si richiama proprio,
+   finche' c'e' qualcun altro da chiamare. */
+const overpassRifiuti={};
 /* Dopo quanto si smette di sperare nel primo e si chiedono anche gli altri. */
 const VICINI_PAZIENZA_MS=2500;
 /* Si parte da quello che ha risposto l'ultima volta. Se dopo due secondi e mezzo
@@ -11987,19 +12030,25 @@ function overpassUnGiro(q){
      tutti, meglio riprovare loro che non chiedere a nessuno. */
   const sveglio=u=>!(overpassStanchi[u]>ora);
   const ordine=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS.slice();
-  const lista=[...ordine.filter(sveglio),...ordine.filter(u=>!sveglio(u))];
+  /* Chi ha rifiutato resta fuori del tutto. Solo se hanno rifiutato TUTTI
+     si riprova con loro: meglio un tentativo che nessuno. */
+  const rifiutato=u=>overpassRifiuti[u]>ora;
+  const base=ordine.some(u=>!rifiutato(u))?ordine.filter(u=>!rifiutato(u)):ordine;
+  const lista=[...base.filter(sveglio),...base.filter(u=>!sveglio(u))];
   return new Promise((risolvi,rifiuta)=>{
     let prossimo=0,falliti=0,errore=null,fatto=false;
     const stop=new AbortController();
     const scaduto=setTimeout(()=>{if(!fatto){fatto=true;stop.abort();rifiuta(errore||new Error('overpass lento'));}},VICINI_ATTESA_MS);
     const chiudi=()=>{fatto=true;clearTimeout(scaduto);};
     const lancia=url=>{
+      const via=Date.now();
       fetch(url,{method:'POST',signal:stop.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)})
         .then(res=>{
           if(!res.ok){
             /* 429 = "troppe richieste": e' un limite, non un guasto, e si
                rispetta stando zitti un po' con QUESTO server. */
             if(res.status===429||res.status===504)overpassStanchi[url]=Date.now()+OVERPASS_CASTIGO_MS;
+            if(res.status===406||res.status===403)overpassRifiuti[url]=Date.now()+OVERPASS_RIFIUTO_MS;
             const e=new Error(res.status+' da '+new URL(url).host);e.stato=res.status;throw e;
           }
           return res.json();
@@ -12013,6 +12062,12 @@ function overpassUnGiro(q){
         })
         .then(dati=>{if(fatto)return;chiudi();overpassBuono=url;stop.abort();risolvi(dati);})
         .catch(e=>{
+          /* Una caduta di rete in un istante, col telefono in linea e non
+             perche' l'abbiamo fermata noi, e' quasi sempre un rifiuto che il
+             browser non ci lascia leggere: la si tratta come tale. */
+          if(e&&e.name!=='AbortError'&&!e.stato&&navigator.onLine!==false&&
+             Date.now()-via<OVERPASS_CADUTA_ISTANTANEA_MS)
+            overpassRifiuti[url]=Date.now()+OVERPASS_RIFIUTO_MS;
           errore=errore||e;falliti++;
           /* UN SERVER CHE CADE SUBITO NON DEVE FAR ASPETTARE. Prima il
              secondo indirizzo partiva a tempo, dopo due secondi e mezzo,
@@ -12737,7 +12792,7 @@ function closeSheet(id){
   /* Chiudendo la scheda del «qui intorno» si smette anche di aspettare: la
      riprova da sola riaprirebbe un foglio che la persona ha appena chiuso,
      e un'app che si riapre da sola e' un'app che non ascolta. */
-  if(m.id==='mBagno')vicinoSmettiDiAspettare();
+  if(m.id==='mBagno'){vicinoSmettiDiAspettare();vicinoGiro++;}
   m.classList.remove('active');
   /* Si toglie dal layout solo quando ha finito di scendere. Il tempo e' un
      ripiego voluto, non una pigrizia: se la transizione non parte affatto —
@@ -17969,7 +18024,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-23 11:00';
+const VERSIONE_APP='2026-09-23 12:00';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

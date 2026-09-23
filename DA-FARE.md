@@ -771,6 +771,23 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ overpass-api.de chiude la porta a chi bussa troppo, e lo fa con un
+  406 che sul telefono non si vede.** «Funziona solo per stazione e metro»:
+  sono le prime due del menu. Rifatta la sequenza sulla rete vera (workflow
+  «Il ponte risponde?», passo «Le sei voci in fila»): all'inizio il server
+  principale rispondeva, dopo una dozzina di richieste la stessa connessione
+  riceveva `406 Not Acceptable` su tutto. Il 406 arriva senza le
+  intestazioni per il browser, quindi sul telefono diventa **un errore di
+  rete in tre decimi di secondo**, e l'app lo trattava come lentezza —
+  riprova, seconda riprova, riprova da sola — allungandosi il castigo.
+  Adesso un rifiuto (406, 403, o caduta istantanea col telefono in linea)
+  tiene quel server **fuori del tutto per dieci minuti**, finché ce n'è un
+  altro da chiamare. Al ponte il 406 lo dà sempre: da lì il server
+  principale non si usa, e la memoria comune si riempie dagli altri, in
+  sottofondo. **Quando la memoria ha la risposta, tutto arriva in un
+  secondo** (5 voci su 6 nella stessa prova). E prima, la ricerca in corso
+  bloccava le altre: toccando una seconda voce la scheda non si apriva — «chiude
+  direttamente la finestra».
 - **Un ripiego in fila fa pagare al caso lento tutta l'attesa.** Il
   telefono chiedeva al ponte e aspettava; solo se il ponte falliva provava
   da solo. Dalla memoria il ponte risponde in meno di un secondo, ma quando
