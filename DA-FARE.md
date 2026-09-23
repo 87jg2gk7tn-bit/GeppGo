@@ -771,6 +771,17 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Un ripiego in fila fa pagare al caso lento tutta l'attesa.** Il
+  telefono chiedeva al ponte e aspettava; solo se il ponte falliva provava
+  da solo. Dalla memoria il ponte risponde in meno di un secondo, ma quando
+  deve andare fuori ci mette fino a diciotto — e quei diciotto li pagava
+  chiunque cercasse qualcosa che la memoria non aveva: «le ricerche sono
+  ancora molto lente». Adesso il ponte ha **un vantaggio, non
+  l'esclusiva**: due secondi e mezzo tutti per sé, poi parte anche la
+  strada diretta e vince il primo che porta una risposta *vera* (non il
+  primo che risponde: «sto ancora cercando» non deve battere chi sta per
+  trovare). `prova-ponte` misura il tempo — 3,5 s contro 15 — perché una
+  prova che guarda solo se la risposta arriva era verde anche prima.
 - **⚠️⚠️ UN SERVER PUÒ MENTIRE BENE, E ERA QUESTO.** «Il bancomat ce l'ho
   davanti a casa e non lo trova», «la fermata dell'autobus a cento metri e
   non la trova». Il colpevole era `overpass.osm.ch`: rispondeva **200, senza
