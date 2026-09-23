@@ -11879,7 +11879,26 @@ const VICINI_PAUSA_MS=1500;
 /* Un server che ha detto "troppe richieste" resta in castigo per un po': non
    ha senso richiamarlo subito, e ogni chiamata in piu' allunga il castigo. */
 const OVERPASS_CASTIGO_MS=90000;
+/* CHI TI HA CHIUSO LA PORTA NON SI RICHIAMA PER DIECI MINUTI.
+   Misurato dal vivo: overpass-api.de, dopo una raffica di richieste dalla
+   stessa connessione, smette di rispondere e manda un «406 Not
+   Acceptable» — senza le intestazioni che servono a un browser, per cui
+   sul telefono non arriva nemmeno il 406: arriva un errore di rete in tre
+   decimi di secondo. Era il motivo di «funziona solo per stazione e metro»:
+   sono le prime due del menu, spendevano le richieste, e dal bus in poi il
+   server non rispondeva piu'. E l'app continuava a bussare — riprova,
+   seconda riprova, riprova da sola — trattando un rifiuto come un momento
+   di lentezza, e allungandosi il castigo da sola.
+   Adesso un rifiuto vero (406, 403) o una caduta istantanea mette quel
+   server in fondo alla fila per dieci minuti, e si va dagli altri. Novanta
+   secondi restano per 429 e 504, che sono «sono pieno, torna fra poco». */
+const OVERPASS_RIFIUTO_MS=600000;
+const OVERPASS_CADUTA_ISTANTANEA_MS=1500;
 const overpassStanchi={};
+/* Tenuti a parte da quelli stanchi: uno stanco si mette in fondo e si
+   richiama se non c'e' altro; uno che ha rifiutato non si richiama proprio,
+   finche' c'e' qualcun altro da chiamare. */
+const overpassRifiuti={};
 /* Dopo quanto si smette di sperare nel primo e si chiedono anche gli altri. */
 const VICINI_PAZIENZA_MS=2500;
 /* Si parte da quello che ha risposto l'ultima volta. Se dopo due secondi e mezzo
@@ -12011,19 +12030,25 @@ function overpassUnGiro(q){
      tutti, meglio riprovare loro che non chiedere a nessuno. */
   const sveglio=u=>!(overpassStanchi[u]>ora);
   const ordine=overpassBuono?[overpassBuono,...OVERPASS.filter(u=>u!==overpassBuono)]:OVERPASS.slice();
-  const lista=[...ordine.filter(sveglio),...ordine.filter(u=>!sveglio(u))];
+  /* Chi ha rifiutato resta fuori del tutto. Solo se hanno rifiutato TUTTI
+     si riprova con loro: meglio un tentativo che nessuno. */
+  const rifiutato=u=>overpassRifiuti[u]>ora;
+  const base=ordine.some(u=>!rifiutato(u))?ordine.filter(u=>!rifiutato(u)):ordine;
+  const lista=[...base.filter(sveglio),...base.filter(u=>!sveglio(u))];
   return new Promise((risolvi,rifiuta)=>{
     let prossimo=0,falliti=0,errore=null,fatto=false;
     const stop=new AbortController();
     const scaduto=setTimeout(()=>{if(!fatto){fatto=true;stop.abort();rifiuta(errore||new Error('overpass lento'));}},VICINI_ATTESA_MS);
     const chiudi=()=>{fatto=true;clearTimeout(scaduto);};
     const lancia=url=>{
+      const via=Date.now();
       fetch(url,{method:'POST',signal:stop.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)})
         .then(res=>{
           if(!res.ok){
             /* 429 = "troppe richieste": e' un limite, non un guasto, e si
                rispetta stando zitti un po' con QUESTO server. */
             if(res.status===429||res.status===504)overpassStanchi[url]=Date.now()+OVERPASS_CASTIGO_MS;
+            if(res.status===406||res.status===403)overpassRifiuti[url]=Date.now()+OVERPASS_RIFIUTO_MS;
             const e=new Error(res.status+' da '+new URL(url).host);e.stato=res.status;throw e;
           }
           return res.json();
@@ -12037,6 +12062,12 @@ function overpassUnGiro(q){
         })
         .then(dati=>{if(fatto)return;chiudi();overpassBuono=url;stop.abort();risolvi(dati);})
         .catch(e=>{
+          /* Una caduta di rete in un istante, col telefono in linea e non
+             perche' l'abbiamo fermata noi, e' quasi sempre un rifiuto che il
+             browser non ci lascia leggere: la si tratta come tale. */
+          if(e&&e.name!=='AbortError'&&!e.stato&&navigator.onLine!==false&&
+             Date.now()-via<OVERPASS_CADUTA_ISTANTANEA_MS)
+            overpassRifiuti[url]=Date.now()+OVERPASS_RIFIUTO_MS;
           errore=errore||e;falliti++;
           /* UN SERVER CHE CADE SUBITO NON DEVE FAR ASPETTARE. Prima il
              secondo indirizzo partiva a tempo, dopo due secondi e mezzo,
