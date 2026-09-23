@@ -430,9 +430,84 @@ const stato = {
     /* E chiudendo la scheda si smette di aspettare: una riprova che
        riapre un foglio appena chiuso è un'app che non ascolta. */
     await pa.evaluate(() => { closeSheet('mBagno'); });
-    const fermi = await pa.evaluate(() => vicinoAttesa === null && vicinoConto === null);
-    ok('e chiudendo la scheda l\'app smette di aspettare', fermi === true);
+    const fermiPrima = await pa.evaluate(() => vicinoAttesa === null && vicinoConto === null);
+    ok('e chiudendo la scheda l\'app smette di aspettare', fermiPrima === true);
     await pa.close();
+  }
+
+  // ── 6. UN PONTE LENTO NON DEVE FAR ASPETTARE ────────────────────────
+  /* Segnalato dal vivo: «le ricerche sono ancora molto lente». Il telefono
+     chiedeva al ponte e ASPETTAVA: dalla memoria la risposta arriva in un
+     attimo, ma quando il ponte deve andare a chiederla fuori ci mette fino
+     a diciotto secondi — e solo dopo il telefono provava da solo.
+     Qui il ponte ci mette quindici secondi e la strada diretta uno. Si
+     misura il TEMPO, perché «lento» è il guasto: una prova che guarda solo
+     se la risposta arriva sarebbe stata verde anche prima. */
+  async function conPonteLento({ direttaGiu }) {
+    const pl = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    pl.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
+    await pl.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+    await pl.route(/tile\.openstreetmap\.org/, ro => ro.abort());
+    await pl.route('**/functions/v1/vicini', async route => {
+      await new Promise(s => setTimeout(s, 15000));
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify(comeOverpass([
+          { type: 'node', id: 1, lat: IO.lat + 0.0009, lon: IO.lng,
+            tags: { amenity: 'atm', name: 'Bancomat dal ponte lento' } }
+        ], { da: 'overpass' })) }).catch(() => {});
+    });
+    await pl.route('**/api/interpreter', async route => {
+      if (direttaGiu) return route.fulfill({ status: 504, body: 'gateway timeout' });
+      await new Promise(s => setTimeout(s, 1000));
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify(comeOverpass([
+          { type: 'node', id: 2, lat: IO.lat + 0.001, lon: IO.lng,
+            tags: { amenity: 'atm', name: 'Bancomat diretto' } }
+        ])) });
+    });
+    await pl.addInitScript(([s, io]) => {
+      localStorage.setItem('geppgo2', JSON.stringify(s));
+      navigator.geolocation.getCurrentPosition = cb =>
+        cb({ coords: { latitude: io.lat, longitude: io.lng } });
+    }, [stato, IO]);
+    await pl.goto(APP, { waitUntil: 'domcontentloaded' });
+    await pl.waitForFunction(() => typeof window.cercaVicino === 'function', { timeout: 20000 });
+    await pl.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 20000 });
+    const via = Date.now();
+    await pl.evaluate(() => {
+      localStorage.removeItem(VICINI_CACHE_CHIAVE);
+      myPos = null; myPosAt = 0; ponteRotto = 0; ponteAncora = 0;
+      cercaVicino('atm');
+    });
+    await pl.waitForFunction(() => /Bancomat/.test(document.getElementById('bagnoBody').innerText),
+      { timeout: 60000 }).catch(() => {});
+    const quanto = Date.now() - via;
+    const testo = await pl.evaluate(() => document.getElementById('bagnoBody').innerText.replace(/\s+/g, ' ').trim());
+    const rotto = await pl.evaluate(() => ponteRotto);
+    const vantaggio = await pl.evaluate(() => PONTE_VANTAGGIO_MS);
+    await pl.close();
+    return { quanto, testo, rotto, vantaggio };
+  }
+  {
+    const l = await conPonteLento({ direttaGiu: false });
+    /* Il tetto è il vantaggio del ponte, più il secondo della strada
+       diretta, più un margine per la pagina: ben sotto i quindici secondi
+       del ponte. Prima di questa correzione ci voleva il ponte intero. */
+    const tetto = l.vantaggio + 1000 + 3000;
+    ok('col ponte lento la risposta arriva lo stesso in fretta',
+       /Bancomat diretto/.test(l.testo) && l.quanto < tetto,
+       `${(l.quanto / 1000).toFixed(1)}s (tetto ${(tetto / 1000).toFixed(1)}s, il ponte ne voleva 15)`);
+    ok('e il ponte lento non viene messo in castigo: era lento, non rotto',
+       l.rotto === 0);
+  }
+  {
+    /* E il contrario: se la strada diretta è giù, si aspetta il ponte e si
+       prende la sua. «Il primo che risponde» avrebbe preso l'errore della
+       strada diretta e buttato via il ponte che stava per arrivare. */
+    const l = await conPonteLento({ direttaGiu: true });
+    ok('con la strada diretta giù, si aspetta il ponte e si prende la sua',
+       /Bancomat dal ponte lento/.test(l.testo), l.testo.slice(0, 70));
   }
 
   await browser.close();

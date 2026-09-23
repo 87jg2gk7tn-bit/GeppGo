@@ -12038,26 +12038,64 @@ function overpassUnGiro(q){
    la persona ha chiesto dov'e' il bancomat, non di fare il turno di guardia
    ai server. */
 function attendi(ms){return new Promise(r=>setTimeout(r,ms));}
+/* IL PONTE HA UN VANTAGGIO, NON L'ESCLUSIVA.
+   Prima il telefono chiedeva al ponte e ASPETTAVA: se la risposta era gia'
+   in memoria arrivava in meno di un secondo, ma se il ponte doveva andare a
+   chiederla fuori ci metteva fino a diciotto secondi — e solo dopo il
+   telefono provava da solo. «Le ricerche sono ancora molto lente»: erano
+   quei diciotto secondi, pagati per intero ogni volta che la memoria non
+   ce l'aveva.
+   Adesso il ponte parte per primo e ha due secondi e mezzo tutti per se':
+   e' piu' del tempo che gli serve per rispondere dalla memoria, e meno di
+   quanto una persona con fretta tolleri. Se in quel tempo non ha risposto,
+   vuol dire che sta chiedendo fuori: allora parte anche la strada diretta,
+   e vince il primo dei due che porta una risposta vera. Il ponte non viene
+   fermato — continua, e la sua risposta finisce comunque in memoria per chi
+   cerca la stessa cosa dopo. */
+const PONTE_VANTAGGIO_MS=2500;
 async function overpassChiedi(q,avvisa){
-  let ultimo=null;
   const inizio=Date.now();
-  /* Prima il ponte: e' una richiesta sola, e quasi sempre risponde dalla
-     memoria comune senza uscire. Se non c'e' o non risponde, si continua
-     come si e' sempre fatto. */
-  try{ return await overpassDalPonte(q); }catch(e){ ultimo=e; }
-  for(let i=1;i<=VICINI_TENTATIVI;i++){
-    if(i>1){
-      /* Se il primo giro se n'e' andato in attesa, riprovare vuol dire far
-         aspettare il doppio per la stessa attesa. Si riprova solo se c'e'
-         ancora tempo nel budget, cioe' solo se il giro di prima e' caduto
-         in fretta. */
-      if(Date.now()-inizio>VICINI_BUDGET_RETE_MS-VICINI_PAUSA_MS)break;
-      if(avvisa)avvisa(i);
-      await attendi(VICINI_PAUSA_MS*(i-1));
+  const dalPonte=overpassDalPonte(q);
+  dalPonte.catch(()=>{});
+  const presto=await Promise.race([
+    dalPonte.then(d=>({ok:d}),e=>({ko:e})),
+    attendi(PONTE_VANTAGGIO_MS).then(()=>({tardi:true}))
+  ]);
+  if(presto.ok)return presto.ok;
+  const diretta=(async()=>{
+    let ultimo=null;
+    for(let i=1;i<=VICINI_TENTATIVI;i++){
+      if(i>1){
+        /* Se il primo giro se n'e' andato in attesa, riprovare vuol dire far
+           aspettare il doppio per la stessa attesa. Si riprova solo se c'e'
+           ancora tempo nel budget, cioe' solo se il giro di prima e' caduto
+           in fretta. */
+        if(Date.now()-inizio>VICINI_BUDGET_RETE_MS-VICINI_PAUSA_MS)break;
+        if(avvisa)avvisa(i);
+        await attendi(VICINI_PAUSA_MS*(i-1));
+      }
+      try{ return await overpassUnGiro(q); }catch(e){ ultimo=e; }
     }
-    try{ return await overpassUnGiro(q); }catch(e){ ultimo=e; }
-  }
-  throw ultimo||new Error('overpass');
+    throw ultimo||new Error('overpass');
+  })();
+  diretta.catch(()=>{});
+  /* Il ponte e' gia' caduto (o non c'e'): resta solo la strada diretta. */
+  if(presto.ko)return diretta;
+  return primoCheRiesce([dalPonte,diretta]);
+}
+/* Il primo che RIESCE, non il primo che risponde: un ponte che dice «sto
+   ancora cercando» non deve battere una strada diretta che sta per trovare.
+   Se cadono tutti e due si tiene il motivo piu' utile da mostrare nel
+   «dettaglio:» — quello della strada diretta, che dice quali server e
+   come, invece di «il ponte sta ancora cercando». */
+function primoCheRiesce(gara){
+  return new Promise((ris,rif)=>{
+    const errori=[];
+    gara.forEach(p=>p.then(ris,e=>{
+      errori.push(e);
+      if(errori.length===gara.length)rif(errori.find(x=>x&&!x.ancora)||errori[0]);
+    }));
+  });
 }
 let overpassBuono=null;
 /* Due righe sono lo stesso posto se stanno praticamente sopra, o se hanno lo
@@ -17931,7 +17969,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-23 03:30';
+const VERSIONE_APP='2026-09-23 11:00';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
