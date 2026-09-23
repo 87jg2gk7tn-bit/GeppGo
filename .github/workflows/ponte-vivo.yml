@@ -222,3 +222,12 @@ jobs:
       - name: Ogni voce, dal ponte vero
         if: always()
         run: node test/domande-dal-vivo.js
+
+      # E LA COSA PIU' VICINA A UN TELEFONO VERO: l'app aperta senza recinto,
+      # il ponte e i server veri, le sei voci toccate in fila dal menu come fa
+      # una persona. «Funziona solo per stazione e metro» — che sono le prime
+      # due del menu: se il guasto sono le richieste che si esauriscono, qui
+      # si vede.
+      - name: Le sei voci in fila, come un telefono
+        if: always()
+        run: node test/come-un-telefono.js

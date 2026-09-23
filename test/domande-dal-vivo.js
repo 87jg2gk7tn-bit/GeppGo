@@ -81,6 +81,11 @@ function chiedi(url, corpo, intestazioni, attesa) {
 
 function riassunto(x) {
   if (x.errore) return `${x.s.toFixed(1)}s  NON RISPONDE: ${x.errore}`;
+  /* Un «0 posti» senza data era in realtà una pagina d'errore (troppe
+     richieste, server pieno), letta come una risposta vuota perché qui non
+     si guardava lo stato. Stessa bugia che l'app ha smesso di credere. */
+  if (x.stato && x.stato !== 200) return `${x.s.toFixed(1)}s  ERRORE ${x.stato}${x.d && x.d.errore ? ': ' + String(x.d.errore).slice(0, 70) : ''}`;
+  if (!x.d) return `${x.s.toFixed(1)}s  risposta che non è JSON`;
   const d = x.d || {};
   if (d.ancora) return `${x.s.toFixed(1)}s  sta ancora cercando (${String(d.errore).slice(0, 70)})`;
   if (d.errore) return `${x.s.toFixed(1)}s  DICE DI NO [${x.stato}]: ${String(d.errore).slice(0, 80)}`;

@@ -88,7 +88,15 @@ async function unServer(url: string, q: string, attesa: number): Promise<unknown
       },
       body: 'data=' + encodeURIComponent(q),
     });
-    if (!res.ok) throw new Error(res.status + ' da ' + new URL(url).host);
+    /* Con lo stato si porta dietro anche l'inizio di quello che il server ha
+       scritto: «406» dice che non ci vuole, e non perche'. overpass-api.de
+       risponde 406 al ponte e risponde bene agli stessi identici testi
+       mandati da un'altra parte — il motivo sta scritto li' dentro, e senza
+       leggerlo si tira a indovinare. */
+    if (!res.ok) {
+      const perche = (await res.text().catch(() => '')).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      throw new Error(res.status + ' da ' + new URL(url).host + (perche ? ' «' + perche.slice(0, 90) + '»' : ''));
+    }
     const d = await res.json();
     /* Un «non c'e' niente» si crede solo a chi sa dire di quando sono i suoi
        dati: vedi memoria.mjs. Chi non lo sa dire non ha risposto, ha solo
@@ -127,7 +135,7 @@ function perche(url: string, e: unknown): string {
   const casa = new URL(url).host.replace(/^overpass\./, '');
   const m = String((e as Error)?.message ?? e);
   if (/abort/i.test(m)) return casa + ' tempo scaduto';
-  return casa + ' ' + m.replace(' da ' + new URL(url).host, '').slice(0, 40);
+  return casa + ' ' + m.replace(' da ' + new URL(url).host, '').slice(0, 120);
 }
 
 /* E QUANDO NON CE LA FA DENTRO QUEL TEMPO, NON SI LASCIA PERDERE.
