@@ -1,0 +1,28 @@
+# Le fonti del «qui intorno», misurate una per una.
+#
+# Si lancia a mano: Actions → «Le fonti del qui intorno» → Run workflow.
+# Per ogni voce del menu chiede la stessa cosa a tutti i server di Overpass,
+# a Photon e a Nominatim, e scrive chi ha risposto, in quanto tempo, e quale
+# posto ha trovato più vicino. Serve a scegliere le fonti misurando, invece
+# di aggiungerle perché esistono — che è come era entrato il server che
+# rispondeva «non c'è niente» a tutto.
+
+name: Le fonti del qui intorno
+
+on:
+  workflow_dispatch:
+
+jobs:
+  misura:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Le dipendenze
+        run: npm install --no-audit --no-fund
+      - name: Il browser
+        run: npx playwright install --with-deps chromium
+      - name: Le fonti, voce per voce
+        run: node test/fonti-dal-vivo.js
