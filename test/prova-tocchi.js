@@ -19,7 +19,7 @@ const { apriBrowser, APP } = require('./browser');
 
 /* Le classi che si toccano più spesso in tutta l'app. Non è un elenco
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
-const CLASSI = ['nav-item', 'hh-cerca', 'menu-btn', 'hh-day', 'hh-add', 'hh-grado',
+const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'hh-day', 'hh-add', 'hh-grado',
   'tt-az', 'tt-costruisci',
                 'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'th-btn', 'ad-x'];
 

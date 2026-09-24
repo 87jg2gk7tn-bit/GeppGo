@@ -31,6 +31,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # LE FONTI PRIMA DI TUTTO: e' la misura che serve a scegliere, e deve
+      # arrivare prima che il resto del controllo consumi le richieste di
+      # questa connessione verso i server della mappa.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Le dipendenze (per le fonti)
+        run: npm install --no-audit --no-fund
+      - name: Il browser (per le fonti)
+        run: npx playwright install --with-deps chromium
+      - name: Le fonti del qui intorno, voce per voce
+        run: node test/fonti-dal-vivo.js
+
       - name: Chiedi al ponte
         run: |
           python3 - <<'FINE'
@@ -231,3 +244,21 @@ jobs:
       - name: Le sei voci in fila, come un telefono
         if: always()
         run: node test/come-un-telefono.js
+
+  # «DEVE FUNZIONARE IN TUTTO IL MONDO»: la ricerca veloce — la funzione vera
+  # dell'app — in tredici posti di tutti i continenti. E' un lavoro a se',
+  # in parallelo all'altro: finisce in pochi minuti e si legge subito, senza
+  # aspettare il resto del controllo.
+  mondo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Le dipendenze
+        run: npm install --no-audit --no-fund
+      - name: Il browser
+        run: npx playwright install --with-deps chromium
+      - name: La ricerca veloce in giro per il mondo
+        run: node test/veloce-nel-mondo.js

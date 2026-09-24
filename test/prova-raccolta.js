@@ -122,6 +122,45 @@ const stato = {
   ok('e nemmeno in uno che non è nel cloud', tasto.senzaCloud === false);
   ok('quando le condizioni tornano, torna anche il tasto', tasto.tornato === true);
 
+  // ── e il tasto IN HOME ─────────────────────────────────────────────────
+  /* «La funzione a raccolta la voglio in home, ora non la trovo.» Era
+     stata spostata nella scheda del viaggio pensando che si usasse una volta
+     per viaggio; si usa in strada, col gruppo sparpagliato. Adesso sta in
+     home accanto a «Cosa cerchi». E quando non si puo' ancora usare il tasto
+     c'e' lo stesso e dice cosa manca: sparire senza spiegazioni era il
+     motivo per cui non si trovava. */
+  const inHome = await page.evaluate(async () => {
+    const f = {};
+    renderAll();
+    const b = () => document.querySelector('#homeHero .hh-raccolta');
+    f.cePer = !!b();
+    f.testo = (b() || {}).textContent || '';
+    f.accantoACerca = !!(b() && b().parentElement && b().parentElement.querySelector('.hh-cerca'));
+    if (b()) b().click();
+    f.apre = document.getElementById('mRaccolta').classList.contains('active');
+    closeSheet('mRaccolta');
+    // da compagno non admin: il tasto c'e', e dice perche' non si puo'
+    const t = T(); t._admin = false; renderAll();
+    f.ceDaCompagno = !!b();
+    if (b()) b().click();
+    await new Promise(x => setTimeout(x, 50));
+    f.spiega = (document.querySelector('.toast') || {}).textContent || '';
+    f.nonApre = !document.getElementById('mRaccolta').classList.contains('active');
+    t._admin = true;
+    // da soli non c'e': non c'e' nessuno da chiamare
+    const tutti = t.participants; t.participants = [tutti[0]]; renderAll();
+    f.daSolo = !!b();
+    t.participants = tutti; renderAll();
+    return f;
+  });
+  ok('in home c\'è «A raccolta»', inHome.cePer && /A raccolta/.test(inHome.testo), inHome.testo);
+  ok('sulla stessa riga di «Cosa cerchi qui intorno?»', inHome.accantoACerca);
+  ok('e toccandolo si apre la chiamata', inHome.apre);
+  ok('chi non può lanciarlo lo vede lo stesso', inHome.ceDaCompagno);
+  ok('e toccandolo gli si dice perché, invece di non fare niente',
+     /creato il viaggio/.test(inHome.spiega) && inHome.nonApre, inHome.spiega);
+  ok('in un viaggio da soli in home non c\'è: non c\'è nessuno da chiamare', inHome.daSolo === false);
+
   // ── chiamare ────────────────────────────────────────────────────────────
   const chiama = await page.evaluate(async () => {
     apriRaccolta();

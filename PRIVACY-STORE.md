@@ -265,7 +265,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |
 | `overpass-api.de`, `overpass.kumi.systems`, `overpass.private.coffee` | Coordinate (su una griglia di ~200 m) |
 | `maps.mail.ru/osm/tools/overpass` (Russia) | Coordinate (su una griglia di ~200 m). **Non è di OpenStreetMap**: è una copia della mappa tenuta su da mail.ru, aggiunta perché è l'unica che risponda con dati aggiornati al giorno. Quando il ponte risponde, la richiesta parte dal nostro server; quando il ponte è giù parte dal telefono, e allora vede anche l'IP |
-| `photon.komoot.io` | Testo cercato, coordinate |
+| `photon.komoot.io` | Testo cercato, coordinate; per «qui intorno» solo il tipo di posto e un punto sulla griglia di ~200 m, e solo quando la mappa non risponde |
 | `router.project-osrm.org` | Coordinate |
 | `api.open-meteo.com` | Coordinate |
 | `it.wikipedia.org`, `commons.wikimedia.org`, `www.wikidata.org` | Nomi di luoghi |
