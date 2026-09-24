@@ -786,6 +786,16 @@ qualcuno che risponde".
   ponte **anche Nominatim ci chiude la porta (403)**, come overpass-api.de:
   le due vanno chiamate dal telefono. Infine la risposta vecchia non è più
   la fine: si mostra subito e intanto si cerca da soli quella di adesso.
+  **Misurata in giro per il mondo** (lavoro «mondo» del workflow, 13 posti
+  di tutti i continenti, la funzione vera dell'app): bus, bagni e bancomat
+  13 su 13, stazione 11 (Islanda e Moab non hanno treni), metro 9 (Nairobi,
+  Reykjavík, Matera e Moab non hanno il metro), fumatori solo dove sono
+  mappati (Tokyo, Reykjavík). Sempre fra 0,8 e 3,5 secondi. E ha trovato un
+  errore: **Photon per «stazione» dava anche il metro** (New York «49th
+  Street»), perché di un posto sa solo «è una stazione». Per la stazione dei
+  treni adesso si chiede solo a Nominatim, coi dettagli, e si scarta
+  station=subway come fa la mappa; prima vicino, poi largo, perché
+  Nominatim ordina per importanza e non per distanza.
 - **⚠️ overpass-api.de chiude la porta a chi bussa troppo, e lo fa con un
   406 che sul telefono non si vede.** «Funziona solo per stazione e metro»:
   sono le prime due del menu. Rifatta la sequenza sulla rete vera (workflow

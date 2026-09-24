@@ -12414,8 +12414,20 @@ function viciniCacheScrivi(kind,lat,lng,raggio,soloNome,lista){
  * chiama «dei Bagni» non e' un bagno. Poi passa dalle stesse funzioni dei
  * risultati di Overpass (nome, dettagli, il bancomat segnato come assente)
  * — cosi' una riga e' fatta allo stesso modo da qualunque parte arrivi. */
+/* LA STAZIONE DEI TRENI SOLO DA NOMINATIM. Misurata in giro per il mondo,
+   Photon per «stazione» restituiva anche le fermate del METRO: a New York
+   «49th Street», a Parigi «Châtelet», a Istanbul «Taksim». Photon di un
+   posto sa soltanto «e' una stazione», e non distingue il treno dal metro.
+   Nominatim si': chiedendogli i dettagli (extratags) dice station=subway,
+   e quelle si scartano — come fa la domanda a Overpass con
+   ["station"!="subway"].
+   E si chiede prima vicino, poi largo: Nominatim mette in fila per
+   importanza, non per distanza, e in un riquadro di dieci chilometri la
+   stazione piccola sotto casa finisce dietro le venti piu' importanti —
+   attorno a Muggio' dava Monza a 3,8 km invece di Lissone-Muggio' a 1,7. */
 const VICINI_VELOCE={
-  treno:{tag:['railway:station','railway:halt'],frasi:['railway station'],km:10},
+  treno:{tag:['railway:station','railway:halt'],frasi:['railway station'],scala:[2,10],soloNominatim:true,
+         scarta:t=>t.station==='subway'||(t.subway==='yes'&&t.train!=='yes')},
   metro:{tag:['railway:subway_entrance','station:subway'],frasi:['subway entrance','subway station'],km:15},
   bus:{tag:['highway:bus_stop','amenity:bus_station'],frasi:['bus stop'],km:1.5},
   bagno:{tag:['amenity:toilets'],frasi:['toilets'],km:3},
@@ -12439,9 +12451,13 @@ async function viciniVeloce(kind,lat,lng){
   };
   const ammessi=new Set(c.tag),elementi=[];
   const tagQS=c.tag.map(t=>'osm_tag='+encodeURIComponent(t)).join('&');
-  const dLat=c.km/111,dLng=c.km/(111*Math.cos(qLat*Math.PI/180));
-  const box=[qLng-dLng,qLat+dLat,qLng+dLng,qLat-dLat].map(n=>n.toFixed(3)).join(',');
-  const daPhoton=prendi(`https://photon.komoot.io/reverse?lat=${qLat}&lon=${qLng}&radius=${c.km}&limit=15&${tagQS}`).then(d=>{
+  const scala=c.scala||[c.km];
+  const km=scala[scala.length-1];
+  const riquadro=k=>{
+    const dLat=k/111,dLng=k/(111*Math.cos(qLat*Math.PI/180));
+    return [qLng-dLng,qLat+dLat,qLng+dLng,qLat-dLat].map(n=>n.toFixed(3)).join(',');
+  };
+  const daPhoton=c.soloNominatim?Promise.resolve():prendi(`https://photon.komoot.io/reverse?lat=${qLat}&lon=${qLng}&radius=${km}&limit=15&${tagQS}`).then(d=>{
     ((d&&d.features)||[]).forEach(f=>{
       const p=f.properties||{},g=(f.geometry||{}).coordinates||[];
       if(!ammessi.has(p.osm_key+':'+p.osm_value)||g.length<2)return;
@@ -12451,15 +12467,24 @@ async function viciniVeloce(kind,lat,lng){
   });
   /* Nominatim: una domanda al secondo, e' la sua regola. Le frasi della
      stessa voce partono in fila, non insieme. */
+  /* Con i dettagli (extratags): servono a scartare il metro dalla stazione
+     dei treni, e danno anche gli orari, se si paga, se e' accessibile — le
+     stesse cose che mostra la mappa. */
   const daNominatim=(async()=>{
-    for(let i=0;i<c.frasi.length;i++){
-      if(i)await attendi(1100);
-      const d=await prendi(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.frasi[i])}&viewbox=${box}&bounded=1&format=json&limit=20`);
-      (Array.isArray(d)?d:[]).forEach(x=>{
-        if(!ammessi.has(x.class+':'+x.type))return;
-        const t={[x.class]:x.type};if(x.name)t.name=x.name;
-        elementi.push({lat:+x.lat,lon:+x.lon,tags:t});
-      });
+    let presi=0,prima=true;
+    for(const k of scala){
+      if(presi)break;
+      for(const f of c.frasi){
+        if(!prima)await attendi(1100);
+        prima=false;
+        const d=await prendi(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(f)}&viewbox=${riquadro(k)}&bounded=1&format=json&extratags=1&limit=${c.soloNominatim?40:20}`);
+        (Array.isArray(d)?d:[]).forEach(x=>{
+          if(!ammessi.has(x.class+':'+x.type))return;
+          const t=Object.assign({},x.extratags||{},{[x.class]:x.type});if(x.name)t.name=x.name;
+          if(c.scarta&&c.scarta(t))return;
+          elementi.push({lat:+x.lat,lon:+x.lon,tags:t});presi++;
+        });
+      }
     }
   })();
   await Promise.all([daPhoton,daNominatim]);
@@ -18235,7 +18260,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-24 23:30';
+const VERSIONE_APP='2026-09-25 00:30';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

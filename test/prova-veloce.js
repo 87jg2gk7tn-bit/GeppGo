@@ -54,7 +54,10 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Muggiò', currency
       const tag = u.searchParams.getAll('osm_tag');
       const f = tag.includes('amenity:toilets')
         ? [{ geometry: { coordinates: [IO.lng, su(90)] }, properties: { osm_key: 'amenity', osm_value: 'toilets', name: 'Bagno da Photon' } }]
-        : [];
+        : tag.includes('railway:station')
+          /* Photon per «stazione» da' anche il metro, e non sa distinguerlo */
+          ? [{ geometry: { coordinates: [IO.lng, su(200)] }, properties: { osm_key: 'railway', osm_value: 'station', name: '49th Street' } }]
+          : [];
       ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ type: 'FeatureCollection', features: f }) });
     });
     await page.route(/nominatim\.openstreetmap\.org\/search/, ro => {
@@ -63,7 +66,12 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Muggiò', currency
          dov'è la città del viaggio, e quella non c'entra. */
       if (/bounded=1/.test(ro.request().url())) page._nominatim.push(ro.request().url());
       const q = new URL(ro.request().url()).searchParams.get('q');
-      const d = q === 'toilets' ? [
+      const d = q === 'railway station' ? [
+        /* la fermata del metro, che Nominatim riconosce dai dettagli */
+        { lat: String(su(200)), lon: String(IO.lng), class: 'railway', type: 'station', name: '49th Street', extratags: { station: 'subway' } },
+        /* e la stazione dei treni vera, piu' lontana */
+        { lat: String(su(1000)), lon: String(IO.lng), class: 'railway', type: 'station', name: 'Grand Central', extratags: { train: 'yes', operator: 'Metro-North' } }
+      ] : q === 'toilets' ? [
         /* un bagno vero, senza nome: Photon non ce l'ha, Nominatim sì */
         { lat: String(su(60)), lon: String(IO.lng), class: 'amenity', type: 'toilets', name: '', display_name: 'Via Casati, Muggiò' },
         /* e una via che si chiama «dei Bagni»: NON è un bagno */
@@ -140,6 +148,24 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Muggiò', currency
     ok('e né Photon né Nominatim vengono chiamati',
        p._photon.length === 0 && p._nominatim.length === 0,
        `photon ${p._photon.length}, nominatim ${p._nominatim.length} ${p._nominatim.join(' ').slice(0, 140)}`);
+    await p.close();
+  }
+
+  // ── 4. la stazione dei treni non è la fermata del metro ──────────────
+  /* Misurato in giro per il mondo: Photon per «stazione» restituiva anche il
+     metro — a New York «49th Street», a Parigi «Châtelet». Nominatim coi
+     dettagli dice station=subway, e quella si scarta come fa la mappa. */
+  {
+    const p = await apri('giu');
+    await p.evaluate(() => cercaVicino('treno'));
+    await fino(p, 'Grand Central|49th Street', 40000);
+    await p.waitForTimeout(500);
+    const t = await corpo(p);
+    ok('la stazione dei treni vera si trova', /Grand Central/.test(t), t.slice(0, 80));
+    ok('e la fermata del metro non passa per stazione dei treni', !/49th Street/.test(t), t.slice(0, 80));
+    ok('per la stazione Photon non si interpella nemmeno: non sa distinguere', p._photon.length === 0,
+       p._photon.length + ' domande a Photon');
+    ok('e dai dettagli di Nominatim viene fuori anche chi la gestisce', /gestita da Metro-North/.test(t), t.slice(0, 100));
     await p.close();
   }
 
