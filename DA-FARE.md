@@ -771,6 +771,21 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ Una sola fonte non basta, e quale aggiungere si misura.** «Perché mi
+  dà il risultato di due giorni fa?» Overpass era l'unica fonte del «qui
+  intorno», e i suoi server pubblici oggi rispondono in 12-40 secondi o non
+  rispondono. Misurate dal vivo nella zona di chi usa l'app (passo «Le
+  fonti» del workflow «Il ponte risponde?»), **Photon e Nominatim insieme
+  trovano gli stessi posti in 0,2-4 secondi**, e dove manca l'uno c'è
+  l'altro (Photon tiene solo i posti col nome: niente bagni anonimi;
+  Nominatim ordina per importanza, non per distanza: sbaglia la stazione
+  più vicina). Adesso sono la **ricerca veloce**: parte se dopo 4 secondi la
+  mappa non ha trovato niente, o se la mappa finisce giù o vuota; tiene solo
+  i posti del tipo giusto; passa dalle stesse funzioni dei risultati di
+  Overpass. Quando la mappa risponde in fretta non parte nemmeno. E dal
+  ponte **anche Nominatim ci chiude la porta (403)**, come overpass-api.de:
+  le due vanno chiamate dal telefono. Infine la risposta vecchia non è più
+  la fine: si mostra subito e intanto si cerca da soli quella di adesso.
 - **⚠️ overpass-api.de chiude la porta a chi bussa troppo, e lo fa con un
   406 che sul telefono non si vede.** «Funziona solo per stazione e metro»:
   sono le prime due del menu. Rifatta la sequenza sulla rete vera (workflow

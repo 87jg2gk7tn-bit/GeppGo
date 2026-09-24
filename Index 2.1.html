@@ -7925,7 +7925,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e': un bagno non si sposta, e saperlo di ieri e' meglio che non saperlo. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Prima erano sei pillole separate in home: adesso no. "Condividi" e "A raccolta" non stanno piu' in home: Condividi e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio), "A raccolta" sta nella scheda del viaggio. I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -11657,6 +11657,7 @@ async function viciniIntorno(lat,lng,giro){
   /* Ancora la ricerca di adesso? Se no si smette in silenzio: la scheda e'
      di un'altra, o e' stata chiusa. */
   const miaAncora=()=>giro===undefined||giro===vicinoGiro;
+  let veloce=null,finito=false,sveglia=null;
   try{
     let trovati=[],andataBene=false,giu=false,ultimoGuasto=null;
     const aggiungi=n=>{if(!vicinoDoppione(trovati,n.lat,n.lng,n.nome))trovati.push(n);};
@@ -11665,6 +11666,20 @@ async function viciniIntorno(lat,lng,giro){
        Questa è la ricerca che risolve quasi tutti i casi. */
     const scala=raggiDi(kind);
     const iniziato=Date.now();
+    /* La ricerca veloce: parte da sola se dopo qualche secondo la mappa non
+       ha ancora trovato niente, e se arriva prima mostra subito i suoi
+       risultati — con in alto la riga che dice che si sta controllando
+       anche sulla mappa. Quando poi la mappa risponde, la sua lista (piu'
+       ricca) prende il posto di questa. */
+    const avviaVeloce=()=>{
+      if(!veloce)veloce=viciniVeloce(kind,lat,lng).catch(()=>[]).then(l=>{
+        if(l.length&&miaAncora()&&!finito&&!trovati.length)
+          body.innerHTML=`<div style="font-size:.82rem;line-height:1.5;color:var(--ink-faint);background:var(--sand-tint);border-radius:var(--r-md);padding:.6rem .7rem;margin-bottom:.7rem">Trovati con la ricerca veloce — <span id="vicinoStato">controllo anche sulla mappa completa…</span></div>`+vicinoRighe(l,lat,lng);
+        return l;
+      });
+      return veloce;
+    };
+    sveglia=setTimeout(()=>{if(miaAncora()&&!finito&&!trovati.length)avviaVeloce();},VICINI_VELOCE_DOPO_MS);
     const dillo=t=>{if(!miaAncora())return;const st=document.getElementById('vicinoStato');if(st){st.textContent=t.charAt(0).toLowerCase()+t.slice(1);return;}body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
     for(const r of scala){
       if(!miaAncora())return;
@@ -11723,6 +11738,17 @@ async function viciniIntorno(lat,lng,giro){
        perde anche il bancomat che si era trovato.
        Adesso parte solo a MANI COMPLETAMENTE VUOTE, che e' il caso per cui
        era stata scritta. */
+    /* LA SCALA E' FINITA A MANI VUOTE, O LA MAPPA E' GIU': prima della rete
+       sul nome — che e' lenta e sbaglia volentieri, come il «Garage
+       Visconti» dato per stazione — si prende la ricerca veloce, se non e'
+       gia' arrivata la si aspetta. Un suo «niente» pero' non basta a dire
+       che non c'e' niente: tiene meno posti della mappa (Photon, per
+       esempio, solo quelli col nome). */
+    if(!trovati.length&&miaAncora()){
+      const l=await avviaVeloce();
+      if(!miaAncora())return;
+      if(l.length){l.forEach(aggiungi);andataBene=true;}
+    }
     if(!trovati.length&&!giu&&miaAncora()){
       dillo('Cerco anche per nome...');
       try{
@@ -11832,6 +11858,10 @@ async function viciniIntorno(lat,lng,giro){
     body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>${navigator.onLine===false?'Il telefono risulta <b>senza rete</b>.':'Di solito è passeggero. Se hai campo, fra un minuto va.'}</div>
       <div style="font-size:.7rem;color:var(--ink-faint);margin-top:.5rem">dettaglio: ${esc(perche)}</div>
       <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`;
+  }finally{
+    /* Finita la ricerca, la sveglia della veloce non deve piu' suonare: se la
+       mappa ha risposto in un secondo, la veloce non parte proprio. */
+    clearTimeout(sveglia);finito=true;
   }
 }
 
@@ -12307,6 +12337,115 @@ function viciniCacheScrivi(kind,lat,lng,raggio,soloNome,lista){
   }
 }
 
+/* LA RICERCA VELOCE: PHOTON E NOMINATIM, QUANDO LA MAPPA ARRANCA.
+ *
+ * Segnalato con la foto: «Perche' mi da' il risultato di due giorni fa?
+ * Deve trovarlo adesso». Overpass era l'unica fonte del «qui intorno», e i
+ * suoi server pubblici sono in affanno: quello principale chiude la porta
+ * a chi chiede troppo (406), gli altri ci mettono da dodici a oltre
+ * quaranta secondi, o rispondono 504. Misurato dal vivo nella zona di chi
+ * usa l'app, voce per voce (workflow «Il ponte risponde?», passo «Le
+ * fonti»):
+ *
+ *               Overpass (4 server)       Photon             Nominatim
+ *   stazione    2 rispondono, con 0       Lissone-Muggio' 1,7 km  3,3s   Monza 3,8 km (sbaglia il piu' vicino)
+ *   metro       2 rispondono, con 0       Sesto 1 Maggio 5,7 km   3,4s   5,7 km
+ *   bus         1 su 4: 242 m             242 m, la stessa        3,5s   273 m   0,2s
+ *   bagno       1 su 4: 216 m             0 (tiene solo i posti con un nome)   216 m   0,2s
+ *   bancomat    1 su 4: 275 m, 13s        275 m, lo stesso        4,1s   317 m   0,6s
+ *
+ * Photon e Nominatim insieme trovano gli stessi posti in 0,2-4 secondi, e
+ * dove manca l'uno c'e' l'altro. Nessuno dei due e' un servizio nuovo: sono
+ * gia' dichiarati in privacy.html. Dal ponte non si possono usare: dal
+ * ponte OpenStreetMap chiude la porta anche a Nominatim (403), mentre dal
+ * telefono rispondono.
+ *
+ * COME SI USA, per non rompere niente: la mappa (Overpass) resta la fonte
+ * principale, perche' e' la piu' ricca — orari, se si paga, accessibile.
+ * La ricerca veloce parte solo se dopo VICINI_VELOCE_DOPO_MS la mappa non
+ * ha ancora trovato niente, o se la mappa finisce a mani vuote o giu'.
+ * Quando la mappa risponde in fretta — dalla memoria del ponte, in un
+ * secondo — la veloce non parte nemmeno.
+ *
+ * Si tiene SOLO quello che e' davvero del tipo giusto: una via che si
+ * chiama «dei Bagni» non e' un bagno. Poi passa dalle stesse funzioni dei
+ * risultati di Overpass (nome, dettagli, il bancomat segnato come assente)
+ * — cosi' una riga e' fatta allo stesso modo da qualunque parte arrivi. */
+const VICINI_VELOCE={
+  treno:{tag:['railway:station','railway:halt'],frasi:['railway station'],km:10},
+  metro:{tag:['railway:subway_entrance','station:subway'],frasi:['subway entrance','subway station'],km:15},
+  bus:{tag:['highway:bus_stop','amenity:bus_station'],frasi:['bus stop'],km:1.5},
+  bagno:{tag:['amenity:toilets'],frasi:['toilets'],km:3},
+  fumo:{tag:['amenity:smoking_area'],frasi:['smoking area'],km:5},
+  atm:{tag:['amenity:atm','amenity:bank'],frasi:['atm','bank'],km:2}
+};
+const VICINI_VELOCE_DOPO_MS=4000;
+const VICINI_VELOCE_ATTESA_MS=8000;
+async function viciniVeloce(kind,lat,lng){
+  const c=VICINI_VELOCE[kind],v=VICINI[kind];
+  if(!c||!v)return [];
+  const gia=viciniCacheLeggi(kind,lat,lng,'veloce',false);
+  if(gia)return gia;
+  /* Anche qui si chiede su un punto della griglia, non su quello esatto:
+     sono servizi di altri, e dove sei di preciso non serve a nessuno per
+     sapere dov'e' il bagno piu' vicino. Le distanze si ricalcolano dopo. */
+  const qLat=suGrigliaVicini(lat),qLng=suGrigliaVicini(lng);
+  const prendi=u=>{
+    const stop=new AbortController(),taglia=setTimeout(()=>stop.abort(),VICINI_VELOCE_ATTESA_MS);
+    return fetch(u,{signal:stop.signal}).then(r=>r.ok?r.json():null).catch(()=>null).finally(()=>clearTimeout(taglia));
+  };
+  const ammessi=new Set(c.tag),elementi=[];
+  const tagQS=c.tag.map(t=>'osm_tag='+encodeURIComponent(t)).join('&');
+  const dLat=c.km/111,dLng=c.km/(111*Math.cos(qLat*Math.PI/180));
+  const box=[qLng-dLng,qLat+dLat,qLng+dLng,qLat-dLat].map(n=>n.toFixed(3)).join(',');
+  const daPhoton=prendi(`https://photon.komoot.io/reverse?lat=${qLat}&lon=${qLng}&radius=${c.km}&limit=15&${tagQS}`).then(d=>{
+    ((d&&d.features)||[]).forEach(f=>{
+      const p=f.properties||{},g=(f.geometry||{}).coordinates||[];
+      if(!ammessi.has(p.osm_key+':'+p.osm_value)||g.length<2)return;
+      const t={[p.osm_key]:p.osm_value};if(p.name)t.name=p.name;
+      elementi.push({lat:+g[1],lon:+g[0],tags:t});
+    });
+  });
+  /* Nominatim: una domanda al secondo, e' la sua regola. Le frasi della
+     stessa voce partono in fila, non insieme. */
+  const daNominatim=(async()=>{
+    for(let i=0;i<c.frasi.length;i++){
+      if(i)await attendi(1100);
+      const d=await prendi(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(c.frasi[i])}&viewbox=${box}&bounded=1&format=json&limit=20`);
+      (Array.isArray(d)?d:[]).forEach(x=>{
+        if(!ammessi.has(x.class+':'+x.type))return;
+        const t={[x.class]:x.type};if(x.name)t.name=x.name;
+        elementi.push({lat:+x.lat,lon:+x.lon,tags:t});
+      });
+    }
+  })();
+  await Promise.all([daPhoton,daNominatim]);
+  const out=[];
+  elementi.forEach(e=>{
+    if(!isFinite(e.lat)||!isFinite(e.lon))return;
+    const t=e.tags,nome=v.nome(t);
+    if(kind==='atm'&&t.atm==='no')return;
+    if(vicinoDoppione(out,e.lat,e.lon,nome))return;
+    out.push({lat:e.lat,lng:e.lon,nome:nome,extra:v.extra(t)});
+  });
+  if(out.length)viciniCacheScrivi(kind,lat,lng,'veloce',false,out);
+  return out;
+}
+/* Le righe di una lista di posti, come le mostra la scheda. */
+function vicinoRighe(lista,lat,lng){
+  return lista.map(b=>Object.assign({},b,{dist:Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}))}))
+    .sort((a,b)=>a.dist-b.dist).slice(0,6).map((b,i)=>{
+      const min=Math.max(1,Math.round(b.dist/TRAVEL_SPEED_KMH.walk/1000*60));
+      const extra=(b.extra||[]).filter(Boolean).join(' · ');
+      return `<div class="ms-row" style="cursor:default;align-items:center">
+        <div style="flex:1;min-width:0">
+          <div class="ms-t">${i===0?'⭐ ':''}${esc(b.nome)}</div>
+          <div class="ms-w">${b.dist<1000?b.dist+' m':(b.dist/1000).toFixed(1)+' km'} · ${min} min a piedi${extra?' · '+esc(extra):''}</div>
+        </div>
+        <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
+      </div>`;
+    }).join('');
+}
 async function viciniOverpass(kind,lat,lng,raggio,soloNome,avvisa){
   const gia=viciniCacheLeggi(kind,lat,lng,raggio,soloNome);
   if(gia)return gia;
@@ -18053,7 +18192,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-24 21:00';
+const VERSIONE_APP='2026-09-24 22:30';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
