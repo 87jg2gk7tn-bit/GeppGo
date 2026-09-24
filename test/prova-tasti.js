@@ -17,9 +17,10 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   const r=[]; const ok=(n,c,e='')=>r.push(`${c?'  OK  ':' FALLITO '} ${n}${e?' — '+e:''}`);
 
   /* Erano cinque pillole in fila (sei per chi organizza un viaggio di
-     gruppo). Adesso e' UN tasto solo: le cinque ricerche stanno dietro la
-     domanda «cosa cerchi», e Condividi, Bagagli e A raccolta si usano una
-     volta per viaggio e vivono nel Profilo. */
+     gruppo). Adesso le cinque ricerche stanno dietro UN tasto, la domanda
+     «cosa cerchi»; Condividi e Bagagli si usano una volta per viaggio e
+     vivono nel Profilo. «A raccolta» e' tornato in home accanto a «cosa
+     cerchi» (vedi prova-raccolta): qui il viaggio e' da soli, e non compare. */
   const home = await p.evaluate(()=>[...document.querySelectorAll('#homeHero .hh-cerca')].map(x=>x.textContent.trim()));
   ok('in home c\'è un tasto solo, non una fila di pillole', home.length===1, home.length+': '+home.join(' | '));
   ok('e chiede cosa cerchi', /[Cc]osa cerchi/.test(home[0]||''), home[0]||'');

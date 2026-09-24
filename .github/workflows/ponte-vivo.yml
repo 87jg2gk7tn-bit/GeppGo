@@ -41,7 +41,12 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Il browser (per le fonti)
         run: npx playwright install --with-deps chromium
+      # «Deve funzionare in tutto il mondo»: la ricerca veloce, la funzione
+      # vera dell'app, in tredici posti di tutti i continenti.
+      - name: La ricerca veloce in giro per il mondo
+        run: node test/veloce-nel-mondo.js
       - name: Le fonti del qui intorno, voce per voce
+        if: always()
         run: node test/fonti-dal-vivo.js
 
       - name: Chiedi al ponte
