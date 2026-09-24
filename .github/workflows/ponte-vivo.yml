@@ -31,6 +31,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # LE FONTI PRIMA DI TUTTO: e' la misura che serve a scegliere, e deve
+      # arrivare prima che il resto del controllo consumi le richieste di
+      # questa connessione verso i server della mappa.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Le dipendenze (per le fonti)
+        run: npm install --no-audit --no-fund
+      - name: Il browser (per le fonti)
+        run: npx playwright install --with-deps chromium
+      - name: Le fonti del qui intorno, voce per voce
+        run: node test/fonti-dal-vivo.js
+
       - name: Chiedi al ponte
         run: |
           python3 - <<'FINE'
