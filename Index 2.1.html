@@ -11256,6 +11256,20 @@ const VICINI_POCHI=3;
 const VICINI_RIPROVA_MS=9000;
 const VICINI_RIPROVE_MAX=2;
 let vicinoRiprove=0,vicinoAttesa=null,vicinoConto=null;
+/* Aspetta e riprova da sola, dicendo quanto manca. `scrivi(restano)` mette
+   il conto dove serve: in una scheda vuota occupa tutto, sopra a una
+   risposta vecchia sta nella riga in alto e la lista resta dov'e'. */
+function vicinoRiprovaDaSola(kind,scrivi){
+  vicinoRiprove++;
+  let restano=Math.round(VICINI_RIPROVA_MS/1000);
+  scrivi(restano);
+  /* Arrivato a zero il conto si spegne DA SOLO, non chiamando
+     `vicinoSmettiDiAspettare` — quella spegne anche la riprova, e la
+     riprova scatta nello stesso istante: il conto alla rovescia
+     cancellava proprio la cosa che stava annunciando. */
+  vicinoConto=setInterval(()=>{restano--;if(restano>0)return scrivi(restano);clearInterval(vicinoConto);vicinoConto=null;},1000);
+  vicinoAttesa=setTimeout(()=>{vicinoSmettiDiAspettare();cercaVicino(kind,true);},VICINI_RIPROVA_MS);
+}
 function vicinoSmettiDiAspettare(){
   if(vicinoAttesa){clearTimeout(vicinoAttesa);vicinoAttesa=null;}
   if(vicinoConto){clearInterval(vicinoConto);vicinoConto=null;}
@@ -11599,7 +11613,13 @@ function cercaVicino(kind,automatica){
   vicinoKind=VICINI[kind]?kind:'bagno';
   const v=VICINI[vicinoKind],body=document.getElementById('bagnoBody');
   document.getElementById('bagnoTitle').textContent=v.ic+' '+v.titolo;
-  body.innerHTML='<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">📍 Cerco dove sei...</div>';
+  /* Una riprova da sola sopra a una risposta vecchia la lascia dov'e': si
+     aggiorna solo la riga in alto. Svuotare la scheda vorrebbe dire
+     togliere a chi guarda l'unica cosa che ha, per mostrargli una
+     clessidra. */
+  const stato=automatica&&document.getElementById('vicinoStato');
+  if(stato)stato.textContent='sto cercando quello di adesso…';
+  else body.innerHTML='<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">📍 Cerco dove sei...</div>';
   openSheet('mBagno');
   /* Se il GPS è già acceso e la posizione è fresca si parte da lì, senza
      chiedere di nuovo: sono secondi di attesa in meno proprio nel momento in
@@ -11645,7 +11665,7 @@ async function viciniIntorno(lat,lng,giro){
        Questa è la ricerca che risolve quasi tutti i casi. */
     const scala=raggiDi(kind);
     const iniziato=Date.now();
-    const dillo=t=>{if(miaAncora())body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
+    const dillo=t=>{if(!miaAncora())return;const st=document.getElementById('vicinoStato');if(st){st.textContent=t.charAt(0).toLowerCase()+t.slice(1);return;}body.innerHTML=`<div style="color:var(--ink-faint);font-size:.88rem;padding:.4rem 0">${v.ic} ${t}</div>`;};
     for(const r of scala){
       if(!miaAncora())return;
       /* il giro largo si fa solo a mani vuote: se qualcosa c'è, roba più
@@ -11760,7 +11780,21 @@ async function viciniIntorno(lat,lng,giro){
       const quando=gg<1?'poco fa':(gg===1?'ieri':'circa '+gg+' giorni fa');
       const righe=vecchia.lista.map(b=>Object.assign({},b,{dist:Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}))}))
         .sort((a,b)=>a.dist-b.dist);
-      body.innerHTML=`<div style="font-size:.82rem;line-height:1.5;color:var(--ink-faint);background:var(--sand-tint);border-radius:var(--r-md);padding:.6rem .7rem;margin-bottom:.7rem">Il servizio della mappa non risponde adesso. Questo è quello che avevo trovato <b>${esc(quando)}</b>: le distanze sono giuste, ma qualcosa può essere cambiato.</div>`+
+      /* LA RISPOSTA VECCHIA E' UN «INTANTO», NON LA FINE.
+         Segnalato dal vivo con la foto: «Perche' mi da' il risultato di due
+         giorni fa? Deve trovarlo adesso». La risposta vecchia si mostrava e
+         basta: niente riprova, perche' la riprova da sola stava qui sotto e
+         a questa riga non ci si arrivava. Chi guardava restava col risultato
+         di due giorni prima, mentre quello di adesso stava magari arrivando.
+         Adesso la vecchia si mostra SUBITO — meglio sapere dov'era ieri che
+         guardare una clessidra — e intanto si continua a cercare da soli; la
+         riga in alto dice cosa sta succedendo, e appena arriva quella di
+         adesso prende il suo posto. Solo finite le riprove resta la vecchia,
+         col tasto per riprovare. */
+      const riprovo=vicinoRiprove<VICINI_RIPROVE_MAX;
+      body.innerHTML=`<div style="font-size:.82rem;line-height:1.5;color:var(--ink-faint);background:var(--sand-tint);border-radius:var(--r-md);padding:.6rem .7rem;margin-bottom:.7rem">${riprovo
+        ?`La mappa non risponde adesso. Intanto ecco quello che avevo trovato <b>${esc(quando)}</b> — <span id="vicinoStato">sto cercando quello di adesso…</span>`
+        :`Il servizio della mappa non risponde adesso. Questo è quello che avevo trovato <b>${esc(quando)}</b>: le distanze sono giuste, ma qualcosa può essere cambiato.`}</div>`+
         righe.slice(0,6).map((b,i)=>{
           const min=Math.max(1,Math.round(b.dist/TRAVEL_SPEED_KMH.walk/1000*60));
           const extra=(b.extra||[]).filter(Boolean).join(' · ');
@@ -11771,7 +11805,11 @@ async function viciniIntorno(lat,lng,giro){
             </div>
             <button class="chip green" style="flex-shrink:0" onclick="openNav(${b.lat},${b.lng},${jesc(b.nome)})">🧭</button>
           </div>`;}).join('')+
-        `<button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`;
+        (riprovo?'':`<button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`);
+      if(riprovo)vicinoRiprovaDaSola(kind,restano=>{
+        const st=document.getElementById('vicinoStato');
+        if(st)st.textContent=`sto cercando quello di adesso, riprovo da solo fra ${restano} second${restano===1?'o':'i'}…`;
+      });
       return;
     }
     /* Si dice che ci si e' provati, quante volte, e COSA e' andato storto:
@@ -11785,18 +11823,9 @@ async function viciniIntorno(lat,lng,giro){
        alla rovescia c'e' perche' uno schermo fermo per nove secondi sembra
        bloccato, e perche' cosi' si vede che l'app sta facendo qualcosa. */
     if(Date.now()-ponteAncora<VICINI_ATTESA_MS+VICINI_RIPROVA_MS&&vicinoRiprove<VICINI_RIPROVE_MAX){
-      vicinoRiprove++;
       const mio=kind;
-      let restano=Math.round(VICINI_RIPROVA_MS/1000);
-      const scrivi=()=>{body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">La mappa oggi è lenta, ma la ricerca è partita e sta andando avanti.<br><br>Ci riprovo da solo fra <b>${restano}</b> second${restano===1?'o':'i'}.</div>
-        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${mio}')">Riprova adesso</button>`;};
-      scrivi();
-      /* Arrivato a zero il conto si spegne DA SOLO, non chiamando
-         `vicinoSmettiDiAspettare` — quella spegne anche la riprova, e la
-         riprova scatta nello stesso istante: il conto alla rovescia
-         cancellava proprio la cosa che stava annunciando. */
-      vicinoConto=setInterval(()=>{restano--;if(restano>0)return scrivi();clearInterval(vicinoConto);vicinoConto=null;},1000);
-      vicinoAttesa=setTimeout(()=>{vicinoSmettiDiAspettare();cercaVicino(mio,true);},VICINI_RIPROVA_MS);
+      vicinoRiprovaDaSola(kind,restano=>{body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">La mappa oggi è lenta, ma la ricerca è partita e sta andando avanti.<br><br>Ci riprovo da solo fra <b>${restano}</b> second${restano===1?'o':'i'}.</div>
+        <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${mio}')">Riprova adesso</button>`;});
       return;
     }
     const perche=(e&&e.message)?String(e.message).slice(0,80):'nessuna risposta';
@@ -18024,7 +18053,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-23 12:00';
+const VERSIONE_APP='2026-09-24 21:00';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

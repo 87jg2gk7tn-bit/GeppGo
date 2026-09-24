@@ -316,6 +316,26 @@ const stato = {
   ok('e dice che è una risposta vecchia, senza spacciarla per fresca',
      /non risponde adesso/.test(testo) && /avevo trovato/.test(testo), testo.slice(0, 110));
   ok('con la distanza, che quella resta giusta', /120 m|1 min a piedi/.test(testo), testo.slice(0, 110));
+
+  /* E LA RISPOSTA VECCHIA NON E' LA FINE. Segnalato con la foto: «Perché mi
+     dà il risultato di due giorni fa? Deve trovarlo adesso». La vecchia si
+     mostrava e basta — la riprova da sola stava sotto, e a quella riga non
+     ci si arrivava. Qui la rete torna mentre la vecchia è sullo schermo, e
+     c'è un bagno nuovo più vicino: deve comparire DA SOLO, senza che
+     nessuno tocchi niente, al posto della risposta vecchia. */
+  ok('e mentre mostra la vecchia, dice che sta cercando quella di adesso',
+     /sto cercando quello di adesso/.test(testo), testo.slice(0, 140));
+  await page.route('**/api/interpreter', ro => ro.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify(comeOverpass([{ type: 'node', id: 61, lat: su(40), lon: IO.lng,
+      tags: { amenity: 'toilets', name: 'Bagno appena aperto' } }])) }));
+  const attesa = await page.evaluate(() => VICINI_RIPROVA_MS);
+  await page.waitForFunction(() => /Bagno appena aperto/.test(document.getElementById('bagnoBody').innerText),
+    { timeout: attesa + 15000 }).catch(() => {});
+  testo = await page.evaluate(() => document.getElementById('bagnoBody').innerText.replace(/\s+/g, ' ').trim());
+  ok('e quando la mappa torna, la risposta di adesso arriva da sola',
+     /Bagno appena aperto/.test(testo), testo.slice(0, 90));
+  ok('e prende il posto di quella vecchia, senza più dire «avevo trovato»',
+     !/avevo trovato/.test(testo), testo.slice(0, 90));
   await page.close();
 
   /* E il rovescio: se non si sapeva niente, non si inventa niente. */
