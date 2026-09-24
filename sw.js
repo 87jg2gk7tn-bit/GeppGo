@@ -10,7 +10,7 @@
    cache qui: senza rete non servirebbero comunque a molto (es. la mappa
    avrebbe comunque bisogno delle tile, che non si possono precaricare tutte),
    e il codice dell'app già degrada con calma quando mancano. */
-const CACHE_NAME = 'geppgo-shell-v29';
+const CACHE_NAME = 'geppgo-shell-v30';
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 
 self.addEventListener('install', (event) => {

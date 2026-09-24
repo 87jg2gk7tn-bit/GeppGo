@@ -771,6 +771,15 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Lo stesso posto sta sulla mappa più volte, e la regola «a due passi» non
+  basta.** «Stazione, metro e bus duplicano i risultati.» Al Duomo il metro
+  dava «Duomo» tre volte (24, 48, 76 m): tre ENTRATE della stessa stazione,
+  oltre i 45 metri entro cui si univano. Lo stesso per le due fermate del bus
+  sui due lati della strada, e per la stazione segnata come punto e come
+  edificio. Per queste tre voci adesso stesso nome = stesso posto, si tiene il
+  più vicino (`vicinoUnoPerNome`); i posti senza nome si uniscono solo se
+  vicini fra loro. Bagni e bancomat no: due «Intesa Sanpaolo» in due vie sono
+  due bancomat. `prova-una-riga`.
 - **⚠️ Una sola fonte non basta, e quale aggiungere si misura.** «Perché mi
   dà il risultato di due giorni fa?» Overpass era l'unica fonte del «qui
   intorno», e i suoi server pubblici oggi rispondono in 12-40 secondi o non
