@@ -89,11 +89,14 @@ const stato = {
   ok('e chiama la ricerca giusta', iAtm >= 0 && /cercaAtm\(\)/.test(fila[iAtm].onclick),
      iAtm >= 0 ? fila[iAtm].onclick : '');
   /* L'ordine e' quello con cui le cose servono in viaggio: prima come ci
-     si muove, poi i bisogni. Il bancomat sta in fondo perche' e' l'unico
-     che si puo' risolvere anche in un altro modo. */
-  ok('l\'elenco parte dai trasporti e finisce col bancomat',
+     si muove, poi i bisogni, poi il bancomat. Dopo vengono le quattro
+     della vita di ogni giorno — spesa, farmacia, mangiare, bere — che
+     sono arrivate dopo e che non devono spostare le prime sei: chi le
+     usa le trova dove le ha sempre trovate. */
+  ok('l\'elenco parte dai trasporti, poi i bisogni, il bancomat e le quattro nuove',
      fila.map(x => x.testo).join('|') === ['Stazione dei treni', 'Metropolitana', 'Fermata del bus',
-       'Bagno pubblico', 'Area fumatori', 'Bancomat'].join('|'),
+       'Bagno pubblico', 'Area fumatori', 'Bancomat',
+       'Supermarket', 'Farmacia', 'Ristorante', 'Bar'].join('|'),
      fila.map(x => x.testo).join(' | '));
   await page.screenshot({ path: `${OUT}/atm-home.png` });
   await page.evaluate(() => closeSheet('mCerca'));

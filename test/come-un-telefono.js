@@ -1,8 +1,8 @@
-/* LE SEI VOCI IN FILA, COME LE PROVA UNA PERSONA, SULLA RETE VERA.
+/* LE VOCI IN FILA, COME LE PROVA UNA PERSONA, SULLA RETE VERA.
  *
  * Non è una prova — `npm test` non la lancia — e fa apposta la cosa che le
  * prove non devono fare: apre l'app SENZA recinto, col ponte vero e i
- * server della mappa veri, e tocca le sei voci del menu una dopo l'altra,
+ * server della mappa veri, e tocca le voci del menu una dopo l'altra,
  * chiudendo ogni volta con la ✕. La lancia il workflow «Il ponte
  * risponde?».
  *
@@ -19,6 +19,7 @@ const DOVE = { lat: 45.4641, lng: 9.1900 };
 const VOCI = [
   ['treno', 'Stazione dei treni'], ['metro', 'Metropolitana'], ['bus', 'Fermata del bus'],
   ['bagno', 'Bagno pubblico'], ['fumo', 'Area fumatori'], ['atm', 'Bancomat'],
+  ['super', 'Supermarket'], ['farmacia', 'Farmacia'], ['ristorante', 'Ristorante'], ['bar', 'Bar'],
 ];
 const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency: 'EUR', status: 'open',
   participants: [{ id: 'p1', name: 'Gepp' }], suggested: [], pois: [], expenses: [], tickets: [],
@@ -54,7 +55,7 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
   await page.waitForFunction(() => typeof window.cercaVicino === 'function', { timeout: 30000 });
   await page.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 30000 }).catch(() => {});
   const versione = await page.evaluate(() => VERSIONE_APP);
-  console.log(`L'app vera (${versione}), la rete vera, dal Duomo di Milano. Le sei voci in fila, come dal menu.\n`);
+  console.log(`L'app vera (${versione}), la rete vera, dal Duomo di Milano. Le voci in fila, come dal menu.\n`);
 
   for (const [kind, voce] of VOCI) {
     log = [];

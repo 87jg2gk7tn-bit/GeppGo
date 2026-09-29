@@ -771,6 +771,22 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Supermarket, farmacia, ristorante, bar: le voci nuove del «qui intorno»
+  non cercano per nome, e il giro più stretto è di 500 metri.** Stesso
+  metodo delle sei (mappa, ricerca veloce se arranca, scala che si allarga a
+  mani vuote), con tre differenze volute. Niente rete sul nome: «bar» sta
+  dentro «Barbiere», «pub» dentro «Pubblico», e queste cose sono mappate
+  bene quasi ovunque. Il «bar» è quello dove si beve (amenity=bar, pub,
+  biergarten): il bar italiano della colazione è amenity=cafe e apposta non
+  c'è — chiesto «bar (per bere alcolici)». Per ristoranti e bar la scala
+  parte da 500 m con un tetto di 400 risultati, perché in centro sono
+  centinaia e la mappa taglia *prima* di ordinare per distanza. **Più stretto
+  di 500 no:** il giro è centrato sul punto della griglia (privacy), che può
+  stare ~150 m più in là di te — con 300 m, dall'altra parte ne restavano
+  coperti 150 e la prova ha perso il bar a 280 m. Doppioni: per i negozi
+  stesso nome **e** entro 80-150 m = stesso posto (entrata ed edificio);
+  due Esselunga in due vie restano due (`VICINI_STESSO_NEGOZIO`).
+  `prova-voci-nuove`.
 - **Lo stesso posto sta sulla mappa più volte, e la regola «a due passi» non
   basta.** «Stazione, metro e bus duplicano i risultati.» Al Duomo il metro
   dava «Duomo» tre volte (24, 48, 76 m): tre ENTRATE della stessa stazione,

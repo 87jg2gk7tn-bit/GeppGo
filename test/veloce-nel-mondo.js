@@ -28,7 +28,7 @@ const POSTI = [
   ['Matera (paese)', 40.6664, 16.6043],
   ['Moab, Utah (campagna)', 38.5733, -109.5498],
 ];
-const VOCI = ['treno', 'metro', 'bus', 'bagno', 'fumo', 'atm'];
+const VOCI = ['treno', 'metro', 'bus', 'bagno', 'fumo', 'atm', 'super', 'farmacia', 'ristorante', 'bar'];
 
 (async () => {
   const browser = await apriBrowser();
