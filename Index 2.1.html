@@ -1494,11 +1494,17 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   position:relative;display:flex;align-items:center;gap:.5rem;width:100%;
   margin-top:.8rem;padding:.85rem .9rem;min-height:44px;
   border-radius:var(--r-lg);border:1px solid var(--line);
-  background:var(--surface);color:var(--ink-soft);
+  /* La scritta in --ink, non --ink-soft: «metti la scritta della sezione
+     piu' scura». Col grigio chiaro sul fondo chiaro si leggeva come un
+     suggerimento dentro un campo vuoto, non come un tasto da toccare.
+     Solo piu' scura, non in grassetto: accanto ad «A raccolta», su un
+     telefono normale, il grassetto mandava a capo la scritta e il tasto
+     diventava alto il doppio. */
+  background:var(--surface);color:var(--ink);
   font-family:inherit;font-size:.9rem;text-align:left;cursor:pointer;
   box-shadow:var(--sh-xs);transition:var(--ease);
 }
-.hh-cerca svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.6}
+.hh-cerca svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.85}
 .hh-cerca:active{transform:scale(.99)}
 .hh.cl-buio .hh-cerca{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
 .hh.cl-buio .hh-cerca svg{opacity:.85}
@@ -1534,6 +1540,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cerca-txt,.vg-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1rem}
 .cerca-txt b,.vg-txt b{font-weight:700;font-size:.92rem}
 .cerca-txt i,.vg-txt i{font-style:normal;font-size:.76rem;color:var(--ink-faint);line-height:1.35}
+/* Nel «cosa cerchi» le righe sotto le voci un tono piu' scure: dicono cosa
+   si trova (orari, se si paga, le linee), e col grigio piu' chiaro si
+   leggevano a fatica proprio in strada, col sole sullo schermo. */
+.cerca-txt i{color:var(--ink-soft)}
 .cerca-freccia{color:var(--ink-faint);font-size:1.1rem;flex-shrink:0}
 .cerca-nota{font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem}
 .vg-voce.qui{border-color:var(--green-soft);background:var(--green-tint)}
@@ -2167,6 +2177,10 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="cerca-voce" onclick="closeSheet('mCerca');cercaBagno()"><span class="cerca-ic">🚻</span><span class="cerca-txt"><b>Bagno pubblico</b><i>Orari e se si paga</i></span><span class="cerca-freccia">›</span></button>
     <button class="cerca-voce" onclick="closeSheet('mCerca');cercaFumo()"><span class="cerca-ic">🚬</span><span class="cerca-txt"><b>Area fumatori</b><i>Dove fumare è permesso</i></span><span class="cerca-freccia">›</span></button>
     <button class="cerca-voce" onclick="closeSheet('mCerca');cercaAtm()"><span class="cerca-ic">🏧</span><span class="cerca-txt"><b>Bancomat</b><i>Anche quelli dentro i negozi</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaVicino('super')"><span class="cerca-ic">🛒</span><span class="cerca-txt"><b>Supermarket</b><i>Per fare la spesa, con gli orari</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaVicino('farmacia')"><span class="cerca-ic">💊</span><span class="cerca-txt"><b>Farmacia</b><i>Con gli orari, quando si sanno</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaVicino('ristorante')"><span class="cerca-ic">🍽️</span><span class="cerca-txt"><b>Ristorante</b><i>Con la cucina, quando si sa</i></span><span class="cerca-freccia">›</span></button>
+    <button class="cerca-voce" onclick="closeSheet('mCerca');cercaVicino('bar')"><span class="cerca-ic">🍸</span><span class="cerca-txt"><b>Bar</b><i>Per bere qualcosa: cocktail bar, pub, birrerie</i></span><span class="cerca-freccia">›</span></button>
   </div>
   <p class="cerca-nota">Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c'è niente, allarga il giro da sé.</p>
 </div></div>
@@ -4652,6 +4666,14 @@ const DIZIONARIO_COMPOSTE={
     'Orari e se si paga':'Opening hours, and whether you pay',
     'Dove fumare è permesso':'Where smoking is allowed',
     'Anche quelli dentro i negozi':'Including the ones inside shops',
+    'Supermarket':'Supermarket',
+    'Per fare la spesa, con gli orari':'For groceries, with opening hours',
+    'Farmacia':'Pharmacy',
+    'Con gli orari, quando si sanno':'With opening hours, when known',
+    'Ristorante':'Restaurant',
+    'Con la cucina, quando si sa':'With the cuisine, when known',
+    'Bar':'Bar',
+    'Per bere qualcosa: cocktail bar, pub, birrerie':'For a drink: cocktail bars, pubs, beer gardens',
     'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Searches around where you are, using GPS, on the OpenStreetMap map. If there’s nothing nearby, it widens the circle by itself.','Apri la time-table':'Open the timetable','Nessun alloggio ancora':'No place to stay yet','Cerca un hotel':'Find a hotel','Cercane uno':'Find one',
     'La notte del viaggio ha un letto':'The one night of the trip has a bed','Tutte le {1} notti hanno un letto':'All {1} nights have a bed',
     'La notte del viaggio non ha un letto':'The one night of the trip has no bed','Nessuna delle {1} notti ha un letto':'None of the {1} nights has a bed',
@@ -4730,6 +4752,14 @@ const DIZIONARIO_COMPOSTE={
     'Orari e se si paga':'Horarios y si se paga',
     'Dove fumare è permesso':'Donde se puede fumar',
     'Anche quelli dentro i negozi':'También los de dentro de las tiendas',
+    'Supermarket':'Supermercado',
+    'Per fare la spesa, con gli orari':'Para hacer la compra, con horarios',
+    'Farmacia':'Farmacia',
+    'Con gli orari, quando si sanno':'Con horarios, cuando se saben',
+    'Ristorante':'Restaurante',
+    'Con la cucina, quando si sa':'Con el tipo de cocina, cuando se sabe',
+    'Bar':'Bar',
+    'Per bere qualcosa: cocktail bar, pub, birrerie':'Para tomar algo: bares de copas, pubs, cervecerías',
     'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Busca alrededor de donde estás, con el GPS, en el mapa de OpenStreetMap. Si cerca no hay nada, amplía el círculo solo.','Apri la time-table':'Abre la time-table','Nessun alloggio ancora':'Aún no hay alojamiento','Cerca un hotel':'Busca un hotel','Cercane uno':'Busca uno',
     'La notte del viaggio ha un letto':'La única noche del viaje tiene cama','Tutte le {1} notti hanno un letto':'Las {1} noches tienen cama',
     'La notte del viaggio non ha un letto':'La única noche del viaje no tiene cama','Nessuna delle {1} notti ha un letto':'Ninguna de las {1} noches tiene cama',
@@ -4808,6 +4838,14 @@ const DIZIONARIO_COMPOSTE={
     'Orari e se si paga':'Horaires, et si c’est payant',
     'Dove fumare è permesso':'Où il est permis de fumer',
     'Anche quelli dentro i negozi':'Y compris ceux dans les commerces',
+    'Supermarket':'Supermarché',
+    'Per fare la spesa, con gli orari':'Pour faire les courses, avec les horaires',
+    'Farmacia':'Pharmacie',
+    'Con gli orari, quando si sanno':'Avec les horaires, quand on les connaît',
+    'Ristorante':'Restaurant',
+    'Con la cucina, quando si sa':'Avec la cuisine, quand on la connaît',
+    'Bar':'Bar',
+    'Per bere qualcosa: cocktail bar, pub, birrerie':'Pour boire un verre : bars à cocktails, pubs, brasseries',
     'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Cherche autour de toi, avec le GPS, sur la carte OpenStreetMap. S’il n’y a rien tout près, le cercle s’élargit tout seul.','Apri la time-table':'Ouvre la time-table','Nessun alloggio ancora':'Pas encore de logement','Cerca un hotel':'Cherche un hôtel','Cercane uno':'Cherches-en un',
     'La notte del viaggio ha un letto':'La seule nuit du voyage a un lit','Tutte le {1} notti hanno un letto':'Les {1} nuits ont un lit',
     'La notte del viaggio non ha un letto':'La seule nuit du voyage n’a pas de lit','Nessuna delle {1} notti ha un letto':'Aucune des {1} nuits n’a de lit',
@@ -4886,6 +4924,14 @@ const DIZIONARIO_COMPOSTE={
     'Orari e se si paga':'Horários e se se paga',
     'Dove fumare è permesso':'Onde é permitido fumar',
     'Anche quelli dentro i negozi':'Também os que estão dentro das lojas',
+    'Supermarket':'Supermercado',
+    'Per fare la spesa, con gli orari':'Para fazer compras, com horários',
+    'Farmacia':'Farmácia',
+    'Con gli orari, quando si sanno':'Com horários, quando se sabem',
+    'Ristorante':'Restaurante',
+    'Con la cucina, quando si sa':'Com a cozinha, quando se sabe',
+    'Bar':'Bar',
+    'Per bere qualcosa: cocktail bar, pub, birrerie':'Para beber alguma coisa: bares de cocktails, pubs, cervejarias',
     'Cerca intorno a dove sei, col GPS, sulla mappa di OpenStreetMap. Se lì vicino non c\'è niente, allarga il giro da sé.':'Procura à volta de onde estás, com o GPS, no mapa do OpenStreetMap. Se ali perto não houver nada, alarga o círculo sozinho.','Apri la time-table':'Abre a time-table','Nessun alloggio ancora':'Ainda sem alojamento','Cerca un hotel':'Procura um hotel','Cercane uno':'Procura um',
     'La notte del viaggio ha un letto':'A única noite da viagem tem cama','Tutte le {1} notti hanno un letto':'As {1} noites têm cama',
     'La notte del viaggio non ha un letto':'A única noite da viagem não tem cama','Nessuna delle {1} notti ha un letto':'Nenhuma das {1} noites tem cama',
@@ -7968,7 +8014,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. "Condividi" non sta in home: e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio). I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. "Condividi" non sta in home: e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio). I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -11589,6 +11635,80 @@ const VICINI={
       t.wheelchair==='yes'?'accessibile':''
     ],
     vuoto:'Nel raggio di 5 km non risulta nessun bancomat sulla mappa.<br><br><b>La mappa è OpenStreetMap, non quella di Google.</b> Sono due mappe diverse fatte da persone diverse: un posto che su Google c\'è, qui può non esserci ancora. Se ne conosci uno che manca, aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.<br><br>Intanto: i minimarket aperti tutta la notte e le stazioni restano la via più veloce.'
+  },
+  /* LE QUATTRO VOCI DELLA VITA DI OGNI GIORNO IN VIAGGIO: la spesa, la
+     farmacia, dove mangiare, dove bere qualcosa. Stesso metodo delle altre —
+     la mappa per prima, la ricerca veloce quando la mappa arranca, una scala
+     di giri che si allarga solo a mani vuote.
+     Due differenze, tutte e due volute:
+     - NIENTE RETE SUL NOME. Queste quattro sono mappate bene quasi ovunque
+       (un supermercato lo segna chiunque), e cercarle per nome farebbe piu'
+       danni che altro: «bar» sta dentro «Barbiere» e «Barilla», «pub» dentro
+       «Pubblico».
+     - PER RISTORANTI E BAR LA SCALA COMINCIA PIU' STRETTA, E IL TETTO E'
+       PIU' ALTO. La mappa taglia i risultati PRIMA che li si ordini per
+       distanza, e in centro citta' in un chilometro i ristoranti sono
+       centinaia: con il tetto solito si rischierebbe di perdere proprio
+       quello sotto casa. Piu' stretta di cinquecento metri no, pero': il
+       giro e' centrato sul punto della griglia, non su di te, e quel punto
+       puo' stare centocinquanta metri piu' in la'. Con un giro da trecento
+       metri, dall'altra parte resterebbero coperti solo centocinquanta
+       metri, e il bar a duecento non lo si vedrebbe. */
+  super:{
+    raggi:[1000,3000,8000],
+    ic:'🛒', titolo:'Supermarket più vicino', cosa:'supermarket', manca:'il supermarket più vicino',
+    q:(r,lat,lng)=>ovAttorno(['["shop"="supermarket"]'],r,lat,lng),
+    nome:t=>t.name||t.brand||t.operator||'Supermarket',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 8 km non risulta nessun supermarket sulla mappa.<br><br>Può voler dire che qui la spesa si fa nei negozi piccoli, o che il supermarket non è ancora sulla mappa: aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.'
+  },
+  farmacia:{
+    raggi:[1000,3000,8000],
+    ic:'💊', titolo:'Farmacia più vicina', cosa:'farmacia', manca:'la farmacia più vicina',
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="pharmacy"]','["healthcare"="pharmacy"]'],r,lat,lng),
+    nome:t=>t.name||t.brand||t.operator||'Farmacia',
+    extra:t=>[
+      t.opening_hours==='24/7'?'sempre aperta':(t.opening_hours?'orari: '+t.opening_hours:''),
+      /* dispensing=no: e' una parafarmacia, i farmaci con la ricetta li' non
+         ci sono. A chi cerca una farmacia in viaggio, di solito, serve
+         proprio quello. */
+      t.dispensing==='no'?'senza farmaci con ricetta':'',
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 8 km non risulta nessuna farmacia sulla mappa.<br><br>Se hai bisogno di un farmaco con urgenza, in un ospedale o al pronto soccorso sanno dirti dove trovarlo.'
+  },
+  ristorante:{
+    raggi:[500,1500,3000,8000], tetto:400,
+    ic:'🍽️', titolo:'Ristorante più vicino', cosa:'ristorante', manca:'il ristorante più vicino',
+    q:(r,lat,lng)=>ovAttorno(['["amenity"="restaurant"]'],r,lat,lng),
+    nome:t=>t.name||t.brand||t.operator||'Ristorante',
+    extra:t=>[
+      /* La cucina come la scrive la mappa («italian;pizza»), resa leggibile. */
+      t.cuisine?'cucina: '+String(t.cuisine).split(';').map(x=>x.trim().replace(/_/g,' ')).filter(Boolean).join(', '):'',
+      t['diet:vegan']==='yes'||t['diet:vegan']==='only'?'anche vegano':(t['diet:vegetarian']==='yes'||t['diet:vegetarian']==='only'?'anche vegetariano':''),
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 8 km non risulta nessun ristorante sulla mappa.<br><br>Può voler dire che il posto dove mangiare non è ancora sulla mappa: aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.'
+  },
+  bar:{
+    raggi:[500,1500,3000,8000], tetto:400,
+    ic:'🍸', titolo:'Bar più vicino', cosa:'bar', manca:'il bar più vicino',
+    /* «Bar» nel senso di dove si beve qualcosa di alcolico: sulla mappa sono
+       amenity=bar (cocktail bar, bar da sera), pub e biergarten. Il bar
+       italiano della colazione e' amenity=cafe, e qui apposta non c'e'. */
+    q:(r,lat,lng)=>ovAttorno(['["amenity"~"^(bar|pub|biergarten)$"]'],r,lat,lng),
+    nome:t=>t.name||t.brand||t.operator||(t.amenity==='pub'?'Pub':(t.amenity==='biergarten'?'Birreria':'Bar')),
+    extra:t=>[
+      t.amenity==='pub'?'pub':(t.amenity==='biergarten'?'birreria all\'aperto':''),
+      t.opening_hours==='24/7'?'sempre aperto':(t.opening_hours?'orari: '+t.opening_hours:''),
+      t.outdoor_seating==='yes'?'tavoli fuori':'',
+      t.wheelchair==='yes'?'accessibile':''
+    ],
+    vuoto:'Nel raggio di 8 km non risulta nessun bar sulla mappa.<br><br>Può voler dire che il locale non è ancora sulla mappa: aggiungerlo su openstreetmap.org lo fa comparire anche qui, per tutti.'
   }
 };
 /* UNA RICERCA NUOVA NON ASPETTA QUELLA VECCHIA: LA SOSTITUISCE.
@@ -11792,7 +11912,7 @@ async function viciniIntorno(lat,lng,giro){
       if(!miaAncora())return;
       if(l.length){l.forEach(aggiungi);andataBene=true;}
     }
-    if(!trovati.length&&!giu&&miaAncora()){
+    if(!trovati.length&&!giu&&miaAncora()&&v.parole){
       dillo('Cerco anche per nome...');
       try{
         const perNome=await viciniOverpass(kind,lat,lng,raggiDi(kind)[0],true,
@@ -12277,14 +12397,22 @@ function vicinoDoppione(lista,la,lo,nome){
    Bagni, fumatori e bancomat restano come sono: due «Intesa Sanpaolo» a
    trecento metri sono due bancomat, e servono tutti e due. */
 const VICINI_UNO_PER_NOME={treno:400,metro:250,bus:60};
+/* PER I NEGOZI la regola sta a meta' strada. Due «Lidl» in due vie diverse
+   sono due supermercati, e tutti e due servono: lo stesso nome NON basta.
+   Ma lo stesso negozio si trova spesso segnato due volte — un punto
+   sull'entrata e l'edificio intero — e la regola dei 45 metri non lo
+   prende: di un supermercato grande il centro dell'edificio sta anche
+   cento metri piu' in la' della porta. Allora: stesso nome E vicini
+   entro questi metri, e resta il piu' vicino. */
+const VICINI_STESSO_NEGOZIO={super:150,farmacia:80,ristorante:80,bar:80};
 function vicinoChiave(n){
   return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 }
 function vicinoUnoPerNome(kind,lista,lat,lng){
   const ordinati=lista.map(b=>Object.assign({},b,{dist:Math.round(hav({lat,lng},{lat:b.lat,lng:b.lng}))}))
     .sort((a,b)=>a.dist-b.dist);
-  const vicini=VICINI_UNO_PER_NOME[kind];
-  if(!vicini)return ordinati;
+  const vicini=VICINI_UNO_PER_NOME[kind],negozio=VICINI_STESSO_NEGOZIO[kind];
+  if(!vicini&&!negozio)return ordinati;
   /* Il nome che la voce da' a un posto senza nome: «Fermata», «Stazione»,
      «Metropolitana». Lo dice la voce stessa, non si scrive qui. */
   const anonimo=VICINI[kind].nome({});
@@ -12292,7 +12420,8 @@ function vicinoUnoPerNome(kind,lista,lat,lng){
   ordinati.forEach(b=>{
     const k=vicinoChiave(b.nome);
     const gia=tenuti.some(o=>vicinoChiave(o.nome)===k&&
-      (b.nome!==anonimo||calcDist(o.lat,o.lng,b.lat,b.lng)<=vicini));
+      (negozio?calcDist(o.lat,o.lng,b.lat,b.lng)<=negozio
+              :(b.nome!==anonimo||calcDist(o.lat,o.lng,b.lat,b.lng)<=vicini)));
     if(!gia)tenuti.push(b);
   });
   return tenuti;
@@ -12464,7 +12593,14 @@ const VICINI_VELOCE={
   bus:{tag:['highway:bus_stop','amenity:bus_station'],frasi:['bus stop'],km:1.5},
   bagno:{tag:['amenity:toilets'],frasi:['toilets'],km:3},
   fumo:{tag:['amenity:smoking_area'],frasi:['smoking area'],km:5},
-  atm:{tag:['amenity:atm','amenity:bank'],frasi:['atm','bank'],km:2}
+  atm:{tag:['amenity:atm','amenity:bank'],frasi:['atm','bank'],km:2},
+  /* Prima vicino, poi largo, come per la stazione: Nominatim mette in fila
+     per importanza, e fra venti ristoranti «importanti» di un quartiere
+     quello sotto casa puo' non esserci. Photon invece ordina per distanza. */
+  super:{tag:['shop:supermarket'],frasi:['supermarket'],scala:[2,8]},
+  farmacia:{tag:['amenity:pharmacy','healthcare:pharmacy'],frasi:['pharmacy'],scala:[2,8]},
+  ristorante:{tag:['amenity:restaurant'],frasi:['restaurant'],scala:[1,5]},
+  bar:{tag:['amenity:bar','amenity:pub','amenity:biergarten'],frasi:['bar','pub'],scala:[1,5]}
 };
 const VICINI_VELOCE_DOPO_MS=4000;
 const VICINI_VELOCE_ATTESA_MS=8000;
@@ -12571,7 +12707,7 @@ async function viciniOverpass(kind,lat,lng,raggio,soloNome,avvisa){
      tenendo dentro quelle dall'altra parte della citta'. Sul giro largo si
      alza. Restano oggetti piccoli: quattrocento sono un centinaio di
      kilobyte, non un problema. */
-  const tetto=raggio>=10000?400:150;
+  const tetto=v.tetto||(raggio>=10000?400:150);
   const q=`[out:json][timeout:${VICINI_TIMEOUT_SERVER}];(${dentro});out center ${tetto};`;
   const d=await overpassChiedi(q,avvisa);
   const out=[];
@@ -18291,7 +18427,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-09-25 10:00';
+const VERSIONE_APP='2026-09-29 12:00';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
