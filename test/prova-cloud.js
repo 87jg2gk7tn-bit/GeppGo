@@ -49,12 +49,29 @@ const { apriBrowser, APP, RADICE } = require('./browser');
   ok('e nel pannello si rivede la propria', mio.campo === 'https://mioprogetto.supabase.co', mio.campo);
   await p.close();
 
-  // ── una configurazione nell'indirizzo vince anche lei ─────────────────────
+  // ── un indirizzo non può cambiare il server ───────────────────────────────
+  /* QUESTO CONTROLLO DESCRIVEVA IL GUASTO e andava cambiato, non aggirato.
+     Diceva «la configurazione nell'indirizzo vince»: un "#c=" col server di
+     un altro progetto prendeva il comando e veniva salvato. È la stessa porta
+     da cui un link finto portava email, password e viaggi su un server
+     altrui. Adesso il server si sceglie solo a mano (il blocco qui sopra), e
+     un indirizzo può soltanto confermarlo. Il resto lo prova prova-inviti. */
   const b64 = Buffer.from('https://daltro.supabase.co|chiave-di-un-altro-progetto-x').toString('base64');
   p = await apri(null, '#c=' + encodeURIComponent(b64));
-  const daHash = await p.evaluate(() => ({ url: window.GEPPGO_SUPA_URL, serie: !!window.GEPPGO_CFG_DI_SERIE }));
-  ok('la configurazione nell\'indirizzo vince', daHash.url === 'https://daltro.supabase.co', daHash.url);
-  ok('e nemmeno quella è "di serie"', daHash.serie === false);
+  const daHash = await p.evaluate(() => ({ url: window.GEPPGO_SUPA_URL, serie: !!window.GEPPGO_CFG_DI_SERIE, cfg: localStorage.getItem('geppgo_cfg') }));
+  ok('un indirizzo col server di un altro progetto non cambia il server', daHash.url === nuovo.url && daHash.serie === true, daHash.url);
+  ok('e non lo salva', daHash.cfg === null, String(daHash.cfg));
+  await p.close();
+
+  /* Il rovescio: chi il proprio progetto l'ha scelto a mano si ritrova
+     nell'indirizzo proprio quello (l'app ce lo riscrive a ogni avvio), e
+     riaprendo la pagina non deve vedersi rifiutare niente. */
+  const mioB64 = Buffer.from('https://mioprogetto.supabase.co|chiave-mia-lunghissima-1234567890').toString('base64');
+  p = await apri(() => localStorage.setItem('geppgo_cfg', JSON.stringify({
+    url: 'https://mioprogetto.supabase.co', key: 'chiave-mia-lunghissima-1234567890' })), '#c=' + encodeURIComponent(mioB64));
+  const mioHash = await p.evaluate(() => ({ url: window.GEPPGO_SUPA_URL, rifiutato: !!window.GEPPGO_LINK_RIFIUTATO }));
+  ok('l\'indirizzo che porta il progetto scelto a mano resta buono, senza avvisi',
+     mioHash.url === 'https://mioprogetto.supabase.co' && mioHash.rifiutato === false, JSON.stringify(mioHash));
   await p.close();
 
   console.log('\n' + r.join('\n'));

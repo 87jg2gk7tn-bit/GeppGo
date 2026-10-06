@@ -655,6 +655,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-block.tt-compact .tszr::after{width:16px;height:3px}
 
 #authGate{position:fixed;inset:0;background:var(--paper);z-index:20000;display:none;align-items:center;justify-content:center;padding:1.2rem}
+/* L'avviso del link non valido sta sopra la schermata di accesso: chi apre
+   un invito senza account se la trova davanti (vedi avvisaLinkNonValido). */
+#mConfirm.sopra-accesso{z-index:20001}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-xl);padding:1.7rem 1.4rem;box-shadow:var(--sh-md)}
 .auth-brand{display:flex;align-items:center;gap:.6rem;justify-content:center;margin-bottom:1.2rem}
 .auth-link{background:none;border:none;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--ink-faint);cursor:pointer;display:block;margin:1rem auto 0;text-decoration:underline;text-underline-offset:3px}
@@ -702,6 +705,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tic-ic.on{background:#4E7A22;border-color:#4E7A22;color:#fff}
 .exp-tappa{font-weight:700;color:var(--green-deep)}
 .share-link{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-md);padding:.8rem;font-size:.76rem;font-weight:700;word-break:break-all;user-select:all;cursor:pointer;line-height:1.45}
+/* Quando il telefono non lascia copiare: il testo gia' selezionato, da
+   copiare a mano (vedi copiaAMano). */
+.copia-manuale{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-md);padding:.8rem;margin-bottom:1rem}
+.copia-manuale .cm-t{font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.5rem}
+.copia-manuale textarea{width:100%;min-height:4.5rem;font-size:.8rem;word-break:break-all;margin-bottom:.5rem}
 .share-qr{display:flex;flex-direction:column;align-items:center;gap:.35rem;margin-top:.9rem}
 .share-qr canvas{border-radius:var(--r-md);background:#fff;padding:.35rem}
 .share-qr div{font-size:.75rem;color:var(--ink-faint);font-weight:700}
@@ -2701,47 +2709,33 @@ Minimum version required to store current data is: `+i+`.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ==== CONFIG CLOUD ====
-   Il cloud di GeppGo e' gia' dentro l'app (in fondo a questo blocco): chi la
-   apre entra con la sola email, non deve configurare niente. Restano davanti
-   tre modi per puntare a un Supabase diverso - un link d'invito, l'indirizzo,
-   o la configurazione salvata su questo telefono - e vincono su quello di
-   serie, in quest'ordine. */
+   Il cloud di GeppGo e' gia' dentro l'app (qui sotto): chi la apre entra con
+   la sola email, non deve configurare niente. L'unico modo di puntare a un
+   Supabase diverso e' sceglierlo apposta, a mano, da "Usa un cloud tuo"
+   (Profilo, in fondo a Backup): quella scelta resta salvata su questo
+   telefono e vince su quella di serie.
+
+   UN LINK NON PUO' CAMBIARE IL SERVER. Prima poteva: un invito
+   "#join2=...~..." o un indirizzo "#c=..." si portavano dietro indirizzo e
+   chiave di un Supabase qualsiasi, e l'app li prendeva e li SALVAVA. Bastava
+   un link finto mandato in chat perche' email, password e viaggi di chi lo
+   apriva finissero sul server di qualcun altro - e ci restassero anche alle
+   aperture successive, senza che niente lo facesse vedere.
+   Adesso il server scritto nel link serve solo a un controllo: se e' quello
+   che l'app usa gia', l'invito vale come prima - e i link gia' mandati
+   continuano a funzionare, perche' portano dentro proprio il server di
+   serie; se e' un altro, il link si ignora, non si salva niente e lo si
+   dice (avvisaLinkNonValido). La chiave che sta nel link non si usa mai. */
 window.GEPPGO_SUPA_URL="";
 window.GEPPGO_SUPA_KEY="";
 window.GEPPGO_PUBLIC_URL="";
-/* 1) config arrivata dentro un link d'invito */
-try{
-  if(location.hash.indexOf('#join2=')===0){
-    const raw=decodeURIComponent(location.hash.slice(7)),ix=raw.indexOf('~');
-    if(ix>0){
-      const c=atob(raw.slice(ix+1)).split('|');
-      if(c[0]&&c[1]){window.GEPPGO_SUPA_URL=c[0];window.GEPPGO_SUPA_KEY=c[1];
-        localStorage.setItem('geppgo_cfg',JSON.stringify({url:c[0],key:c[1]}));}
-    }
-  }
-}catch(e){}
-/* 2) config gia' nell'indirizzo (#c=...): e' quello che salva chi si mette
-      l'app sulla schermata iniziale. Su iPhone l'app aggiunta alla Home ha una
-      memoria tutta sua, separata da quella di Safari: quello che era stato
-      salvato nel browser li' dentro non c'e', e senza configurazione non si
-      puo' nemmeno entrare nel proprio account. Tenendola nell'indirizzo, la
-      scorciatoia se la porta dietro e ogni avvio la ritrova. */
-try{
-  if(location.hash.indexOf('#c=')===0){
-    const c=atob(decodeURIComponent(location.hash.slice(3))).split('|');
-    if(c[0]&&c[1]){window.GEPPGO_SUPA_URL=c[0];window.GEPPGO_SUPA_KEY=c[1];
-      localStorage.setItem('geppgo_cfg',JSON.stringify({url:c[0],key:c[1]}));}
-  }
-}catch(e){}
-/* 3) config salvata su questo telefono */
+window.GEPPGO_LINK_RIFIUTATO=false;
+/* 1) la configurazione scelta a mano su questo telefono */
 try{
   const c=JSON.parse(localStorage.getItem('geppgo_cfg')||'null');
-  if(c){if(!window.GEPPGO_SUPA_URL&&c.url)window.GEPPGO_SUPA_URL=c.url;
-        if(!window.GEPPGO_SUPA_KEY&&c.key)window.GEPPGO_SUPA_KEY=c.key;}
+  if(c&&c.url&&c.key){window.GEPPGO_SUPA_URL=c.url;window.GEPPGO_SUPA_KEY=c.key;}
 }catch(e){}
-/* 4) il cloud di GeppGo, se nessuno dei tre passaggi sopra ha detto altro.
-      E' l'ultimo della fila apposta: chi ha configurato un proprio progetto,
-      o e' arrivato da un invito che ne portava un altro, tiene il suo.
+/* 2) il cloud di GeppGo, se a mano non e' stato scelto altro.
 
       La chiave "anon" e' fatta per stare qui dentro, in chiaro, dentro ogni
       copia dell'app: non e' un segreto e da sola non apre niente. Quello che
@@ -2759,6 +2753,33 @@ if(!window.GEPPGO_SUPA_URL||!window.GEPPGO_SUPA_KEY){
   window.GEPPGO_SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5b2xocW5kdXJnd2Jpdnhjc3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzAxMzgsImV4cCI6MjA5OTg0NjEzOH0.RnPAhyE8-XND8XyrXehiPlacbLl_accdx9F9O2R8QEY";
   window.GEPPGO_CFG_DI_SERIE=true;
 }
+/* 3) il server scritto dentro un link: si confronta, non si prende.
+      Si guarda l'origine (protocollo e nome del server), non la stringa: una
+      barra in fondo non fa due server diversi, mentre "...supabase.co.altro.it"
+      o "...supabase.co@altro.it" sono server di qualcun altro anche se
+      cominciano allo stesso modo. */
+function geppgoStessoServer(a,b){
+  try{return new URL(String(a)).origin===new URL(String(b)).origin;}catch(e){return false;}
+}
+/* Vero se il pezzo di link (dopo la tilde, o dopo "#c=") porta il server che
+   l'app usa gia', oppure se non porta niente. Un pezzo che non si riesce a
+   leggere non vale: un invito vero lo scrive l'app, ed e' sempre leggibile.
+   Chi usa "Usa un cloud tuo" e si mette l'app sulla Home deve sceglierlo
+   anche li': la Home di iPhone ha una memoria sua, e l'indirizzo "#c=" non
+   puo' piu' portarselo dietro - era proprio la porta da chiudere. */
+function geppgoServerDelLinkVa(pezzo){
+  if(!pezzo)return true;
+  try{return geppgoStessoServer(atob(pezzo).split('|')[0],window.GEPPGO_SUPA_URL);}catch(e){return false;}
+}
+try{
+  const h=location.hash||'';
+  if(h.indexOf('#join2=')===0){
+    const raw=decodeURIComponent(h.slice(7)),ix=raw.indexOf('~');
+    if(ix>0&&!geppgoServerDelLinkVa(raw.slice(ix+1)))window.GEPPGO_LINK_RIFIUTATO=true;
+  }else if(h.indexOf('#c=')===0){
+    if(!geppgoServerDelLinkVa(decodeURIComponent(h.slice(3))))window.GEPPGO_LINK_RIFIUTATO=true;
+  }
+}catch(e){window.GEPPGO_LINK_RIFIUTATO=true;}
 /* Il testo condiviso arriva anche dopo il cancelletto (il Comando di iOS lo
    passa cosi', per non farlo finire nei registri del server). Va messo da
    parte QUI, prima che l'indirizzo venga riscritto poche righe piu' sotto:
@@ -5808,11 +5829,46 @@ const DIZIONARIO_BIGLIETTI={
   }
 };
 Object.keys(DIZIONARIO_BIGLIETTI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_BIGLIETTI[l]));
+/* Gli inviti: la conferma della copia, il testo da copiare a mano quando il
+   telefono non lascia, e l'avviso del link che porta a un altro server. Sono
+   frasi che vede chi l'app non la conosce ancora - il compagno appena
+   invitato - quindi devono arrivare nella sua lingua dal primo momento. */
+const DIZIONARIO_INVITI={
+  en:{
+    '📋 Codice copiato':'📋 Code copied',
+    'Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».':'I can’t copy it myself: press and hold the text below and choose “Copy”.',
+    '📤 Invia il link':'📤 Send the link',
+    'Questo invito non è valido':'This invite isn’t valid',
+    'Il link porta a un server diverso da quello che usa GeppGo su questo telefono. Per sicurezza l\'ho ignorato e non ho salvato niente: chiedi a chi te l\'ha mandato un invito nuovo, fatto dall\'app.':'The link points to a different server from the one GeppGo uses on this phone. To be safe I ignored it and saved nothing: ask the person who sent it for a new invite, made from the app.'
+  },
+  es:{
+    '📋 Codice copiato':'📋 Código copiado',
+    'Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».':'No consigo copiarlo yo solo: mantén pulsado el texto de abajo y elige «Copiar».',
+    '📤 Invia il link':'📤 Enviar el enlace',
+    'Questo invito non è valido':'Esta invitación no es válida',
+    'Il link porta a un server diverso da quello che usa GeppGo su questo telefono. Per sicurezza l\'ho ignorato e non ho salvato niente: chiedi a chi te l\'ha mandato un invito nuovo, fatto dall\'app.':'El enlace lleva a un servidor distinto del que usa GeppGo en este teléfono. Por seguridad lo he ignorado y no he guardado nada: pide a quien te lo envió una invitación nueva, hecha desde la app.'
+  },
+  fr:{
+    '📋 Codice copiato':'📋 Code copié',
+    'Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».':'Je n’arrive pas à le copier tout seul : appuie longuement sur le texte ci-dessous et choisis « Copier ».',
+    '📤 Invia il link':'📤 Envoyer le lien',
+    'Questo invito non è valido':'Cette invitation n’est pas valide',
+    'Il link porta a un server diverso da quello che usa GeppGo su questo telefono. Per sicurezza l\'ho ignorato e non ho salvato niente: chiedi a chi te l\'ha mandato un invito nuovo, fatto dall\'app.':'Le lien mène à un serveur différent de celui qu’utilise GeppGo sur ce téléphone. Par sécurité, je l’ai ignoré et je n’ai rien enregistré : demande à la personne qui te l’a envoyé une nouvelle invitation, faite depuis l’app.'
+  },
+  pt:{
+    '📋 Codice copiato':'📋 Código copiado',
+    'Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».':'Não consigo copiá-lo sozinho: mantém premido o texto abaixo e escolhe «Copiar».',
+    '📤 Invia il link':'📤 Enviar a ligação',
+    'Questo invito non è valido':'Este convite não é válido',
+    'Il link porta a un server diverso da quello che usa GeppGo su questo telefono. Per sicurezza l\'ho ignorato e non ho salvato niente: chiedi a chi te l\'ha mandato un invito nuovo, fatto dall\'app.':'A ligação leva a um servidor diferente do que o GeppGo usa neste telemóvel. Por segurança ignorei-a e não guardei nada: pede a quem ta enviou um convite novo, feito a partir da app.'
+  }
+};
+Object.keys(DIZIONARIO_INVITI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_INVITI[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=981;
+const FRASI_IN_TUTTO=985;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -5969,8 +6025,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   navAvvia();
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
-  if(location.hash.startsWith('#join2=')){let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
+  /* Un invito che porta un server diverso non entra da nessuna parte: si
+     pulisce l'indirizzo e lo si dice (vedi CONFIG CLOUD). L'avviso aspetta che
+     se ne vada la schermata d'apertura, se no ci finirebbe sotto. */
+  if(location.hash.startsWith('#join2=')){
+    if(window.GEPPGO_LINK_RIFIUTATO){window.GEPPGO_SISTEMA_HASH();setTimeout(avvisaLinkNonValido,800);}
+    else{let r=decodeURIComponent(location.hash.slice(7));const ix=r.indexOf('~');if(ix>0)r=r.slice(0,ix);pendingJoin2=r;window.GEPPGO_SISTEMA_HASH();}
+  }
   else if(location.hash.startsWith('#join=')){try{handleJoin(location.hash.slice(6));}catch(e){}}
+  else if(window.GEPPGO_LINK_RIFIUTATO)setTimeout(avvisaLinkNonValido,800);
   if(!T() && app.trips.length){app.currentTripId=app.trips.filter(t=>t.status!=='closed')[0]?.id||app.trips[0].id;}
   try{initMap();}catch(e){}
   document.getElementById('proxRadius').value=app.settings.proxRadius;
@@ -8030,6 +8093,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
+- Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da "Usa un cloud tuo" in fondo al Profilo.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -9805,7 +9869,7 @@ function baseApp(){
 }
 async function inviaLink(url,nome){
   try{await navigator.share({title:'GeppGo · '+nome,text:'Ti aggiungo al viaggio "'+nome+'" su GeppGo. Apri il link e crea il tuo account:',url});}
-  catch(e){if(e&&e.name!=='AbortError')copyText(url);}
+  catch(e){if(e&&e.name!=='AbortError')copyShare(url,'link',nome);}
 }
 function disegnaQr(id,testo){
   const cv=document.getElementById(id);
@@ -9841,15 +9905,15 @@ async function openShare(id){
     const link=base?base+'#join2='+encodeURIComponent(payload):'';
     box.innerHTML=`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem"><div style="font-weight:800">${esc(t.name)}</div><div style="font-size:.82rem;color:var(--ink-soft);margin-top:.2rem">Condivisione in tempo reale</div></div>
     ${link?`<p style="font-size:.88rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.7rem">Manda questo link ai tuoi compagni: aprendolo si ritrovano l'app e l'invito a <b>${esc(t.name)}</b> già dentro. Devono solo creare il <b>loro</b> account.</p>
-    <div class="share-link" onclick="copyText(${jesc(link)})">${esc(link)}</div>
-    <div style="display:flex;gap:.5rem;margin-top:.6rem">${navigator.share?`<button class="btn btn-grad" style="flex:1" onclick="inviaLink(${jesc(link)},${jesc(t.name)})">📤 Invia il link</button>`:''}<button class="btn ${navigator.share?'btn-soft':'btn-grad'}" style="flex:1" onclick="copyText(${jesc(link)})">📋 Copia il link</button></div>
+    <div class="share-link" onclick="copyShare(${jesc(link)},'link',${jesc(t.name)})">${esc(link)}</div>
+    <div style="display:flex;gap:.5rem;margin-top:.6rem">${navigator.share?`<button class="btn btn-grad" style="flex:1" onclick="inviaLink(${jesc(link)},${jesc(t.name)})">📤 Invia il link</button>`:''}<button class="btn ${navigator.share?'btn-soft':'btn-grad'}" style="flex:1" onclick="copyShare(${jesc(link)},'link',${jesc(t.name)})">📋 Copia il link</button></div>
     <div class="share-qr"><canvas id="shareQr"></canvas><div>Oppure inquadra questo</div></div>`
     :`<p style="font-size:.88rem;color:var(--red);line-height:1.6">L'app non sa da che indirizzo viene aperta, quindi non posso costruire il link. Usa il codice qui sotto.</p>`}
     ${bloccoInstalla()}
     <details class="share-code"><summary>Se il link non funziona, c'è il codice</summary>
       <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.6;margin:.5rem 0">Il compagno apre l'app, crea il suo account, e in Home tocca <b>"Ho un codice invito"</b>:</p>
       <div style="background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-md);padding:.9rem;text-align:center;font-weight:800;font-size:.7rem;word-break:break-all;user-select:all">${payload}</div>
-      <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="copyText(${jesc(payload)})">Copia il codice</button>
+      <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="copyShare(${jesc(payload)},'codice')">Copia il codice</button>
     </details>
     <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem">Da quel momento attività e spese si aggiornano da sole su tutti i telefoni (serve connessione).</p>`;
     openSheet('mShare');
@@ -9866,7 +9930,55 @@ function openShareLocal(){
   document.getElementById('shareBody').innerHTML=`<div style="background:var(--grad-warm);padding:1rem;border-radius:var(--r-md);margin-bottom:1rem"><div style="font-weight:800">${esc(t.name)}</div><div style="font-size:.82rem;color:var(--ink-soft);margin-top:.2rem">${t.participants.length} partecipanti</div></div><div class="fg"><label>Link da inviare ai compagni</label><input id="shareLink" readonly value="${link}" onclick="this.select()"></div><button class="btn btn-grad btn-block" onclick="copyShare('${link.replace(/'/g,"\\'")}')">📋 Copia link</button><div class="share-qr"><canvas id="shareQr"></canvas><div>Oppure inquadra questo</div></div>${bloccoInstalla()}<p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.9rem">Chi apre il link entra nel viaggio e sceglie chi è. ⚠️ Senza account le spese altrui restano sul loro telefono: per vedersi le cose in tempo reale serve entrare con un account.</p>`;
   openSheet('mShare');disegnaQr('shareQr',link);
 }
-async function copyShare(link){try{await navigator.clipboard.writeText(link);toast('📋 Link copiato');}catch(e){const i=document.getElementById('shareLink');i.select();document.execCommand('copy');toast('📋 Link copiato');}}
+/* COPIARE UN LINK O UN CODICE DELLA FINESTRA CONDIVIDI.
+   Una funzione sola per tutti i tasti "copia" della finestra. Prima i nomi
+   erano due, e uno (copyText) non esisteva: i tre tasti della condivisione
+   col cloud davano errore e non copiavano niente - proprio quelli che
+   servono a portare dentro i compagni.
+   Tre tentativi, dal migliore al piu' semplice:
+   - gli appunti del browser. Safari li concede solo subito dopo un tocco:
+     per questo si chiamano per primi, senza aspettare niente prima;
+   - il vecchio comando "copia" su un campo fuori dallo schermo, per i
+     Safari che gli appunti non li hanno o li rifiutano;
+   - se non riesce nemmeno quello, il testo resta a schermo gia' selezionato,
+     da copiare a mano, con accanto "Invia il link" se il telefono sa
+     condividere. Dire "copiato" senza averlo copiato e' peggio di niente:
+     uno incolla in chat quello che c'era prima negli appunti. */
+async function copyShare(testo,cosa,nome){
+  const fatto=cosa==='codice'?'📋 Codice copiato':'📋 Link copiato';
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(testo);toast(fatto);return true;}
+  }catch(e){}
+  if(copiaConComando(testo)){toast(fatto);return true;}
+  copiaAMano(testo,cosa,nome);
+  return false;
+}
+/* Fuori dallo schermo ma non nascosto: un campo invisibile per davvero
+   (display:none) non si seleziona, e senza selezione non si copia. Su iPhone
+   il campo dev'essere di sola lettura, se no sale la tastiera, e la
+   selezione va fatta con setSelectionRange: select() da solo li' non basta.
+   16px perche' sotto quella misura iPhone ingrandisce la pagina. */
+function copiaConComando(testo){
+  const ta=document.createElement('textarea');
+  ta.value=testo;ta.setAttribute('readonly','');
+  ta.style.cssText='position:fixed;top:0;left:-9999px;font-size:16px;border:0;padding:0;margin:0';
+  document.body.appendChild(ta);
+  let ok=false;
+  try{ta.select();ta.setSelectionRange(0,testo.length);ok=document.execCommand('copy');}catch(e){ok=false;}
+  ta.remove();
+  return !!ok;
+}
+function copiaAMano(testo,cosa,nome){
+  let m=document.getElementById('copiaManuale');
+  if(!m){m=document.createElement('div');m.id='copiaManuale';m.className='copia-manuale';document.getElementById('shareBody').prepend(m);}
+  const invia=cosa!=='codice'&&nome!=null&&!!navigator.share;
+  m.innerHTML=`<div class="cm-t">${esc(t('Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».'))}</div>
+    <textarea readonly rows="3">${esc(testo)}</textarea>
+    ${invia?`<button class="btn btn-grad btn-block" onclick="inviaLink(${jesc(testo)},${jesc(nome)})">${esc(t('📤 Invia il link'))}</button>`:''}`;
+  const ta=m.querySelector('textarea');
+  try{ta.focus();ta.select();ta.setSelectionRange(0,testo.length);}catch(e){}
+  try{m.scrollIntoView({block:'nearest'});}catch(e){}
+}
 function handleJoin(code){
   let data;try{data=JSON.parse(decodeURIComponent(atob(code)));}catch(e){return;}
   history.replaceState(null,'',location.pathname);
@@ -13165,8 +13277,22 @@ function confirmDo(title,msg,cb,icon,okText,okClass){
   document.getElementById('cfMsg').textContent=t(msg||'');
   document.getElementById('cfIc').textContent=icon||'⚠️';
   const ok=document.getElementById('cfOk');ok.textContent=t(okText||'Conferma');ok.className='btn '+(okClass||'btn-danger');ok.style.flex='1';
+  /* Si rimette tutto com'e' di solito: il tasto Annulla e il posto normale
+     fra i fogli. Li cambia solo avvisaLinkNonValido, qui sotto. */
+  const annulla=document.querySelector('#mConfirm .confirm-a .btn-soft');if(annulla)annulla.style.display='';
+  document.getElementById('mConfirm').classList.remove('sopra-accesso');
   cfCallback=cb;openSheet('mConfirm');
   ok.onclick=()=>{closeSheet('mConfirm');if(cfCallback)cfCallback();cfCallback=null;};
+}
+/* Un link che voleva portare l'app su un altro server (vedi CONFIG CLOUD).
+   Non c'e' niente da confermare ne' da annullare, quindi un tasto solo. E
+   deve vedersi anche sopra la schermata di accesso: chi apre un invito senza
+   avere ancora un account la trova davanti, e un avviso nascosto li' sotto
+   sarebbe come non darlo - e' proprio il caso di chi riceve un link finto. */
+function avvisaLinkNonValido(){
+  confirmDo('Questo invito non è valido','Il link porta a un server diverso da quello che usa GeppGo su questo telefono. Per sicurezza l\'ho ignorato e non ho salvato niente: chiedi a chi te l\'ha mandato un invito nuovo, fatto dall\'app.',null,'⚠️','Ho capito','btn-grad');
+  const annulla=document.querySelector('#mConfirm .confirm-a .btn-soft');if(annulla)annulla.style.display='none';
+  document.getElementById('mConfirm').classList.add('sopra-accesso');
 }
 
 /* ===== HELPERS ===== */
@@ -16728,10 +16854,10 @@ async function doJoin2(code){
   if(!code){toast('Incolla il codice invito');return;}
   const tildeIx=code.indexOf('~');
   if(tildeIx>0){
-    try{
-      const c=atob(code.slice(tildeIx+1)).split('|');
-      if(c[0]&&c[1]&&!window.GEPPGO_SUPA_URL){window.GEPPGO_SUPA_URL=c[0];window.GEPPGO_SUPA_KEY=c[1];localStorage.setItem('geppgo_cfg',JSON.stringify({url:c[0],key:c[1]}));}
-    }catch(e){}
+    /* Il server che sta dopo la tilde si confronta e basta, come all'avvio
+       (vedi CONFIG CLOUD): un codice incollato non e' meno pericoloso di un
+       link toccato. */
+    if(!geppgoServerDelLinkVa(code.slice(tildeIx+1))){closeSheet('mCode');avvisaLinkNonValido();return;}
     code=code.slice(0,tildeIx);
   }
   if(!sb){toast('Cloud non configurato: guida, Passo 9');return;}
@@ -16968,7 +17094,10 @@ function usaInvito(){
   let url='',key='';
   try{const c=atob(cfgB64).split('|');if(c[0]&&c[1]){url=c[0];key=c[1];}}catch(e){}
   if(!url&&!invito){m.textContent='Non ci ho trovato né un link né un codice validi.';return;}
-  if(url&&key)localStorage.setItem('geppgo_cfg',JSON.stringify({url,key}));
+  /* Anche incollato qui, un link non sceglie il server e non si salva: vale
+     la stessa regola dell'avvio (vedi CONFIG CLOUD). Il server si sceglie a
+     mano, nei due campi qui sotto, ed e' l'unico modo. */
+  if(cfgB64&&!geppgoServerDelLinkVa(cfgB64)){m.textContent=t('Questo invito non è valido');avvisaLinkNonValido();return;}
   m.style.color='var(--green-deep)';
   m.textContent=url?'Trovato. Riavvio l\'app...':'Codice preso. Riavvio l\'app...';
   /* Si riscrive l'indirizzo e si riavvia: cambiare solo la parte dopo il
@@ -18426,7 +18555,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-06 12:00';
+const VERSIONE_APP='2026-10-06 13:50';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
