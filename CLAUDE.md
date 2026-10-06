@@ -10,11 +10,13 @@ telefono (i dizionari stanno dentro l'HTML). Sviluppatore singolo che lavora da
 iPhone. Hosting statico su GitHub Pages: **ogni push su `main` va online**
 (i rami no), quindi su `main` arriva solo codice verificato.
 
-La versione è la costante **`VERSIONE_APP`** (data e ora, `'AAAA-MM-GG HH:MM'`):
-il Profilo la mostra come «GeppGo · …» e «Versione del …». Quando è stato
-scritto questo file era `2026-09-29 12:00`; quella vera è sempre nel codice.
-La vecchia «build rXX» non esiste più: era scritta a mano e non la aggiornava
-nessuno.
+La versione è la costante **`VERSIONE_APP`** in `Index 2.1.html` (data e ora,
+`'AAAA-MM-GG HH:MM'`). È l'unico numero di versione che l'utente vede: il
+Profilo la mostra nella scheda dell'account («GeppGo · 2026-10-06 12:00») e
+nella scheda Versione («Versione del 6 ottobre 2026, 12:00», nella lingua
+scelta). Il valore di adesso si legge nel codice, non qui. Non esiste un numero
+di build: la vecchia «build rXX» era scritta a mano, non la aggiornava nessuno
+ed è stata tolta. La `version` di `package.json` non compare da nessuna parte.
 
 ## Leggi prima di tutto
 
@@ -38,6 +40,11 @@ quel file è la memoria.
 - **AI**: passa dal Worker Cloudflare `geppgo-ai`, che tiene la chiave e parla
   con Gemini (`GUIDA-AI.md`). Nell'app non c'è nessuna chiave, e l'utente non
   ne deve inserire.
+- **Lingue**: ogni testo nuovo dell'interfaccia va aggiunto in tutte le lingue
+  supportate (it, en, es, fr, pt) con il sistema di traduzioni esistente
+  (`DIZIONARIO`; `tv()` per i testi con variabili). L'italiano resta la lingua
+  di riferimento. La chiave è la frase italiana intera: un testo cucito a pezzi
+  (`'Fatto: '+nome`) non si traduce mai.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
   schermo stretto, tocco).
 - **Logo**: oro `#C9962C` con tratto `#14110B`, nell'SVG dentro l'HTML. Non si
@@ -59,9 +66,16 @@ quel file è la memoria.
 
 ## A ogni modifica dell'app
 
-1. Alza `VERSIONE_APP` (data e ora di adesso) e il numero di `CACHE_NAME` in
-   `sw.js` (`geppgo-shell-vNN`): se resta uguale, il telefono tiene la copia
-   vecchia.
+1. Aggiorna la versione, sempre in questi due posti e solo in questi:
+   - `VERSIONE_APP` in `Index 2.1.html`: data e ora della modifica (ora
+     italiana), formato `'AAAA-MM-GG HH:MM'`. L'ora serve: due versioni dello
+     stesso giorno devono leggersi diverse;
+   - `CACHE_NAME` in `sw.js`: `geppgo-shell-vNN`, con NN alzato di uno. Se
+     resta uguale, il telefono continua a usare la copia vecchia dell'app.
+
+   `test/prova-versione.js` controlla il formato e che nessuna «build rNN»
+   ricompaia. Le modifiche che non toccano l'app (solo documenti o prove) non
+   cambiano versione.
 2. Controlla la sintassi degli script inline, uno per uno (insieme darebbero
    errori finti di variabili dichiarate due volte). Non fare commit se fallisce:
    ```sh
@@ -70,18 +84,23 @@ quel file è la memoria.
 3. Verifica che funzioni, ID ed elementi citati dal codice esistano davvero, e
    che i `div` siano bilanciati (`grep -o '<div\b'` e `grep -o '</div>'`
    devono dare lo stesso numero).
-4. Lancia **`npm test`** (vedi `test/README.md`; gira anche da solo a ogni
+4. Prima di ogni commit verifica con Playwright (`test/browser.js`) le
+   funzioni toccate: aprile, toccale come farebbe una persona e guarda che in
+   console non compaiano errori. `test/browser.js` blocca la rete, quindi le
+   librerie da CDN risultano assenti: quelle che servono vanno servite in
+   locale, come fanno le prove con Leaflet.
+5. Lancia **`npm test`** (vedi `test/README.md`; gira anche da solo a ogni
    push). Prima di dire che una modifica funziona, la si prova — e quando si
    corregge un guasto, la prova va fatta fallire sul codice vecchio, altrimenti
    non dimostra niente.
-5. Modifiche mirate: non riscrivere né riformattare parti del file che non
+6. Modifiche mirate: non riscrivere né riformattare parti del file che non
    c'entrano.
-6. Se cambia l'interfaccia, aggiorna `MAPPA_APP` (dentro l'HTML): è la mappa
+7. Se cambia l'interfaccia, aggiorna `MAPPA_APP` (dentro l'HTML): è la mappa
    che l'assistente dell'app usa per rispondere all'utente.
-7. Se l'app inizia a raccogliere un dato nuovo o a parlare con un servizio
+8. Se l'app inizia a raccogliere un dato nuovo o a parlare con un servizio
    nuovo, aggiorna `privacy.html` e `PRIVACY-STORE.md`: devono restare **veri**.
    Una prova confronta i servizi chiamati dal codice con quelli dichiarati.
-8. A fine lavoro, riassumi in poche righe cosa hai cambiato e la nuova
+9. A fine lavoro, riassumi in poche righe cosa hai cambiato e la nuova
    versione.
 
 ## Come si lavora
