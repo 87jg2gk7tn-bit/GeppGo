@@ -158,8 +158,13 @@ Fammi sapere. Un abbraccio.`
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
 
+  /* L'unica chiamata che si lascia passare e' la tabella dei cambi, che
+     l'app chiede da sola all'apertura per la valuta del viaggio: indirizzo
+     fisso, dentro c'e' solo un codice di tre lettere, quindi della mail non
+     puo' portare niente. Tutto il resto conta. */
+  const CAMBI = /^https:\/\/open\.er-api\.com\/v6\/latest\/[A-Z]{3}$/;
   const fuori = [];
-  page.on('request', q => { if (/^https?:/.test(q.url())) fuori.push(q.url()); });
+  page.on('request', q => { if (/^https?:/.test(q.url()) && !CAMBI.test(q.url())) fuori.push(q.url()); });
 
   await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
