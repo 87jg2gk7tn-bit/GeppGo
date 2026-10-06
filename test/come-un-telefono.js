@@ -31,7 +31,9 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
   const browser = await apriBrowser();
   /* `newContext` e non `newPage`: il recinto sta su `newPage`, e qui la rete
      vera la si vuole. */
-  const ctx = await browser.newContext({ locale: 'it-IT', viewport: { width: 390, height: 844 } });
+  /* Col permesso della posizione gia' dato, come sul telefono di chi l'aveva
+     concesso (vedi LA POSIZIONE, SOLO QUANDO SERVE). */
+  const ctx = await browser.newContext({ locale: 'it-IT', viewport: { width: 390, height: 844 }, permissions: ['geolocation'] });
   const page = await ctx.newPage();
   let log = [];
   const partenze = new Map();

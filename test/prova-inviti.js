@@ -231,14 +231,14 @@ const NUOVE = [
     const p = await apri({});
     const r3 = await chiedi(p, async ([link]) => {
       window.__resta = 'questa pagina';
-      openCloudCfg();
+      openSheet('mCode');
       document.getElementById('cfgInvito').value = 'https://esempio.github.io/GeppGo/' + link;
       usaInvito();
       await new Promise(s => setTimeout(s, 1200));
       return { cfg: localStorage.getItem('geppgo_cfg'), msg: document.getElementById('cfgInvMsg').textContent, resta: window.__resta };
     }, [linkFinto]);
     const a = await avviso(p);
-    ok('link finto incollato in «Configura cloud»: non salva, non riavvia, avvisa',
+    ok('link finto incollato in «Ho un codice»: non salva, non riavvia, avvisa',
        r3.cfg === null && r3.resta === 'questa pagina' && r3.msg === 'Questo invito non è valido' && a.aperto, JSON.stringify(r3));
     /* Il controllo guarda il server vero, non come comincia l'indirizzo. */
     const somiglianti = await chiedi(p, base => [
@@ -298,17 +298,18 @@ const NUOVE = [
     await p.close();
   }
   {
-    /* Incollato in «Configura cloud», un invito vero riavvia l'app sull'invito,
-       come prima - ma senza salvare il server. */
+    /* Incollato in «Ho un codice» (il campo stava in «Configura cloud»), un
+       invito vero riavvia l'app sull'invito, come prima - ma senza salvare il
+       server. */
     const p = await apri({});
     const linkVero = '#join2=' + encodeURIComponent(CID + ':' + INV + '~' + b64(DI_SERIE + '|k'));
     const riavvio = p.waitForNavigation({ timeout: 15000 }).catch(() => {});
-    await p.evaluate(link => { openCloudCfg(); document.getElementById('cfgInvito').value = 'https://esempio.github.io/GeppGo/' + link; usaInvito(); }, linkVero);
+    await p.evaluate(link => { openSheet('mCode'); document.getElementById('cfgInvito').value = 'https://esempio.github.io/GeppGo/' + link; usaInvito(); }, linkVero);
     await riavvio;
     await p.waitForFunction(() => typeof go === 'function' && !document.getElementById('bootSplash'), { timeout: 20000 }).catch(() => {});
     await p.waitForTimeout(300);
     const dopo = await p.evaluate(() => ({ attesa: typeof pendingJoin2 === 'undefined' ? 'nessuno' : pendingJoin2, cfg: localStorage.getItem('geppgo_cfg') }));
-    ok('invito vero incollato in «Configura cloud»: si riparte sull\'invito, senza salvare il server',
+    ok('invito vero incollato in «Ho un codice»: si riparte sull\'invito, senza salvare il server',
        dopo.attesa === CID + ':' + INV && dopo.cfg === null, JSON.stringify(dopo));
     await p.close();
   }

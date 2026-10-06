@@ -797,6 +797,31 @@ qualcuno che risponde".
   `execCommand('copy')` su un campo di sola lettura fuori schermo, selezionato
   con `setSelectionRange`; se non va nemmeno quello, il testo a schermo già
   selezionato. Mai dire «copiato» senza averlo copiato (`copyShare`).
+- **La posizione non si chiede all'apertura.** `autoLocate` la usa solo se
+  il permesso c'è già (`navigator.permissions`, che Safari ha da iOS 16);
+  le funzioni che ne hanno bisogno passano da `chiediPosizione(perché)`, che
+  prima del permesso di iOS apre il foglio `mPosizione` con «Continua» e
+  «Non ora». **Le prove che fingono il GPS** sostituendo `getCurrentPosition`
+  devono anche concedere il permesso (`newPage({permissions:['geolocation']})`):
+  senza, il foglio compare e la ricerca aspetta un tocco che non arriva.
+- **La presentazione esce solo al primissimo avvio**: nessun `geppgo2` e
+  nessun `geppgo2_intro` nel telefono (`PRIMO_AVVIO`, guardato prima che
+  l'app scriva qualcosa). Sta sopra tutto (z-index 20002): una prova che apre
+  l'app senza stato se la trova davanti, e deve mettere `geppgo2_intro` o uno
+  stato. Chi arriva da un link (`#join2=`, `#join=`, ritorni dell'accesso,
+  `#testo=`/`#mail=`) la salta (`INTRO_SALTA`).
+- **I messaggi d'errore si scrivono per chi usa l'app.** Niente «guida,
+  Passo 9», «GUIDA-AI.md», «Worker», «ponte», «Supabase» o il testo grezzo
+  del server a schermo: passano da `spiegaErroreAccesso`, `erroreCloud`,
+  `fotoSpiega`, `raccoltaSpiega`, `motivoAI`, che restituiscono una frase
+  tradotta e mettono il dettaglio in `console.log`. Fa eccezione mCloud, che
+  è il pannello tecnico per chi ha un Supabase suo: non ha più un tasto, si
+  apre tenendo premuta due secondi la riga della versione nel Profilo
+  (`cloudPremi`), e il campo del link d'invito sta in «Ho un codice».
+- **Il cambio di una spesa non si rifà modificandola.** `cambioDaTenere`:
+  stessa valuta di prima → resta il cambio salvato, anche cambiando la cifra.
+  Si ricalcola solo cambiando valuta o da «Ricalcola col cambio attuale».
+  Vale anche per le spese create dall'app (`setExpAmt`).
 - **⚠️ Un cambio che manca non vale 1.** Senza rete e senza un cambio preso
   nelle ultime sei ore, `getRate` restituiva 1 e la spesa si salvava così per
   sempre: 10.000 yen diventavano 10.000 euro, e l'anteprima scriveva già

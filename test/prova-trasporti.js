@@ -49,7 +49,10 @@ const METRO = [
   /* `risposta` decide cosa torna a ogni giro: così si può fingere il posto
      dove non c'è niente fino a venti chilometri. */
   async function apri(risposta) {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+       concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+       cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+    const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     page._domande = [];
     await page.route('**/api/interpreter', async route => {

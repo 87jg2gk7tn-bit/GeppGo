@@ -109,7 +109,11 @@ const stato = {
     return { msg: document.getElementById('eaMsg').textContent,
              ancoraAperto: document.getElementById('mElimAcc').classList.contains('active') };
   });
-  ok('se il cloud rifiuta lo dice, e non chiude', /qualcosa non va/.test(rifiuto.msg) && rifiuto.ancoraAperto, rifiuto.msg);
+  /* Prima si chiedeva il testo grezzo del server a schermo («qualcosa non
+     va»): conta che lo dica e non chiuda, e la frase dev'essere da persona.
+     Il testo del server resta in console. */
+  ok('se il cloud rifiuta lo dice, e non chiude',
+     /Non ci sono riuscito/.test(rifiuto.msg) && !/qualcosa non va/.test(rifiuto.msg) && rifiuto.ancoraAperto, rifiuto.msg);
 
   // ── senza account non si apre nemmeno ────────────────────────────────────
   const senza = await page.evaluate(() => {

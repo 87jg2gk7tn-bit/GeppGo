@@ -53,7 +53,10 @@ const MONDO = [
   const r = [];
   const err = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+     concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+     cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+  const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
   await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
     status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));

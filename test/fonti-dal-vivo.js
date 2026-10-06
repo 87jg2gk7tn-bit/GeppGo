@@ -81,7 +81,10 @@ async function primeDomande() {
   /* Le domande di Overpass si fanno fare all'APP, come sempre: il primo
      giro di ogni voce, esattamente come parte dal telefono. */
   const browser = await apriBrowser();
-  const page = await browser.newPage();
+  /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+     concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+     cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+  const page = await browser.newPage({ permissions: ['geolocation'] });
   let viste = [];
   await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
     status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));

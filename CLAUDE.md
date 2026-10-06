@@ -47,6 +47,15 @@ quel file è la memoria.
   (`'Fatto: '+nome`) non si traduce mai.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
   schermo stretto, tocco).
+- **Messaggi per chi usa l'app**: dicono cosa è successo e cosa si può fare
+  (riprovare, controllare la rete). Niente guide, passi, file o nomi di
+  servizi tecnici (Supabase, Worker, ponte) e niente testo grezzo del server:
+  il dettaglio va in `console.log`. Unica eccezione mCloud, il pannello per
+  chi ha un Supabase suo, che non ha un tasto (pressione lunga sulla versione
+  nel Profilo).
+- **Posizione**: mai chiesta all'apertura. La si chiede quando si usa una
+  funzione che ne ha bisogno, dopo il foglio che spiega a cosa serve
+  (`chiediPosizione`); chi ha già dato il permesso non vede niente di nuovo.
 - **Logo**: oro `#C9962C` con tratto `#14110B`, nell'SVG dentro l'HTML. Non si
   cambia senza che sia chiesto. (La variabile `--green` si chiama così per
   storia: vale `#B8863C`, un ocra.)

@@ -39,8 +39,11 @@ il suo account). **Used for tracking**: **NO**.
 ### Location — la voce da guardare due volte
 
 La posizione **viene usata ma non conservata da noi**: si prende quando serve
-(cercare un bagno, un bancomat, il meteo, avvisare che sei vicino a una
-tappa), si manda ai servizi che rispondono, e finisce lì.
+(cercare un bagno, un bancomat, chiamare il gruppo «A raccolta», avvisare che
+sei vicino a una tappa), si manda ai servizi che rispondono, e finisce lì.
+All'apertura dell'app non si chiede: il permesso lo chiede iOS solo quando si
+tocca una di queste funzioni, dopo un foglio che dice a cosa serve. Il meteo
+e la città della home vengono dalla destinazione del viaggio.
 
 **Una cosa è cambiata e va detta.** Le ricerche «qui intorno» **e la ricerca
 degli indirizzi** (alberghi, città, luoghi) non partono più
