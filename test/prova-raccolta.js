@@ -25,7 +25,10 @@ const stato = {
 
 (async () => {
   const browser = await apriBrowser();
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+     concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+     cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+  const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message + '\n' + (e.stack || '')));
 
@@ -227,7 +230,9 @@ const stato = {
     CLOUD.errore = null;
     return msg;
   });
-  ok('se al database manca la tabella lo dice chiaro', /supabase-schema\.sql/.test(senzaTabella), senzaTabella);
+  /* Prima chiedeva «supabase-schema.sql» nel messaggio: un'istruzione per chi
+     gestisce il database, a schermo per chi sta chiamando il gruppo. */
+  ok('se al database manca la tabella lo dice chiaro', /non è ancora disponibile/.test(senzaTabella) && !/supabase|\.sql/i.test(senzaTabella), senzaTabella);
 
   // ── riceverne una ───────────────────────────────────────────────────────
   const riceve = await page.evaluate(async () => {

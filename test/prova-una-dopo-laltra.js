@@ -29,7 +29,10 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
   const err = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+     concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+     cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+  const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
   const chieste = [];
   await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
@@ -112,7 +115,7 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
      secondo. L'app lo trattava come un momento di lentezza: ci ribussava a
      ogni giro, a ogni riprova, a ogni voce. Qui il primo server rifiuta
      così, e il secondo risponde. */
-  const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const p2 = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   p2.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
   const perServer = {};
   let chiude = null;

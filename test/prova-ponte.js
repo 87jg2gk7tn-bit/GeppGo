@@ -81,7 +81,10 @@ const stato = {
      prima. Percio' qui le domande NON si scrivono: si fanno fare all'app,
      tutte quelle di tutte le voci, e si passano al controllo vero. */
   {
-    const pq = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+       concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+       cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+    const pq = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     const dette = [];
     await pq.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
       status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
@@ -124,7 +127,7 @@ const stato = {
      funzione — e nessuno li confrontava. Adesso questa riga lo fa. */
   const tempiPonte = await import('../supabase/functions/vicini/domanda.mjs');
   {
-    const p0 = await browser.newPage();
+    const p0 = await browser.newPage({ permissions: ['geolocation'] });
     /* Si blocca solo quello che uscirebbe davvero in rete, non tutto:
        bloccando tutto la pagina non si carica e la costante si legge
        `null` — cioè la prova diventa rossa per colpa sua. */
@@ -185,7 +188,7 @@ const stato = {
 
   // ══ L'APP E IL PONTE ═════════════════════════════════════════════════
   async function apri({ ponte }) {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
       status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
@@ -279,7 +282,7 @@ const stato = {
      proprio punto esatto, ogni domanda sarebbe diversa dalle altre e la
      memoria non troverebbe mai niente. */
   const vicino = { lat: IO.lat + 0.0004, lng: IO.lng - 0.0004 };   /* ~60 m più in là */
-  const pagina2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const pagina2 = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   pagina2._ponte = [];
   await pagina2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
     status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
@@ -311,7 +314,7 @@ const stato = {
      che si usa come `fetch` ed è quello che li ha fatti passare tutti dal
      ponte senza rimaneggiarne ventuno a mano — che è il modo di introdurre
      un difetto proprio in quello che non si guarda. */
-  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const pg = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   pg._geo = []; pg._nominatim = [];
   await pg.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
     status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
@@ -370,7 +373,7 @@ const stato = {
          risposta è lì pronta, e chiedere alla persona di premere un tasto
          è chiederle di fare il lavoro dell'app. */
   {
-    const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const pa = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     pa.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     const alPonte = [];
     await pa.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
@@ -444,7 +447,7 @@ const stato = {
      misura il TEMPO, perché «lento» è il guasto: una prova che guarda solo
      se la risposta arriva sarebbe stata verde anche prima. */
   async function conPonteLento({ direttaGiu }) {
-    const pl = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const pl = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     pl.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     await pl.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
       status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));

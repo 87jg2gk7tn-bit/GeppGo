@@ -71,7 +71,10 @@ const { comeOverpass, comeIlServerRotto } = require('./overpass-finto');
 
   // ── 2. e la copia che sta nell'app dice le stesse cose ───────────────
   const browser = await apriBrowser();
-  const page = await browser.newPage();
+  /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+     concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+     cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+  const page = await browser.newPage({ permissions: ['geolocation'] });
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window.rispostaAttendibile === 'function', { timeout: 20000 });
   const dettiDallApp = await page.evaluate(
@@ -99,7 +102,7 @@ const { comeOverpass, comeIlServerRotto } = require('./overpass-finto');
     days: [{ id: 'd1', date: '2026-09-01', title: '', activities: [] }] }],
     currentTripId: 1, settings: {}, myName: 'Gepp', skipAuth: true };
 
-  const p2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const p2 = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   const interrogati = [];
   /* Chi è il primo server lo dirà l'APP, appena la pagina è in piedi:
      scrivere un nome qui vorrebbe dire che riordinando la lista la prova

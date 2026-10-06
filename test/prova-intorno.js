@@ -44,7 +44,10 @@ const stato = {
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 
   async function apri(mondo, opts = {}) {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+       concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+       cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+    const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
       status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
@@ -345,10 +348,11 @@ const stato = {
      !/avevo trovato/.test(testo) && /non ha risposto/.test(testo), testo.slice(0, 90));
   /* E dice cosa è andato storto: «non risponde» nasconde la differenza fra
      l'essere senza campo e l'essere stati messi in castigo da Overpass, e
-     quelle due cose si risolvono in modi diversi. Senza questa riga una
-     segnalazione dice solo «non funziona». */
+     quelle due cose si risolvono in modi diversi. Lo dice in parole («troppe
+     richieste»), non col codice del server: la riga «dettaglio: 429 da ...»
+     era un messaggio da sviluppatore, e il dettaglio adesso sta in console. */
   ok('e dice cosa è andato storto, non solo che è andato storto',
-     /dettaglio:/.test(testo) && /429/.test(testo), testo.slice(-80));
+     /troppe richieste/.test(testo) && !/dettaglio:|429/.test(testo), testo.slice(-80));
   await page.close();
 
   // ══ 5-ter. LA MEMORIA COL NOME VECCHIO VALE PER IL RIPIEGO ═══════════

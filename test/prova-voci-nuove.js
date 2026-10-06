@@ -65,7 +65,10 @@ const MONDO = [
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 
   async function apri(overpass, viewport = { width: 390, height: 844 }) {
-    const page = await browser.newPage({ viewport });
+    /* Il permesso della posizione e' gia' dato: e' il telefono di chi l'aveva
+       concesso. Senza, prima della richiesta l'app apre il foglio che spiega a
+       cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
+    const page = await browser.newPage({ viewport, permissions: ['geolocation'] });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     page._domande = [];
     await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({

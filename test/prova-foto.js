@@ -218,6 +218,9 @@ const stato = {
 
   // ── quando non arriva nel cloud, si sa perché ────────────────────────────
   const perche = await page.evaluate(async () => {
+    /* Il dettaglio tecnico va in console: lo si raccoglie da li'. */
+    const log = [], logVero = console.log;
+    console.log = (...a) => { log.push(a.join(' ')); logVero.apply(console, a); };
     const vero = sb.storage;
     sb.storage = { from: () => ({ upload: async () => ({ error: { message: 'Bucket not found' } }) }) };
     const rec = { id: 'zz', tripId: 101, date: '2026-09-01', data: 'data:image/jpeg;base64,' + window.__JPEG, ts: Date.now() };
@@ -229,10 +232,16 @@ const stato = {
     const riga = document.getElementById('phChi').textContent;
     const tasto = document.getElementById('phRiprova').style.display;
     sb.storage = vero;
-    return { motivo, riga, tasto };
+    console.log = logVero;
+    return { motivo, riga, tasto, log: log.join(' | ') };
   });
-  ok('un magazzino mancante viene spiegato, non subìto', /supabase-schema\.sql/.test(perche.motivo), perche.motivo);
-  ok('e la spiegazione si legge sotto la foto', /supabase-schema\.sql/.test(perche.riga), perche.riga.slice(0, 90));
+  /* Questi due controlli chiedevano che la spiegazione citasse
+     «supabase-schema.sql»: era un messaggio da sviluppatore, a schermo per chi
+     guarda una foto. Adesso la spiegazione dice cosa fare, e il dettaglio
+     tecnico resta in console per chi indaga. */
+  ok('un magazzino mancante viene spiegato, non subìto', /non è pronto/.test(perche.motivo) && !/supabase|\.sql/i.test(perche.motivo), perche.motivo);
+  ok('e la spiegazione si legge sotto la foto', /non è pronto/.test(perche.riga), perche.riga.slice(0, 90));
+  ok('e il dettaglio tecnico resta in console', /Bucket not found/.test(perche.log), perche.log.slice(0, 90));
   ok('con il tasto per riprovare', perche.tasto === 'block', perche.tasto);
 
   const senzaSess = await page.evaluate(async () => {

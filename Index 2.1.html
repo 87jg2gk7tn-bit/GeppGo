@@ -516,6 +516,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .cv-riga{display:flex;flex-direction:column;gap:.15rem;padding:.55rem .75rem;font-size:.85rem}
 .cv-riga+.cv-riga{border-top:1px solid var(--line)}
 .cv-riga span{font-size:.78rem;color:var(--ink-faint)}
+.pos-perche{font-size:.95rem;color:var(--ink);line-height:1.55;margin:0 0 .6rem}
+.pos-dopo{font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin:0 0 1.1rem}
 .cambi-nota{font-size:.78rem;font-weight:700;color:var(--clay-deep);background:var(--clay-tint);border-radius:var(--r-md);padding:.5rem .7rem;margin:.5rem 0 .7rem;line-height:1.45}
 .cat-chips{display:flex;flex-wrap:wrap;gap:.4rem}
 .cat-chip{background:var(--paper);border:1px solid var(--line);padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.8rem;color:var(--ink-soft);cursor:pointer;transition:var(--ease)}
@@ -676,6 +678,41 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-xl);padding:1.7rem 1.4rem;box-shadow:var(--sh-md)}
 .auth-brand{display:flex;align-items:center;gap:.6rem;justify-content:center;margin-bottom:1.2rem}
 .auth-link{background:none;border:none;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--ink-faint);cursor:pointer;display:block;margin:1rem auto 0;text-decoration:underline;text-underline-offset:3px}
+.ver-riga{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.au-perche{font-size:.9rem;color:var(--ink-soft);line-height:1.55;text-align:center;margin:0 0 1.2rem}
+.au-scelte{display:flex;flex-direction:column;gap:.6rem}
+.au-scelte .btn{min-height:50px;font-size:.98rem}
+.btn-filo{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.au-privacy{font-size:.74rem;color:var(--ink-faint);line-height:1.5;text-align:center;margin:.9rem 0 0}
+.au-titolo{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;text-align:center;margin:0 0 1rem}
+.au-mail-ic{font-size:2.2rem;line-height:1;margin-bottom:.7rem}
+.au-mail-t{font-size:.98rem;color:var(--ink);line-height:1.55;margin:0 0 .4rem;font-weight:600}
+.au-mail-a{font-size:.85rem;color:var(--ink-soft);margin:0 0 1.1rem;word-break:break-all}
+/* La presentazione sta sopra tutto, anche sopra la schermata di accesso:
+   viene prima di lei. */
+#intro{position:fixed;inset:0;z-index:20002;background:var(--paper);display:none;flex-direction:column;padding:calc(env(safe-area-inset-top) + .6rem) 0 calc(env(safe-area-inset-bottom) + 1.2rem);transition:opacity .3s}
+#intro.via{opacity:0}
+.intro-salta{align-self:flex-end;margin-right:.8rem;background:none;border:none;font-family:inherit;font-weight:700;font-size:.92rem;color:var(--ink-soft);padding:.6rem .9rem;min-height:44px;cursor:pointer}
+.intro-pista{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.intro-pista::-webkit-scrollbar{display:none}
+.intro-pag{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 1.6rem;box-sizing:border-box;min-width:0}
+.intro-ill{width:min(66vw,250px);margin-bottom:1.5rem}
+.intro-ill svg{width:100%;height:auto;display:block}
+.intro-t{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;line-height:1.2;color:var(--ink);margin:0 0 .7rem}
+.intro-s{font-size:1rem;line-height:1.55;color:var(--ink-soft);margin:0;max-width:22rem}
+.intro-giu{padding:0 1.4rem;display:flex;flex-direction:column;align-items:center;gap:1.1rem}
+.intro-giu .btn{min-height:50px;max-width:380px;font-size:.98rem}
+.intro-punti{display:flex;gap:.45rem}
+.intro-punti span{width:7px;height:7px;border-radius:4px;background:var(--line);transition:var(--ease)}
+.intro-punti span.on{width:22px;background:var(--green)}
+.intro-ill .i-carta{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.intro-ill .i-oro{fill:var(--green)}
+.intro-ill .i-tinta{fill:var(--green-tint);stroke:var(--green-soft);stroke-width:1.5}
+.intro-ill .i-riga{fill:var(--line)}
+.intro-ill .i-ink{fill:var(--ink)}
+.intro-ill .i-tratto{fill:none;stroke:var(--green);stroke-width:2.5;stroke-dasharray:5 6;stroke-linecap:round}
+.intro-ill .i-sim{font-family:'Fraunces',serif;font-weight:600;font-size:28px;fill:var(--ink);text-anchor:middle}
+.intro-ill .i-sim-chiaro{fill:#fff;font-size:32px}
 
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:8px;padding:.2rem .45rem;font-size:.65rem;font-weight:800;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
@@ -743,6 +780,11 @@ body.dark .tic-ic.on{background:#4E7A22;color:#fff}
 body.dark .exp-manca.ok{color:#A8CF7A}
 .edit-ic:active{transform:scale(.92)}
 input[type="date"],input[type="time"]{-webkit-appearance:none;appearance:none;min-height:48px;width:100%;display:block;line-height:1.3}
+/* Due campi affiancati (Inizio e Fine, Check-in e Check-out): in una riga
+   flex una casella non scende sotto la sua larghezza naturale, e quella della
+   data e' larga. A 320 e 360 px la seconda usciva dallo schermo; cosi' si
+   dividono lo spazio che c'e'. Su un campo da solo non cambia niente. */
+.fg{min-width:0}
 
 body.dark{
   --paper:#0E0C09;--surface:#1C1712;
@@ -1528,6 +1570,14 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   box-shadow:var(--sh-xs);transition:var(--ease);
 }
 .hh-cerca svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.85}
+/* Su una riga sola, sempre: su due il tasto diventava alto il doppio. Se la
+   frase intera non ci sta (telefono stretto, o una lingua piu' lunga) si
+   passa a quella corta, misurando (vedi adattaCerca): scegliere per
+   larghezza di schermo varrebbe solo per l'italiano. */
+.hh-cerca span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hh-cerca .hh-cerca-c{display:none}
+.hh-cerca.corto .hh-cerca-l{display:none}
+.hh-cerca.corto .hh-cerca-c{display:inline}
 .hh-cerca:active{transform:scale(.99)}
 .hh.cl-buio .hh-cerca{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
 .hh.cl-buio .hh-cerca svg{opacity:.85}
@@ -1996,18 +2046,17 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="restoreBak()">Ripristina copia automatica</button>
         <label class="btn btn-soft btn-block" style="margin-bottom:.5rem;cursor:pointer">Importa dati<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
         <button class="btn btn-danger btn-block" onclick="confirmReset()">Reset completo</button>
-        <!-- Il cloud ora e' gia' configurato in ogni copia dell'app, quindi
-             questo pannello non serve piu' a nessuno per entrare: resta come
-             porta di servizio per chi vuole far girare GeppGo sul proprio
-             Supabase. Piccolo e in fondo, dove non da' fastidio. -->
-        <div style="text-align:center;margin-top:.9rem"><button onclick="openCloudCfg()" style="background:none;border:none;font-family:inherit;font-size:.74rem;color:var(--ink-faint);cursor:pointer;text-decoration:underline">Usa un cloud tuo</button></div></div>
+        <!-- «Usa un cloud tuo» non c'e' piu': quel pannello serve solo a chi fa
+             girare GeppGo su un Supabase suo, e il link faceva pensare a tutti
+             gli altri di dover configurare qualcosa. Si apre tenendo premuta
+             la riga della versione, qui sotto (vedi cloudPremi). --></div>
       <!-- Non c'era modo di sapere che versione si stava usando. Quando una
            cosa nuova non si vede, la domanda e' sempre la stessa - "e'
            arrivata o sto guardando quella di ieri?" - e senza una riga da
            leggere si tira a indovinare. Qui c'e' la data della versione e
            il tasto che butta via la copia tenuta da parte e ricarica. -->
       <div class="card"><div class="card-h" style="margin-bottom:.3rem">🔄 Versione</div>
-        <div class="card-sub" id="verRiga">—</div>
+        <div class="card-sub ver-riga" id="verRiga" onpointerdown="cloudPremi()" onpointerup="cloudLascia()" onpointerleave="cloudLascia()" onpointercancel="cloudLascia()" oncontextmenu="return false">—</div>
         <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="forzaAggiornamento()">Cerca la versione più recente</button>
         <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">L'app tiene da parte una copia di sé per funzionare senza campo. Se hai appena saputo che c'è una novità e qui non la vedi, questo tasto butta via la copia e riscarica.</p></div>
       <!-- Il contatto pubblicato: chi ospita contenuti caricati dalle persone
@@ -2064,24 +2113,98 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <button class="fab" id="ttFab">＋</button></div>
   </div>
 </div>
+<!-- La presentazione: tre schermate al primissimo avvio, prima
+     dell'accesso (vedi LA PRESENTAZIONE). Si scorrono col dito o con
+     «Avanti», e «Salta» c'e' sempre. -->
+<div id="intro" aria-hidden="true">
+  <button class="intro-salta" onclick="introFine()">Salta</button>
+  <div class="intro-pista" id="introPista">
+    <section class="intro-pag">
+      <div class="intro-ill" aria-hidden="true"><svg viewBox="0 0 200 150">
+        <rect x="38" y="12" width="124" height="126" rx="16" class="i-carta"/>
+        <rect x="52" y="30" width="28" height="12" rx="6" class="i-oro"/><rect x="88" y="32" width="58" height="8" rx="4" class="i-riga"/>
+        <rect x="52" y="54" width="28" height="12" rx="6" class="i-oro"/><rect x="88" y="56" width="44" height="8" rx="4" class="i-riga"/>
+        <rect x="52" y="78" width="28" height="12" rx="6" class="i-oro"/><rect x="88" y="80" width="52" height="8" rx="4" class="i-riga"/>
+        <path d="M60 118 C 84 104, 108 130, 132 114" class="i-tratto"/>
+        <circle cx="60" cy="118" r="4.5" class="i-oro"/>
+        <path d="M140 96a10 10 0 0 1 10 10c0 8-10 17-10 17s-10-9-10-17a10 10 0 0 1 10-10z" class="i-ink"/><circle cx="140" cy="106" r="3.6" class="i-tinta"/>
+      </svg></div>
+      <h2 class="intro-t">Il viaggio, giorno per giorno</h2>
+      <p class="intro-s">Tappe, orari e mappa in un'unica time table.</p>
+    </section>
+    <section class="intro-pag">
+      <div class="intro-ill" aria-hidden="true"><svg viewBox="0 0 200 150">
+        <circle cx="72" cy="34" r="15" class="i-tinta"/><circle cx="100" cy="28" r="17" class="i-oro"/><circle cx="128" cy="34" r="15" class="i-tinta"/>
+        <rect x="26" y="62" width="148" height="70" rx="12" class="i-carta"/>
+        <line x1="114" y1="70" x2="114" y2="124" class="i-tratto"/>
+        <rect x="40" y="78" width="56" height="8" rx="4" class="i-riga"/><rect x="40" y="94" width="40" height="8" rx="4" class="i-riga"/><rect x="40" y="110" width="48" height="8" rx="4" class="i-oro"/>
+        <g class="i-ink"><rect x="126" y="76" width="12" height="12" rx="2"/><rect x="146" y="76" width="12" height="12" rx="2"/><rect x="126" y="106" width="12" height="12" rx="2"/><rect x="142" y="94" width="5" height="5"/><rect x="150" y="102" width="5" height="5"/><rect x="146" y="112" width="5" height="5"/><rect x="134" y="94" width="5" height="5"/></g>
+      </svg></div>
+      <h2 class="intro-t">Tutto il gruppo in un'app</h2>
+      <p class="intro-s">Biglietti con QR e hotel assegnati a ognuno.</p>
+    </section>
+    <section class="intro-pag">
+      <div class="intro-ill" aria-hidden="true"><svg viewBox="0 0 200 150">
+        <circle cx="74" cy="72" r="32" class="i-oro"/><text x="74" y="83" class="i-sim i-sim-chiaro">¥</text>
+        <circle cx="128" cy="54" r="26" class="i-carta"/><text x="128" y="63" class="i-sim">$</text>
+        <circle cx="124" cy="106" r="24" class="i-tinta"/><text x="124" y="115" class="i-sim">€</text>
+      </svg></div>
+      <h2 class="intro-t">Conti chiari in ogni valuta</h2>
+      <p class="intro-s">Le spese si dividono da sole, anche in yen o dollari.</p>
+    </section>
+  </div>
+  <div class="intro-giu">
+    <div class="intro-punti"><span class="on"></span><span></span><span></span></div>
+    <button class="btn btn-grad btn-block" id="introAvanti" onclick="introAvanti()">Avanti</button>
+  </div>
+</div>
 <div id="authGate"><div class="auth-card">
   <div class="auth-brand"><svg width="34" height="34" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="23" fill="#C9962C"/><g stroke="#14110B" fill="none" stroke-linecap="round"><g transform="rotate(22 24 19)"><circle cx="24" cy="19" r="10" stroke-width="1.6"/><ellipse cx="24" cy="19" rx="4.2" ry="10" stroke-width="1.3"/><line x1="14" y1="19" x2="34" y2="19" stroke-width="1.3"/></g></g></svg><div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600">Gepp<span class="brand-go">Go</span></div></div>
-  <div id="auMain">
-  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.5;text-align:center;margin-bottom:1.1rem">Accedi per salvare i viaggi online e condividerli in tempo reale con i compagni.</p>
+  <!-- Le tre strade stanno tutte qui, grandi uguali: prima «senza account»
+       era un link piccolo in fondo, e chi voleva solo provare l'app pensava
+       di essere obbligato a registrarsi. La riga sopra dice cosa cambia fra
+       le due, che e' l'unica cosa da sapere per scegliere. -->
+  <div id="auScelta">
+    <p class="au-perche">Con un account i tuoi viaggi sono su tutti i tuoi dispositivi e li condividi con gli amici. Senza, restano solo su questo telefono.</p>
+    <div class="au-scelte">
+      <button class="btn btn-grad btn-block" onclick="auVai('su')">Crea un account</button>
+      <button class="btn btn-soft btn-block" onclick="auVai('in')">Accedi</button>
+      <button class="btn btn-filo btn-block" onclick="authSkip()">Prova senza account</button>
+    </div>
+    <!-- Chi crea un account deve poter leggere PRIMA cosa succede ai suoi dati.
+         Il link e' vero e apre la pagina, non un testo scritto per finta: senza,
+         l'App Store non pubblica, e non sarebbe nemmeno corretto. -->
+    <p class="au-privacy">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">privacy di GeppGo</a>.</p>
+  </div>
+  <div id="auMain" style="display:none">
+  <div class="au-titolo" id="auTitolo">Accedi</div>
   <div class="fg"><label>Email</label><input id="auEmail" type="email" autocomplete="email" placeholder="tu@esempio.it"></div>
   <div class="fg"><label>Password</label><input id="auPass" type="password" autocomplete="current-password" placeholder="Minimo 6 caratteri"></div>
   <div class="fg" id="auPass2Wrap" style="display:none"><label>Conferma password</label><input id="auPass2" type="password" autocomplete="new-password" placeholder="Riscrivila uguale"></div>
   <div id="auMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
-  <button class="btn btn-grad btn-block" onclick="authIn()">Accedi</button>
-  <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="authUp()">Crea account</button>
-  <button class="auth-link" style="margin-top:.7rem" onclick="authForgot()">Password dimenticata?</button>
-  <button class="auth-link" style="margin-top:.2rem" onclick="authMagic()">Entra con un link via email (senza password)</button>
-  <button class="auth-link" style="margin-top:.2rem" onclick="openRecPanel(false)">Ho un codice o un link di recupero ›</button>
-  <button class="auth-link" onclick="authSkip()">Usa senza account (dati solo su questo telefono)</button>
-  <!-- Chi crea un account deve poter leggere PRIMA cosa succede ai suoi dati.
-       Il link e' vero e apre la pagina, non un testo scritto per finta: senza,
-       l'App Store non pubblica, e non sarebbe nemmeno corretto. -->
-  <p style="font-size:.74rem;color:var(--ink-faint);line-height:1.5;text-align:center;margin-top:.9rem">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">privacy di GeppGo</a>.</p>
+  <button class="btn btn-grad btn-block" id="auBtnIn" onclick="authIn()">Accedi</button>
+  <button class="btn btn-grad btn-block" id="auBtnUp" style="display:none" onclick="authUp()">Crea account</button>
+  <div id="auSoloAccesso">
+    <button class="auth-link" style="margin-top:.7rem" onclick="authForgot()">Password dimenticata?</button>
+    <button class="auth-link" style="margin-top:.2rem" onclick="authMagic()">Entra con un link via email (senza password)</button>
+    <button class="auth-link" style="margin-top:.2rem" onclick="openRecPanel(false)">Ho un codice o un link di recupero ›</button>
+    <button class="auth-link" style="margin-top:.2rem" onclick="auVai('su')">Non hai un account? Creane uno</button>
+  </div>
+  <div id="auSoloNuovo" style="display:none">
+    <button class="auth-link" style="margin-top:.7rem" onclick="auVai('in')">Hai già un account? Accedi</button>
+    <p class="au-privacy">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">privacy di GeppGo</a>.</p>
+  </div>
+  <button class="auth-link" style="margin-top:.2rem" onclick="auMostra('auScelta')">‹ Indietro</button>
+  </div>
+  <!-- Con la conferma via email attiva, la registrazione non fa entrare:
+       senza dirlo, chi si era appena registrato restava davanti allo stesso
+       modulo e pensava che non avesse funzionato. -->
+  <div id="auMailInviata" style="display:none;text-align:center">
+    <div class="au-mail-ic" aria-hidden="true">✉️</div>
+    <p class="au-mail-t">Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui.</p>
+    <p class="au-mail-a" id="auMailA"></p>
+    <button class="btn btn-grad btn-block" onclick="auVai('in')">Ho confermato: accedi</button>
+    <button class="auth-link" onclick="auMostra('auScelta')">‹ Indietro</button>
   </div>
   <div id="auRec" style="display:none">
     <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link "Reset password" → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
@@ -2603,7 +2726,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       3. Aggiungi <b>Apri URL</b> e scrivi <span style="font-family:ui-monospace,monospace;font-size:.74rem" id="mhUrlEs">…</span> seguito dal <b>risultato della codifica</b>.<br>
       4. Chiamalo <b>GeppGo</b> e salva.<br><br>
       Da lì: apri la mail dell'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.
-      <button class="chip" style="margin-top:.5rem" onclick="copiaBaseCondivisione()">Copia l'indirizzo del passo 3</button>
+      <button class="chip" style="margin-top:.5rem" onclick="copiaBaseCondivisione()">Copia l'indirizzo per «Apri URL»</button>
     </div>
   </details>
 </div></div>
@@ -2636,14 +2759,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mCloud"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Configura cloud</div><button class="x x-close" onclick="closeSheet('mCloud')">✕</button></div>
-  <div class="card" style="background:var(--green-tint);border-color:var(--green-soft);margin-bottom:1rem">
-    <div style="font-weight:800;font-size:.88rem;margin-bottom:.3rem">Ti hanno mandato un link?</div>
-    <p style="font-size:.8rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.6rem">Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.</p>
-    <textarea id="cfgInvito" style="min-height:64px;font-size:.75rem" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
-    <div id="cfgInvMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin:.35rem 0;line-height:1.4"></div>
-    <button class="btn btn-grad btn-block" onclick="usaInvito()">Usa questo link</button>
-  </div>
-  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Oppure a mano, se il progetto Supabase è tuo: i due valori sono in <strong>Project Settings > API</strong>. Servono una volta sola su questo telefono.</p>
+  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Se il progetto Supabase è tuo, i due valori sono in <strong>Project Settings > API</strong>. Servono una volta sola su questo telefono.</p>
   <div class="fg"><label>Project URL</label><input id="cfgUrl" placeholder="https://xxxxx.supabase.co" autocapitalize="off" autocorrect="off"></div>
   <div class="fg"><label>Chiave anon public</label><textarea id="cfgKey" style="min-height:80px;font-size:.75rem" placeholder="Incolla qui la chiave lunga" autocapitalize="off" autocorrect="off"></textarea></div>
   <div id="cfgMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
@@ -2657,6 +2773,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><label>Codice invito</label><input id="joinCode" placeholder="Incolla qui il codice"></div>
   <button class="btn btn-grad btn-block" onclick="doJoin2(document.getElementById('joinCode').value)">Entra nel viaggio</button>
   <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">Il codice te lo manda chi ha creato il viaggio, dal suo tasto Condividi. Serve un account.</p>
+  <!-- Il link d'invito si incolla qui, accanto al codice: chi riceve un invito
+       cerca «Ho un codice», non un pannello tecnico. Le protezioni sono quelle
+       di sempre (usaInvito): il server del link si confronta e non si salva. -->
+  <div class="card" style="background:var(--green-tint);border-color:var(--green-soft);margin-top:1rem">
+    <div style="font-weight:800;font-size:.88rem;margin-bottom:.3rem">Ti hanno mandato un link?</div>
+    <p style="font-size:.8rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.6rem">Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.</p>
+    <textarea id="cfgInvito" style="min-height:64px;font-size:.75rem" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
+    <div id="cfgInvMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin:.35rem 0;line-height:1.4"></div>
+    <button class="btn btn-grad btn-block" onclick="usaInvito()">Usa questo link</button>
+  </div>
 </div></div>
 <div class="modal" id="mPremium"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2716,6 +2842,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="sheet-grip"></div>
   <div class="confirm-box"><div class="confirm-ic" id="cfIc">⚠️</div><div class="confirm-t" id="cfTitle"></div><div class="confirm-msg" id="cfMsg"></div>
     <div class="confirm-a"><button class="btn btn-soft" style="flex:1" onclick="closeSheet('mConfirm')">Annulla</button><button class="btn btn-danger" style="flex:1" id="cfOk">Conferma</button></div></div>
+</div></div>
+<!-- A cosa serve la posizione, detto prima del permesso di iOS (vedi LA
+     POSIZIONE, SOLO QUANDO SERVE). Sta in fondo apposta: si apre sopra al
+     foglio da cui e' stata chiesta. Niente croce: si sceglie una delle due. -->
+<div class="modal" id="mPosizione"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">📍 La tua posizione</div></div>
+  <p class="pos-perche" id="posPerche"></p>
+  <p class="pos-dopo">Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.</p>
+  <div style="display:flex;gap:.6rem"><button class="btn btn-grad" style="flex:1" onclick="posContinua()">Continua</button><button class="btn btn-soft" style="flex:1" onclick="posNonOra()">Non ora</button></div>
 </div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -2847,6 +2983,9 @@ window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
    l'autenticazione per conto suo. */
 const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
+/* Il primissimo avvio: niente di salvato e la presentazione mai vista. Va
+   guardato qui, prima che l'app scriva qualcosa: dopo non si saprebbe piu'. */
+const PRIMO_AVVIO=(()=>{try{return !localStorage.getItem('geppgo2')&&!localStorage.getItem('geppgo2_intro');}catch(e){return false;}})();
 let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
 /* I cambi si tengono anche fra un'apertura e l'altra: in viaggio la rete c'e'
@@ -3368,7 +3507,7 @@ const DIZIONARIO_MESSAGGI={
     'Non sono riuscito a fare la cartolina':'I couldn’t make the postcard',
     'Richiesta annullata: il viaggio resta':'Request cancelled — the trip stays',
     'Incolla prima il testo della conferma':'Paste the confirmation text first',
-    'Cloud non configurato: guida, Passo 9':'Cloud not set up — see the guide, step 9',
+    'Non riesco a collegarmi al cloud: controlla la rete e riprova.':'I can’t connect to the cloud: check your connection and try again.',
     'Incolla un itinerario o carica un file':'Paste an itinerary or upload a file',
     'Un viaggio condiviso è stato eliminato':'A shared trip was deleted',
     '⚠️ Navigatore interno non raggiungibile':'⚠️ The built-in navigation isn’t reachable',
@@ -3381,7 +3520,7 @@ const DIZIONARIO_MESSAGGI={
     'È un altro admin: prima togligli il ruolo':'They’re another admin — take the role away first',
     'Nessuna attività con orario o prenotazione':'No activity with a time or a booking',
     'Cloud non raggiungibile: riprova fra poco.':'Cloud unreachable — try again shortly.',
-    'Copiato: incollalo nel passo 3 del Comando':'Copied — paste it into step 3 of the Shortcut',
+    'Copiato: incollalo in «Apri URL», nel Comando':'Copied — paste it into “Open URL” in the Shortcut',
     'Fatto: ora la vedono i compagni di viaggio':'Done — your travel mates can see it now',
     'Scorri con un dito ← → per cambiare giorno':'Swipe ← → to change day',
     'Nessun biglietto assegnato a questa persona':'No ticket assigned to this person',
@@ -3453,7 +3592,7 @@ const DIZIONARIO_MESSAGGI={
     'Non sono riuscito a fare la cartolina':'No he podido hacer la postal',
     'Richiesta annullata: il viaggio resta':'Solicitud cancelada: el viaje se queda',
     'Incolla prima il testo della conferma':'Pega antes el texto de la confirmación',
-    'Cloud non configurato: guida, Passo 9':'Nube sin configurar: guía, paso 9',
+    'Non riesco a collegarmi al cloud: controlla la rete e riprova.':'No consigo conectarme a la nube: revisa la conexión y vuelve a intentarlo.',
     'Incolla un itinerario o carica un file':'Pega un itinerario o sube un archivo',
     'Un viaggio condiviso è stato eliminato':'Se ha eliminado un viaje compartido',
     '⚠️ Navigatore interno non raggiungibile':'⚠️ El navegador interno no responde',
@@ -3466,7 +3605,7 @@ const DIZIONARIO_MESSAGGI={
     'È un altro admin: prima togligli il ruolo':'Es otro admin: quítale antes el rol',
     'Nessuna attività con orario o prenotazione':'Ninguna actividad con hora o reserva',
     'Cloud non raggiungibile: riprova fra poco.':'La nube no responde: inténtalo en un rato.',
-    'Copiato: incollalo nel passo 3 del Comando':'Copiado: pégalo en el paso 3 del atajo',
+    'Copiato: incollalo in «Apri URL», nel Comando':'Copiado: pégalo en «Abrir URL», en el atajo',
     'Fatto: ora la vedono i compagni di viaggio':'Hecho: ahora la ven tus compañeros de viaje',
     'Scorri con un dito ← → per cambiare giorno':'Desliza ← → para cambiar de día',
     'Nessun biglietto assegnato a questa persona':'Ningún billete asignado a esta persona',
@@ -3538,7 +3677,7 @@ const DIZIONARIO_MESSAGGI={
     'Non sono riuscito a fare la cartolina':'Je n’ai pas réussi à faire la carte',
     'Richiesta annullata: il viaggio resta':'Demande annulée : le voyage reste',
     'Incolla prima il testo della conferma':'Colle d’abord le texte de la confirmation',
-    'Cloud non configurato: guida, Passo 9':'Cloud non configuré : guide, étape 9',
+    'Non riesco a collegarmi al cloud: controlla la rete e riprova.':'Je n’arrive pas à me connecter au cloud : vérifie ta connexion et réessaie.',
     'Incolla un itinerario o carica un file':'Colle un itinéraire ou charge un fichier',
     'Un viaggio condiviso è stato eliminato':'Un voyage partagé a été supprimé',
     '⚠️ Navigatore interno non raggiungibile':'⚠️ Le guidage intégré ne répond pas',
@@ -3551,7 +3690,7 @@ const DIZIONARIO_MESSAGGI={
     'È un altro admin: prima togligli il ruolo':'C’est un autre admin : retire-lui d’abord le rôle',
     'Nessuna attività con orario o prenotazione':'Aucune activité avec horaire ou réservation',
     'Cloud non raggiungibile: riprova fra poco.':'Cloud injoignable : réessaie dans un moment.',
-    'Copiato: incollalo nel passo 3 del Comando':'Copié : colle-le à l’étape 3 du raccourci',
+    'Copiato: incollalo in «Apri URL», nel Comando':'Copié : colle-le dans « Ouvrir l’URL », dans le raccourci',
     'Fatto: ora la vedono i compagni di viaggio':'C’est fait : tes compagnons de voyage la voient',
     'Scorri con un dito ← → per cambiare giorno':'Balaie ← → pour changer de jour',
     'Nessun biglietto assegnato a questa persona':'Aucun billet attribué à cette personne',
@@ -3623,7 +3762,7 @@ const DIZIONARIO_MESSAGGI={
     'Non sono riuscito a fare la cartolina':'Não consegui fazer o postal',
     'Richiesta annullata: il viaggio resta':'Pedido cancelado: a viagem fica',
     'Incolla prima il testo della conferma':'Cola primeiro o texto da confirmação',
-    'Cloud non configurato: guida, Passo 9':'Nuvem por configurar: guia, passo 9',
+    'Non riesco a collegarmi al cloud: controlla la rete e riprova.':'Não consigo ligar-me à nuvem: verifica a ligação e tenta de novo.',
     'Incolla un itinerario o carica un file':'Cola um roteiro ou carrega um ficheiro',
     'Un viaggio condiviso è stato eliminato':'Uma viagem partilhada foi eliminada',
     '⚠️ Navigatore interno non raggiungibile':'⚠️ A navegação interna não responde',
@@ -3636,7 +3775,7 @@ const DIZIONARIO_MESSAGGI={
     'È un altro admin: prima togligli il ruolo':'É outro admin: tira-lhe primeiro o papel',
     'Nessuna attività con orario o prenotazione':'Nenhuma atividade com hora ou reserva',
     'Cloud non raggiungibile: riprova fra poco.':'A nuvem não responde: tenta daqui a pouco.',
-    'Copiato: incollalo nel passo 3 del Comando':'Copiado: cola no passo 3 do atalho',
+    'Copiato: incollalo in «Apri URL», nel Comando':'Copiado: cola-o em «Abrir URL», no atalho',
     'Fatto: ora la vedono i compagni di viaggio':'Feito: agora os teus companheiros veem-na',
     'Scorri con un dito ← → per cambiare giorno':'Desliza ← → para mudar de dia',
     'Nessun biglietto assegnato a questa persona':'Nenhum bilhete atribuído a esta pessoa',
@@ -3956,7 +4095,7 @@ const DIZIONARIO_RESTO={
     'Alta — 2560 px (consigliata)':'High — 2560 px (recommended)','Libera lo spazio della mappa':'Free up the map’s space',
     'Metti l\'avviso in calendario':'Put the alert in the calendar','Quanti ne vuoi, in parallelo':'As many as you like, at once',
     'Avvisi GPS su tutti i viaggi':'GPS alerts on every trip','Creando un account accetti la':'By creating an account you accept',
-    'Copia l\'indirizzo del passo 3':'Copy the address from step 3','scade il termine per prenotare':'the booking deadline runs out',
+    'Copia l\'indirizzo per «Apri URL»':'Copy the address for “Open URL”','scade il termine per prenotare':'the booking deadline runs out',
     'prima che inizi un\'attività':'before an activity starts','passi vicino a una tappa salvata':'you walk past a saved stop',
     'Quando accetti un avviso, apri con':'When you accept an alert, open it with',
     'ti faccio controllare tutto prima di salvare':'I let you check everything before saving',
@@ -4033,7 +4172,7 @@ const DIZIONARIO_RESTO={
     'Alta — 2560 px (consigliata)':'Alta — 2560 px (recomendada)','Libera lo spazio della mappa':'Libera el espacio del mapa',
     'Metti l\'avviso in calendario':'Pon el aviso en el calendario','Quanti ne vuoi, in parallelo':'Todos los que quieras, a la vez',
     'Avvisi GPS su tutti i viaggi':'Avisos GPS en todos los viajes','Creando un account accetti la':'Al crear una cuenta aceptas',
-    'Copia l\'indirizzo del passo 3':'Copia la dirección del paso 3','scade il termine per prenotare':'vence el plazo para reservar',
+    'Copia l\'indirizzo per «Apri URL»':'Copia la dirección para «Abrir URL»','scade il termine per prenotare':'vence el plazo para reservar',
     'prima che inizi un\'attività':'antes de que empiece una actividad','passi vicino a una tappa salvata':'pasas cerca de una parada guardada',
     'Quando accetti un avviso, apri con':'Cuando aceptas un aviso, ábrelo con',
     'ti faccio controllare tutto prima di salvare':'te dejo comprobarlo todo antes de guardar',
@@ -4110,7 +4249,7 @@ const DIZIONARIO_RESTO={
     'Alta — 2560 px (consigliata)':'Haute — 2560 px (conseillée)','Libera lo spazio della mappa':'Libère l’espace de la carte',
     'Metti l\'avviso in calendario':'Mets l’alerte dans l’agenda','Quanti ne vuoi, in parallelo':'Autant que tu veux, en même temps',
     'Avvisi GPS su tutti i viaggi':'Alertes GPS sur tous les voyages','Creando un account accetti la':'En créant un compte tu acceptes',
-    'Copia l\'indirizzo del passo 3':'Copie l’adresse de l’étape 3','scade il termine per prenotare':'la date limite de réservation approche',
+    'Copia l\'indirizzo per «Apri URL»':'Copie l’adresse pour « Ouvrir l’URL »','scade il termine per prenotare':'la date limite de réservation approche',
     'prima che inizi un\'attività':'avant qu’une activité commence','passi vicino a una tappa salvata':'tu passes près d’une étape enregistrée',
     'Quando accetti un avviso, apri con':'Quand tu acceptes une alerte, ouvre-la avec',
     'ti faccio controllare tutto prima di salvare':'je te laisse tout vérifier avant d’enregistrer',
@@ -4187,7 +4326,7 @@ const DIZIONARIO_RESTO={
     'Alta — 2560 px (consigliata)':'Alta — 2560 px (recomendada)','Libera lo spazio della mappa':'Liberta o espaço do mapa',
     'Metti l\'avviso in calendario':'Põe o aviso no calendário','Quanti ne vuoi, in parallelo':'Quantas quiseres, ao mesmo tempo',
     'Avvisi GPS su tutti i viaggi':'Avisos GPS em todas as viagens','Creando un account accetti la':'Ao criar uma conta aceitas',
-    'Copia l\'indirizzo del passo 3':'Copia o endereço do passo 3','scade il termine per prenotare':'acaba o prazo para reservar',
+    'Copia l\'indirizzo per «Apri URL»':'Copia o endereço para «Abrir URL»','scade il termine per prenotare':'acaba o prazo para reservar',
     'prima che inizi un\'attività':'antes de começar uma atividade','passi vicino a una tappa salvata':'passas perto de uma paragem guardada',
     'Quando accetti un avviso, apri con':'Quando aceitas um aviso, abre-o com',
     'ti faccio controllare tutto prima di salvare':'deixo-te conferir tudo antes de guardar',
@@ -4522,7 +4661,7 @@ const DIZIONARIO_PANNELLI={
     '(anche a schermo bloccato, nell\'app installata), quando':'(even on a locked screen, in the installed app), when',
     'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'sunscreen\nphone charger\npassport\nflip-flops',
     '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. If the mail shows a 6-digit code, that works too.',
-    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Or by hand, if the Supabase project is yours: the two values are in',
+    'Se il progetto Supabase è tuo, i due valori sono in':'If the Supabase project is yours, the two values are in',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommended: on a phone you can’t tell it from the original, about 1.5 MB per photo',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'to the ones you already have, each in its own category. The ones already there I skip.',
     'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Day 1: breakfast, museum at 9:30, lunch downtown…\nDay 2: market, park, local dinner…',
@@ -4561,7 +4700,7 @@ const DIZIONARIO_PANNELLI={
     '(anche a schermo bloccato, nell\'app installata), quando':'(incluso con la pantalla bloqueada, en la app instalada), cuando',
     'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'crema solar\ncargador del móvil\npasaporte\nchanclas',
     '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Si el correo muestra un código de 6 cifras, también vale.',
-    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'O a mano, si el proyecto de Supabase es tuyo: los dos valores están en',
+    'Se il progetto Supabase è tuo, i due valori sono in':'Si el proyecto de Supabase es tuyo, los dos valores están en',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: en un teléfono no se distingue del original, unos 1,5 MB por foto',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'a los que ya tienes, cada uno en su categoría. Los que ya están me los salto.',
     'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Día 1: desayuno, museo a las 9:30, comida en el centro…\nDía 2: mercado, parque, cena típica…',
@@ -4600,7 +4739,7 @@ const DIZIONARIO_PANNELLI={
     '(anche a schermo bloccato, nell\'app installata), quando':'(même écran verrouillé, dans l’app installée), quand',
     'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'crème solaire\nchargeur de téléphone\npasseport\ntongs',
     '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Si le mail affiche un code à 6 chiffres, ça marche aussi.',
-    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Ou à la main, si le projet Supabase est le tien : les deux valeurs sont dans',
+    'Se il progetto Supabase è tuo, i due valori sono in':'Si le projet Supabase est le tien, les deux valeurs sont dans',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommandée : sur un téléphone on ne la distingue pas de l’originale, environ 1,5 Mo par photo',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'à ceux que tu as déjà, chacun dans sa catégorie. Ceux qui y sont déjà, je les saute.',
     'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Jour 1 : petit-déjeuner, musée à 9h30, déjeuner au centre…\nJour 2 : marché, parc, dîner typique…',
@@ -4639,7 +4778,7 @@ const DIZIONARIO_PANNELLI={
     '(anche a schermo bloccato, nell\'app installata), quando':'(mesmo com o ecrã bloqueado, na app instalada), quando',
     'crema solare\ncaricatore del telefono\npassaporto\ninfradito':'protetor solar\ncarregador do telemóvel\npassaporte\nchinelos',
     '. Se la mail mostra un codice a 6 cifre, va bene anche quello.':'. Se o email mostrar um código de 6 dígitos, também serve.',
-    'Oppure a mano, se il progetto Supabase è tuo: i due valori sono in':'Ou à mão, se o projeto Supabase for teu: os dois valores estão em',
+    'Se il progetto Supabase è tuo, i due valori sono in':'Se o projeto Supabase for teu, os dois valores estão em',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: num telemóvel não se distingue do original, cerca de 1,5 MB por foto',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'aos que já tens, cada um na sua categoria. Os que já lá estão, salto-os.',
     'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Dia 1: pequeno-almoço, museu às 9:30, almoço no centro…\nDia 2: mercado, parque, jantar típico…',
@@ -6033,11 +6172,294 @@ const DIZIONARIO_CAMBI={
   }
 };
 Object.keys(DIZIONARIO_CAMBI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_CAMBI[l]));
+/* Il primo impatto: la presentazione, la schermata di accesso, il foglio
+   della posizione e i messaggi d'errore riscritti per chi usa l'app. Sono le
+   prime frasi che vede chi apre GeppGo, quindi devono arrivare nella sua
+   lingua dal primo secondo. */
+const DIZIONARIO_PRIMO={
+  en:{
+    '≈ {1} · cambio da verificare':'≈ {1} · rate to check',
+    '≈ {1} · cambio salvato con la spesa':'≈ {1} · rate saved with the expense',
+    'Per cercare cosa c\'è intorno a te mi serve sapere dove sei. La uso solo per questa ricerca.':'To find what’s around you I need to know where you are. I only use it for this search.',
+    'Per chiamare il gruppo dove sei tu mi serve la tua posizione: la vedono solo le persone di questo viaggio, per due ore.':'To call the group to where you are I need your location: only the people on this trip see it, for two hours.',
+    'Per mostrarti sulla mappa e avvisarti quando passi vicino a una tappa mi serve la tua posizione.':'To show you on the map and let you know when you pass near a stop I need your location.',
+    '📍 La tua posizione':'📍 Your location',
+    'Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.':'Right after, your phone will ask for permission. You can change your mind any time in Settings.',
+    'Continua':'Continue',
+    'Senza la posizione non posso cercare qui intorno.':'Without your location I can’t search around here.',
+    'Usa la posizione':'Use my location',
+    'Salta':'Skip',
+    'Il viaggio, giorno per giorno':'Your trip, day by day',
+    'Tappe, orari e mappa in un\'unica time table.':'Stops, times and map in a single timetable.',
+    'Tutto il gruppo in un\'app':'The whole group in one app',
+    'Biglietti con QR e hotel assegnati a ognuno.':'Tickets with QR codes and hotels assigned to each person.',
+    'Conti chiari in ogni valuta':'Clear accounts in any currency',
+    'Le spese si dividono da sole, anche in yen o dollari.':'Expenses split themselves, even in yen or dollars.',
+    'Avanti':'Next',
+    'Inizia':'Get started',
+    'Con un account i tuoi viaggi sono su tutti i tuoi dispositivi e li condividi con gli amici. Senza, restano solo su questo telefono.':'With an account your trips are on all your devices and you share them with friends. Without one, they stay on this phone only.',
+    'Crea un account':'Create an account',
+    'Prova senza account':'Try without an account',
+    'Non hai un account? Creane uno':'No account? Create one',
+    'Hai già un account? Accedi':'Already have an account? Sign in',
+    'Ti abbiamo mandato un\'email: apri il link per confermare, poi torna qui.':'We’ve sent you an email: open the link to confirm, then come back here.',
+    'Ho confermato: accedi':'I’ve confirmed: sign in',
+    'Con questa email c\'è già un account: accedi.':'There’s already an account with this email: sign in.',
+    'Prima conferma l\'email: apri il link che ti abbiamo mandato, poi riprova.':'Confirm your email first: open the link we sent you, then try again.',
+    'Troppi tentativi di fila: aspetta un minuto e riprova.':'Too many attempts in a row: wait a minute and try again.',
+    'La password è troppo semplice: usane una più lunga.':'That password is too simple: use a longer one.',
+    'Questa email non sembra valida: ricontrollala.':'That email doesn’t look valid: check it again.',
+    'Non ci sono riuscito: riprova fra poco.':'That didn’t work: try again shortly.',
+    'Errore di rete':'Network error',
+    'Email o password sbagliate':'Wrong email or password',
+    'Le due password non coincidono: ricontrolla':'The two passwords don’t match: check again',
+    'Serve un\'email valida e una password di almeno 6 caratteri':'You need a valid email and a password of at least 6 characters',
+    'Creazione account...':'Creating your account...',
+    'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'This link is in the old format. The SAME email has a 6-digit code: tap “I have a code or a recovery link” and type it.',
+    'Senza rete non ci riesco: riprova quando sei online.':'I can’t without a connection: try again when you’re online.',
+    'Non hai il permesso per farlo in questo viaggio.':'You don’t have permission to do that on this trip.',
+    'Troppe richieste di fila: riprova fra {1} secondi':'Too many requests in a row: try again in {1} seconds',
+    'Richieste gratuite finite per adesso: riprova fra un minuto':'Free requests are used up for now: try again in a minute',
+    'L\'assistente non è disponibile in questo momento: riprova più tardi.':'The assistant isn’t available right now: try again later.',
+    'L\'assistente non ha risposto: riprova fra poco.':'The assistant didn’t answer: try again shortly.',
+    'L\'assistente non è raggiungibile: controlla la rete e riprova.':'The assistant can’t be reached: check your connection and try again.',
+    'Il riconoscimento non è raggiungibile: controlla la rete e riprova.':'Recognition can’t be reached: check your connection and try again.',
+    'Ricerca non riuscita: controlla la rete e riprova, oppure compila a mano.':'Search failed: check your connection and try again, or fill it in by hand.',
+    'Non sono riuscito a salvare il viaggio nel cloud.':'I couldn’t save the trip to the cloud.',
+    'Controlla di avere la rete e di essere dentro il tuo account, poi riprova. In alternativa:':'Check you’re online and signed in to your account, then try again. Or else:',
+    'Il cloud delle foto non è pronto: riprova più tardi.':'The photo cloud isn’t ready: try again later.',
+    'Non hai il permesso di mettere foto in questo viaggio.':'You don’t have permission to add photos to this trip.',
+    'La foto è troppo grande: provane una più piccola.':'The photo is too big: try a smaller one.',
+    'Si possono caricare solo foto JPEG.':'Only JPEG photos can be uploaded.',
+    'Senza rete: riprovo da solo appena torna.':'No connection: I’ll try again on my own as soon as it’s back.',
+    'Non sono riuscito a salvarla nel cloud: riprova più tardi.':'I couldn’t save it to the cloud: try again later.',
+    'A raccolta non è ancora disponibile: riprova più tardi.':'Gather round isn’t available yet: try again later.',
+    'Non posso mandare la chiamata: la può fare solo un admin del viaggio.':'I can’t send the call: only a trip admin can.',
+    'Senza rete non posso avvisare nessuno.':'Without a connection I can’t tell anyone.',
+    'Non sono riuscito a mandare la chiamata: riprova fra poco.':'I couldn’t send the call: try again shortly.',
+    'Il telefono risulta senza rete: riprova quando hai campo.':'Your phone seems to be offline: try again when you have signal.',
+    'La mappa sta ricevendo troppe richieste: riprova fra qualche minuto.':'The map is getting too many requests: try again in a few minutes.',
+    'La mappa è lenta in questo momento: riprova fra un minuto.':'The map is slow right now: try again in a minute.',
+    'Di solito è passeggero. Se hai campo, fra un minuto va.':'It usually passes. If you have signal, it’ll work in a minute.',
+    'Il servizio della mappa non ha risposto: ho provato {1} volte su {2} server diversi.':'The map service didn’t answer: I tried {1} times on {2} different servers.',
+    'Cosa cerchi?':'Search nearby',
+    'Riprova adesso':'Try again now',
+    'Condividi versione locale':'Share the local version'
+  },
+  es:{
+    '≈ {1} · cambio da verificare':'≈ {1} · cambio por revisar',
+    '≈ {1} · cambio salvato con la spesa':'≈ {1} · cambio guardado con el gasto',
+    'Per cercare cosa c\'è intorno a te mi serve sapere dove sei. La uso solo per questa ricerca.':'Para buscar lo que hay a tu alrededor necesito saber dónde estás. Solo la uso para esta búsqueda.',
+    'Per chiamare il gruppo dove sei tu mi serve la tua posizione: la vedono solo le persone di questo viaggio, per due ore.':'Para llamar al grupo adonde estás necesito tu ubicación: solo la ven las personas de este viaje, durante dos horas.',
+    'Per mostrarti sulla mappa e avvisarti quando passi vicino a una tappa mi serve la tua posizione.':'Para mostrarte en el mapa y avisarte cuando pases cerca de una parada necesito tu ubicación.',
+    '📍 La tua posizione':'📍 Tu ubicación',
+    'Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.':'Justo después el teléfono te pedirá permiso. Puedes cambiar de idea cuando quieras desde los ajustes.',
+    'Continua':'Continuar',
+    'Senza la posizione non posso cercare qui intorno.':'Sin tu ubicación no puedo buscar por aquí.',
+    'Usa la posizione':'Usar mi ubicación',
+    'Salta':'Saltar',
+    'Il viaggio, giorno per giorno':'El viaje, día a día',
+    'Tappe, orari e mappa in un\'unica time table.':'Paradas, horas y mapa en un solo horario.',
+    'Tutto il gruppo in un\'app':'Todo el grupo en una app',
+    'Biglietti con QR e hotel assegnati a ognuno.':'Billetes con QR y alojamientos asignados a cada uno.',
+    'Conti chiari in ogni valuta':'Cuentas claras en cualquier moneda',
+    'Le spese si dividono da sole, anche in yen o dollari.':'Los gastos se reparten solos, incluso en yenes o dólares.',
+    'Avanti':'Siguiente',
+    'Inizia':'Empezar',
+    'Con un account i tuoi viaggi sono su tutti i tuoi dispositivi e li condividi con gli amici. Senza, restano solo su questo telefono.':'Con una cuenta tus viajes están en todos tus dispositivos y los compartes con tus amigos. Sin ella, se quedan solo en este teléfono.',
+    'Crea un account':'Crear una cuenta',
+    'Prova senza account':'Probar sin cuenta',
+    'Non hai un account? Creane uno':'¿No tienes cuenta? Crea una',
+    'Hai già un account? Accedi':'¿Ya tienes cuenta? Entra',
+    'Ti abbiamo mandato un\'email: apri il link per confermare, poi torna qui.':'Te hemos enviado un correo: abre el enlace para confirmar y luego vuelve aquí.',
+    'Ho confermato: accedi':'Ya he confirmado: entrar',
+    'Con questa email c\'è già un account: accedi.':'Ya hay una cuenta con este correo: entra.',
+    'Prima conferma l\'email: apri il link che ti abbiamo mandato, poi riprova.':'Primero confirma el correo: abre el enlace que te enviamos y vuelve a intentarlo.',
+    'Troppi tentativi di fila: aspetta un minuto e riprova.':'Demasiados intentos seguidos: espera un minuto y vuelve a intentarlo.',
+    'La password è troppo semplice: usane una più lunga.':'La contraseña es demasiado simple: usa una más larga.',
+    'Questa email non sembra valida: ricontrollala.':'Este correo no parece válido: revísalo.',
+    'Non ci sono riuscito: riprova fra poco.':'No lo he conseguido: vuelve a intentarlo dentro de poco.',
+    'Errore di rete':'Error de red',
+    'Email o password sbagliate':'Correo o contraseña incorrectos',
+    'Le due password non coincidono: ricontrolla':'Las dos contraseñas no coinciden: revísalas',
+    'Serve un\'email valida e una password di almeno 6 caratteri':'Hace falta un correo válido y una contraseña de al menos 6 caracteres',
+    'Creazione account...':'Creando la cuenta...',
+    'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Este enlace está en el formato antiguo. En el MISMO correo hay un código de 6 cifras: toca «Tengo un código o un enlace de recuperación» y escríbelo.',
+    'Senza rete non ci riesco: riprova quando sei online.':'Sin conexión no puedo: vuelve a intentarlo cuando estés en línea.',
+    'Non hai il permesso per farlo in questo viaggio.':'No tienes permiso para hacerlo en este viaje.',
+    'Troppe richieste di fila: riprova fra {1} secondi':'Demasiadas peticiones seguidas: vuelve a intentarlo en {1} segundos',
+    'Richieste gratuite finite per adesso: riprova fra un minuto':'Se han acabado las peticiones gratuitas por ahora: vuelve a intentarlo en un minuto',
+    'L\'assistente non è disponibile in questo momento: riprova più tardi.':'El asistente no está disponible en este momento: vuelve a intentarlo más tarde.',
+    'L\'assistente non ha risposto: riprova fra poco.':'El asistente no ha respondido: vuelve a intentarlo dentro de poco.',
+    'L\'assistente non è raggiungibile: controlla la rete e riprova.':'No se puede contactar con el asistente: revisa la conexión y vuelve a intentarlo.',
+    'Il riconoscimento non è raggiungibile: controlla la rete e riprova.':'No se puede contactar con el reconocimiento: revisa la conexión y vuelve a intentarlo.',
+    'Ricerca non riuscita: controlla la rete e riprova, oppure compila a mano.':'La búsqueda no ha funcionado: revisa la conexión y vuelve a intentarlo, o rellénalo a mano.',
+    'Non sono riuscito a salvare il viaggio nel cloud.':'No he podido guardar el viaje en la nube.',
+    'Controlla di avere la rete e di essere dentro il tuo account, poi riprova. In alternativa:':'Comprueba que tienes conexión y que has entrado en tu cuenta, y vuelve a intentarlo. Si no:',
+    'Il cloud delle foto non è pronto: riprova più tardi.':'La nube de fotos no está lista: vuelve a intentarlo más tarde.',
+    'Non hai il permesso di mettere foto in questo viaggio.':'No tienes permiso para poner fotos en este viaje.',
+    'La foto è troppo grande: provane una più piccola.':'La foto es demasiado grande: prueba con una más pequeña.',
+    'Si possono caricare solo foto JPEG.':'Solo se pueden subir fotos JPEG.',
+    'Senza rete: riprovo da solo appena torna.':'Sin conexión: lo reintentaré solo en cuanto vuelva.',
+    'Non sono riuscito a salvarla nel cloud: riprova più tardi.':'No he podido guardarla en la nube: vuelve a intentarlo más tarde.',
+    'A raccolta non è ancora disponibile: riprova più tardi.':'Reunión aún no está disponible: vuelve a intentarlo más tarde.',
+    'Non posso mandare la chiamata: la può fare solo un admin del viaggio.':'No puedo enviar la llamada: solo puede hacerlo un administrador del viaje.',
+    'Senza rete non posso avvisare nessuno.':'Sin conexión no puedo avisar a nadie.',
+    'Non sono riuscito a mandare la chiamata: riprova fra poco.':'No he podido enviar la llamada: vuelve a intentarlo dentro de poco.',
+    'Il telefono risulta senza rete: riprova quando hai campo.':'El teléfono parece no tener conexión: vuelve a intentarlo cuando tengas cobertura.',
+    'La mappa sta ricevendo troppe richieste: riprova fra qualche minuto.':'El mapa está recibiendo demasiadas peticiones: vuelve a intentarlo en unos minutos.',
+    'La mappa è lenta in questo momento: riprova fra un minuto.':'El mapa va lento en este momento: vuelve a intentarlo en un minuto.',
+    'Di solito è passeggero. Se hai campo, fra un minuto va.':'Suele ser pasajero. Si tienes cobertura, en un minuto funciona.',
+    'Il servizio della mappa non ha risposto: ho provato {1} volte su {2} server diversi.':'El servicio del mapa no ha respondido: lo he intentado {1} veces en {2} servidores distintos.',
+    'Cosa cerchi?':'¿Qué buscas?',
+    'Riprova adesso':'Reintentar ahora',
+    'Condividi versione locale':'Compartir la versión local'
+  },
+  fr:{
+    '≈ {1} · cambio da verificare':'≈ {1} · taux à vérifier',
+    '≈ {1} · cambio salvato con la spesa':'≈ {1} · taux enregistré avec la dépense',
+    'Per cercare cosa c\'è intorno a te mi serve sapere dove sei. La uso solo per questa ricerca.':'Pour chercher ce qu’il y a autour de toi, j’ai besoin de savoir où tu es. Je ne l’utilise que pour cette recherche.',
+    'Per chiamare il gruppo dove sei tu mi serve la tua posizione: la vedono solo le persone di questo viaggio, per due ore.':'Pour appeler le groupe là où tu es, j’ai besoin de ta position : seules les personnes de ce voyage la voient, pendant deux heures.',
+    'Per mostrarti sulla mappa e avvisarti quando passi vicino a una tappa mi serve la tua posizione.':'Pour te montrer sur la carte et te prévenir quand tu passes près d’une étape, j’ai besoin de ta position.',
+    '📍 La tua posizione':'📍 Ta position',
+    'Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.':'Juste après, ton téléphone te demandera l’autorisation. Tu peux changer d’avis quand tu veux dans les réglages.',
+    'Continua':'Continuer',
+    'Senza la posizione non posso cercare qui intorno.':'Sans ta position, je ne peux pas chercher dans le coin.',
+    'Usa la posizione':'Utiliser ma position',
+    'Salta':'Passer',
+    'Il viaggio, giorno per giorno':'Le voyage, jour après jour',
+    'Tappe, orari e mappa in un\'unica time table.':'Étapes, horaires et carte dans un seul programme.',
+    'Tutto il gruppo in un\'app':'Tout le groupe dans une appli',
+    'Biglietti con QR e hotel assegnati a ognuno.':'Billets avec QR et hébergements attribués à chacun.',
+    'Conti chiari in ogni valuta':'Des comptes clairs dans toutes les devises',
+    'Le spese si dividono da sole, anche in yen o dollari.':'Les dépenses se partagent toutes seules, même en yens ou en dollars.',
+    'Avanti':'Suivant',
+    'Inizia':'Commencer',
+    'Con un account i tuoi viaggi sono su tutti i tuoi dispositivi e li condividi con gli amici. Senza, restano solo su questo telefono.':'Avec un compte, tes voyages sont sur tous tes appareils et tu les partages avec tes amis. Sans compte, ils restent seulement sur ce téléphone.',
+    'Crea un account':'Créer un compte',
+    'Prova senza account':'Essayer sans compte',
+    'Non hai un account? Creane uno':'Pas de compte ? Crées-en un',
+    'Hai già un account? Accedi':'Déjà un compte ? Connecte-toi',
+    'Ti abbiamo mandato un\'email: apri il link per confermare, poi torna qui.':'On t’a envoyé un e-mail : ouvre le lien pour confirmer, puis reviens ici.',
+    'Ho confermato: accedi':'J’ai confirmé : me connecter',
+    'Con questa email c\'è già un account: accedi.':'Il y a déjà un compte avec cet e-mail : connecte-toi.',
+    'Prima conferma l\'email: apri il link che ti abbiamo mandato, poi riprova.':'Confirme d’abord ton e-mail : ouvre le lien qu’on t’a envoyé, puis réessaie.',
+    'Troppi tentativi di fila: aspetta un minuto e riprova.':'Trop de tentatives d’affilée : attends une minute et réessaie.',
+    'La password è troppo semplice: usane una più lunga.':'Le mot de passe est trop simple : choisis-en un plus long.',
+    'Questa email non sembra valida: ricontrollala.':'Cet e-mail ne semble pas valide : vérifie-le.',
+    'Non ci sono riuscito: riprova fra poco.':'Ça n’a pas marché : réessaie dans un instant.',
+    'Errore di rete':'Erreur réseau',
+    'Email o password sbagliate':'E-mail ou mot de passe incorrect',
+    'Le due password non coincidono: ricontrolla':'Les deux mots de passe ne correspondent pas : vérifie',
+    'Serve un\'email valida e una password di almeno 6 caratteri':'Il faut un e-mail valide et un mot de passe d’au moins 6 caractères',
+    'Creazione account...':'Création du compte...',
+    'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Ce lien est dans l’ancien format. Dans le MÊME e-mail il y a un code à 6 chiffres : touche « J’ai un code ou un lien de récupération » et saisis-le.',
+    'Senza rete non ci riesco: riprova quando sei online.':'Sans réseau je n’y arrive pas : réessaie quand tu seras en ligne.',
+    'Non hai il permesso per farlo in questo viaggio.':'Tu n’as pas l’autorisation de faire ça dans ce voyage.',
+    'Troppe richieste di fila: riprova fra {1} secondi':'Trop de demandes d’affilée : réessaie dans {1} secondes',
+    'Richieste gratuite finite per adesso: riprova fra un minuto':'Plus de demandes gratuites pour l’instant : réessaie dans une minute',
+    'L\'assistente non è disponibile in questo momento: riprova più tardi.':'L’assistant n’est pas disponible pour le moment : réessaie plus tard.',
+    'L\'assistente non ha risposto: riprova fra poco.':'L’assistant n’a pas répondu : réessaie dans un instant.',
+    'L\'assistente non è raggiungibile: controlla la rete e riprova.':'L’assistant est injoignable : vérifie ta connexion et réessaie.',
+    'Il riconoscimento non è raggiungibile: controlla la rete e riprova.':'La reconnaissance est injoignable : vérifie ta connexion et réessaie.',
+    'Ricerca non riuscita: controlla la rete e riprova, oppure compila a mano.':'La recherche a échoué : vérifie ta connexion et réessaie, ou remplis à la main.',
+    'Non sono riuscito a salvare il viaggio nel cloud.':'Je n’ai pas pu enregistrer le voyage dans le cloud.',
+    'Controlla di avere la rete e di essere dentro il tuo account, poi riprova. In alternativa:':'Vérifie que tu as du réseau et que tu es connecté à ton compte, puis réessaie. Sinon :',
+    'Il cloud delle foto non è pronto: riprova più tardi.':'Le cloud des photos n’est pas prêt : réessaie plus tard.',
+    'Non hai il permesso di mettere foto in questo viaggio.':'Tu n’as pas l’autorisation d’ajouter des photos à ce voyage.',
+    'La foto è troppo grande: provane una più piccola.':'La photo est trop grande : essaie avec une plus petite.',
+    'Si possono caricare solo foto JPEG.':'On ne peut envoyer que des photos JPEG.',
+    'Senza rete: riprovo da solo appena torna.':'Pas de réseau : je réessaierai tout seul dès qu’il reviendra.',
+    'Non sono riuscito a salvarla nel cloud: riprova più tardi.':'Je n’ai pas pu l’enregistrer dans le cloud : réessaie plus tard.',
+    'A raccolta non è ancora disponibile: riprova più tardi.':'« On se retrouve » n’est pas encore disponible : réessaie plus tard.',
+    'Non posso mandare la chiamata: la può fare solo un admin del viaggio.':'Je ne peux pas envoyer l’appel : seul un admin du voyage peut le faire.',
+    'Senza rete non posso avvisare nessuno.':'Sans réseau, je ne peux prévenir personne.',
+    'Non sono riuscito a mandare la chiamata: riprova fra poco.':'Je n’ai pas pu envoyer l’appel : réessaie dans un instant.',
+    'Il telefono risulta senza rete: riprova quando hai campo.':'Ton téléphone semble hors ligne : réessaie quand tu auras du réseau.',
+    'La mappa sta ricevendo troppe richieste: riprova fra qualche minuto.':'La carte reçoit trop de demandes : réessaie dans quelques minutes.',
+    'La mappa è lenta in questo momento: riprova fra un minuto.':'La carte est lente en ce moment : réessaie dans une minute.',
+    'Di solito è passeggero. Se hai campo, fra un minuto va.':'C’est souvent passager. Si tu as du réseau, ça ira dans une minute.',
+    'Il servizio della mappa non ha risposto: ho provato {1} volte su {2} server diversi.':'Le service de carte n’a pas répondu : j’ai essayé {1} fois sur {2} serveurs différents.',
+    'Cosa cerchi?':'Tu cherches quoi ?',
+    'Riprova adesso':'Réessayer maintenant',
+    'Condividi versione locale':'Partager la version locale'
+  },
+  pt:{
+    '≈ {1} · cambio da verificare':'≈ {1} · câmbio a verificar',
+    '≈ {1} · cambio salvato con la spesa':'≈ {1} · câmbio guardado com a despesa',
+    'Per cercare cosa c\'è intorno a te mi serve sapere dove sei. La uso solo per questa ricerca.':'Para procurar o que há à tua volta preciso de saber onde estás. Só a uso para esta pesquisa.',
+    'Per chiamare il gruppo dove sei tu mi serve la tua posizione: la vedono solo le persone di questo viaggio, per due ore.':'Para chamar o grupo para onde estás preciso da tua localização: só a veem as pessoas desta viagem, durante duas horas.',
+    'Per mostrarti sulla mappa e avvisarti quando passi vicino a una tappa mi serve la tua posizione.':'Para te mostrar no mapa e avisar-te quando passas perto de uma paragem preciso da tua localização.',
+    '📍 La tua posizione':'📍 A tua localização',
+    'Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.':'Logo a seguir o telemóvel vai pedir-te autorização. Podes mudar de ideias quando quiseres nas definições.',
+    'Continua':'Continuar',
+    'Senza la posizione non posso cercare qui intorno.':'Sem a tua localização não consigo procurar por aqui.',
+    'Usa la posizione':'Usar a minha localização',
+    'Salta':'Saltar',
+    'Il viaggio, giorno per giorno':'A viagem, dia a dia',
+    'Tappe, orari e mappa in un\'unica time table.':'Paragens, horários e mapa num único roteiro.',
+    'Tutto il gruppo in un\'app':'O grupo todo numa app',
+    'Biglietti con QR e hotel assegnati a ognuno.':'Bilhetes com QR e alojamentos atribuídos a cada um.',
+    'Conti chiari in ogni valuta':'Contas claras em qualquer moeda',
+    'Le spese si dividono da sole, anche in yen o dollari.':'As despesas dividem-se sozinhas, mesmo em ienes ou dólares.',
+    'Avanti':'Seguinte',
+    'Inizia':'Começar',
+    'Con un account i tuoi viaggi sono su tutti i tuoi dispositivi e li condividi con gli amici. Senza, restano solo su questo telefono.':'Com uma conta as tuas viagens estão em todos os teus dispositivos e partilha-las com os amigos. Sem ela, ficam só neste telemóvel.',
+    'Crea un account':'Criar uma conta',
+    'Prova senza account':'Experimentar sem conta',
+    'Non hai un account? Creane uno':'Não tens conta? Cria uma',
+    'Hai già un account? Accedi':'Já tens conta? Entra',
+    'Ti abbiamo mandato un\'email: apri il link per confermare, poi torna qui.':'Enviámos-te um e-mail: abre a ligação para confirmar e depois volta aqui.',
+    'Ho confermato: accedi':'Já confirmei: entrar',
+    'Con questa email c\'è già un account: accedi.':'Já existe uma conta com este e-mail: entra.',
+    'Prima conferma l\'email: apri il link che ti abbiamo mandato, poi riprova.':'Primeiro confirma o e-mail: abre a ligação que te enviámos e tenta de novo.',
+    'Troppi tentativi di fila: aspetta un minuto e riprova.':'Demasiadas tentativas seguidas: espera um minuto e tenta de novo.',
+    'La password è troppo semplice: usane una più lunga.':'A palavra-passe é demasiado simples: usa uma mais comprida.',
+    'Questa email non sembra valida: ricontrollala.':'Este e-mail não parece válido: verifica-o.',
+    'Non ci sono riuscito: riprova fra poco.':'Não consegui: tenta de novo daqui a pouco.',
+    'Errore di rete':'Erro de rede',
+    'Email o password sbagliate':'E-mail ou palavra-passe errados',
+    'Le due password non coincidono: ricontrolla':'As duas palavras-passe não coincidem: verifica',
+    'Serve un\'email valida e una password di almeno 6 caratteri':'É preciso um e-mail válido e uma palavra-passe com pelo menos 6 caracteres',
+    'Creazione account...':'A criar a conta...',
+    'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Esta ligação está no formato antigo. No MESMO e-mail há um código de 6 dígitos: toca em «Tenho um código ou uma ligação de recuperação» e escreve-o.',
+    'Senza rete non ci riesco: riprova quando sei online.':'Sem rede não consigo: tenta de novo quando estiveres online.',
+    'Non hai il permesso per farlo in questo viaggio.':'Não tens permissão para fazer isso nesta viagem.',
+    'Troppe richieste di fila: riprova fra {1} secondi':'Demasiados pedidos seguidos: tenta de novo daqui a {1} segundos',
+    'Richieste gratuite finite per adesso: riprova fra un minuto':'Acabaram os pedidos gratuitos por agora: tenta de novo daqui a um minuto',
+    'L\'assistente non è disponibile in questo momento: riprova più tardi.':'O assistente não está disponível neste momento: tenta mais tarde.',
+    'L\'assistente non ha risposto: riprova fra poco.':'O assistente não respondeu: tenta de novo daqui a pouco.',
+    'L\'assistente non è raggiungibile: controlla la rete e riprova.':'Não é possível contactar o assistente: verifica a ligação e tenta de novo.',
+    'Il riconoscimento non è raggiungibile: controlla la rete e riprova.':'Não é possível contactar o reconhecimento: verifica a ligação e tenta de novo.',
+    'Ricerca non riuscita: controlla la rete e riprova, oppure compila a mano.':'A pesquisa falhou: verifica a ligação e tenta de novo, ou preenche à mão.',
+    'Non sono riuscito a salvare il viaggio nel cloud.':'Não consegui guardar a viagem na nuvem.',
+    'Controlla di avere la rete e di essere dentro il tuo account, poi riprova. In alternativa:':'Verifica que tens rede e que entraste na tua conta, e tenta de novo. Em alternativa:',
+    'Il cloud delle foto non è pronto: riprova più tardi.':'A nuvem das fotos não está pronta: tenta mais tarde.',
+    'Non hai il permesso di mettere foto in questo viaggio.':'Não tens permissão para pôr fotos nesta viagem.',
+    'La foto è troppo grande: provane una più piccola.':'A foto é demasiado grande: experimenta uma mais pequena.',
+    'Si possono caricare solo foto JPEG.':'Só se podem carregar fotos JPEG.',
+    'Senza rete: riprovo da solo appena torna.':'Sem rede: tento de novo sozinho assim que voltar.',
+    'Non sono riuscito a salvarla nel cloud: riprova più tardi.':'Não consegui guardá-la na nuvem: tenta mais tarde.',
+    'A raccolta non è ancora disponibile: riprova più tardi.':'«Toca a reunir» ainda não está disponível: tenta mais tarde.',
+    'Non posso mandare la chiamata: la può fare solo un admin del viaggio.':'Não posso enviar a chamada: só um administrador da viagem pode fazê-lo.',
+    'Senza rete non posso avvisare nessuno.':'Sem rede não posso avisar ninguém.',
+    'Non sono riuscito a mandare la chiamata: riprova fra poco.':'Não consegui enviar a chamada: tenta de novo daqui a pouco.',
+    'Il telefono risulta senza rete: riprova quando hai campo.':'O telemóvel parece estar sem rede: tenta de novo quando tiveres sinal.',
+    'La mappa sta ricevendo troppe richieste: riprova fra qualche minuto.':'O mapa está a receber demasiados pedidos: tenta de novo daqui a uns minutos.',
+    'La mappa è lenta in questo momento: riprova fra un minuto.':'O mapa está lento neste momento: tenta de novo daqui a um minuto.',
+    'Di solito è passeggero. Se hai campo, fra un minuto va.':'Costuma ser passageiro. Se tiveres sinal, daqui a um minuto funciona.',
+    'Il servizio della mappa non ha risposto: ho provato {1} volte su {2} server diversi.':'O serviço do mapa não respondeu: tentei {1} vezes em {2} servidores diferentes.',
+    'Cosa cerchi?':'O que procuras?',
+    'Riprova adesso':'Tentar de novo agora',
+    'Condividi versione locale':'Partilhar a versão local'
+  }
+};
+Object.keys(DIZIONARIO_PRIMO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_PRIMO[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1016;
+const FRASI_IN_TUTTO=1072;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6191,6 +6613,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.documentElement.lang=linguaScelta();
   traduciPagina();
   osservaPerTradurre();
+  introAvvia();
   navAvvia();
   if(NATIVE)initNativeNotifs();
   setTimeout(checkBookingAlerts,2500);
@@ -7301,6 +7724,20 @@ function soonRing(m){
   if(m<=0)return 100;
   return Math.max(4,Math.min(100,Math.round((H-Math.min(m,H))/H*100)));
 }
+/* «Cosa cerchi qui intorno?» o «Cosa cerchi?»: si prova la frase intera e si
+   ripiega sulla corta se non ci sta in una riga. Si rimisura quando il tasto
+   cambia larghezza (rotazione, o la home che torna visibile: nascosta misura
+   zero, e la scelta fatta li' non varrebbe). */
+let _cercaOsserva=null;
+function adattaCerca(radice){
+  const misura=b=>{
+    b.classList.remove('corto');
+    const l=b.querySelector('.hh-cerca-l');
+    if(l&&l.clientWidth&&l.scrollWidth>l.clientWidth+1)b.classList.add('corto');
+  };
+  if(!_cercaOsserva&&typeof ResizeObserver!=='undefined')_cercaOsserva=new ResizeObserver(v=>v.forEach(x=>misura(x.target)));
+  (radice||document).querySelectorAll('.hh-cerca').forEach(b=>{misura(b);if(_cercaOsserva)_cercaOsserva.observe(b);});
+}
 function renderHomeHero(){
   const box=document.getElementById('homeHero');if(!box)return;
   /* Le due strisce orizzontali (giorni e viaggi) vengono ricostruite a ogni
@@ -7328,6 +7765,7 @@ function renderHomeHero(){
       center(box.querySelector('.hh-days'),'.hh-day.on',keepD);
       center(box.querySelector('.hh-trips'),'.hh-trip.on',keepT);
       viaggiAscolta();
+      adattaCerca(box);
     };
     place();
     // Se il layout non era ancora pronto la prima assegnazione viene ignorata.
@@ -7395,7 +7833,7 @@ function renderHomeHero(){
     ?`<button class="hh-raccolta" onclick="raccoltaDallaHome()">📣 ${esc(tv('A raccolta'))}</button>`:'';
   const actsBar=`<div class="hh-azioni"><button class="hh-cerca" onclick="apriCerca()">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
-    <span>${esc(tv('Cosa cerchi qui intorno?'))}</span></button>${raccoltaHome}</div>`;
+    <span class="hh-cerca-l">${esc(tv('Cosa cerchi qui intorno?'))}</span><span class="hh-cerca-c">${esc(tv('Cosa cerchi?'))}</span></button>${raccoltaHome}</div>`;
   if(!t.days||!t.days.length){
     const vNiente=cieloVestito(t,null);
     paint(`<div class="hh">${vNiente.velo}
@@ -8252,11 +8690,13 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
+- Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
+- La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
 - Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. "Condividi" non sta in home: e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio). I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
-- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. Una spesa fatta in un'altra valuta si converte col cambio del giorno, che l'app scarica quando c'e' rete e tiene in memoria: senza rete usa l'ultimo che ha e sotto la cifra scrive "cambio del" con la data. Se un cambio non l'ha proprio, la spesa si salva lo stesso ma resta "cambio in attesa": si vede nella sua valuta, non entra in totali, saldi e budget (lo dice una riga "N spese non ancora incluse") e ci entra da sola appena torna la rete. Il cambio si puo' anche scrivere a mano nel campo "Cambio" della spesa (per esempio quello della propria banca): scritto a mano non viene mai cambiato da solo. Le spese vecchie in un'altra valuta salvate con cambio 1 sono segnate "da verificare": aprendo il viaggio un avviso le elenca e offre "Ricalcola col cambio attuale", "Inserisco io il cambio" o "Va bene così". In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
+- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. Una spesa fatta in un'altra valuta si converte col cambio del giorno, che l'app scarica quando c'e' rete e tiene in memoria: senza rete usa l'ultimo che ha e sotto la cifra scrive "cambio del" con la data. Se un cambio non l'ha proprio, la spesa si salva lo stesso ma resta "cambio in attesa": si vede nella sua valuta, non entra in totali, saldi e budget (lo dice una riga "N spese non ancora incluse") e ci entra da sola appena torna la rete. Il cambio si puo' anche scrivere a mano nel campo "Cambio" della spesa (per esempio quello della propria banca): scritto a mano non viene mai cambiato da solo. Il cambio di una spesa resta quello con cui e' stata segnata: correggerne descrizione, persone, data o cifra non lo rifa' col cambio di oggi. Si ricalcola solo cambiando la valuta della spesa, o con "Ricalcola col cambio attuale". Le spese vecchie in un'altra valuta salvate con cambio 1 sono segnate "da verificare": aprendo il viaggio un avviso le elenca e offre "Ricalcola col cambio attuale", "Inserisco io il cambio" o "Va bene così". In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima, prima di tutto, c'e' la striscia delle NOTTI del viaggio: una casella per notte, piena se quella notte un letto ce l'hai e vuota tratteggiata se non ce l'hai, e sotto una riga che dice quali mancano e il tasto per cercarne uno. Un viaggio dal 14 al 18 ha quattro notti, non cinque: la notte si conta da dove si dorme, e l'ultimo giorno si torna a casa. Un albergo con check-in il 14 e check-out il 16 copre le notti del 14 e del 15. Ogni scheda dice quante notti copre quell'albergo, quanto costa e se e' ancora da pagare (il costo e' la spesa collegata, quella che si vede anche in Spese). Il tasto pieno "Portami qui, e' stanotte" compare solo sull'albergo dove si dorme stanotte; sugli altri il tasto c'e' lo stesso, ma piu' piano. Poi c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti delle ATTRAZIONI - l'ingresso a un castello, un museo, una torre - e i voucher. In cima ci sono tre tasti uguali, che sono tre modi per fare la stessa cosa: "Scansiona" (col codice davanti), "Foto o PDF" (se ce l'hai gia' nel telefono) e "A mano". Di fianco, la scritta "Come funziona la lettura" si apre toccandola. L'elenco parte da TUTTI i biglietti del viaggio, non solo dai tuoi: un ingresso preso per il gruppo non e' di nessuno in particolare. Se le persone sono piu' di una, sopra l'elenco c'e' una tendina per guardare i biglietti di una persona alla volta; da li' si torna a tutti con un tasto, e quello che aggiungi mentre stai guardando una persona viene intestato a lei. I biglietti stanno sotto l'attrazione a cui servono, e il titolo del gruppo dice anche quando ci vai: giorno, data e ora. Quelli non attaccati a nessuna tappa stanno insieme, sotto un titolo loro. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. L'ora del posto NON viene mai dall'orologio del telefono: se la previsione non porta il fuso - perche' e' stata salvata prima - si ricava dalla longitudine del posto, che e' la sua ora solare (ogni quindici gradi un'ora). Cosi' funziona in tutto il mondo anche prima che la previsione si riscarichi. L'orario scritto a parole invece compare solo col fuso vero, perche' la stima puo' sbagliare di un'ora dove il fuso politico non segue il sole. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
@@ -8269,7 +8709,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
-- Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da "Usa un cloud tuo" in fondo al Profilo.
+- Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -8403,7 +8843,7 @@ ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
       el.after(wrap);
       if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;
     }
-  }catch(e){attesa.remove();ui.msg('ai','\u26a0\ufe0f L\'assistente non e\' raggiungibile. Controlla il ponte (GUIDA-AI.md).');}
+  }catch(e){attesa.remove();console.log('Assistente non raggiungibile:',e);ui.msg('ai','\u26a0\ufe0f '+tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'));}
 }
 
 async function sendChat(){
@@ -10112,6 +10552,14 @@ function updateShare(){
    numero - scritto a mano, o la tabella di quel giorno - e, se il cambio non
    c'e', dice quello invece di mostrare una cifra inventata. */
 let _convGiro=0;
+/* La spesa che si sta modificando, se il suo cambio va tenuto: stessa
+   valuta di prima, e un cambio vero (non in attesa, non scritto a mano: quel
+   caso lo governa il campo). Null in tutti gli altri casi. */
+function cambioDaTenere(t,from){
+  const e=expEditId?(t.expenses||[]).find(x=>x.id===expEditId):null;
+  if(!e||e.origCurrency!==from||from===(t.currency||'EUR')||inAttesa(e)||e.cambioManuale||!(e.rate>0))return null;
+  return e;
+}
 async function updateConv(){
   const t=T();if(!t)return;
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value,amt=num(document.getElementById('expAmt').value),box=document.getElementById('expConv');
@@ -10124,6 +10572,16 @@ async function updateConv(){
   document.getElementById('expCambioLbl').textContent=tv('Cambio: quanti {2} vale 1 {1}',from,cur);
   const mano=num(campo.value);
   if(mano>0){box.textContent=amt?tv('≈ {1} · cambio scritto a mano',fmtMoney(amt*mano,cur)):'';return;}
+  /* Modificando una spesa si vede il cambio che ha gia', non quello di oggi:
+     e' quello che verra' salvato (vedi addExpense). */
+  const tenuto=cambioDaTenere(t,from);
+  if(tenuto){
+    campo.placeholder=String(Math.round(tenuto.rate*1e6)/1e6).replace('.',',');
+    const x=fmtMoney(amt*tenuto.rate,cur);
+    box.textContent=!amt?'':tenuto.cambioStato==='verifica'?tv('≈ {1} · cambio da verificare',x)
+      :tenuto.cambioData?tv('≈ {1} · cambio del {2}',x,dataCambio(tenuto.cambioData)):tv('≈ {1} · cambio salvato con la spesa',x);
+    return;
+  }
   let c=cambioDa(from,cur);
   /* Senza nessuna tabella si prova a scaricarla adesso; con una vecchia la si
      usa subito e la si aggiorna dietro, senza far aspettare. */
@@ -10164,8 +10622,10 @@ function setExpAmt(t,e,amount,fromCur){
   const prima=e.origCurrency;
   e.origAmount=amount;e.origCurrency=fromCur||t.currency||'EUR';
   /* Il cambio scritto a mano valeva per quella valuta: cambiata la valuta,
-     non vale piu'. */
-  if(prima!==e.origCurrency)delete e.cambioManuale;
+     non vale piu'. Con la stessa valuta invece il cambio resta quello che la
+     spesa aveva, anche se cambia la cifra (lo stesso patto di addExpense). */
+  if(prima!==e.origCurrency){delete e.cambioManuale;delete e.cambioStato;}
+  else if(e.origCurrency!==(t.currency||'EUR')&&!inAttesa(e)&&e.rate>0){e.amount=e.origAmount*e.rate;return;}
   if(!applicaCambio(t,e))fixRate(t,e.id);
 }
 function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,splitAmong){
@@ -10189,20 +10649,31 @@ async function addExpense(){
   const payerId=parseInt(document.getElementById('expPayer').value);
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value;
   const mano=from!==cur?num(document.getElementById('expCambio').value):0;
+  /* Va guardato prima di scrivere i dati nuovi nella spesa: confronta la
+     valuta di prima con quella scelta adesso. */
+  const tenuto=mano>0?null:cambioDaTenere(t,from);
   /* Senza nessuna tabella si prova una volta a scaricarla, prima di decidere:
      se la rete c'e', la spesa nasce gia' col suo cambio. */
-  if(from!==cur&&!(mano>0)&&!cambioDa(from,cur))await aggiornaCambi(cur);
+  if(from!==cur&&!(mano>0)&&!tenuto&&!cambioDa(from,cur))await aggiornaCambi(cur);
   const dv=document.getElementById('expDate').value;
   const data={desc,origAmount:amt,origCurrency:from,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked};
   const vecchia=expEditId?t.expenses.find(x=>x.id===expEditId):null;
   const e=vecchia||{id:uid()};
   Object.assign(e,data);
-  /* Riaprire e salvare una spesa e' una scelta: il "da verificare" se ne va,
-     e il cambio si rifa' con quello che c'e' adesso. Il cambio a mano lo
-     decide il campo: pieno lo mette, vuoto lo toglie. */
-  delete e.cambioStato;
-  if(mano>0){e.rate=mano;e.amount=amt*mano;e.cambioManuale=true;e.cambioData=Date.now();}
-  else{delete e.cambioManuale;applicaCambio(t,e);}
+  /* Il cambio di una spesa e' quello che aveva quando la si e' segnata.
+     Correggere descrizione, persone, data o cifra non lo rifa' col cambio di
+     oggi: prima lo rifaceva, e i saldi si spostavano senza che nessuno
+     l'avesse chiesto. Si ricalcola solo cambiando valuta, o da «Ricalcola
+     col cambio attuale»; una spesa in attesa lo prende appena c'e'. Il
+     cambio a mano lo decide il campo: pieno lo mette, vuoto lo toglie. Un
+     «da verificare» resta tale finche' non si sceglie cosa farne. */
+  if(mano>0){
+    const uguale=e.cambioManuale&&e.rate===mano;
+    e.rate=mano;e.amount=amt*mano;e.cambioManuale=true;delete e.cambioStato;
+    if(!uguale)e.cambioData=Date.now();
+  }
+  else if(tenuto)e.amount=amt*e.rate;
+  else{delete e.cambioStato;delete e.cambioManuale;applicaCambio(t,e);}
   setSpesaTappe(e,expActSel);
   if(!vecchia)t.expenses.push(e);
   toast(inAttesa(e)?'Spesa salvata: il cambio lo calcolo appena torna la rete':(vecchia?'✅ Spesa aggiornata':'✅ Spesa aggiunta'));
@@ -10302,7 +10773,8 @@ async function openShare(id){
       openSheet('mShare');
       const res=await cloudCreate(t);
       if(t.cid){openShare(id);return;}
-      box.innerHTML=`<p style="font-size:.9rem;color:var(--red);line-height:1.6">Il cloud ha rifiutato il salvataggio${res&&res.error?': <b>'+esc(res.error)+'</b>':''}.</p>${/row-level security/i.test((res&&res.error)||'')?`<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem"><b>È il problema dei permessi del database:</b> incolla lo schema (supabase-schema.sql, nella cartella dell'app) nel SQL Editor di Supabase, premi Run, poi riprova qui.</p>`:``}<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Controlla Impostazioni → Account di essere connesso, poi riprova. In alternativa:</p><button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openShareLocal()">Condividi versione locale</button>`;
+      console.log('Salvataggio nel cloud non riuscito:',res&&res.error);
+      box.innerHTML=`<p style="font-size:.9rem;color:var(--red);line-height:1.6">${esc(tv('Non sono riuscito a salvare il viaggio nel cloud.'))}</p><p style="font-size:.85rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">${esc(tv('Controlla di avere la rete e di essere dentro il tuo account, poi riprova. In alternativa:'))}</p><button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openShareLocal()">Condividi versione locale</button>`;
       return;
     }
     const code=t.cid+':'+(t._invite||'');
@@ -10745,7 +11217,7 @@ function askDeleteTrip(id){
     if(quantiAdmin(t)>1){
       confirmDo('Chiedere di eliminarlo per tutti?',`Ci sono altri admin: il viaggio sparirà solo quando uno di loro confermerà. Fino ad allora resta a tutti, e la richiesta si può annullare.`,async()=>{
         const{error}=await sb.rpc('elimina_viaggio',{p_trip:t.cid});
-        if(error){toast('Non riesco: '+error.message);return;}
+        if(error){toast(erroreCloud(error,'eliminazione'));return;}
         t.canc_chiesta_da=myUid;save();renderAll();closeSheet('mDetail');closeSheet('mTripZoom');
         toast('Richiesta inviata: serve la conferma di un altro admin');
       },'🗑️','Chiedi','btn-danger');
@@ -10753,7 +11225,7 @@ function askDeleteTrip(id){
     }
     confirmDo('Eliminare per tutti?','Sei l\'unico admin: il viaggio sparirà anche dai telefoni dei compagni. Definitivo.',async()=>{
       const{error}=await sb.rpc('elimina_viaggio',{p_trip:t.cid});
-      if(error){toast('Non riesco: '+error.message);return;}
+      if(error){toast(erroreCloud(error,'eliminazione'));return;}
       scollega();finishLocal();toast('Viaggio eliminato per tutti');
     });
     return;
@@ -10783,7 +11255,7 @@ async function confermaEliminazione(cid){
   const t=app.trips.find(x=>x.cid===cid);if(!t)return;
   confirmDo('Confermare l\'eliminazione?','Il viaggio sparirà dai telefoni di tutti i compagni. Definitivo.',async()=>{
     const{error}=await sb.rpc('conferma_eliminazione',{p_trip:cid});
-    if(error){toast('Non riesco: '+error.message);return;}
+    if(error){toast(erroreCloud(error,'conferma eliminazione'));return;}
     app.trips=app.trips.filter(x=>x.cid!==cid);
     delete lastPush[cid];persistLastPush();delete memByTrip[cid];delete membriPerViaggio[cid];
     if(!T()&&app.trips.length)app.currentTripId=app.trips[0].id;
@@ -10793,7 +11265,7 @@ async function confermaEliminazione(cid){
 async function annullaEliminazione(cid){
   const t=app.trips.find(x=>x.cid===cid);if(!t)return;
   const{error}=await sb.rpc('annulla_eliminazione',{p_trip:cid});
-  if(error){toast('Non riesco: '+error.message);return;}
+  if(error){toast(erroreCloud(error,'annulla eliminazione'));return;}
   t.canc_chiesta_da=null;save();renderAll();toast('Richiesta annullata: il viaggio resta');
 }
 /* L'avviso da mettere in cima a un viaggio per cui qualcuno ha chiesto
@@ -12311,6 +12783,16 @@ function cercaVicino(kind,automatica){
      chiedere di nuovo: sono secondi di attesa in meno proprio nel momento in
      cui uno ha fretta. */
   if(myPos&&Date.now()-myPosAt<POS_FRESCA_MS)return viciniIntorno(myPos.lat,myPos.lng,giro);
+  /* Prima del permesso di iOS si dice a cosa serve (vedi LA POSIZIONE, SOLO
+     QUANDO SERVE). La riprova che fa l'app da sola non chiede niente: la
+     posizione l'aveva gia' avuta. */
+  if(automatica)return vicinoPrendiPosizione(giro);
+  chiediPosizione('vicino').then(ok=>{
+    if(giro!==vicinoGiro)return;
+    if(ok)vicinoPrendiPosizione(giro);else vicinoSenzaPosizione();
+  });
+}
+function vicinoPrendiPosizione(giro){
   if(NATIVE&&nPlug('Geolocation')){
     const G=nPlug('Geolocation');
     G.getCurrentPosition({enableHighAccuracy:true})
@@ -12325,6 +12807,13 @@ function cercaVicino(kind,automatica){
     ()=>{if(giro===vicinoGiro)vicinoNienteGps();},
     {enableHighAccuracy:true,timeout:12000,maximumAge:30000}
   );
+}
+/* «Non ora» non chiude la scheda: si dice perche' non c'e' niente, e come
+   ripartire quando si vuole. */
+function vicinoSenzaPosizione(){
+  document.getElementById('bagnoBody').innerHTML=
+    `<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${esc(tv('Senza la posizione non posso cercare qui intorno.'))}</div>
+     <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${vicinoKind}')">${esc(tv('Usa la posizione'))}</button>`;
 }
 function vicinoNienteGps(){
   const v=VICINI[vicinoKind];
@@ -12538,9 +13027,16 @@ async function viciniIntorno(lat,lng,giro){
         <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${mio}')">Riprova adesso</button>`;});
       return;
     }
-    const perche=(e&&e.message)?String(e.message).slice(0,80):'nessuna risposta';
-    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">Il servizio della mappa non ha risposto: ho provato ${VICINI_TENTATIVI} volte su ${OVERPASS.length} server diversi.<br><br>${navigator.onLine===false?'Il telefono risulta <b>senza rete</b>.':'Di solito è passeggero. Se hai campo, fra un minuto va.'}</div>
-      <div style="font-size:.7rem;color:var(--ink-faint);margin-top:.5rem">dettaglio: ${esc(perche)}</div>
+    /* Cosa e' andato storto, detto in parole: essere senza campo e trovare la
+       mappa sovraccarica si risolvono in modi diversi, e chi legge deve sapere
+       quale dei due. Il dettaglio tecnico (server, codice) va in console. */
+    const perche=(e&&e.message)?String(e.message):'nessuna risposta';
+    console.log('Ricerca qui intorno non riuscita:',perche);
+    const cosa=navigator.onLine===false?tv('Il telefono risulta senza rete: riprova quando hai campo.')
+      :((e&&(e.stato===429||e.stato===504))||/\b(429|504)\b|too many/i.test(perche))?tv('La mappa sta ricevendo troppe richieste: riprova fra qualche minuto.')
+      :/lento|abort|timeout/i.test(perche)?tv('La mappa è lenta in questo momento: riprova fra un minuto.')
+      :tv('Di solito è passeggero. Se hai campo, fra un minuto va.');
+    body.innerHTML=`<div style="font-size:.88rem;line-height:1.55;color:var(--ink-soft)">${esc(tv('Il servizio della mappa non ha risposto: ho provato {1} volte su {2} server diversi.',VICINI_TENTATIVI,OVERPASS.length))}<br><br>${esc(cosa)}</div>
       <button class="btn btn-soft btn-block" style="margin-top:.9rem" onclick="cercaVicino('${kind}')">Riprova adesso</button>`;
   }finally{
     /* Finita la ricerca, la sveglia della veloce non deve piu' suonare: se la
@@ -13407,16 +13903,20 @@ async function internalNav(lat,lng,name){
 }
 function endNav(){if(routeLine){map.removeLayer(routeLine);routeLine=null;}const n=document.querySelector('.navbar');if(n)n.remove();}
 function toggleGPS(){if(gpsId!==null)return stopGPS();if(app.consentNotif===undefined){pendingConsentCb=startGPS;openSheet('mNotif');return;}startGPS();}
-async function startGPS(){
-  startHeading();
-  if(NATIVE&&nPlug('Geolocation'))return startGPSNative();
-  if(!navigator.geolocation){toast('GPS non disponibile sul dispositivo');return;}
-  toast('📍 Attivo il GPS...');
-  navigator.geolocation.getCurrentPosition(
-    pos=>{placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);beginWatch();},
-    err=>{gpsError(err);},
-    {enableHighAccuracy:true,timeout:12000,maximumAge:0}
-  );
+/* La bussola passa da chiediPosizione: iOS la concede solo dentro un tocco,
+   e il tocco giusto e' questo o «Continua» nel foglio della posizione. */
+function startGPS(){
+  chiediPosizione('gps',startHeading).then(ok=>{
+    if(!ok)return;
+    if(NATIVE&&nPlug('Geolocation'))return startGPSNative();
+    if(!navigator.geolocation){toast('GPS non disponibile sul dispositivo');return;}
+    toast('📍 Attivo il GPS...');
+    navigator.geolocation.getCurrentPosition(
+      pos=>{placeMe(pos);checkProx(pos.coords.latitude,pos.coords.longitude);beginWatch();},
+      err=>{gpsError(err);},
+      {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+    );
+  });
 }
 async function startGPSNative(){
   startHeading();
@@ -13733,6 +14233,9 @@ function closeSheet(id){
      riprova da sola riaprirebbe un foglio che la persona ha appena chiuso,
      e un'app che si riapre da sola e' un'app che non ascolta. */
   if(m.id==='mBagno'){vicinoSmettiDiAspettare();vicinoGiro++;}
+  /* Il foglio della posizione chiuso in un altro modo vale «Non ora»: chi
+     aspettava la risposta non deve restare appeso. */
+  if(m.id==='mPosizione'&&_posRisposta){const r=_posRisposta;_posRisposta=null;_posGesto=null;r(false);}
   m.classList.remove('active');
   /* Si toglie dal layout solo quando ha finito di scendere. Il tempo e' un
      ripiego voluto, non una pigrizia: se la transizione non parte affatto —
@@ -13878,7 +14381,7 @@ async function identifyPlace(){
     const cert={alta:'🟢 Certezza alta',media:'🟡 Certezza media',bassa:'🟠 Certezza bassa'}[r.certezza]||'';
     const bookLbl={necessaria:'🔴 Prenotazione necessaria',consigliata:'🟡 Prenotazione consigliata',no:'🟢 Non serve prenotare',non_so:''}[r.prenotazione]||'';
     box.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem"><div class="card-h">${esc(r.nome)}</div>${cert?`<span class="tag top" style="white-space:nowrap">${cert}</span>`:''}</div><div class="card-sub" style="margin-bottom:.6rem">${esc([r.citta,r.paese].filter(Boolean).join(', '))}</div><div style="font-size:.88rem;line-height:1.6;color:var(--ink-soft)">${esc(r.storia||'')}</div>${r.orari?`<div class="fg" style="margin-top:.8rem"><label>Orari</label><div style="font-size:.85rem;color:var(--ink-soft)">${esc(r.orari)}</div></div>`:''}${bookLbl?`<div class="fg" style="margin-top:.8rem"><label>Prenotazione</label><div style="font-size:.85rem;color:var(--ink-soft)">${bookLbl}${r.note_prenotazione?' · '+esc(r.note_prenotazione):''}</div></div>`:''}${r.sito?`<div class="chips" style="margin-top:.8rem"><a class="chip green" href="${esc(r.sito)}" target="_blank">🌐 Sito ufficiale</a></div>`:''}</div>`;
-  }catch(e){box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ Il riconoscimento AI non è raggiungibile qui. Funziona nell'anteprima dentro Claude e nell'app nativa con la chiave collegata.</div></div>`;}
+  }catch(e){console.log('Riconoscimento non raggiungibile:',e);box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(tv('Il riconoscimento non è raggiungibile: controlla la rete e riprova.'))}</div></div>`;}
 }
 
 /* ===== IMPORTA DA REEL / POST ===== */
@@ -13905,7 +14408,7 @@ async function extractPlaces(){
     const r=JSON.parse(s);
     if(!r.posti||!r.posti.length){box.innerHTML='<div class="card"><div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5">Nessun luogo riconosciuto. Prova a incollare la didascalia completa o uno screenshot dove si leggono i nomi.</div></div>';return;}
     box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.7rem">📍 ${r.posti.length} posti trovati</div>${r.posti.map(p=>`<div class="chat-place" style="margin-bottom:.5rem"><div style="flex:1;min-width:0"><div class="chat-place-n">${esc(p.nome)}</div><div style="font-size:.76rem;color:var(--ink-soft);margin-top:.15rem">${esc(p.perche||'')}</div></div><button class="chip brown" onclick='aiAddPlace(${JSON.stringify(p.query||p.nome).replace(/'/g,"&apos;")})'>+</button></div>`).join('')}<button class="btn btn-grad btn-block" style="margin-top:.6rem" onclick='addAllPlaces(${JSON.stringify(r.posti.map(p=>p.query||p.nome)).replace(/'/g,"&apos;")})'>📍 Aggiungi tutti alla mappa</button></div>`;
-  }catch(e){box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ L'AI non è raggiungibile qui. Funziona nell'anteprima dentro Claude e nell'app nativa con la chiave collegata.</div></div>`;}
+  }catch(e){console.log('Assistente non raggiungibile:',e);box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'))}</div></div>`;}
 }
 async function addAllPlaces(list){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
@@ -14446,7 +14949,7 @@ async function importTrip(){
     const nAct=trip.days.reduce((s,d)=>s+d.activities.length,0);
     box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.4rem">✅ ${esc(trip.name)}</div><div style="font-size:.86rem;color:var(--ink-soft);line-height:1.6">${trip.days.length} giorni · ${nAct} attività · valuta ${trip.currency}</div><button class="btn btn-grad btn-block" style="margin-top:.7rem" onclick="closeSheet('mImport');geoImported(${trip.id})">📍 Trova i luoghi sulla mappa</button></div>`;
     toast('✅ Viaggio importato');
-  }catch(e){box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ L\'AI non è raggiungibile qui. Funziona nell\'anteprima dentro Claude e nell\'app nativa con la chiave collegata (guida, passo 7).</div></div>`;}
+  }catch(e){console.log('Assistente non raggiungibile:',e);box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'))}</div></div>`;}
 }
 async function geoImported(id){
   const t=app.trips.find(x=>x.id===id);if(!t)return;
@@ -15410,18 +15913,20 @@ function oraTonda(min){return Math.max(0,Math.min(1439,Math.round(min/PASSO_ORAR
    richieste al minuto, chiave scaduta, modello ritirato - e l'app buttava via
    tutto per mostrare sempre lo stesso "non è raggiungibile". Chi la usa non ha
    modo di capire se deve aspettare trenta secondi o rifare la chiave. */
+/* A schermo pero' va una frase da persona: «la chiave», «il Worker» e
+   «GUIDA-AI.md» sono cose da sistemare per chi ha costruito l'app, non per
+   chi la usa. Il testo vero resta in console, per chi indaga. */
 function motivoAI(msg){
   const m=String(msg||'');
+  console.log('L\'assistente non ha risposto:',m);
   if(/quota|rate.?limit|RESOURCE_EXHAUSTED|\b429\b/i.test(m)){
     const s=(m.match(/retry in ([\d.]+)\s*s/i)||[])[1];
-    return s?`Troppe richieste di fila: riprova fra ${Math.ceil(+s)} secondi`
-            :'Richieste gratuite finite per adesso: riprova fra un minuto';
+    return s?tv('Troppe richieste di fila: riprova fra {1} secondi',Math.ceil(+s))
+            :tv('Richieste gratuite finite per adesso: riprova fra un minuto');
   }
-  if(/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b/i.test(m))
-    return'La chiave AI non è valida o è scaduta (vedi GUIDA-AI.md)';
-  if(/no longer available|NOT_FOUND|not found/i.test(m))
-    return'Il modello non è più disponibile: va cambiato nel Worker';
-  return'L\'IA non ha risposto: '+m.slice(0,80);
+  if(/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b|no longer available|NOT_FOUND|not found/i.test(m))
+    return tv('L\'assistente non è disponibile in questo momento: riprova più tardi.');
+  return tv('L\'assistente non ha risposto: riprova fra poco.');
 }
 
 /* ===== ORARI DI APERTURA =====
@@ -15818,7 +16323,7 @@ Regole ferree:
     itinProposta={giorni:giorniOk,commento:r.commento||''};
     st.textContent='';
     mostraItinerario(t,itinProposta);
-  }catch(e){st.textContent='⚠️ L\'IA non è raggiungibile. Controlla il ponte (GUIDA-AI.md).';}
+  }catch(e){console.log('Assistente non raggiungibile:',e);st.textContent='⚠️ '+tv('L\'assistente non è raggiungibile: controlla la rete e riprova.');}
   finally{itinBusy=false;}
 }
 
@@ -16681,7 +17186,7 @@ async function cambiaRuolo(participantId,ruolo){
       :'Resterà nel viaggio come compagno: potrà costruire la giornata, ma non eliminarlo.',
     async()=>{
       const{error}=await sb.from('trip_members').update({ruolo}).eq('trip_id',t.cid).eq('user_id',mem.user_id);
-      if(error){toast('Non riesco: '+error.message);return;}
+      if(error){toast(erroreCloud(error,'ruolo'));return;}
       mem.ruolo=ruolo;
       if(mem.user_id===myUid)t._admin=(ruolo==='admin');
       save();renderAll();renderPeople();toast(su?'👑 Ora è admin':'Non è più admin');
@@ -16708,7 +17213,7 @@ async function removeParticipant(id){
     if(mem.ruolo==='admin'){toast('È un altro admin: prima togligli il ruolo');return;}
     confirmDo(`Togliere ${pp.name} dal viaggio?`,'Non vedrà più il viaggio, né le foto, dal suo telefono. Potrai riammetterlo con un nuovo invito.',async()=>{
       const{error}=await sb.rpc('togli_dal_viaggio',{p_trip:t.cid,p_utente:mem.user_id});
-      if(error){toast('Non riesco: '+error.message);return;}
+      if(error){toast(erroreCloud(error,'togli dal viaggio'));return;}
       membriPerViaggio[t.cid]=(membriPerViaggio[t.cid]||[]).filter(x=>x.user_id!==mem.user_id);
       t.participants=t.participants.filter(x=>x.id!==id);
       save();renderAll();renderPeople();toast(pp.name+' non è più nel viaggio');
@@ -16752,7 +17257,7 @@ async function doCheckBooking(){
     if(r.sito&&/^https?:\/\//.test(r.sito))document.getElementById('adBookUrl').value=r.sito;
     const g=parseInt(r.giorni_prima)||0;
     if(g>0){const day=new Date(t.days[adRef.di].date);day.setDate(day.getDate()-g);const today=new Date();today.setHours(0,0,0,0);const by=day<today?today:day;document.getElementById('adBookBy').value=by.toISOString().split('T')[0];}
-  }catch(e){hint.textContent='Ricerca non riuscita qui: funziona nell\'anteprima Claude e nell\'app con la chiave AI collegata. Puoi compilare a mano.';}
+  }catch(e){console.log('Ricerca non riuscita:',e);hint.textContent=tv('Ricerca non riuscita: controlla la rete e riprova, oppure compila a mano.');}
 }
 
 /* ===== ESPORTA CALENDARIO (.ics) ===== */
@@ -16785,13 +17290,69 @@ function exportICS(){
   toast(n+' eventi pronti per il calendario');
 }
 
-/* ===== VOLI: campi persistenti + link piu robusto ===== */
+/* ===== LA POSIZIONE, SOLO QUANDO SERVE =====
+   Prima l'app la chiedeva appena aperta, senza dire perche': il primo
+   contatto con GeppGo era un permesso di iOS da decidere al buio, e chi
+   diceva no per prudenza si perdeva per sempre le cose che ne hanno bisogno.
+   Adesso:
+   - all'apertura non si chiede niente. Se il permesso c'e' gia' (lo dice
+     l'API dei permessi, che Safari ha da iOS 16) la posizione si usa come
+     prima: chi l'aveva gia' data non nota differenze. Dove l'API non c'e' si
+     aspetta che serva;
+   - la si chiede quando si tocca una cosa che ne ha bisogno (cosa cerchi qui
+     intorno, a raccolta, il GPS con gli avvisi vicino alle tappe), e prima
+     del permesso di iOS un foglio dice a cosa serve;
+   - senza posizione la home resta piena: citta' e meteo vengono dalla
+     destinazione del viaggio, non da dove si e'. */
+let statoPos='unknown',posSpiegata=false,_posRisposta=null,_posGesto=null;
+function guardaPermessoPosizione(){
+  if(NATIVE&&nPlug('Geolocation')){
+    return nPlug('Geolocation').checkPermissions()
+      .then(p=>statoPos=(p&&p.location==='granted')?'granted':(p&&p.location==='denied')?'denied':'prompt')
+      .catch(()=>statoPos);
+  }
+  if(!navigator.permissions||!navigator.permissions.query)return Promise.resolve(statoPos);
+  return navigator.permissions.query({name:'geolocation'}).then(st=>{
+    statoPos=st.state;
+    /* Se la si concede o la si toglie dalle impostazioni con l'app aperta,
+       lo si sa senza dover chiedere di nuovo. */
+    st.onchange=()=>{statoPos=st.state;};
+    return statoPos;
+  }).catch(()=>statoPos);
+}
+const POS_PERCHE={
+  vicino:'Per cercare cosa c\'è intorno a te mi serve sapere dove sei. La uso solo per questa ricerca.',
+  raccolta:'Per chiamare il gruppo dove sei tu mi serve la tua posizione: la vedono solo le persone di questo viaggio, per due ore.',
+  gps:'Per mostrarti sulla mappa e avvisarti quando passi vicino a una tappa mi serve la tua posizione.'
+};
+/* Risolve true se si puo' andare avanti a chiedere la posizione, false con
+   «Non ora». `gesto` e' quello che iOS concede solo dentro un tocco (la
+   bussola): si fa subito se il foglio non serve, o nel tocco su «Continua».
+   Il permesso negato non mostra il foglio: iOS non chiederebbe niente, e
+   l'errore che segue dice come riattivarla. */
+function chiediPosizione(perche,gesto){
+  if(statoPos==='granted'||statoPos==='denied'||posSpiegata){if(gesto)gesto();return Promise.resolve(true);}
+  if(_posRisposta){const r=_posRisposta;_posRisposta=null;r(false);}
+  document.getElementById('posPerche').textContent=tv(POS_PERCHE[perche]||POS_PERCHE.gps);
+  openSheet('mPosizione');
+  return new Promise(res=>{_posRisposta=res;_posGesto=gesto||null;});
+}
+function posContinua(){
+  const r=_posRisposta,g=_posGesto;_posRisposta=null;_posGesto=null;
+  posSpiegata=true;closeSheet('mPosizione');
+  if(g)g();
+  if(r)r(true);
+}
+function posNonOra(){closeSheet('mPosizione');}
 function autoLocate(){
   if(!navigator.geolocation)return;
-  navigator.geolocation.getCurrentPosition(p=>{
-    placeMe(p);
-    if(posWatch===null){posWatch=navigator.geolocation.watchPosition(pp=>placeMe(pp),()=>{},{enableHighAccuracy:false,maximumAge:15000,timeout:25000});}
-  },()=>{},{enableHighAccuracy:false,timeout:9000,maximumAge:120000});
+  guardaPermessoPosizione().then(st=>{
+    if(st!=='granted')return;
+    navigator.geolocation.getCurrentPosition(p=>{
+      placeMe(p);
+      if(posWatch===null){posWatch=navigator.geolocation.watchPosition(pp=>placeMe(pp),()=>{},{enableHighAccuracy:false,maximumAge:15000,timeout:25000});}
+    },()=>{},{enableHighAccuracy:false,timeout:9000,maximumAge:120000});
+  });
 }
 
 /* ===== CONSIGLI IN LINEA COL VIAGGIO (ragionamento in background) ===== */
@@ -16864,7 +17425,7 @@ function quickSaveSug(tid,idx){
 
 /* ===== MANIGLIA: trascina giù per chiudere ===== */
 function initSheetSwipe(){
-  const skip=['mJoin','mNotif'];
+  const skip=['mJoin','mNotif','mPosizione'];
   document.querySelectorAll('.modal').forEach(modal=>{
     if(skip.includes(modal.id))return;
     const sheet=modal.querySelector('.sheet'),grip=modal.querySelector('.sheet-grip');
@@ -16879,7 +17440,7 @@ function initSheetSwipe(){
 }
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
-    if(m.id==='mJoin'||m.id==='mNotif')return;
+    if(m.id==='mJoin'||m.id==='mNotif'||m.id==='mPosizione')return;
     m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else closeSheet(m);}});
     const head=m.querySelector('.sheet-head');
     if(!head||head.querySelector('.x-close'))return;
@@ -17014,6 +17575,39 @@ async function cloudCreate(t){
     return{ok:true};
   }catch(e){return{ok:false,error:(e&&e.message)||'errore di rete'};}
 }
+/* ===== LA PRESENTAZIONE =====
+   Tre schermate al primissimo avvio, prima dell'accesso: chi apre GeppGo per
+   la prima volta deve capire cos'e' prima che gli si chieda un'email. Una
+   volta sola, e si salta. Chi arriva da un invito (o da un link che lo sta
+   facendo entrare) va dritto dove lo porta il link: ha gia' un motivo per
+   essere qui, e tre schermate in mezzo lo farebbero solo aspettare. */
+const INTRO_SALTA=/^#(join2?=|testo=|mail=)|access_token=|type=recovery|error_description=/.test(location.hash||'')||/[?&]code=/.test(location.search||'');
+function introSegnaVista(){try{localStorage.setItem('geppgo2_intro','1');}catch(e){}}
+function introAvvia(){
+  if(!PRIMO_AVVIO)return;
+  if(INTRO_SALTA){introSegnaVista();return;}
+  const el=document.getElementById('intro');if(!el)return;
+  el.style.display='flex';el.setAttribute('aria-hidden','false');
+  document.getElementById('introPista').addEventListener('scroll',introSegui,{passive:true});
+  introSegui();
+}
+function introPagina(){const p=document.getElementById('introPista');return Math.round(p.scrollLeft/Math.max(1,p.clientWidth));}
+function introSegui(){
+  const i=introPagina(),n=document.querySelectorAll('#introPista .intro-pag').length;
+  document.querySelectorAll('#intro .intro-punti span').forEach((x,j)=>x.classList.toggle('on',j===i));
+  document.getElementById('introAvanti').textContent=tv(i>=n-1?'Inizia':'Avanti');
+}
+function introAvanti(){
+  const p=document.getElementById('introPista'),n=document.querySelectorAll('#introPista .intro-pag').length,i=introPagina();
+  if(i>=n-1)return introFine();
+  p.scrollTo({left:(i+1)*p.clientWidth,behavior:'smooth'});
+}
+function introFine(){
+  introSegnaVista();
+  const el=document.getElementById('intro');if(!el)return;
+  el.classList.add('via');el.setAttribute('aria-hidden','true');
+  setTimeout(()=>{el.style.display='none';},300);
+}
 async function supaBoot(){
   updateAccountCard();
   if(!window.GEPPGO_SUPA_URL||!window.GEPPGO_SUPA_KEY||typeof supabase==='undefined')return;
@@ -17043,8 +17637,9 @@ async function supaBoot(){
           const{data:d3,error:e3}=await sb.auth.exchangeCodeForSession(qc);
           if(!e3&&d3&&d3.session){session=d3.session;myUid=session.user.id;history.replaceState(null,'',location.pathname);toast('Accesso effettuato');}
           else{
+            auVai('in');
             const m=document.getElementById('auMsg');
-            if(m){m.style.color='';m.textContent='Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca "Ho già un codice di recupero" e scrivilo.';}
+            if(m){m.style.color='';m.textContent='Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.';}
             app.skipAuth=false;save();
           }
         }catch(e){}
@@ -17054,6 +17649,7 @@ async function supaBoot(){
     if(session)setTimeout(()=>{if(localStorage.getItem('geppgo2_fp')){localStorage.removeItem('geppgo2_fp');lastPush={};persistLastPush();}syncPush();},600);
     if(wasRecovery&&session){setTimeout(openNewPass,400);}
     else if(wasRecovery||authErr){
+      auVai('in');
       const m=document.getElementById('auMsg');
       if(m)m.textContent='Link già usato o scaduto. Richiedi una NUOVA email; poi tieni premuto sul link → Copia, e incollalo in \'Ho un codice o un link di recupero\'.';
       app.skipAuth=false;save();afterAuth();
@@ -17276,7 +17872,7 @@ async function doJoin2(code){
     if(!geppgoServerDelLinkVa(code.slice(tildeIx+1))){closeSheet('mCode');avvisaLinkNonValido();return;}
     code=code.slice(0,tildeIx);
   }
-  if(!sb){toast('Cloud non configurato: guida, Passo 9');return;}
+  if(!sb){toast('Non riesco a collegarmi al cloud: controlla la rete e riprova.');return;}
   if(!session){pendingJoin2=code;app.skipAuth=false;save();closeSheet('mCode');afterAuth();toast('Prima accedi o crea il tuo account');return;}
   const parts=code.split(':');
   if(parts.length!==2){toast('Codice non valido');return;}
@@ -17308,7 +17904,7 @@ async function authForgot(){
   try{
     const red=window.GEPPGO_PUBLIC_URL||(location.protocol.indexOf('http')===0?location.origin+location.pathname:undefined);
     const{error}=await sb.auth.resetPasswordForEmail(em,red?{redirectTo:red}:{});
-    if(error){msg.textContent='Errore: '+error.message;return;}
+    if(error){console.log('Recupero password non riuscito:',error.message);msg.textContent=spiegaErroreAccesso(error);return;}
     msg.textContent='';
     recEmail=em;openRecPanel(true);
   }catch(e){msg.textContent='Errore di rete';}
@@ -17319,12 +17915,11 @@ function openRecPanel(fromSend){
   document.getElementById('recMail').textContent=recEmail||'la tua email';
   document.getElementById('auCode').value='';
   document.getElementById('recMsg').textContent='';
-  document.getElementById('auMain').style.display='none';
-  document.getElementById('auRec').style.display='block';
+  auMostra('auRec');
   const gate=document.getElementById('authGate');if(gate)gate.style.display='flex';
   setTimeout(()=>document.getElementById('auCode').focus(),250);
 }
-function recBack(){document.getElementById('auRec').style.display='none';document.getElementById('auMain').style.display='block';}
+function recBack(){auVai('in');}
 async function authVerifyCode(){
   const raw=document.getElementById('auCode').value.trim(),m=document.getElementById('recMsg');
   if(!raw){m.textContent='Incolla il link della mail, o scrivi il codice a 6 cifre';return;}
@@ -17354,7 +17949,7 @@ async function saveNewPass(){
   m.textContent='Salvataggio...';
   try{
     const{error}=await sb.auth.updateUser({password:pw});
-    if(error){m.textContent='Errore: '+error.message;return;}
+    if(error){console.log('Nuova password non salvata:',error.message);m.textContent=spiegaErroreAccesso(error);return;}
     m.textContent='';closeSheet('mNewPass');toast('Password aggiornata');
   }catch(e){m.textContent='Errore di rete';}
 }
@@ -17366,7 +17961,7 @@ async function authMagic(){
   try{
     const red=window.GEPPGO_PUBLIC_URL||(location.protocol.indexOf('http')===0?location.origin+location.pathname:undefined);
     const{error}=await sb.auth.signInWithOtp({email:em,options:Object.assign({shouldCreateUser:false},red?{emailRedirectTo:red}:{})});
-    if(error){msg.textContent=/not found|invalid/i.test(error.message)?'Nessun account con questa email':'Errore: '+error.message;return;}
+    if(error){console.log('Link di accesso non inviato:',error.message);msg.textContent=/not found|invalid/i.test(error.message)?'Nessun account con questa email':spiegaErroreAccesso(error);return;}
     msg.style.color='var(--green-deep)';
     msg.textContent='Link inviato a '+em+'. Aprilo con un TOCCO DIRETTO (niente anteprima): vale una volta sola e per poco tempo.';
   }catch(e){msg.textContent='Errore di rete';}
@@ -17377,23 +17972,75 @@ async function authIn(){
   msg.textContent='Accesso in corso...';
   try{
     const{error}=await sb.auth.signInWithPassword({email:em,password:pw});
-    if(error){msg.textContent=/invalid/i.test(error.message)?'Email o password sbagliate':'Errore: '+error.message;return;}
+    if(error){console.log('Accesso non riuscito:',error.message);msg.textContent=spiegaErroreAccesso(error);return;}
     msg.textContent='';app.skipAuth=false;save();
   }catch(e){msg.textContent='Errore di rete';}
+}
+/* Un tocco solo. Prima il primo tocco su «Crea account» faceva comparire il
+   campo di conferma e chiedeva di ritoccare: sembrava che non fosse
+   successo niente. Adesso il campo c'e' da subito (auVai). */
+/* Gli errori del server arrivano in inglese tecnico: a schermo va una frase
+   che dica cosa e' successo e cosa fare. Il testo originale resta in
+   console, per chi indaga. */
+function spiegaErroreAccesso(err){
+  const m=String((err&&err.message)||err||'');
+  if(/invalid login|invalid credentials|invalid email or password/i.test(m))return tv('Email o password sbagliate');
+  if(/already registered|already exists/i.test(m))return tv('Con questa email c\'è già un account: accedi.');
+  if(/not confirmed/i.test(m))return tv('Prima conferma l\'email: apri il link che ti abbiamo mandato, poi riprova.');
+  if(/rate limit|too many|security purposes/i.test(m))return tv('Troppi tentativi di fila: aspetta un minuto e riprova.');
+  if(/password/i.test(m)&&/weak|short|least|characters/i.test(m))return tv('La password è troppo semplice: usane una più lunga.');
+  if(/valid email|invalid email|email address/i.test(m))return tv('Questa email non sembra valida: ricontrollala.');
+  if(/fetch|network|offline/i.test(m))return tv('Errore di rete');
+  return tv('Non ci sono riuscito: riprova fra poco.');
+}
+/* Lo stesso per gli altri errori del cloud: «Non riesco: new row violates
+   row-level security policy» non dice niente a nessuno, e di sicuro non cosa
+   fare. */
+function erroreCloud(err,cosa){
+  console.log('Cloud'+(cosa?' ('+cosa+')':'')+':',err);
+  const m=String((err&&(err.message||err.error))||err||'');
+  if(navigator.onLine===false||/fetch|network|offline/i.test(m))return tv('Senza rete non ci riesco: riprova quando sei online.');
+  if(/row-level security|permission denied|violates|not allowed/i.test(m))return tv('Non hai il permesso per farlo in questo viaggio.');
+  return tv('Non ci sono riuscito: riprova fra poco.');
 }
 async function authUp(){
   const em=document.getElementById('auEmail').value.trim(),pw=document.getElementById('auPass').value,msg=document.getElementById('auMsg');msg.style.color='';
   if(!em||pw.length<6){msg.textContent='Serve un\'email valida e una password di almeno 6 caratteri';return;}
-  const w2=document.getElementById('auPass2Wrap');
-  if(w2.style.display!=='block'){w2.style.display='block';msg.textContent='Per sicurezza, riscrivi la password nel campo "Conferma" e ritocca Crea account';return;}
   if(document.getElementById('auPass2').value!==pw){msg.textContent='Le due password non coincidono: ricontrolla';return;}
   msg.textContent='Creazione account...';
   try{
     const{data,error}=await sb.auth.signUp({email:em,password:pw});
-    if(error){msg.textContent='Errore: '+error.message;return;}
-    if(data.session){msg.textContent='';app.skipAuth=false;save();}
-    else msg.textContent='Account creato. Se non entri subito, in Supabase disattiva la conferma email (guida, Passo 9) e riprova ad accedere.';
-  }catch(e){msg.textContent='Errore di rete';}
+    if(error){console.log('Registrazione non riuscita:',error.message);msg.textContent=spiegaErroreAccesso(error);return;}
+    if(data&&data.session){msg.textContent='';app.skipAuth=false;save();return;}
+    /* Un utente senza identita' e' la risposta che si riceve per un'email
+       gia' registrata: nessuna email parte, quindi dire «controlla la
+       posta» sarebbe falso. */
+    const u=data&&data.user;
+    if(u&&Array.isArray(u.identities)&&!u.identities.length){auVai('in');msg.textContent='Con questa email c\'è già un account: accedi.';return;}
+    /* Nessuna sessione: e' la conferma via email. Lo si dice chiaro, invece
+       di lasciare lo stesso modulo davanti. */
+    msg.textContent='';
+    document.getElementById('auMailA').textContent=em;
+    auMostra('auMailInviata');
+  }catch(e){console.log('Registrazione non riuscita:',e);msg.textContent='Errore di rete';}
+}
+/* La schermata di accesso ha quattro pannelli e se ne vede uno alla volta. */
+function auMostra(id){
+  ['auScelta','auMain','auRec','auMailInviata'].forEach(x=>{const el=document.getElementById(x);if(el)el.style.display=x===id?'block':'none';});
+}
+/* «Crea un account» e «Accedi» sono lo stesso modulo: cambia il tasto, e chi
+   si registra vede subito il campo di conferma. */
+function auVai(modo){
+  const su=modo==='su';
+  auMostra('auMain');
+  document.getElementById('auTitolo').textContent=tv(su?'Crea un account':'Accedi');
+  document.getElementById('auPass2Wrap').style.display=su?'block':'none';
+  document.getElementById('auPass').setAttribute('autocomplete',su?'new-password':'current-password');
+  document.getElementById('auBtnUp').style.display=su?'':'none';
+  document.getElementById('auBtnIn').style.display=su?'none':'';
+  document.getElementById('auSoloAccesso').style.display=su?'none':'block';
+  document.getElementById('auSoloNuovo').style.display=su?'block':'none';
+  const m=document.getElementById('auMsg');m.style.color='';m.textContent='';
 }
 function authSkip(){app.skipAuth=true;save();const g=document.getElementById('authGate');if(g)g.style.display='none';updateAccountCard();}
 async function authOut(){try{await sb.auth.signOut();}catch(e){}app.skipAuth=false;save();toast('Sei uscito dall\'account');}
@@ -17452,7 +18099,7 @@ async function eliminaAccount(){
     }
   }catch(e){}
   const{error}=await sb.rpc('elimina_account');
-  if(error){msg.textContent='Non riesco: '+error.message;return;}
+  if(error){msg.textContent=erroreCloud(error,'elimina account');return;}
   try{await sb.auth.signOut();}catch(e){}
   closeSheet('mElimAcc');
   /* Restano i dati su questo telefono, e va detto: qualcuno vuole cancellare
@@ -17489,9 +18136,15 @@ function showGate(){accediOra();}
    cloud e, se c'e', anche l'invito al viaggio. Nessuno deve andare a cercare
    URL e chiavi di Supabase: quelli sono roba di chi ha creato il progetto. */
 function apriRecupero(){
-  openCloudCfg();
+  openSheet('mCode');
   setTimeout(()=>{const i=document.getElementById('cfgInvito');if(i)i.focus();},350);
 }
+/* mCloud non ha piu' un tasto (vedi il Profilo): si apre tenendo premuta per
+   due secondi la riga della versione. Chi ne ha bisogno lo sa, gli altri non
+   ci inciampano. */
+let _cloudPremuto=null;
+function cloudPremi(){clearTimeout(_cloudPremuto);_cloudPremuto=setTimeout(()=>{_cloudPremuto=null;openCloudCfg();},2000);}
+function cloudLascia(){clearTimeout(_cloudPremuto);_cloudPremuto=null;}
 function usaInvito(){
   const raw=(document.getElementById('cfgInvito').value||'').trim();
   const m=document.getElementById('cfgInvMsg');
@@ -17512,7 +18165,7 @@ function usaInvito(){
   if(!url&&!invito){m.textContent='Non ci ho trovato né un link né un codice validi.';return;}
   /* Anche incollato qui, un link non sceglie il server e non si salva: vale
      la stessa regola dell'avvio (vedi CONFIG CLOUD). Il server si sceglie a
-     mano, nei due campi qui sotto, ed e' l'unico modo. */
+     mano, nei due campi di mCloud, ed e' l'unico modo. */
   if(cfgB64&&!geppgoServerDelLinkVa(cfgB64)){m.textContent=t('Questo invito non è valido');avvisaLinkNonValido();return;}
   m.style.color='var(--green-deep)';
   m.textContent=url?'Trovato. Riavvio l\'app...':'Codice preso. Riavvio l\'app...';
@@ -18357,7 +19010,7 @@ function baseCondivisione(){
 }
 function copiaBaseCondivisione(){
   const u=baseCondivisione();
-  const fatto=()=>toast('Copiato: incollalo nel passo 3 del Comando');
+  const fatto=()=>toast('Copiato: incollalo in «Apri URL», nel Comando');
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(fatto).catch(()=>toast(u));
   else toast(u);
 }
@@ -18971,7 +19624,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-06 19:16';
+const VERSIONE_APP='2026-10-06 20:44';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -19500,21 +20153,23 @@ function fotoMini(dataUrl){
    connessi, o se il magazzino non era ancora stato preparato. Un guasto che
    non si sa spiegare vale quanto un guasto non risolto. */
 let fotoPerche='';
+/* Le parole sono per chi guarda la foto: cosa e' successo e cosa fare. Cosa
+   manca nel database o nel magazzino e' affare di chi gestisce il cloud, e
+   resta in console, per chi indaga. */
 function fotoSpiega(e){
   const m=((e&&(e.message||e.error||e))||'').toString();
-  if(/bucket.*not.*found|not.*found.*bucket/i.test(m))
-    return 'Il magazzino delle foto non c\'e\' ancora: va lanciato supabase-schema.sql sul progetto Supabase.';
-  if(/relation.*foto.*does not exist|PGRST205|schema cache/i.test(m))
-    return 'Nel database manca la tabella delle foto: va lanciato supabase-schema.sql sul progetto Supabase.';
+  console.log('Foto non salvata nel cloud:',m);
+  if(/bucket.*not.*found|not.*found.*bucket|relation.*foto.*does not exist|PGRST205|schema cache/i.test(m))
+    return tv('Il cloud delle foto non è pronto: riprova più tardi.');
   if(/row-level security|permission denied|violates/i.test(m))
-    return 'Il database non mi lascia salvare la foto: controlla i permessi (supabase-schema.sql).';
+    return tv('Non hai il permesso di mettere foto in questo viaggio.');
   if(/exceeded|too large|payload/i.test(m))
-    return 'La foto e\' troppo grande per il magazzino.';
+    return tv('La foto è troppo grande: provane una più piccola.');
   if(/mime|content.?type/i.test(m))
-    return 'Il magazzino accetta solo immagini JPEG.';
+    return tv('Si possono caricare solo foto JPEG.');
   if(/fetch|network|Failed to fetch|offline/i.test(m))
-    return 'Senza rete: riprovo da solo appena torna.';
-  return m?('Il cloud ha risposto: '+m):'Non sono riuscito a salvarla nel cloud.';
+    return tv('Senza rete: riprovo da solo appena torna.');
+  return tv('Non sono riuscito a salvarla nel cloud: riprova più tardi.');
 }
 /* Attacca alla foto il motivo per cui non e' partita, cosi' riaprendola fra
    un'ora si legge ancora quello giusto invece dell'ultimo capitato. */
@@ -19940,7 +20595,7 @@ async function inviaSegnalazione(){
     motivo:document.getElementById('sgMotivo').value,
     nota:document.getElementById('sgNota').value.trim()||null
   });
-  if(error){msg.textContent='Non riesco a inviare: '+error.message;return;}
+  if(error){msg.textContent=erroreCloud(error,'segnalazione');return;}
   closeSheet('mSegnala');closeSheet('mPhoto');
   toast('Segnalazione inviata. Grazie: la guardiamo al più presto.');
 }
@@ -20051,19 +20706,23 @@ async function mandaRaccolta(){
 }
 function raccoltaSpiega(e){
   const m=((e&&(e.message||e.error||e))||'').toString();
+  console.log('A raccolta non partita:',m);
   if(/relation.*raccolte.*does not exist|PGRST205|schema cache/i.test(m))
-    return 'Nel database manca la tabella delle chiamate: va lanciato supabase-schema.sql sul progetto Supabase.';
+    return tv('A raccolta non è ancora disponibile: riprova più tardi.');
   if(/row-level security|permission denied|violates/i.test(m))
-    return 'Il database non mi lascia mandare la chiamata: la può fare solo un admin del viaggio.';
+    return tv('Non posso mandare la chiamata: la può fare solo un admin del viaggio.');
   if(/fetch|network|Failed to fetch|offline/i.test(m))
-    return 'Senza rete non posso avvisare nessuno.';
-  return m?('Il cloud ha risposto: '+m):'Non sono riuscito a mandare la chiamata.';
+    return tv('Senza rete non posso avvisare nessuno.');
+  return tv('Non sono riuscito a mandare la chiamata: riprova fra poco.');
 }
 /* La posizione, una volta sola. Se il telefono ne ha una recente in mano si
    prende quella - in mezzo ai palazzi il GPS puo' metterci venti secondi, e
    qui si sta facendo aspettare della gente in piazza. */
 function raccoltaDoveSono(){
   if(myPos&&myPosAt&&Date.now()-myPosAt<60000)return Promise.resolve({lat:myPos.lat,lng:myPos.lng});
+  return chiediPosizione('raccolta').then(ok=>ok?raccoltaPrendiPosizione():null);
+}
+function raccoltaPrendiPosizione(){
   return new Promise(res=>{
     if(!navigator.geolocation)return res(null);
     navigator.geolocation.getCurrentPosition(
