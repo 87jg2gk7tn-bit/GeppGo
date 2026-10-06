@@ -502,6 +502,21 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .amt-big:focus{outline:none;box-shadow:none!important}
 .amt-cur{width:auto!important;border:none!important;background:var(--surface)!important;font-weight:800;font-size:.85rem!important;padding:.5rem 2rem .5rem .7rem!important;border-radius:100px!important;box-shadow:var(--sh-xs)}
 .amt-conv{font-size:.8rem;color:var(--ink-faint);font-weight:600;margin-bottom:1rem;min-height:1rem;padding-left:.2rem}
+/* Senza cambio non c'e' una cifra da mostrare, c'e' una cosa da sapere: si
+   legge come un avviso, non come un numero sbiadito. */
+.amt-conv.attesa{color:var(--clay-deep);background:var(--clay-tint);border-radius:var(--r-md);padding:.55rem .7rem;line-height:1.45}
+.exp-cambio-nota{font-size:.72rem;color:var(--ink-soft);line-height:1.45;margin:.35rem 0 0}
+/* Intera su una riga: spezzata a meta' su uno schermo stretto sembrava due
+   etichette diverse. */
+.tag-cambio{display:inline-block;white-space:nowrap;margin:0 .35rem .15rem 0}
+.tag-cambio.attesa{background:var(--sand-tint);color:var(--clay-deep)}
+.tag-cambio.verifica{background:var(--clay-tint);color:var(--clay-deep)}
+.cv-testo{font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem}
+.cv-elenco{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:1rem;max-height:40vh;overflow-y:auto}
+.cv-riga{display:flex;flex-direction:column;gap:.15rem;padding:.55rem .75rem;font-size:.85rem}
+.cv-riga+.cv-riga{border-top:1px solid var(--line)}
+.cv-riga span{font-size:.78rem;color:var(--ink-faint)}
+.cambi-nota{font-size:.78rem;font-weight:700;color:var(--clay-deep);background:var(--clay-tint);border-radius:var(--r-md);padding:.5rem .7rem;margin:.5rem 0 .7rem;line-height:1.45}
 .cat-chips{display:flex;flex-wrap:wrap;gap:.4rem}
 .cat-chip{background:var(--paper);border:1px solid var(--line);padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.8rem;color:var(--ink-soft);cursor:pointer;transition:var(--ease)}
 .cat-chip:active{transform:scale(.94)}
@@ -2276,6 +2291,13 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <select class="amt-cur" id="expCur" onchange="updateConv()"></select>
   </div>
   <div id="expConv" class="amt-conv"></div>
+  <!-- Il cambio a mano: quello che ha applicato davvero la banca o il
+       cambiavalute vale piu' di quello di una tabella, e senza rete e' l'unico
+       modo di avere subito la cifra giusta. Si vede solo con una valuta
+       diversa da quella del viaggio. -->
+  <div class="fg" id="expCambioWrap" style="display:none"><label id="expCambioLbl">Cambio</label>
+    <input id="expCambio" type="text" inputmode="decimal" autocomplete="off" oninput="updateConv()">
+    <p class="exp-cambio-nota">Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.</p></div>
   <div class="fg"><label>Per cosa?</label><input id="expDesc" placeholder="Cena al ristorante"></div>
   <div class="fg"><label>Categoria</label><div class="cat-chips" id="expCatChips"></div></div>
   <div class="fg"><label>Pagato da</label><select id="expPayer"></select></div>
@@ -2289,6 +2311,11 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem"><label style="margin:0">Diviso tra</label><div style="display:flex;gap:.4rem"><button class="chip" onclick="splitAll(true)">Tutti</button><button class="chip" onclick="splitAll(false)">Nessuno</button></div></div><div class="split-list" id="expSplit"></div><div id="expShare" class="split-share"></div></div>
   <button class="btn btn-grad btn-block" onclick="addExpense()">✓ Salva spesa</button>
   <button class="btn btn-danger btn-block" id="expDel" style="display:none;margin-top:.5rem" onclick="delExpense(expEditId)">🗑️ Elimina spesa</button>
+</div></div>
+<div class="modal" id="mCambiVerifica"><div class="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">Cambi da verificare</div><button class="x x-close" onclick="closeSheet('mCambiVerifica')">✕</button></div>
+  <div id="cvBody"></div>
 </div></div>
 <div class="modal" id="mTicket"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2824,7 +2851,8 @@ let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=ne
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
 /* I cambi si tengono anche fra un'apertura e l'altra: in viaggio la rete c'e'
    a tratti, e senza questo la seconda valuta sparirebbe proprio quando serve.
-   Restano validi sei ore, poi si riprovano. */
+   Dopo sei ore si prova ad aggiornarli, ma l'ultima tabella buona non si butta
+   mai (vedi aggiornaCambi). */
 let rateCache={};
 try{const g=JSON.parse(localStorage.getItem('geppgo2_cambi')||'{}');if(g&&typeof g==='object')rateCache=g;}catch(e){}
 function salvaCambi(){try{localStorage.setItem('geppgo2_cambi',JSON.stringify(rateCache));}catch(e){}}
@@ -2897,6 +2925,9 @@ if('serviceWorker' in navigator){
 /* Appena torna la connessione, prova subito a rimandare le modifiche fatte
    offline, invece di aspettare il prossimo giro del retry periodico (20s). */
 window.addEventListener('online',()=>{if(sb&&session)syncPush();});
+/* La rete che torna e' l'occasione delle spese in attesa: arriva il cambio
+   e la spesa entra nei conti, senza che nessuno debba ricordarsene. */
+window.addEventListener('online',()=>{aggiornaCambiViaggi();});
 
 /* ===== LE LINGUE =====
    La chiave del dizionario e' la frase italiana stessa, non un codice. E'
@@ -5864,11 +5895,149 @@ const DIZIONARIO_INVITI={
   }
 };
 Object.keys(DIZIONARIO_INVITI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_INVITI[l]));
+/* I cambi: le spese in attesa, quelle da verificare e il cambio scritto a
+   mano. Servono proprio all'estero, cioe' a chi l'app la usa piu' spesso in
+   un'altra lingua. */
+const DIZIONARIO_CAMBI={
+  en:{
+    '✅ Cambio arrivato: 1 spesa entra nei conti':'✅ Rate arrived: 1 expense now counts',
+    '✅ Cambio arrivato: {1} spese entrano nei conti':'✅ Rate arrived: {1} expenses now count',
+    '1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.':'1 expense in another currency was saved with a rate of 1: its amount is counted as if it were in {1}.',
+    '{1} spese in un\'altra valuta sono state salvate con cambio 1: le loro cifre sono contate come se fossero in {2}.':'{1} expenses in another currency were saved with a rate of 1: their amounts are counted as if they were in {2}.',
+    '{1} contati come {2}':'{1} counted as {2}',
+    'Ricalcola col cambio attuale':'Recalculate with today’s rate',
+    'Inserisco io il cambio':'I’ll enter the rate myself',
+    'Va bene così':'It’s fine as it is',
+    'Cambio non ancora disponibile, spese in attesa della rete: {1}':'Rate not available yet, expenses waiting for a connection: {1}',
+    '✅ Spese ricalcolate: {1}':'✅ Expenses recalculated: {1}',
+    'Scrivi il cambio che hai avuto davvero, per esempio quello della tua banca: vale per tutte le spese da verificare in quella valuta, e non verrà mai cambiato da solo.':'Enter the rate you actually got, for example your bank’s: it applies to all the expenses to check in that currency, and it will never change on its own.',
+    'Cambio: quanti {2} vale 1 {1}':'Rate: how many {2} 1 {1} is worth',
+    'Salva i cambi':'Save the rates',
+    '‹ Indietro':'‹ Back',
+    'Scrivi almeno un cambio':'Enter at least one rate',
+    '✅ Cambio salvato, spese aggiornate: {1}':'✅ Rate saved, expenses updated: {1}',
+    'Spese lasciate come sono: {1}':'Expenses left as they are: {1}',
+    'Cambi da verificare':'Rates to check',
+    '≈ {1} · cambio scritto a mano':'≈ {1} · rate entered by hand',
+    'Cerco il cambio…':'Looking up the rate…',
+    'Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.':'Rate not available yet: I’ll work it out as soon as you’re back online, or you can enter it below.',
+    '≈ {1} · cambio del {2}':'≈ {1} · rate of {2}',
+    'Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.':'Leave it empty for the automatic rate. If you enter it yourself (for example your bank’s) it will never change on its own.',
+    'Cambio':'Rate',
+    'Spesa salvata: il cambio lo calcolo appena torna la rete':'Expense saved: I’ll work out the rate as soon as you’re back online',
+    'cambio in attesa':'rate pending',
+    'da verificare':'to check',
+    'cambio a mano':'rate by hand',
+    'non ancora nei conti':'not in the totals yet',
+    '1 spesa non ancora inclusa (cambio in attesa)':'1 expense not included yet (rate pending)',
+    '{1} spese non ancora incluse (cambio in attesa)':'{1} expenses not included yet (rate pending)'
+  },
+  es:{
+    '✅ Cambio arrivato: 1 spesa entra nei conti':'✅ Ha llegado el cambio: 1 gasto entra en las cuentas',
+    '✅ Cambio arrivato: {1} spese entrano nei conti':'✅ Ha llegado el cambio: {1} gastos entran en las cuentas',
+    '1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.':'1 gasto en otra moneda se guardó con cambio 1: su importe cuenta como si fuera en {1}.',
+    '{1} spese in un\'altra valuta sono state salvate con cambio 1: le loro cifre sono contate come se fossero in {2}.':'{1} gastos en otra moneda se guardaron con cambio 1: sus importes cuentan como si fueran en {2}.',
+    '{1} contati come {2}':'{1} contados como {2}',
+    'Ricalcola col cambio attuale':'Recalcular con el cambio actual',
+    'Inserisco io il cambio':'Pongo yo el cambio',
+    'Va bene così':'Así está bien',
+    'Cambio non ancora disponibile, spese in attesa della rete: {1}':'Cambio aún no disponible, gastos esperando la conexión: {1}',
+    '✅ Spese ricalcolate: {1}':'✅ Gastos recalculados: {1}',
+    'Scrivi il cambio che hai avuto davvero, per esempio quello della tua banca: vale per tutte le spese da verificare in quella valuta, e non verrà mai cambiato da solo.':'Escribe el cambio que tuviste de verdad, por ejemplo el de tu banco: vale para todos los gastos por revisar en esa moneda, y nunca cambiará solo.',
+    'Cambio: quanti {2} vale 1 {1}':'Cambio: cuántos {2} vale 1 {1}',
+    'Salva i cambi':'Guardar los cambios de moneda',
+    '‹ Indietro':'‹ Atrás',
+    'Scrivi almeno un cambio':'Escribe al menos un cambio',
+    '✅ Cambio salvato, spese aggiornate: {1}':'✅ Cambio guardado, gastos actualizados: {1}',
+    'Spese lasciate come sono: {1}':'Gastos dejados como están: {1}',
+    'Cambi da verificare':'Cambios por revisar',
+    '≈ {1} · cambio scritto a mano':'≈ {1} · cambio escrito a mano',
+    'Cerco il cambio…':'Buscando el cambio…',
+    'Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.':'Cambio aún no disponible: lo calculo en cuanto vuelva la conexión, o escríbelo tú aquí abajo.',
+    '≈ {1} · cambio del {2}':'≈ {1} · cambio del {2}',
+    'Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.':'Déjalo vacío para el cambio automático. Si lo escribes tú (por ejemplo el de tu banco) nunca cambiará solo.',
+    'Cambio':'Cambio',
+    'Spesa salvata: il cambio lo calcolo appena torna la rete':'Gasto guardado: calculo el cambio en cuanto vuelva la conexión',
+    'cambio in attesa':'cambio pendiente',
+    'da verificare':'por revisar',
+    'cambio a mano':'cambio a mano',
+    'non ancora nei conti':'aún no en las cuentas',
+    '1 spesa non ancora inclusa (cambio in attesa)':'1 gasto aún no incluido (cambio pendiente)',
+    '{1} spese non ancora incluse (cambio in attesa)':'{1} gastos aún no incluidos (cambio pendiente)'
+  },
+  fr:{
+    '✅ Cambio arrivato: 1 spesa entra nei conti':'✅ Taux reçu : 1 dépense entre dans les comptes',
+    '✅ Cambio arrivato: {1} spese entrano nei conti':'✅ Taux reçu : {1} dépenses entrent dans les comptes',
+    '1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.':'1 dépense dans une autre devise a été enregistrée avec un taux de 1 : son montant est compté comme s’il était en {1}.',
+    '{1} spese in un\'altra valuta sono state salvate con cambio 1: le loro cifre sono contate come se fossero in {2}.':'{1} dépenses dans une autre devise ont été enregistrées avec un taux de 1 : leurs montants sont comptés comme s’ils étaient en {2}.',
+    '{1} contati come {2}':'{1} comptés comme {2}',
+    'Ricalcola col cambio attuale':'Recalculer avec le taux actuel',
+    'Inserisco io il cambio':'Je saisis le taux moi-même',
+    'Va bene così':'C’est bien comme ça',
+    'Cambio non ancora disponibile, spese in attesa della rete: {1}':'Taux pas encore disponible, dépenses en attente du réseau : {1}',
+    '✅ Spese ricalcolate: {1}':'✅ Dépenses recalculées : {1}',
+    'Scrivi il cambio che hai avuto davvero, per esempio quello della tua banca: vale per tutte le spese da verificare in quella valuta, e non verrà mai cambiato da solo.':'Saisis le taux que tu as vraiment eu, par exemple celui de ta banque : il vaut pour toutes les dépenses à vérifier dans cette devise, et ne changera jamais tout seul.',
+    'Cambio: quanti {2} vale 1 {1}':'Taux : combien de {2} vaut 1 {1}',
+    'Salva i cambi':'Enregistrer les taux',
+    '‹ Indietro':'‹ Retour',
+    'Scrivi almeno un cambio':'Saisis au moins un taux',
+    '✅ Cambio salvato, spese aggiornate: {1}':'✅ Taux enregistré, dépenses mises à jour : {1}',
+    'Spese lasciate come sono: {1}':'Dépenses laissées telles quelles : {1}',
+    'Cambi da verificare':'Taux à vérifier',
+    '≈ {1} · cambio scritto a mano':'≈ {1} · taux saisi à la main',
+    'Cerco il cambio…':'Je cherche le taux…',
+    'Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.':'Taux pas encore disponible : je le calcule dès que le réseau revient, ou saisis-le ci-dessous.',
+    '≈ {1} · cambio del {2}':'≈ {1} · taux du {2}',
+    'Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.':'Laisse-le vide pour le taux automatique. Si tu le saisis toi-même (par exemple celui de ta banque), il ne changera jamais tout seul.',
+    'Cambio':'Taux',
+    'Spesa salvata: il cambio lo calcolo appena torna la rete':'Dépense enregistrée : je calcule le taux dès que le réseau revient',
+    'cambio in attesa':'taux en attente',
+    'da verificare':'à vérifier',
+    'cambio a mano':'taux à la main',
+    'non ancora nei conti':'pas encore dans les comptes',
+    '1 spesa non ancora inclusa (cambio in attesa)':'1 dépense pas encore incluse (taux en attente)',
+    '{1} spese non ancora incluse (cambio in attesa)':'{1} dépenses pas encore incluses (taux en attente)'
+  },
+  pt:{
+    '✅ Cambio arrivato: 1 spesa entra nei conti':'✅ Câmbio recebido: 1 despesa entra nas contas',
+    '✅ Cambio arrivato: {1} spese entrano nei conti':'✅ Câmbio recebido: {1} despesas entram nas contas',
+    '1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.':'1 despesa noutra moeda foi guardada com câmbio 1: o seu valor conta como se fosse em {1}.',
+    '{1} spese in un\'altra valuta sono state salvate con cambio 1: le loro cifre sono contate come se fossero in {2}.':'{1} despesas noutra moeda foram guardadas com câmbio 1: os seus valores contam como se fossem em {2}.',
+    '{1} contati come {2}':'{1} contados como {2}',
+    'Ricalcola col cambio attuale':'Recalcular com o câmbio atual',
+    'Inserisco io il cambio':'Ponho eu o câmbio',
+    'Va bene così':'Está bem assim',
+    'Cambio non ancora disponibile, spese in attesa della rete: {1}':'Câmbio ainda não disponível, despesas à espera de rede: {1}',
+    '✅ Spese ricalcolate: {1}':'✅ Despesas recalculadas: {1}',
+    'Scrivi il cambio che hai avuto davvero, per esempio quello della tua banca: vale per tutte le spese da verificare in quella valuta, e non verrà mai cambiato da solo.':'Escreve o câmbio que tiveste de verdade, por exemplo o do teu banco: vale para todas as despesas a verificar nessa moeda, e nunca vai mudar sozinho.',
+    'Cambio: quanti {2} vale 1 {1}':'Câmbio: quantos {2} vale 1 {1}',
+    'Salva i cambi':'Guardar os câmbios',
+    '‹ Indietro':'‹ Voltar',
+    'Scrivi almeno un cambio':'Escreve pelo menos um câmbio',
+    '✅ Cambio salvato, spese aggiornate: {1}':'✅ Câmbio guardado, despesas atualizadas: {1}',
+    'Spese lasciate come sono: {1}':'Despesas deixadas como estão: {1}',
+    'Cambi da verificare':'Câmbios a verificar',
+    '≈ {1} · cambio scritto a mano':'≈ {1} · câmbio escrito à mão',
+    'Cerco il cambio…':'A procurar o câmbio…',
+    'Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.':'Câmbio ainda não disponível: calculo-o assim que a rede voltar, ou escreve-o tu aqui em baixo.',
+    '≈ {1} · cambio del {2}':'≈ {1} · câmbio de {2}',
+    'Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.':'Deixa-o vazio para o câmbio automático. Se o escreveres tu (por exemplo o do teu banco) nunca vai mudar sozinho.',
+    'Cambio':'Câmbio',
+    'Spesa salvata: il cambio lo calcolo appena torna la rete':'Despesa guardada: calculo o câmbio assim que a rede voltar',
+    'cambio in attesa':'câmbio pendente',
+    'da verificare':'a verificar',
+    'cambio a mano':'câmbio à mão',
+    'non ancora nei conti':'ainda fora das contas',
+    '1 spesa non ancora inclusa (cambio in attesa)':'1 despesa ainda não incluída (câmbio pendente)',
+    '{1} spese non ancora incluse (cambio in attesa)':'{1} despesas ainda não incluídas (câmbio pendente)'
+  }
+};
+Object.keys(DIZIONARIO_CAMBI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_CAMBI[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=985;
+const FRASI_IN_TUTTO=1016;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6043,6 +6212,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   fillCurrencySelect(document.getElementById('expCur'));
   initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);checkLeaveAlerts();setInterval(checkLeaveAlerts,60000);
   renderAll();
+  /* I cambi si prendono all'apertura, finche' c'e' rete: e' il momento in
+     cui ci si ricorda di avercela. Un po' dopo, per non rubare tempo al
+     primo disegno. */
+  setTimeout(aggiornaCambiViaggi,1200);
   /* Dopo renderAll: il pannello che si apre ha bisogno della pagina gia'
      disegnata sotto, se no si apre sul vuoto. */
   try{accogliCondiviso();}catch(e){}
@@ -6404,6 +6577,9 @@ function createTrip(){
      aggiungono quando servono. */
   if(!trip.days.length)trip.days.push({id:uid(),date:start||end||todayISO(),title:'',activities:[]});
   app.trips.push(trip);ensureDestLoc(trip).then(()=>{drawMarkers();if(trip.destLoc)openFamousPlaces(trip);});geocodeCities(trip).then(()=>refreshWeather());app.currentTripId=trip.id;save();renderAll();closeSheet('mNewTrip');toast('✅ Viaggio creato');go('plan');
+  /* Si crea il viaggio di solito ancora a casa, con la rete: e' il momento
+     giusto per mettersi in tasca i cambi della sua valuta. */
+  aggiornaCambiViaggi();
 }
 /* Le date si potevano indicare solo alla creazione: se il viaggio nasceva
    senza, restava con un giorno solo e gli altri andavano aggiunti a uno a uno.
@@ -8080,7 +8256,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
-- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
+- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" lo stesso tic verde sta su ogni persona e su ogni riga di "come pareggiare": si tocca e si registra il rimborso, anche fra due altri. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. Una spesa fatta in un'altra valuta si converte col cambio del giorno, che l'app scarica quando c'e' rete e tiene in memoria: senza rete usa l'ultimo che ha e sotto la cifra scrive "cambio del" con la data. Se un cambio non l'ha proprio, la spesa si salva lo stesso ma resta "cambio in attesa": si vede nella sua valuta, non entra in totali, saldi e budget (lo dice una riga "N spese non ancora incluse") e ci entra da sola appena torna la rete. Il cambio si puo' anche scrivere a mano nel campo "Cambio" della spesa (per esempio quello della propria banca): scritto a mano non viene mai cambiato da solo. Le spese vecchie in un'altra valuta salvate con cambio 1 sono segnate "da verificare": aprendo il viaggio un avviso le elenca e offre "Ricalcola col cambio attuale", "Inserisco io il cambio" o "Va bene così". In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima, prima di tutto, c'e' la striscia delle NOTTI del viaggio: una casella per notte, piena se quella notte un letto ce l'hai e vuota tratteggiata se non ce l'hai, e sotto una riga che dice quali mancano e il tasto per cercarne uno. Un viaggio dal 14 al 18 ha quattro notti, non cinque: la notte si conta da dove si dorme, e l'ultimo giorno si torna a casa. Un albergo con check-in il 14 e check-out il 16 copre le notti del 14 e del 15. Ogni scheda dice quante notti copre quell'albergo, quanto costa e se e' ancora da pagare (il costo e' la spesa collegata, quella che si vede anche in Spese). Il tasto pieno "Portami qui, e' stanotte" compare solo sull'albergo dove si dorme stanotte; sugli altri il tasto c'e' lo stesso, ma piu' piano. Poi c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti delle ATTRAZIONI - l'ingresso a un castello, un museo, una torre - e i voucher. In cima ci sono tre tasti uguali, che sono tre modi per fare la stessa cosa: "Scansiona" (col codice davanti), "Foto o PDF" (se ce l'hai gia' nel telefono) e "A mano". Di fianco, la scritta "Come funziona la lettura" si apre toccandola. L'elenco parte da TUTTI i biglietti del viaggio, non solo dai tuoi: un ingresso preso per il gruppo non e' di nessuno in particolare. Se le persone sono piu' di una, sopra l'elenco c'e' una tendina per guardare i biglietti di una persona alla volta; da li' si torna a tutti con un tasto, e quello che aggiungi mentre stai guardando una persona viene intestato a lei. I biglietti stanno sotto l'attrazione a cui servono, e il titolo del gruppo dice anche quando ci vai: giorno, data e ora. Quelli non attaccati a nessuna tappa stanno insieme, sotto un titolo loro. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. L'ora del posto NON viene mai dall'orologio del telefono: se la previsione non porta il fuso - perche' e' stata salvata prima - si ricava dalla longitudine del posto, che e' la sua ora solare (ogni quindici gradi un'ora). Cosi' funziona in tutto il mondo anche prima che la previsione si riscarichi. L'orario scritto a parole invece compare solo col fuso vero, perche' la stima puo' sbagliare di un'ora dove il fuso politico non segue il sole. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
@@ -9242,11 +9418,175 @@ function wxEmoji(c,notte){if(c===0)return notte?'🌙':'☀️';if(c<=3)return n
 function wxDescIt(c){if(c===0)return'cielo limpido';if(c<=3)return'nuvole leggere';if(c<=49)return'foschia sottile';if(c<=67)return'pioggia leggera';if(c<=77)return'neve leggera';if(c<=82)return'acquazzoni improvvisi';if(c<=99)return'temporale in arrivo';return'cielo variabile';}
 function wxDesc(c){return tv(wxDescIt(c));}
 function fillCurrencySelect(sel){sel.innerHTML=CURR.map(c=>`<option value="${c.c}">${c.c} ${c.s!==c.c?'('+c.s+')':''}</option>`).join('');}
-async function getRate(from,to){
-  if(from===to)return 1;const key=from,now=Date.now();
-  if(rateCache[key]&&(now-rateCache[key].t)<6*3600*1000&&rateCache[key].rates[to])return rateCache[key].rates[to];
-  try{const r=await fetch(`https://open.er-api.com/v6/latest/${from}`);const d=await r.json();if(d&&d.rates){rateCache[key]={t:now,rates:d.rates};salvaCambi();return d.rates[to]||1;}}catch(e){}
-  return 1;
+/* ===== I CAMBI =====
+   IL GUASTO DA CUI VIENE TUTTO QUESTO: senza rete, e senza un cambio preso
+   nelle ultime sei ore, la funzione di prima restituiva 1. Una cena da
+   10.000 yen diventava una cena da 10.000 euro, si salvava cosi' per sempre
+   e nessuno lo diceva: l'anteprima stessa scriveva «≈ €10.000,00». In
+   viaggio, all'estero, senza campo, e' proprio il momento in cui si segnano
+   le spese.
+   Adesso:
+   - si tiene una tabella completa per la valuta di ogni viaggio, scaricata
+     con UNA chiamata quando c'e' rete (all'apertura, creando un viaggio, al
+     ritorno della rete). Le sei ore dicono quando aggiornarla, non quando
+     smettere di usarla: l'ultima tabella buona resta;
+   - se un cambio non c'e', non lo si inventa: la spesa resta nella sua
+     valuta, "in attesa", fuori dai conti finche' non arriva (applicaCambio);
+   - un cambio scritto a mano non lo tocca piu' nessuno. */
+const CAMBI_DURATA_MS=6*3600*1000;
+const _cambiInCorso={};
+/* Una chiamata per valuta del viaggio: la tabella di open.er-api ha dentro
+   tutte le altre, quindi qualunque valuta si usi in quel viaggio e' coperta.
+   Con un tempo massimo: con un segnale debole la richiesta restava appesa, e
+   con lei il salvataggio della spesa. */
+function aggiornaCambi(base){
+  const c=rateCache[base];
+  if(!base)return Promise.resolve(null);
+  if(c&&c.rates&&Date.now()-c.t<CAMBI_DURATA_MS)return Promise.resolve(c);
+  if(_cambiInCorso[base])return _cambiInCorso[base];
+  if(navigator.onLine===false)return Promise.resolve(c||null);
+  const stop=new AbortController(),taglia=setTimeout(()=>stop.abort(),8000);
+  return _cambiInCorso[base]=fetch(`https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`,{signal:stop.signal})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&d.rates&&typeof d.rates==='object'&&Object.keys(d.rates).length){
+        /* t: quando l'abbiamo presa (decide se aggiornarla); d: di quando sono
+           i cambi (e' la data che si mostra). */
+        rateCache[base]={t:Date.now(),d:d.time_last_update_unix?d.time_last_update_unix*1000:Date.now(),rates:d.rates};
+        salvaCambi();
+      }
+      return rateCache[base]||null;
+    })
+    .catch(()=>rateCache[base]||null)
+    .finally(()=>{clearTimeout(taglia);delete _cambiInCorso[base];});
+}
+/* Il cambio da una valuta all'altra, con la data della tabella da cui viene.
+   Qualunque tabella salvata va bene, anche vecchia: meglio il cambio di tre
+   giorni fa, detto, che nessuno. Null se non c'e' proprio: chi chiama deve
+   saperlo, non ricevere un 1 che sembra un cambio. */
+function cambioDa(from,to){
+  if(!from||!to)return null;
+  if(from===to)return {rate:1,t:Date.now()};
+  const a=rateCache[to];
+  if(a&&a.rates&&a.rates[from]>0)return {rate:1/a.rates[from],t:a.d||a.t};
+  const b=rateCache[from];
+  if(b&&b.rates&&b.rates[to]>0)return {rate:b.rates[to],t:b.d||b.t};
+  return null;
+}
+function dataCambio(ms){
+  try{return new Date(ms).toLocaleDateString(loc(),{day:'2-digit',month:'2-digit'});}catch(e){return '';}
+}
+/* Il cambio dentro una spesa. Vero se l'importo nella valuta del viaggio e'
+   noto; se no la spesa resta "in attesa": importo a zero nei conti (cosi'
+   nessuna somma la conta per sbaglio) e la cifra vera nella sua valuta, in
+   origAmount. Un cambio scritto a mano vince sempre. */
+function applicaCambio(t,e){
+  const cur=t.currency||'EUR',from=e.origCurrency||cur;
+  if(from===cur){e.rate=1;e.amount=e.origAmount;delete e.cambioStato;delete e.cambioData;delete e.cambioManuale;return true;}
+  if(e.cambioManuale&&e.rate>0){e.amount=e.origAmount*e.rate;delete e.cambioStato;return true;}
+  const c=cambioDa(from,cur);
+  if(c){e.rate=c.rate;e.amount=e.origAmount*c.rate;e.cambioData=c.t;delete e.cambioStato;return true;}
+  e.rate=null;e.amount=0;e.cambioStato='attesa';delete e.cambioData;
+  return false;
+}
+function inAttesa(e){return !!e&&e.cambioStato==='attesa';}
+/* Le tabelle di tutti i viaggi in corso, poi le spese che aspettavano. */
+async function aggiornaCambiViaggi(){
+  const valute=[...new Set(app.trips.filter(x=>x.status!=='closed').map(x=>x.currency||'EUR'))];
+  await Promise.all(valute.map(v=>aggiornaCambi(v)));
+  risolviCambiInAttesa();
+}
+/* Le spese in attesa ricevono il cambio appena c'e' una tabella. Si fa da
+   sole, dopo la rete che torna o un viaggio che arriva dal cloud, e lo si
+   dice in breve: la cifra del totale cambia sotto gli occhi di chi guarda. */
+function risolviCambiInAttesa(){
+  let n=0;
+  app.trips.forEach(t=>(t.expenses||[]).forEach(e=>{if(inAttesa(e)&&applicaCambio(t,e))n++;}));
+  if(!n)return 0;
+  save();renderAll();
+  toast(n===1?'✅ Cambio arrivato: 1 spesa entra nei conti':tv('✅ Cambio arrivato: {1} spese entrano nei conti',n));
+  return n;
+}
+/* ===== LE SPESE SALVATE COL CAMBIO SBAGLIATO =====
+   Quelle fatte prima di questa correzione: valuta diversa da quella del
+   viaggio e cambio esattamente 1. Quasi certamente e' il guasto, ma non lo
+   si puo' sapere per sicuro (qualche valuta e' davvero alla pari), quindi
+   l'importo non si tocca da solo: si segna "da verificare" e si chiede, una
+   volta per viaggio a ogni apertura dell'app, con tre risposte. */
+const cambiControllati=new Set();
+function speseDaVerificare(viaggio){return (viaggio.expenses||[]).filter(e=>e.cambioStato==='verifica');}
+function segnaCambiDaVerificare(viaggio){
+  const cur=viaggio.currency||'EUR';let n=0;
+  (viaggio.expenses||[]).forEach(e=>{
+    if(e.type==='transfer'||e.cambioStato||e.cambioManuale)return;
+    if(!e.origCurrency||e.origCurrency===cur||Number(e.rate)!==1)return;
+    e.cambioStato='verifica';n++;
+  });
+  return n;
+}
+function controllaCambiDaVerificare(){
+  const viaggio=T();if(!viaggio||cambiControllati.has(viaggio.id))return;
+  /* Con un altro foglio aperto si aspetta: ci si riprova al prossimo disegno. */
+  if(document.querySelector('.modal.active'))return;
+  cambiControllati.add(viaggio.id);
+  /* Si ridisegna perche' l'etichetta «da verificare» compaia nell'elenco;
+     il viaggio e' gia' fra i controllati, quindi non si ricomincia. */
+  if(segnaCambiDaVerificare(viaggio)){save();renderAll();}
+  if(speseDaVerificare(viaggio).length)apriCambiVerifica();
+}
+function apriCambiVerifica(){
+  const viaggio=T();if(!viaggio)return;
+  const lista=speseDaVerificare(viaggio);
+  if(!lista.length){closeSheet('mCambiVerifica');return;}
+  const cur=viaggio.currency||'EUR',n=lista.length;
+  document.getElementById('cvBody').innerHTML=`<p class="cv-testo">${esc(n===1
+      ?tv('1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.',cur)
+      :tv('{1} spese in un\'altra valuta sono state salvate con cambio 1: le loro cifre sono contate come se fossero in {2}.',n,cur))}</p>
+    <div class="cv-elenco">${lista.map(e=>`<div class="cv-riga"><b>${esc(e.desc)}</b><span>${esc(tv('{1} contati come {2}',fmtMoney(e.origAmount,e.origCurrency),fmtMoney(e.amount,cur)))}</span></div>`).join('')}</div>
+    <button class="btn btn-grad btn-block" onclick="cambiRicalcola()">${esc(tv('Ricalcola col cambio attuale'))}</button>
+    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="cambiAMano()">${esc(tv('Inserisco io il cambio'))}</button>
+    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="cambiVaBene()">${esc(tv('Va bene così'))}</button>`;
+  openSheet('mCambiVerifica');
+}
+async function cambiRicalcola(){
+  const viaggio=T();if(!viaggio)return;
+  await aggiornaCambi(viaggio.currency||'EUR');
+  let ok=0,attesa=0;
+  speseDaVerificare(viaggio).forEach(e=>{delete e.cambioStato;delete e.cambioManuale;if(applicaCambio(viaggio,e))ok++;else attesa++;});
+  save();renderAll();closeSheet('mCambiVerifica');
+  toast(attesa?tv('Cambio non ancora disponibile, spese in attesa della rete: {1}',attesa):tv('✅ Spese ricalcolate: {1}',ok));
+}
+/* Un cambio per valuta, non uno per spesa: chi ha cambiato yen in banca ha
+   avuto quel cambio per tutto il viaggio. */
+function cambiAMano(){
+  const viaggio=T();if(!viaggio)return;
+  const cur=viaggio.currency||'EUR';
+  const valute=[...new Set(speseDaVerificare(viaggio).map(e=>e.origCurrency))];
+  document.getElementById('cvBody').innerHTML=`<p class="cv-testo">${esc(tv('Scrivi il cambio che hai avuto davvero, per esempio quello della tua banca: vale per tutte le spese da verificare in quella valuta, e non verrà mai cambiato da solo.'))}</p>
+    ${valute.map(v=>{const c=cambioDa(v,cur);return `<div class="fg"><label>${esc(tv('Cambio: quanti {2} vale 1 {1}',v,cur))}</label><input class="cv-cambio" data-valuta="${esc(v)}" type="text" inputmode="decimal" autocomplete="off" placeholder="${c?String(Math.round(c.rate*1e6)/1e6).replace('.',','):''}"></div>`;}).join('')}
+    <button class="btn btn-grad btn-block" onclick="cambiAManoSalva()">${esc(tv('Salva i cambi'))}</button>
+    <button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="apriCambiVerifica()">${esc(tv('‹ Indietro'))}</button>`;
+}
+function cambiAManoSalva(){
+  const viaggio=T();if(!viaggio)return;
+  const per={};
+  document.querySelectorAll('#cvBody .cv-cambio').forEach(i=>{const v=num(i.value);if(v>0)per[i.dataset.valuta]=v;});
+  if(!Object.keys(per).length){toast('Scrivi almeno un cambio');return;}
+  let n=0;
+  speseDaVerificare(viaggio).forEach(e=>{const r=per[e.origCurrency];if(!r)return;
+    e.rate=r;e.amount=e.origAmount*r;e.cambioManuale=true;e.cambioData=Date.now();delete e.cambioStato;n++;});
+  save();renderAll();
+  if(speseDaVerificare(viaggio).length)apriCambiVerifica();else closeSheet('mCambiVerifica');
+  toast(tv('✅ Cambio salvato, spese aggiornate: {1}',n));
+}
+/* "Va bene cosi'" e' una decisione: il cambio 1 diventa un cambio scelto a
+   mano, e nessun controllo lo rimette in discussione. */
+function cambiVaBene(){
+  const viaggio=T();if(!viaggio)return;
+  const lista=speseDaVerificare(viaggio);
+  lista.forEach(e=>{delete e.cambioStato;e.cambioManuale=true;});
+  save();renderAll();closeSheet('mCambiVerifica');
+  toast(tv('Spese lasciate come sono: {1}',lista.length));
 }
 
 /* ===== IN CHE VALUTA LEGGERE I NUMERI =====
@@ -9257,16 +9597,18 @@ async function getRate(from,to){
    che si e' scelto. Quello che c'e' scritto nelle spese non cambia: cambia
    solo come lo si legge. */
 function tassoPronto(from,to){
-  if(from===to)return 1;
-  const c=rateCache[from];
-  if(c&&(Date.now()-c.t)<6*3600*1000&&c.rates&&c.rates[to])return c.rates[to];
-  return null;
+  const c=cambioDa(from,to);
+  return c?c.rate:null;
 }
-let _tassoInCorso='';
+/* Si ridisegna solo se la tabella e' cambiata davvero. Prima si ridisegnava
+   comunque, e il disegno chiedeva di nuovo il cambio: senza rete era un giro
+   senza fine di richieste fallite. */
 function assicuraTasso(from,to,poi){
-  if(!to||from===to||tassoPronto(from,to)!=null||_tassoInCorso===from+to)return;
-  _tassoInCorso=from+to;
-  getRate(from,to).finally(()=>{_tassoInCorso='';if(poi)poi();});
+  if(!to||from===to)return;
+  const c=rateCache[from];
+  if(c&&c.rates&&Date.now()-c.t<CAMBI_DURATA_MS)return;
+  const prima=c?c.t:0;
+  aggiornaCambi(from).then(()=>{const d=rateCache[from];if(poi&&d&&d.t!==prima)poi();});
 }
 /* La valuta in cui si legge adesso. Se il cambio non e' ancora arrivato si
    resta su quella del viaggio: meglio la cifra vera che una inventata. */
@@ -9299,6 +9641,25 @@ function vistaSel(cur){
 }
 let moneySeg='list';
 function setMoney(m){moneySeg=m;renderTricount();}
+/* Una spesa in attesa di cambio si legge nella sua valuta: nella valuta del
+   viaggio la cifra ancora non la sappiamo, e mostrare 0 sarebbe dire una
+   cosa falsa. */
+function importoSpesa(e,cur,vista){
+  if(inAttesa(e))return fmtMoney(e.origAmount,e.origCurrency);
+  return vista?fmtVista(e.amount,cur):fmtMoney(e.amount,cur);
+}
+function etichettaCambio(e){
+  if(inAttesa(e))return `<span class="tag tag-cambio attesa">${esc(tv('cambio in attesa'))}</span>`;
+  if(e&&e.cambioStato==='verifica')return `<span class="tag tag-cambio verifica">${esc(tv('da verificare'))}</span>`;
+  return '';
+}
+/* Totali, saldi e budget non contano le spese in attesa, e lo devono dire:
+   un totale che non torna senza spiegazione fa pensare a un errore. */
+function notaNonIncluse(viaggio){
+  const n=(viaggio.expenses||[]).filter(e=>inAttesa(e)&&e.type!=='transfer').length;
+  if(!n)return '';
+  return `<div class="cambi-nota">${esc(n===1?tv('1 spesa non ancora inclusa (cambio in attesa)'):tv('{1} spese non ancora incluse (cambio in attesa)',n))}</div>`;
+}
 function renderTricount(){
   const t=T(),c=document.getElementById('tricountBody');
   if(!t){c.innerHTML=`<div class="empty"><div class="empty-ic">💸</div><div class="empty-t">Crea un viaggio per dividere le spese</div><button class="btn btn-grad" onclick="openNewTrip()">Nuovo viaggio</button></div>`;return;}
@@ -9321,8 +9682,11 @@ function renderTricount(){
           if(e.type==='transfer'){const f2=t.participants.find(p=>p.id===e.payerId),g2=t.participants.find(p=>p.id===e.splitAmong[0]);return `<div class="exp-row" onclick="delExpense(${e.id})"><div class="cat-ic">↔</div><div class="exp-info"><div class="exp-d">Rimborso</div><div class="exp-meta">${esc(f2?.name||'?')} → ${esc(g2?.name||'?')} · tocca per annullare</div></div><div style="text-align:right"><div class="exp-amt" style="color:var(--green-deep)">${fmtVista(e.amount,cur)}</div></div></div>`;}
           const payer=t.participants.find(p=>p.id===e.payerId),ic=(CATS.find(x=>x.k===e.category)||{i:'🧾'}).i;
           const uamong=[...new Set(e.splitAmong||[])];const mine=me&&uamong.includes(me.id)?e.amount/uamong.length:0;
-          const orig=(e.origCurrency&&e.origCurrency!==cur)?`<span class="exp-orig">${fmtMoney(e.origAmount,e.origCurrency)}</span> · `:'';
-          const q=quoteSpesa(t,e);
+          const attesa=inAttesa(e);
+          const orig=(!attesa&&e.origCurrency&&e.origCurrency!==cur)?`<span class="exp-orig">${fmtMoney(e.origAmount,e.origCurrency)}${e.cambioManuale?' · '+esc(tv('cambio a mano')):''}</span> · `:'';
+          /* In attesa di cambio la spesa non e' ancora nei conti: niente quote
+             da rincorrere, niente "tua parte" - si saprà col cambio. */
+          const q=attesa?{debitori:[],mancanti:[]}:quoteSpesa(t,e);
           /* Quanti devono ancora dare la loro parte. Sul "tutti a posto" si
              scrive, perche' e' l'informazione che si cerca guardando la riga:
              di questa spesa non devo piu' rincorrere nessuno. */
@@ -9330,18 +9694,18 @@ function renderTricount(){
             ?`<div class="exp-manca">${q.mancanti.length===1?'1 persona mancante':q.mancanti.length+' persone mancanti'}</div>`
             :`<div class="exp-manca ok">tutti a posto</div>`):'';
           const tic=q.debitori.length?`<button class="tic-ic ${q.mancanti.length?'':'on'}" title="Chi ha già dato la sua parte" onclick="event.stopPropagation();openSaldoSpesa(${e.id})">✓</button>`:'';
-          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong>${tappaDiSpesa(t,e)}</div></div><div style="text-align:right"><div class="exp-amt">${fmtVista(e.amount,cur)}</div>${mine?`<div class="exp-mine">${tv('tu {1}',fmtVista(mine,cur))}</div>`:'<div class="exp-mine">non tua</div>'}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
+          return `<div class="exp-row" onclick="openExpense(${e.id})"><div class="cat-ic">${ic}</div><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${etichettaCambio(e)}${orig}pagato da <strong>${esc(payer?.name||'?')}</strong>${tappaDiSpesa(t,e)}</div></div><div style="text-align:right"><div class="exp-amt">${importoSpesa(e,cur,true)}</div>${attesa?`<div class="exp-mine">${esc(tv('non ancora nei conti'))}</div>`:(mine?`<div class="exp-mine">${tv('tu {1}',fmtVista(mine,cur))}</div>`:'<div class="exp-mine">non tua</div>')}${manca}</div><div class="exp-btns">${tic}<button class="edit-ic" onclick="event.stopPropagation();openExpense(${e.id})">✎</button></div></div>`;
         }).join('')}</div>`;
       }).join('');
     }
   } else {
-    body=`<div class="section-label">Saldi</div><div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;const inPari=Math.abs(b)<0.01;const quanti=txns.filter(x=>x.from===p.id||x.to===p.id).length;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${inPari?'in pari':(b>0?'deve ricevere':'deve dare')}${(!inPari&&quanti)?` · ${quanti===1?'1 persona':quanti+' persone'}`:''}</div></div></div><div style="display:flex;align-items:center;gap:.5rem"><div class="bal ${b>=0?'pos':'neg'}">${inPari?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div>${inPari?'<span class="tic-ic on">✓</span>':`<button class="tic-ic" title="Segna chi ha pareggiato" onclick="event.stopPropagation();openPareggia(${p.id})">✓</button>`}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
+    body=`<div class="section-label">Saldi</div>${notaNonIncluse(t)}<div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;const inPari=Math.abs(b)<0.01;const quanti=txns.filter(x=>x.from===p.id||x.to===p.id).length;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.name)}${p.isMe?' (tu)':(p._g?' (ospite)':'')}</div><div class="person-tag">${inPari?'in pari':(b>0?'deve ricevere':'deve dare')}${(!inPari&&quanti)?` · ${quanti===1?'1 persona':quanti+' persone'}`:''}</div></div></div><div style="display:flex;align-items:center;gap:.5rem"><div class="bal ${b>=0?'pos':'neg'}">${inPari?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div>${inPari?'<span class="tic-ic on">✓</span>':`<button class="tic-ic" title="Segna chi ha pareggiato" onclick="event.stopPropagation();openPareggia(${p.id})">✓</button>`}</div></div>`;}).join('')}<button class="btn btn-soft btn-block" style="margin-top:.5rem" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
       ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span><button class="tic-ic" style="margin-left:.4rem" title="Segna come pagato" onclick="event.stopPropagation();markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">✓</button></div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
   c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${t.participants.length===1?tv('{1} persona',1):tv('{1} persone',t.participants.length)}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi" (da' un link con dentro l'invito al viaggio, un QR e le due righe per attaccare l'app alla schermata iniziale del telefono)>🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
-    <div class="mh-tot-row"><div class="mh-tot">${fmtVista(total,cur)}</div>${vistaSel(cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtVista(planned,cur)} previste dal gruppo · tua parte ${fmtVista(plannedMine,cur)}</div>`:``}
+    <div class="mh-tot-row"><div class="mh-tot">${fmtVista(total,cur)}</div>${vistaSel(cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${notaNonIncluse(t)}${planned>0?`<div class="mh-lbl" style="opacity:.8">+ ${fmtVista(planned,cur)} previste dal gruppo · tua parte ${fmtVista(plannedMine,cur)}</div>`:``}
     <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?tv('Ti devono {1}',fmtVista(myBal,cur)):tv('Devi {1}',fmtVista(Math.abs(myBal),cur)))}</div></div>
     <div class="seg"><button class="seg-btn ${moneySeg==='list'?'active':''}" onclick="setMoney('list')">Spese</button><button class="seg-btn ${moneySeg==='bal'?'active':''}" onclick="setMoney('bal')">Saldi</button></div>
     ${body}<div style="display:flex;justify-content:center;margin:1.1rem 0 .5rem"><button class="btn btn-grad" style="padding:.95rem 2.4rem" onclick="openExpense()">Aggiungi spesa</button></div>`;
@@ -9658,7 +10022,11 @@ function openExpense(id){
   document.getElementById('expPaid').checked=e?(e.paid!==false):true;
   document.getElementById('expPaidHint').style.display=(e&&e.paid===false)?'block':'none';
   expActSel=e?spesaTappe(e).slice():[];renderExpAct();
-  document.getElementById('expConv').textContent='';updateShare();
+  /* Il cambio a mano si rivede com'era stato scritto; quello automatico no,
+     se no al salvataggio diventerebbe "a mano" senza che nessuno l'abbia
+     deciso. */
+  document.getElementById('expCambio').value=(e&&e.cambioManuale&&e.rate>0)?String(e.rate).replace('.',','):'';
+  document.getElementById('expConv').textContent='';updateConv();
   document.getElementById('expDel').style.display=e?'block':'none';
   openSheet('mExpense');
   setTimeout(()=>document.getElementById('expAmt').focus(),350);
@@ -9740,13 +10108,30 @@ function updateShare(){
   const box=document.getElementById('expShare');if(!box)return;
   box.textContent=(n&&amt)?`${fmtMoney(amt/n,document.getElementById('expCur').value)} a testa · ${n} person${n===1?'a':'e'}`:'';
 }
+/* L'anteprima del cambio sotto la cifra. Dice sempre da dove viene il
+   numero - scritto a mano, o la tabella di quel giorno - e, se il cambio non
+   c'e', dice quello invece di mostrare una cifra inventata. */
+let _convGiro=0;
 async function updateConv(){
   const t=T();if(!t)return;
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value,amt=num(document.getElementById('expAmt').value),box=document.getElementById('expConv');
+  const giro=++_convGiro;
   updateShare();
-  if(!amt||from===cur){box.textContent='';return;}
-  box.textContent='Calcolo il cambio...';const rate=await getRate(from,cur);
-  box.textContent=`≈ ${fmtMoney(amt*rate,cur)} · cambio ${from}→${cur}`;
+  const wrap=document.getElementById('expCambioWrap'),campo=document.getElementById('expCambio');
+  box.classList.remove('attesa');
+  if(from===cur){wrap.style.display='none';box.textContent='';return;}
+  wrap.style.display='';
+  document.getElementById('expCambioLbl').textContent=tv('Cambio: quanti {2} vale 1 {1}',from,cur);
+  const mano=num(campo.value);
+  if(mano>0){box.textContent=amt?tv('≈ {1} · cambio scritto a mano',fmtMoney(amt*mano,cur)):'';return;}
+  let c=cambioDa(from,cur);
+  /* Senza nessuna tabella si prova a scaricarla adesso; con una vecchia la si
+     usa subito e la si aggiorna dietro, senza far aspettare. */
+  if(!c){box.textContent=tv('Cerco il cambio…');await aggiornaCambi(cur);if(giro!==_convGiro)return;c=cambioDa(from,cur);}
+  else aggiornaCambi(cur);
+  campo.placeholder=c?String(Math.round(c.rate*1e6)/1e6).replace('.',','):'';
+  if(!c){box.classList.add('attesa');box.textContent=tv('Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.');return;}
+  box.textContent=amt?tv('≈ {1} · cambio del {2}',fmtMoney(amt*c.rate,cur),dataCambio(c.t)):'';
 }
 const AUTOCURS=['EUR','USD','GBP','JPY','CHF','AUD','CAD','SEK','NOK','DKK','PLN','CZK','HUF','THB','AED','TRY','SGD','HKD','MXN','BRL'];
 function curOpts(defCur){const base=AUTOCURS.includes(defCur)?AUTOCURS:[defCur].concat(AUTOCURS);return base.map(c=>`<option ${c===defCur?'selected':''}>${c}</option>`).join('');}
@@ -9759,25 +10144,38 @@ function catGuess(name){
   if(/shopping|negozio|outlet|boutique/i.test(name||''))return 'Shopping';
   return 'Attrazioni';
 }
+/* Il cambio di una spesa fatta dall'app (hotel, volo, prenotazione), anche
+   quando la tabella non c'e' ancora. Prima chiedeva il cambio e lo scriveva
+   comunque: se la richiesta falliva, il cambio era 1 e restava 1 per sempre.
+   Adesso, se non c'e', la spesa resta in attesa e si riprova dopo aver
+   scaricato la tabella; arrivera' da sola anche col ritorno della rete. */
 async function fixRate(t,eid){
   try{
     const e=t.expenses.find(x=>x.id===eid);if(!e)return;
-    const r=await getRate(e.origCurrency,t.currency||'EUR');
-    if(r){e.rate=r;e.amount=e.origAmount*r;save();renderAll();}
+    if(applicaCambio(t,e))return;
+    await aggiornaCambi(t.currency||'EUR');
+    /* Durante l'attesa la sincronizzazione puo' aver rimesso al suo posto un
+       altro oggetto con lo stesso id: si lavora su quello che c'e' adesso. */
+    const t2=app.trips.find(x=>x.id===t.id)||t,e2=(t2.expenses||[]).find(x=>x.id===eid);
+    if(e2&&inAttesa(e2)&&applicaCambio(t2,e2)){save();renderAll();}
   }catch(err){}
 }
 function setExpAmt(t,e,amount,fromCur){
+  const prima=e.origCurrency;
   e.origAmount=amount;e.origCurrency=fromCur||t.currency||'EUR';
-  if(e.origCurrency===(t.currency||'EUR')){e.rate=1;e.amount=amount;}
-  else fixRate(t,e.id);
+  /* Il cambio scritto a mano valeva per quella valuta: cambiata la valuta,
+     non vale piu'. */
+  if(prima!==e.origCurrency)delete e.cambioManuale;
+  if(!applicaCambio(t,e))fixRate(t,e.id);
 }
 function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,splitAmong){
   const me=t.participants.find(pp=>pp.isMe);
   const fc=fromCur||t.currency||'EUR';
   const e={id:uid(),desc:label,amount:amount,origAmount:amount,origCurrency:fc,rate:1,category:category,payerId:me?me.id:(t.participants[0]?t.participants[0].id:null),splitAmong:(splitAmong&&splitAmong.length)?splitAmong.slice():t.participants.map(pp=>pp.id),date:new Date().toISOString(),paid:!!paidBool};
   if(linkKey)e[linkKey]=linkVal;
+  const pronto=applicaCambio(t,e);
   t.expenses.push(e);
-  if(fc!==(t.currency||'EUR'))fixRate(t,e.id);
+  if(!pronto)fixRate(t,e.id);
   toast((paidBool?'Aggiunta a Soldi: ':'Prevista in Soldi: ')+label);
   return e.id;
 }
@@ -9790,11 +10188,24 @@ async function addExpense(){
   const desc=document.getElementById('expDesc').value.trim()||expCat;
   const payerId=parseInt(document.getElementById('expPayer').value);
   const cur=t.currency||'EUR',from=document.getElementById('expCur').value;
-  let rate=1;if(from!==cur)rate=await getRate(from,cur);
+  const mano=from!==cur?num(document.getElementById('expCambio').value):0;
+  /* Senza nessuna tabella si prova una volta a scaricarla, prima di decidere:
+     se la rete c'e', la spesa nasce gia' col suo cambio. */
+  if(from!==cur&&!(mano>0)&&!cambioDa(from,cur))await aggiornaCambi(cur);
   const dv=document.getElementById('expDate').value;
-  const data={desc,amount:amt*rate,origAmount:amt,origCurrency:from,rate,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked};
-  if(expEditId){const e=t.expenses.find(x=>x.id===expEditId);Object.assign(e,data);setSpesaTappe(e,expActSel);toast('✅ Spesa aggiornata');}
-  else{const e={id:uid(),...data};setSpesaTappe(e,expActSel);t.expenses.push(e);toast('✅ Spesa aggiunta');}
+  const data={desc,origAmount:amt,origCurrency:from,category:expCat,payerId,splitAmong:among,date:dv?dv+'T12:00:00':new Date().toISOString(),paid:document.getElementById('expPaid').checked};
+  const vecchia=expEditId?t.expenses.find(x=>x.id===expEditId):null;
+  const e=vecchia||{id:uid()};
+  Object.assign(e,data);
+  /* Riaprire e salvare una spesa e' una scelta: il "da verificare" se ne va,
+     e il cambio si rifa' con quello che c'e' adesso. Il cambio a mano lo
+     decide il campo: pieno lo mette, vuoto lo toglie. */
+  delete e.cambioStato;
+  if(mano>0){e.rate=mano;e.amount=amt*mano;e.cambioManuale=true;e.cambioData=Date.now();}
+  else{delete e.cambioManuale;applicaCambio(t,e);}
+  setSpesaTappe(e,expActSel);
+  if(!vecchia)t.expenses.push(e);
+  toast(inAttesa(e)?'Spesa salvata: il cambio lo calcolo appena torna la rete':(vecchia?'✅ Spesa aggiornata':'✅ Spesa aggiunta'));
   expEditId=null;save();renderAll();closeSheet('mExpense');
 }
 function delExpense(id){const t=T();confirmDo('Eliminare la spesa?','L\'operazione non si può annullare.',()=>{t.expenses=t.expenses.filter(e=>e.id!==id);t._delExp=t._delExp||{};t._delExp[id]=Date.now();expEditId=null;save();renderAll();closeSheet('mExpense');});}
@@ -9841,7 +10252,7 @@ function renderBudget(){
   document.getElementById('bCnt').textContent=mineCnt;
   const catSum=c=>t.expenses.filter(e=>e.category===c).reduce((s2,e)=>s2+share(e),0);
   const max=Math.max(...cats.map(catSum),1);
-  document.getElementById('catList').innerHTML=cats.map(c=>{const s3=catSum(c);return `<div class="cat" style="cursor:pointer" onclick="openCatExp('${c}')"><div class="cat-l"><div class="cat-ic">${ic[c]}</div><div><div class="cat-n">${c}</div><div class="cat-bar"><div class="cat-bar-fill" style="width:${(s3/max*100).toFixed(0)}%"></div></div></div></div><div class="cat-amt">${fmtVista(s3,cur)}</div></div>`;}).join('');
+  document.getElementById('catList').innerHTML=notaNonIncluse(t)+cats.map(c=>{const s3=catSum(c);return `<div class="cat" style="cursor:pointer" onclick="openCatExp('${c}')"><div class="cat-l"><div class="cat-ic">${ic[c]}</div><div><div class="cat-n">${c}</div><div class="cat-bar"><div class="cat-bar-fill" style="width:${(s3/max*100).toFixed(0)}%"></div></div></div></div><div class="cat-amt">${fmtVista(s3,cur)}</div></div>`;}).join('');
 }
 /* ===== METTERLA SUL TELEFONO =====
    GeppGo e' un sito che si comporta da app, e questo e' il suo punto debole
@@ -10000,6 +10411,7 @@ function confirmJoin(data){
   const trip={id:uid(),name:data.n,destination:data.d||'',currency:data.cu||'EUR',status:'open',start:data.s||'',end:data.e||'',participants,days:[],pois:[],expenses:[],tickets:[],weather:{},createdAt:Date.now(),_shared:true};
   if(data.s&&data.e){const s=new Date(data.s),e=new Date(data.e);for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))trip.days.push({id:uid(),date:d.toISOString().split('T')[0],title:'',activities:[]});}
   app.trips.push(trip);app.currentTripId=trip.id;save();renderAll();closeSheet('mJoin');toast(`✅ Sei entrato in ${data.n}`);go('money');
+  aggiornaCambiViaggi();
 }
 function renderTripsList(){
   const open=app.trips.filter(t=>t.status!=='closed'),closed=app.trips.filter(t=>t.status==='closed');
@@ -10022,7 +10434,7 @@ function openDetail(id){
     <button class="btn btn-soft btn-block" style="margin-bottom:1.2rem" onclick="closeSheet('mDetail');apriRicordo(${t.id})">📖 Il ricordo del viaggio</button>
     <div class="detail-sec"><h4>📅 Itinerario</h4>${t.days.length?t.days.map((d,i)=>{const ds=new Date(d.date).toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'});return `<div class="detail-day"><div class="detail-day-t">${tv('G{1}',i+1)} · ${esc(d.title||ds)}</div>${(d.activities||[]).length?d.activities.map(a=>`<div class="detail-act"><span>${a.completed?'✅':'•'}</span><span>${a.time?'<strong>'+a.time+'</strong> ':''}${esc(a.name)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink-faint)">Nessuna attività</div>'}</div>`;}).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun giorno</div>'}</div>
     <div class="detail-sec"><h4>📍 Luoghi salvati</h4>${t.pois.length?t.pois.map(p=>`<div class="detail-act"><span>${p.priority==='essential'?'⭐':'🔵'}</span><span>${esc(p.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun luogo</div>'}</div>
-    <div class="detail-sec"><h4>💸 Spese (${cur})</h4>${t.expenses.length?t.expenses.map(e=>{const p=t.participants.find(x=>x.id===e.payerId);return `<div class="exp-row" style="padding:.5rem 0"><div class="exp-info"><div class="exp-d" style="font-size:.85rem">${esc(e.desc)}</div><div class="exp-meta">${e.category} · ${esc(p?.name||'?')}</div></div><div class="exp-amt">${fmtMoney(e.amount,cur)}</div></div>`;}).join('')+(txns.length?'<div style="margin-top:.6rem">'+txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle" style="font-size:.82rem"><span><strong>${esc(f.name)}</strong> → <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span></div>`;}).join('')+'</div>':''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessuna spesa</div>'}</div>
+    <div class="detail-sec"><h4>💸 Spese (${cur})</h4>${t.expenses.length?t.expenses.map(e=>{const p=t.participants.find(x=>x.id===e.payerId);return `<div class="exp-row" style="padding:.5rem 0"><div class="exp-info"><div class="exp-d" style="font-size:.85rem">${esc(e.desc)}</div><div class="exp-meta">${etichettaCambio(e)}${e.category} · ${esc(p?.name||'?')}</div></div><div class="exp-amt">${importoSpesa(e,cur,false)}</div></div>`;}).join('')+(txns.length?'<div style="margin-top:.6rem">'+txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle" style="font-size:.82rem"><span><strong>${esc(f.name)}</strong> → <strong>${esc(to.name)}</strong></span><span style="margin-left:auto;font-weight:800;color:var(--green-deep)">${fmtMoney(x.amount,cur)}</span></div>`;}).join('')+'</div>':''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessuna spesa</div>'}</div>
     <div class="detail-sec"><h4>🎫 Biglietti</h4>${t.tickets.length?t.tickets.map(tk=>`<div class="detail-act"><span>🎫</span><span>${esc(tk.name)}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-faint)">Nessun biglietto</div>'}</div>
     <div style="display:flex;gap:.5rem;margin-top:1.3rem"><button class="btn btn-grad" style="flex:1" onclick="openTripFromDetail(${t.id})">↗️ Apri</button>${t.status==='closed'?`<button class="btn btn-soft" onclick="reopenFromDetail(${t.id})">✅ Riapri</button>`:`<button class="btn btn-soft" onclick="closeFromDetail(${t.id})">🏁 Concludi</button>`}<button class="btn btn-danger" onclick="askDeleteTrip(${t.id})" title="${t.cid&&!t._admin?'Esci dal viaggio':'Elimina'}">${t.cid&&!t._admin?'🚪':'🗑️'}</button></div>`;
   openSheet('mDetail');
@@ -10983,7 +11395,7 @@ function renderAdExpList(){
        due cose che uno si chiede guardandola da dentro una tappa. */
     const n=[...new Set(e.splitAmong||[])].length;
     const altre=spesaTappe(e).filter(x=>x!==actId).length;
-    return `<div class="tk-mini" style="text-align:left;padding:.6rem .8rem"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="unlinkAdExpense(${e.id})">✕</button><div style="font-weight:700;font-size:.85rem;padding-right:1.8rem">${esc(e.desc)}</div><div style="font-size:.76rem;color:var(--ink-faint);margin-top:.15rem">${fmtVista(e.amount,cur)} · divisa fra ${n} ${n===1?'persona':'persone'} · ${String(e.date||'').split('T')[0]}${altre?` · anche su ${altre===1?'un\'altra tappa':altre+' altre tappe'}`:''}</div></div>`;
+    return `<div class="tk-mini" style="text-align:left;padding:.6rem .8rem"><button class="x" style="position:absolute;top:.4rem;right:.4rem;width:26px;height:26px;font-size:.75rem" onclick="unlinkAdExpense(${e.id})">✕</button><div style="font-weight:700;font-size:.85rem;padding-right:1.8rem">${esc(e.desc)}</div><div style="font-size:.76rem;color:var(--ink-faint);margin-top:.15rem">${importoSpesa(e,cur,true)} · divisa fra ${n} ${n===1?'persona':'persone'} · ${String(e.date||'').split('T')[0]}${altre?` · anche su ${altre===1?'un\'altra tappa':altre+' altre tappe'}`:''}</div></div>`;
   }).join('');
 }
 function renderAdExpPick(){
@@ -10992,7 +11404,7 @@ function renderAdExpPick(){
   /* Si offrono anche le spese gia' agganciate altrove: la stessa spesa puo'
      servire a piu' tappe. Si escludono solo quelle gia' su questa. */
   const opts=t.expenses.filter(e=>e.type!=='transfer'&&!spesaTappe(e).includes(actId)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  sel.innerHTML='<option value="">Nessuna spesa da collegare</option>'+opts.map(e=>`<option value="${e.id}">${esc(e.desc)} · ${fmtVista(e.amount,t.currency||'EUR')} · ${String(e.date||'').split('T')[0]}</option>`).join('');
+  sel.innerHTML='<option value="">Nessuna spesa da collegare</option>'+opts.map(e=>`<option value="${e.id}">${esc(e.desc)} · ${importoSpesa(e,t.currency||'EUR',true)} · ${String(e.date||'').split('T')[0]}</option>`).join('');
 }
 function linkAdExpense(){
   const t=T(),sel=document.getElementById('adExpPick');if(!t||!sel)return;
@@ -16756,6 +17168,9 @@ async function pullCloud(){
     localStorage.setItem('geppgo2',JSON.stringify(app));
     renderAll();identityCheck();
     scheduleSync();
+    /* Un viaggio arrivato dal cloud puo' portare una valuta nuova, o spese in
+       attesa che qui hanno gia' la tabella per diventare spese vere. */
+    aggiornaCambiViaggi();
   }catch(e){}
 }
 function handleRealtimeChange(payload){
@@ -16801,6 +17216,7 @@ function handleRealtimeChange(payload){
   localStorage.setItem('geppgo2',JSON.stringify(app));
   renderAll();
   scheduleSync();
+  aggiornaCambiViaggi();
 }
 function subscribeRT(){
   if(rtChan){try{sb.removeChannel(rtChan);}catch(e){}rtChan=null;}
@@ -18411,7 +18827,7 @@ function openCatExp(cat){
   const rows=t.expenses.filter(e=>e.type!=='transfer'&&e.category===cat).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   document.getElementById('catExpList').innerHTML=rows.length?rows.map(e=>{
     const pay=t.participants.find(pp=>pp.id===e.payerId);
-    return `<div class="exp-row" onclick="closeSheet('mCatExp');setTimeout(()=>openExpense(${e.id}),160)"><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${String(e.date||'').split('T')[0]} · ${pay?esc(pay.name):'—'}</div></div><div style="text-align:right"><div class="exp-a">${fmtMoney(e.amount,cur)}</div></div><button class="edit-ic" onclick="event.stopPropagation();closeSheet('mCatExp');setTimeout(()=>openExpense(${e.id}),160)">✎</button></div>`;
+    return `<div class="exp-row" onclick="closeSheet('mCatExp');setTimeout(()=>openExpense(${e.id}),160)"><div class="exp-info"><div class="exp-d">${esc(e.desc)}</div><div class="exp-meta">${e.paid===false?'<span class="tag" style="background:var(--clay-tint);color:var(--clay-deep);margin-right:.35rem">prevista</span>':''}${etichettaCambio(e)}${String(e.date||'').split('T')[0]} · ${pay?esc(pay.name):'—'}</div></div><div style="text-align:right"><div class="exp-a">${importoSpesa(e,cur,false)}</div></div><button class="edit-ic" onclick="event.stopPropagation();closeSheet('mCatExp');setTimeout(()=>openExpense(${e.id}),160)">✎</button></div>`;
   }).join(''):`<div class="empty" style="padding:1.2rem"><div class="empty-t">Nessuna spesa in ${esc(cat)}</div></div>`;
   openSheet('mCatExp');
 }
@@ -18555,7 +18971,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-06 13:50';
+const VERSIONE_APP='2026-10-06 19:16';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -19844,7 +20260,10 @@ function renderAll(){
      di testo, e in cambio ogni frase che si aggiunge al dizionario arriva
      dappertutto senza dover toccare i punti in cui viene scritta. In italiano
      non fa niente ed esce subito. */
-  traduciPagina();}
+  traduciPagina();
+  /* Le spese col cambio sbagliato si guardano quando il viaggio si apre, ed
+     e' il disegno che lo sa: si controlla dopo, una volta per viaggio. */
+  const tc=T();if(tc&&!cambiControllati.has(tc.id))setTimeout(controllaCambiDaVerificare,700);}
 
 </script>
 </body>

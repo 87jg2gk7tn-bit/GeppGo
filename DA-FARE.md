@@ -797,6 +797,23 @@ qualcuno che risponde".
   `execCommand('copy')` su un campo di sola lettura fuori schermo, selezionato
   con `setSelectionRange`; se non va nemmeno quello, il testo a schermo già
   selezionato. Mai dire «copiato» senza averlo copiato (`copyShare`).
+- **⚠️ Un cambio che manca non vale 1.** Senza rete e senza un cambio preso
+  nelle ultime sei ore, `getRate` restituiva 1 e la spesa si salvava così per
+  sempre: 10.000 yen diventavano 10.000 euro, e l'anteprima scriveva già
+  «≈ €10.000,00». Adesso (blocco «I CAMBI»): una tabella per la valuta di ogni
+  viaggio, presa con una chiamata all'apertura, creando un viaggio, al ritorno
+  della rete e quando arriva un viaggio dal cloud; le sei ore dicono quando
+  aggiornarla, mai quando buttarla. Se il cambio non c'è, la spesa resta
+  «cambio in attesa» (`cambioStato:'attesa'`, `amount` a 0 così nessuna somma
+  la conta per sbaglio, la cifra vera in `origAmount`) e ci entra da sola
+  quando arriva la tabella. Il cambio scritto a mano (`cambioManuale`) non lo
+  tocca più niente. Le spese vecchie in un'altra valuta con cambio esattamente
+  1 si segnano «da verificare» e si chiede all'apertura del viaggio, senza
+  toccare la cifra: qualche valuta è davvero alla pari. Chi aggiunge una somma
+  nuova sulle spese deve passare da `importoSpesa` per mostrarle, non da
+  `e.amount`, se no una spesa in attesa si legge «€0,00». Il viaggio non ha un
+  modo di cambiare valuta dopo la creazione: se un giorno ce l'avrà, le spese
+  vanno ripassate da `applicaCambio`. `prova-cambi`.
 
 - **Supermarket, farmacia, ristorante, bar: le voci nuove del «qui intorno»
   non cercano per nome, e il giro più stretto è di 500 metri.** Stesso
