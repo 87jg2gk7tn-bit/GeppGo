@@ -771,6 +771,33 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ Un link non deve poter scegliere il server.** Un invito
+  «#join2=…~base64(url|chiave)» o un indirizzo «#c=…» impostavano e
+  SALVAVANO un Supabase qualsiasi: bastava un link finto in chat perché email,
+  password e viaggi di chi lo apriva finissero su un server altrui, anche alle
+  aperture successive. Adesso il server del link si confronta (per origine,
+  non per stringa) con quello in uso — di serie, o scelto a mano da «Usa un
+  cloud tuo» — e se è diverso il link si ignora con «Questo invito non è
+  valido». Vale all'avvio, in «Ho un codice» e nel campo «Ti hanno mandato un
+  link?» di «Configura cloud»; la chiave del link non si usa mai. Due cose da
+  sapere: le finestre stanno SOTTO la schermata di accesso (9999 contro
+  20000), quindi un avviso per chi apre un invito senza account va alzato
+  (`#mConfirm.sopra-accesso`), se no non lo vede nessuno; e una configurazione
+  salvata da un link finto prima di questa correzione non si distingue da una
+  scelta a mano, quindi resta. `prova-inviti`.
+- **Una funzione chiamata e mai definita non la vede nessuno finché qualcuno
+  non tocca il tasto.** `copyText` mancava da settimane: «Copia il link» e
+  «Copia il codice» davano errore e non copiavano niente, e nessuna prova
+  toccava quei tasti. Si trovano con un parser vero (acorn sui tre blocchi di
+  script, più i gestori `on…=` scritti nei template), non con le espressioni
+  regolari. All'ultimo giro ne resta una sola: `saveFl`, dentro
+  `searchFlights`, che nessuno chiama più.
+- **Copiare negli appunti su iPhone vuole tre strade.** `navigator.clipboard`
+  subito nel tocco (Safari lo rifiuta dopo un'attesa); se manca o è rifiutato,
+  `execCommand('copy')` su un campo di sola lettura fuori schermo, selezionato
+  con `setSelectionRange`; se non va nemmeno quello, il testo a schermo già
+  selezionato. Mai dire «copiato» senza averlo copiato (`copyShare`).
+
 - **Supermarket, farmacia, ristorante, bar: le voci nuove del «qui intorno»
   non cercano per nome, e il giro più stretto è di 500 metri.** Stesso
   metodo delle sei (mappa, ricerca veloce se arranca, scala che si allarga a
