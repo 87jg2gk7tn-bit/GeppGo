@@ -292,7 +292,7 @@ async function apri(browser, lingua, linguaTelefono) {
     'Check-in', 'Check-out', '💾 Backup', '1 km', 'PDF', 'QR', 'Go', 'ok', 'OK',
     'Italiano', 'English', 'Español', 'Français', 'Português',
     'Project URL', 'Project Settings > API', 'https://...', 'tu@esempio.it',
-    'es. MXP', 'es. NRT', 'q@x.it', 'GeppGo · build r91', 'build r91',
+    'es. MXP', 'es. NRT', 'q@x.it',
     'Marco', 'https://xxxxx.supabase.co',
     'merati.giacomo94@gmail.com',
     "Louvre\nMusée d'Orsay\nSainte-Chapelle"
