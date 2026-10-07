@@ -21,7 +21,11 @@
       in ordine;
    9. la registrazione passa emailRedirectTo; sull'origine di Pages vale la
       costante, altrove l'indirizzo calcolato;
-   10. i testi nuovi in cinque lingue. */
+   10. i testi nuovi in cinque lingue.
+   E il recupero della password, obbligatorio (R1-R7): dopo un link o un
+   codice di recupero il foglio non ha la croce, non si chiude e copre tutto;
+   «Annulla» fa uscire; dopo una ricarica torna; salvata la password si esce
+   dagli altri dispositivi; l'accesso normale non lo apre; le lingue. */
 const fs = require('fs');
 const path = require('path');
 const { apriBrowser, APP, RADICE } = require('./browser');
@@ -50,9 +54,14 @@ const SUPA_FINTO = `(()=>{
   const reg=window.__supa={opzioni:null,chiamate:[]};
   const vuoto={data:[],error:null};
   const catena=()=>{const f=function(){};const p=new Proxy(f,{get:(t,k)=>k==='then'?(ok=>ok(vuoto)):(()=>p),apply:()=>p});return p;};
-  const ascolta=[];let sess=null;
+  const ascolta=[];
+  /* La sessione sta in localStorage, come la tiene la libreria vera: cosi'
+     una ricarica la ritrova. */
+  const CHIAVE='sb-cyolhqndurgwbivxcssf-auth-token';
+  let sess=null;try{sess=JSON.parse(localStorage.getItem(CHIAVE)||'null');}catch(e){}
   const utente={id:'u-1',email:'${EMAIL}'};
-  const entra=s=>{sess=s;ascolta.forEach(cb=>{try{cb('SIGNED_IN',s);}catch(e){}});};
+  const avvisa=(ev,s)=>ascolta.forEach(cb=>{try{cb(ev,s);}catch(e){}});
+  const entra=(s,ev)=>{sess=s;try{localStorage.setItem(CHIAVE,JSON.stringify(s));}catch(e){}avvisa(ev||'SIGNED_IN',s);};
   const si=s=>({data:{user:s.user,session:s},error:null});
   const no=m=>({data:{user:null,session:null},error:{message:m}});
   const auth={
@@ -61,13 +70,17 @@ const SUPA_FINTO = `(()=>{
     async setSession(t){reg.chiamate.push(['setSession',t]);if(t.access_token==='scaduto')return no('Invalid JWT');const s={access_token:t.access_token,refresh_token:t.refresh_token,user:utente};entra(s);return si(s);},
     async verifyOtp(a){reg.chiamate.push(['verifyOtp',a]);const g=window.__giusto||{};
       const va=(a.token_hash&&a.token_hash===g.token_hash&&a.type===g.type)||(a.token&&a.token===g.token&&a.type===g.type&&a.email===g.email);
-      if(!va)return no('Token has expired or is invalid');const s={access_token:'x',refresh_token:'y',user:utente};entra(s);return si(s);},
+      if(!va)return no('Token has expired or is invalid');const s={access_token:'x',refresh_token:'y',user:utente};
+      entra(s,a.type==='recovery'?'PASSWORD_RECOVERY':'SIGNED_IN');return si(s);},
+    async signInWithPassword(a){reg.chiamate.push(['signInWithPassword',a]);if(a.password!=='giusta123')return no('Invalid login credentials');
+      const s={access_token:'pw',refresh_token:'pw',user:utente};entra(s);return si(s);},
     async resetPasswordForEmail(e,o){reg.chiamate.push(['resetPasswordForEmail',e,o]);return{data:{},error:null};},
     async signInWithOtp(a){reg.chiamate.push(['signInWithOtp',a]);return{data:{},error:null};},
     async signUp(a){reg.chiamate.push(['signUp',a]);return{data:{user:{id:'u-2',email:a.email,identities:[{id:'i'}]},session:null},error:null};},
     async resend(a){reg.chiamate.push(['resend',a]);return{data:{},error:null};},
-    async updateUser(a){return{data:{user:utente},error:null};},
-    async signOut(){sess=null;return{error:null};},
+    async updateUser(a){reg.chiamate.push(['updateUser',a]);return{data:{user:utente},error:null};},
+    async signOut(o){reg.chiamate.push(['signOut',o||null]);if(o&&o.scope==='others')return{error:null};
+      sess=null;try{localStorage.removeItem(CHIAVE);}catch(e){}avvisa('SIGNED_OUT',null);return{error:null};},
     async exchangeCodeForSession(){return no('no');}
   };
   const client=new Proxy({auth},{get:(t,k)=>k in t?t[k]:(k==='then'?undefined:catena())});
@@ -341,6 +354,118 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
       await p.close();
     }
     ok('10. il link scaduto e «Ho un codice» si leggono in ogni lingua', !viste.some(v => /non tradotto/.test(v)), viste.join(' | '));
+  });
+
+  /* ── R. IL RECUPERO DELLA PASSWORD, OBBLIGATORIO ─────────────────────────
+     Provato su iPhone: aperto il link di recupero, la croce chiudeva il
+     foglio «Nuova password» e si restava dentro senza averla cambiata. */
+  const foglioPw = p => p.evaluate(() => {
+    const m = document.getElementById('mNewPass'), x = m.querySelector('.x-close'), g = m.querySelector('.sheet-grip'), r = m.getBoundingClientRect();
+    const fondo = getComputedStyle(m).backgroundColor, alfa = /rgba\([^)]*,\s*([\d.]+)\)/.exec(fondo);
+    return { attivo: m.classList.contains('active'), obbligatorio: m.classList.contains('obbligatorio'),
+      croce: !!x && x.offsetParent !== null, maniglia: !!g && g.offsetParent !== null,
+      copre: r.top <= 0 && r.left <= 0 && r.right >= innerWidth && r.bottom >= innerHeight, pieno: !alfa || +alfa[1] === 1,
+      segno: !!localStorage.getItem('geppgo2_recupero') };
+  });
+  const dietroSiVede = p => p.evaluate(() => {
+    const m = document.getElementById('mNewPass');
+    return [[10, 10], [innerWidth / 2, 70], [innerWidth - 12, innerHeight / 3], [20, innerHeight - 20]].filter(([x, y]) => !m.contains(document.elementFromPoint(x, y))).length;
+  });
+  await prova('R1-R4', async () => {
+    let p = await apri(browser, { hash: linkMail('recovery') });
+    await p.waitForTimeout(600);
+    let f = await foglioPw(p);
+    await p.mouse.click(8, 8);                       // un tocco sul fondo
+    await p.waitForTimeout(400);
+    await p.evaluate(() => closeSheet('mNewPass'));  // la strada di ogni altra chiusura
+    await p.goBack().catch(() => {});                // il gesto indietro
+    await p.waitForTimeout(500);
+    /* Col codice di prima il gesto indietro portava via dalla pagina: il
+       foglio non c'e' piu', e la prova lo deve dire, non fermarsi. */
+    const resta = await p.evaluate(() => { const m = document.getElementById('mNewPass'); return !!m && m.classList.contains('active'); }).catch(() => false);
+    const dietro = resta ? await dietroSiVede(p) : -1;
+    ok('R1. link di recupero: foglio obbligatorio, senza croce né maniglia', f.attivo && f.obbligatorio && !f.croce && !f.maniglia && f.segno, JSON.stringify(f));
+    ok('R1. non si chiude toccando fuori, né da codice, né col gesto indietro', resta, String(resta));
+    ok('R1. e copre tutto, con un fondo pieno: dietro non si vede niente', f.copre && f.pieno && dietro === 0, JSON.stringify({ copre: f.copre, pieno: f.pieno, puntiScoperti: dietro }));
+    await p.click('#mNewPass button.np-obbligo');
+    await p.waitForTimeout(600);
+    let s = await p.evaluate(() => ({ uscite: window.__supa.chiamate.filter(c => c[0] === 'signOut').map(c => c[1]), dentro: !!session,
+      gate: getComputedStyle(document.getElementById('authGate')).display, segno: !!localStorage.getItem('geppgo2_recupero'),
+      foglio: document.getElementById('mNewPass').classList.contains('active'), sessioneNelTelefono: !!localStorage.getItem('sb-cyolhqndurgwbivxcssf-auth-token') }));
+    ok('R2. «Annulla» fa uscire dall\'account', s.uscite.length === 1 && s.uscite[0] === null && !s.dentro && !s.sessioneNelTelefono && s.gate === 'flex' && !s.segno && !s.foglio, JSON.stringify(s));
+    await p.close();
+
+    p = await apri(browser, { hash: linkMail('recovery') });
+    await p.waitForTimeout(600);
+    await p.reload({ waitUntil: 'domcontentloaded' });
+    await p.waitForFunction(() => typeof window.renderAll === 'function' && !document.getElementById('bootSplash'), null, { timeout: 30000 });
+    await p.waitForTimeout(1500);
+    f = await foglioPw(p);
+    ok('R3. ricaricata prima di salvare: il foglio obbligatorio ricompare', f.attivo && f.obbligatorio && !f.croce && f.segno && f.copre, JSON.stringify(f));
+    await p.fill('#npPass', 'nuova-segreta');
+    await p.click('#mNewPass .btn-grad');
+    await p.waitForTimeout(800);
+    s = await p.evaluate(() => ({ aggiornata: window.__supa.chiamate.filter(c => c[0] === 'updateUser').map(c => c[1].password),
+      uscite: window.__supa.chiamate.filter(c => c[0] === 'signOut').map(c => c[1]), segno: !!localStorage.getItem('geppgo2_recupero'),
+      foglio: document.getElementById('mNewPass').classList.contains('active'), dentro: !!session, toast: window.__toast.slice() }));
+    ok('R4. «Salva nuova password»: aggiornata, segno cancellato, fuori dagli altri dispositivi, e lo dice',
+       s.aggiornata.join() === 'nuova-segreta' && !s.segno && !s.foglio && s.dentro && s.uscite.length === 1 && s.uscite[0] && s.uscite[0].scope === 'others'
+       && s.toast.includes('Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.'), JSON.stringify(s));
+    await p.close();
+  });
+
+  await prova('R5', async () => {
+    const p = await apri(browser, { ls: { geppgo2_richiesta_email: JSON.stringify({ tipo: 'recovery', email: EMAIL, t: Date.now() }) },
+      giusto: { token: '123456', type: 'recovery', email: EMAIL } });
+    await p.evaluate(() => { auVai('in'); openRecPanel(false); });
+    await p.fill('#auCode', '123456');
+    await p.click('#auRec .btn-grad');
+    await p.waitForTimeout(900);
+    const f = await foglioPw(p);
+    await p.mouse.click(8, 8);
+    await p.waitForTimeout(400);
+    const resta = await p.evaluate(() => document.getElementById('mNewPass').classList.contains('active'));
+    ok('R5. recupero col codice a 6 cifre: stesso foglio obbligatorio', f.attivo && f.obbligatorio && !f.croce && f.segno && f.copre && resta, JSON.stringify(f));
+    await p.close();
+  });
+
+  await prova('R6', async () => {
+    const p = await apri(browser);
+    await p.evaluate(e => { auVai('in'); document.getElementById('auEmail').value = e; document.getElementById('auPass').value = 'giusta123'; }, EMAIL);
+    await p.click('#auBtnIn');
+    await p.waitForTimeout(800);
+    const f = await foglioPw(p);
+    const dentro = await p.evaluate(() => !!session);
+    ok('R6. accesso normale con email e password: nessun foglio obbligatorio', dentro && !f.attivo && !f.obbligatorio && !f.segno, JSON.stringify({ dentro, ...f }));
+    /* E «Cambia password» dal Profilo resta il foglio libero. */
+    await p.evaluate(() => openNewPass());
+    await p.waitForTimeout(400);
+    const libero = await foglioPw(p);
+    await p.click('#mNewPass .x-close');
+    await p.waitForTimeout(500);
+    const chiuso = await p.evaluate(() => !document.getElementById('mNewPass').classList.contains('active'));
+    ok('R6. «Cambia password» dal Profilo resta chiudibile', libero.attivo && !libero.obbligatorio && libero.croce && chiuso, JSON.stringify({ ...libero, chiuso }));
+    await p.close();
+  });
+
+  await prova('R7', async () => {
+    let p = await apri(browser, { stato: viaggio({ skipAuth: true }) });
+    const d = await p.evaluate(() => {
+      const it = Object.keys(DIZIONARIO_RECUPERO.en), buchi = [];
+      ['en', 'es', 'fr', 'pt'].forEach(l => it.forEach(k => { const v = DIZIONARIO_RECUPERO[l][k]; if (!v || v === k || DIZIONARIO[l][k] !== v) buchi.push(l + ': ' + k); }));
+      return { n: it.length, buchi };
+    });
+    ok('R7. le frasi nuove ci sono in inglese, spagnolo, francese e portoghese', d.n >= 4 && !d.buchi.length, d.buchi.slice(0, 3).join(' | ') || d.n + ' frasi');
+    await p.close();
+    const viste = [];
+    for (const [l, salva, annulla] of [['en', 'Save new password', 'Cancel'], ['es', 'Guardar nueva contraseña', 'Cancelar'], ['fr', 'Enregistrer le nouveau mot de passe', 'Annuler'], ['pt', 'Guardar nova palavra-passe', 'Cancelar']]) {
+      p = await apri(browser, { hash: linkMail('recovery'), lingua: l });
+      await p.waitForTimeout(600);
+      const t = await p.evaluate(() => ({ testo: document.querySelector('#mNewPass p.np-obbligo').textContent, salva: document.querySelector('#mNewPass .btn-grad').textContent, annulla: document.querySelector('#mNewPass button.np-obbligo').textContent }));
+      viste.push(`${l}: ${t.salva} / ${t.annulla}` + (t.salva !== salva || t.annulla !== annulla || /Sei entrato/.test(t.testo) ? '  ← non tradotto' : ''));
+      await p.close();
+    }
+    ok('R7. il foglio obbligatorio si legge in ogni lingua', !viste.some(v => /non tradotto/.test(v)), viste.join(' | '));
   });
 
   ok('nessun errore in pagina', !errori.length, errori.slice(0, 3).join(' | '));

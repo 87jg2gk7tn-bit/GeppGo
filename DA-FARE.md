@@ -795,6 +795,23 @@ qualcuno che risponde".
   sull'origine di Pages, e va scritto **identico** (con `%20`) fra le
   Redirect URLs di Supabase, se no Supabase lo scarta senza dirlo e manda
   alla Site URL. `prova-link-email`.
+- **⚠️ Il recupero della password si poteva saltare con la croce.** Provato
+  su iPhone: aperto il link di recupero, la X chiudeva «Nuova password» e si
+  restava dentro senza averla cambiata (chi ha in mano la mail ha l'account).
+  Ora una sessione nata da un recupero (link, codice a 6 cifre o evento
+  `PASSWORD_RECOVERY`) rende il foglio **obbligatorio** (`obbligaNuovaPassword`,
+  classe `obbligatorio`): niente croce né maniglia, fondo pieno sopra tutto,
+  anche sopra la schermata d'accesso, e solo «Salva nuova password» o
+  «Annulla» (che fa uscire). Si ferma in tre punti: `closeSheet` lo rifiuta
+  (ci passano il tocco fuori, il trascinamento e ogni altra chiusura), il
+  gesto indietro trova uno stato in più nella cronologia (`pushState`, e
+  `popstate` lo rimette), e il segno `geppgo2_recupero` nel telefono lo fa
+  ricomparire dopo una ricarica: `PASSWORD_RECOVERY` arriva una volta sola.
+  Il segno vale solo per l'account che l'ha messo (`uid`): senza sessione o
+  con un altro account si butta. Dopo il salvataggio si esce dagli altri
+  dispositivi (`signOut({scope:'others'})`) e il messaggio lo dice. «Cambia
+  password» dal Profilo resta il foglio libero di prima. `prova-link-email`
+  R1–R7.
 - **Una prova che passa la mattina e cade il pomeriggio.** La time-table si
   apre sull'ora di adesso: `prova-tempi` trascinava col mouse la tappa delle
   10, che dopo mezzogiorno sta sopra la vista, e il dito non la prendeva.

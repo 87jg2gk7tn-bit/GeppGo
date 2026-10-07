@@ -672,6 +672,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 /* L'avviso del link non valido sta sopra la schermata di accesso: chi apre
    un invito senza account se la trova davanti (vedi avvisaLinkNonValido). */
 #mConfirm.sopra-accesso{z-index:20001}
+/* Il foglio della password nuova dopo un recupero: copre tutto, subito, con
+   un fondo pieno. Dietro c'e' un account in cui si e' appena entrati con un
+   link: chi l'ha toccato senza averlo chiesto non deve vederci niente. */
+#mNewPass .np-obbligo{display:none}
+#mNewPass.obbligatorio{background:var(--paper);-webkit-backdrop-filter:none;backdrop-filter:none;z-index:20002;transition:none}
+#mNewPass.obbligatorio .sheet{transition:none}
+#mNewPass.obbligatorio p.np-obbligo{display:block}
+#mNewPass.obbligatorio button.np-obbligo{display:inline-flex}
+#mNewPass.obbligatorio .np-libera,#mNewPass.obbligatorio .x-close,#mNewPass.obbligatorio .sheet-grip{display:none}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-xl);padding:1.7rem 1.4rem;box-shadow:var(--sh-md)}
 .auth-brand{display:flex;align-items:center;gap:.6rem;justify-content:center;margin-bottom:1.2rem}
 .auth-link{background:none;border:none;font-family:inherit;font-size:.8rem;font-weight:700;color:var(--ink-faint);cursor:pointer;display:block;margin:1rem auto 0;text-decoration:underline;text-underline-offset:3px}
@@ -2634,10 +2643,16 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mNewPass"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Scegli la nuova password</div><button class="x x-close" onclick="closeSheet('mNewPass')">✕</button></div>
-  <p style="font-size:.85rem;color:var(--ink-soft);line-height:1.55;margin-bottom:1rem">Sei entrato dal link dell'email: scegli qui la nuova password. Da questo momento accedi ovunque con quella.</p>
+  <!-- Due modi. Libero, dal Profilo («Cambia password»): si chiude quando si
+       vuole. Obbligatorio, dopo un recupero (vedi IL RECUPERO DELLA PASSWORD,
+       OBBLIGATORIO): niente croce, copre tutto, e si esce solo salvando o con
+       «Annulla», che fa uscire dall'account. -->
+  <p class="np-libera" style="font-size:.85rem;color:var(--ink-soft);line-height:1.55;margin-bottom:1rem">Da questo momento accederai ovunque con la nuova password.</p>
+  <p class="np-obbligo" style="font-size:.85rem;color:var(--ink-soft);line-height:1.55;margin-bottom:1rem">Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l'hai chiesto tu, tocca «Annulla».</p>
   <div class="fg"><label>Nuova password</label><input id="npPass" type="password" autocomplete="new-password" placeholder="Minimo 6 caratteri"></div>
   <div id="npMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
-  <button class="btn btn-grad btn-block" onclick="saveNewPass()">Salva password</button>
+  <button class="btn btn-grad btn-block" onclick="saveNewPass()">Salva nuova password</button>
+  <button class="btn btn-soft btn-block np-obbligo" style="margin-top:.5rem" onclick="annullaRecupero()">Annulla</button>
 </div></div>
 <div class="modal" id="mGen"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3337,7 +3352,7 @@ const DIZIONARIO_SCHERMATE={
     'Aggiungi tutti':'Add everyone','Condividi viaggio':'Share trip','Entra nel viaggio':'Join the trip',
     'Torna alla home':'Back to home','Codice invito':'Invite code','Nome compagno':'Travel mate’s name',
     'Il tuo nome':'Your name','Come ti chiami':'What’s your name','Salva luogo':'Save place',
-    'Modifica luogo':'Edit place','Salva password':'Save password','Nuova password':'New password',
+    'Modifica luogo':'Edit place','Nuova password':'New password',
     'Conferma password':'Confirm password',
     'Minimo 6 caratteri':'At least 6 characters','Tema scuro':'Dark theme','Tema chiaro':'Light theme',
     'Calendario':'Calendar','Navigatore':'Navigation app','Autopilota':'Autopilot',
@@ -3400,7 +3415,7 @@ const DIZIONARIO_SCHERMATE={
     'Aggiungi tutti':'Añadir a todos','Condividi viaggio':'Compartir viaje','Entra nel viaggio':'Entrar en el viaje',
     'Torna alla home':'Volver al inicio','Codice invito':'Código de invitación','Nome compagno':'Nombre del compañero',
     'Il tuo nome':'Tu nombre','Come ti chiami':'¿Cómo te llamas?','Salva luogo':'Guardar lugar',
-    'Modifica luogo':'Editar lugar','Salva password':'Guardar contraseña','Nuova password':'Nueva contraseña',
+    'Modifica luogo':'Editar lugar','Nuova password':'Nueva contraseña',
     'Conferma password':'Confirmar contraseña',
     'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema oscuro','Tema chiaro':'Tema claro',
     'Calendario':'Calendario','Navigatore':'Navegador','Autopilota':'Piloto automático',
@@ -3463,7 +3478,7 @@ const DIZIONARIO_SCHERMATE={
     'Aggiungi tutti':'Ajouter tout le monde','Condividi viaggio':'Partager le voyage','Entra nel viaggio':'Rejoindre le voyage',
     'Torna alla home':'Retour à l’accueil','Codice invito':'Code d’invitation','Nome compagno':'Nom du compagnon',
     'Il tuo nome':'Ton nom','Come ti chiami':'Comment tu t’appelles','Salva luogo':'Enregistrer le lieu',
-    'Modifica luogo':'Modifier le lieu','Salva password':'Enregistrer le mot de passe','Nuova password':'Nouveau mot de passe',
+    'Modifica luogo':'Modifier le lieu','Nuova password':'Nouveau mot de passe',
     'Conferma password':'Confirmer le mot de passe',
     'Minimo 6 caratteri':'6 caractères minimum','Tema scuro':'Thème sombre','Tema chiaro':'Thème clair',
     'Calendario':'Agenda','Navigatore':'Application GPS','Autopilota':'Pilote automatique',
@@ -3526,7 +3541,7 @@ const DIZIONARIO_SCHERMATE={
     'Aggiungi tutti':'Adicionar toda a gente','Condividi viaggio':'Partilhar a viagem','Entra nel viaggio':'Entrar na viagem',
     'Torna alla home':'Voltar ao início','Codice invito':'Código de convite','Nome compagno':'Nome do companheiro',
     'Il tuo nome':'O teu nome','Come ti chiami':'Como te chamas','Salva luogo':'Guardar lugar',
-    'Modifica luogo':'Editar lugar','Salva password':'Guardar palavra-passe','Nuova password':'Nova palavra-passe',
+    'Modifica luogo':'Editar lugar','Nuova password':'Nova palavra-passe',
     'Conferma password':'Confirmar palavra-passe',
     'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema escuro','Tema chiaro':'Tema claro',
     'Calendario':'Calendário','Navigatore':'Aplicação de navegação','Autopilota':'Piloto automático',
@@ -6797,11 +6812,51 @@ const DIZIONARIO_LINK={
   }
 };
 Object.keys(DIZIONARIO_LINK).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_LINK[l]));
+/* Il recupero della password, obbligatorio. */
+const DIZIONARIO_RECUPERO={
+  en:{
+    'Da questo momento accederai ovunque con la nuova password.':'From now on you’ll sign in everywhere with the new password.',
+    'Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l\'hai chiesto tu, tocca «Annulla».':'You signed in to reset your password: choose a new one before you go on. If you didn’t ask for this, tap “Cancel”.',
+    'Salva nuova password':'Save new password',
+    'Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.':'Password updated. On your other devices you’ll need to sign in again.',
+    'Sei uscito dall\'account':'You’ve signed out',
+    'Servono almeno 6 caratteri':'It needs at least 6 characters',
+    'Salvataggio...':'Saving…'
+  },
+  es:{
+    'Da questo momento accederai ovunque con la nuova password.':'A partir de ahora entrarás en todas partes con la nueva contraseña.',
+    'Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l\'hai chiesto tu, tocca «Annulla».':'Has entrado para recuperar la contraseña: antes de seguir, elige una nueva. Si no lo has pedido tú, toca «Cancelar».',
+    'Salva nuova password':'Guardar nueva contraseña',
+    'Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.':'Contraseña actualizada. En tus otros dispositivos tendrás que volver a entrar.',
+    'Sei uscito dall\'account':'Has salido de la cuenta',
+    'Servono almeno 6 caratteri':'Hacen falta al menos 6 caracteres',
+    'Salvataggio...':'Guardando…'
+  },
+  fr:{
+    'Da questo momento accederai ovunque con la nuova password.':'Désormais tu te connecteras partout avec le nouveau mot de passe.',
+    'Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l\'hai chiesto tu, tocca «Annulla».':'Tu es entré pour récupérer ton mot de passe : avant de continuer, choisis-en un nouveau. Si ce n’est pas toi qui l’as demandé, touche « Annuler ».',
+    'Salva nuova password':'Enregistrer le nouveau mot de passe',
+    'Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.':'Mot de passe mis à jour. Sur tes autres appareils il faudra te reconnecter.',
+    'Sei uscito dall\'account':'Tu t’es déconnecté',
+    'Servono almeno 6 caratteri':'Il faut au moins 6 caractères',
+    'Salvataggio...':'Enregistrement…'
+  },
+  pt:{
+    'Da questo momento accederai ovunque con la nuova password.':'A partir de agora vais entrar em todo o lado com a nova palavra-passe.',
+    'Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l\'hai chiesto tu, tocca «Annulla».':'Entraste para recuperar a palavra-passe: antes de continuar, escolhe uma nova. Se não foste tu a pedir, toca em «Cancelar».',
+    'Salva nuova password':'Guardar nova palavra-passe',
+    'Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.':'Palavra-passe atualizada. Nos teus outros dispositivos vais ter de entrar outra vez.',
+    'Sei uscito dall\'account':'Saíste da conta',
+    'Servono almeno 6 caratteri':'São precisos pelo menos 6 caracteres',
+    'Salvataggio...':'A guardar…'
+  }
+};
+Object.keys(DIZIONARIO_RECUPERO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RECUPERO[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1103;
+const FRASI_IN_TUTTO=1109;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -6979,6 +7034,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   fillCurrencySelect(document.getElementById('expCur'));
   initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);checkLeaveAlerts();setInterval(checkLeaveAlerts,60000);
   renderAll();
+  /* Un recupero della password lasciato a meta' (app chiusa prima di
+     salvare): il foglio obbligatorio torna subito, sotto la schermata
+     d'avvio, prima che si veda l'account. Senza un account salvato non c'e'
+     niente da proteggere. */
+  if(recuperoInCorso()){if(accountSalvato())obbligaNuovaPassword();else togliRecupero();}
   /* I cambi si prendono all'apertura, finche' c'e' rete: e' il momento in
      cui ci si ricorda di avercela. Un po' dopo, per non rubare tempo al
      primo disegno. */
@@ -9083,7 +9143,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
-- Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
+- Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
@@ -14756,6 +14816,10 @@ function openSheet(id){
 function closeSheet(id){
   const m=(typeof id==='string')?document.getElementById(id):id;
   if(!m)return;
+  /* La password nuova dopo un recupero non si chiude da nessuna strada: la
+     croce, un tocco fuori, la maniglia, il codice che chiude tutti i fogli.
+     Se ne esce solo salvando o con «Annulla» (vedi chiudiNuovaPassword). */
+  if(m.id==='mNewPass'&&m.classList.contains('obbligatorio'))return;
   /* Chiudendo la scheda del «qui intorno» si smette anche di aspettare: la
      riprova da sola riaprirebbe un foglio che la persona ha appena chiuso,
      e un'app che si riapre da sola e' un'app che non ascolta. */
@@ -18181,7 +18245,7 @@ async function supaBoot(){
        anche quando la richiesta e' partita dall'app sulla Home, che ha una
        memoria sua, e un flusso che pretende la stessa memoria li' non va. */
     sb=supabase.createClient(window.GEPPGO_SUPA_URL,window.GEPPGO_SUPA_KEY,{auth:{flowType:'implicit',detectSessionInUrl:false}});
-    sb.auth.onAuthStateChange((ev,s2)=>{session=s2;myUid=s2?s2.user.id:null;if(ev==='PASSWORD_RECOVERY')openNewPass();afterAuth();});
+    sb.auth.onAuthStateChange((ev,s2)=>{session=s2;myUid=s2?s2.user.id:null;if(ev==='PASSWORD_RECOVERY')obbligaNuovaPassword();afterAuth();});
     const{data}=await sb.auth.getSession();
     session=data.session||null;myUid=session?session.user.id:null;
     /* Un link con i token vince sulla sessione che c'era gia': e' l'ultima
@@ -18213,13 +18277,14 @@ async function supaBoot(){
     if(session)setTimeout(()=>{if(localStorage.getItem('geppgo2_fp')){localStorage.removeItem('geppgo2_fp');lastPush={};persistLastPush();}syncPush();},600);
     /* Dentro col link: secondo il tipo, il passo dopo. */
     if(link&&link.at&&!link.errore&&session){
-      if(link.tipo==='recovery')setTimeout(openNewPass,400);
+      if(link.tipo==='recovery')obbligaNuovaPassword();
       else if(link.tipo==='signup')toast('Account confermato');
       else toast('Accesso effettuato');
     }else if(link){
       if(!session){app.skipAuth=false;save();afterAuth();}
       linkEmailScaduto();
     }
+    controllaRecupero();
   }catch(e){}
 }
 /* ===== I LINK DELLE EMAIL, LETTI =====
@@ -18607,21 +18672,89 @@ async function authVerifyCode(){
     }
     m.textContent='';recBack();
     app.skipAuth=false;save();
-    if(quale==='recovery')setTimeout(openNewPass,300);
+    if(quale==='recovery')obbligaNuovaPassword();
     else toast(quale==='signup'?'Account confermato':'Accesso effettuato');
   }catch(e){console.log('Verifica non riuscita:',e);m.textContent=tv('Errore di rete');}
 }
 
-function openNewPass(){const f=document.getElementById('npPass');if(f)f.value='';const m=document.getElementById('npMsg');if(m)m.textContent='';openSheet('mNewPass');}
+function openNewPass(){
+  const f=document.getElementById('npPass');if(f)f.value='';const m=document.getElementById('npMsg');if(m)m.textContent='';
+  /* Dal Profilo e' il foglio libero, a meno che un recupero sia a meta'. */
+  if(!recuperoInCorso())document.getElementById('mNewPass').classList.remove('obbligatorio');
+  openSheet('mNewPass');
+}
+/* ===== IL RECUPERO DELLA PASSWORD, OBBLIGATORIO =====
+   Provato su iPhone: aperto il link di recupero compariva «Nuova password»,
+   la croce lo chiudeva, e si restava dentro l'account senza aver cambiato
+   niente. Ma un recupero vuol dire che la password vecchia non vale piu' (o
+   ce l'ha qualcun altro): dopo un recupero il foglio e' obbligatorio. Copre
+   tutto, non ha la croce, non si chiude toccando fuori ne' col gesto
+   indietro, e ha due tasti: salvare, o «Annulla» che fa uscire dall'account.
+   Il segno sta nel telefono, non in memoria: l'evento PASSWORD_RECOVERY di
+   Supabase arriva una volta sola, e chi chiude l'app prima di salvare alla
+   riapertura deve ritrovarsi davanti lo stesso foglio. */
+const RECUPERO_CHIAVE='geppgo2_recupero';
+function recuperoInCorso(){try{return !!localStorage.getItem(RECUPERO_CHIAVE);}catch(e){return false;}}
+function togliRecupero(){try{localStorage.removeItem(RECUPERO_CHIAVE);}catch(e){}}
+function obbligaNuovaPassword(){
+  try{if(!recuperoInCorso())localStorage.setItem(RECUPERO_CHIAVE,JSON.stringify({t:Date.now(),uid:myUid||''}));}catch(e){}
+  const m=document.getElementById('mNewPass');
+  if(m.classList.contains('obbligatorio')&&m.classList.contains('active'))return;
+  m.classList.add('obbligatorio');
+  openNewPass();
+  /* Una voce in piu' nella cronologia: il gesto indietro la consuma, e il
+     foglio resta li' (vedi popstate qui sotto). */
+  try{history.pushState({nuovaPassword:1},'',location.href);}catch(e){}
+}
+window.addEventListener('popstate',()=>{
+  const m=document.getElementById('mNewPass');
+  if(m&&m.classList.contains('obbligatorio')&&m.classList.contains('active')){try{history.pushState({nuovaPassword:1},'',location.href);}catch(e){}}
+});
+function chiudiNuovaPassword(){
+  const m=document.getElementById('mNewPass');if(!m)return;
+  m.classList.remove('obbligatorio');closeSheet(m);
+}
+/* Il segno e la sessione devono dire la stessa cosa: senza sessione (uscito
+   altrove, scaduta) o con un altro account non c'e' piu' niente da
+   proteggere, e il foglio se ne va; con la sessione giusta resta. */
+function controllaRecupero(){
+  if(!recuperoInCorso())return;
+  let r=null;try{r=JSON.parse(localStorage.getItem(RECUPERO_CHIAVE));}catch(e){}
+  if(!session||(r&&r.uid&&myUid&&r.uid!==myUid)){togliRecupero();chiudiNuovaPassword();return;}
+  obbligaNuovaPassword();
+}
+/* «Annulla»: fuori dall'account. Anche senza cloud la sessione del telefono
+   se ne va: chi tocca Annulla non deve restare dentro. */
+async function annullaRecupero(){
+  togliRecupero();
+  chiudiNuovaPassword();
+  try{if(sb)await sb.auth.signOut();}catch(e){console.log('Uscita non riuscita:',e);}
+  try{localStorage.removeItem('sb-'+new URL(window.GEPPGO_SUPA_URL).hostname.split('.')[0]+'-auth-token');}catch(e){}
+  session=null;myUid=null;app.skipAuth=false;save();
+  updateAccountCard();
+  auMostra('auScelta');
+  const g=document.getElementById('authGate');if(g)g.style.display='flex';
+  toast('Sei uscito dall\'account');
+}
 async function saveNewPass(){
   const pw=document.getElementById('npPass').value,m=document.getElementById('npMsg');
-  if(pw.length<6){m.textContent='Servono almeno 6 caratteri';return;}
-  m.textContent='Salvataggio...';
+  if(pw.length<6){m.textContent=tv('Servono almeno 6 caratteri');return;}
+  if(!sb){m.textContent=tv('Il cloud non risponde: controlla la rete e riprova.');return;}
+  m.textContent=tv('Salvataggio...');
   try{
     const{error}=await sb.auth.updateUser({password:pw});
     if(error){console.log('Nuova password non salvata:',error.message);m.textContent=spiegaErroreAccesso(error);return;}
-    m.textContent='';closeSheet('mNewPass');toast('Password aggiornata');
-  }catch(e){m.textContent='Errore di rete';}
+    const eraRecupero=recuperoInCorso();
+    togliRecupero();
+    m.textContent='';chiudiNuovaPassword();
+    if(!eraRecupero){toast('Password aggiornata');return;}
+    /* Dopo un recupero la password vecchia poteva averla qualcun altro: si
+       esce dagli altri dispositivi, e lo si dice. */
+    let fuori=false;
+    try{const r=await sb.auth.signOut({scope:'others'});fuori=!(r&&r.error);if(r&&r.error)console.log('Uscita dagli altri dispositivi non riuscita:',r.error.message);}
+    catch(e){console.log('Uscita dagli altri dispositivi non riuscita:',e);}
+    toast(fuori?'Password aggiornata. Sugli altri dispositivi dovrai accedere di nuovo.':'Password aggiornata');
+  }catch(e){console.log('Nuova password non salvata:',e);m.textContent=tv('Errore di rete');}
 }
 async function authMagic(){
   const em=document.getElementById('auEmail').value.trim(),msg=document.getElementById('auMsg');
@@ -20298,7 +20431,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-07 13:00';
+const VERSIONE_APP='2026-10-07 15:16';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
