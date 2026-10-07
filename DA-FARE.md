@@ -819,6 +819,14 @@ qualcuno che risponde".
   rosso sul codice di prima). Prima di trascinare si porta la tappa in vista
   (`scrollIntoViewIfNeeded`). Fermare l'orologio della pagina non si può:
   ferma anche la coda dei percorsi, che conta il tempo con `Date.now`.
+- **`prova-ruoli` rossa a caso, solo sul server delle prove.** La prova
+  finge di essere dentro scrivendo `myUid` a mano. Il recinto lascia passare
+  le CDN, e lì la libreria del cloud arriva davvero: se arriva a metà prova,
+  l'avvio legge «nessuna sessione» e rimette `myUid` a null. Qui la CDN non
+  risponde, quindi in locale passava sempre. Ora la prova ferma la libreria
+  (non le serve). Le altre che scrivono `myUid` a mano (`account`, `foto`,
+  `inviti`, `raccolta`) finora non hanno dato segni, ma il rischio è lo
+  stesso: se una diventa rossa a caso, si guarda prima qui.
 
 - **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
   librerie bloccanti prima del codice: 523 KB compressi da aspettare per

@@ -24,6 +24,12 @@ const stato = {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
+  /* La prova finge di essere dentro (myUid e ruoli scritti a mano), senza un
+     account vero. Se la libreria del cloud arriva dopo, l'avvio legge «nessuna
+     sessione» e rimette myUid a null: sul server delle prove la CDN risponde
+     davvero, e a volte arrivava proprio a meta' prova (rosso a caso, anche
+     sul codice di prima). Qui il cloud non serve: non arriva. */
+  await page.route('**/supabase-js@*/**', r => r.abort('blockedbyclient'));
 
   await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
