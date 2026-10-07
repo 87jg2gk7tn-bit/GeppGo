@@ -11,19 +11,28 @@
    nell'indirizzo, quindi non invecchiano. Prima non si tenevano, e senza rete
    lo scanner, i codici a barre e la mappa non c'erano proprio, anche con le
    mattonelle della mappa gia' viste in memoria. */
-const CACHE_NAME = 'geppgo-shell-v40';
+const CACHE_NAME = 'geppgo-shell-v41';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
    uguali, perche' una libreria nuova scritta solo di la' offline mancherebbe
-   senza che nessuno se ne accorga. */
+   senza che nessuno se ne accorga. Queste si scaricano in sottofondo dopo il
+   primo avvio; quelle di LIBRERIE_AL_MOMENTO no (vedi sotto). */
 const LIBRERIE = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
   'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',
-  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',
+  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js'
+];
+/* SheetJS (i file di Excel) pesa piu' di tutte le altre insieme e serve solo
+   a chi importa un viaggio: scaricarla in sottofondo sul telefono di tutti
+   era mezzo megabyte sprecato per quasi tutti. Arriva la prima volta che si
+   apre l'importazione e da li' resta (libreria() la tiene); qui si dice solo
+   di portarla nella cache della versione nuova, come le altre, invece di
+   buttarla a ogni aggiornamento. */
+const LIBRERIE_AL_MOMENTO = [
   'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'
 ];
 /* Quanto si aspetta la rete prima di aprire la copia. Col campo debole
@@ -63,7 +72,7 @@ self.addEventListener('activate', (event) => {
     for (const k of keys) {
       if (k === CACHE_LIBRERIE || !k.startsWith('geppgo-librerie-')) continue;
       const vecchia = await caches.open(k);
-      for (const url of LIBRERIE) {
+      for (const url of LIBRERIE.concat(LIBRERIE_AL_MOMENTO)) {
         if (await nuova.match(url)) continue;
         const r = await vecchia.match(url);
         if (r) await nuova.put(url, r);

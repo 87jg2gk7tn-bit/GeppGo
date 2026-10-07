@@ -71,6 +71,9 @@ const path = require('path');
     'commons.wikimedia.org': /Wikimedia/i, 'www.wikidata.org': /Wikidata/i,
     'cdn.jsdelivr.net': /jsDelivr/i, 'unpkg.com': /unpkg/i,
     'cdn.sheetjs.com': /SheetJS/i, 'fonts.gstatic.com': /Google Fonts/i,
+    /* Il ponte dell'assistente non e' il fornitore: chi legge le richieste
+       e' Google, e la pagina lo deve chiamare per nome. */
+    'workers.dev': /Google Gemini/i,
     /* LE COPIE DELLA MAPPA TENUTE SU DA ALTRI. Non sono un dettaglio
        tecnico: quando il ponte non risponde è il TELEFONO a chiamarle, e
        allora vedono l'indirizzo IP di chi usa l'app. Vanno nominate una per

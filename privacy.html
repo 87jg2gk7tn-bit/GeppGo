@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>Privacy di GeppGo</h1>
-<p class="data">In vigore dal 1 settembre 2026</p>
+<p class="data">In vigore dal 1 settembre 2026 · aggiornata l'8 ottobre 2026</p>
 
 <p>GeppGo serve a organizzare un viaggio in gruppo: la giornata, le spese, i
 biglietti, le foto. Per farlo tratta dei dati, e questa pagina dice quali,
@@ -133,11 +133,46 @@ sei: il tasto avvisa che senza posizione non può dire agli altri dove
 sei, e non manda niente.</p>
 
 <h3>Quello che chiedi all'assistente</h3>
-<p>Il testo che scrivi all'assistente, e le immagini che gli fai leggere (per
-esempio la foto di un biglietto da cui ricavare i dati), vengono mandati a un
-servizio di intelligenza artificiale che li elabora e risponde. Attenzione:
-<strong>un biglietto contiene nome, codice di prenotazione e a volte altro</strong>
-— se preferisci non farlo passare di lì, i dati puoi scriverli a mano.</p>
+<p>L'assistente di GeppGo è <strong>Google Gemini</strong>, il modello di
+intelligenza artificiale di Google. Le richieste non vanno dal tuo telefono a
+Google: passano da un ponte di GeppGo (un piccolo programma su Cloudflare che
+custodisce la chiave d'accesso), che le gira a Gemini e ti riporta la
+risposta. Il ponte non tiene da parte quello che gli passa, e l'app non ci
+aggiunge né la tua email né il tuo account.</p>
+<p>All'assistente arriva solo quello che serve alla richiesta che fai:</p>
+<ul>
+<li><strong>in chat</strong>, quello che scrivi, gli ultimi messaggi della
+conversazione e il programma del viaggio aperto: destinazione, date, meteo,
+nomi e orari delle tappe, con una posizione arrotondata a circa cento metri.
+Non i nomi dei compagni, non le spese, non dove sei tu;</li>
+<li><strong>la foto di un posto</strong> da riconoscere, o lo screenshot di
+un reel: una copia ridisegnata, senza i dati nascosti del file (il punto GPS
+in cui è stata scattata, il modello del telefono);</li>
+<li><strong>il testo che gli chiedi di leggere</strong>: un itinerario
+incollato o in un file, il PDF di una lista per la valigia, la mail di
+conferma di un albergo. Prima di spedirlo il telefono toglie quello che
+riconosce come email, numero di carta, IBAN o numero di telefono (dalla mail
+dell'albergo i telefoni restano, perché serve quello della struttura). È un
+filtro automatico e qualcosa può sfuggirgli; i nomi delle persone possono
+restare: in un itinerario servono a creare i compagni del viaggio;</li>
+<li><strong>per i consigli e le ricerche sul web</strong> (orari di apertura,
+se serve prenotare), i nomi dei posti, la destinazione e i gusti del
+gruppo.</li>
+</ul>
+<p>GeppGo oggi usa il <strong>piano gratuito</strong> dell'API di Gemini.
+Con questo piano, <strong>Google può usare le richieste e le risposte per
+migliorare i suoi prodotti</strong>, compresi i suoi modelli di intelligenza
+artificiale, e <strong>possono essere lette da revisori</strong>: persone
+incaricate da Google di controllarne la qualità (Google dice di staccarle
+prima dall'account che le ha mandate). Valgono le condizioni di Google per
+l'API di Gemini e la privacy di Google.</p>
+<div class="box">
+<p><strong>Non mandare all'assistente dati sensibili</strong>: salute,
+documenti d'identità, numeri di carta, password e codici d'accesso, o cose
+di altre persone che non vorrebbero far girare. Per organizzare un viaggio
+non servono. L'assistente non è obbligatorio: il resto dell'app funziona
+senza, e i dati di un albergo o di una tappa si possono scrivere a mano.</p>
+</div>
 
 <h3>Segnalazioni</h3>
 <p>Se segnali una foto, teniamo la segnalazione, il motivo, cosa hai scritto e
@@ -174,7 +209,7 @@ serve per fare la sua parte.</p>
 <table>
 <tr><th>Servizio</th><th>Cosa riceve</th><th>Per fare cosa</th></tr>
 <tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto</td><td>Database e archivio: è il cloud dell'app</td></tr>
-<tr><td>Il ponte IA di GeppGo, e da lì il fornitore del modello</td><td>Quello che scrivi all'assistente e le immagini che gli mostri</td><td>Rispondere, leggere i biglietti, proporre tappe</td></tr>
+<tr><td>Il ponte IA di GeppGo, su Cloudflare, e da lì <b>Google Gemini</b></td><td>Quello che chiedi all'assistente, con il pezzo di viaggio che serve a rispondere, e le foto che gli fai riconoscere (vedi «Quello che chiedi all'assistente»). Il ponte vede anche l'indirizzo IP</td><td>Rispondere in chat, proporre e sistemare tappe, leggere un itinerario o la mail di un albergo, riconoscere un posto da una foto</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino</td></tr>
 <tr><td>FOSSGIS (routing.openstreetmap.de), il servizio dei percorsi sulla mappa di OpenStreetMap</td><td>Le coordinate di due tappe del viaggio alla volta — <b>non</b> dove sei tu</td><td>Il tempo vero a piedi, in bici e in auto fra una tappa e l'altra della time-table. La risposta resta nel telefono, così non si chiede due volte</td></tr>
 <tr><td>Copie della mappa OpenStreetMap tenute su da altri: <b>kumi.systems</b> (Austria), <b>private.coffee</b> (Austria), <b>maps.mail.ru</b> (Russia)</td><td>Cosa stai cercando e un punto di una griglia di circa 200 metri. Se la richiesta parte dal telefono — cioè quando il ponte non risponde — vedono anche l'indirizzo IP</td><td>Gli stessi dati della mappa, quando il server principale non risponde. Senza di loro, quando quello è in coda l'app non trova niente</td></tr>
@@ -229,6 +264,9 @@ GeppGo si trovano a <strong>Stoccolma, in Svezia</strong> (regione
 <code>eu-north-1</code>): dentro lo Spazio economico europeo. La tua email, i
 viaggi e le foto restano lì, e non vengono trasferiti fuori dall'Europa per
 essere conservati.</p>
+<p>Le richieste all'assistente invece le elabora Google, che può farlo anche
+fuori dall'Europa, con le regole scritte in «Quello che chiedi
+all'assistente».</p>
 </div>
 
 <h2>Per quanto tempo</h2>

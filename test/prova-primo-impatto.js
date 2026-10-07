@@ -356,7 +356,7 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
         openSheet('mCode'); await new Promise(x => setTimeout(x, 300)); fuori.push(document.getElementById('mCode').innerText); closeSheet('mCode');
         errs.forEach(m => {
           const e = { message: m };
-          fuori.push(spiegaErroreAccesso(e), erroreCloud(e), fotoSpiega(e), raccoltaSpiega(e), motivoAI(m));
+          fuori.push(spiegaErroreAccesso(e), erroreCloud(e), fotoSpiega(e), raccoltaSpiega(e), aiErrore(aiTipoErrore(0, m)).messaggio);
         });
         return fuori;
       }, TECNICI);

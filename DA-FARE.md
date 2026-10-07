@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 14 settembre 2026.
+Aggiornato: 8 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -20,13 +20,22 @@ dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
 lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
 più: per conservare i dati non si esce dall'Europa.
 
-Resta una cosa sola, e non è codice:
+Restano due cose, e non sono codice:
 
 - **Far leggere a un avvocato la privacy policy**, in particolare la parte
   «A raccolta». Il riassunto pronto da mandargli, con le sei garanzie
   strutturali e le domande, sta in fondo a `PRIVACY-STORE.md` — dove ora c'è
   anche la domanda su Supabase Inc., che è una società statunitense pur
   tenendo i server in Svezia.
+- ⚠️ **Rileggere le condizioni dell'API di Gemini per l'Europa** (ottobre
+  2026; `ai.google.dev/gemini-api/terms`, che dall'ambiente di lavoro non si
+  apriva). Da quello che si trova cercando, chi rende un'app disponibile a
+  persone nello Spazio economico europeo, in Svizzera o nel Regno Unito **può
+  usare solo i servizi a pagamento**, e a chi sta in quei paesi Google applica
+  anche sul gratuito le regole sui dati del pagamento. Se è così: attivare la
+  fatturazione sul progetto della chiave (zero codice, `GUIDA-AI.md` 7a), e lo
+  stesso giorno togliere da `privacy.html` e `PRIVACY-STORE.md` la frase
+  sull'uso dei dati per migliorare i prodotti, che non sarebbe più vera.
 
 **Come si rilancia lo schema**, quando servirà di nuovo: Supabase → **SQL
 Editor** → **New query** → incolla **tutto** il contenuto di
@@ -771,6 +780,47 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ L'assistente: quattordici copie dello stesso `fetch`, e nessuna con un
+  tempo massimo.** Col campo debole una richiesta restava appesa per sempre,
+  col tasto morto e «Sto pensando...». Adesso tutte passano da `chiediAI`
+  (blocco `L'ASSISTENTE: UNA PORTA SOLA`; il quadro completo in
+  `GUIDA-AI.md` §3), e in tutto il file c'è **una** `fetch` verso il ponte,
+  dentro `aiRichiesta`: `prova-ai` lo conta. Le cose da sapere:
+  - **Il ponte manda la quota finita come 502**, col messaggio di Google
+    dentro («RESOURCE_EXHAUSTED», «Please retry in 21s»). Un 5xx si ritenta;
+    una quota finita no, perché insistere allunga la coda: `aiTipoErrore` la
+    riconosce dal testo e la tratta come un 429.
+  - **Il tempo massimo vale per tentativo**, e un tempo scaduto non si
+    ritenta: se il modello è così lento, una seconda attesa uguale non la
+    vuole nessuno.
+  - **Il tasto si prende da `window.event` all'inizio della funzione chiamata
+    dal tocco** (`tastoDelTocco`), prima del primo `await`: dopo, l'evento non
+    c'è più. Lo si spegne subito, nello stesso giro del tocco, così il
+    secondo tocco cade su un tasto spento.
+  - **Chi scrive una scritta d'attesa prima di chiamare controlla
+    `aiInCorso` prima di scriverla.** Se no il secondo tocco (fermato da
+    `chiediAI`) cancellava la scritta della prima richiesta ancora in viaggio.
+  - **Le richieste restano scritte in italiano; cambia la lingua della
+    risposta**, con una riga in `system` (`aiRigaLingua`). Le parole che l'app
+    rilegge — categorie, chiavi e valori del JSON, `LUOGHI:`, `[MODIFICA]` —
+    devono restare identiche, e la riga lo dice.
+  - **Quello che non serve non si manda**: `aiSenzaDatiPersonali` (email,
+    IBAN, carte con la cifra di controllo, telefoni col prefisso
+    internazionale, righe «Ospite: …») e `aiImmagineLeggera` (la foto
+    ridisegnata, senza GPS). Sono filtri a regole: qualcosa sfugge, e la
+    privacy lo dice.
+  - **Per le prove: `context.setOffline(true)` non ferma le rotte di
+    Playwright.** Una richiesta intercettata con `route.fulfill` arriva lo
+    stesso: il codice vecchio, «senza rete», trovava i posti. Per dire che
+    non parte niente si contano gli eventi `request`. E i trenta secondi li fa
+    passare l'orologio finto (`page.clock.install()` e `fastForward`), non
+    l'attesa vera.
+  - **SheetJS non si scarica più in sottofondo**: pesa più di tutte le altre
+    librerie insieme e serve solo a chi importa. Sta in `LIBRERIE_AL_MOMENTO`
+    di `sw.js` (che la porta da una versione all'altra della cache, ma non la
+    scarica da sola) e ha `alMomento:true` in `LIBRERIE` dell'app; arriva
+    quando si apre l'importazione e da lì resta. `prova-avvio` controlla che
+    le due liste combacino.
 - **⚠️ I link delle email non facevano entrare nessuno, e per mesi non se n'è
   accorto nessuno.** Supabase, col flusso «implicit», riapre l'app con i
   token dopo il cancelletto (`#access_token=…&refresh_token=…&type=…`, o

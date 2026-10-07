@@ -37,6 +37,9 @@ quel file è la memoria.
   davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
   supabase-js all'avvio senza fermarlo, le altre quando servono. La stessa
   lista sta in `sw.js`, che le tiene per l'offline: una prova le confronta.
+  SheetJS, che pesa più di tutte le altre insieme, non si scarica in
+  sottofondo: ha `alMomento:true` nell'app e sta in `LIBRERIE_AL_MOMENTO` di
+  `sw.js`; arriva la prima volta che si apre l'importazione, e da lì resta.
   SheetJS viene da `cdn.sheetjs.com` (il pacchetto «xlsx» su npm è fermo
   alla 0.18.5, con falle note): anche le prove lo installano da lì, quindi
   l'ambiente di lavoro deve poter raggiungere quel dominio.
@@ -58,7 +61,12 @@ quel file è la memoria.
   sulla Home, quindi un flusso che pretende la stessa memoria (PKCE) non va.
 - **AI**: passa dal Worker Cloudflare `geppgo-ai`, che tiene la chiave e parla
   con Gemini (`GUIDA-AI.md`). Nell'app non c'è nessuna chiave, e l'utente non
-  ne deve inserire.
+  ne deve inserire. Ogni richiesta passa da **`chiediAI`**, e c'è una sola
+  `fetch` verso il ponte: tempo massimo (30 s, 60 con una foto o un PDF), un
+  secondo tentativo solo per rete e 5xx, una richiesta per volta, «Annulla»
+  dopo 10 s, JSON letto anche sporco, risposta nella lingua dell'app, dati
+  personali tolti prima di spedire. Una chiamata nuova all'assistente si fa
+  con `chiediAI`, mai con un `fetch` suo (`test/prova-ai.js` lo controlla).
 - **Lingue**: ogni testo nuovo dell'interfaccia va aggiunto in tutte le lingue
   supportate (it, en, es, fr, pt) con il sistema di traduzioni esistente
   (`DIZIONARIO`; `tv()` per i testi con variabili). L'italiano resta la lingua
