@@ -7111,6 +7111,9 @@ function fermaMappa(m){
 function mappaArrivata(){
   try{initMap();}catch(e){}
   const giu=document.getElementById('mappaGiu');if(giu)giu.remove();
+  /* La posizione arrivata prima della mappa: il pallino si mette adesso,
+     senza far sembrare piu' fresca la posizione di quanto sia. */
+  if(myPos&&map&&!meMarker){const at=myPosAt;try{placeMe({coords:{latitude:myPos.lat,longitude:myPos.lng,accuracy:myPosAcc}});}catch(e){}myPosAt=at;}
   /* Solo la mini-mappa, con i dati dell'ultimo disegno della home: rifare
      tutta la home sotto il dito di chi la sta usando sarebbe peggio. */
   const t=T();
@@ -14455,11 +14458,14 @@ function locateFabHome(){
   else toast('Sto ancora cercando la tua posizione...');
 }
 function placeMe(pos){
-  if(!map||typeof L==='undefined')return;
   const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy||30;
   /* Segnata qui e non solo in checkProx: cosi' chi disegna il pallino trova
-     sempre la posizione appena arrivata, non quella del giro prima. */
+     sempre la posizione appena arrivata, non quella del giro prima. E prima
+     di guardare la mappa: Leaflet arriva dopo l'avvio (vedi LE LIBRERIE), e
+     una posizione arrivata prima di lui andava persa. Il pallino, in quel
+     caso, lo mette mappaArrivata. */
   myPos={lat:lat,lng:lng};myPosAt=Date.now();myPosAcc=acc;
+  if(!map||typeof L==='undefined')return;
   if(meMarker)map.removeLayer(meMarker);
   if(meHalo)map.removeLayer(meHalo);
   meHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(map);
