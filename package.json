@@ -17,6 +17,7 @@
     "jsqr": "1.4.0",
     "leaflet": "1.9.4",
     "playwright": "^1.62.1",
-    "playwright-core": "^1.62.1"
+    "playwright-core": "^1.62.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

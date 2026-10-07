@@ -274,8 +274,8 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `it.wikipedia.org`, `commons.wikimedia.org`, `www.wikidata.org` | Nomi di luoghi |
 | `api.mymemory.translated.net` | Il testo da tradurre |
 | `open.er-api.com` | Niente di personale (solo le valute) |
-| `cdn.jsdelivr.net`, `unpkg.com` | Indirizzo IP (scarico librerie) |
-| `fonts.googleapis.com` | Indirizzo IP (caratteri) |
+| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare) |
+| `fonts.googleapis.com`, `fonts.gstatic.com` | Indirizzo IP (caratteri; dopo la prima volta restano sul telefono) |
 
 Google Maps, Google Calendar e i siti esterni si aprono **solo** quando è
 l'utente a toccare un tasto: non sono richieste che l'app fa da sola.

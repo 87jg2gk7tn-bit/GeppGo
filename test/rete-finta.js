@@ -26,7 +26,7 @@ const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const { RADICE } = require('./browser');
 
-const HOST_CDN = ['unpkg.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const HOST_CDN = ['unpkg.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const TIPI = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html; charset=utf-8',
   '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.png': 'image/png' };
 
@@ -43,6 +43,12 @@ function certificato() {
 function leggiIndirizzo(url) {
   let u; try { u = new URL(url); } catch (e) { return null; }
   let p = u.pathname;
+  /* SheetJS sta sul suo sito, con la versione nel nome della cartella:
+     /xlsx-0.20.3/package/dist/... e' il pacchetto «xlsx» di quella versione. */
+  if (u.hostname === 'cdn.sheetjs.com') {
+    const s = /^\/xlsx-(\d+\.\d+\.\d+)\/package\/(.+)$/.exec(p);
+    return s ? { nome: 'xlsx', versione: s[1], dentro: s[2] } : null;
+  }
   if (u.hostname === 'cdn.jsdelivr.net') { if (!p.startsWith('/npm/')) return null; p = p.slice(5); }
   else if (u.hostname === 'unpkg.com') p = p.slice(1);
   else return null;
@@ -85,6 +91,7 @@ function manda(q, r, buf, tipo, extra = {}) {
    - giu: l'app non risponde (connessione chiusa), come senza rete;
    - cdnGiu: le CDN non rispondono;
    - cdnRotti: nomi di pacchetti che rispondono 404;
+   - caratteri: i caratteri di Google veri (foglio e file), non finti;
    - ripiego(url): per misurare il codice vecchio, il file da dare a un
      indirizzo che nei pacchetti non c'e' (jsDelivr lo minificava al volo). */
 async function serverFinti(opz = {}) {
@@ -123,8 +130,17 @@ async function serverFinti(opz = {}) {
     log.push(voce);
     if (stato.cdnGiu) { q.socket.destroy(); voce.esito = 'giu'; return; }
     const cors = { 'access-control-allow-origin': '*', 'timing-allow-origin': '*', 'cache-control': 'public, max-age=31536000, immutable' };
+    /* Di serie un foglio finto e basta. Con `caratteri` un foglio vero, con
+       un file vero dietro (un carattere che sta gia' fra i pacchetti delle
+       prove): serve a chi vuole vedere i caratteri anche senza rete. */
     if (host === 'fonts.googleapis.com') {
-      voce.byte = manda(q, r, Buffer.from('/* caratteri finti */\n'.repeat(40)), TIPI['.css'], cors); voce.esito = 200; return;
+      const css = stato.caratteri
+        ? "/* latin */\n@font-face {\n  font-family: 'Fraunces';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(https://fonts.gstatic.com/s/prova/fraunces.ttf) format('truetype');\n}\n"
+        : '/* caratteri finti */\n'.repeat(40);
+      voce.byte = manda(q, r, Buffer.from(css), TIPI['.css'], cors); voce.esito = 200; return;
+    }
+    if (host === 'fonts.gstatic.com' && stato.caratteri) {
+      voce.byte = manda(q, r, fs.readFileSync(path.join(RADICE, 'node_modules', 'bwip-js', 'fonts', 'OCRB7.ttf')), 'font/ttf', cors); voce.esito = 200; return;
     }
     const pz = leggiIndirizzo(url);
     if (pz && stato.cdnRotti.has(pz.nome)) { r.writeHead(404, cors); r.end(); voce.esito = 404; return; }

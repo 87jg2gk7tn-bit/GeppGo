@@ -795,6 +795,42 @@ qualcuno che risponde".
   sull'origine di Pages, e va scritto **identico** (con `%20`) fra le
   Redirect URLs di Supabase, se no Supabase lo scarta senza dirlo e manda
   alla Site URL. `prova-link-email`.
+- **Importare un viaggio da Excel, CSV o celle incollate** (`IMPORTA DA UNA
+  TABELLA`, `prova-importa`). Tutto si legge sul telefono: i CSV a mano
+  (separatore indovinato, UTF-8 o Windows-1252, UTF-16 di Excel), i file di
+  Excel/Numbers con SheetJS caricata al momento. Le date di Excel sono numeri
+  (giorni dal 30/12/1899): si convertono a mano in UTC, mai passando dal fuso
+  del telefono. Giorno/mese o mese/giorno si decide sulla colonna intera (13/08
+  non può che essere agosto; se è tutto ambiguo vince la lettura con le date
+  più vicine). Una data scritta una volta vale per le righe sotto, come si fa
+  in Excel. Le righe di tipo albergo diventano Hotel (check-out: la riga di
+  uscita, o «3 notti», o l'albergo dopo); i costi spese previste
+  (`pushAutoExp(..., zitto)`). Tre cose scoperte strada facendo:
+  - **`uid()` dava doppioni.** Era l'ora più un numero a caso fino a 10.000: cento
+    attività create nello stesso millesimo avevano buone probabilità di due id
+    uguali (tocchi una, si apre l'altra). Ora è sempre crescente.
+  - **Nominatim riceveva raffiche.** Un viaggio nuovo chiedeva la stessa città
+    tre volte nello stesso istante (mappa, meteo, scheda), e i luoghi trovati
+    facevano partire insieme le loro foto. Ora `ensureDestLoc` riusa la
+    ricerca in corso (e non richiede per cinque minuti una città che non
+    trova), e `fetchGeo` mette in fila le richieste dirette a Nominatim, una
+    ogni 1,1 secondi. Col ponte acceso non cambia niente: la fila vale quando
+    il telefono chiede da solo. Prezzo: senza ponte, all'avvio il meteo
+    scaduto si rifà un secondo più tardi (`prova-cielo` ora lo aspetta fino
+    a sei secondi, invece di 1,4).
+  - **Il «Si parte?» sta in una colonna sola.** Tre tasti affiancati a 320 px
+    non ci stanno: «Importa da Excel o CSV» sta sotto agli altri due.
+- **I caratteri fermavano la prima schermata.** Erano un `@import` in cima al
+  CSS: la pagina aspettava Google prima di disegnare. Ora `preconnect` più un
+  `<link>` con `media="print"` che diventa `all` quando arriva, e
+  `display=swap`; la service worker tiene foglio e file in `geppgo-caratteri`
+  (una cache senza versione nel nome, che una versione nuova non butta), e al
+  primo avvio scarica l'alfabeto latino. Offline il foglio si dà dalla copia e
+  si prova a rinnovarlo in sottofondo; il file non si richiede.
+- **Di cosa è fatto l'HTML** (1,55 MB, 467 KB compressi, misurato il 7
+  ottobre 2026): codice 639 KB, traduzioni 324, commenti JS 257, markup 94,
+  CSS 87, commenti CSS 35, `MAPPA_APP` 25, la libreria QR incorporata 24,
+  tabelle di dati 10, commenti HTML 7, SVG 6. Niente immagini incorporate.
 - **⚠️ Il recupero della password si poteva saltare con la croce.** Provato
   su iPhone: aperto il link di recupero, la X chiudeva «Nuova password» e si
   restava dentro senza averla cambiata (chi ha in mano la mail ha l'account).

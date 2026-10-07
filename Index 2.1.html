@@ -11,8 +11,17 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icona.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icona.svg">
+<!-- I caratteri. Prima erano un @import in cima al CSS, che fermava la prima
+     schermata finche' Google non rispondeva: col campo debole, secondi di
+     schermo vuoto per due caratteri. Ora la strada si apre subito
+     (preconnect), il foglio arriva senza fermare niente (media print, poi
+     all) e intanto il testo si legge coi caratteri del telefono (swap). La
+     service worker tiene da parte foglio e file, per l'offline: lo stesso
+     indirizzo sta in sw.js (CARATTERI_CSS), e una prova li confronta. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="caratteri" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 :root{
   --paper:#F6EEDD; --surface:#FFFFFF;
   --ink:#1E1A12; --ink-soft:#5C5346; --ink-faint:#9B9184;
@@ -672,6 +681,61 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 /* L'avviso del link non valido sta sopra la schermata di accesso: chi apre
    un invito senza account se la trova davanti (vedi avvisaLinkNonValido). */
 #mConfirm.sopra-accesso{z-index:20001}
+/* L'importazione da un foglio (vedi IMPORTA DA UNA TABELLA). Tutto sta in
+   colonna: a 320 px un menu accanto al nome della colonna non ci sta. */
+#mImport .imp-intro{font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem}
+#mImport .imp-file input{display:none}
+#mImport .imp-nota{font-size:.74rem;color:var(--ink-faint);text-align:center;margin:.45rem 0 0}
+#mImport .imp-incolla{margin-top:1.1rem}
+#mImport .imp-incolla textarea{min-height:110px}
+.imp-modello{display:block;width:100%;min-height:44px;margin-top:1rem;background:none;border:none;font-family:inherit;font-size:.84rem;font-weight:700;color:var(--green-deep);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+body.dark .imp-modello{color:var(--green)}
+.imp-avviso{font-size:.84rem;line-height:1.5;color:var(--ink);background:var(--sand-tint);border:1px solid var(--line);border-radius:var(--r-sm);padding:.7rem .8rem;margin-top:.8rem}
+.imp-testa{margin-bottom:.8rem}
+.imp-testa-t{font-weight:800;font-size:1rem;overflow-wrap:anywhere}
+.imp-testa-s{font-size:.78rem;color:var(--ink-faint);margin-top:.15rem}
+.imp-intest{min-height:44px}
+.imp-intest input,.imp-salta input,.imp-dest input{width:auto;min-height:0}
+.imp-sez{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:1.3rem .1rem .55rem}
+.imp-nota-s{font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin:.2rem .1rem .6rem}
+.imp-col{background:var(--paper);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:.65rem .7rem;margin-bottom:.5rem}
+.imp-col-t{display:flex;align-items:center;gap:.45rem;font-size:.86rem;min-width:0}
+.imp-col-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.imp-lett{flex-shrink:0;min-width:1.6rem;height:1.6rem;padding:0 .3rem;border-radius:6px;background:var(--surface);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:var(--ink-soft)}
+.imp-col-es{font-size:.76rem;color:var(--ink-faint);margin:.3rem 0 .5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-col select{width:100%;min-height:44px}
+.imp-pv{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:.2rem .6rem;align-items:baseline;padding:.5rem .1rem;border-bottom:1px solid var(--line-soft);font-size:.84rem}
+.imp-pv-g{font-weight:700;white-space:nowrap}
+.imp-pv-o{color:var(--ink-faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+.imp-pv-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-pv-n i{font-style:normal;color:var(--ink-faint);font-size:.78rem}
+.imp-prob{background:var(--red-tint);border-radius:var(--r-md);padding:.65rem .7rem;margin-bottom:.5rem}
+.imp-prob.ok{background:var(--green-tint)}
+.imp-prob-t{font-size:.84rem;font-weight:700;overflow-wrap:anywhere}
+.imp-prob-g{font-size:.76rem;color:var(--ink-soft);margin:.25rem 0 .45rem;overflow-wrap:anywhere}
+.imp-prob-az{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.imp-prob-az input[type=date],.imp-prob-az input[type=text]{flex:1 1 9rem;min-width:0;width:auto;min-height:44px}
+.imp-salta{display:inline-flex;align-items:center;gap:.4rem;min-height:44px;font-size:.84rem;font-weight:700;cursor:pointer;padding:0 .3rem}
+.imp-dest .rcard{min-height:44px}
+.imp-dest .imp-off{opacity:.55;cursor:default}
+.imp-nome{margin:.8rem 0 .2rem}
+#mImport .btn,#mImport .file-btn{min-height:46px}
+.imp-piede{position:sticky;bottom:calc(-1.4rem - env(safe-area-inset-bottom));z-index:2;display:flex;gap:.5rem;margin:1.1rem -1.25rem calc(-1.4rem - env(safe-area-inset-bottom));padding:.7rem 1.25rem calc(.8rem + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line-soft)}
+.imp-piede .btn{min-height:46px}
+.imp-piede .imp-vai{flex:1;min-width:0}
+.imp-vai:disabled{opacity:.5;cursor:default}
+.imp-ok{background:var(--green-tint);border-radius:var(--r-md);padding:.8rem .9rem;margin-bottom:.8rem}
+.imp-ok-t{font-weight:800;font-size:.98rem;overflow-wrap:anywhere}
+.imp-tab{width:100%;border-collapse:collapse;font-size:.88rem}
+.imp-tab td{padding:.5rem .1rem;border-bottom:1px solid var(--line-soft)}
+.imp-tab td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.imp-geo{margin-top:1rem}
+.imp-geo-t{font-size:.82rem;color:var(--ink-soft);line-height:1.5}
+.imp-barra{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;margin-top:.45rem}
+.imp-barra i{display:block;height:100%;width:0;background:var(--grad);transition:width .3s}
+.imp-entra{display:block;width:100%;min-height:44px;margin:-.3rem 0 .9rem;padding:.55rem .8rem;background:var(--sand-tint);border:1px dashed var(--line);border-radius:var(--r-md);font-family:inherit;font-size:.84rem;color:var(--ink-soft);text-align:left;cursor:pointer}
+.imp-entra b{color:var(--green-deep)}
+body.dark .imp-entra b{color:var(--green)}
 /* Il foglio della password nuova dopo un recupero: copre tutto, subito, con
    un fondo pieno. Dietro c'e' un account in cui si e' appena entrati con un
    link: chi l'ha toccato senza averlo chiesto non deve vederci niente. */
@@ -1640,6 +1704,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .vg-voce.qui{border-color:var(--green-soft);background:var(--green-tint)}
 .vg-qui{font-size:.68rem;font-weight:700;color:var(--green-deep);flex-shrink:0;text-align:right;line-height:1.25;max-width:38%}
 .vg-nuovo{margin-top:.9rem;flex-shrink:0}
+.vg-importa{margin-top:.5rem;flex-shrink:0}
 /* Il piede del cassetto: il margine automatico lo spinge in fondo quando
    c'e' spazio, e la riga sopra dice che da li' in giu' non si parla piu' di
    viaggi. */
@@ -2281,6 +2346,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mNewTrip"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Nuovo viaggio</div><button class="x x-close" onclick="closeSheet('mNewTrip')">✕</button></div>
+  <button class="imp-entra" onclick="closeSheet('mNewTrip');setTimeout(openImport,160)"><span>Hai già il viaggio su Excel?</span> <b>Importalo</b></button>
   <div class="fg"><label>Il tuo nome</label><input id="ntMe" placeholder="Come ti chiami"></div>
   <div class="fg"><label>Nome del viaggio</label><input id="ntName" placeholder="es. Vacanza estiva"></div>
   <div class="fg"><label>Destinazione <span style="font-weight:500;color:var(--ink-faint)">(per valuta e meteo: più città separale con la virgola)</span></label><input id="ntDest" placeholder="es. Milano — oppure Tokyo, Kyoto, Osaka" onchange="detectCurrency()"><div id="ntCurInfo" style="margin-top:.5rem"></div></div>
@@ -2327,6 +2393,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   </div>
   <div class="vg-lista" id="vgLista"></div>
   <button class="btn btn-soft btn-block vg-nuovo" onclick="closeSheet('mViaggi');openNewTrip()">+ Aggiungi viaggio</button>
+  <button class="btn btn-soft btn-block vg-importa" onclick="closeSheet('mViaggi');openImport()">📊 Importa da Excel</button>
   <!-- Il Profilo sta in FONDO, staccato dai viaggi e spinto giu' dal bordo:
        e' quello che c'e' sotto tutto il resto, non un viaggio fra i viaggi.
        Ed e' anche dove il pollice arriva senza spostare la mano. -->
@@ -2625,12 +2692,21 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 <div class="modal" id="mImport"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Importa viaggio</div><button class="x x-close" onclick="closeSheet('mImport')">✕</button></div>
-  <p style="font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:.9rem">Incolla <strong>qualsiasi cosa</strong>: un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.</p>
-  <div class="fg"><textarea id="impTripText" style="min-height:150px" placeholder="Giorno 1: colazione, museo ore 9:30, pranzo in centro...&#10;Giorno 2: mercato, parco, cena tipica..."></textarea></div>
-  <label class="file-btn btn-soft" style="background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:none;margin-bottom:.7rem">📄 Oppure carica un file (.csv / .txt)<input type="file" accept=".csv,.txt,text/csv,text/plain" style="display:none" onchange="onTripFile(event)"></label>
-  <div id="impTripPrev"></div>
-  <button class="btn btn-grad btn-block" onclick="importTrip()">✦ Crea il viaggio</button>
-  <div id="impTripResult" style="margin-top:.8rem"></div>
+  <!-- Tre passi nello stesso foglio (vedi IMPORTA DA UNA TABELLA): si
+       sceglie il file o si incollano le celle, si controlla cosa c'e' in
+       ogni colonna, e il riepilogo con la ricerca dei luoghi. -->
+  <div id="impScegli">
+    <p class="imp-intro">Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c'è, l'ora.</p>
+    <label class="file-btn imp-file">📄 Scegli un file<input type="file" id="impFile" accept=".xlsx,.xlsm,.xls,.numbers,.ods,.csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="impDaFile(event)"></label>
+    <p class="imp-nota">Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe</p>
+    <div class="fg imp-incolla"><label for="impTripText">Incolla le celle</label><textarea id="impTripText" placeholder="Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui"></textarea></div>
+    <button class="btn btn-soft btn-block" onclick="impDaIncolla()">Leggi le celle</button>
+    <div id="impMsg" role="status"></div>
+    <div id="impTripResult"></div>
+    <button class="imp-modello" onclick="impModello()">⬇️ Scarica un modello da compilare</button>
+  </div>
+  <div id="impControlla" style="display:none"></div>
+  <div id="impFatto" style="display:none"></div>
 </div></div>
 <div class="modal" id="mSuggest"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3092,7 +3168,11 @@ const LIBRERIE={
   supabase:{js:'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',pronta:()=>typeof supabase!=='undefined'&&!!supabase.createClient},
   jsqr:{js:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',pronta:()=>typeof jsQR!=='undefined'},
   zxing:{js:'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',pronta:()=>typeof ZXing!=='undefined'},
-  bwip:{js:'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',pronta:()=>typeof bwipjs!=='undefined'}
+  bwip:{js:'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',pronta:()=>typeof bwipjs!=='undefined'},
+  /* SheetJS, per i file di Excel (vedi IMPORTA DA UNA TABELLA). Dal suo
+     sito, non da npm: il pacchetto «xlsx» su npm e' fermo alla 0.18.5, che
+     ha falle note. */
+  xlsx:{js:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',pronta:()=>typeof XLSX!=='undefined'&&!!XLSX.read}
 };
 /* Oltre questo tempo una libreria si da' per persa, e lo si dice. E' largo
    apposta: i codici a barre sono 250 KB compressi, che col campo debole
@@ -3194,7 +3274,12 @@ function restoreBak(){
   confirmDo('Ripristinare la copia?',`Torni allo stato di inizio ${d||'giornata'}: le modifiche fatte dopo, su questo telefono, andranno perse.`,()=>{localStorage.setItem('geppgo2',b);location.reload();});
 }
 function T(){return app.trips.find(t=>t.id===app.currentTripId);}
-function uid(){return Date.now()+Math.floor(Math.random()*10000);}
+/* Sempre crescente: con l'ora piu' un numero a caso, cento attivita' create
+   nello stesso millesimo di secondo (un'importazione) avevano buone
+   probabilita' di trovarne due con lo stesso id - e tocchi una, si apre
+   l'altra. */
+let ultimoUid=0;
+function uid(){let u=Date.now()+Math.floor(Math.random()*10000);if(u<=ultimoUid)u=ultimoUid+1;ultimoUid=u;return u;}
 /* La data di oggi come la vede chi tiene in mano il telefono. toISOString()
    da solo dà quella di Greenwich: di sera, in Italia, sarebbe già il giorno
    dopo o ancora quello prima a seconda dell'ora. */
@@ -3395,13 +3480,13 @@ const DIZIONARIO_SCHERMATE={
     'Riempio':'I’ll fill it in','copiato':'copied','divisa':'split','Fatto?':'Done?',
     'ELIMINA':'DELETE','Chiave anon public':'Anon public key','privacy di GeppGo':'GeppGo’s privacy policy',
     'es. Vacanza estiva':'e.g. Summer holiday','Cena al ristorante':'Dinner out',
-    'Allega un PDF':'Attach a PDF','Codice / URL':'Code / URL','qualsiasi cosa':'anything',
+    'Allega un PDF':'Attach a PDF','Codice / URL':'Code / URL',
     '📷 Scansiona':'📷 Scan','🚶 A piedi':'🚶 On foot','🚗 Macchina':'🚗 By car','🚆 Treno e metro':'🚆 Train and metro','📄 Da un PDF':'📄 From a PDF','📄 Carica il PDF':'📄 Upload the PDF',
     '🖼️ Foto o PDF':'🖼️ Photo or PDF','🎫 Biglietto':'🎫 Ticket','🎫 Prenotazione':'🎫 Booking',
     '🎒 Lista bagagli':'🎒 Packing list','🧭 Naviga':'🧭 Navigate','🧭 Autopilota':'🧭 Autopilot',
     '🧭 Il giro di oggi':'🧭 Today’s route','📸 Che cos’è?':'📸 What is it?','📸 Che cos\'è?':'📸 What is it?',
     '⭐ Essenziale':'⭐ Must-see','🔵 Saltabile':'🔵 Skippable','✦ Su misura':'✦ Tailored',
-    '✦ Identifica':'✦ Identify','✦ Trova i posti':'✦ Find the places','✦ Crea il viaggio':'✦ Create the trip',
+    '✦ Identifica':'✦ Identify','✦ Trova i posti':'✦ Find the places',
     '✓ Salva spesa':'✓ Save expense','✓ Chi ha già dato':'✓ Who has already paid',
     '🗑️ Elimina spesa':'🗑️ Delete expense','📋 Incolla e leggi':'📋 Paste and read','🌍 Lingua':'🌍 Language',
     'ℹ️ Info':'ℹ️ Info','📝 Note':'📝 Notes'
@@ -3458,13 +3543,13 @@ const DIZIONARIO_SCHERMATE={
     'Riempio':'Lo relleno','copiato':'copiado','divisa':'dividido','Fatto?':'¿Hecho?',
     'ELIMINA':'ELIMINAR','Chiave anon public':'Clave anon public','privacy di GeppGo':'la privacidad de GeppGo',
     'es. Vacanza estiva':'p. ej. Vacaciones de verano','Cena al ristorante':'Cena fuera',
-    'Allega un PDF':'Adjuntar un PDF','Codice / URL':'Código / URL','qualsiasi cosa':'cualquier cosa',
+    'Allega un PDF':'Adjuntar un PDF','Codice / URL':'Código / URL',
     '📷 Scansiona':'📷 Escanear','🚶 A piedi':'🚶 A pie','🚗 Macchina':'🚗 En coche','🚆 Treno e metro':'🚆 Tren y metro','📄 Da un PDF':'📄 Desde un PDF','📄 Carica il PDF':'📄 Subir el PDF',
     '🖼️ Foto o PDF':'🖼️ Foto o PDF','🎫 Biglietto':'🎫 Billete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de equipaje','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 La ruta de hoy','📸 Che cos’è?':'📸 ¿Qué es?','📸 Che cos\'è?':'📸 ¿Qué es?',
     '⭐ Essenziale':'⭐ Imprescindible','🔵 Saltabile':'🔵 Prescindible','✦ Su misura':'✦ A medida',
-    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares','✦ Crea il viaggio':'✦ Crear el viaje',
+    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares',
     '✓ Salva spesa':'✓ Guardar gasto','✓ Chi ha già dato':'✓ Quién ya ha pagado',
     '🗑️ Elimina spesa':'🗑️ Eliminar gasto','📋 Incolla e leggi':'📋 Pegar y leer','🌍 Lingua':'🌍 Idioma',
     'ℹ️ Info':'ℹ️ Información','📝 Note':'📝 Notas'
@@ -3521,13 +3606,13 @@ const DIZIONARIO_SCHERMATE={
     'Riempio':'Je remplis','copiato':'copié','divisa':'partagée','Fatto?':'C’est fait ?',
     'ELIMINA':'SUPPRIMER','Chiave anon public':'Clé anon public','privacy di GeppGo':'la confidentialité de GeppGo',
     'es. Vacanza estiva':'ex. Vacances d’été','Cena al ristorante':'Dîner au restaurant',
-    'Allega un PDF':'Joindre un PDF','Codice / URL':'Code / URL','qualsiasi cosa':'n’importe quoi',
+    'Allega un PDF':'Joindre un PDF','Codice / URL':'Code / URL',
     '📷 Scansiona':'📷 Scanner','🚶 A piedi':'🚶 À pied','🚗 Macchina':'🚗 En voiture','🚆 Treno e metro':'🚆 Train et métro','📄 Da un PDF':'📄 Depuis un PDF','📄 Carica il PDF':'📄 Charger le PDF',
     '🖼️ Foto o PDF':'🖼️ Photo ou PDF','🎫 Biglietto':'🎫 Billet','🎫 Prenotazione':'🎫 Réservation',
     '🎒 Lista bagagli':'🎒 Liste de bagages','🧭 Naviga':'🧭 Guider','🧭 Autopilota':'🧭 Pilote automatique',
     '🧭 Il giro di oggi':'🧭 Le tour du jour','📸 Che cos’è?':'📸 Qu’est-ce que c’est ?','📸 Che cos\'è?':'📸 Qu’est-ce que c’est ?',
     '⭐ Essenziale':'⭐ Incontournable','🔵 Saltabile':'🔵 Facultatif','✦ Su misura':'✦ Sur mesure',
-    '✦ Identifica':'✦ Identifier','✦ Trova i posti':'✦ Trouver les lieux','✦ Crea il viaggio':'✦ Créer le voyage',
+    '✦ Identifica':'✦ Identifier','✦ Trova i posti':'✦ Trouver les lieux',
     '✓ Salva spesa':'✓ Enregistrer la dépense','✓ Chi ha già dato':'✓ Qui a déjà payé',
     '🗑️ Elimina spesa':'🗑️ Supprimer la dépense','📋 Incolla e leggi':'📋 Coller et lire','🌍 Lingua':'🌍 Langue',
     'ℹ️ Info':'ℹ️ Infos','📝 Note':'📝 Notes'
@@ -3584,13 +3669,13 @@ const DIZIONARIO_SCHERMATE={
     'Riempio':'Preencho','copiato':'copiado','divisa':'dividida','Fatto?':'Feito?',
     'ELIMINA':'ELIMINAR','Chiave anon public':'Chave anon public','privacy di GeppGo':'a privacidade do GeppGo',
     'es. Vacanza estiva':'p. ex. Férias de verão','Cena al ristorante':'Jantar fora',
-    'Allega un PDF':'Anexar um PDF','Codice / URL':'Código / URL','qualsiasi cosa':'qualquer coisa',
+    'Allega un PDF':'Anexar um PDF','Codice / URL':'Código / URL',
     '📷 Scansiona':'📷 Digitalizar','🚶 A piedi':'🚶 A pé','🚗 Macchina':'🚗 De carro','🚆 Treno e metro':'🚆 Comboio e metro','📄 Da un PDF':'📄 A partir de um PDF','📄 Carica il PDF':'📄 Carregar o PDF',
     '🖼️ Foto o PDF':'🖼️ Foto ou PDF','🎫 Biglietto':'🎫 Bilhete','🎫 Prenotazione':'🎫 Reserva',
     '🎒 Lista bagagli':'🎒 Lista de bagagem','🧭 Naviga':'🧭 Navegar','🧭 Autopilota':'🧭 Piloto automático',
     '🧭 Il giro di oggi':'🧭 O percurso de hoje','📸 Che cos’è?':'📸 O que é?','📸 Che cos\'è?':'📸 O que é?',
     '⭐ Essenziale':'⭐ Imperdível','🔵 Saltabile':'🔵 Dispensável','✦ Su misura':'✦ À medida',
-    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares','✦ Crea il viaggio':'✦ Criar a viagem',
+    '✦ Identifica':'✦ Identificar','✦ Trova i posti':'✦ Encontrar lugares',
     '✓ Salva spesa':'✓ Guardar despesa','✓ Chi ha già dato':'✓ Quem já pagou',
     '🗑️ Elimina spesa':'🗑️ Eliminar despesa','📋 Incolla e leggi':'📋 Colar e ler','🌍 Lingua':'🌍 Idioma',
     'ℹ️ Info':'ℹ️ Informações','📝 Note':'📝 Notas'
@@ -3967,7 +4052,6 @@ const DIZIONARIO_FRASI={
     'Nome, indirizzo o link di Google Maps':'Name, address or Google Maps link',
     'PNR, numero del codice a barre o link':'PNR, barcode number or link',
     'Esporta attività nel calendario (.ics)':'Export activities to the calendar (.ics)',
-    '📄 Oppure carica un file (.csv / .txt)':'📄 Or upload a file (.csv / .txt)',
     'Incolla il link, o il codice a 6 cifre':'Paste the link, or the 6-digit code',
     'Da chi c\'è già stato — niente cartoline':'From people who’ve been there — no postcards',
     '🎫 Incolla una conferma di prenotazione':'🎫 Paste a booking confirmation',
@@ -4026,7 +4110,6 @@ const DIZIONARIO_FRASI={
     'Nome, indirizzo o link di Google Maps':'Nombre, dirección o enlace de Google Maps',
     'PNR, numero del codice a barre o link':'PNR, número del código de barras o enlace',
     'Esporta attività nel calendario (.ics)':'Exportar actividades al calendario (.ics)',
-    '📄 Oppure carica un file (.csv / .txt)':'📄 O sube un archivo (.csv / .txt)',
     'Incolla il link, o il codice a 6 cifre':'Pega el enlace, o el código de 6 cifras',
     'Da chi c\'è già stato — niente cartoline':'De quien ya ha estado — nada de postales',
     '🎫 Incolla una conferma di prenotazione':'🎫 Pega una confirmación de reserva',
@@ -4085,7 +4168,6 @@ const DIZIONARIO_FRASI={
     'Nome, indirizzo o link di Google Maps':'Nom, adresse ou lien Google Maps',
     'PNR, numero del codice a barre o link':'PNR, numéro du code-barres ou lien',
     'Esporta attività nel calendario (.ics)':'Exporter les activités vers l’agenda (.ics)',
-    '📄 Oppure carica un file (.csv / .txt)':'📄 Ou charge un fichier (.csv / .txt)',
     'Incolla il link, o il codice a 6 cifre':'Colle le lien, ou le code à 6 chiffres',
     'Da chi c\'è già stato — niente cartoline':'Par ceux qui y sont allés — pas de cartes postales',
     '🎫 Incolla una conferma di prenotazione':'🎫 Colle une confirmation de réservation',
@@ -4144,7 +4226,6 @@ const DIZIONARIO_FRASI={
     'Nome, indirizzo o link di Google Maps':'Nome, morada ou ligação do Google Maps',
     'PNR, numero del codice a barre o link':'PNR, número do código de barras ou ligação',
     'Esporta attività nel calendario (.ics)':'Exportar atividades para o calendário (.ics)',
-    '📄 Oppure carica un file (.csv / .txt)':'📄 Ou carrega um ficheiro (.csv / .txt)',
     'Incolla il link, o il codice a 6 cifre':'Cola a ligação, ou o código de 6 dígitos',
     'Da chi c\'è già stato — niente cartoline':'De quem já lá esteve — nada de postais',
     '🎫 Incolla una conferma di prenotazione':'🎫 Cola uma confirmação de reserva',
@@ -4799,9 +4880,7 @@ const DIZIONARIO_PANNELLI={
     'Se il progetto Supabase è tuo, i due valori sono in':'If the Supabase project is yours, the two values are in',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommended: on a phone you can’t tell it from the original, about 1.5 MB per photo',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'to the ones you already have, each in its own category. The ones already there I skip.',
-    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Day 1: breakfast, museum at 9:30, lunch downtown…\nDay 2: market, park, local dinner…',
     '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple doesn’t let a web app sit in the share sheet. You get there in a minute with the app',
-    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': an itinerary written by ChatGPT, a list by hand, or cells copied from Excel. I’ll work it out.',
     '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. In Italy, material involving minors is also reported to the Polizia Postale, at commissariatodips.it.',
     'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'From there: open the hotel mail → Share → GeppGo → this panel opens with the booking already read.',
     'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'and the way to reach you. The location is taken right now, once only: nobody is followed.',
@@ -4838,9 +4917,7 @@ const DIZIONARIO_PANNELLI={
     'Se il progetto Supabase è tuo, i due valori sono in':'Si el proyecto de Supabase es tuyo, los dos valores están en',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: en un teléfono no se distingue del original, unos 1,5 MB por foto',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'a los que ya tienes, cada uno en su categoría. Los que ya están me los salto.',
-    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Día 1: desayuno, museo a las 9:30, comida en el centro…\nDía 2: mercado, parque, cena típica…',
     '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple no deja que una app web esté en el menú de compartir. Se llega en un minuto con la app',
-    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': un itinerario escrito por ChatGPT, una lista a mano, o celdas copiadas de Excel. Ya lo entiendo yo.',
     '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. En Italia el material que afecta a menores se denuncia también a la Polizia Postale, en commissariatodips.it.',
     'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'Desde ahí: abre el correo del hotel → Compartir → GeppGo → se abre este panel con la reserva ya leída.',
     'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'y el camino para llegar hasta ti. La ubicación se toma en este momento, una sola vez: nadie es seguido.',
@@ -4877,9 +4954,7 @@ const DIZIONARIO_PANNELLI={
     'Se il progetto Supabase è tuo, i due valori sono in':'Si le projet Supabase est le tien, les deux valeurs sont dans',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recommandée : sur un téléphone on ne la distingue pas de l’originale, environ 1,5 Mo par photo',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'à ceux que tu as déjà, chacun dans sa catégorie. Ceux qui y sont déjà, je les saute.',
-    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Jour 1 : petit-déjeuner, musée à 9h30, déjeuner au centre…\nJour 2 : marché, parc, dîner typique…',
     '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— Apple ne laisse pas une app web figurer dans la feuille de partage. On y arrive en une minute avec l’app',
-    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': un itinéraire écrit par ChatGPT, une liste à la main, ou des cellules copiées d’Excel. Je m’en occupe.',
     '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. En Italie, le matériel impliquant des mineurs se signale aussi à la Polizia Postale, sur commissariatodips.it.',
     'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'De là : ouvre le mail de l’hôtel → Partager → GeppGo → ce panneau s’ouvre avec la réservation déjà lue.',
     'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'et le chemin pour te rejoindre. La position est prise à cet instant, une seule fois : personne n’est suivi.',
@@ -4916,9 +4991,7 @@ const DIZIONARIO_PANNELLI={
     'Se il progetto Supabase è tuo, i due valori sono in':'Se o projeto Supabase for teu, os dois valores estão em',
     'consigliata: su un telefono non si distingue dall\'originale, circa 1,5 MB a foto':'recomendada: num telemóvel não se distingue do original, cerca de 1,5 MB por foto',
     'a quelle che hai già, ognuna nella sua categoria. Quelle che ci sono già le salto.':'aos que já tens, cada um na sua categoria. Os que já lá estão, salto-os.',
-    'Giorno 1: colazione, museo ore 9:30, pranzo in centro...\nGiorno 2: mercato, parco, cena tipica...':'Dia 1: pequeno-almoço, museu às 9:30, almoço no centro…\nDia 2: mercado, parque, jantar típico…',
     '— Apple non lascia che un\'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l\'app':'— a Apple não deixa uma app web estar no menu de partilha. Chega-se lá num minuto com a app',
-    ': un itinerario scritto da ChatGPT, un elenco a mano, o le celle copiate da Excel. Ci penso io a capirlo.':': um itinerário escrito pelo ChatGPT, uma lista à mão, ou células copiadas do Excel. Eu trato de perceber.',
     '. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.':'. Em Itália, o material que envolve menores denuncia-se também à Polizia Postale, em commissariatodips.it.',
     'Da lì: apri la mail dell\'hotel → Condividi → GeppGo → si apre questo pannello con la prenotazione già letta.':'A partir daí: abre o email do hotel → Partilhar → GeppGo → abre-se este painel com a reserva já lida.',
     'e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.':'e o caminho para chegar até ti. A localização é tirada neste momento, uma só vez: ninguém é seguido.',
@@ -6852,11 +6925,363 @@ const DIZIONARIO_RECUPERO={
   }
 };
 Object.keys(DIZIONARIO_RECUPERO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_RECUPERO[l]));
+/* L'importazione da un foglio (vedi IMPORTA DA UNA TABELLA). */
+const DIZIONARIO_IMPORTA={
+  en:{
+    'Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c\'è, l\'ora.':'Got your trip in an Excel, Numbers or Google Sheets spreadsheet? Bring it here: one row per activity, with the date and, if you have it, the time.',
+    '📄 Scegli un file':'📄 Choose a file',
+    'Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe':'Excel, Numbers, CSV or text · up to 5 MB and 1,000 rows',
+    'Incolla le celle':'Paste the cells',
+    'Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui':'Select the cells in Excel, Numbers or Google Sheets, copy them and paste them here',
+    'Leggi le celle':'Read the cells',
+    '⬇️ Scarica un modello da compilare':'⬇️ Download a template to fill in',
+    '📊 Importa da Excel o CSV':'📊 Import from Excel or CSV',
+    'Hai già il viaggio su Excel?':'Already have the trip in Excel?',
+    'Importalo':'Import it',
+    '📊 Importa da Excel':'📊 Import from Excel',
+    'Non usare':'Don’t use',
+    'Data o giorno':'Date or day',
+    'Ora di inizio':'Start time',
+    'Ora di fine':'End time',
+    'Durata':'Duration',
+    'Luogo o tappa':'Place or stop',
+    'Indirizzo':'Address',
+    'Città':'City',
+    'Costo':'Cost',
+    'Link':'Link',
+    'Tipo o categoria':'Type or category',
+    'Il file pesa {1} MB: il limite è 5 MB. Tieni solo il foglio del viaggio e riprova.':'The file is {1} MB: the limit is 5 MB. Keep only the trip sheet and try again.',
+    'Non riesco ad aprire il file: riprova, o salvalo di nuovo e riprova.':'I can’t open the file: try again, or save it again and retry.',
+    'Apro il file…':'Opening the file…',
+    'Per aprire i file Excel la prima volta serve la rete: controlla la connessione e riprova, oppure salva il foglio come CSV.':'Opening Excel files needs the internet the first time: check your connection and try again, or save the sheet as CSV.',
+    'Questo file di Numbers non si apre: in Numbers scegli Esporta › Excel e importa quello.':'This Numbers file won’t open: in Numbers choose Export › Excel and import that.',
+    'Non riesco a leggere questo file. Salvalo di nuovo come .xlsx o .csv e riprova.':'I can’t read this file. Save it again as .xlsx or .csv and try again.',
+    'Incolla prima le celle copiate dal foglio.':'First paste the cells you copied from the sheet.',
+    'Il testo incollato è troppo lungo: il limite è 5 MB. Incollane una parte alla volta.':'The pasted text is too long: the limit is 5 MB. Paste one part at a time.',
+    'Il file è vuoto: non ho trovato nessuna riga.':'The file is empty: I didn’t find any rows.',
+    'Qui non vedo colonne: sembra un itinerario scritto, non una tabella.':'I don’t see any columns here: it looks like a written itinerary, not a table.',
+    'Fallo leggere all\'assistente':'Let the assistant read it',
+    'Ci sono {1} righe: il limite è 1.000. Dividi il foglio in più parti e importale una alla volta.':'There are {1} rows: the limit is 1,000. Split the sheet into parts and import them one at a time.',
+    'Durata: {1}':'Duration: {1}',
+    'Celle incollate':'Pasted cells',
+    'Righe lette: {1}':'Rows read: {1}',
+    'Foglio':'Sheet',
+    'La prima riga contiene i nomi delle colonne':'The first row has the column names',
+    'Cosa c\'è in ogni colonna':'What’s in each column',
+    'Senza i nomi delle colonne decidi tu: scegli nel menu cosa contiene ognuna.':'Without column names, you decide: pick in the menu what each one holds.',
+    'Colonna {1}':'Column {1}',
+    '(vuota)':'(empty)',
+    'Cosa c\'è nella colonna {1}':'What’s in column {1}',
+    'Data del primo giorno':'Date of the first day',
+    'Nella colonna ci sono i giorni del viaggio (1, 2, 3…): dimmi quando comincia.':'The column has the trip days (1, 2, 3…): tell me when it starts.',
+    'Come diventerà il viaggio':'How the trip will look',
+    'Manca la colonna della data: sceglila in uno dei menu qui sopra.':'The date column is missing: pick it in one of the menus above.',
+    'Scegli la data del primo giorno.':'Choose the date of the first day.',
+    'Nessuna riga pronta: controlla le colonne qui sopra.':'No rows ready: check the columns above.',
+    '…e altre {1} righe.':'…and {1} more rows.',
+    'Righe da sistemare: {1}':'Rows to fix: {1}',
+    'riga vuota: la salto':'empty row: I’ll skip it',
+    'data non riconosciuta: «{1}»':'date not recognised: “{1}”',
+    'manca la data':'the date is missing',
+    'manca il nome dell\'attività':'the activity name is missing',
+    'corretta':'fixed',
+    'Nome dell\'attività':'Activity name',
+    'Correggi la riga {1}':'Fix row {1}',
+    'Riga {1}':'Row {1}',
+    'Dove le metto?':'Where should I put them?',
+    'Un viaggio nuovo':'A new trip',
+    'Con il piano gratuito hai già il massimo di viaggi tuoi in corso: per uno nuovo serve Premium.':'On the free plan you already have the most trips of your own in progress: a new one needs Premium.',
+    'Viaggio importato':'Imported trip',
+    'Aggiungi a «{1}»':'Add to “{1}”',
+    'Prima salvo un punto di ripristino':'I’ll save a restore point first',
+    'Importa {1} righe':'Import {1} rows',
+    'Indietro':'Back',
+    'Non c\'è ancora niente da importare: controlla le colonne':'Nothing to import yet: check the columns',
+    'Alloggio':'Accommodation',
+    '✅ Righe aggiunte al viaggio':'✅ Rows added to the trip',
+    'Viaggio «{1}» creato':'Trip “{1}” created',
+    'Righe aggiunte a «{1}»':'Rows added to “{1}”',
+    'Spese previste':'Planned expenses',
+    'Righe saltate':'Rows skipped',
+    'Luoghi da sistemare':'Places to fix',
+    'I costi sono in Soldi come spese previste: diventano spese vere quando le segni pagate.':'The costs are in Money as planned expenses: they become real expenses when you mark them paid.',
+    'Apri il viaggio':'Open the trip',
+    'Cerco i luoghi sulla mappa: {1} di {2}':'Finding the places on the map: {1} of {2}',
+    'Luoghi trovati: {1} di {2}. Gli altri restano «senza posizione»: aprili e scegli il posto.':'Places found: {1} of {2}. The others stay “no location”: open them and pick the place.',
+    'Luoghi trovati: {1} di {2}':'Places found: {1} of {2}',
+    'Preparo il modello…':'Preparing the template…',
+    'Modello pronto: {1}. Compilalo e importalo da qui.':'Template ready: {1}. Fill it in and import it from here.',
+    ' · senza posizione':' · no location',
+    'senza posizione':'no location'
+  },
+  es:{
+    'Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c\'è, l\'ora.':'¿Tienes el viaje en una hoja de Excel, Numbers o Google Sheets? Tráelo aquí: una fila por actividad, con la fecha y, si la hay, la hora.',
+    '📄 Scegli un file':'📄 Elegir un archivo',
+    'Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe':'Excel, Numbers, CSV o texto · hasta 5 MB y 1.000 filas',
+    'Incolla le celle':'Pega las celdas',
+    'Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui':'Selecciona las celdas en Excel, Numbers o Google Sheets, cópialas y pégalas aquí',
+    'Leggi le celle':'Leer las celdas',
+    '⬇️ Scarica un modello da compilare':'⬇️ Descargar una plantilla para rellenar',
+    '📊 Importa da Excel o CSV':'📊 Importar desde Excel o CSV',
+    'Hai già il viaggio su Excel?':'¿Ya tienes el viaje en Excel?',
+    'Importalo':'Impórtalo',
+    '📊 Importa da Excel':'📊 Importar desde Excel',
+    'Non usare':'No usar',
+    'Data o giorno':'Fecha o día',
+    'Ora di inizio':'Hora de inicio',
+    'Ora di fine':'Hora de fin',
+    'Durata':'Duración',
+    'Luogo o tappa':'Lugar o parada',
+    'Indirizzo':'Dirección',
+    'Città':'Ciudad',
+    'Costo':'Coste',
+    'Link':'Enlace',
+    'Tipo o categoria':'Tipo o categoría',
+    'Il file pesa {1} MB: il limite è 5 MB. Tieni solo il foglio del viaggio e riprova.':'El archivo pesa {1} MB: el límite es 5 MB. Deja solo la hoja del viaje y vuelve a intentarlo.',
+    'Non riesco ad aprire il file: riprova, o salvalo di nuovo e riprova.':'No consigo abrir el archivo: inténtalo de nuevo, o guárdalo otra vez y vuelve a intentarlo.',
+    'Apro il file…':'Abriendo el archivo…',
+    'Per aprire i file Excel la prima volta serve la rete: controlla la connessione e riprova, oppure salva il foglio come CSV.':'Para abrir archivos de Excel la primera vez hace falta conexión: revisa la red y vuelve a intentarlo, o guarda la hoja como CSV.',
+    'Questo file di Numbers non si apre: in Numbers scegli Esporta › Excel e importa quello.':'Este archivo de Numbers no se abre: en Numbers elige Exportar › Excel e importa ese.',
+    'Non riesco a leggere questo file. Salvalo di nuovo come .xlsx o .csv e riprova.':'No consigo leer este archivo. Guárdalo de nuevo como .xlsx o .csv y vuelve a intentarlo.',
+    'Incolla prima le celle copiate dal foglio.':'Pega primero las celdas copiadas de la hoja.',
+    'Il testo incollato è troppo lungo: il limite è 5 MB. Incollane una parte alla volta.':'El texto pegado es demasiado largo: el límite es 5 MB. Pega una parte cada vez.',
+    'Il file è vuoto: non ho trovato nessuna riga.':'El archivo está vacío: no he encontrado ninguna fila.',
+    'Qui non vedo colonne: sembra un itinerario scritto, non una tabella.':'Aquí no veo columnas: parece un itinerario escrito, no una tabla.',
+    'Fallo leggere all\'assistente':'Que lo lea el asistente',
+    'Ci sono {1} righe: il limite è 1.000. Dividi il foglio in più parti e importale una alla volta.':'Hay {1} filas: el límite es 1.000. Divide la hoja en varias partes e impórtalas una a una.',
+    'Durata: {1}':'Duración: {1}',
+    'Celle incollate':'Celdas pegadas',
+    'Righe lette: {1}':'Filas leídas: {1}',
+    'Foglio':'Hoja',
+    'La prima riga contiene i nomi delle colonne':'La primera fila tiene los nombres de las columnas',
+    'Cosa c\'è in ogni colonna':'Qué hay en cada columna',
+    'Senza i nomi delle colonne decidi tu: scegli nel menu cosa contiene ognuna.':'Sin nombres de columna decides tú: elige en el menú qué contiene cada una.',
+    'Colonna {1}':'Columna {1}',
+    '(vuota)':'(vacía)',
+    'Cosa c\'è nella colonna {1}':'Qué hay en la columna {1}',
+    'Data del primo giorno':'Fecha del primer día',
+    'Nella colonna ci sono i giorni del viaggio (1, 2, 3…): dimmi quando comincia.':'En la columna están los días del viaje (1, 2, 3…): dime cuándo empieza.',
+    'Come diventerà il viaggio':'Cómo quedará el viaje',
+    'Manca la colonna della data: sceglila in uno dei menu qui sopra.':'Falta la columna de la fecha: elígela en uno de los menús de arriba.',
+    'Scegli la data del primo giorno.':'Elige la fecha del primer día.',
+    'Nessuna riga pronta: controlla le colonne qui sopra.':'Ninguna fila lista: revisa las columnas de arriba.',
+    '…e altre {1} righe.':'…y {1} filas más.',
+    'Righe da sistemare: {1}':'Filas por arreglar: {1}',
+    'riga vuota: la salto':'fila vacía: me la salto',
+    'data non riconosciuta: «{1}»':'fecha no reconocida: «{1}»',
+    'manca la data':'falta la fecha',
+    'manca il nome dell\'attività':'falta el nombre de la actividad',
+    'corretta':'corregida',
+    'Nome dell\'attività':'Nombre de la actividad',
+    'Correggi la riga {1}':'Corregir la fila {1}',
+    'Riga {1}':'Fila {1}',
+    'Dove le metto?':'¿Dónde las pongo?',
+    'Un viaggio nuovo':'Un viaje nuevo',
+    'Con il piano gratuito hai già il massimo di viaggi tuoi in corso: per uno nuovo serve Premium.':'Con el plan gratuito ya tienes el máximo de viajes tuyos en curso: para uno nuevo hace falta Premium.',
+    'Viaggio importato':'Viaje importado',
+    'Aggiungi a «{1}»':'Añadir a «{1}»',
+    'Prima salvo un punto di ripristino':'Antes guardo un punto de restauración',
+    'Importa {1} righe':'Importar {1} filas',
+    'Indietro':'Atrás',
+    'Non c\'è ancora niente da importare: controlla le colonne':'Todavía no hay nada que importar: revisa las columnas',
+    'Alloggio':'Alojamiento',
+    '✅ Righe aggiunte al viaggio':'✅ Filas añadidas al viaje',
+    'Viaggio «{1}» creato':'Viaje «{1}» creado',
+    'Righe aggiunte a «{1}»':'Filas añadidas a «{1}»',
+    'Spese previste':'Gastos previstos',
+    'Righe saltate':'Filas saltadas',
+    'Luoghi da sistemare':'Lugares por arreglar',
+    'I costi sono in Soldi come spese previste: diventano spese vere quando le segni pagate.':'Los costes están en Dinero como gastos previstos: se convierten en gastos reales cuando los marcas como pagados.',
+    'Apri il viaggio':'Abrir el viaje',
+    'Cerco i luoghi sulla mappa: {1} di {2}':'Busco los lugares en el mapa: {1} de {2}',
+    'Luoghi trovati: {1} di {2}. Gli altri restano «senza posizione»: aprili e scegli il posto.':'Lugares encontrados: {1} de {2}. Los demás quedan «sin ubicación»: ábrelos y elige el sitio.',
+    'Luoghi trovati: {1} di {2}':'Lugares encontrados: {1} de {2}',
+    'Preparo il modello…':'Preparando la plantilla…',
+    'Modello pronto: {1}. Compilalo e importalo da qui.':'Plantilla lista: {1}. Rellénala e impórtala desde aquí.',
+    ' · senza posizione':' · sin ubicación',
+    'senza posizione':'sin ubicación'
+  },
+  fr:{
+    'Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c\'è, l\'ora.':'Ton voyage est dans une feuille Excel, Numbers ou Google Sheets ? Apporte-le ici : une ligne par activité, avec la date et, s’il y en a une, l’heure.',
+    '📄 Scegli un file':'📄 Choisir un fichier',
+    'Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe':'Excel, Numbers, CSV ou texte · jusqu’à 5 Mo et 1 000 lignes',
+    'Incolla le celle':'Colle les cellules',
+    'Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui':'Sélectionne les cellules dans Excel, Numbers ou Google Sheets, copie-les et colle-les ici',
+    'Leggi le celle':'Lire les cellules',
+    '⬇️ Scarica un modello da compilare':'⬇️ Télécharger un modèle à remplir',
+    '📊 Importa da Excel o CSV':'📊 Importer depuis Excel ou CSV',
+    'Hai già il viaggio su Excel?':'Tu as déjà le voyage sur Excel ?',
+    'Importalo':'Importe-le',
+    '📊 Importa da Excel':'📊 Importer depuis Excel',
+    'Non usare':'Ne pas utiliser',
+    'Data o giorno':'Date ou jour',
+    'Ora di inizio':'Heure de début',
+    'Ora di fine':'Heure de fin',
+    'Durata':'Durée',
+    'Luogo o tappa':'Lieu ou étape',
+    'Indirizzo':'Adresse',
+    'Città':'Ville',
+    'Costo':'Coût',
+    'Link':'Lien',
+    'Tipo o categoria':'Type ou catégorie',
+    'Il file pesa {1} MB: il limite è 5 MB. Tieni solo il foglio del viaggio e riprova.':'Le fichier pèse {1} Mo : la limite est de 5 Mo. Garde seulement la feuille du voyage et réessaie.',
+    'Non riesco ad aprire il file: riprova, o salvalo di nuovo e riprova.':'Je n’arrive pas à ouvrir le fichier : réessaie, ou enregistre-le de nouveau et réessaie.',
+    'Apro il file…':'J’ouvre le fichier…',
+    'Per aprire i file Excel la prima volta serve la rete: controlla la connessione e riprova, oppure salva il foglio come CSV.':'Pour ouvrir les fichiers Excel la première fois, il faut le réseau : vérifie la connexion et réessaie, ou enregistre la feuille en CSV.',
+    'Questo file di Numbers non si apre: in Numbers scegli Esporta › Excel e importa quello.':'Ce fichier Numbers ne s’ouvre pas : dans Numbers, choisis Exporter › Excel et importe celui-là.',
+    'Non riesco a leggere questo file. Salvalo di nuovo come .xlsx o .csv e riprova.':'Je n’arrive pas à lire ce fichier. Enregistre-le de nouveau en .xlsx ou .csv et réessaie.',
+    'Incolla prima le celle copiate dal foglio.':'Colle d’abord les cellules copiées de la feuille.',
+    'Il testo incollato è troppo lungo: il limite è 5 MB. Incollane una parte alla volta.':'Le texte collé est trop long : la limite est de 5 Mo. Colles-en une partie à la fois.',
+    'Il file è vuoto: non ho trovato nessuna riga.':'Le fichier est vide : je n’ai trouvé aucune ligne.',
+    'Qui non vedo colonne: sembra un itinerario scritto, non una tabella.':'Je ne vois pas de colonnes ici : on dirait un itinéraire écrit, pas un tableau.',
+    'Fallo leggere all\'assistente':'Fais-le lire à l’assistant',
+    'Ci sono {1} righe: il limite è 1.000. Dividi il foglio in più parti e importale una alla volta.':'Il y a {1} lignes : la limite est de 1 000. Divise la feuille en plusieurs parties et importe-les une à la fois.',
+    'Durata: {1}':'Durée : {1}',
+    'Celle incollate':'Cellules collées',
+    'Righe lette: {1}':'Lignes lues : {1}',
+    'Foglio':'Feuille',
+    'La prima riga contiene i nomi delle colonne':'La première ligne contient les noms des colonnes',
+    'Cosa c\'è in ogni colonna':'Ce qu’il y a dans chaque colonne',
+    'Senza i nomi delle colonne decidi tu: scegli nel menu cosa contiene ognuna.':'Sans noms de colonnes, c’est toi qui décides : choisis dans le menu ce que contient chacune.',
+    'Colonna {1}':'Colonne {1}',
+    '(vuota)':'(vide)',
+    'Cosa c\'è nella colonna {1}':'Ce qu’il y a dans la colonne {1}',
+    'Data del primo giorno':'Date du premier jour',
+    'Nella colonna ci sono i giorni del viaggio (1, 2, 3…): dimmi quando comincia.':'La colonne contient les jours du voyage (1, 2, 3…) : dis-moi quand il commence.',
+    'Come diventerà il viaggio':'Ce que deviendra le voyage',
+    'Manca la colonna della data: sceglila in uno dei menu qui sopra.':'La colonne de la date manque : choisis-la dans l’un des menus ci-dessus.',
+    'Scegli la data del primo giorno.':'Choisis la date du premier jour.',
+    'Nessuna riga pronta: controlla le colonne qui sopra.':'Aucune ligne prête : vérifie les colonnes ci-dessus.',
+    '…e altre {1} righe.':'…et {1} autres lignes.',
+    'Righe da sistemare: {1}':'Lignes à corriger : {1}',
+    'riga vuota: la salto':'ligne vide : je la saute',
+    'data non riconosciuta: «{1}»':'date non reconnue : « {1} »',
+    'manca la data':'la date manque',
+    'manca il nome dell\'attività':'le nom de l’activité manque',
+    'corretta':'corrigée',
+    'Nome dell\'attività':'Nom de l’activité',
+    'Correggi la riga {1}':'Corriger la ligne {1}',
+    'Riga {1}':'Ligne {1}',
+    'Dove le metto?':'Où je les mets ?',
+    'Un viaggio nuovo':'Un nouveau voyage',
+    'Con il piano gratuito hai già il massimo di viaggi tuoi in corso: per uno nuovo serve Premium.':'Avec le forfait gratuit, tu as déjà le maximum de voyages à toi en cours : pour un nouveau, il faut Premium.',
+    'Viaggio importato':'Voyage importé',
+    'Aggiungi a «{1}»':'Ajouter à « {1} »',
+    'Prima salvo un punto di ripristino':'J’enregistre d’abord un point de restauration',
+    'Importa {1} righe':'Importer {1} lignes',
+    'Indietro':'Retour',
+    'Non c\'è ancora niente da importare: controlla le colonne':'Il n’y a encore rien à importer : vérifie les colonnes',
+    'Alloggio':'Hébergement',
+    '✅ Righe aggiunte al viaggio':'✅ Lignes ajoutées au voyage',
+    'Viaggio «{1}» creato':'Voyage « {1} » créé',
+    'Righe aggiunte a «{1}»':'Lignes ajoutées à « {1} »',
+    'Spese previste':'Dépenses prévues',
+    'Righe saltate':'Lignes sautées',
+    'Luoghi da sistemare':'Lieux à corriger',
+    'I costi sono in Soldi come spese previste: diventano spese vere quando le segni pagate.':'Les coûts sont dans Argent comme dépenses prévues : ils deviennent de vraies dépenses quand tu les marques payés.',
+    'Apri il viaggio':'Ouvrir le voyage',
+    'Cerco i luoghi sulla mappa: {1} di {2}':'Je cherche les lieux sur la carte : {1} sur {2}',
+    'Luoghi trovati: {1} di {2}. Gli altri restano «senza posizione»: aprili e scegli il posto.':'Lieux trouvés : {1} sur {2}. Les autres restent « sans position » : ouvre-les et choisis le lieu.',
+    'Luoghi trovati: {1} di {2}':'Lieux trouvés : {1} sur {2}',
+    'Preparo il modello…':'Je prépare le modèle…',
+    'Modello pronto: {1}. Compilalo e importalo da qui.':'Modèle prêt : {1}. Remplis-le et importe-le d’ici.',
+    ' · senza posizione':' · sans position',
+    'senza posizione':'sans position'
+  },
+  pt:{
+    'Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c\'è, l\'ora.':'Tens a viagem numa folha de Excel, Numbers ou Google Sheets? Traz-la para aqui: uma linha por atividade, com a data e, se houver, a hora.',
+    '📄 Scegli un file':'📄 Escolher um ficheiro',
+    'Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe':'Excel, Numbers, CSV ou texto · até 5 MB e 1.000 linhas',
+    'Incolla le celle':'Cola as células',
+    'Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui':'Seleciona as células no Excel, Numbers ou Google Sheets, copia-as e cola-as aqui',
+    'Leggi le celle':'Ler as células',
+    '⬇️ Scarica un modello da compilare':'⬇️ Descarregar um modelo para preencher',
+    '📊 Importa da Excel o CSV':'📊 Importar do Excel ou CSV',
+    'Hai già il viaggio su Excel?':'Já tens a viagem no Excel?',
+    'Importalo':'Importa-a',
+    '📊 Importa da Excel':'📊 Importar do Excel',
+    'Non usare':'Não usar',
+    'Data o giorno':'Data ou dia',
+    'Ora di inizio':'Hora de início',
+    'Ora di fine':'Hora de fim',
+    'Durata':'Duração',
+    'Luogo o tappa':'Local ou paragem',
+    'Indirizzo':'Morada',
+    'Città':'Cidade',
+    'Costo':'Custo',
+    'Link':'Ligação',
+    'Tipo o categoria':'Tipo ou categoria',
+    'Il file pesa {1} MB: il limite è 5 MB. Tieni solo il foglio del viaggio e riprova.':'O ficheiro tem {1} MB: o limite é 5 MB. Deixa só a folha da viagem e tenta outra vez.',
+    'Non riesco ad aprire il file: riprova, o salvalo di nuovo e riprova.':'Não consigo abrir o ficheiro: tenta outra vez, ou guarda-o de novo e tenta outra vez.',
+    'Apro il file…':'A abrir o ficheiro…',
+    'Per aprire i file Excel la prima volta serve la rete: controlla la connessione e riprova, oppure salva il foglio come CSV.':'Para abrir ficheiros Excel pela primeira vez é preciso rede: verifica a ligação e tenta outra vez, ou guarda a folha como CSV.',
+    'Questo file di Numbers non si apre: in Numbers scegli Esporta › Excel e importa quello.':'Este ficheiro do Numbers não abre: no Numbers escolhe Exportar › Excel e importa esse.',
+    'Non riesco a leggere questo file. Salvalo di nuovo come .xlsx o .csv e riprova.':'Não consigo ler este ficheiro. Guarda-o de novo como .xlsx ou .csv e tenta outra vez.',
+    'Incolla prima le celle copiate dal foglio.':'Cola primeiro as células copiadas da folha.',
+    'Il testo incollato è troppo lungo: il limite è 5 MB. Incollane una parte alla volta.':'O texto colado é demasiado longo: o limite é 5 MB. Cola uma parte de cada vez.',
+    'Il file è vuoto: non ho trovato nessuna riga.':'O ficheiro está vazio: não encontrei nenhuma linha.',
+    'Qui non vedo colonne: sembra un itinerario scritto, non una tabella.':'Aqui não vejo colunas: parece um itinerário escrito, não uma tabela.',
+    'Fallo leggere all\'assistente':'Deixa o assistente ler',
+    'Ci sono {1} righe: il limite è 1.000. Dividi il foglio in più parti e importale una alla volta.':'Há {1} linhas: o limite é 1.000. Divide a folha em várias partes e importa-as uma de cada vez.',
+    'Durata: {1}':'Duração: {1}',
+    'Celle incollate':'Células coladas',
+    'Righe lette: {1}':'Linhas lidas: {1}',
+    'Foglio':'Folha',
+    'La prima riga contiene i nomi delle colonne':'A primeira linha tem os nomes das colunas',
+    'Cosa c\'è in ogni colonna':'O que há em cada coluna',
+    'Senza i nomi delle colonne decidi tu: scegli nel menu cosa contiene ognuna.':'Sem nomes de colunas decides tu: escolhe no menu o que contém cada uma.',
+    'Colonna {1}':'Coluna {1}',
+    '(vuota)':'(vazia)',
+    'Cosa c\'è nella colonna {1}':'O que há na coluna {1}',
+    'Data del primo giorno':'Data do primeiro dia',
+    'Nella colonna ci sono i giorni del viaggio (1, 2, 3…): dimmi quando comincia.':'Na coluna estão os dias da viagem (1, 2, 3…): diz-me quando começa.',
+    'Come diventerà il viaggio':'Como vai ficar a viagem',
+    'Manca la colonna della data: sceglila in uno dei menu qui sopra.':'Falta a coluna da data: escolhe-a num dos menus acima.',
+    'Scegli la data del primo giorno.':'Escolhe a data do primeiro dia.',
+    'Nessuna riga pronta: controlla le colonne qui sopra.':'Nenhuma linha pronta: verifica as colunas acima.',
+    '…e altre {1} righe.':'…e mais {1} linhas.',
+    'Righe da sistemare: {1}':'Linhas a corrigir: {1}',
+    'riga vuota: la salto':'linha vazia: salto-a',
+    'data non riconosciuta: «{1}»':'data não reconhecida: «{1}»',
+    'manca la data':'falta a data',
+    'manca il nome dell\'attività':'falta o nome da atividade',
+    'corretta':'corrigida',
+    'Nome dell\'attività':'Nome da atividade',
+    'Correggi la riga {1}':'Corrigir a linha {1}',
+    'Riga {1}':'Linha {1}',
+    'Dove le metto?':'Onde as ponho?',
+    'Un viaggio nuovo':'Uma viagem nova',
+    'Con il piano gratuito hai già il massimo di viaggi tuoi in corso: per uno nuovo serve Premium.':'Com o plano gratuito já tens o máximo de viagens tuas a decorrer: para uma nova é preciso Premium.',
+    'Viaggio importato':'Viagem importada',
+    'Aggiungi a «{1}»':'Adicionar a «{1}»',
+    'Prima salvo un punto di ripristino':'Antes guardo um ponto de restauro',
+    'Importa {1} righe':'Importar {1} linhas',
+    'Indietro':'Voltar',
+    'Non c\'è ancora niente da importare: controlla le colonne':'Ainda não há nada para importar: verifica as colunas',
+    'Alloggio':'Alojamento',
+    '✅ Righe aggiunte al viaggio':'✅ Linhas adicionadas à viagem',
+    'Viaggio «{1}» creato':'Viagem «{1}» criada',
+    'Righe aggiunte a «{1}»':'Linhas adicionadas a «{1}»',
+    'Spese previste':'Despesas previstas',
+    'Righe saltate':'Linhas saltadas',
+    'Luoghi da sistemare':'Locais a corrigir',
+    'I costi sono in Soldi come spese previste: diventano spese vere quando le segni pagate.':'Os custos estão em Dinheiro como despesas previstas: tornam-se despesas reais quando as marcas como pagas.',
+    'Apri il viaggio':'Abrir a viagem',
+    'Cerco i luoghi sulla mappa: {1} di {2}':'A procurar os locais no mapa: {1} de {2}',
+    'Luoghi trovati: {1} di {2}. Gli altri restano «senza posizione»: aprili e scegli il posto.':'Locais encontrados: {1} de {2}. Os outros ficam «sem localização»: abre-os e escolhe o sítio.',
+    'Luoghi trovati: {1} di {2}':'Locais encontrados: {1} de {2}',
+    'Preparo il modello…':'A preparar o modelo…',
+    'Modello pronto: {1}. Compilalo e importalo da qui.':'Modelo pronto: {1}. Preenche-o e importa-o daqui.',
+    ' · senza posizione':' · sem localização',
+    'senza posizione':'sem localização'
+  }
+};
+Object.keys(DIZIONARIO_IMPORTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_IMPORTA[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1109;
+const FRASI_IN_TUTTO=1189;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -8218,7 +8643,8 @@ function renderHomeHero(){
     <div style="display:flex;gap:.6rem;margin-top:1.3rem">
       <button class="btn btn-green" style="flex:1" onclick="openNewTrip()">+ Aggiungi viaggio</button>
       <button class="btn btn-soft" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button>
-    </div>`);
+    </div>
+    <button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="openImport()">📊 Importa da Excel o CSV</button>`);
     return;
   }
   /* Riga dei viaggi aperti: scorre in orizzontale come la barra in basso
@@ -9126,6 +9552,7 @@ function sembraUnComando(s){
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Il Profilo NON e' piu' una voce della barra: sta in fondo al cassetto delle tre righine in alto a sinistra. Il Meteo NON e' piu' una voce della barra: si apre dal riquadro del cielo in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
 - Le TRE RIGHINE in alto a sinistra, di fianco al logo, aprono un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "+ Aggiungi viaggio", e in fondo al cassetto il PROFILO. E' l'unico modo di arrivare al Profilo e l'unico di cambiare viaggio. Il cassetto si richiude ritoccando le righine o toccando fuori. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
+- Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "+ Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nella time-table, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
 - Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. "Condividi" non sta in home: e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio). I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
@@ -9999,8 +10426,20 @@ function saveActNote(){
   save();renderAll();closeSheet('mActNote');
   toast(cambiata?(testo?'📝 Nota salvata':'Nota svuotata'):'Nota invariata');
 }
-async function ensureDestLoc(t){
-  if(t.destLoc||!t.destination)return;
+/* Una citta' si cerca una volta: appena nato un viaggio la chiedevano in
+   tre insieme (la mappa, il meteo, la scheda), tre domande nello stesso
+   istante a una mappa che ne vuole una al secondo. Chi arriva mentre la
+   ricerca e' in corso aspetta quella; e una citta' che la mappa non trova
+   non si richiede a ogni disegno, ma dopo qualche minuto. */
+const DEST_IN_CORSO=new Map(),DEST_NON_TROVATE=new Map();
+function ensureDestLoc(t){
+  if(t.destLoc||!t.destination)return Promise.resolve();
+  const k=t.id+'|'+t.destination;
+  if(Date.now()-(DEST_NON_TROVATE.get(k)||0)<300000)return Promise.resolve();
+  if(!DEST_IN_CORSO.has(k))DEST_IN_CORSO.set(k,cercaDestLoc(t).finally(()=>{DEST_IN_CORSO.delete(k);if(!t.destLoc)DEST_NON_TROVATE.set(k,Date.now());}));
+  return DEST_IN_CORSO.get(k);
+}
+async function cercaDestLoc(t){
   const q=(t.multiCity&&t.cities&&t.cities.length)?t.cities[0].name:t.destination;
   try{
     const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=1&addressdetails=1`,{headers:{'Accept-Language':'it,en'}});
@@ -11181,7 +11620,7 @@ function setExpAmt(t,e,amount,fromCur){
   else if(e.origCurrency!==(t.currency||'EUR')&&!inAttesa(e)&&e.rate>0){e.amount=e.origAmount*e.rate;return;}
   if(!applicaCambio(t,e))fixRate(t,e.id);
 }
-function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,splitAmong){
+function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,splitAmong,zitto){
   const me=t.participants.find(pp=>pp.isMe);
   const fc=fromCur||t.currency||'EUR';
   const e={id:uid(),desc:label,amount:amount,origAmount:amount,origCurrency:fc,rate:1,category:category,payerId:me?me.id:(t.participants[0]?t.participants[0].id:null),splitAmong:(splitAmong&&splitAmong.length)?splitAmong.slice():t.participants.map(pp=>pp.id),date:new Date().toISOString(),paid:!!paidBool};
@@ -11189,7 +11628,8 @@ function pushAutoExp(t,label,amount,paidBool,category,linkKey,linkVal,fromCur,sp
   const pronto=applicaCambio(t,e);
   t.expenses.push(e);
   if(!pronto)fixRate(t,e.id);
-  toast((paidBool?'Aggiunta a Soldi: ':'Prevista in Soldi: ')+label);
+  /* Zitto quando sono tante insieme (un'importazione): il riepilogo le conta. */
+  if(!zitto)toast((paidBool?'Aggiunta a Soldi: ':'Prevista in Soldi: ')+label);
   return e.id;
 }
 async function addExpense(){
@@ -13767,8 +14207,25 @@ let ponteRotto=0,ponteGeoRotto=0,ponteAncora=0;
    rimasti come erano, e non c'e' stato da rimaneggiare ventun chiamate una
    per una - che e' il modo di introdurre un difetto in quella che non si
    guarda. */
+/* DRITTI A NOMINATIM, UNO AL SECONDO. Quando il ponte non c'e' o non
+   risponde, il telefono chiede da solo, e le regole di Nominatim dicono una
+   richiesta al secondo al massimo. Prima partivano insieme: un viaggio
+   importato con dieci luoghi faceva cercare i luoghi, poi le foto di
+   ognuno, poi la citta' del meteo, tutto nello stesso istante. Qui si mettono
+   in fila; Photon e il resto passano come prima. */
+const NOMINATIM_PAUSA_MS=1100;
+let nominatimUltima=0,nominatimCoda=Promise.resolve();
+function inFilaNominatim(fai){
+  const turno=nominatimCoda.then(async()=>{
+    const attesa=nominatimUltima+NOMINATIM_PAUSA_MS-Date.now();
+    if(attesa>0)await new Promise(ok=>setTimeout(ok,attesa));
+    nominatimUltima=Date.now();
+  });
+  nominatimCoda=turno;
+  return turno.then(fai);
+}
 function fetchGeo(url,opzioni){
-  const dritto=()=>fetch(url,opzioni);
+  const dritto=()=>/^https:\/\/nominatim\.openstreetmap\.org\//.test(String(url))?inFilaNominatim(()=>fetch(url,opzioni)):fetch(url,opzioni);
   const p=pontePerVicini();
   if(!p)return dritto();
   if(Date.now()-ponteGeoRotto<60000)return dritto();
@@ -15498,13 +15955,9 @@ function checkBookingAlerts(){
 }
 
 /* ===== IMPORTA VIAGGIO (AI: testo libero, ChatGPT, Excel, CSV) ===== */
+/* Il testo di un file che non e' una tabella, da far leggere all'assistente
+   (vedi impPrepara). */
 let tripFileText='';
-function onTripFile(ev){
-  const f=ev.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=e=>{tripFileText=e.target.result;document.getElementById('impTripPrev').innerHTML=`<div class="book-row"><span>📄</span><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem">${esc(f.name)}</div><div style="font-size:.75rem;color:var(--ink-faint)">${tripFileText.length} caratteri pronti</div></div><button class="chip" onclick="tripFileText='';document.getElementById('impTripPrev').innerHTML=''">✕</button></div>`;};
-  r.readAsText(f);
-}
 async function importTrip(){
   const txt=(document.getElementById('impTripText').value.trim()+'\n'+tripFileText).trim();
   if(!txt){toast('Incolla un itinerario o carica un file');return;}
@@ -15553,6 +16006,905 @@ async function geoImported(id){
     await new Promise(r=>setTimeout(r,1100));
   }
   save();renderAll();toast(`✅ ${n} luoghi sulla mappa`);
+}
+
+/* ===== IMPORTA DA UNA TABELLA: EXCEL, CSV, CELLE INCOLLATE =====
+   Chi organizza un viaggio spesso lo fa in un foglio di Excel: una riga per
+   ogni cosa da fare, con la data e l'ora. Qui quel foglio diventa un viaggio
+   in tre passi, tutti nello stesso foglio dell'app: si sceglie il file (o si
+   incollano le celle), si controlla colonna per colonna cosa l'app ha
+   capito, e si importa. Il file si legge qui nel telefono e non va da
+   nessuna parte. Dopo, in sottofondo, si cercano le posizioni con la
+   ricerca di sempre (geoSearch), una al secondo come chiede OpenStreetMap.
+   Un itinerario scritto (non una tabella) resta all'assistente: importTrip,
+   com'era. */
+const IMP_MAX_BYTE=5*1024*1024,IMP_MAX_RIGHE=1000,IMP_GEO_PAUSA_MS=1100;
+let imp=null,impGeoUltima=0;
+/* I campi che una colonna puo' contenere, nell'ordine del menu. */
+const IMP_CAMPI=[['','Non usare'],['data','Data o giorno'],['ora','Ora di inizio'],['fine','Ora di fine'],['durata','Durata'],
+  ['attivita','Attività'],['luogo','Luogo o tappa'],['indirizzo','Indirizzo'],['citta','Città'],['note','Note'],
+  ['costo','Costo'],['valuta','Valuta'],['link','Link'],['tipo','Tipo o categoria']];
+/* Come si chiamano le colonne nelle cinque lingue, gia' senza accenti e
+   in minuscolo (vedi impNorm). L'ordine di IMP_ORDINE conta: «Ora fine»
+   e' la fine prima di essere un'ora, «Nome del posto» e' un luogo prima di
+   essere un nome. Le parole corte valgono solo da sole: «via» dentro
+   «Via di fuga» non e' un indirizzo. */
+const IMP_SINONIMI={
+  fine:['fine','ora fine','orario fine','ora di fine','orario di fine','fino a','alle','end','end time','ends','until','finish','fin','hora fin','hora de fin','hasta','heure de fin','jusqua','fim','hora de fim','hora fim','ate','termine'],
+  durata:['durata','duration','length','duracion','duree','duracao','quanto dura','tempo'],
+  valuta:['valuta','currency','moneda','divisa','devise','moeda'],
+  costo:['costo','costi','cost','costs','prezzo','price','precio','prix','preco','coste','importo','amount','importe','montant','valor','spesa','expense','gasto','depense','despesa','budget','tariffa','costo previsto','costo stimato','eur','euro','€','$','£'],
+  data:['data','date','fecha','dia','giorno','day','jour','quando','when','cuando','quand','giornata','data inizio'],
+  ora:['ora','orario','ore','time','hour','hora','heure','horario','inizio','ora inizio','orario inizio','ora di inizio','start','start time','starts','begin','inicio','hora de inicio','hora inicio','debut','heure de debut','comeco','dalle'],
+  indirizzo:['indirizzo','address','direccion','adresse','endereco','morada','via','street','calle','rue','rua'],
+  citta:['citta','city','ciudad','ville','cidade','localita','town','comune','destinazione','destination','destino'],
+  link:['link','url','sito','sito web','website','web','enlace','lien','ligacao','pagina','site','site web'],
+  tipo:['tipo','type','categoria','category','categorie','genere','kind','clase','classe','tipologia'],
+  note:['note','notes','nota','notas','commenti','commento','comments','comment','comentarios','commentaires','osservazioni','dettagli','details','detalles','detalhes','info','informazioni','descrizione','description','descripcion','descricao'],
+  luogo:['luogo','posto','place','location','lugar','sitio','lieu','endroit','local','tappa','stop','parada','etape','paragem','dove','where','donde','ou','onde','poi','punto di interesse'],
+  attivita:['attivita','activity','activities','actividad','activite','atividade','cosa','cosa fare','what','que','quoi','o que','evento','event','titolo','title','titulo','titre','nome','name','nombre','nom','programma','plan','itinerario','visita']
+};
+const IMP_ORDINE=['fine','durata','valuta','costo','data','ora','indirizzo','citta','link','tipo','note','luogo','attivita'];
+const IMP_MESI={gennaio:1,gen:1,january:1,jan:1,enero:1,ene:1,janvier:1,janv:1,janeiro:1,
+  febbraio:2,feb:2,february:2,febrero:2,fevrier:2,fevr:2,fev:2,fevereiro:2,
+  marzo:3,mar:3,march:3,mars:3,marco:3,
+  aprile:4,apr:4,april:4,abril:4,abr:4,avril:4,avr:4,
+  maggio:5,mag:5,may:5,mayo:5,mai:5,maio:5,
+  giugno:6,giu:6,june:6,jun:6,junio:6,juin:6,junho:6,
+  luglio:7,lug:7,july:7,jul:7,julio:7,juillet:7,juil:7,julho:7,
+  agosto:8,ago:8,august:8,aug:8,aout:8,
+  settembre:9,set:9,september:9,sep:9,sept:9,septiembre:9,setiembre:9,septembre:9,setembro:9,
+  ottobre:10,ott:10,october:10,oct:10,octubre:10,octobre:10,outubro:10,out:10,
+  novembre:11,nov:11,november:11,noviembre:11,novembro:11,
+  dicembre:12,dic:12,december:12,dec:12,diciembre:12,decembre:12,dezembro:12,dez:12};
+/* I giorni della settimana davanti alla data («lun 7 ago»): si saltano.
+   «mar» e' martedi' ma anche marzo: decide il posto (vedi impDataGrezza). */
+const IMP_SETTIMANA=new Set(['lunedi','lun','martedi','mar','mercoledi','mer','giovedi','gio','venerdi','ven','sabato','sab','domenica','dom',
+  'monday','mon','tuesday','tue','tues','wednesday','wed','thursday','thu','thur','thurs','friday','fri','saturday','sat','sunday','sun',
+  'lunes','martes','miercoles','mie','jueves','jue','viernes','vie','sabado','domingo',
+  'lundi','mardi','mercredi','jeudi','jeu','vendredi','samedi','sam','dimanche','dim',
+  'segunda','seg','terca','ter','quarta','qua','quinta','qui','sexta','sex','feira']);
+const IMP_RIEMPITIVI=new Set(['de','del','di','the','of','le','el','em','do','da','du','il','lo','la']);
+/* Le righe di alloggio finiscono negli Hotel, non fra le attivita'. */
+const IMP_ALLOGGIO=/\b(hotel|albergo|alloggio|alloggi|airbnb|b b|bb|bnb|bed and breakfast|ostello|hostel|accommodation|lodging|alojamiento|hospedaje|hebergement|logement|alojamento|hospedagem|pernottamento|pernottamenti|appartamento|apartment|residence|pensione|guesthouse|guest house|motel|resort|agriturismo|pousada|gite|auberge)\b/;
+const IMP_USCITA=/\b(check ?out|partenza|salida|depart|saida|uscita)\b/;
+const IMP_PREFISSO_ALLOGGIO=/^(check[\s-]?in|check[\s-]?out|pernottamento|notte|night|noche|nuit|noite)\s*[:\-–·]?\s*/i;
+
+function impNorm(s){return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/['’`´]/g,'').replace(/[^a-z0-9€$£¥]+/g,' ').trim();}
+function impPad(n){return String(n).padStart(2,'0');}
+function impHM(h,m){return impPad(h)+':'+impPad(m);}
+function impMinutiOra(min){min=((Math.round(min)%1440)+1440)%1440;return impHM(Math.floor(min/60),min%60);}
+function impPiuMinuti(ora,min){const [h,m]=ora.split(':').map(Number);const tot=h*60+m+min;return tot>=1440?'23:59':impMinutiOra(tot);}
+function impPiuGiorni(iso,n){const [y,m,d]=iso.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10);}
+function impSeriale(iso){const [y,m,d]=iso.split('-').map(Number);return (Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/864e5;}
+/* Le date di Excel sono numeri: i giorni dal 30 dicembre 1899, e l'ora e'
+   la parte dopo la virgola. Si convertono a mano, senza passare dal fuso
+   del telefono: una data che diventa il giorno prima e' il guasto peggiore. */
+function impDaSeriale(v,d1904){
+  if(d1904)v+=1462;
+  const giorni=Math.floor(v),min=Math.round((v-giorni)*1440);
+  const ora=impMinutiOra(min);
+  if(giorni<1)return ora;
+  const iso=new Date(Date.UTC(1899,11,30)+giorni*864e5).toISOString().slice(0,10);
+  return min?iso+' '+ora:iso;
+}
+function impNomeDaFile(nome){return String(nome||'').replace(/\.[a-z0-9]{1,6}$/i,'').replace(/[_]+/g,' ').replace(/\s+/g,' ').trim();}
+
+/* ── Leggere ──────────────────────────────────────────────────────────── */
+/* Excel in italiano salva i CSV in Windows-1252, non in UTF-8: letto come
+   UTF-8 «Città» diventava «Citt?». Si prova UTF-8 in modo severo, e se
+   non regge si passa all'altra. Il testo Unicode di Excel e' UTF-16. */
+function impDecodifica(buf){
+  const b=new Uint8Array(buf);
+  if(b[0]===0xFF&&b[1]===0xFE)return new TextDecoder('utf-16le').decode(b.subarray(2));
+  if(b[0]===0xFE&&b[1]===0xFF)return new TextDecoder('utf-16be').decode(b.subarray(2));
+  const da=(b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF)?3:0;
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(b.subarray(da));}
+  catch(e){return new TextDecoder('windows-1252').decode(b.subarray(da));}
+}
+function impContaFuori(riga,sep){let n=0,dentro=false;for(const c of riga){if(c==='"')dentro=!dentro;else if(c===sep&&!dentro)n++;}return n;}
+/* Virgola, punto e virgola (Excel in italiano) o tabulazione (le celle
+   copiate): vince quello che divide tutte le righe nello stesso modo. */
+function impSeparatore(testo){
+  const righe=testo.split(/\r\n|\n|\r/).filter(r=>r.trim()).slice(0,40);
+  let meglio=null,punti=0;
+  for(const sep of ['\t',';',',']){
+    const conti=righe.map(r=>impContaFuori(r,sep));
+    const usate=conti.filter(n=>n>0);if(!usate.length)continue;
+    const freq={};usate.forEach(n=>{freq[n]=(freq[n]||0)+1;});
+    const [moda,quante]=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+    const p=quante/righe.length*10+Math.min(+moda,12)*.05+(sep==='\t'?.3:0);
+    if(p>punti){punti=p;meglio=sep;}
+  }
+  return meglio;
+}
+function impCsv(testo,sep){
+  const out=[];let riga=[],cella='',dentro=false;
+  for(let i=0;i<testo.length;i++){
+    const c=testo[i];
+    if(dentro){if(c==='"'){if(testo[i+1]==='"'){cella+='"';i++;}else dentro=false;}else cella+=c;continue;}
+    if(c==='"'&&!cella.trim()){dentro=true;cella='';continue;}
+    if(sep&&c===sep){riga.push(cella);cella='';continue;}
+    if(c==='\r'||c==='\n'){if(c==='\r'&&testo[i+1]==='\n')i++;riga.push(cella);out.push(riga);riga=[];cella='';continue;}
+    cella+=c;
+  }
+  if(cella!==''||riga.length){riga.push(cella);out.push(riga);}
+  return out.map(r=>r.map(x=>x.trim()));
+}
+function impLeggiTesto(testo){return impCsv(String(testo||'').replace(/^﻿/,''),impSeparatore(testo));}
+/* I file di Excel (e Numbers, e OpenDocument) li apre SheetJS, che arriva
+   solo adesso (vedi LE LIBRERIE). Le celle con un formato di data restano
+   numeri e si convertono qui (impDaSeriale); le celle unite si riempiono
+   tutte, perche' una data scritta una volta per tre righe vale per tutte e
+   tre; i collegamenti dentro le celle si tengono da parte. */
+function impLeggiCartella(buf){
+  const wb=XLSX.read(new Uint8Array(buf),{type:'array',cellDates:false,cellNF:true});
+  const d1904=!!(wb.Workbook&&wb.Workbook.WBProps&&wb.Workbook.WBProps.date1904);
+  return wb.SheetNames.map(nome=>{
+    const ws=wb.Sheets[nome];
+    if(!ws||!ws['!ref'])return {nome,righe:[],link:[]};
+    const rg=XLSX.utils.decode_range(ws['!ref']);
+    const righe=[],link=[];
+    for(let r=rg.s.r;r<=rg.e.r;r++){
+      const riga=[];let l='';
+      for(let c=rg.s.c;c<=rg.e.c;c++){
+        const cella=ws[XLSX.utils.encode_cell({r,c})];
+        let v='';
+        if(cella){
+          if(cella.t==='n')v=(cella.z&&XLSX.SSF.is_date(cella.z))?impDaSeriale(cella.v,d1904):cella.v;
+          else if(cella.t==='d'&&cella.v instanceof Date)v=cella.v.toISOString().slice(0,10);
+          else if(cella.t==='b')v=cella.v?'1':'';
+          else if(cella.t!=='e'&&cella.t!=='z')v=String(cella.v!=null?cella.v:(cella.w||'')).trim();
+          if(!l&&cella.l&&cella.l.Target&&/^https?:\/\//i.test(cella.l.Target))l=cella.l.Target;
+        }
+        riga.push(v);
+      }
+      righe.push(riga);link.push(l);
+    }
+    (ws['!merges']||[]).forEach(m=>{
+      const v=(righe[m.s.r-rg.s.r]||[])[m.s.c-rg.s.c];
+      for(let r=m.s.r;r<=m.e.r;r++)for(let c=m.s.c;c<=m.e.c;c++){const rr=righe[r-rg.s.r];if(rr&&(r!==m.s.r||c!==m.s.c))rr[c-rg.s.c]=v;}
+    });
+    return {nome,righe,link};
+  });
+}
+const impVuota=v=>v==null||String(v).trim()==='';
+/* Via le righe vuote in cima e in fondo e le colonne vuote: Excel ne
+   esporta spesso decine, e nella schermata di controllo sarebbero rumore. */
+function impPulisci(f){
+  let righe=f.righe.map(r=>r.slice()),link=(f.link||[]).slice();
+  while(righe.length&&righe[0].every(impVuota)){righe.shift();link.shift();}
+  while(righe.length&&righe[righe.length-1].every(impVuota)){righe.pop();link.pop();}
+  const larg=Math.max(0,...righe.map(r=>r.length));
+  const piene=[];for(let c=0;c<larg;c++)if(righe.some(r=>!impVuota(r[c])))piene.push(c);
+  righe=righe.map(r=>piene.map(c=>r[c]==null?'':r[c]));
+  return {nome:f.nome||'',righe,link};
+}
+
+/* ── Capire ───────────────────────────────────────────────────────────── */
+function impCampoDaIntestazione(h){
+  const n=impNorm(h);if(!n||n.length>40)return '';
+  for(const k of IMP_ORDINE)if(IMP_SINONIMI[k].includes(n))return k;
+  const parole=' '+n+' ';
+  for(const k of IMP_ORDINE)for(const s of IMP_SINONIMI[k])if((s.length>=4||s.includes(' '))&&parole.includes(' '+s+' '))return k;
+  return '';
+}
+function impSembraData(v){
+  if(typeof v==='number')return v>20000&&v<80000;
+  /* «9.30» e' un'ora, non il 30 settembre: col punto e senza anno non si
+     prende per una data. */
+  if(typeof v==='string'&&/^\s*\d{1,2}\.\d{1,2}\s*$/.test(v))return false;
+  const ok=g=>!!g&&g.m>=1&&g.m<=12&&g.d>=1&&g.d<=31;
+  return ok(impDataGrezza(v,'dmy'))||ok(impDataGrezza(v,'mdy'));
+}
+function impOraStretta(v){return typeof v==='string'&&/^\s*\d{1,2}\s*[:.h]\s*\d{2}\b|^\s*\d{1,2}\s*(am|pm)\b/i.test(v);}
+function impHaIntestazione(righe){
+  const prima=righe[0]||[];
+  const note=prima.filter(c=>typeof c==='string'&&impCampoDaIntestazione(c)).length;
+  if(!note)return false;
+  const sembraDati=prima.some(c=>typeof c==='number'||impSembraData(c)||impOraStretta(c));
+  return note>=2||!sembraDati;
+}
+/* Senza intestazioni si guarda il contenuto: date, ore, collegamenti e
+   cifre con la valuta si riconoscono da soli; il testo no, e la prima
+   colonna di testo si prova come attivita', la seconda come luogo. */
+function impDaContenuto(valori){
+  const v=valori.filter(x=>!impVuota(x)).slice(0,60);if(!v.length)return '';
+  const quota=f=>v.filter(f).length/v.length;
+  if(quota(x=>impSembraData(x))>=.6)return 'data';
+  if(quota(x=>impOraStretta(x)||(typeof x==='number'&&x>0&&x<1))>=.6)return 'ora';
+  if(quota(x=>/^https?:\/\//i.test(String(x)))>=.6)return 'link';
+  if(quota(x=>/^[A-Z]{3}$/.test(String(x).trim())&&CURR.some(k=>k.c===String(x).trim()))>=.6)return 'valuta';
+  if(quota(x=>/\d/.test(String(x))&&/[€$£¥]|\b[A-Z]{3}\b|\d[.,]\d{2}\b/.test(String(x))&&!/[a-z]{4,}/i.test(String(x)))>=.6)return 'costo';
+  if(quota(x=>typeof x==='string'&&/[a-zà-ÿ]{3,}/i.test(x))>=.6)return '#testo';
+  return '';
+}
+function impIndovinaCampi(){
+  const larg=Math.max(0,...imp.righe.map(r=>r.length));
+  const dati=imp.intest?imp.righe.slice(1):imp.righe;
+  let campi=[];
+  if(imp.intest)for(let c=0;c<larg;c++)campi[c]=impCampoDaIntestazione(String(imp.righe[0][c]==null?'':imp.righe[0][c]));
+  else{
+    for(let c=0;c<larg;c++)campi[c]=impDaContenuto(dati.map(r=>r[c]));
+    let ore=0,testi=0;
+    campi=campi.map(k=>{
+      if(k==='ora')return ore++?(ore===2?'fine':''):'ora';
+      if(k==='#testo')return ['attivita','luogo'][testi++]||'';
+      return k;
+    });
+  }
+  /* Una colonna per campo (le note possono essere piu' d'una). Fra due
+     «date» vince quella che si legge davvero come data: «Giorno» con dentro
+     «lunedi'» accanto a «Data» con dentro «07/08/2026». */
+  const leggibili=c=>dati.filter(r=>!impVuota(r[c])&&(impSembraData(r[c])||impGiornoNumero(r[c])!=null)).length;
+  const visti={};
+  const ordine=campi.map((k,c)=>c).sort((a,b)=>campi[a]==='data'&&campi[b]==='data'?leggibili(b)-leggibili(a):a-b);
+  ordine.forEach(c=>{
+    const k=campi[c];if(!k||k==='note')return;
+    if(visti[k]){campi[c]=(k==='ora'&&!campi.includes('fine'))?'fine':'';return;}
+    visti[k]=true;
+  });
+  for(let c=0;c<larg;c++)if(campi[c]==null)campi[c]='';
+  return campi;
+}
+function impGiornoNumero(v){
+  if(typeof v==='number')return Number.isInteger(v)&&v>=1&&v<=366?v:null;
+  const n=impNorm(v);if(!n)return null;
+  const m=/^(?:g|gg|giorno|day|dia|jour|j|d)\s*(\d{1,3})$/.exec(n)||/^(\d{1,3})(?:o|a|e|er|eme|st|nd|rd|th)?(?:\s*(?:giorno|day|dia|jour))?$/.exec(n);
+  if(!m)return null;const g=+m[1];return g>=1&&g<=366?g:null;
+}
+function impCoppiaNumerica(v){
+  if(typeof v!=='string')return null;
+  const m=/^(?:[A-Za-zÀ-ÿ]{2,12}\.?,?\s+)?(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-]\d{2,4})?(?:\s|$)/.exec(v.trim());
+  return m?[+m[1],+m[2]]:null;
+}
+/* Una data com'e' scritta: {y,m,d} con l'anno che puo' mancare. Vale per
+   07/08/2026, 2026-08-07, «lun 7 ago», «7 de agosto», «Aug 7th, 2026», e
+   per i numeri di Excel. */
+function impDataGrezza(v,ordine){
+  if(v==null)return null;
+  if(typeof v==='number')return (v>20000&&v<80000)?impDataGrezza(impDaSeriale(v,false),ordine):null;
+  let s=String(v).trim();if(!s)return null;
+  if(/^\d{5}(?:[.,]\d+)?$/.test(s))return impDataGrezza(parseFloat(s.replace(',','.')),ordine);
+  let ora='';
+  const mo=/(?:\s|T)(\d{1,2}[:.]\d{2}(?::\d{2})?\s*(?:[ap]\.?\s?m\.?)?)\s*$/i.exec(s);
+  if(mo&&/\d\D+\d/.test(s.slice(0,mo.index))){ora=impOra(mo[1]);s=s.slice(0,mo.index).trim();}
+  let m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s);
+  if(m)return {y:+m[1],m:+m[2],d:+m[3],ora};
+  s=s.replace(/^([A-Za-zÀ-ÿ]{2,12})\.?,?\s+(?=\d)/,(w,p)=>IMP_SETTIMANA.has(impNorm(p))?'':w);
+  m=/^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2}|\d{4}))?$/.exec(s);
+  if(m){const a=+m[1],b=+m[2],y=m[3]?(m[3].length===2?2000+(+m[3]):+m[3]):undefined;return ordine==='mdy'?{y,m:a,d:b,ora}:{y,m:b,d:a,ora};}
+  const tok=impNorm(s).replace(/(\d+)(st|nd|rd|th|er|o|a)\b/g,'$1').split(' ').filter(x=>x&&!IMP_RIEMPITIVI.has(x));
+  let gi=-1;
+  for(let k=0;k<tok.length;k++)if(/^\d{1,2}$/.test(tok[k])&&+tok[k]>=1&&+tok[k]<=31){gi=k;break;}
+  if(gi<0)return null;
+  let km=gi+1,mm=IMP_MESI[tok[km]];
+  if(!mm){km=gi-1;mm=km>=0?IMP_MESI[tok[km]]:undefined;}
+  if(!mm)return null;
+  let y;
+  for(let k=0;k<tok.length;k++){
+    if(k===gi||k===km)continue;
+    const x=tok[k];
+    if(/^\d{4}$/.test(x)){y=+x;continue;}
+    if(/^\d{2}$/.test(x)&&k>gi){y=2000+(+x);continue;}
+    if(IMP_SETTIMANA.has(x))continue;
+    return null;
+  }
+  return {y,m:mm,d:+tok[gi],ora};
+}
+function impValida(g){
+  if(!g||!g.y||g.m<1||g.m>12||g.d<1||g.d>31||g.y<1990||g.y>2100)return false;
+  const dt=new Date(Date.UTC(g.y,g.m-1,g.d));return dt.getUTCMonth()===g.m-1&&dt.getUTCDate()===g.d;
+}
+function impIso(g){return g.y+'-'+impPad(g.m)+'-'+impPad(g.d);}
+/* L'anno, quando non c'e': quello scritto altrove nella colonna, se no
+   quello che porta la data nel futuro (un viaggio si prepara prima). Da
+   una riga all'altra, se si torna indietro di mesi e' l'anno dopo:
+   30 dicembre, poi 2 gennaio. */
+function impAnni(lista){
+  const conAnno=lista.find(x=>x&&x.y);
+  let anno;
+  if(conAnno)anno=conAnno.y;
+  else{
+    const p=lista.find(x=>x&&x.m);const oggi=new Date();anno=oggi.getFullYear();
+    if(p&&Date.UTC(anno,p.m-1,p.d)<Date.now()-60*864e5)anno++;
+  }
+  let prec=null;
+  lista.forEach(x=>{
+    if(!x||!x.m)return;
+    if(x.y){anno=x.y;prec=x;return;}
+    let y=anno;
+    if(prec&&prec.y&&Date.UTC(y,x.m-1,x.d)<Date.UTC(prec.y,prec.m-1,prec.d)-180*864e5)y++;
+    x.y=y;anno=y;prec=x;
+  });
+}
+/* Tutta la colonna delle date insieme: giorno/mese o mese/giorno si capisce
+   da una riga sola (13/08 non puo' che essere il 13 agosto), e se e' tutto
+   ambiguo vince la lettura che tiene le date piu' vicine fra loro. */
+function impLeggiDate(valori){
+  const out=valori.map(()=>null);out.modo='date';
+  const piene=valori.map((v,i)=>[v,i]).filter(([v])=>!impVuota(v));
+  if(!piene.length)return out;
+  const comeGiorno=piene.filter(([v])=>impGiornoNumero(v)!=null).length;
+  const comeData=piene.filter(([v])=>impSembraData(v)).length;
+  if(comeGiorno>=piene.length*.6&&comeGiorno>comeData){
+    piene.forEach(([v,i])=>{const g=impGiornoNumero(v);out[i]=g!=null?{giorno:g}:{errore:true};});
+    out.modo='giorni';return out;
+  }
+  let ordine='dmy';
+  const coppie=piene.map(([v])=>impCoppiaNumerica(v)).filter(Boolean);
+  if(coppie.some(([a,b])=>a>12&&b<=12))ordine='dmy';
+  else if(coppie.some(([a,b])=>b>12&&a<=12))ordine='mdy';
+  else if(coppie.length){
+    const ampiezza=o=>{const ds=piene.map(([v])=>impDataGrezza(v,o)).filter(g=>g&&g.m>=1&&g.m<=12).map(g=>Date.UTC(g.y||2000,g.m-1,g.d));return ds.length?Math.max(...ds)-Math.min(...ds):Infinity;};
+    if(ampiezza('mdy')<ampiezza('dmy'))ordine='mdy';
+  }
+  const grezze=piene.map(([v])=>impDataGrezza(v,ordine));
+  impAnni(grezze);
+  piene.forEach(([v,i],k)=>{const g=grezze[k];out[i]=impValida(g)?{iso:impIso(g),ora:g.ora||''}:{errore:true};});
+  return out;
+}
+/* Le ore: 14:30, 14.30, 14h30, 2:30 PM, le frazioni di giorno di Excel
+   (0,604166 sono le 14:30) e i numeri interi in una colonna di ore. */
+function impOra(v){
+  if(v==null||v==='')return '';
+  if(typeof v==='number'){
+    if(v>=0&&v<1)return impMinutiOra(Math.round(v*1440));
+    if(Number.isInteger(v)&&v>=0&&v<=24)return impMinutiOra(v*60);
+    if(Number.isInteger(v)&&v>=100&&v<=2359&&v%100<60)return impHM(Math.floor(v/100),v%100);
+    if(v>20000&&v<80000)return impMinutiOra(Math.round((v%1)*1440));
+    return '';
+  }
+  const s=String(v).trim().toLowerCase();if(!s)return '';
+  let m=/^\d{4}-\d{2}-\d{2}[ t](\d{1,2}):(\d{2})/.exec(s);if(m)return impHM(+m[1],+m[2]);
+  if(/^0?[.,]\d{3,}$/.test(s))return impOra(parseFloat(s.replace(',','.')));
+  if(/^\d{3,4}$/.test(s))return impOra(+s);
+  m=/(\d{1,2})(?:\s*[:.h]\s*(\d{2}))?(?::\d{2})?\s*([ap]\.?\s?m\.?)?/.exec(s);
+  if(!m)return '';
+  let h=+m[1];const mi=m[2]?+m[2]:0,ap=m[3]?m[3].replace(/[\s.]/g,''):'';
+  if(!m[2]&&!ap&&!/^(?:ore|h|alle|at|a las|as|a)?\s*\d{1,2}\s*(?:h|ore|uhr)?$/.test(s))return '';
+  if(ap==='pm'&&h<12)h+=12;
+  if(ap==='am'&&h===12)h=0;
+  if(h>23||mi>59)return '';
+  return impHM(h,mi);
+}
+/* «9:00-11:30», «dalle 9 alle 11», «2 PM - 4 PM» in una cella sola. */
+function impIntervallo(v){
+  if(typeof v!=='string')return null;
+  const p='(\\d{1,2}(?:\\s*[:.h]\\s*\\d{2})?\\s*(?:[ap]\\.?\\s?m\\.?)?)';
+  const m=new RegExp(p+'\\s*(?:-|–|—|alle|to|a|à|até|ate|hasta|au)\\s*'+p,'i').exec(v.trim());
+  if(!m)return null;
+  const a=impOra(m[1]),b=impOra(m[2]);
+  return a&&b?[a,b]:null;
+}
+/* La durata in minuti: 90, «1:30», «1h30», «1,5 ore», «45 min», «2 hours». */
+function impDurata(v){
+  if(v==null||v==='')return 0;
+  if(typeof v==='number'){if(v>0&&v<1)return Math.round(v*1440);if(v>0&&v<=12)return Math.round(v*60);if(v>12&&v<=1440)return Math.round(v);return 0;}
+  const s=String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  let m=/^(\d{1,2}):(\d{2})$/.exec(s);if(m)return +m[1]*60+(+m[2]);
+  if(/^\d+([.,]\d+)?$/.test(s))return impDurata(parseFloat(s.replace(',','.')));
+  let min=0,trovato=false;
+  m=/(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|ora|ore|hour|hours|hora|horas|heure|heures)(?![a-z])\s*(\d{1,2})?/.exec(s);
+  if(m){min+=parseFloat(m[1].replace(',','.'))*60;if(m[2])min+=+m[2];trovato=true;}
+  const m2=/(\d+)\s*(?:m|min|mins|minuti|minuto|minutes|minute|minutos|')(?![a-z])/.exec(s);
+  if(m2&&!(m&&m[2])){min+=+m2[1];trovato=true;}
+  return trovato?Math.round(min):0;
+}
+function impDurataTesto(min){const h=Math.floor(min/60),m=min%60;return h?(m?h+' h '+m+' min':h+' h'):m+' min';}
+/* La valuta scritta in una cella: il codice (EUR) o il simbolo, dal piu'
+   lungo (R$ prima di $). Quelli fatti di lettere («kr», «R») sono di piu'
+   paesi o si confondono col testo: lì vale la valuta del viaggio. */
+function impValutaDa(s){
+  s=String(s||'').trim();if(!s)return '';
+  for(const x of (s.toUpperCase().match(/\b[A-Z]{3}\b/g)||[]))if(CURR.some(k=>k.c===x))return x;
+  if(/\beuro?s?\b/i.test(s))return 'EUR';
+  const simboli=CURR.filter(k=>k.s&&!/^[A-Za-z]+$/.test(k.s)).sort((a,b)=>b.s.length-a.s.length);
+  for(const k of simboli)if(s.includes(k.s))return k.c;
+  return '';
+}
+/* 18 · 12,50 € · 1.234,56 · USD 12.50 · «gratis». Con virgola e punto
+   insieme, il separatore dei decimali e' l'ultimo. */
+function impCosto(v){
+  if(v==null||v==='')return null;
+  if(typeof v==='number')return v>0?{n:Math.round(v*100)/100,cur:''}:null;
+  const s=String(v).trim();if(!s)return null;
+  const cur=impValutaDa(s);
+  let num=s.replace(/[^\d.,]/g,'');
+  if(!/\d/.test(num))return null;
+  const p=num.lastIndexOf('.'),c=num.lastIndexOf(',');
+  if(p>=0&&c>=0)num=c>p?num.replace(/\./g,'').replace(',','.'):num.replace(/,/g,'');
+  else if(c>=0)num=(/^\d{1,3}(,\d{3})+$/.test(num)&&linguaScelta()==='en')?num.replace(/,/g,''):num.replace(/\./g,'').replace(',','.');
+  else if(p>=0&&/^\d{1,3}(\.\d{3})+$/.test(num)&&linguaScelta()!=='en')num=num.replace(/\./g,'');
+  const n=parseFloat(num);
+  return isFinite(n)&&n>0?{n:Math.round(n*100)/100,cur}:null;
+}
+function impNotti(testo){const m=/(\d{1,2})\s*(?:notti|notte|nights?|noches?|nuits?|noites?)\b/.exec(impNorm(testo));return m?+m[1]:0;}
+function impCategoria(v){
+  const n=' '+impNorm(v.tipo+' '+v.nome)+' ';
+  if(/ (volo|voli|flight|vuelo|vol|voo|aereo) /.test(n))return 'Voli';
+  if(/ (treno|train|tren|bus|autobus|taxi|metro|traghetto|ferry|transfer|noleggio|trasporto|trasporti|transport|transporte|comboio) /.test(n))return 'Trasporti';
+  if(/ (ristorante|pranzo|cena|colazione|aperitivo|cibo|food|restaurant|lunch|dinner|breakfast|comida|almuerzo|desayuno|repas|dejeuner|diner|restaurante|almoco|jantar) /.test(n))return 'Cibo';
+  if(/ (shopping|negozi|acquisti|compras|achats) /.test(n))return 'Shopping';
+  return 'Attrazioni';
+}
+
+/* ── Il foglio dell'app: tre passi ────────────────────────────────────── */
+function openImport(){
+  imp=null;tripFileText='';
+  const ta=document.getElementById('impTripText');if(ta)ta.value='';
+  const r=document.getElementById('impTripResult');if(r)r.innerHTML='';
+  impMsg('');impMostra('impScegli');
+  openSheet('mImport');
+  /* Il lettore dei file Excel si prende adesso, mentre si sceglie il file:
+     cosi' «Scarica un modello» ha il file pronto nel momento del tocco, che
+     e' l'unico in cui iPhone lascia aprire il foglio Condividi. */
+  if(navigator.onLine!==false)caricaLibreria('xlsx').catch(()=>{});
+}
+function impMostra(id){
+  ['impScegli','impControlla','impFatto'].forEach(x=>{const el=document.getElementById(x);if(el)el.style.display=x===id?'':'none';});
+  const s=document.querySelector('#mImport .sheet');if(s)s.scrollTop=0;
+}
+function impMsg(testo,extra){
+  const m=document.getElementById('impMsg');if(!m)return;
+  m.innerHTML=testo?`<div class="imp-avviso">${esc(testo)}</div>${extra||''}`:'';
+}
+async function impDaFile(ev){
+  const inp=ev.target,f=inp.files&&inp.files[0];
+  if(!f)return;
+  inp.value='';impMsg('');
+  if(f.size>IMP_MAX_BYTE){impMsg(tv('Il file pesa {1} MB: il limite è 5 MB. Tieni solo il foglio del viaggio e riprova.',(f.size/1048576).toLocaleString(loc(),{maximumFractionDigits:1})));return;}
+  let buf;
+  try{buf=await f.arrayBuffer();}catch(e){console.log('File non letto:',e);impMsg(tv('Non riesco ad aprire il file: riprova, o salvalo di nuovo e riprova.'));return;}
+  const nome=impNomeDaFile(f.name),ext=(String(f.name).split('.').pop()||'').toLowerCase();
+  const b=new Uint8Array(buf.slice(0,4));
+  const zip=b[0]===0x50&&b[1]===0x4B,ole=b[0]===0xD0&&b[1]===0xCF&&b[2]===0x11&&b[3]===0xE0;
+  if(zip||ole||['xlsx','xlsm','xlsb','xls','numbers','ods'].includes(ext)){
+    impMsg(tv('Apro il file…'));
+    try{await caricaLibreria('xlsx');}
+    catch(e){impMsg(tv('Per aprire i file Excel la prima volta serve la rete: controlla la connessione e riprova, oppure salva il foglio come CSV.'));return;}
+    let fogli;
+    try{fogli=impLeggiCartella(buf);}
+    catch(e){
+      console.log('Cartella non letta:',e);
+      impMsg(ext==='numbers'?tv('Questo file di Numbers non si apre: in Numbers scegli Esporta › Excel e importa quello.'):tv('Non riesco a leggere questo file. Salvalo di nuovo come .xlsx o .csv e riprova.'));
+      return;
+    }
+    impPrepara({nome,fonte:'file',fogli});
+  }else{
+    const testo=impDecodifica(buf);
+    impPrepara({nome,fonte:'file',fogli:[{nome:'',righe:impLeggiTesto(testo)}],testo});
+  }
+}
+function impDaIncolla(){
+  const testo=document.getElementById('impTripText').value||'';
+  impMsg('');
+  if(!testo.trim()){impMsg(tv('Incolla prima le celle copiate dal foglio.'));return;}
+  if(new Blob([testo]).size>IMP_MAX_BYTE){impMsg(tv('Il testo incollato è troppo lungo: il limite è 5 MB. Incollane una parte alla volta.'));return;}
+  impPrepara({nome:'',fonte:'incolla',fogli:[{nome:'',righe:impLeggiTesto(testo)}],testo});
+}
+/* Un itinerario scritto, non una tabella: lo legge l'assistente, come
+   prima (importTrip non e' cambiato). */
+function impAssistente(){impMsg('');importTrip();}
+function impPrepara(o){
+  const fogli=o.fogli.map(impPulisci).filter(f=>f.righe.length);
+  if(!fogli.length){impMsg(tv('Il file è vuoto: non ho trovato nessuna riga.'));return;}
+  const larghezza=f=>(f.righe[0]||[]).length;
+  let i=fogli.findIndex(f=>larghezza(f)>=2&&f.righe.length>=2);if(i<0)i=0;
+  if(larghezza(fogli[i])<2){
+    tripFileText=o.fonte==='file'?(o.testo||fogli[i].righe.map(r=>r.join(' ')).join('\n')):'';
+    impMsg(tv('Qui non vedo colonne: sembra un itinerario scritto, non una tabella.'),`<button class="btn btn-soft btn-block" style="margin-top:.6rem" onclick="impAssistente()">${esc(tv('Fallo leggere all\'assistente'))}</button>`);
+    return;
+  }
+  const piene=fogli[i].righe.filter(r=>!r.every(impVuota)).length;
+  if(piene>IMP_MAX_RIGHE+1){impMsg(tv('Ci sono {1} righe: il limite è 1.000. Dividi il foglio in più parti e importale una alla volta.',piene.toLocaleString(loc())));return;}
+  imp={nome:o.nome,fonte:o.fonte,fogli,foglio:0,righe:[],link:[],intest:false,campi:[],inizio:'',correzioni:{},salta:{},dest:'',nomeViaggio:o.nome||'',voci:[],modoGiorni:false,fatto:null};
+  impScegliFoglio(i);
+  impMostra('impControlla');
+}
+function impScegliFoglio(i){
+  imp.foglio=i;imp.righe=imp.fogli[i].righe;imp.link=imp.fogli[i].link||[];
+  imp.correzioni={};imp.salta={};
+  imp.intest=impHaIntestazione(imp.righe);
+  imp.campi=impIndovinaCampi();
+  const t=T();if(t&&t.start)imp.inizio=imp.inizio||t.start;
+  impAnalizza();impDisegnaControllo();
+}
+function impIntestazione(si){imp.intest=!!si;imp.correzioni={};imp.salta={};imp.campi=impIndovinaCampi();impAnalizza();impDisegnaControllo();}
+function impCampo(c,k){imp.campi[c]=k;impAnalizza();impDisegnaControllo();}
+function impInizio(v){imp.inizio=v||'';impAnalizza();impDisegnaControllo();}
+function impDest(d){imp.dest=d;impDisegnaControllo();}
+function impCorreggi(riga,campo,v){
+  const c=imp.correzioni[riga]=imp.correzioni[riga]||{};
+  v=String(v||'').trim();
+  if(v){c[campo]=v;imp.salta[riga]=false;}else{delete c[campo];delete imp.salta[riga];}
+  impAnalizza();impDisegnaControllo();
+}
+function impSalta(riga,si){imp.salta[riga]=!!si;impAnalizza();impDisegnaControllo();}
+function impIndietro(){imp=null;impMsg('');impMostra('impScegli');}
+/* Una riga con un problema si salta finche' non la si corregge, o finche'
+   non si toglie la spunta; una riga a posto si salta solo se lo si chiede. */
+function impSaltata(v){return v.problema==='vuota'||(imp.salta[v.riga]!=null?imp.salta[v.riga]:!!v.problema);}
+
+/* Dalle righe del foglio alle voci del viaggio. Si rifa' da capo a ogni
+   cambio nella schermata di controllo: costa poco, e cosi' quello che si
+   vede e' sempre quello che verra' importato. */
+function impAnalizza(){
+  const righe=imp.intest?imp.righe.slice(1):imp.righe,off=imp.intest?2:1,link=imp.intest?imp.link.slice(1):imp.link;
+  const col=k=>imp.campi.indexOf(k);
+  const cData=col('data'),cOra=col('ora'),cFine=col('fine'),cDur=col('durata'),cAtt=col('attivita'),cLuogo=col('luogo'),
+    cInd=col('indirizzo'),cCitta=col('citta'),cCosto=col('costo'),cVal=col('valuta'),cLink=col('link'),cTipo=col('tipo');
+  const cNote=imp.campi.map((k,i)=>k==='note'?i:-1).filter(i=>i>=0);
+  const val=(r,c)=>c>=0&&r[c]!=null?r[c]:'';
+  const txt=(r,c)=>{const v=val(r,c);return typeof v==='number'?String(v):String(v).trim();};
+  const date=cData>=0?impLeggiDate(righe.map(r=>val(r,cData))):Object.assign(righe.map(()=>null),{modo:'date'});
+  imp.modoGiorni=date.modo==='giorni';
+  /* «Costo (€)», «Price USD»: la valuta scritta nell'intestazione vale per
+     tutta la colonna. */
+  const valCol=(imp.intest&&cCosto>=0)?impValutaDa(String(imp.righe[0][cCosto]||'')):'';
+  let ultima=-1;righe.forEach((r,i)=>{if(!r.every(impVuota))ultima=i;});
+  const voci=[];let dataPrima=null;
+  righe.forEach((r,i)=>{
+    if(i>ultima)return;
+    const n=i+off;
+    const v={riga:n,grezzo:r.filter(x=>!impVuota(x)).map(x=>String(x)).join(' · ').slice(0,100),problema:'',data:null,corretta:false};
+    if(r.every(impVuota)){v.problema='vuota';voci.push(v);return;}
+    const corr=imp.correzioni[n]||{},d=date[i];
+    /* La data: scritta, corretta a mano, o quella della riga prima — in
+       Excel la data si scrive spesso una volta sola per tutto il giorno. */
+    if(corr.data){v.data=corr.data;v.corretta=true;}
+    else if(d&&d.iso)v.data=d.iso;
+    else if(d&&d.giorno){v.giorno=d.giorno;if(imp.inizio)v.data=impPiuGiorni(imp.inizio,d.giorno-1);}
+    else if(d&&d.errore){v.problema='data';v.dataGrezza=txt(r,cData);}
+    else if(dataPrima)v.data=dataPrima;
+    else if(!imp.modoGiorni)v.problema='senzaData';
+    /* Dopo una data sbagliata le righe senza data non sanno di che giorno
+       sono: meglio chiederlo che metterle nel giorno prima. */
+    if(v.data)dataPrima=v.data;else if(v.problema==='data')dataPrima=null;
+    let ora=cOra>=0?impOra(val(r,cOra)):'',fine=cFine>=0?impOra(val(r,cFine)):'';
+    if(cOra>=0&&!fine){const rng=impIntervallo(val(r,cOra));if(rng){ora=rng[0];fine=rng[1];}}
+    if(!ora&&d&&d.ora)ora=d.ora;
+    const dur=cDur>=0?impDurata(val(r,cDur)):0;
+    if(!fine&&ora&&dur)fine=impPiuMinuti(ora,dur);
+    v.ora=ora;v.fine=fine;
+    v.attivita=txt(r,cAtt);v.luogo=txt(r,cLuogo);v.indirizzo=txt(r,cInd);v.citta=txt(r,cCitta);v.tipo=txt(r,cTipo);
+    v.note=cNote.map(c=>txt(r,c)).filter(Boolean).join(' · ');
+    if(!ora&&dur)v.note=[v.note,tv('Durata: {1}',impDurataTesto(dur))].filter(Boolean).join(' · ');
+    const lk=txt(r,cLink)||link[i]||'';
+    v.link=/^https?:\/\/\S+$/i.test(lk)?lk:'';
+    v.costo=cCosto>=0?impCosto(val(r,cCosto)):null;
+    if(v.costo)v.costo.cur=(cVal>=0?impValutaDa(txt(r,cVal)):'')||v.costo.cur||valCol||'';
+    v.alloggio=!!v.tipo&&IMP_ALLOGGIO.test(impNorm(v.tipo));
+    if(corr.nome)v.corretta=true;
+    v.nome=corr.nome||v.attivita||v.luogo||v.indirizzo;
+    if(!v.nome&&!v.problema)v.problema='nome';
+    voci.push(v);
+  });
+  imp.voci=voci;
+}
+function impPronte(){return imp?imp.voci.filter(v=>!impSaltata(v)&&v.data&&v.nome):[];}
+function impLettera(c){let s='';c++;while(c>0){const m=(c-1)%26;s=String.fromCharCode(65+m)+s;c=Math.floor((c-1)/26);}return s;}
+function impGiornoTesto(iso){try{return new Date(iso+'T12:00:00').toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'});}catch(e){return iso;}}
+function impValoreTesto(v){return typeof v==='number'?v.toLocaleString(loc()):String(v);}
+function impDisegnaControllo(){
+  const box=document.getElementById('impControlla');if(!box||!imp)return;
+  const scorre=document.querySelector('#mImport .sheet'),eraA=scorre?scorre.scrollTop:0;
+  const larg=imp.campi.length,dati=imp.intest?imp.righe.slice(1):imp.righe;
+  let h='';
+  h+=`<div class="imp-testa"><div class="imp-testa-t">${esc(imp.nome||t('Celle incollate'))}</div><div class="imp-testa-s">${esc(tv('Righe lette: {1}',dati.filter(r=>!r.every(impVuota)).length))}</div></div>`;
+  if(imp.fogli.length>1){
+    h+=`<div class="fg"><label for="impFoglio">Foglio</label><select id="impFoglio" onchange="impScegliFoglio(+this.value)">${imp.fogli.map((f,i)=>`<option value="${i}" ${i===imp.foglio?'selected':''}>${esc(f.nome||String(i+1))}</option>`).join('')}</select></div>`;
+  }
+  h+=`<label class="split-item imp-intest ${imp.intest?'on':''}"><input type="checkbox" ${imp.intest?'checked':''} onchange="impIntestazione(this.checked)"><span>La prima riga contiene i nomi delle colonne</span></label>`;
+  h+=`<div class="imp-sez">Cosa c'è in ogni colonna</div>`;
+  if(!imp.intest)h+=`<p class="imp-nota-s">Senza i nomi delle colonne decidi tu: scegli nel menu cosa contiene ognuna.</p>`;
+  for(let c=0;c<larg;c++){
+    const titolo=imp.intest?String(imp.righe[0][c]==null?'':imp.righe[0][c]).trim():'';
+    const esempi=dati.map(r=>r[c]).filter(v=>!impVuota(v)).slice(0,3).map(impValoreTesto).join(' · ');
+    const L=impLettera(c);
+    h+=`<div class="imp-col"><div class="imp-col-t"><span class="imp-lett">${L}</span><b>${esc(titolo||tv('Colonna {1}',L))}</b></div>`+
+      `<div class="imp-col-es">${esc(esempi||t('(vuota)'))}</div>`+
+      `<select aria-label="${esc(tv('Cosa c\'è nella colonna {1}',L))}" onchange="impCampo(${c},this.value)">${IMP_CAMPI.map(([k,l])=>`<option value="${k}" ${(imp.campi[c]||'')===k?'selected':''}>${esc(t(l))}</option>`).join('')}</select></div>`;
+  }
+  if(imp.modoGiorni){
+    h+=`<div class="fg imp-inizio"><label for="impInizioData">Data del primo giorno</label><input type="date" id="impInizioData" value="${esc(imp.inizio)}" onchange="impInizio(this.value)"><p class="imp-nota-s">Nella colonna ci sono i giorni del viaggio (1, 2, 3…): dimmi quando comincia.</p></div>`;
+  }
+  const pronte=impPronte();
+  h+=`<div class="imp-sez">Come diventerà il viaggio</div>`;
+  if(!imp.campi.includes('data'))h+=`<p class="imp-avviso">Manca la colonna della data: sceglila in uno dei menu qui sopra.</p>`;
+  else if(imp.modoGiorni&&!imp.inizio)h+=`<p class="imp-avviso">Scegli la data del primo giorno.</p>`;
+  else if(!pronte.length)h+=`<p class="imp-avviso">Nessuna riga pronta: controlla le colonne qui sopra.</p>`;
+  else{
+    const prime=pronte.slice().sort(impOrdina).slice(0,8);
+    h+=`<div class="imp-prev">`+prime.map(v=>`<div class="imp-pv"><span class="imp-pv-g">${esc(impGiornoTesto(v.data))}</span><span class="imp-pv-o">${esc(v.ora?(v.fine?v.ora+'–'+v.fine:v.ora):'—')}</span><span class="imp-pv-n">${v.alloggio?'🏨 '+esc((v.luogo||v.nome).replace(IMP_PREFISSO_ALLOGGIO,'')||v.nome):esc(v.nome)}${v.costo?` <i>${esc(fmtMoney(v.costo.n,v.costo.cur||'EUR'))}</i>`:''}</span></div>`).join('')+`</div>`;
+    if(pronte.length>prime.length)h+=`<p class="imp-nota-s">${esc(tv('…e altre {1} righe.',pronte.length-prime.length))}</p>`;
+  }
+  const prob=imp.voci.filter(v=>v.problema||v.corretta);
+  if(prob.length){
+    h+=`<div class="imp-sez">${esc(tv('Righe da sistemare: {1}',prob.filter(v=>v.problema).length))}</div>`;
+    h+=prob.map(v=>{
+      const c=imp.correzioni[v.riga]||{},salta=impSaltata(v);
+      const motivo=v.problema==='vuota'?t('riga vuota: la salto'):v.problema==='data'?tv('data non riconosciuta: «{1}»',v.dataGrezza):
+        v.problema==='senzaData'?t('manca la data'):v.problema==='nome'?t('manca il nome dell\'attività'):t('corretta');
+      const campo=(v.problema==='nome'||c.nome)?'nome':'data';
+      const ingresso=v.problema==='vuota'?'':campo==='nome'
+        ?`<input type="text" value="${esc(c.nome||'')}" placeholder="${esc(t('Nome dell\'attività'))}" aria-label="${esc(tv('Correggi la riga {1}',v.riga))}" onchange="impCorreggi(${v.riga},'nome',this.value)">`
+        :`<input type="date" value="${esc(c.data||'')}" aria-label="${esc(tv('Correggi la riga {1}',v.riga))}" onchange="impCorreggi(${v.riga},'data',this.value)">`;
+      return `<div class="imp-prob ${v.problema?'':'ok'}" data-riga="${v.riga}"><div class="imp-prob-t">${esc(tv('Riga {1}',v.riga))} · ${esc(motivo)}</div>`+
+        (v.grezzo?`<div class="imp-prob-g">${esc(v.grezzo)}</div>`:'')+
+        (v.problema==='vuota'?'':`<div class="imp-prob-az">${ingresso}<label class="imp-salta"><input type="checkbox" ${salta?'checked':''} onchange="impSalta(${v.riga},this.checked)"><span>Salta</span></label></div>`)+`</div>`;
+    }).join('');
+  }
+  /* Dove vanno: un viaggio nuovo (se il piano lo permette) o quello aperto,
+     dopo un punto di ripristino. */
+  const ta=T(),puoNuovo=canCreateTrip(),puoAgg=!!(ta&&ta.status!=='closed');
+  if(!imp.dest||(imp.dest==='nuovo'&&!puoNuovo&&puoAgg)||(imp.dest==='aggiungi'&&!puoAgg))imp.dest=(puoNuovo||!puoAgg)?'nuovo':'aggiungi';
+  const date=pronte.map(v=>v.data).sort();
+  h+=`<div class="imp-sez">Dove le metto?</div><div class="rgroup imp-dest">`;
+  h+=`<label class="rcard ${imp.dest==='nuovo'?'sel':''} ${puoNuovo?'':'imp-off'}"><input type="radio" name="impDest" value="nuovo" ${imp.dest==='nuovo'?'checked':''} ${puoNuovo?'':'disabled'} onchange="impDest('nuovo')"><div><div class="rlbl">Un viaggio nuovo</div><div class="rsub">${esc(puoNuovo?(date.length?fmtRange(date[0],date[date.length-1]):''):t('Con il piano gratuito hai già il massimo di viaggi tuoi in corso: per uno nuovo serve Premium.'))}</div></div></label>`;
+  if(puoAgg)h+=`<label class="rcard ${imp.dest==='aggiungi'?'sel':''}"><input type="radio" name="impDest" value="aggiungi" ${imp.dest==='aggiungi'?'checked':''} onchange="impDest('aggiungi')"><div><div class="rlbl">${esc(tv('Aggiungi a «{1}»',ta.name||''))}</div><div class="rsub">Prima salvo un punto di ripristino</div></div></label>`;
+  h+=`</div>`;
+  if(imp.dest==='nuovo'&&puoNuovo)h+=`<div class="fg imp-nome"><label for="impNomeViaggio">Nome del viaggio</label><input id="impNomeViaggio" value="${esc(imp.nomeViaggio)}" placeholder="${esc(t('Viaggio importato'))}" oninput="imp.nomeViaggio=this.value"></div>`;
+  /* I tasti restano in fondo allo schermo mentre si scorre: con dodici
+     colonne il tasto per importare stava tre schermate piu' giu'. */
+  h+=`<div class="imp-piede"><button class="btn btn-soft" onclick="impIndietro()">Indietro</button><button class="btn btn-grad imp-vai" ${pronte.length?'':'disabled'} onclick="impEsegui()">${esc(tv('Importa {1} righe',pronte.length))}</button></div>`;
+  box.innerHTML=h;
+  if(scorre)scorre.scrollTop=eraA;
+}
+function impOrdina(a,b){return a.data.localeCompare(b.data)||((a.ora||'99:99').localeCompare(b.ora||'99:99'))||(a.riga-b.riga);}
+function impQuery(v,t,nomeHotel){
+  const citta=v.citta||parseDestCities((t&&t.destination)||'')[0]||'';
+  const posto=nomeHotel||v.luogo||'';
+  const conCitta=q=>citta&&!impNorm(q).includes(impNorm(citta))?q+', '+citta:q;
+  const q=[];
+  if(v.indirizzo){q.push(conCitta(posto?posto+', '+v.indirizzo:v.indirizzo));if(posto)q.push(conCitta(v.indirizzo));}
+  else if(posto)q.push(conCitta(posto));
+  else if(!imp.campi.includes('luogo')&&!imp.campi.includes('indirizzo')&&v.nome)q.push(conCitta(v.nome));
+  return [...new Set(q)];
+}
+/* Si importa. */
+function impEsegui(){
+  if(!imp)return;
+  const voci=impPronte().sort(impOrdina);
+  if(!voci.length){toast('Non c\'è ancora niente da importare: controlla le colonne');return;}
+  const nuovo=imp.dest==='nuovo';
+  const date=voci.map(v=>v.data).sort(),prima=date[0],ultima=date[date.length-1];
+  let vg;
+  if(nuovo){
+    if(!canCreateTrip()){closeSheet('mImport');openPremium();return;}
+    const citta=[];voci.forEach(v=>{const c=v.citta.trim();if(c&&!citta.some(x=>x.toLowerCase()===c.toLowerCase()))citta.push(c);});
+    const conta={};voci.forEach(v=>{if(v.costo&&v.costo.cur)conta[v.costo.cur]=(conta[v.costo.cur]||0)+1;});
+    const valuta=Object.keys(conta).sort((a,b)=>conta[b]-conta[a])[0]||'EUR';
+    const multi=citta.length>1;
+    vg={id:uid(),name:(imp.nomeViaggio||'').trim()||t('Viaggio importato'),destination:citta.join(', '),currency:valuta,status:'open',start:prima,end:ultima,
+      participants:[{id:uid(),name:app.myName||'Io',isMe:true}],suggestOn:false,interests:'',multiCity:multi,cities:multi?citta.map(n=>({name:n})):[],
+      suggested:[],days:[],pois:[],expenses:[],tickets:[],weather:{},createdAt:Date.now()};
+    for(let d=prima;d<=ultima;d=impPiuGiorni(d,1))vg.days.push({id:uid(),date:d,title:'',activities:[]});
+    app.trips.push(vg);app.currentTripId=vg.id;
+  }else{
+    vg=T();if(!vg){toast('Crea prima un viaggio');return;}
+    /* Prima di toccare un viaggio che c'e' gia', una fotografia: se
+       l'importazione non era quella giusta, si torna indietro da Recupero. */
+    save();snapNow(true);
+    const gia=new Set(vg.days.map(d=>d.date));
+    const tutte=[...vg.days.map(d=>d.date).filter(Boolean),prima,ultima].sort();
+    for(let d=tutte[0];d<=tutte[tutte.length-1];d=impPiuGiorni(d,1))if(!gia.has(d))vg.days.push({id:uid(),date:d,title:'',activities:[]});
+    vg.days.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+    if(!vg.start||prima<vg.start)vg.start=prima;
+    if(!vg.end||ultima>vg.end)vg.end=ultima;
+  }
+  const whoAll=vg.participants.map(p=>p.id),cur0=vg.currency||'EUR';
+  const daCercare=[];let nAtt=0,nHot=0,nSpese=0;
+  voci.filter(v=>!v.alloggio).forEach(v=>{
+    const d=vg.days.find(x=>x.date===v.data);if(!d)return;
+    const note=[v.luogo&&v.luogo!==v.nome?v.luogo:'',v.indirizzo,v.note,v.link?'🔗 '+v.link:''].filter(Boolean).join('\n');
+    const a={id:uid(),name:v.nome,time:v.ora||'',timeEnd:v.ora?(v.fine||''):'',type:'any',notes:note,who:whoAll.slice(),completed:false,
+      booking:{needed:false,done:false,url:v.link||''},lat:null,lng:null,poiId:null};
+    /* Il costo diventa una spesa prevista, legata all'attivita' come quella
+       che si mette a mano nel foglio dell'attivita' (vedi saveAct). */
+    if(v.costo&&v.costo.n>0){a.bookExpId=pushAutoExp(vg,a.name,v.costo.n,false,impCategoria(v),'bookRef',a.id,v.costo.cur||cur0,whoAll,true);nSpese++;}
+    const q=impQuery(v,vg);
+    if(q.length){a.senzaPosizione=true;daCercare.push({tipo:'att',id:a.id,q,nome:v.luogo||v.nome,data:v.data});}
+    d.activities.push(a);nAtt++;
+  });
+  /* Gli alloggi: le righe dello stesso albergo fanno un hotel solo. Il
+     check-out e' la riga di uscita se c'e', se no le notti scritte («3
+     notti»), se no l'ultima notte piu' uno, se no l'arrivo dell'albergo
+     dopo o la fine del viaggio. */
+  const gruppi=new Map();
+  voci.filter(v=>v.alloggio).forEach(v=>{
+    const grezzo=(v.luogo||v.attivita||v.indirizzo||'').trim();
+    const esce=IMP_USCITA.test(impNorm(v.attivita))||IMP_USCITA.test(impNorm(grezzo));
+    const nome=grezzo.replace(IMP_PREFISSO_ALLOGGIO,'').trim()||grezzo||t('Alloggio');
+    const k=nome.toLowerCase();
+    if(!gruppi.has(k))gruppi.set(k,{nome,dentro:[],fuori:[]});
+    gruppi.get(k)[esce?'fuori':'dentro'].push(v);
+  });
+  const fineViaggio=[ultima,vg.end||''].sort().pop();
+  const lista=[...gruppi.values()].map(g=>{
+    const notti=g.dentro.map(v=>v.data).sort(),uscite=g.fuori.map(v=>v.data).sort();
+    const ci=notti[0]||impPiuGiorni(uscite[0],-1);
+    let co=uscite.length?uscite[uscite.length-1]:'';
+    if(!co){const n=impNotti(g.dentro.map(v=>v.note+' '+v.attivita).join(' '));if(n)co=impPiuGiorni(ci,n);else if(new Set(notti).size>1)co=impPiuGiorni(notti[notti.length-1],1);}
+    return Object.assign(g,{ci,co});
+  }).sort((a,b)=>a.ci.localeCompare(b.ci));
+  vg.hotels=vg.hotels||[];
+  lista.forEach((g,i)=>{
+    if(!g.co){const dopo=lista.slice(i+1).find(x=>x.ci>g.ci);g.co=dopo?dopo.ci:(fineViaggio>g.ci?fineViaggio:impPiuGiorni(g.ci,1));}
+    if(g.co<=g.ci)g.co=impPiuGiorni(g.ci,1);
+    if(vg.hotels.some(x=>String(x.name||'').toLowerCase()===g.nome.toLowerCase()))return;
+    const v0=g.dentro[0]||g.fuori[0];
+    const h={id:uid(),name:g.nome,lat:null,lng:null,address:v0.indirizzo||'',checkIn:g.ci,checkOut:g.co,approx:true};
+    const oraIn=g.dentro.map(v=>v.ora).find(Boolean),oraOut=g.fuori.map(v=>v.ora).find(Boolean);
+    if(oraIn)h.oraCheckIn=oraIn;if(oraOut)h.oraCheckOut=oraOut;
+    vg.hotels.push(h);creaTappeHotel(vg,h);nHot++;
+    const costo=[...g.dentro,...g.fuori].map(v=>v.costo).find(c=>c&&c.n>0);
+    if(costo){pushAutoExp(vg,'Hotel · '+h.name,costo.n,false,'Hotel','hotelId',h.id,costo.cur||cur0,undefined,true);nSpese++;}
+    const q=impQuery(Object.assign({},v0,{luogo:g.nome}),vg,g.nome);
+    if(q.length)daCercare.push({tipo:'hotel',id:h.id,q,nome:g.nome,conIndirizzo:!!v0.indirizzo});
+  });
+  save();renderAll();
+  let pronti=Promise.resolve();
+  if(nuovo){
+    /* Come createTrip: la citta' (mappa, meteo) e i cambi. Una richiesta
+       alla mappa alla volta, e la ricerca dei luoghi parte dopo: insieme
+       sarebbero piu' di una al secondo. */
+    pronti=(async()=>{
+      if(vg.destination){
+        try{await ensureDestLoc(vg);}catch(e){}
+        impGeoUltima=Date.now();
+        if(vg.multiCity){await new Promise(ok=>setTimeout(ok,IMP_GEO_PAUSA_MS));try{await geocodeCities(vg);}catch(e){}impGeoUltima=Date.now();}
+      }
+      try{drawMarkers();}catch(e){}
+      try{refreshWeather();}catch(e){}
+    })();
+    aggiornaCambiViaggi();
+  }
+  imp.fatto={tripId:vg.id,nuovo,nome:vg.name,giorni:nuovo?vg.days.length:new Set(voci.map(v=>v.data)).size,att:nAtt,hot:nHot,spese:nSpese,
+    saltate:imp.voci.filter(v=>impSaltata(v)).length,geo:{tot:daCercare.length,fatti:0,trovati:0,finito:!daCercare.length}};
+  impDisegnaFatto();impMostra('impFatto');
+  toast(nuovo?'✅ Viaggio importato':'✅ Righe aggiunte al viaggio');
+  const stato=imp.fatto.geo;
+  pronti.catch(()=>{}).then(()=>impCercaPosti(vg.id,daCercare,stato));
+}
+function impDisegnaFatto(){
+  const box=document.getElementById('impFatto');if(!box||!imp||!imp.fatto)return;
+  const f=imp.fatto,g=f.geo,daSistemare=g.finito?g.tot-g.trovati:0;
+  const riga=(k,n)=>`<tr><td>${esc(t(k))}</td><td>${n}</td></tr>`;
+  box.innerHTML=`<div class="imp-ok"><div class="imp-ok-t">${esc(f.nuovo?tv('Viaggio «{1}» creato',f.nome):tv('Righe aggiunte a «{1}»',f.nome))}</div></div>`+
+    `<table class="imp-tab"><tbody>${riga('Giorni',f.giorni)}${riga('Attività',f.att)}${riga('Hotel',f.hot)}${f.spese?riga('Spese previste',f.spese):''}${riga('Righe saltate',f.saltate)}<tr><td>${esc(t('Luoghi da sistemare'))}</td><td id="impDaSistemare">${g.finito?daSistemare:'…'}</td></tr></tbody></table>`+
+    (g.tot?`<div class="imp-geo"><div class="imp-geo-t" id="impGeoT">${esc(impGeoTesto(g))}</div><div class="imp-barra" role="progressbar" aria-valuemin="0" aria-valuemax="${g.tot}" aria-valuenow="${g.fatti}"><i id="impGeoBar" style="width:${Math.round(g.fatti/g.tot*100)}%"></i></div></div>`:'')+
+    (f.spese?`<p class="imp-nota-s">I costi sono in Soldi come spese previste: diventano spese vere quando le segni pagate.</p>`:'')+
+    `<button class="btn btn-grad btn-block" style="margin-top:1rem" onclick="impApri()">Apri il viaggio</button>`;
+}
+function impGeoTesto(g){
+  if(!g.finito)return tv('Cerco i luoghi sulla mappa: {1} di {2}',g.fatti,g.tot);
+  return g.tot-g.trovati?tv('Luoghi trovati: {1} di {2}. Gli altri restano «senza posizione»: aprili e scegli il posto.',g.trovati,g.tot):tv('Luoghi trovati: {1} di {2}',g.trovati,g.tot);
+}
+function impDisegnaGeo(g){
+  const tt=document.getElementById('impGeoT'),b=document.getElementById('impGeoBar'),n=document.getElementById('impDaSistemare');
+  if(tt)tt.textContent=impGeoTesto(g);
+  if(b){b.style.width=Math.round(g.fatti/Math.max(1,g.tot)*100)+'%';b.parentNode.setAttribute('aria-valuenow',g.fatti);}
+  if(n)n.textContent=g.finito?String(g.tot-g.trovati):'…';
+}
+function impApri(){
+  const id=imp&&imp.fatto&&imp.fatto.tripId;closeSheet('mImport');
+  if(id!=null){app.currentTripId=id;save();renderAll();go('plan');}
+}
+/* La ricerca dei luoghi, in fila e una al secondo: Nominatim non ne vuole
+   di piu' (e passa dal ponte quando c'e', vedi fetchGeo). Prima la
+   richiesta piu' precisa (luogo e indirizzo), poi l'indirizzo da solo. */
+async function impGeoCerca(q){
+  const attesa=impGeoUltima+IMP_GEO_PAUSA_MS-Date.now();
+  if(attesa>0)await new Promise(ok=>setTimeout(ok,attesa));
+  impGeoUltima=Date.now();
+  try{return await geoSearch(q);}catch(e){console.log('Ricerca del luogo non riuscita:',e);return [];}
+}
+async function impCercaPosti(tripId,lista,stato){
+  const nuoviPoi=[];
+  for(const x of lista){
+    let r=null;
+    for(const q of x.q){
+      const res=await impGeoCerca(q);
+      const ord=res&&res.length?rankPlaces(res,x.nome):[];
+      if(ord&&ord[0]){r=ord[0];break;}
+    }
+    const t=app.trips.find(z=>z.id===tripId);if(!t)return;
+    stato.fatti++;
+    if(r){
+      const lat=parseFloat(r.lat),lng=parseFloat(r.lon);
+      if(x.tipo==='hotel'){
+        const h=(t.hotels||[]).find(z=>z.id===x.id);
+        if(h){h.lat=lat;h.lng=lng;h.approx=!x.conIndirizzo;t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.hotelId===h.id){a.lat=lat;a.lng=lng;}}));stato.trovati++;}
+      }else{
+        let a=null;t.days.forEach(d=>(d.activities||[]).forEach(z=>{if(z.id===x.id)a=z;}));
+        if(a){
+          a.lat=lat;a.lng=lng;delete a.senzaPosizione;stato.trovati++;
+          const parti=String(r.display_name||'').split(',');const nm=parti[0].trim()||a.name;
+          let poi=t.pois.find(p=>p.name===nm);
+          if(!poi){poi={id:uid(),name:nm,lat,lng,address:parti.slice(1,4).join(',').trim(),notes:'',website:'',phone:'',hours:'',priority:'essential',assignedDay:x.data};t.pois.push(poi);nuoviPoi.push(poi);}
+          a.poiId=poi.id;a.priority=a.priority||'essential';
+        }
+      }
+    }
+    save();impDisegnaGeo(stato);
+  }
+  stato.finito=true;impDisegnaGeo(stato);
+  save();renderAll();
+  const aperto=document.getElementById('mImport');
+  if(lista.length&&!(aperto&&aperto.classList.contains('active')))toast(tv('Luoghi trovati: {1} di {2}',stato.trovati,stato.tot));
+  /* Le foto dei luoghi nuovi, dopo e in fila: anche loro chiedono alla
+     mappa (orari, sito, la voce di Wikipedia), e partite tutte insieme
+     sarebbero state di nuovo piu' di una al secondo. */
+  for(const pp of nuoviPoi){
+    const attesa=impGeoUltima+IMP_GEO_PAUSA_MS-Date.now();
+    if(attesa>0)await new Promise(ok=>setTimeout(ok,attesa));
+    impGeoUltima=Date.now();
+    try{await enrichPoiPhoto(tripId,pp.id,pp.name,pp.lat,pp.lng);}catch(e){}
+  }
+}
+
+/* ── Il modello da compilare ──────────────────────────────────────────── */
+/* Le colonne consigliate e due righe d'esempio, nella lingua di chi lo
+   scarica: un albergo e una visita, cosi' si vede anche come si scrive un
+   alloggio. Le intestazioni sono fra quelle che impCampoDaIntestazione
+   riconosce, in ogni lingua (una prova reimporta il modello). */
+const IMP_MODELLO={
+  it:{file:'GeppGo-modello',foglio:'Viaggio',col:['Data','Ora','Fine','Attività','Luogo','Indirizzo','Città','Tipo','Costo','Valuta','Note','Link'],
+    righe:[['15:00','','Check-in','Hotel Artemide','Via Nazionale 22','Roma','Hotel',240,'EUR','1 notte',''],['11:00','13:00','Visita al Colosseo','Colosseo','Piazza del Colosseo','Roma','Attrazione',18,'EUR','Biglietti da stampare','']]},
+  en:{file:'GeppGo-template',foglio:'Trip',col:['Date','Time','End','Activity','Place','Address','City','Type','Cost','Currency','Notes','Link'],
+    righe:[['15:00','','Check-in','Hotel Artemide','Via Nazionale 22','Rome','Hotel',240,'EUR','1 night',''],['11:00','13:00','Colosseum visit','Colosseum','Piazza del Colosseo','Rome','Attraction',18,'EUR','Tickets to print','']]},
+  es:{file:'GeppGo-plantilla',foglio:'Viaje',col:['Fecha','Hora','Fin','Actividad','Lugar','Dirección','Ciudad','Tipo','Precio','Moneda','Notas','Enlace'],
+    righe:[['15:00','','Check-in','Hotel Artemide','Via Nazionale 22','Roma','Hotel',240,'EUR','1 noche',''],['11:00','13:00','Visita al Coliseo','Coliseo','Piazza del Colosseo','Roma','Atracción',18,'EUR','Entradas para imprimir','']]},
+  fr:{file:'GeppGo-modele',foglio:'Voyage',col:['Date','Heure','Fin','Activité','Lieu','Adresse','Ville','Type','Prix','Devise','Notes','Lien'],
+    righe:[['15:00','','Check-in','Hotel Artemide','Via Nazionale 22','Rome','Hôtel',240,'EUR','1 nuit',''],['11:00','13:00','Visite du Colisée','Colisée','Piazza del Colosseo','Rome','Attraction',18,'EUR','Billets à imprimer','']]},
+  pt:{file:'GeppGo-modelo',foglio:'Viagem',col:['Data','Hora','Fim','Atividade','Local','Morada','Cidade','Tipo','Preço','Moeda','Notas','Link'],
+    righe:[['15:00','','Check-in','Hotel Artemide','Via Nazionale 22','Roma','Hotel',240,'EUR','1 noite',''],['11:00','13:00','Visita ao Coliseu','Coliseu','Piazza del Colosseo','Roma','Atração',18,'EUR','Bilhetes para imprimir','']]}
+};
+function impModelloXlsx(m,d1,d2){
+  const ws=XLSX.utils.aoa_to_sheet([m.col,...m.righe.map(r=>['',...r])]);
+  /* Le date come date vere di Excel (numero con il formato), non testo:
+     cosi' nel foglio si ordinano e si cambiano come le altre. */
+  [d1,d2].forEach((iso,i)=>{ws[XLSX.utils.encode_cell({r:i+1,c:0})]={t:'n',v:impSeriale(iso),z:'dd/mm/yyyy'};});
+  ws['!cols']=[12,7,7,22,18,22,10,11,8,8,22,24].map(wch=>({wch}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,m.foglio);
+  return new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function impModelloCsv(m,d1,d2){
+  /* Excel in inglese legge la virgola, nelle altre lingue il punto e
+     virgola; il BOM gli dice che e' UTF-8, se no gli accenti si rompono. */
+  const sep=linguaScelta()==='en'?',':';';
+  const cella=v=>{const s=String(v);return /["\r\n;,]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const fmt=iso=>iso.split('-').reverse().join('/');
+  const righe=[m.col,...m.righe.map((r,i)=>[fmt(i?d2:d1),...r])];
+  return new Blob(['﻿'+righe.map(r=>r.map(cella).join(sep)).join('\r\n')],{type:'text/csv;charset=utf-8'});
+}
+/* Il file si consegna col foglio Condividi del telefono (su iPhone: salva
+   in File, manda per mail, apri in Excel); dove non c'e', si scarica. */
+async function impConsegna(blob,nome){
+  try{
+    const f=new File([blob],nome,{type:blob.type});
+    if(navigator.canShare&&navigator.share&&navigator.canShare({files:[f]})){
+      try{await navigator.share({files:[f],title:nome});return 'condiviso';}
+      catch(e){if(e&&e.name==='AbortError')return 'annullato';console.log('Condivisione non riuscita:',e);}
+    }
+  }catch(e){}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=nome;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  return 'scaricato';
+}
+async function impModello(){
+  const m=IMP_MODELLO[linguaScelta()]||IMP_MODELLO.it;
+  const d1=impPiuGiorni(todayISO(),30),d2=impPiuGiorni(d1,1);
+  if(!LIBRERIE.xlsx.pronta()){impMsg(tv('Preparo il modello…'));try{await caricaLibreria('xlsx');}catch(e){}}
+  let blob,nome;
+  try{
+    if(LIBRERIE.xlsx.pronta()){blob=impModelloXlsx(m,d1,d2);nome=m.file+'.xlsx';}
+  }catch(e){console.log('Modello Excel non riuscito:',e);}
+  if(!blob){blob=impModelloCsv(m,d1,d2);nome=m.file+'.csv';}
+  const come=await impConsegna(blob,nome);
+  impMsg(come==='annullato'?'':tv('Modello pronto: {1}. Compilalo e importalo da qui.',nome));
 }
 
 
@@ -15732,7 +17084,7 @@ function buildTTDayInner(t,di){
       html+=`<div class="tt-hotel-travel tt-travel-shown"><span class="tt-travel-quanto">\uD83C\uDFE8 \u2192 ${esc(it.a.name)}: ${trattoTesto(est,false)}${est.cost!=null?' \u00b7 '+costoBenzina(est.cost,t.currency):''}</span><span class="tt-travel-mezzo" title="${esc(tv('Come ci vai'))}" onclick="event.stopPropagation();apriMezzi(${di},'hotel')">${modeEmo(est.mode)}<i>▾</i></span>${n===0?`<span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})"><span class="lungo">non necessario </span>\u2715</span>`:''}</div>`;
     });
   }
-  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):''}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
+  if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':'da prenotare'):((a.senzaPosizione&&a.lat==null)?tv('senza posizione'):'')}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
   for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   /* La riga di adesso, e solo se la giornata e' oggi. Su un giorno che non
@@ -15809,7 +17161,7 @@ function buildTTDayInner(t,di){
         inline=` <span class="tsub-tratto">→ ${modeEmo(est.mode)} ${est.vero?'':'≈ '}${est.minutes} min</span>`;
       }
     }
-    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?tv(' · prenotare'):''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
+    html+=`<div class="${cls}" data-id="${a.id}" style="top:${it.top}px;height:${it.hei}px;left:${l};width:${w}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tsub">${a.time}${a.timeEnd?'–'+a.timeEnd:''}${a.nextDay?' +1':''}${flyTag(a)}${voteTag(a)}${nWho}${(a.booking&&a.booking.needed&&!a.booking.done)?tv(' · prenotare'):''}${(a.senzaPosizione&&a.lat==null)?tv(' · senza posizione'):''}${inline}</span><span class="tszr" onclick="event.stopPropagation()"></span>${childrenHtml(kids[a.id]||[],it,d,t,H,dwx,wpre)}</div>`;
   });
   const dm=d.travelMode||'walk';
   tratti.forEach(tr=>{
@@ -20431,7 +21783,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-07 15:16';
+const VERSIONE_APP='2026-10-07 21:54';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

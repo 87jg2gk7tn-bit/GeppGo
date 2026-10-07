@@ -11,7 +11,7 @@
    nell'indirizzo, quindi non invecchiano. Prima non si tenevano, e senza rete
    lo scanner, i codici a barre e la mappa non c'erano proprio, anche con le
    mattonelle della mappa gia' viste in memoria. */
-const CACHE_NAME = 'geppgo-shell-v39';
+const CACHE_NAME = 'geppgo-shell-v40';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -23,7 +23,8 @@ const LIBRERIE = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
   'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',
-  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js'
+  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',
+  'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'
 ];
 /* Quanto si aspetta la rete prima di aprire la copia. Col campo debole
    l'HTML intero vuole parecchi secondi, e prima si aspettava tutto il
@@ -31,6 +32,13 @@ const LIBRERIE = [
    restava nero proprio quando la copia c'era. Con la rete buona la risposta
    arriva molto prima, e si vede subito l'ultima versione. */
 const HTML_ATTESA_MS = 3000;
+/* I caratteri di Google: il foglio (che cambia di rado) e i file (che hanno
+   l'impronta nell'indirizzo, quindi non cambiano mai). Stanno in una cache
+   che non ha la versione nel nome: una versione nuova dell'app non li deve
+   riscaricare. L'indirizzo e' lo stesso del <link id="caratteri">
+   nell'HTML: una prova li confronta. */
+const CACHE_CARATTERI = 'geppgo-caratteri';
+const CARATTERI_CSS = 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap';
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -61,7 +69,7 @@ self.addEventListener('activate', (event) => {
         if (r) await nuova.put(url, r);
       }
     }
-    await Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== CACHE_LIBRERIE).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== CACHE_LIBRERIE && k !== CACHE_CARATTERI).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -70,7 +78,7 @@ self.addEventListener('activate', (event) => {
    una alla volta: cosi' scanner, codici a barre e mappa ci sono anche senza
    rete, comprese quelle che l'app carica solo al momento. */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.tipo === 'librerie') event.waitUntil(scaricaLibrerie());
+  if (event.data && event.data.tipo === 'librerie') event.waitUntil(scaricaLibrerie().then(scaricaCaratteri));
 });
 async function scaricaLibrerie() {
   const cache = await caches.open(CACHE_LIBRERIE);
@@ -82,11 +90,59 @@ async function scaricaLibrerie() {
     } catch (e) {}
   }
 }
-/* Una libreria e' un indirizzo di unpkg o jsDelivr con la versione esatta:
-   quello non cambia mai, quindi si risponde dalla cache e, se non c'e', la si
-   prende e la si tiene (anche una caricata al momento che non sta nella
-   lista, come il lettore dei PDF). */
+/* I caratteri si tengono gia' quando la pagina li chiede (vedi carattere()),
+   ma alla primissima apertura la service worker non c'era ancora: qui si
+   prendono il foglio e i file dell'alfabeto latino, che coprono tutte e
+   cinque le lingue dell'app. Gli altri alfabeti arrivano se servono. */
+async function scaricaCaratteri() {
+  try {
+    const cache = await caches.open(CACHE_CARATTERI);
+    let foglio = await cache.match(CARATTERI_CSS);
+    if (!foglio) {
+      const r = await fetch(CARATTERI_CSS, { mode: 'cors', credentials: 'omit' });
+      if (!r || !r.ok) return;
+      await cache.put(CARATTERI_CSS, r.clone());
+      foglio = r;
+    }
+    const testo = await foglio.text();
+    // Google mette l'alfabeto in un commento prima di ogni @font-face.
+    for (const [, alfabeto, blocco] of testo.matchAll(/(?:\/\*\s*([\w-]+)\s*\*\/\s*)?@font-face\s*\{([^}]*)\}/g)) {
+      if (/cyrillic|greek|vietnamese/.test(alfabeto || '')) continue;
+      const m = /url\((https:\/\/fonts\.gstatic\.com\/[^)\s]+)\)/.exec(blocco);
+      if (!m || await cache.match(m[1])) continue;
+      try {
+        const f = await fetch(m[1], { mode: 'cors', credentials: 'omit' });
+        if (f && f.ok) await cache.put(m[1], f);
+      } catch (e) {}
+    }
+  } catch (e) {}
+}
+function eCarattere(url) {
+  return url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+}
+/* Il foglio si da' dalla copia, subito (anche senza rete), e intanto si
+   rinnova; un file si da' dalla copia e basta. Chiesti con CORS come le
+   librerie: una risposta opaca non si puo' controllare. */
+async function carattere(event) {
+  const req = event.request;
+  const cache = await caches.open(CACHE_CARATTERI);
+  const c = await cache.match(req.url);
+  const foglio = new URL(req.url).hostname === 'fonts.googleapis.com';
+  if (c && !foglio) return c;
+  const rete = fetch(req.url, { mode: 'cors', credentials: 'omit' }).then((r) => {
+    if (r && r.ok) return cache.put(req.url, r.clone()).then(() => r, () => r);
+    return r;
+  }).catch(() => null);
+  if (c) { event.waitUntil(rete); return c; }
+  return (await rete) || Response.error();
+}
+/* Una libreria e' un indirizzo di unpkg o jsDelivr con la versione esatta
+   (o di SheetJS, che la scrive a modo suo: /xlsx-0.20.3/): quello non cambia
+   mai, quindi si risponde dalla cache e, se non c'e', la si prende e la si
+   tiene (anche una caricata al momento che non sta nella lista, come il
+   lettore dei PDF). */
 function eLibreria(url) {
+  if (url.hostname === 'cdn.sheetjs.com') return /^\/xlsx-\d+\.\d+\.\d+\//.test(url.pathname);
   return (url.hostname === 'unpkg.com' || url.hostname === 'cdn.jsdelivr.net') && /@\d+\.\d+\.\d+\//.test(url.pathname);
 }
 async function libreria(req) {
@@ -108,6 +164,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) {
     // le librerie si tengono; le API e tutto il resto vanno alla rete, come sempre
     if (eLibreria(url)) event.respondWith(libreria(req));
+    else if (eCarattere(url)) event.respondWith(carattere(event));
     return;
   }
 
