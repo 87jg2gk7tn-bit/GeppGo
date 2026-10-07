@@ -76,7 +76,8 @@ async function apri(browser, { stato = null, intro = false, locale = 'it-IT', pe
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/v6/latest/**', ro => ro.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ result: 'success', base_code: 'EUR', time_last_update_unix: Math.floor(Date.now() / 1000), rates: TABELLA_EUR }) }));
-  if (supabase !== null) await page.route('**/supabase-js@2/**', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: SUPA_FINTO(supabase) }));
+  /* Qualunque versione: l'app la fissa (vedi LE LIBRERIE), la prova no. */
+  if (supabase !== null) await page.route('**/supabase-js@*/**', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: SUPA_FINTO(supabase) }));
   if (rotte) await rotte(page);
   await page.addInitScript(([s, conIntro]) => {
     const g = navigator.geolocation;
