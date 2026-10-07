@@ -720,6 +720,13 @@ body.dark .imp-modello{color:var(--green)}
 .imp-dest .imp-off{opacity:.55;cursor:default}
 .imp-nome{margin:.8rem 0 .2rem}
 #mImport .btn,#mImport .file-btn{min-height:46px}
+/* L'attesa dell'assistente (vedi chiediAI): in alto, dove la tastiera non
+   arriva e i messaggi in basso non la coprono; sopra i fogli, sotto la
+   schermata d'accesso. */
+.ai-attesa{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);z-index:10050;display:none;align-items:center;gap:.6rem;max-width:calc(100vw - 32px);min-height:44px;padding:.35rem .4rem .35rem 1rem;background:var(--ink);color:var(--paper);border-radius:99px;box-shadow:var(--sh-lg);font-size:.84rem;font-weight:700}
+.ai-attesa.on{display:flex}
+.ai-attesa-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:.6rem}
+.ai-annulla{flex-shrink:0;min-height:44px;padding:0 1.1rem;border:none;border-radius:99px;background:var(--paper);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
 .imp-piede{position:sticky;bottom:calc(-1.4rem - env(safe-area-inset-bottom));z-index:2;display:flex;gap:.5rem;margin:1.1rem -1.25rem calc(-1.4rem - env(safe-area-inset-bottom));padding:.7rem 1.25rem calc(.8rem + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line-soft)}
 .imp-piede .btn{min-height:46px}
 .imp-piede .imp-vai{flex:1;min-width:0}
@@ -3120,10 +3127,248 @@ if(location.hash.indexOf('#join')!==0&&!window.GEPPGO_LINK_EMAIL)window.GEPPGO_S
 window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
 
 /* ===== ENDPOINT AI =====
-   L'indirizzo qui sopra vince. Se non fosse definito, si ricade sull'API di
-   Anthropic in chiaro: funziona solo dentro l'anteprima di Claude, che ci mette
-   l'autenticazione per conto suo. */
-const AI_URL=window.GEPPGO_AI_URL||"https://api.anthropic.com/v1/messages";
+   L'indirizzo qui sopra e' l'unico. Prima, se mancava, si ricadeva sull'API
+   di Anthropic in chiaro: senza una chiave non rispondeva a nessuno, e
+   dall'app nessuno poteva dargliela. Ora senza indirizzo l'assistente dice
+   che non e' disponibile, e basta. */
+const AI_URL=window.GEPPGO_AI_URL||'';
+
+/* ===== L'ASSISTENTE: UNA PORTA SOLA =====
+   Le chiamate all'assistente erano quattordici copie dello stesso fetch, e
+   nessuna aveva un tempo massimo: col campo debole, o col modello in coda,
+   una richiesta poteva restare appesa per sempre, col tasto morto e la
+   scritta «Sto pensando...». Adesso passano tutte da chiediAI, che:
+   - non parte senza rete, e lo dice subito;
+   - aspetta al massimo 30 secondi, 60 con una foto o un PDF;
+   - riprova una volta sola se la rete o il server inciampano, mai se
+     l'assistente e' troppo richiesto: insistere allunga solo la coda;
+   - tiene spento il tasto che l'ha chiamata e non fa partire una seconda
+     richiesta uguale: due tocchi, una richiesta;
+   - mostra che sta aspettando e, dopo dieci secondi, «Annulla»;
+   - legge il JSON anche fra ``` o con una frase intorno, e se proprio non si
+     legge lo chiede di nuovo, una volta;
+   - dice all'assistente di rispondere nella lingua dell'app.
+   A schermo vanno frasi da persona; il dettaglio tecnico va in console. */
+const AI_TEMPO_TESTO_MS=30000,AI_TEMPO_FILE_MS=60000,AI_ANNULLA_DOPO_MS=10000;
+const AI_LINGUE={it:'italiano',en:'inglese (English)',es:'spagnolo (español)',fr:'francese (français)',pt:'portoghese europeo (português de Portugal)'};
+const AI_IN_CORSO=new Map();
+let aiAttese=[];
+function aiInCorso(chiave){return AI_IN_CORSO.has(chiave);}
+/* La lingua la decide chi usa l'app, non il prompt: le richieste sono scritte
+   in italiano, ma la risposta deve arrivare nella lingua che si legge a
+   schermo. I nomi dei posti invece restano quelli veri, quelli che si
+   ritrovano sulla mappa e sui cartelli; e le parole da copiare (categorie,
+   chiavi del JSON, i segni come LUOGHI:) restano identiche, perche' e' l'app
+   a leggerle. */
+function aiRigaLingua(){
+  const l=(typeof linguaScelta==='function')?linguaScelta():'it';
+  return `Rispondi in ${AI_LINGUE[l]||AI_LINGUE.it}: è la lingua in cui chi ti scrive usa l'app. I nomi dei luoghi lasciali come sono, nella forma originale con cui si trovano sulle mappe. Le parole che ti chiedo di copiare da un elenco (categorie, codici, chiavi e valori fissi del JSON, segni come LUOGHI: o [MODIFICA]) restano esattamente come le ho scritte.`;
+}
+/* Il tasto che ha lanciato la richiesta. Si prende all'inizio della
+   funzione chiamata dal tocco: dopo il primo await l'evento non c'e' piu'. */
+function tastoDelTocco(){
+  const e=window.event;
+  const el=e&&e.target&&e.target.closest?e.target.closest('button'):null;
+  return el||null;
+}
+function aiErrore(tipo,dettaglio){
+  if(dettaglio)console.log('L\'assistente non ha risposto ('+tipo+'):',dettaglio);
+  const frasi={
+    offline:'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.',
+    tempo:'L\'assistente non ha risposto in tempo: riprova fra poco.',
+    annullata:'Richiesta annullata.',
+    occupato:'L\'assistente è molto richiesto: riprova fra qualche minuto',
+    non_disponibile:'L\'assistente non è disponibile in questo momento: riprova più tardi.',
+    rete:'L\'assistente non è raggiungibile: controlla la rete e riprova.',
+    server:'L\'assistente non ha risposto: riprova fra poco.',
+    json:'La risposta dell\'assistente non si legge: riprova fra poco.'
+  };
+  return {ok:false,errore:tipo,messaggio:frasi[tipo]?tv(frasi[tipo]):''};
+}
+/* Il ponte sa perche' non ha risposto (quota finita, troppe richieste,
+   chiave scaduta, modello ritirato) e lo scrive nel messaggio d'errore,
+   anche quando lo manda come 502: qui lo si mette in una delle tre caselle
+   che contano per chi usa l'app. */
+function aiTipoErrore(status,msg){
+  const m=String(msg||'');
+  if(status===429||/quota|rate.?limit|RESOURCE_EXHAUSTED|\b429\b|too many requests|retry in/i.test(m))return 'occupato';
+  if(status===401||status===403||/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b|no longer available|NOT_FOUND|not found/i.test(m))return 'non_disponibile';
+  return 'server';
+}
+/* Il JSON, anche quando il modello lo mette fra ``` o ci scrive una frase
+   prima e dopo: si prende il primo oggetto intero, contando le parentesi
+   fuori dalle virgolette. Una regex dalla prima graffa all'ultima si
+   mangiava il testo in mezzo a due oggetti, o una graffa dentro una frase. */
+function aiLeggiJSON(testo){
+  let s=String(testo||'').trim();
+  const recinto=s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if(recinto)s=recinto[1].trim();
+  const prova=x=>{try{const v=JSON.parse(x);return v&&typeof v==='object'?v:null;}catch(e){return null;}};
+  const intero=prova(s);if(intero)return intero;
+  const inizi=['{','['].map(c=>s.indexOf(c)).filter(i=>i>=0).sort((a,b)=>a-b);
+  for(const i of inizi){
+    const apre=s[i],chiude=apre==='{'?'}':']';
+    let prof=0,dentro=false,scappa=false;
+    for(let j=i;j<s.length;j++){
+      const c=s[j];
+      if(dentro){if(scappa)scappa=false;else if(c==='\\')scappa=true;else if(c==='"')dentro=false;continue;}
+      if(c==='"'){dentro=true;continue;}
+      if(c===apre)prof++;
+      else if(c===chiude&&--prof===0){const v=prova(s.slice(i,j+1));if(v)return v;break;}
+    }
+  }
+  return null;
+}
+function aiPausa(ms,ctrl){
+  return new Promise(ok=>{
+    if(ctrl.signal.aborted)return ok();
+    const tm=setTimeout(ok,ms);
+    ctrl.signal.addEventListener('abort',()=>{clearTimeout(tm);ok();},{once:true});
+  });
+}
+/* Una richiesta, con al massimo un secondo tentativo. Il tempo massimo vale
+   per ogni tentativo; un tempo scaduto non si ritenta: se il modello e' cosi'
+   lento, una seconda attesa uguale non la vuole nessuno. */
+async function aiRichiesta(corpo,tempo,ctrl,stato){
+  for(let giro=0;giro<2;giro++){
+    if(giro&&navigator.onLine===false)return aiErrore('offline');
+    let res=null,data=null;
+    const tm=setTimeout(()=>{stato.motivo='tempo';ctrl.abort();},tempo);
+    try{
+      res=await fetch(AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo),signal:ctrl.signal});
+      try{data=await res.json();}catch(e){data=null;}
+    }catch(e){
+      if(stato.motivo==='annullata')return aiErrore('annullata');
+      if(stato.motivo==='tempo')return aiErrore('tempo','nessuna risposta in '+Math.round(tempo/1000)+' secondi');
+      if(giro===0){console.log('Rete verso l\'assistente, riprovo:',e);await aiPausa(800,ctrl);continue;}
+      return aiErrore(navigator.onLine===false?'offline':'rete',String((e&&e.message)||e));
+    }finally{clearTimeout(tm);}
+    if(stato.motivo==='annullata')return aiErrore('annullata');
+    const msg=data&&data.error?String(data.error.message||data.error.type||''):'';
+    if(!res.ok||(data&&data.error)){
+      const tipo=aiTipoErrore(res.status,msg);
+      if(tipo==='server'&&res.status>=500&&giro===0){console.log('Il server dell\'assistente ha risposto '+res.status+', riprovo:',msg);await aiPausa(800,ctrl);continue;}
+      return aiErrore(tipo,res.status+' '+msg);
+    }
+    const testo=((data&&data.content)||[]).filter(b=>b&&b.type==='text').map(b=>b.text||'').join('').trim();
+    if(!testo){if(giro===0){console.log('Risposta vuota, riprovo');continue;}return aiErrore('server','risposta vuota');}
+    return {ok:true,testo};
+  }
+  return aiErrore('server');
+}
+/* Le richieste che si vedono aspettare. «globale»: la pillola in alto dice
+   subito che si sta aspettando (chi chiama non ha un suo segno d'attesa);
+   «locale»: il segno ce l'ha chi chiama, e la pillola arriva solo dopo dieci
+   secondi, con «Annulla»; «nessuna»: le richieste di sottofondo. */
+function aiDisegnaAttesa(){
+  let el=document.getElementById('aiAttesa');
+  const visibili=aiAttese.filter(v=>v.attesa==='globale'||v.lunga);
+  if(!visibili.length){if(el)el.classList.remove('on');return;}
+  if(!el){
+    el=document.createElement('div');el.id='aiAttesa';el.className='ai-attesa';
+    el.setAttribute('role','status');el.setAttribute('aria-live','polite');
+    el.innerHTML='<span class="ai-attesa-t"></span><button type="button" class="ai-annulla" onclick="aiAnnulla()"></button>';
+    document.body.appendChild(el);
+  }
+  const lunga=visibili.some(v=>v.lunga);
+  el.querySelector('.ai-attesa-t').textContent=lunga?tv('Ci sta mettendo più del solito…'):tv('✦ L\'assistente sta pensando…');
+  const b=el.querySelector('.ai-annulla');
+  b.textContent=tv('Annulla');b.style.display=lunga?'':'none';
+  el.classList.add('on');
+}
+function aiAnnulla(){aiAttese.slice().forEach(v=>{if(v.attesa==='globale'||v.lunga)v.ferma();});}
+/* La porta.
+   o.chiave   cosa si sta chiedendo: una richiesta per chiave alla volta
+   o.domanda  il testo della richiesta, oppure o.messaggi (una conversazione,
+              o testo e foto insieme)
+   o.sistema  le istruzioni di contorno
+   o.json     la risposta e' un JSON: torna gia' letto in .dati
+   o.conFile  c'e' una foto o il testo di un PDF: tempo massimo piu' lungo
+   o.cercaSulWeb, o.maxToken, o.tasto, o.attesa ('globale'|'locale'|'nessuna')
+   Torna {ok:true,testo,dati} oppure {ok:false,errore,messaggio}: il
+   messaggio e' gia' tradotto, e vuoto per un doppio tocco. */
+async function chiediAI(o){
+  const chiave=o.chiave||'assistente';
+  if(AI_IN_CORSO.has(chiave))return {ok:false,errore:'doppione',messaggio:''};
+  if(!AI_URL)return aiErrore('non_disponibile','indirizzo dell\'assistente non configurato');
+  if(navigator.onLine===false)return aiErrore('offline');
+  const tasto=o.tasto&&o.tasto.nodeType===1?o.tasto:null;
+  const eraSpento=tasto?!!tasto.disabled:false;
+  if(tasto){tasto.disabled=true;tasto.setAttribute('aria-busy','true');}
+  const ctrl=new AbortController(),stato={motivo:''};
+  const voce={chiave,attesa:o.attesa||'globale',lunga:false,timer:null,ferma:()=>{if(!stato.motivo)stato.motivo='annullata';ctrl.abort();}};
+  AI_IN_CORSO.set(chiave,voce);
+  if(voce.attesa!=='nessuna'){
+    aiAttese.push(voce);
+    voce.timer=setTimeout(()=>{voce.lunga=true;aiDisegnaAttesa();},AI_ANNULLA_DOPO_MS);
+    aiDisegnaAttesa();
+  }
+  try{
+    const sistema=[o.sistema||'',aiRigaLingua()].filter(Boolean).join('\n\n');
+    let messaggi=o.messaggi||[{role:'user',content:String(o.domanda||'')}];
+    const corpo=()=>{
+      const c={max_tokens:o.maxToken||1500,system:sistema,messages:messaggi};
+      if(o.cercaSulWeb)c.tools=[{type:'web_search_20250305',name:'web_search'}];
+      return c;
+    };
+    const tempo=o.conFile?AI_TEMPO_FILE_MS:AI_TEMPO_TESTO_MS;
+    let r=await aiRichiesta(corpo(),tempo,ctrl,stato);
+    if(!r.ok||!o.json)return r;
+    let dati=aiLeggiJSON(r.testo);
+    if(dati)return {ok:true,testo:r.testo,dati};
+    /* Una seconda volta, mostrandogli quello che ha scritto: correggere la
+       propria risposta gli riesce meglio che rifarla da capo. */
+    console.log('Risposta dell\'assistente non in JSON, la richiedo:',r.testo.slice(0,300));
+    messaggi=messaggi.concat([{role:'assistant',content:r.testo},
+      {role:'user',content:'Quello che hai scritto non è JSON valido. Riscrivi la stessa risposta solo come JSON: niente ```, niente testo prima o dopo.'}]);
+    r=await aiRichiesta(corpo(),tempo,ctrl,stato);
+    if(!r.ok)return r;
+    dati=aiLeggiJSON(r.testo);
+    return dati?{ok:true,testo:r.testo,dati}:aiErrore('json',r.testo.slice(0,300));
+  }finally{
+    AI_IN_CORSO.delete(chiave);
+    if(voce.timer)clearTimeout(voce.timer);
+    aiAttese=aiAttese.filter(x=>x!==voce);
+    aiDisegnaAttesa();
+    if(tasto&&!eraSpento){tasto.disabled=false;tasto.removeAttribute('aria-busy');}
+  }
+}
+/* Quello che all'assistente non serve non gli si manda. Il PDF di
+   un'agenzia o la mail di un albergo portano con se' email, telefoni,
+   numeri di carta e IBAN di chi ha prenotato: per leggere un itinerario o le
+   date di un soggiorno non servono, e una volta usciti dal telefono non si
+   richiamano indietro. Si tolgono qui, prima di spedire. I numeri di carta
+   si riconoscono dalla cifra di controllo, per non toccare i codici di
+   prenotazione; i telefoni solo col prefisso internazionale, per non
+   toccare date e prezzi. */
+function aiLuhn(n){
+  if(n.length<13||n.length>19)return false;
+  let s=0,doppia=false;
+  for(let i=n.length-1;i>=0;i--){let x=+n[i];if(doppia){x*=2;if(x>9)x-=9;}s+=x;doppia=!doppia;}
+  return s%10===0;
+}
+function aiSenzaDatiPersonali(testo,opz){
+  opz=opz||{};
+  let s=String(testo||'');
+  s=s.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,'[email]');
+  s=s.replace(/\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b/g,'[IBAN]');
+  s=s.replace(/\b\d(?:[ -]?\d){12,18}\b/g,m=>aiLuhn(m.replace(/\D/g,''))?'[carta]':m);
+  if(opz.telefoni!==false)s=s.replace(/(?:\+|\b00)\d{1,3}[\s.\-]?(?:\(?\d{1,4}\)?[\s.\-]?){2,5}\d{2,4}\b/g,'[telefono]');
+  if(opz.nomi!==false)s=s.replace(/^(\s*(?:guest(?: name)?|lead guest|main guest|booker|booked by|reservation holder|ospite(?: principale)?|nome (?:dell'|del |della )?ospite|intestatario|titolare(?: della prenotazione)?|cliente|prenotato da|nome e cognome|hu[ée]sped|titular(?: da reserva)?|client|h[ôo]te|r[ée]serv[ée] par|h[óo]spede)\s*[:：]\s*).+$/gim,'$1[nome]');
+  return s;
+}
+/* Una foto per l'assistente: ridisegnata su una tela, che lascia indietro i
+   dati nascosti del file (il punto GPS in cui e' stata scattata, il modello
+   del telefono), e non piu' grande del necessario per leggerla. */
+function aiImmagineLeggera(img,lato){
+  lato=lato||1280;
+  const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+  const k=Math.min(1,lato/Math.max(w,h,1));
+  const c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.85).split(',')[1];
+}
 let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};
 /* Il primissimo avvio: niente di salvato e la presentazione mai vista. Va
    guardato qui, prima che l'app scriva qualcosa: dopo non si saprebbe piu'. */
@@ -3171,8 +3416,10 @@ const LIBRERIE={
   bwip:{js:'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',pronta:()=>typeof bwipjs!=='undefined'},
   /* SheetJS, per i file di Excel (vedi IMPORTA DA UNA TABELLA). Dal suo
      sito, non da npm: il pacchetto «xlsx» su npm e' fermo alla 0.18.5, che
-     ha falle note. */
-  xlsx:{js:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',pronta:()=>typeof XLSX!=='undefined'&&!!XLSX.read}
+     ha falle note. Solo al momento: arriva quando si apre l'importazione, e
+     la service worker non la scarica in sottofondo (sta in
+     LIBRERIE_AL_MOMENTO di sw.js, non in LIBRERIE). */
+  xlsx:{js:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',alMomento:true,pronta:()=>typeof XLSX!=='undefined'&&!!XLSX.read}
 };
 /* Oltre questo tempo una libreria si da' per persa, e lo si dice. E' largo
    apposta: i codici a barre sono 250 KB compressi, che col campo debole
@@ -3706,8 +3953,7 @@ const DIZIONARIO_MESSAGGI={
     'Viaggio non trovato':'Trip not found','Password aggiornata':'Password updated',
     '🗺️ Spazio liberato':'🗺️ Space freed','Apri prima una foto':'Open a photo first',
     'Inserisci un importo':'Enter an amount','📥 Cartolina salvata':'📥 Postcard saved',
-    'Percorso non trovato':'Route not found','🗑️ Tutto cancellato':'🗑️ Everything deleted',
-    '✦ Ci sto pensando...':'✦ Thinking…','Consigli disattivati':'Suggestions turned off',
+    'Percorso non trovato':'Route not found','🗑️ Tutto cancellato':'🗑️ Everything deleted','Consigli disattivati':'Suggestions turned off',
     'Crea prima un viaggio':'Create a trip first','Inserisci il tuo nome':'Enter your name',
     'Compila nome e codice':'Fill in name and code','Non è cambiato niente':'Nothing changed',
     '🔄 Attività scambiate':'🔄 Activities swapped','Apri prima un viaggio':'Open a trip first',
@@ -3787,8 +4033,7 @@ const DIZIONARIO_MESSAGGI={
     'Viaggio non trovato':'Viaje no encontrado','Password aggiornata':'Contraseña actualizada',
     '🗺️ Spazio liberato':'🗺️ Espacio liberado','Apri prima una foto':'Abre antes una foto',
     'Inserisci un importo':'Escribe un importe','📥 Cartolina salvata':'📥 Postal guardada',
-    'Percorso non trovato':'Ruta no encontrada','🗑️ Tutto cancellato':'🗑️ Todo borrado',
-    '✦ Ci sto pensando...':'✦ Lo estoy pensando…','Consigli disattivati':'Sugerencias desactivadas',
+    'Percorso non trovato':'Ruta no encontrada','🗑️ Tutto cancellato':'🗑️ Todo borrado','Consigli disattivati':'Sugerencias desactivadas',
     'Crea prima un viaggio':'Crea antes un viaje','Inserisci il tuo nome':'Escribe tu nombre',
     'Compila nome e codice':'Rellena nombre y código','Non è cambiato niente':'No ha cambiado nada',
     '🔄 Attività scambiate':'🔄 Actividades intercambiadas','Apri prima un viaggio':'Abre antes un viaje',
@@ -3868,8 +4113,7 @@ const DIZIONARIO_MESSAGGI={
     'Viaggio non trovato':'Voyage introuvable','Password aggiornata':'Mot de passe mis à jour',
     '🗺️ Spazio liberato':'🗺️ Espace libéré','Apri prima una foto':'Ouvre d’abord une photo',
     'Inserisci un importo':'Saisis un montant','📥 Cartolina salvata':'📥 Carte enregistrée',
-    'Percorso non trovato':'Itinéraire introuvable','🗑️ Tutto cancellato':'🗑️ Tout est effacé',
-    '✦ Ci sto pensando...':'✦ Je réfléchis…','Consigli disattivati':'Suggestions désactivées',
+    'Percorso non trovato':'Itinéraire introuvable','🗑️ Tutto cancellato':'🗑️ Tout est effacé','Consigli disattivati':'Suggestions désactivées',
     'Crea prima un viaggio':'Crée d’abord un voyage','Inserisci il tuo nome':'Saisis ton nom',
     'Compila nome e codice':'Remplis le nom et le code','Non è cambiato niente':'Rien n’a changé',
     '🔄 Attività scambiate':'🔄 Activités échangées','Apri prima un viaggio':'Ouvre d’abord un voyage',
@@ -3949,8 +4193,7 @@ const DIZIONARIO_MESSAGGI={
     'Viaggio non trovato':'Viagem não encontrada','Password aggiornata':'Palavra-passe atualizada',
     '🗺️ Spazio liberato':'🗺️ Espaço libertado','Apri prima una foto':'Abre primeiro uma foto',
     'Inserisci un importo':'Escreve um valor','📥 Cartolina salvata':'📥 Postal guardado',
-    'Percorso non trovato':'Percurso não encontrado','🗑️ Tutto cancellato':'🗑️ Tudo apagado',
-    '✦ Ci sto pensando...':'✦ Estou a pensar…','Consigli disattivati':'Sugestões desligadas',
+    'Percorso non trovato':'Percurso não encontrado','🗑️ Tutto cancellato':'🗑️ Tudo apagado','Consigli disattivati':'Sugestões desligadas',
     'Crea prima un viaggio':'Cria primeiro uma viagem','Inserisci il tuo nome':'Escreve o teu nome',
     'Compila nome e codice':'Preenche o nome e o código','Non è cambiato niente':'Não mudou nada',
     '🔄 Attività scambiate':'🔄 Atividades trocadas','Apri prima un viaggio':'Abre primeiro uma viagem',
@@ -6426,8 +6669,6 @@ const DIZIONARIO_PRIMO={
     'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'This link is in the old format. The SAME email has a 6-digit code: tap “I have a code or a recovery link” and type it.',
     'Senza rete non ci riesco: riprova quando sei online.':'I can’t without a connection: try again when you’re online.',
     'Non hai il permesso per farlo in questo viaggio.':'You don’t have permission to do that on this trip.',
-    'Troppe richieste di fila: riprova fra {1} secondi':'Too many requests in a row: try again in {1} seconds',
-    'Richieste gratuite finite per adesso: riprova fra un minuto':'Free requests are used up for now: try again in a minute',
     'L\'assistente non è disponibile in questo momento: riprova più tardi.':'The assistant isn’t available right now: try again later.',
     'L\'assistente non ha risposto: riprova fra poco.':'The assistant didn’t answer: try again shortly.',
     'L\'assistente non è raggiungibile: controlla la rete e riprova.':'The assistant can’t be reached: check your connection and try again.',
@@ -6495,8 +6736,6 @@ const DIZIONARIO_PRIMO={
     'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Este enlace está en el formato antiguo. En el MISMO correo hay un código de 6 cifras: toca «Tengo un código o un enlace de recuperación» y escríbelo.',
     'Senza rete non ci riesco: riprova quando sei online.':'Sin conexión no puedo: vuelve a intentarlo cuando estés en línea.',
     'Non hai il permesso per farlo in questo viaggio.':'No tienes permiso para hacerlo en este viaje.',
-    'Troppe richieste di fila: riprova fra {1} secondi':'Demasiadas peticiones seguidas: vuelve a intentarlo en {1} segundos',
-    'Richieste gratuite finite per adesso: riprova fra un minuto':'Se han acabado las peticiones gratuitas por ahora: vuelve a intentarlo en un minuto',
     'L\'assistente non è disponibile in questo momento: riprova più tardi.':'El asistente no está disponible en este momento: vuelve a intentarlo más tarde.',
     'L\'assistente non ha risposto: riprova fra poco.':'El asistente no ha respondido: vuelve a intentarlo dentro de poco.',
     'L\'assistente non è raggiungibile: controlla la rete e riprova.':'No se puede contactar con el asistente: revisa la conexión y vuelve a intentarlo.',
@@ -6564,8 +6803,6 @@ const DIZIONARIO_PRIMO={
     'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Ce lien est dans l’ancien format. Dans le MÊME e-mail il y a un code à 6 chiffres : touche « J’ai un code ou un lien de récupération » et saisis-le.',
     'Senza rete non ci riesco: riprova quando sei online.':'Sans réseau je n’y arrive pas : réessaie quand tu seras en ligne.',
     'Non hai il permesso per farlo in questo viaggio.':'Tu n’as pas l’autorisation de faire ça dans ce voyage.',
-    'Troppe richieste di fila: riprova fra {1} secondi':'Trop de demandes d’affilée : réessaie dans {1} secondes',
-    'Richieste gratuite finite per adesso: riprova fra un minuto':'Plus de demandes gratuites pour l’instant : réessaie dans une minute',
     'L\'assistente non è disponibile in questo momento: riprova più tardi.':'L’assistant n’est pas disponible pour le moment : réessaie plus tard.',
     'L\'assistente non ha risposto: riprova fra poco.':'L’assistant n’a pas répondu : réessaie dans un instant.',
     'L\'assistente non è raggiungibile: controlla la rete e riprova.':'L’assistant est injoignable : vérifie ta connexion et réessaie.',
@@ -6633,8 +6870,6 @@ const DIZIONARIO_PRIMO={
     'Questo link è nel vecchio formato. Nella STESSA email c\'è un codice a 6 cifre: tocca «Ho un codice o un link di recupero» e scrivilo.':'Esta ligação está no formato antigo. No MESMO e-mail há um código de 6 dígitos: toca em «Tenho um código ou uma ligação de recuperação» e escreve-o.',
     'Senza rete non ci riesco: riprova quando sei online.':'Sem rede não consigo: tenta de novo quando estiveres online.',
     'Non hai il permesso per farlo in questo viaggio.':'Não tens permissão para fazer isso nesta viagem.',
-    'Troppe richieste di fila: riprova fra {1} secondi':'Demasiados pedidos seguidos: tenta de novo daqui a {1} segundos',
-    'Richieste gratuite finite per adesso: riprova fra un minuto':'Acabaram os pedidos gratuitos por agora: tenta de novo daqui a um minuto',
     'L\'assistente non è disponibile in questo momento: riprova più tardi.':'O assistente não está disponível neste momento: tenta mais tarde.',
     'L\'assistente non ha risposto: riprova fra poco.':'O assistente não respondeu: tenta de novo daqui a pouco.',
     'L\'assistente non è raggiungibile: controlla la rete e riprova.':'Não é possível contactar o assistente: verifica a ligação e tenta de novo.',
@@ -7277,11 +7512,55 @@ const DIZIONARIO_IMPORTA={
   }
 };
 Object.keys(DIZIONARIO_IMPORTA).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_IMPORTA[l]));
+/* L'assistente, una porta sola (vedi chiediAI). */
+const DIZIONARIO_AI={
+  en:{
+    'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'You’re offline: the assistant needs the internet. Try again when you’re back online.',
+    'L\'assistente non ha risposto in tempo: riprova fra poco.':'The assistant didn’t answer in time: try again shortly.',
+    'Richiesta annullata.':'Request cancelled.',
+    'L\'assistente è molto richiesto: riprova fra qualche minuto':'The assistant is very busy: try again in a few minutes',
+    'La risposta dell\'assistente non si legge: riprova fra poco.':'The assistant’s answer can’t be read: try again shortly.',
+    'Ci sta mettendo più del solito…':'It’s taking longer than usual…',
+    '✦ L\'assistente sta pensando…':'✦ The assistant is thinking…',
+    'Questa immagine non si apre: prova con uno screenshot':'This image won’t open: try a screenshot'
+  },
+  es:{
+    'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Estás sin conexión: el asistente necesita internet. Vuelve a intentarlo cuando vuelva la conexión.',
+    'L\'assistente non ha risposto in tempo: riprova fra poco.':'El asistente no ha respondido a tiempo: vuelve a intentarlo en un momento.',
+    'Richiesta annullata.':'Solicitud cancelada.',
+    'L\'assistente è molto richiesto: riprova fra qualche minuto':'El asistente está muy solicitado: vuelve a intentarlo en unos minutos',
+    'La risposta dell\'assistente non si legge: riprova fra poco.':'La respuesta del asistente no se puede leer: vuelve a intentarlo en un momento.',
+    'Ci sta mettendo più del solito…':'Está tardando más de lo normal…',
+    '✦ L\'assistente sta pensando…':'✦ El asistente está pensando…',
+    'Questa immagine non si apre: prova con uno screenshot':'Esta imagen no se abre: prueba con una captura de pantalla'
+  },
+  fr:{
+    'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Tu es hors ligne : l’assistant a besoin d’internet. Réessaie quand la connexion revient.',
+    'L\'assistente non ha risposto in tempo: riprova fra poco.':'L’assistant n’a pas répondu à temps : réessaie dans un instant.',
+    'Richiesta annullata.':'Demande annulée.',
+    'L\'assistente è molto richiesto: riprova fra qualche minuto':'L’assistant est très sollicité : réessaie dans quelques minutes',
+    'La risposta dell\'assistente non si legge: riprova fra poco.':'La réponse de l’assistant est illisible : réessaie dans un instant.',
+    'Ci sta mettendo più del solito…':'Ça prend plus de temps que d’habitude…',
+    '✦ L\'assistente sta pensando…':'✦ L’assistant réfléchit…',
+    'Questa immagine non si apre: prova con uno screenshot':'Cette image ne s’ouvre pas : essaie avec une capture d’écran'
+  },
+  pt:{
+    'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Estás sem rede: o assistente precisa de internet. Tenta outra vez quando a ligação voltar.',
+    'L\'assistente non ha risposto in tempo: riprova fra poco.':'O assistente não respondeu a tempo: tenta outra vez daqui a pouco.',
+    'Richiesta annullata.':'Pedido cancelado.',
+    'L\'assistente è molto richiesto: riprova fra qualche minuto':'O assistente está muito solicitado: tenta outra vez daqui a alguns minutos',
+    'La risposta dell\'assistente non si legge: riprova fra poco.':'A resposta do assistente não se consegue ler: tenta outra vez daqui a pouco.',
+    'Ci sta mettendo più del solito…':'Está a demorar mais do que o costume…',
+    '✦ L\'assistente sta pensando…':'✦ O assistente está a pensar…',
+    'Questa immagine non si apre: prova con uno screenshot':'Esta imagem não abre: experimenta com uma captura de ecrã'
+  }
+};
+Object.keys(DIZIONARIO_AI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_AI[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1189;
+const FRASI_IN_TUTTO=1194;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -9013,11 +9292,10 @@ function categoriaLocale(nome){
   return 'Extra';
 }
 
-async function categorizzaBagagli(voci){
+async function categorizzaBagagli(voci,tasto){
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:1500,
-      messages:[{role:"user",content:`Metti ognuna di queste cose da mettere in valigia nella sua categoria.
+    const r=await chiediAI({chiave:'bagagli',json:true,tasto,attesa:'locale',maxToken:1500,
+      domanda:`Metti ognuna di queste cose da mettere in valigia nella sua categoria.
 
 ${voci.map((v,i)=>`${i}. ${v}`).join('\n')}
 
@@ -9031,15 +9309,10 @@ Rispondi SOLO con JSON, senza backtick:
 - "Elettronica" per caricatori, cavi, adattatori, cuffie, macchine fotografiche
 - "Igiene" per lavarsi, creme, trucco e medicinali
 - "Abbigliamento" per tutto quello che si indossa, scarpe comprese
-- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`}]
-    })});
-    const data=await res.json();
-    if(!data||data.error)return null;
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`});
+    if(!r.ok)return null;
     const out=[];
-    (r.voci||[]).forEach(v=>{
+    (r.dati.voci||[]).forEach(v=>{
       const i=parseInt(v.i,10);
       if(i>=0&&i<voci.length&&PACK_CAT.indexOf(v.cat)>=0)out[i]=v.cat;
     });
@@ -9054,6 +9327,9 @@ Rispondi SOLO con JSON, senza backtick:
    categoria - perche' sono lo stesso giudizio. */
 async function bagagliDaTesto(testo,gia){
   try{
+    /* Il testo di un PDF porta con se' quello che non c'entra con la valigia:
+       nomi, email, telefoni e numeri di chi ha prenotato restano qui. */
+    testo=aiSenzaDatiPersonali(testo);
     /* Il controllo dei doppioni qui sotto confronta i nomi esatti, quindi
        "magliette (5)" del PDF e "Magliette (4)" del suggerimento passavano
        tutti e due. Chi legge il testo puo' vedere che sono la stessa cosa:
@@ -9062,9 +9338,8 @@ async function bagagliDaTesto(testo,gia){
 
 In valigia ci sono già queste, non ripeterle nemmeno scritte in modo diverso:
 ${gia.join(', ')}`:'';
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:2000,
-      messages:[{role:"user",content:`Questo è il testo di un PDF. Tirane fuori solo le cose da mettere in valigia, e per ognuna la sua categoria.
+    const r=await chiediAI({chiave:'bagagli',json:true,conFile:true,attesa:'locale',maxToken:2000,
+      domanda:`Questo è il testo di un PDF. Tirane fuori solo le cose da mettere in valigia, e per ognuna la sua categoria.
 
 --- TESTO ---
 ${testo}
@@ -9083,15 +9358,10 @@ Rispondi SOLO con JSON, senza backtick:
 - "Elettronica" per caricatori, cavi, adattatori, cuffie, macchine fotografiche
 - "Igiene" per lavarsi, creme, trucco e medicinali
 - "Abbigliamento" per tutto quello che si indossa, scarpe comprese
-- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`}]
-    })});
-    const data=await res.json();
-    if(data&&data.error)return null;
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
-    return (r.voci||[]).map(v=>({label:String(v.nome||'').trim(),cat:v.cat})).filter(v=>v.label);
-  }catch(e){return null;}
+- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`});
+    if(!r.ok)return {messaggio:r.messaggio};
+    return {voci:(r.dati.voci||[]).map(v=>({label:String(v.nome||'').trim(),cat:v.cat})).filter(v=>v.label)};
+  }catch(e){console.log('Bagagli dal PDF non letti:',e);return {messaggio:tv('L\'assistente non ha risposto: riprova fra poco.')};}
 }
 
 /* Inserire e' uguale da qualunque parte arrivino le voci - incollate, da un
@@ -9120,6 +9390,7 @@ function aggiungiVociBagagli(t,voci){
 let packImportBusy=false;
 async function importPackingText(){
   const t=T();if(!t||packImportBusy)return;
+  const tasto=tastoDelTocco();
   const st=document.getElementById('packImportStatus');
   const raw=document.getElementById('packImportText').value;
   const items=raw.split('\n').map(l=>l.replace(/^[-*•\d.)\s]+/,'').trim()).filter(Boolean);
@@ -9127,7 +9398,7 @@ async function importPackingText(){
   packImportBusy=true;
   st.textContent='✦ Guardo in che categoria va ognuna...';
   try{
-    const cats=await categorizzaBagagli(items);
+    const cats=await categorizzaBagagli(items,tasto);
     const parti=aggiungiVociBagagli(t,items.map((label,i)=>({label,cat:cats&&cats[i]})));
     document.getElementById('packImportText').value='';
     if(!cats)parti.push('categorie indovinate senza IA: controllale');
@@ -9146,8 +9417,9 @@ async function importPackingPDF(inp){
     catch(e){st.textContent='⚠️ '+motivoPDF(e);return;}
     if(r.vuoto){st.textContent='⚠️ Questo PDF non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c\'è niente da leggere.';return;}
     st.textContent=`✦ ${pdfLetto(r)} Cerco le cose da mettere in valigia...`;
-    const voci=await bagagliDaTesto(r.testo,getPacking(t).map(x=>x.label));
-    if(!voci){st.textContent='⚠️ L\'IA non è raggiungibile: copia l\'elenco qui sopra e usa l\'altro tasto.';return;}
+    const letto=await bagagliDaTesto(r.testo,getPacking(t).map(x=>x.label));
+    if(letto.messaggio!=null){if(letto.messaggio)st.textContent='⚠️ '+letto.messaggio;return;}
+    const voci=letto.voci;
     if(!voci.length){st.textContent='Non ho trovato cose da mettere in valigia in questo PDF.';return;}
     st.textContent='✅ '+[`da ${f.name}`].concat(aggiungiVociBagagli(t,voci)).join(' · ');
   }finally{packImportBusy=false;}
@@ -9569,7 +9841,8 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
-- Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
+- L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. Le richieste vanno a Google Gemini: niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
+- Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Il lettore dei file di Excel arriva la prima volta che si apre l'importazione da Excel, e da li' resta anche lui. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
 - Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
@@ -9662,7 +9935,7 @@ async function assistenteChiedi(text,ui){
   try{
     aiRicorda(t,'user',text);
     const dove=t&&t.days[ui.giorno]?`\n\nStai guardando la giornata segnata con <<< QUESTO: quando si parla di "questa giornata", "queste tappe", "qui", si intende quella.`:'';
-    const sys=`Sei l'assistente di viaggio di GeppGo. Rispondi SEMPRE in italiano, in modo caldo, conciso e concreto: due o tre frasi, niente elenchi lunghi e niente premesse.
+    const sys=`Sei l'assistente di viaggio di GeppGo. Rispondi in modo caldo, conciso e concreto: due o tre frasi, niente elenchi lunghi e niente premesse.
 
 Hai la memoria di questa conversazione: quello che ti e' gia' stato detto vale ancora, non farlo ripetere. Se ti riferisci a qualcosa di cui avete gia' parlato, dallo per acquisito.
 
@@ -9680,15 +9953,10 @@ Regole:
 ${MAPPA_APP}
 
 ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:1500,system:sys,
-      tools:[{type:"web_search_20250305",name:"web_search"}],
-      messages:aiMemoria(t).slice(-14)
-    })});
-    const data=await res.json();
+    const r=await chiediAI({chiave:'chat',sistema:sys,cercaSulWeb:true,attesa:'locale',maxToken:1500,messaggi:aiMemoria(t).slice(-14)});
     attesa.remove();
-    if(data&&data.error){ui.msg('ai','\u26a0\ufe0f '+motivoAI(data.error.message));return;}
-    let reply=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    if(!r.ok){if(r.messaggio)ui.msg('ai','\u26a0\ufe0f '+r.messaggio);return;}
+    let reply=r.testo;
     if(!reply){ui.msg('ai','Non ho capito, prova a dirlo in altre parole.');return;}
     /* Rete di sicurezza: se la frase era un ordine che il riconoscitore non ha
        colto, lo dice il modello, e si passa al motore delle mosse. */
@@ -9711,8 +9979,13 @@ ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
   }catch(e){attesa.remove();console.log('Assistente non raggiungibile:',e);ui.msg('ai','\u26a0\ufe0f '+tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'));}
 }
 
+/* Mentre l'assistente risponde non si spedisce un'altra domanda: partirebbe
+   una seconda richiesta, e la prima risposta arriverebbe dopo la domanda
+   sbagliata. Il testo resta nel campo, pronto. */
+function chatOccupata(){return aiInCorso('chat')||aiInCorso('mosse')||aiInCorso('incollato')||itinBusy;}
 async function sendChat(){
   const inp=document.getElementById('chatInput'),text=inp.value.trim();if(!text)return;
+  if(chatOccupata())return;
   chatSvuota();addMsg('me',text);
   await assistenteChiedi(text,{
     msg:addMsg,
@@ -15410,21 +15683,23 @@ function idCropped(){
 }
 async function identifyPlace(){
   if(!idImg){toast('Scatta o scegli una foto');return;}
+  /* Un secondo tocco mentre la prima richiesta e' in viaggio non fa niente:
+     ne' una richiesta in piu', ne' la scritta d'attesa cancellata. */
+  if(aiInCorso('identifica'))return;
+  const tasto=tastoDelTocco();
   const box=document.getElementById('idResult');
   box.innerHTML='<div class="card"><div style="color:var(--ink-faint);font-size:.88rem">✦ Sto guardando la foto...</div></div>';
   const b64=idCropped(),t=T();
   const hint=t&&t.destination?` La foto è probabilmente scattata a ${t.destination} o dintorni.`:'';
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:1200,
-      messages:[{role:"user",content:[
+    const risposta=await chiediAI({chiave:'identifica',json:true,conFile:true,tasto,attesa:'locale',maxToken:1200,
+      messaggi:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},
-        {type:"text",text:`Identifica il monumento, edificio, opera o luogo nella foto e dammi informazioni generali su cosa sto guardando (non serve aggiungerlo a nessun viaggio, solo capire cos'è).${hint} Rispondi SOLO con JSON, senza backtick e senza altro testo: {"nome":"nome ufficiale","citta":"città","paese":"paese","storia":"3-5 frasi in italiano su storia e contesto: cos'è, quando/perché è stato costruito o creato, perché è importante","sito":"URL ufficiale del luogo/museo/monumento se lo conosci con certezza, altrimenti stringa vuota","prenotazione":"necessaria|consigliata|no|non_so","note_prenotazione":"una frase breve sul perché, o stringa vuota","orari":"orari di apertura tipici se li conosci, altrimenti stringa vuota","certezza":"alta|media|bassa"}. Se non lo riconosci usa nome:"" e spiega in storia.`}
+        {type:"text",text:`Identifica il monumento, edificio, opera o luogo nella foto e dammi informazioni generali su cosa sto guardando (non serve aggiungerlo a nessun viaggio, solo capire cos'è).${hint} Rispondi SOLO con JSON, senza backtick e senza altro testo: {"nome":"nome ufficiale","citta":"città","paese":"paese","storia":"3-5 frasi su storia e contesto: cos'è, quando/perché è stato costruito o creato, perché è importante","sito":"URL ufficiale del luogo/museo/monumento se lo conosci con certezza, altrimenti stringa vuota","prenotazione":"necessaria|consigliata|no|non_so","note_prenotazione":"una frase breve sul perché, o stringa vuota","orari":"orari di apertura tipici se li conosci, altrimenti stringa vuota","certezza":"alta|media|bassa"}. Se non lo riconosci usa nome:"" e spiega in storia.`}
       ]}]
-    })});
-    const data=await res.json();
-    let txt=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').replace(/```json|```/g,'').trim();
-    const r=JSON.parse(txt);
+    });
+    if(!risposta.ok){if(risposta.messaggio)box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(risposta.messaggio)}</div></div>`;return;}
+    const r=risposta.dati;
     if(!r.nome){box.innerHTML=`<div class="card"><div style="font-weight:700;margin-bottom:.3rem">🤔 Non riconosciuto</div><div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5">${esc(r.storia||'Prova con una foto più nitida o cerchia meglio il soggetto.')}</div></div>`;return;}
     const cert={alta:'🟢 Certezza alta',media:'🟡 Certezza media',bassa:'🟠 Certezza bassa'}[r.certezza]||'';
     const bookLbl={necessaria:'🔴 Prenotazione necessaria',consigliata:'🟡 Prenotazione consigliata',no:'🟢 Non serve prenotare',non_so:''}[r.prenotazione]||'';
@@ -15437,10 +15712,21 @@ let impB64=null;
 function onImpImage(ev){
   const f=ev.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{impB64=e.target.result.split(',')[1];document.getElementById('impPrev').innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:var(--r-md);margin-bottom:.5rem"><button class="chip" style="margin-bottom:.7rem" onclick="impB64=null;document.getElementById('impPrev').innerHTML=''">✕ Rimuovi screenshot</button>`;};
+  /* All'assistente andava il file cosi' com'era: a piena grandezza e con i
+     dati nascosti della foto, compreso il punto GPS dove e' stata scattata.
+     Ora va una copia ridisegnata e piu' leggera (vedi aiImmagineLeggera); a
+     schermo si vede l'originale, che resta qui. */
+  r.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{impB64=aiImmagineLeggera(img);document.getElementById('impPrev').innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:var(--r-md);margin-bottom:.5rem"><button class="chip" style="margin-bottom:.7rem" onclick="impB64=null;document.getElementById('impPrev').innerHTML=''">✕ Rimuovi screenshot</button>`;};
+    img.onerror=()=>{impB64=null;toast('Questa immagine non si apre: prova con uno screenshot');};
+    img.src=e.target.result;
+  };
   r.readAsDataURL(f);
 }
 async function extractPlaces(){
+  if(aiInCorso('reel'))return;
+  const tasto=tastoDelTocco();
   const txt=document.getElementById('impText').value.trim();
   if(!txt&&!impB64){toast('Incolla il testo o carica uno screenshot');return;}
   const box=document.getElementById('impResult');
@@ -15450,10 +15736,9 @@ async function extractPlaces(){
   if(impB64)content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:impB64}});
   content.push({type:"text",text:`Da questo contenuto (didascalia di un reel/post di viaggio e/o screenshot) estrai i luoghi reali consigliati.${hint}${txt?`\n\nTesto:\n${txt}`:''}\n\nRispondi SOLO con JSON, niente backtick: {"posti":[{"nome":"nome del posto","query":"nome + città per cercarlo su mappa","perche":"una frase sul perché vale"}]}. Massimo 8. Se non trovi luoghi usa posti:[].`});
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content}]})});
-    const data=await res.json();
-    let s=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').replace(/```json|```/g,'').trim();
-    const r=JSON.parse(s);
+    const risposta=await chiediAI({chiave:'reel',json:true,conFile:!!impB64,tasto,attesa:'locale',maxToken:1000,messaggi:[{role:"user",content}]});
+    if(!risposta.ok){if(risposta.messaggio)box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(risposta.messaggio)}</div></div>`;return;}
+    const r=risposta.dati;
     if(!r.posti||!r.posti.length){box.innerHTML='<div class="card"><div style="font-size:.85rem;color:var(--ink-soft);line-height:1.5">Nessun luogo riconosciuto. Prova a incollare la didascalia completa o uno screenshot dove si leggono i nomi.</div></div>';return;}
     box.innerHTML=`<div class="card"><div class="card-h" style="margin-bottom:.7rem">📍 ${r.posti.length} posti trovati</div>${r.posti.map(p=>`<div class="chat-place" style="margin-bottom:.5rem"><div style="flex:1;min-width:0"><div class="chat-place-n">${esc(p.nome)}</div><div style="font-size:.76rem;color:var(--ink-soft);margin-top:.15rem">${esc(p.perche||'')}</div></div><button class="chip brown" onclick='aiAddPlace(${JSON.stringify(p.query||p.nome).replace(/'/g,"&apos;")})'>+</button></div>`).join('')}<button class="btn btn-grad btn-block" style="margin-top:.6rem" onclick='addAllPlaces(${JSON.stringify(r.posti.map(p=>p.query||p.nome)).replace(/'/g,"&apos;")})'>📍 Aggiungi tutti alla mappa</button></div>`;
   }catch(e){console.log('Assistente non raggiungibile:',e);box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'))}</div></div>`;}
@@ -15959,6 +16244,8 @@ function checkBookingAlerts(){
    (vedi impPrepara). */
 let tripFileText='';
 async function importTrip(){
+  if(aiInCorso('itinerario-scritto'))return;
+  const tasto=tastoDelTocco();
   const txt=(document.getElementById('impTripText').value.trim()+'\n'+tripFileText).trim();
   if(!txt){toast('Incolla un itinerario o carica un file');return;}
   if(!canCreateTrip()){closeSheet('mImport');openPremium();return;}
@@ -15966,11 +16253,12 @@ async function importTrip(){
   box.innerHTML='<div class="card"><div style="color:var(--ink-faint);font-size:.88rem">✦ Sto leggendo l\'itinerario...</div></div>';
   const anno=new Date().getFullYear();
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,
-      messages:[{role:"user",content:`Trasforma questo itinerario di viaggio in JSON. Anno corrente: ${anno}.\n\n---\n${txt}\n---\n\nRispondi SOLO con JSON, niente backtick né commenti:\n{"nome":"nome del viaggio","destinazione":"città, paese","inizio":"YYYY-MM-DD","fine":"YYYY-MM-DD","partecipanti":["nome"],"giorni":[{"data":"YYYY-MM-DD","titolo":"","attivita":[{"nome":"","ora":"HH:MM o vuoto","tipo":"outdoor|indoor|any","note":"","prenotazione":true/false,"luogo":"nome cercabile su mappa con città"}]}]}\nSe le date non ci sono, deducile o lascia vuoto. "prenotazione" true solo se serve prenotare (musei famosi, ristoranti, tour).`}]})});
-    const data=await res.json();
-    let raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').replace(/```json|```/g,'').trim();
-    const r=JSON.parse(raw);
+    /* Il testo resta quello che serve a leggere il viaggio: nomi compresi
+       (diventano i compagni), ma non email, telefoni e numeri di carta. */
+    const risposta=await chiediAI({chiave:'itinerario-scritto',json:true,tasto,attesa:'locale',maxToken:4000,
+      domanda:`Trasforma questo itinerario di viaggio in JSON. Anno corrente: ${anno}.\n\n---\n${aiSenzaDatiPersonali(txt,{nomi:false})}\n---\n\nRispondi SOLO con JSON, niente backtick né commenti:\n{"nome":"nome del viaggio","destinazione":"città, paese","inizio":"YYYY-MM-DD","fine":"YYYY-MM-DD","partecipanti":["nome"],"giorni":[{"data":"YYYY-MM-DD","titolo":"","attivita":[{"nome":"","ora":"HH:MM o vuoto","tipo":"outdoor|indoor|any","note":"","prenotazione":true/false,"luogo":"nome cercabile su mappa con città"}]}]}\nSe le date non ci sono, deducile o lascia vuoto. "prenotazione" true solo se serve prenotare (musei famosi, ristoranti, tour).`});
+    if(!risposta.ok){if(risposta.messaggio)box.innerHTML=`<div class="card"><div style="font-size:.85rem;color:var(--red);line-height:1.5">⚠️ ${esc(risposta.messaggio)}</div></div>`;return;}
+    const r=risposta.dati;
     const participants=[{id:uid(),name:app.myName||'Io',isMe:true}];
     (r.partecipanti||[]).forEach(n=>{if(n&&n.toLowerCase()!==String(app.myName||'io').toLowerCase())participants.push({id:uid(),name:n,isMe:false});});
     const trip={id:uid(),name:r.nome||'Viaggio importato',destination:r.destinazione||'',currency:'EUR',status:'open',start:r.inizio||'',end:r.fine||'',participants,days:[],pois:[],expenses:[],tickets:[],weather:{},createdAt:Date.now()};
@@ -17785,7 +18073,7 @@ function mosseRegole(permesse,bloccate){
     ? `- le tappe segnate PRENOTATA hanno un orario gia' fissato con qualcun altro (${bloccate.map(a=>`${a.name} alle ${a.time}`).join(', ')}): non spostarle di ora, non spostarle di giorno e non toglierle. Sono i paletti della giornata: sistema le altre INTORNO a loro, lasciando il tempo di strada per arrivarci in orario\n`
     : '';
   return `Rispondi SOLO con JSON, senza backtick e senza altro testo:
-{"commento":"una frase in italiano su cosa hai deciso","mosse":[...]}
+{"commento":"una frase su cosa hai deciso","mosse":[...]}
 
 Ogni mossa \u00e8 una di queste, e non esistono altre azioni:
 ${ok.map(k=>MOSSE_AZIONI[k]).join('\n')}
@@ -17796,7 +18084,7 @@ ${fisse}${no.length?`- non puoi ${no.map(k=>MOSSE_DIVIETI[k]).join(', n\u00e9 ')
 - non proporre mosse che non cambiano niente: se una tappa \u00e8 gi\u00e0 alle 11:00 non dire di spostarla alle 11:00
 - dove c'\u00e8 scritto APERTO, quello \u00e8 l'orario in cui il posto \u00e8 visitabile: non far cominciare una tappa prima che apra n\u00e9 finire dopo che ha chiuso
 - dove APERTO non c'\u00e8, l'orario di apertura non si sa: non inventarlo e non darlo per scontato
-- "perche" \u00e8 una riga sola in italiano con il motivo vero e concreto (i minuti di strada, la pioggia prevista, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare" o "per una transizione fluida"
+- "perche" \u00e8 una riga sola con il motivo vero e concreto (i minuti di strada, la pioggia prevista, l'ora del pasto). Niente frasi generiche tipo "per ottimizzare" o "per una transizione fluida"
 - non muovere quello che \u00e8 gi\u00e0 al posto giusto: se va bene cos\u00ec rispondi {"mosse":[],"commento":"..."}
 - al massimo 8 mosse, le pi\u00f9 utili`;
 }
@@ -17812,7 +18100,7 @@ function mosseContesto(t,oggi){
     }).map(a=>{
       const pri=a.priority==='essential'?'essenziale':(a.priority==='skippable'?'saltabile':'non detto');
       const loc=actLoc(t,a),ore=orariDi(t,a);
-      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${tappaPrenotata(a)?' | PRENOTATA: ora fissa, non si tocca':''}${ore?` | APERTO ${ore}`:''}${loc?` | ${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}`:' | senza posizione'}`;
+      return `    ID ${a.id} | ${a.time||'senza orario'}${a.timeEnd?'-'+a.timeEnd:''} | ${a.name} | ${a.type||'any'} | ${pri}${tappaPrenotata(a)?' | PRENOTATA: ora fissa, non si tocca':''}${ore?` | APERTO ${ore}`:''}${loc?` | ${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`:' | senza posizione'}`;
     });
     return `  giorno ${i}${i===oggi?'  <<< QUESTO':''} — ${d.date}${meteo}\n${voci.join('\n')||'    (nessuna tappa)'}`;
   });
@@ -17843,26 +18131,6 @@ function mosseDistanze(t,d){
    va al più vicino: 10:09 → 10:00, 13:40 → 13:30. */
 function oraTonda(min){return Math.max(0,Math.min(1439,Math.round(min/PASSO_ORARIO)*PASSO_ORARIO));}
 
-/* Il ponte sa benissimo perché non ha risposto - quota finita, troppe
-   richieste al minuto, chiave scaduta, modello ritirato - e l'app buttava via
-   tutto per mostrare sempre lo stesso "non è raggiungibile". Chi la usa non ha
-   modo di capire se deve aspettare trenta secondi o rifare la chiave. */
-/* A schermo pero' va una frase da persona: «la chiave», «il Worker» e
-   «GUIDA-AI.md» sono cose da sistemare per chi ha costruito l'app, non per
-   chi la usa. Il testo vero resta in console, per chi indaga. */
-function motivoAI(msg){
-  const m=String(msg||'');
-  console.log('L\'assistente non ha risposto:',m);
-  if(/quota|rate.?limit|RESOURCE_EXHAUSTED|\b429\b/i.test(m)){
-    const s=(m.match(/retry in ([\d.]+)\s*s/i)||[])[1];
-    return s?tv('Troppe richieste di fila: riprova fra {1} secondi',Math.ceil(+s))
-            :tv('Richieste gratuite finite per adesso: riprova fra un minuto');
-  }
-  if(/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b|no longer available|NOT_FOUND|not found/i.test(m))
-    return tv('L\'assistente non è disponibile in questo momento: riprova più tardi.');
-  return tv('L\'assistente non ha risposto: riprova fra poco.');
-}
-
 /* ===== ORARI DI APERTURA =====
    Nessuno, dentro l'app, sa a che ora apre un posto: il modello non ce l'ha in
    testa, e OpenStreetMap li conosce solo per le tappe nate dalla ricerca. Senza
@@ -17876,17 +18144,15 @@ function orariDi(t,a){
   return '';
 }
 const GIORNI_SETT=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
-async function verificaOrari(t,d){
+async function verificaOrari(t,d,tasto){
   if(!t||!d)return;
   const da=(d.activities||[]).filter(a=>a.name&&!orariDi(t,a));
   if(!da.length)return;
   const dt=new Date(d.date);
   const gs=isNaN(dt.getTime())?'':` di ${GIORNI_SETT[dt.getDay()]}`;
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:1500,
-      tools:[{type:"web_search_20250305",name:"web_search"}],
-      messages:[{role:"user",content:`Cerca sul web a che ora aprono e chiudono questi posti${t.destination?`, a ${t.destination}`:''}, nella giornata${gs}.
+    const risposta=await chiediAI({chiave:'orari',json:true,cercaSulWeb:true,tasto,attesa:'globale',maxToken:1500,
+      domanda:`Cerca sul web a che ora aprono e chiudono questi posti${t.destination?`, a ${t.destination}`:''}, nella giornata${gs}.
 
 ${da.map((a,i)=>`${i}. ${a.name}`).join('\n')}
 
@@ -17896,13 +18162,9 @@ Rispondi SOLO con JSON, senza backtick:
 - "i" è il numero della riga qui sopra
 - per un posto sempre accessibile (un quartiere, una strada, un parco pubblico senza cancelli) usa apre:"sempre"
 - se quel giorno è chiuso usa apre:"chiuso"
-- se non trovi un orario affidabile ometti del tutto la riga: un orario inventato è peggio di un orario mancante, perché ci si organizza sopra`}]
-    })});
-    const data=await res.json();
-    if(!data||data.error)return;
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+- se non trovi un orario affidabile ometti del tutto la riga: un orario inventato è peggio di un orario mancante, perché ci si organizza sopra`});
+    if(!risposta.ok)return;
+    const r=risposta.dati;
     let n=0;
     (r.orari||[]).forEach(o=>{
       const i=parseInt(o.i,10),a=da[i];
@@ -17946,21 +18208,19 @@ function mossaArrotonda(t,oggi,istruzione,gia){
     perche:'Le porto alla mezz\'ora come le altre, senza spostarle di giornata.'};
 }
 
-async function chiediMosse(istruzione,oggi,titolo,permesse){
+async function chiediMosse(istruzione,oggi,titolo,permesse,tasto){
   const t=T();if(!t||mosseBusy)return;
   if(oggi==null||!t.days[oggi])oggi=(typeof ttDay==='number'&&t.days[ttDay])?ttDay:0;
-  mosseBusy=true;toast('✦ Ci sto pensando...');
+  /* L'attesa la dice chiediAI, in alto: il vecchio avviso «Ci sto
+     pensando» spariva dopo due secondi e mezzo, e poi niente diceva che si
+     stava ancora aspettando. */
+  mosseBusy=true;
   try{
     const bloccate=tappePrenotate(t);
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:1500,
-      messages:[{role:"user",content:`${istruzione}\n\n${mosseRegole(permesse,bloccate)}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`}]
-    })});
-    const data=await res.json();
-    if(data&&data.error){toast(motivoAI(data.error.message));return;}
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+    const risposta=await chiediAI({chiave:'mosse',json:true,tasto,attesa:'globale',maxToken:1500,
+      domanda:`${istruzione}\n\n${mosseRegole(permesse,bloccate)}\n\nEcco il viaggio:\n${mosseContesto(t,oggi)}`});
+    if(!risposta.ok){if(risposta.messaggio)toast(risposta.messaggio);return;}
+    const r=risposta.dati;
     const grezze=Array.isArray(r.mosse)?r.mosse:[];
     const mosse=grezze.filter(x=>mossaValida(t,x,permesse)).slice(0,8);
     const finisci=mossaArrotonda(t,oggi,istruzione,mosse);
@@ -17986,7 +18246,7 @@ async function chiediMosse(istruzione,oggi,titolo,permesse){
       return;
     }
     apriMosse(t,oggi,mosse,titolo||'Proposte',commento);
-  }catch(e){toast('⚠️ L\'IA non è raggiungibile');}
+  }catch(e){console.log('Proposte non lette:',e);toast(tv('L\'assistente non ha risposto: riprova fra poco.'));}
   finally{mosseBusy=false;}
 }
 
@@ -18211,6 +18471,7 @@ async function creaItinerarioIA(){
   if(!t){toast('Crea prima un viaggio');return;}
   if(!t.days.length){toast('Il viaggio non ha giorni');return;}
   if(itinBusy)return;
+  const tasto=tastoDelTocco();
   const st=document.getElementById('itinStatus'),box=document.getElementById('itinResult');
   const gusti=document.getElementById('itinGusti').value.trim();
   const stile=document.getElementById('itinStile').value;
@@ -18223,9 +18484,8 @@ async function creaItinerarioIA(){
       const gia=(d.activities||[]).filter(a=>a.time).map(a=>`${a.time}-${a.timeEnd||''} ${a.name}`).join('; ');
       return `giorno ${i} — ${d.date}${meteo}${gia?` — c'è già: ${gia}`:' — libero'}`;
     }).join('\n');
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:4000,
-      messages:[{role:"user",content:`Fammi l'itinerario completo di questo viaggio.
+    const risposta=await chiediAI({chiave:'itinerario',json:true,tasto,attesa:'locale',maxToken:4000,
+      domanda:`Fammi l'itinerario completo di questo viaggio.
 
 Destinazione: ${t.destination||t.name}
 Giorni:
@@ -18245,13 +18505,9 @@ Regole ferree:
 - lascia il tempo per spostarsi: due posti lontani non possono essere a dieci minuti uno dall'altro
 - non sovrapporti a quello che nel giorno c'è già: lavoraci attorno
 - nei giorni con pioggia prevista metti roba al chiuso
-- "perche" è concreto e legato ai gusti dichiarati, non una frase da dépliant`}]
-    })});
-    const data=await res.json();
-    if(data&&data.error){st.textContent='⚠️ '+motivoAI(data.error.message);return;}
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+- "perche" è concreto e legato ai gusti dichiarati, non una frase da dépliant`});
+    if(!risposta.ok){st.textContent=risposta.messaggio?'⚠️ '+risposta.messaggio:'';return;}
+    const r=risposta.dati;
     const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
     if(!giorniOk.length){st.textContent='Non è venuto fuori niente di usabile. Riprova, magari scrivendo meglio cosa ti piace.';return;}
     itinProposta={giorni:giorniOk,commento:r.commento||''};
@@ -18329,12 +18585,16 @@ Questo testo arriva da un PDF, quindi guardalo con occhio critico:
 - se lo stesso posto compare più volte scritto in modi diversi, mettilo una volta sola
 - se una giornata risulta troppo carica, o ha posti lontanissimi fra loro, lascia fuori quello che non ci sta invece di ammucchiare tutto
 - nel "commento" scrivi anche cosa hai lasciato fuori e perché`:'';
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:4000,
-      messages:[{role:"user",content:`Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
+    /* Da un PDF arriva tutto quello che c'e' scritto, anche nomi, email e
+       numeri di chi ha prenotato: per mettere i posti in programma non
+       servono, e restano qui. Un testo incollato a mano lo si manda com'e',
+       tolti solo email, telefoni e numeri di carta. */
+    const daMandare=aiSenzaDatiPersonali(testo,{nomi:!!(opt&&opt.daPdf)});
+    const risposta=await chiediAI({chiave:'incollato',json:true,conFile:!!(opt&&opt.daPdf),attesa:'locale',maxToken:4000,
+      domanda:`Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
 
 --- TESTO INCOLLATO ---
-${testo}
+${daMandare}
 --- FINE ---
 
 I giorni del viaggio "${t.name}"${t.destination?` a ${t.destination}`:''}:
@@ -18359,13 +18619,9 @@ Gli alloggi sono un'altra cosa:
 - un hotel, ryokan, ostello, B&B, guesthouse o appartamento va segnato con "tipo":"hotel"
 - su un hotel non mettere "ora" né "durata", e NON aggiungere una tappa "check-in" o "check-out" separata: le fa l'app da sola
 - se dal testo si capisce da che giorno a che giorno ci si dorme, scrivilo in "checkin" e "checkout" (AAAA-MM-GG). Se non si capisce, lasciali fuori e ci pensa l'app
-- un hotel va messo nel giorno in cui ci si arriva${daPdf}`}]
-    })});
-    const data=await res.json();
-    if(data&&data.error){fallito('⚠️ '+motivoAI(data.error.message));return;}
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+- un hotel va messo nel giorno in cui ci si arriva${daPdf}`});
+    if(!risposta.ok){if(risposta.messaggio)fallito('⚠️ '+risposta.messaggio);else stato.textContent='';return;}
+    const r=risposta.dati;
     const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
     if(!giorniOk.length){
       /* Il riconoscitore puo' sbagliarsi: tre righe possono essere una domanda
@@ -18386,7 +18642,7 @@ Gli alloggi sono un'altra cosa:
     mostraItinerario(t,itinProposta,idR,idS);
     misuraChat();
     document.getElementById('chatMsgs').scrollTop=document.getElementById('chatMsgs').scrollHeight;
-  }catch(e){fallito('⚠️ L\'assistente non è raggiungibile in questo momento.');}
+  }catch(e){console.log('Testo incollato non letto:',e);fallito('⚠️ '+tv('L\'assistente non ha risposto: riprova fra poco.'));}
   finally{itinBusy=false;}
 }
 
@@ -18588,7 +18844,7 @@ function openAssistenteGiorno(){
 
 async function adqInvia(){
   const el=document.getElementById('adqInput'),text=(el.value||'').trim();
-  if(!text)return;
+  if(!text||chatOccupata())return;
   const t=T();if(!t||!t.days[ttDay])return;
   el.value='';el.style.height='';
   adqMsg('me',text);
@@ -18602,12 +18858,13 @@ async function adqInvia(){
 /* Le porte d'ingresso. */
 async function sistemaGiornata(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
+  const tasto=tastoDelTocco();
   /* Prima gli orari di apertura, se non li abbiamo gia': senza, il giro viene
      ordinato benissimo attorno a negozi ancora chiusi. */
   const d=t.days[typeof ttDay==='number'?ttDay:0];
   if(d&&(d.activities||[]).some(a=>a.name&&!orariDi(t,a))){
     toast('✦ Controllo gli orari di apertura...');
-    await verificaOrari(t,d);
+    await verificaOrari(t,d,tasto);
   }
   chiediMosse(`Sistema il giorno segnato con <<< QUESTO.
 
@@ -18617,11 +18874,12 @@ Ragiona in quest'ordine, e scrivilo nel commento:
 3. I pasti alla loro ora: pranzo fra le 12:00 e le 14:00, cena dalle 19:30 in poi.
 4. Le tappe sono quelle e restano tutte: non togliere niente e non spostare niente a un altro giorno. Se non ci stanno comode, stringi le durate invece di sacrificare una tappa.
 
-Non lasciare buchi di due ore senza motivo.`,ttDay,'Come ordinerei il giro',['sposta_ora','durata']);
+Non lasciare buchi di due ore senza motivo.`,ttDay,'Come ordinerei il giro',['sposta_ora','durata'],tasto);
 }
 function alternativeMeteo(di){
   const t=T();if(!t)return;
-  chiediMosse('Nel giorno segnato con <<< QUESTO è previsto brutto tempo. Le tappe all\'aperto (type outdoor) rischiano: o spostale a un giorno asciutto, oppure toglile e al loro posto aggiungi qualcosa al coperto lì vicino, che stia nello stesso buco di orario. Le tappe al chiuso non toccarle.',di,'Alternative per la pioggia',['sposta_giorno','togli','aggiungi','sposta_ora','durata']);
+  const tasto=tastoDelTocco();
+  chiediMosse('Nel giorno segnato con <<< QUESTO è previsto brutto tempo. Le tappe all\'aperto (type outdoor) rischiano: o spostale a un giorno asciutto, oppure toglile e al loro posto aggiungi qualcosa al coperto lì vicino, che stia nello stesso buco di orario. Le tappe al chiuso non toccarle.',di,'Alternative per la pioggia',['sposta_giorno','togli','aggiungi','sposta_ora','durata'],tasto);
 }
 
 let dayImportBusy=false;
@@ -18643,10 +18901,8 @@ async function verificaPosti(t,nomi){
   if(!nomi||!nomi.length)return null;
   const dove=t&&t.destination?` Il viaggio è a ${t.destination}, quindi quasi certamente sono lì o nei dintorni.`:'';
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:2000,
-      tools:[{type:"web_search_20250305",name:"web_search"}],
-      messages:[{role:"user",content:`Cerca su internet ognuno di questi posti e dimmi come si chiama davvero e dov'è, come sta scritto sulla sua scheda su Google Maps.${dove}
+    const risposta=await chiediAI({chiave:'posti',json:true,cercaSulWeb:true,attesa:'locale',maxToken:2000,
+      domanda:`Cerca su internet ognuno di questi posti e dimmi come si chiama davvero e dov'è, come sta scritto sulla sua scheda su Google Maps.${dove}
 
 ${nomi.map((n,i)=>`${i}. ${n}`).join('\n')}
 
@@ -18657,13 +18913,9 @@ Rispondi SOLO con JSON, senza backtick:
 - "cerca" è la stringa con cui lo si trova su una mappa: nome + via + città
 - "sicuro" vale "alta" se l'hai trovato e sei certo che sia quello, "media" se il posto esiste ma potrebbe essercene più di uno con quel nome, "bassa" se non l'hai trovato
 - con "bassa" lascia "indirizzo" vuoto e rimetti in "nome" esattamente quello che ti ho dato io
-- non inventare mai un indirizzo: meglio "bassa" che un numero civico plausibile e sbagliato`}]
-    })});
-    const data=await res.json();
-    if(!data||data.error)return null;
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);
-    const r=JSON.parse(m?m[0]:txt);
+- non inventare mai un indirizzo: meglio "bassa" che un numero civico plausibile e sbagliato`});
+    if(!risposta.ok)return null;
+    const r=risposta.dati;
     const out=[];
     (r.posti||[]).forEach(p=>{
       const i=parseInt(p.i,10);
@@ -19174,17 +19426,14 @@ function consentNo(){app.consentNotif=false;save();closeSheet('mNotif');const cb
 
 /* ===== CERCA ONLINE SE SERVE PRENOTARE (AI + web) ===== */
 async function doCheckBooking(){
-  if(!adRef)return;const t=T(),a=t.days[adRef.di].activities.find(x=>x.id===adRef.id);if(!a)return;
+  if(!adRef||aiInCorso('prenotare'))return;const t=T(),a=t.days[adRef.di].activities.find(x=>x.id===adRef.id);if(!a)return;
+  const tasto=tastoDelTocco();
   const hint=document.getElementById('adBookHint');hint.textContent='Cerco online...';
   try{
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-6",max_tokens:900,
-      tools:[{type:"web_search_20250305",name:"web_search"}],
-      messages:[{role:"user",content:`Cerca sul web se "${a.name}"${t.destination?` (${t.destination})`:''} richiede o consiglia la prenotazione per la visita. Rispondi SOLO con JSON, niente backtick: {"prenotare":"necessaria|consigliata|no","giorni_prima":numero o 0,"motivo":"una frase in italiano","sito":"URL ufficiale per prenotare, o stringa vuota se non lo trovi con certezza"}`}]
-    })});
-    const data=await res.json();
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);const r=JSON.parse(m?m[0]:txt);
+    const risposta=await chiediAI({chiave:'prenotare',json:true,cercaSulWeb:true,tasto,attesa:'locale',maxToken:900,
+      domanda:`Cerca sul web se "${a.name}"${t.destination?` (${t.destination})`:''} richiede o consiglia la prenotazione per la visita. Rispondi SOLO con JSON, niente backtick: {"prenotare":"necessaria|consigliata|no","giorni_prima":numero o 0,"motivo":"una frase","sito":"URL ufficiale per prenotare, o stringa vuota se non lo trovi con certezza"}`});
+    if(!risposta.ok){if(risposta.messaggio)hint.textContent=risposta.messaggio;return;}
+    const r=risposta.dati;
     if(r.prenotare==='no'){hint.textContent='Secondo le fonti online non serve prenotare. '+(r.motivo||'');document.getElementById('adBookChk').checked=false;document.getElementById('adBookFields').style.display='none';toast('Non serve prenotare');return;}
     document.getElementById('adBookChk').checked=true;
     hint.textContent=(r.prenotare==='necessaria'?'Prenotazione necessaria. ':'Prenotazione consigliata. ')+(r.motivo||'');
@@ -19319,10 +19568,11 @@ async function refreshSuggestions(t){
   try{
     const have=t.pois.map(p=>p.name).concat((t.suggested||[]).map(x=>x.name)).concat((t.suggested||[]).filter(x=>x.dismissed).map(x=>x.name));
     const done=t.pois.filter(p=>p.visited).map(p=>p.name);
-    const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:800,messages:[{role:"user",content:`Viaggio a ${t.destination}. Interessi del gruppo: ${t.interests||'non specificati'}. Luoghi già scelti: ${have.join('; ')||'nessuno'}. Già visitati (non riproporre nulla di simile solo per vicinanza): ${done.join('; ')||'nessuno'}. Suggerisci fino a 5 altri luoghi REALI e visitabili nella stessa area, coerenti con gli interessi. Rispondi SOLO con JSON senza backtick: {"posti":[{"nome":"","query":"nome + città per trovarlo su mappa"}]}. Escludi quelli già scelti.`}]})});
-    const data=await res.json();
-    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-    const m=txt.match(/\{[\s\S]*\}/);const r=JSON.parse(m?m[0]:txt);
+    /* In sottofondo: niente attesa a schermo, e se non risponde si riprova
+       la volta dopo. */
+    const risposta=await chiediAI({chiave:'consigli',json:true,attesa:'nessuna',maxToken:800,domanda:`Viaggio a ${t.destination}. Interessi del gruppo: ${t.interests||'non specificati'}. Luoghi già scelti: ${have.join('; ')||'nessuno'}. Già visitati (non riproporre nulla di simile solo per vicinanza): ${done.join('; ')||'nessuno'}. Suggerisci fino a 5 altri luoghi REALI e visitabili nella stessa area, coerenti con gli interessi. Rispondi SOLO con JSON senza backtick: {"posti":[{"nome":"","query":"nome + città per trovarlo su mappa"}]}. Escludi quelli già scelti.`});
+    if(!risposta.ok){sugBusy=false;return;}
+    const r=risposta.dati;
     const out=[];
     for(const pl of (r.posti||[]).slice(0,5)){
       try{
@@ -21262,7 +21512,7 @@ function alloggioDaRegole(testo,t){
   }
   return p;
 }
-async function alloggioDaIA(testo,t){
+async function alloggioDaIA(testo,t,tasto){
   const oggi=new Date().toISOString().split('T')[0];
   const domanda=[
     'Questa e\' una mail (o un voucher) di conferma di un alloggio. Estrai i dati.',
@@ -21283,27 +21533,26 @@ async function alloggioDaIA(testo,t){
     '',
     'Mail fra i marcatori:',
     '<<<MAIL',
-    String(testo).slice(0,12000),
+    /* Della mail serve l'albergo, non chi l'ha prenotato: nome, email e
+       numeri di carta dell'ospite restano qui. Il telefono si lascia, perche'
+       quello dell'albergo e' uno dei dati da leggere. */
+    aiSenzaDatiPersonali(String(testo).slice(0,12000),{telefoni:false}),
     'MAIL>>>'
   ].join('\n');
-  const res=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    model:"claude-sonnet-4-6",max_tokens:900,messages:[{role:"user",content:domanda}]
-  })});
-  const data=await res.json();
-  if(!data||data.error)throw new Error('ai');
-  const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
-  const m=txt.match(/\{[\s\S]*\}/);
-  return JSON.parse(m?m[0]:txt);
+  const risposta=await chiediAI({chiave:'alloggio',json:true,tasto,attesa:'locale',maxToken:900,domanda});
+  if(!risposta.ok)throw new Error(risposta.errore);
+  return risposta.dati;
 }
 async function leggiMailAlloggio(){
-  const t=T();if(!t)return;
+  const t=T();if(!t||aiInCorso('alloggio'))return;
+  const tasto=tastoDelTocco();
   const testo=document.getElementById('mhText').value.trim();
   const st=document.getElementById('mhStato'),box=document.getElementById('mhResult');
   if(testo.length<30){st.textContent='⚠️ Incolla il testo della mail (o carica il PDF): così com\'è non c\'è abbastanza da leggere.';return;}
   box.innerHTML='';
   st.textContent='Leggo la prenotazione…';
   let p=null,daIA=false;
-  try{p=await alloggioDaIA(testo,t);daIA=true;}catch(e){}
+  try{p=await alloggioDaIA(testo,t,tasto);daIA=true;}catch(e){}
   if(!p||!(p.struttura||p.checkin)){p=alloggioDaRegole(testo,t);daIA=false;}
   /* Quello che il modello scrive non entra mai cosi' com'e': date e orari
      passano da un controllo, e se non reggono restano vuoti. */
@@ -21783,7 +22032,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-07 21:54';
+const VERSIONE_APP='2026-10-08 01:25';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

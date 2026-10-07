@@ -566,3 +566,33 @@ prove significherebbe provare l'app in inglese senza averlo deciso, ed è già
 successo una volta: due prove che non c'entravano niente sono diventate rosse
 perché il server delle prove parla inglese. Chi vuole un'altra lingua la
 chiede, e la sua scelta vince.
+
+## L'assistente
+
+```sh
+node test/prova-ai.js   # 50 controlli, col ponte dell'assistente finto
+```
+
+Le quattordici chiamate all'assistente passano da una porta sola, `chiediAI`,
+e questa prova la mette alla prova al posto del ponte vero: un ponte finto
+risponde quello che decide la prova, quando lo decide, o mai. Così si vedono
+a comando i casi che col ponte vero capitano a caso: il modello che non
+risponde, il server che inciampa e poi si riprende, la quota finita, il JSON
+fra ``` o mezzo rotto, il doppio tocco, «Annulla». E si guarda cosa parte:
+quante richieste, in che lingua chiedono la risposta, che nessuna nomini un
+modello.
+
+Due cose imparate scrivendola:
+
+- **`context.setOffline(true)` non ferma le rotte di Playwright.** Una
+  richiesta intercettata con `route.fulfill` arriva lo stesso, e sul codice di
+  prima l'app «senza rete» trovava i posti. Per dire che non parte niente si
+  contano gli eventi `request`, non le risposte.
+- **Trenta secondi non si aspettano: si saltano.** Con `page.clock.install()`
+  l'orologio della pagina scorre come quello vero finché la prova non lo fa
+  saltare avanti (`fastForward`): il tempo massimo e «Annulla» dopo dieci
+  secondi si provano in un attimo.
+
+Sul codice di prima la prova passa 8 controlli su 50, e quelli che falliscono
+falliscono per quello che l'app fa: dove una funzione nuova manca, la prova
+guarda la scritta d'attesa che c'era anche prima.

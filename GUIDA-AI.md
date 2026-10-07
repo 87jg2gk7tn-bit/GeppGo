@@ -37,7 +37,7 @@ cambiare il Worker — l'app non si tocca. Vedi il paragrafo 6.
 | Pezzo | Dove | A cosa serve |
 |---|---|---|
 | L'app | `Index 2.1.html` | Il file unico di GeppGo |
-| L'aggancio | riga ~1524 dello stesso file | Dice all'app dove sta il ponte |
+| L'aggancio | `window.GEPPGO_AI_URL`, nello stesso file, subito prima del blocco `L'ASSISTENTE: UNA PORTA SOLA` | Dice all'app dove sta il ponte |
 | Il ponte | Cloudflare → Workers → `geppgo-ai` | Traduce e protegge la chiave |
 | La chiave | Cloudflare → `geppgo-ai` → Settings → Variables and Secrets → `GEMINI_KEY` | Le credenziali per Google |
 | L'account Google | aistudio.google.com | Dove la chiave è stata creata |
@@ -61,32 +61,73 @@ niente dopo e scegli quello giusto dall'elenco.
 
 ## 3. Dove l'app usa l'IA
 
-Sei punti, tutti dentro `Index 2.1.html`, tutti passano da `AI_URL`:
+Quattordici punti, tutti dentro `Index 2.1.html`, e **tutti passano da una
+funzione sola, `chiediAI`** (blocco `L'ASSISTENTE: UNA PORTA SOLA`). Nessuno
+fa una `fetch` per conto suo: c'è una `fetch` verso il ponte in tutto il file,
+dentro `aiRichiesta`, e `test/prova-ai.js` controlla che resti così.
 
-| Funzione | Riga circa | Cosa fa |
-|---|---|---|
-| `assistenteChiedi` | 2680 | L'assistente, uno solo per la scheda e per la time-table |
-| `identifyPlace` | 4815 | "Che posto è questa foto" |
-| `importPlaces` | 4850 | Estrae i posti da un reel o uno screenshot |
-| `importTrip` | 5086 | Trasforma un itinerario incollato in un viaggio |
-| `doCheckBooking` | 6218 | Cerca sul web se serve prenotare |
-| `refreshSuggestions` | 6304 | Consiglia attrazioni nei dintorni |
-| `verificaPosti` | 6350 | Controlla sul web nome e indirizzo dei posti incollati |
-| `verificaOrari` | 5975 | Cerca sul web a che ora aprono e chiudono le tappe |
-| `chiediMosse` | 5810 | Propone modifiche al programma già fatto |
-| `creaItinerarioIA` | 5900 | Costruisce l'itinerario di tutto il viaggio da zero |
-| `pianificaDaTesto` | 6408 | Legge un itinerario scritto da un'altra IA — incollato o allegato in PDF — e lo mette in un giorno |
-| `categorizzaBagagli` | 2470 | Mette in categoria le voci di una lista bagagli incollata |
-| `bagagliDaTesto` | 2500 | Tira fuori le voci da mettere in valigia dal testo di un PDF, già in categoria |
+| Funzione | Chiave | Cosa fa | Cosa manda |
+|---|---|---|---|
+| `assistenteChiedi` | `chat` | L'assistente, uno solo per la scheda e per la time-table (cerca sul web) | Gli ultimi 14 messaggi, `MAPPA_APP`, il programma del viaggio (tappe, orari, meteo, posizioni arrotondate a ~110 m) |
+| `identifyPlace` | `identifica` | "Che posto è questa foto" | La foto ritagliata, ridisegnata (niente dati nascosti), e la destinazione |
+| `extractPlaces` | `reel` | Estrae i posti da un reel o uno screenshot | La didascalia e lo screenshot ridisegnato a 1280 px, senza GPS |
+| `importTrip` | `itinerario-scritto` | Trasforma un itinerario scritto in un viaggio | Il testo, tolti email, telefoni, carte e IBAN (i nomi restano: diventano i compagni) |
+| `doCheckBooking` | `prenotare` | Cerca sul web se serve prenotare | Nome della tappa e destinazione |
+| `refreshSuggestions` | `consigli` | Consiglia attrazioni nei dintorni, in sottofondo | Destinazione, gusti, nomi dei posti già scelti |
+| `verificaPosti` | `posti` | Controlla sul web nome e indirizzo dei posti incollati | Nomi dei posti e destinazione |
+| `verificaOrari` | `orari` | Cerca sul web a che ora aprono e chiudono le tappe | Nomi delle tappe, destinazione, giorno della settimana |
+| `chiediMosse` | `mosse` | Propone modifiche al programma già fatto | La richiesta e il programma del viaggio |
+| `creaItinerarioIA` | `itinerario` | Costruisce l'itinerario di tutto il viaggio da zero | Destinazione, giorni, meteo, gusti |
+| `pianificaDaTesto` | `incollato` | Legge un itinerario scritto da un'altra IA — incollato o allegato in PDF — e lo mette in un giorno | Il testo, tolti email, telefoni, carte, IBAN (e dai PDF i nomi di chi ha prenotato) |
+| `categorizzaBagagli` | `bagagli` | Mette in categoria le voci di una lista bagagli incollata | Le voci |
+| `bagagliDaTesto` | `bagagli` | Tira fuori le voci da mettere in valigia dal testo di un PDF | Il testo, ripulito come sopra |
+| `alloggioDaIA` | `alloggio` | Legge la mail di conferma di un albergo | La mail (al massimo 12.000 caratteri), tolti email, carte, IBAN e nome dell'ospite; i telefoni restano, serve quello dell'albergo |
 
 Tutte usano lo stesso indirizzo, quindi **si accendono e si spengono insieme**.
 
+**Cosa fa `chiediAI`, per tutte:**
+
+- **senza rete non parte**: lo dice subito, senza richiesta;
+- **tempo massimo**: 30 secondi, 60 con una foto o il testo di un PDF
+  (`AI_TEMPO_TESTO_MS`, `AI_TEMPO_FILE_MS`). Prima non c'era, e col campo
+  debole la richiesta restava appesa per sempre col tasto morto;
+- **un secondo tentativo, uno solo**, se la rete cade o il ponte risponde con
+  un errore 5xx; mai se l'assistente è troppo richiesto (429, o la quota di
+  Google finita, che il ponte manda come 502 con il messaggio di Google
+  dentro: `aiTipoErrore` lo riconosce dal testo). Insistere allungherebbe solo
+  la coda;
+- **una richiesta per chiave alla volta**: il tasto che l'ha chiamata resta
+  spento finché non finisce, e un secondo tocco non fa partire niente;
+- **l'attesa si vede**: la pillola in alto (`#aiAttesa`) compare subito
+  quando chi chiama non ha un segno d'attesa suo (`attesa:'globale'`), e in
+  ogni caso dopo dieci secondi, con «Annulla», che ferma la richiesta davvero
+  (`AbortController`). Le richieste di sottofondo (`attesa:'nessuna'`) non si
+  vedono;
+- **il JSON si legge anche sporco** (`aiLeggiJSON`): fra ```, con una frase
+  prima o dopo, con le graffe dentro le frasi. Se proprio non si legge, lo si
+  richiede una volta mostrando al modello quello che ha scritto;
+- **la lingua**: a ogni richiesta si aggiunge una riga che chiede la risposta
+  nella lingua dell'app (`aiRigaLingua`), con i nomi dei posti lasciati come
+  sono e le parole del JSON identiche. Le richieste restano scritte in
+  italiano: è la risposta che cambia lingua;
+- **meno dati**: `aiSenzaDatiPersonali` toglie dal testo quello che non serve
+  (email, IBAN, numeri di carta riconosciuti dalla cifra di controllo,
+  telefoni col prefisso internazionale, le righe «Ospite: …»), e
+  `aiImmagineLeggera` ridisegna le foto su una tela, che lascia indietro il
+  punto GPS e i dati del telefono;
+- **i messaggi a schermo sono frasi da persona**, tradotte; il dettaglio
+  tecnico (lo status, il testo del ponte) va in `console.log`.
+
+Il modello non lo sceglie l'app: nella richiesta non c'è nessun `model`, lo
+decide il ponte.
+
 **I PDF non passano dal ponte.** Il testo si tira fuori qui nel telefono con
 `pdf.js` (scaricato da jsDelivr la prima volta che si allega un PDF), e poi si
-manda al modello come se fosse stato incollato a mano. Quindi non c'è niente da
-cambiare nel Worker, e il file non esce mai dal telefono. L'unica cosa che il
-PDF non può dare è il testo di una scansione: se le pagine sono fotografie,
-dentro non c'è nessun testo da leggere, e l'app lo dice invece di far finta.
+manda al modello come se fosse stato incollato a mano, ripulito come sopra.
+Quindi non c'è niente da cambiare nel Worker, e il file non esce mai dal
+telefono. L'unica cosa che il PDF non può dare è il testo di una scansione: se
+le pagine sono fotografie, dentro non c'è nessun testo da leggere, e l'app lo
+dice invece di far finta.
 
 **Un punto da tenere aggiornato a mano:** dentro `Index 2.1.html` c'è una
 costante `MAPPA_APP` che descrive all'assistente com'è fatta l'app — quali voci
@@ -119,7 +160,9 @@ Se un giorno si rompe, o se serve rifarlo su un altro account.
    vanno bene entrambe, dipende da quando la crei)
 
 Non serve la carta di credito. Non cliccare mai *Enable billing* / *Attiva
-fatturazione* se vuoi restare gratis.
+fatturazione* se vuoi restare gratis. ⚠️ Ma prima leggi il paragrafo 7a: per
+un'app usata in Europa le condizioni di Google sembrano chiedere proprio il
+piano a pagamento.
 
 ### 4b. Il Worker
 
@@ -294,6 +337,9 @@ Per passare ad Anthropic (Claude), tutto il codice qui sopra si riduce a questo:
 export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+    /* l'app non dice quale modello usare: lo decide il ponte */
+    const a = await req.json();
+    a.model = env.ANTHROPIC_MODEL;
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -301,7 +347,7 @@ export default {
         "x-api-key": env.ANTHROPIC_KEY,
         "anthropic-version": "2023-06-01"
       },
-      body: await req.text()
+      body: JSON.stringify(a)
     });
     return new Response(r.body, { status: r.status, headers: { ...CORS, "content-type": "application/json" } });
   }
@@ -309,13 +355,16 @@ export default {
 ```
 
 Non serve nessuna traduzione, perché l'app parla già quel linguaggio: si passa
-la richiesta così com'è. Poi si aggiunge il segreto `ANTHROPIC_KEY` al posto di
-`GEMINI_KEY` e si fa Deploy.
+la richiesta com'è, aggiungendo solo il nome del modello (dall'ottobre 2026
+l'app non lo manda più: lo sceglie il ponte). Poi si aggiungono il segreto
+`ANTHROPIC_KEY` al posto di `GEMINI_KEY` e la variabile `ANTHROPIC_MODEL` con
+il nome del modello, e si fa Deploy.
 
-**L'unico pezzo che cambia davvero** è `doCheckBooking` (la ricerca sul web per
-capire se serve prenotare): Anthropic ha lo strumento `web_search`, Google ha il
-*grounding* con la Ricerca Google. Sono due cose diverse — nel codice qui sopra
-la traduzione c'è (`tools: [{ google_search: {} }]`), passando ad Anthropic si
+**L'unico pezzo che cambia davvero** è la ricerca sul web, che usano la chat,
+`doCheckBooking`, `verificaOrari` e `verificaPosti` (`cercaSulWeb` in
+`chiediAI`): Anthropic ha lo strumento `web_search`, Google ha il *grounding*
+con la Ricerca Google. Sono due cose diverse — nel codice qui sopra la
+traduzione c'è (`tools: [{ google_search: {} }]`), passando ad Anthropic si
 può togliere perché l'app manda già il formato giusto.
 
 **Costi a confronto**, per dare un ordine di grandezza (una chiamata di GeppGo
@@ -346,14 +395,29 @@ pagano — cambiano tre cose.
   becca un errore.
 - **I dati del piano gratuito vengono usati per migliorare i modelli di Google.**
   Su un'app personale è poca cosa; su un'app dove entrano itinerari e nomi di
-  altre persone, è un fatto che va scritto nell'informativa privacy.
+  altre persone, è un fatto che va scritto nell'informativa privacy — e da
+  ottobre 2026 `privacy.html` lo scrive: Google Gemini per nome, l'uso per
+  migliorare i prodotti, i revisori, il consiglio di non mandare dati sensibili.
 - **Nessuna garanzia di servizio.** Se rallenta o cambia, non c'è appiglio.
+- ⚠️ **In Europa il piano gratuito potrebbe non essere consentito affatto.**
+  Cercando le condizioni dell'API di Gemini (ottobre 2026; la pagina
+  `ai.google.dev/gemini-api/terms` dall'ambiente di lavoro non si apriva,
+  quindi va riletta a mano) risultano due cose: fra le restrizioni d'uso, chi
+  rende disponibile un'app a persone nello Spazio economico europeo, in
+  Svizzera o nel Regno Unito **può usare solo i servizi a pagamento**; e per
+  chi sta in quei paesi Google applica anche al piano gratuito le regole sui
+  dati del piano a pagamento. Se è così, GeppGo — italiana, per utenti
+  italiani — deve attivare la fatturazione prima di essere usata da altri, e
+  la frase della privacy sull'uso dei dati per migliorare i prodotti va
+  tolta, perché non sarebbe più vera.
 
 Il passaggio è indolore: in Google Cloud si attiva la fatturazione sullo stesso
 progetto, la stessa chiave diventa "a pagamento", i limiti si alzano di molto e
 i dati non vengono più usati per l'addestramento. **Zero righe di codice
 cambiate.** (Le condizioni esatte vanno verificate sul sito nel momento in cui
-si fa: sono cose che Google ritocca.)
+si fa: sono cose che Google ritocca.) Il giorno che si fa, vanno aggiornati
+`privacy.html` (sezione «Quello che chiedi all'assistente») e
+`PRIVACY-STORE.md`.
 
 ### 7b. Il ponte non può restare aperto a chiunque
 
@@ -372,16 +436,23 @@ fatto che il ponte è pubblico.
 
 ### 7c. Vale la pena rivedere come si legge la risposta
 
-Le sei chiamate di oggi chiedono al modello *"rispondi SOLO con JSON, niente
-backtick"* e poi ripuliscono il testo con una regex — in chat si cerca
-addirittura una riga che comincia per `LUOGHI:`. È la parte fragile: basta che
-il modello aggiunga una frase di cortesia e il pezzo che legge la risposta va in
-errore.
+Le chiamate chiedono al modello *"rispondi SOLO con JSON, niente backtick"* —
+in chat si cerca addirittura una riga che comincia per `LUOGHI:`. Era la parte
+fragile: bastava che il modello aggiungesse una frase di cortesia, e il pezzo
+che legge la risposta andava in errore.
 
-Entrambi i fornitori offrono le **structured outputs**: si dichiara lo schema
-del JSON nella richiesta e la risposta è garantita in quella forma. Non è
-urgente, ma è la prima cosa da sistemare quando l'app smette di essere un
-giocattolo personale.
+Da ottobre 2026 la lettura sta in un posto solo, `aiLeggiJSON`: toglie i
+```, prende il primo oggetto intero anche con del testo intorno (contando le
+parentesi fuori dalle virgolette), e se non trova niente `chiediAI` chiede una
+volta sola di riscrivere la stessa risposta come JSON. Regge molto meglio, ma
+resta un rimedio.
+
+La cura vera sono le **structured outputs**, che entrambi i fornitori offrono:
+si dichiara lo schema del JSON nella richiesta e la risposta è garantita in
+quella forma. Serve toccare il Worker (per Gemini: `responseSchema` nella
+`generationConfig`), quindi non è stato fatto insieme al resto. Non è urgente,
+ma è la prossima cosa da sistemare quando l'app smette di essere un giocattolo
+personale.
 
 ---
 
@@ -396,7 +467,10 @@ giocattolo personale.
 | `/prova` dice *"Please retry in N seconds"* | Troppe richieste ravvicinate | Aspettare i secondi indicati. Se capita spesso, mettere una pausa fra una chiamata e l'altra |
 | *"API key not valid"* | La chiave nel Secret è sbagliata o revocata | Rifarla su `aistudio.google.com/apikey` e riscrivere il Secret |
 | Il pannello Cloudflare non mostra `geppgo-ai` | Si è nell'account sbagliato | `dash.cloudflare.com` senza niente dopo, scegliere l'account giusto |
-| L'app dice *"L'assistente AI non è raggiungibile"* | L'app non arriva al Worker | Controllare che la riga `window.GEPPGO_AI_URL` sia in `Index 2.1.html` e che `/prova` risponda |
+| L'app dice *"L'assistente non è raggiungibile: controlla la rete e riprova."* | L'app non arriva al Worker (anche dopo il secondo tentativo) | Controllare che la riga `window.GEPPGO_AI_URL` sia in `Index 2.1.html` e che `/prova` risponda |
+| L'app dice *"L'assistente è molto richiesto: riprova fra qualche minuto"* | Google ha detto 429, o che la quota è finita (il ponte lo manda come 502) | Aspettare. Se capita spesso, è il segno che il piano gratuito non basta più (7a) |
+| L'app dice *"L'assistente non è disponibile in questo momento"* | Chiave rifiutata (401/403) o modello ritirato | `/prova` dice quale dei due; poi come nelle righe qui sopra |
+| L'app dice *"L'assistente non ha risposto in tempo"* | Nessuna risposta in 30 secondi (60 con una foto o un PDF) | Di solito è il modello in coda: riprovare. Il dettaglio è in console |
 
 ---
 

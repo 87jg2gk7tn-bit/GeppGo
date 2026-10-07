@@ -15,13 +15,12 @@
    6. dopo il primo avvio, senza rete: mappa, scanner, codici a barre;
    7. il cloud che non arriva: chi non ha l'account lo sa, chi ce l'ha entra;
    8. una libreria al momento che non arriva: il messaggio con «Riprova»;
-   9. il codice morto non c'e' piu', importTrip e' intatto, e
-      nessuna funzione e' chiamata senza esistere;
+   9. il codice morto non c'e' piu', importTrip passa dalla porta
+      dell'assistente, e nessuna funzione e' chiamata senza esistere;
    10. le misure: l'app usabile prima e meno JavaScript all'avvio;
    11. i testi nuovi in cinque lingue. */
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const { apriBrowser, APP, RADICE } = require('./browser');
 const { serverFinti, misuraAvvio, leggiIndirizzo, filePacchetto } = require('./rete-finta');
 const { funzioniMancanti } = require('./funzioni-mancanti');
@@ -40,10 +39,6 @@ const VERSIONE = /const VERSIONE_APP='([^']+)'/.exec(HTML)[1];
    prese con misuraAvvio su questa stessa rete finta: 400 kbps, 400 ms di
    latenza, mediana di tre avvii. */
 const PRIMA = { prima: 1220, usabile: 21133, kbJs: 523 };
-/* L'impronta di importTrip com'era prima di questa miglioria. mImport e'
-   stato rifatto nella miglioria 6 (l'importazione da una tabella, vedi
-   prova-importa); importTrip no: chiama l'assistente, che e' della 7. */
-const INTATTI = { importTrip: 'a2ba31914123bb82' };
 
 const r = [];
 const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
@@ -206,10 +201,13 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
   /* ── 5. versioni esatte, file che esistono ───────────────────────────── */
   await prova('5', async () => {
     const nellApp = [...new Set(HTML.match(/https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net|cdn\.sheetjs\.com)\/[^'"`\s)]+/g))];
-    /* Solo la lista LIBRERIE di sw.js: li' c'e' anche l'indirizzo dei
-       caratteri, che non e' una libreria. */
-    const listaSw = (/const LIBRERIE = \[([\s\S]*?)\];/.exec(SW) || [, ''])[1];
-    const nelSw = [...listaSw.matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
+    /* Solo le liste di librerie di sw.js: li' c'e' anche l'indirizzo dei
+       caratteri, che non e' una libreria. LIBRERIE si scarica in sottofondo,
+       LIBRERIE_AL_MOMENTO (SheetJS) no: arriva quando serve e poi resta. */
+    const lista = nome => [...((new RegExp('const ' + nome + ' = \\[([\\s\\S]*?)\\];').exec(SW) || [, ''])[1]).matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
+    const sottofondo = lista('LIBRERIE'), alMomento = lista('LIBRERIE_AL_MOMENTO');
+    const nelSw = sottofondo.concat(alMomento);
+    const alMomentoApp = [...HTML.matchAll(/js:'(https:\/\/[^']+)',alMomento:true/g)].map(m => m[1]);
     const lib = [...HTML.matchAll(/(?:js|css):'(https:\/\/[^']+)'/g)].map(m => m[1]);
     const inesatte = nellApp.concat(nelSw).filter(u => { const p = leggiIndirizzo(u); return !p || !/^\d+\.\d+\.\d+$/.test(p.versione); });
     ok('5. ogni indirizzo di libreria ha una versione esatta', !inesatte.length && nellApp.length >= 7, inesatte.join(' ') || nellApp.length + ' indirizzi');
@@ -223,6 +221,8 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     ok('5. e punta a un file che esiste davvero nel pacchetto di quella versione', !mancanti.length, mancanti.join(' ') || daControllare.length + ' controllati');
     ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 7,
        lib.length + ' nell\'app, ' + nelSw.length + ' in sw.js');
+    ok('5. e quelle solo al momento (SheetJS) non si scaricano in sottofondo', alMomento.length === 1 && /sheetjs/.test(alMomento[0])
+       && JSON.stringify(alMomentoApp) === JSON.stringify(alMomento) && sottofondo.length === 6, JSON.stringify({ alMomento, alMomentoApp, sottofondo: sottofondo.length }));
   });
 
   /* ── 6. dopo il primo avvio, senza rete ──────────────────────────────── */
@@ -231,11 +231,11 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const p = await apri(viaggio(), { sw: true });
     await p.evaluate(() => navigator.serviceWorker.ready);
     let tenute = 0;
-    for (let i = 0; i < 60 && tenute < 7; i++) {
+    for (let i = 0; i < 60 && tenute < 6; i++) {
       await p.waitForTimeout(500);
       tenute = await p.evaluate(async c => (await (await caches.open(c)).keys()).length, CACHE_LIBRERIE);
     }
-    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 7, tenute + ' in ' + CACHE_LIBRERIE);
+    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 6, tenute + ' in ' + CACHE_LIBRERIE);
     // via la rete: ne' l'app ne' le CDN rispondono
     srv.stato.giu = true; srv.stato.cdnGiu = true;
     await p.reload({ waitUntil: 'domcontentloaded' });
@@ -330,14 +330,19 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     await p.close();
   });
 
-  /* ── 9. codice morto, pezzi intatti, funzioni che esistono ───────────── */
+  /* ── 9. codice morto, pezzi che restano, funzioni che esistono ───────── */
   await prova('9', async () => {
     const restano = ['renderTimeline', 'Sortable', 'searchFlights', 'saveFl'].filter(n => HTML.includes(n));
     ok('9. nessun riferimento a renderTimeline, Sortable, searchFlights e saveFl', !restano.length, restano.join(', '));
-    const h = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
+    /* importTrip fino alla miglioria 7 doveva restare identico, e lo si
+       controllava con un'impronta; la 7 l'ha toccato apposta, per farlo
+       passare da chiediAI come tutte le altre chiamate all'assistente. Adesso
+       deve esserci, e passare da li'. */
     const a = HTML.search(/\n(async )?function importTrip\(/), resto = HTML.slice(a + 1), b = resto.search(/\n(async )?function [A-Za-z_$]/);
-    const ora = { mImport: HTML.includes('<div class="modal" id="mImport">'), importTrip: a > 0 ? h(resto.slice(0, b)) : '' };
-    ok('9. mImport c\'è ancora e importTrip è come prima', ora.mImport && ora.importTrip === INTATTI.importTrip, JSON.stringify(ora));
+    const corpo = a > 0 ? resto.slice(0, b) : '';
+    const ora = { mImport: HTML.includes('<div class="modal" id="mImport">'), importTrip: !!corpo,
+      chiediAI: /chiediAI\(/.test(corpo), fetch: /\bfetch\(/.test(corpo) };
+    ok('9. mImport c\'è ancora e importTrip passa da chiediAI', ora.mImport && ora.importTrip && ora.chiediAI && !ora.fetch, JSON.stringify(ora));
     const an = await funzioniMancanti(HTML, browser);
     ok('9. nessuna funzione chiamata ma non definita', !an.mancanti.length && an.chiamate > 3000,
        an.mancanti.map(x => x.nome + ' (' + x.righe.join(',') + ')').join(' ') || `${an.chiamate} chiamate, ${an.definiti} nomi`);

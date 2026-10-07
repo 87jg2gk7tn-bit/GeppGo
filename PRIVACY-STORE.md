@@ -135,15 +135,30 @@ Stessa sostanza, nomi diversi:
   obbligatorio no (l'app funziona anche senza account), cifrato in transito
   sì, cancellabile dall'utente sì.
 - **Foto e video → Foto**: raccolte, cancellabili.
-- **File e documenti**: le foto dei biglietti che l'assistente legge.
+- **File e documenti**: il testo dei file che si fanno leggere all'assistente
+  (un itinerario, il PDF della lista per la valigia, la mail di un albergo),
+  da cui il telefono toglie prima email, numeri di carta, IBAN e telefoni.
+  Il file in sé non esce: il testo si tira fuori sul telefono.
+- **Foto e video → Foto**, anche: la foto di un posto che si fa riconoscere
+  all'assistente, e lo screenshot di un reel. Va una copia ridisegnata, senza
+  i dati nascosti del file (niente punto GPS).
 - **Posizione → Posizione precisa**: raccolta ma non conservata sui server
   (vedi sopra; quello che resta nel telefono non conta come raccolta).
 - **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori
-elencati nella privacy policy (Supabase, il servizio di IA, i servizi di
-mappe e meteo). Sono responsabili del trattamento che lavorano per conto di
-GeppGo, non compratori di dati.
+elencati nella privacy policy (Supabase, Google Gemini attraverso il ponte su
+Cloudflare, i servizi di mappe e meteo). Sono responsabili del trattamento
+che lavorano per conto di GeppGo, non compratori di dati.
+
+⚠️ **Con una eccezione, finché l'assistente resta sul piano gratuito di
+Gemini.** Su quel piano Google può usare richieste e risposte anche per
+migliorare i suoi prodotti, e farle leggere a dei revisori: non lavora solo
+per conto nostro. Per le schede degli store questo può contare come
+condivisione vera, non come fornitore, e va dichiarato come tale (la privacy
+policy lo dice già). Con la fatturazione attiva sullo stesso progetto
+Google smette di usarle così e il problema sparisce: vedi `DA-FARE.md`, che
+spiega anche perché per un'app usata in Europa conviene farlo comunque.
 
 Alla domanda *"l'utente può chiedere la cancellazione?"*: sì, dall'app.
 
@@ -264,7 +279,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | A chi parla | Cosa gli manda |
 |---|---|
 | `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni |
-| `geppgo-ai.merati-giacomo94.workers.dev` (e da lì il modello) | Testo scritto all'assistente, immagini dei biglietti |
+| `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, e da lì Google Gemini, piano gratuito) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |
 | `overpass-api.de`, `overpass.kumi.systems`, `overpass.private.coffee` | Coordinate (su una griglia di ~200 m) |
 | `maps.mail.ru/osm/tools/overpass` (Russia) | Coordinate (su una griglia di ~200 m). **Non è di OpenStreetMap**: è una copia della mappa tenuta su da mail.ru, aggiunta perché è l'unica che risponda con dati aggiornati al giorno. Quando il ponte risponde, la richiesta parte dal nostro server; quando il ponte è giù parte dal telefono, e allora vede anche l'IP |
