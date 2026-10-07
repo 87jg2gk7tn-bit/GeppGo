@@ -65,7 +65,7 @@ const path = require('path');
   const nomeUmano = {
     'nominatim.openstreetmap.org': /OpenStreetMap/i, 'overpass-api.de': /Overpass/i,
     'photon.komoot.io': /Photon/i, 'api.open-meteo.com': /Open-Meteo/i,
-    'router.project-osrm.org': /OSRM/i, 'it.wikipedia.org': /Wikipedia/i,
+    'routing.openstreetmap.de': /FOSSGIS/i, 'it.wikipedia.org': /Wikipedia/i,
     'api.mymemory.translated.net': /MyMemory/i, 'open.er-api.com': /er-api/i,
     'fonts.googleapis.com': /Google Fonts/i,
     'commons.wikimedia.org': /Wikimedia/i, 'www.wikidata.org': /Wikidata/i,

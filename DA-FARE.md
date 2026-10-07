@@ -771,6 +771,47 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ I tempi veri fra le tappe sono di un servizio altrui: si chiedono con
+  garbo, e prima dello store vanno sostituiti.** A piedi, in bici e in auto
+  il tempo arriva dalle istanze di FOSSGIS (`routed-foot`, `routed-bike`,
+  `routed-car`), scritte solo in `PERCORSI_SERVIZI`. Le loro regole sono tre,
+  e ognuna ha il suo pezzo di codice: **una richiesta al secondo** (coda,
+  `PERCORSI_INTERVALLO_MS` a 1100: con 1000 la prova ha misurato 999 ms fra
+  due partenze), **niente mentre si trascina** (`ttStaSpostando`, alzato dai
+  trascinamenti e tolto da `pointerup`/`pointercancel` in cattura, perché un
+  dito può finire fuori dal blocco) e **la risposta resta nel telefono**
+  (`geppgo2_percorsi`, chiave = mezzo + coordinate a cinque decimali: una
+  tappa spostata cambia chiave, e il tempo vecchio smette di valere da
+  solo). Chiedono solo il disegno della time-table e il menu della tappa
+  (`tempoTratta(…, chiedi=true)`); totali, avvisi di partenza e assistente
+  usano quello che c'è già, se no la stima col «≈»: se chiedessero anche
+  loro, aprire un viaggio lungo farebbe partire decine di richieste. FOSSGIS
+  chiede un uso non commerciale: con la pubblicità o il Premium non lo è più.
+  Treno, metro e bus restano una stima, minuti fissi di fermata e attesa più
+  la corsa (`MEZZI_PUBBLICI`, `TRAVEL_SPEED_KMH`): senza orari veri, un tempo
+  «vero» sarebbe una bugia. `prova-tempi`.
+- **⚠️ Nelle prove, una pagina `file://` ricaricata poteva tornare con la
+  memoria vuota.** Una volta su dieci, dopo `reload()`, `localStorage` (o
+  `sessionStorage`) era come appena nato: la prova riseminava i dati di
+  partenza, o l'app partiva senza niente, e cadeva un controllo a caso fra
+  quelli dopo la ricarica — sembrava l'app che perdeva i dati. Non era
+  l'app: servita da `http` le perdite erano zero, e con
+  `--allow-file-access-from-files` (ora in `apriBrowser`) anche da `file://`
+  (0 su 80, contro 4 su 40). **Una prova che cade una volta ogni tanto non
+  si rilancia finché passa**: si ripete il pezzo trenta volte, si guarda
+  cosa c'è in memoria a ogni passo, e la causa salta fuori.
+- **Il mezzo `train` è la metro, il treno è `rail`.** Viene da quando c'erano
+  solo «a piedi, metro, auto». Non si rinomina: i viaggi sincronizzati hanno
+  già `train` scritto dentro, e un telefono con l'app vecchia legge gli stessi
+  dati.
+- **Il navigatore interno non c'è più: ogni tasto apre Apple Maps o Google
+  Maps col mezzo del tratto, passando da `apriFuori(url)`.** Un punto solo
+  perché le prove lo possano sostituire (in una pagina di prova `location.href`
+  la porta via). Google: prima l'app (`comgooglemaps://`), dopo 900 ms il sito,
+  coi mezzi pubblici come `transit`. Apple non ha la bici: in bici apre a
+  piedi. Chi aveva scelto il navigatore interno torna a «Chiedimelo» e al
+  primo uso sceglie: la scelta si salva da sola.
+
 - **⚠️ Un link non deve poter scegliere il server.** Un invito
   «#join2=…~base64(url|chiave)» o un indirizzo «#c=…» impostavano e
   SALVAVANO un Supabase qualsiasi: bastava un link finto in chat perché email,
@@ -1834,7 +1875,10 @@ qualcuno che risponde".
   indirizzi, geocodifica dei viaggi) permette **una richiesta al secondo** e
   sconsiglia esplicitamente l'uso da app; Overpass e' volontari senza
   garanzie; `tile.openstreetmap.org` — lo sfondo della mappa — vieta le app ad
-  alto traffico; `router.project-osrm.org` e' dichiarato «non per produzione».
+  alto traffico; i percorsi a piedi, in bici e in auto vengono dalle istanze
+  di FOSSGIS (`routing.openstreetmap.de`), che chiedono un uso ragionevole e
+  non commerciale e una richiesta al secondo (OSRM di prova, «non per
+  produzione», non si usa piu').
   Alleggerire le domande fa guadagnare tempo ma non cambia il problema: **non
   e' quanto pesa una chiamata, e' quante ne fanno diecimila telefoni.**
 - **La risposta e' un ponte con memoria condivisa, non un fornitore diverso.**

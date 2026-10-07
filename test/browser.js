@@ -32,8 +32,15 @@ const APP = process.env.APP_URL || 'file://' + RADICE + '/Index%202.1.html';
 
 async function apriBrowser(opzioni = {}) {
   const exe = NOTI.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
+  /* --allow-file-access-from-files: senza, una pagina aperta da file://
+     ricaricata trovava ogni tanto localStorage o sessionStorage vuoti, come
+     appena nata (4 ricariche su 40 qui; 0 su 80 con l'opzione, e 0 su 40
+     servendo l'app da http, che e' quello che fa un telefono). Le prove che
+     ricaricano per vedere cosa resta cadevano a caso, e sembrava l'app che
+     perdeva i dati. L'app non legge file accanto a se', quindi l'opzione non
+     le cambia niente. */
   const browser = await chromium.launch(Object.assign(
-    { args: ['--no-sandbox'] },
+    { args: ['--no-sandbox', '--allow-file-access-from-files'] },
     exe ? { executablePath: exe } : {},
     opzioni
   ));
