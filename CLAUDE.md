@@ -30,8 +30,12 @@ quel file è la memoria.
   dell'app. Fuori ci sta solo quello che non può stare dentro: `sw.js` (il
   service worker deve essere un file a sé), `manifest.webmanifest`,
   `privacy.html`, `index.html`, le funzioni Supabase in `supabase/functions/`,
-  le prove in `test/`. Le librerie arrivano da CDN (Leaflet, Sortable, jsQR,
-  ZXing, bwip-js, supabase-js).
+  le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
+  jsQR, ZXing, bwip-js; pdf.js per i PDF), **mai bloccanti**: stanno in
+  `LIBRERIE` dentro l'HTML, ognuna con la versione esatta e un file che esiste
+  davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
+  supabase-js all'avvio senza fermarlo, le altre quando servono. La stessa
+  lista sta in `sw.js`, che le tiene per l'offline: una prova le confronta.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, la
   funzione `vicini`, «A raccolta». Senza account i dati restano solo sul
   telefono. `supabase-schema.sql` è la verità sul database: si rilancia quante
@@ -97,7 +101,9 @@ quel file è la memoria.
    funzioni toccate: aprile, toccale come farebbe una persona e guarda che in
    console non compaiano errori. `test/browser.js` blocca la rete, quindi le
    librerie da CDN risultano assenti: quelle che servono vanno servite in
-   locale, come fanno le prove con Leaflet.
+   locale, come fanno le prove con Leaflet. Per l'avvio, la service worker e
+   la rete lenta c'è `test/rete-finta.js`: app in http locale, CDN servite
+   dai pacchetti npm installati.
 5. Lancia **`npm test`** (vedi `test/README.md`; gira anche da solo a ogni
    push). Prima di dire che una modifica funziona, la si prova — e quando si
    corregge un guasto, la prova va fatta fallire sul codice vecchio, altrimenti

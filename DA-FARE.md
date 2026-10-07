@@ -771,6 +771,66 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
+  librerie bloccanti prima del codice: 523 KB compressi da aspettare per
+  intero. A 400 kbps con 400 ms di latenza l'app era usabile dopo **21,1 s**;
+  con le librerie al momento dopo **10,3 s**, e il JavaScript all'avvio
+  scende a **96 KB** (Leaflet e supabase-js). Quello che resta è quasi tutto
+  l'HTML (460 KB compressi). Le misure le fa `misuraAvvio` in
+  `test/rete-finta.js`, e `prova-avvio` le confronta con quelle di prima.
+  Tre cose da non riscoprire:
+  1. **`defer` non basta**: uno script `defer` ferma `DOMContentLoaded`, cioè
+     proprio l'avvio dell'app. Serve il caricamento asincrono
+     (`caricaLibreria`), e chi usa la libreria la aspetta: `mappaArrivata`
+     rifà le mappe quando arriva Leaflet, `supaBoot` aspetta supabase-js.
+  2. **Le librerie partono quando gira lo script dell'app, non prima**: un
+     `preload` in testa le farebbe scaricare insieme all'HTML, rubandogli la
+     banda, e l'app sarebbe usabile più tardi, non prima.
+  3. **`renderAll` disegna anche le pagine nascoste.** Il primo tentativo
+     scaricava bwip-js all'avvio lo stesso, per un codice a barre nella
+     pagina dei biglietti che nessuno guardava. `drawTicketCode` aspetta che
+     il riquadro si veda (`IntersectionObserver`). Ogni libreria «al momento»
+     nuova va provata con un viaggio che ha già dentro la cosa da disegnare.
+- **Versioni esatte e file veri.** «supabase-js@2» voleva dire l'ultima 2.x
+  di quel giorno; `jsQR.min.js` e `supabase.min.js` nei pacchetti non ci sono,
+  e funzionavano solo perché jsDelivr li minificava al volo. supabase-js è
+  fissata alla **2.117.2**, l'ultima 2.x il giorno in cui è stata fissata,
+  cioè quella a cui «@2» portava. `LIBRERIE` (nell'HTML) e la lista in
+  `sw.js` devono restare uguali, e i file esistere nei pacchetti installati
+  (sono fra le dipendenze delle prove, con la stessa versione): lo controlla
+  `prova-avvio`. pdf.js è rimasto com'era (`caricaPdfLib`, già al momento e a
+  versione fissa); il suo pacchetto pesa 32 MB e porta una libreria nativa,
+  quindi non sta fra le dipendenze e i suoi due file sono stati controllati a
+  mano. `@zxing/library` 0.23.0 dichiara Node 24: npm avvisa e installa lo
+  stesso, e tanto gira nel browser.
+- **La service worker: l'HTML aspetta la rete al massimo 3 secondi** (prima
+  senza limite: col campo debole si aspettava tutto il download anche con la
+  copia pronta). La risposta di rete si mette in cache in parallelo, mai
+  aspettandola prima di rispondere, se no la pagina non arriva più a pezzi.
+  Le librerie stanno in una cache a sé (`geppgo-librerie-vNN`): dopo il primo
+  avvio l'app chiede di scaricarle in sottofondo, e a ogni versione nuova
+  quelle ancora usate passano nella cache nuova senza riscaricarle, poi le
+  vecchie si cancellano. Si chiedono con CORS: una risposta opaca in cache
+  non si controlla e pesa come sette mega.
+- **Il cloud che non arriva si dice.** Senza supabase-js la schermata di
+  accesso non compariva e si entrava senza una parola. Chi ha già fatto
+  l'accesso lo si sa anche senza libreria: la sessione sta in localStorage
+  sotto `sb-<primo pezzo del nome del server>-auth-token`. Chi non ha
+  l'account vede «Il cloud non risponde» con «Riprova» e «Prova senza
+  account»; chi ce l'ha entra, e la sincronizzazione riparte da sola (rete
+  che torna, o un tentativo ogni mezzo minuto).
+- **Le prove dell'avvio non passano dalle rotte di Playwright**: le rotte non
+  vedono le richieste della service worker. `rete-finta.js` mette l'app su un
+  server http locale (127.0.0.1 è un posto sicuro, la service worker si
+  registra) e fa puntare unpkg, jsDelivr e i caratteri a un server https
+  locale con `--host-resolver-rules`, **più `--no-proxy-server`**: dietro un
+  proxy il nome lo risolve il proxy e la regola non conta niente. Due
+  trappole già pagate: le risposte compresse vanno tenute per impronta del
+  contenuto (due versioni dell'app hanno la stessa lunghezza, e servirne una
+  per l'altra faceva sembrare rotta la service worker); e ogni prova deve
+  ripartire col server pulito, se no una che cade a metà lascia una CDN
+  «rotta» alla successiva.
+
 - **⚠️ I tempi veri fra le tappe sono di un servizio altrui: si chiedono con
   garbo, e prima dello store vanno sostituiti.** A piedi, in bici e in auto
   il tempo arriva dalle istanze di FOSSGIS (`routed-foot`, `routed-bike`,
@@ -831,8 +891,9 @@ qualcuno che risponde".
   «Copia il codice» davano errore e non copiavano niente, e nessuna prova
   toccava quei tasti. Si trovano con un parser vero (acorn sui tre blocchi di
   script, più i gestori `on…=` scritti nei template), non con le espressioni
-  regolari. All'ultimo giro ne resta una sola: `saveFl`, dentro
-  `searchFlights`, che nessuno chiama più.
+  regolari. L'ultima, `saveFl` dentro `searchFlights`, se n'è andata col
+  codice morto: adesso l'analizzatore è `test/funzioni-mancanti.js` e lo fa
+  girare `prova-avvio`, così una funzione che manca fa rosso da sola.
 - **Copiare negli appunti su iPhone vuole tre strade.** `navigator.clipboard`
   subito nel tocco (Safari lo rifiuta dopo un'attesa); se manca o è rifiutato,
   `execCommand('copy')` su un campo di sola lettura fuori schermo, selezionato
