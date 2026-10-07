@@ -795,6 +795,13 @@ qualcuno che risponde".
   sull'origine di Pages, e va scritto **identico** (con `%20`) fra le
   Redirect URLs di Supabase, se no Supabase lo scarta senza dirlo e manda
   alla Site URL. `prova-link-email`.
+- **Una prova che passa la mattina e cade il pomeriggio.** La time-table si
+  apre sull'ora di adesso: `prova-tempi` trascinava col mouse la tappa delle
+  10, che dopo mezzogiorno sta sopra la vista, e il dito non la prendeva.
+  Rossa in CI e qui, identica, senza che il codice c'entrasse (lo stesso
+  rosso sul codice di prima). Prima di trascinare si porta la tappa in vista
+  (`scrollIntoViewIfNeeded`). Fermare l'orologio della pagina non si può:
+  ferma anche la coda dei percorsi, che conta il tempo con `Date.now`.
 
 - **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
   librerie bloccanti prima del codice: 523 KB compressi da aspettare per

@@ -329,7 +329,14 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
        nuove; mentre il dito tiene la tappa non ne deve partire nessuna. */
     const tenute = [];
     const trascina = async (id, dy) => {
-      const b = await p.locator(`#ttBody .tt-block[data-id="${id}"]`).boundingBox();
+      /* La time-table si apre sull'ora di adesso: a meta' giornata la tappa
+         delle 10 sta sopra la vista, e un dito non la puo' prendere. La
+         prova passava la mattina e cadeva il pomeriggio. Si porta in vista
+         prima, come farebbe chi la vuole spostare. */
+      const blocco = p.locator(`#ttBody .tt-block[data-id="${id}"]`);
+      await blocco.scrollIntoViewIfNeeded();
+      await p.waitForTimeout(200);
+      const b = await blocco.boundingBox();
       const x = b.x + b.width / 2, y = b.y + 12;
       await p.mouse.move(x, y);
       await p.mouse.down();
