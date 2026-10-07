@@ -41,6 +41,15 @@ quel file è la memoria.
   telefono. `supabase-schema.sql` è la verità sul database: si rilancia quante
   volte si vuole senza danni. Prima di modificare un progetto Supabase vero si
   guarda com'è fatto (`test/guarda-il-database.sql`).
+- **Indirizzo pubblico**: la costante `INDIRIZZO_PUBBLICO` (nella
+  configurazione, dentro l'HTML) vale
+  `https://87jg2gk7tn-bit.github.io/GeppGo/Index%202.1.html`. È dove tornano
+  i link delle email di Supabase e da dove partono gli inviti. **Quando l'app
+  passerà su un dominio suo va aggiornata**, insieme a Site URL e Redirect
+  URLs in Supabase (Authentication › URL Configuration): un indirizzo che non
+  sta lì Supabase lo scarta senza dirlo. I link delle email usano il flusso
+  «implicit»: si aprono in Safari anche quando la richiesta parte dall'app
+  sulla Home, quindi un flusso che pretende la stessa memoria (PKCE) non va.
 - **AI**: passa dal Worker Cloudflare `geppgo-ai`, che tiene la chiave e parla
   con Gemini (`GUIDA-AI.md`). Nell'app non c'è nessuna chiave, e l'utente non
   ne deve inserire.
