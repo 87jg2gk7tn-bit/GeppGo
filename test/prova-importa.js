@@ -418,7 +418,9 @@ async function finteMappe(p, noti) {
     await daFile(p, lunghe);
     const m2 = await p.evaluate(() => ({ msg: document.getElementById('impMsg').textContent, controllo: document.getElementById('impControlla').style.display !== 'none' }));
     ok('13. un file oltre 5 MB: lo dice, col peso e il limite', /pesa 5,\d MB: il limite è 5 MB/.test(m1.msg) && !m1.controllo, m1.msg);
-    ok('13. oltre 1.000 righe: lo dice, e dice cosa fare', /Ci sono 1\.201 righe: il limite è 1\.000/.test(m2.msg) && /Dividi/.test(m2.msg) && !m2.controllo, m2.msg);
+    /* «1.201» o «1201»: dipende dai dati della lingua del browser (quello
+       delle prove automatiche in italiano non separa le migliaia a 4 cifre). */
+    ok('13. oltre 1.000 righe: lo dice, e dice cosa fare', /Ci sono 1\.?201 righe: il limite è 1\.000/.test(m2.msg) && /Dividi/.test(m2.msg) && !m2.controllo, m2.msg);
     await p.close();
   });
 
