@@ -11,7 +11,7 @@
    nell'indirizzo, quindi non invecchiano. Prima non si tenevano, e senza rete
    lo scanner, i codici a barre e la mappa non c'erano proprio, anche con le
    mattonelle della mappa gia' viste in memoria. */
-const CACHE_NAME = 'geppgo-shell-v37';
+const CACHE_NAME = 'geppgo-shell-v38';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino

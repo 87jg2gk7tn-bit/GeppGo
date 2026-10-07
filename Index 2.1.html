@@ -2227,8 +2227,8 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
     <button class="auth-link" onclick="auMostra('auScelta')">‹ Indietro</button>
   </div>
   <div id="auRec" style="display:none">
-    <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link "Reset password" → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
-    <div class="fg"><label>Codice di recupero</label><input id="auCode" autocapitalize="off" autocorrect="off" autocomplete="one-time-code" placeholder="Incolla il link, o il codice a 6 cifre" style="font-size:.92rem"></div>
+    <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link della mail → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
+    <div class="fg"><label>Codice o link della mail</label><input id="auCode" autocapitalize="off" autocorrect="off" autocomplete="one-time-code" placeholder="Incolla il link, o il codice a 6 cifre" style="font-size:.92rem"></div>
     <div id="recMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
@@ -2979,6 +2979,24 @@ try{
     catch(e){window.GEPPGO_CONDIVISO=atob(h.slice(6));}
   }
 }catch(e){}
+/* I LINK DELLE EMAIL (recupero, accesso, conferma). Toccato il link, Supabase
+   riapre l'app con quello che serve dopo il cancelletto: «#access_token=...
+   &refresh_token=...&type=recovery», oppure «#error=...&error_description=...»
+   se il link non vale piu'. Prima la riga in fondo riscriveva il cancelletto
+   in «#c=...» durante il caricamento, e se lo mangiava: il cloud arrivava
+   dopo e non trovava niente, e il link apriva l'app senza far entrare.
+   Adesso si mette da parte QUI, prima di ogni riscrittura, e il cancelletto
+   non si tocca: lo legge supaBoot (vedi I LINK DELLE EMAIL, LETTI), che poi
+   toglie i token dalla barra. Gli altri cancelletti dell'app (gli inviti, il
+   testo condiviso, la configurazione) non c'entrano. */
+window.GEPPGO_LINK_EMAIL=null;
+try{
+  const h=location.hash||'',q=location.search||'';
+  const daMail=s=>/(^|[#?&])(access_token|refresh_token|type|error|error_code|error_description)=/.test(s);
+  const nostro=/^#(join2?=|c=|testo=|mail=)/.test(h);
+  if((!nostro&&daMail(h))||/(^|[?&])(error|error_description)=/.test(q))
+    window.GEPPGO_LINK_EMAIL={hash:nostro?'':h,search:q};
+}catch(e){}
 /* L'indirizzo si riscrive cosi': via l'invito, che vale una volta sola, e
    dentro la configurazione, che deve valere sempre. */
 window.GEPPGO_SISTEMA_HASH=function(){
@@ -2988,10 +3006,20 @@ window.GEPPGO_SISTEMA_HASH=function(){
     history.replaceState(null,'',location.pathname+location.search+h);
   }catch(e){}
 };
-/* 4) indirizzo pubblico: lo deduce da solo se sei online */
+/* 4) l'indirizzo pubblico: dove tornano i link delle email (Supabase lo
+      accetta solo se sta nelle sue «Redirect URLs») e da dove partono gli
+      inviti. Sull'origine di GitHub Pages e' sempre questo, scritto per
+      intero: dedotto da come si e' aperta la pagina poteva venire diverso
+      (la cartella, una maiuscola) e Supabase lo avrebbe scartato senza
+      dirlo, rimandando alla Site URL. Altrove (le prove in locale) si deduce
+      come prima. QUANDO L'APP PASSERA' SU UN DOMINIO SUO va cambiato qui, e
+      in Supabase (Site URL e Redirect URLs). */
+const INDIRIZZO_PUBBLICO='https://87jg2gk7tn-bit.github.io/GeppGo/Index%202.1.html';
 if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
-  window.GEPPGO_PUBLIC_URL=location.origin+location.pathname;
-if(location.hash.indexOf('#join')!==0)window.GEPPGO_SISTEMA_HASH();
+  window.GEPPGO_PUBLIC_URL=location.origin===new URL(INDIRIZZO_PUBBLICO).origin?INDIRIZZO_PUBBLICO:location.origin+location.pathname;
+/* Il cancelletto di un link delle email resta com'e': lo pulisce supaBoot
+   dopo averlo letto. */
+if(location.hash.indexOf('#join')!==0&&!window.GEPPGO_LINK_EMAIL)window.GEPPGO_SISTEMA_HASH();
 </script>
 <script>
 /* Il ponte su Cloudflare che tiene la chiave al sicuro e traduce verso Gemini.
@@ -3310,7 +3338,7 @@ const DIZIONARIO_SCHERMATE={
     'Torna alla home':'Back to home','Codice invito':'Invite code','Nome compagno':'Travel mate’s name',
     'Il tuo nome':'Your name','Come ti chiami':'What’s your name','Salva luogo':'Save place',
     'Modifica luogo':'Edit place','Salva password':'Save password','Nuova password':'New password',
-    'Conferma password':'Confirm password','Codice di recupero':'Recovery code',
+    'Conferma password':'Confirm password',
     'Minimo 6 caratteri':'At least 6 characters','Tema scuro':'Dark theme','Tema chiaro':'Light theme',
     'Calendario':'Calendar','Navigatore':'Navigation app','Autopilota':'Autopilot',
     'Attrazione':'Attraction','Attrazioni':'Attractions','Abbigliamento':'Clothing',
@@ -3373,7 +3401,7 @@ const DIZIONARIO_SCHERMATE={
     'Torna alla home':'Volver al inicio','Codice invito':'Código de invitación','Nome compagno':'Nombre del compañero',
     'Il tuo nome':'Tu nombre','Come ti chiami':'¿Cómo te llamas?','Salva luogo':'Guardar lugar',
     'Modifica luogo':'Editar lugar','Salva password':'Guardar contraseña','Nuova password':'Nueva contraseña',
-    'Conferma password':'Confirmar contraseña','Codice di recupero':'Código de recuperación',
+    'Conferma password':'Confirmar contraseña',
     'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema oscuro','Tema chiaro':'Tema claro',
     'Calendario':'Calendario','Navigatore':'Navegador','Autopilota':'Piloto automático',
     'Attrazione':'Atracción','Attrazioni':'Atracciones','Abbigliamento':'Ropa',
@@ -3436,7 +3464,7 @@ const DIZIONARIO_SCHERMATE={
     'Torna alla home':'Retour à l’accueil','Codice invito':'Code d’invitation','Nome compagno':'Nom du compagnon',
     'Il tuo nome':'Ton nom','Come ti chiami':'Comment tu t’appelles','Salva luogo':'Enregistrer le lieu',
     'Modifica luogo':'Modifier le lieu','Salva password':'Enregistrer le mot de passe','Nuova password':'Nouveau mot de passe',
-    'Conferma password':'Confirmer le mot de passe','Codice di recupero':'Code de récupération',
+    'Conferma password':'Confirmer le mot de passe',
     'Minimo 6 caratteri':'6 caractères minimum','Tema scuro':'Thème sombre','Tema chiaro':'Thème clair',
     'Calendario':'Agenda','Navigatore':'Application GPS','Autopilota':'Pilote automatique',
     'Attrazione':'Attraction','Attrazioni':'Attractions','Abbigliamento':'Vêtements',
@@ -3499,7 +3527,7 @@ const DIZIONARIO_SCHERMATE={
     'Torna alla home':'Voltar ao início','Codice invito':'Código de convite','Nome compagno':'Nome do companheiro',
     'Il tuo nome':'O teu nome','Come ti chiami':'Como te chamas','Salva luogo':'Guardar lugar',
     'Modifica luogo':'Editar lugar','Salva password':'Guardar palavra-passe','Nuova password':'Nova palavra-passe',
-    'Conferma password':'Confirmar palavra-passe','Codice di recupero':'Código de recuperação',
+    'Conferma password':'Confirmar palavra-passe',
     'Minimo 6 caratteri':'Mínimo 6 caracteres','Tema scuro':'Tema escuro','Tema chiaro':'Tema claro',
     'Calendario':'Calendário','Navigatore':'Aplicação de navegação','Autopilota':'Piloto automático',
     'Attrazione':'Atração','Attrazioni':'Atrações','Abbigliamento':'Roupa',
@@ -3638,7 +3666,6 @@ const DIZIONARIO_MESSAGGI={
     'Avvisi aggiornati: guarda i raggi sulla mappa':'Alerts updated — see the circles on the map',
     'Controlla i dati e premi Salva per aggiungere':'Check the details and press Save to add it',
     'Le tappe di oggi sono tutte nello stesso posto':'Today’s stops are all in the same place',
-    'Link scaduto o già usato: richiedine uno nuovo':'Link expired or already used — ask for a new one',
     'Crea prima un viaggio, poi ricondividi la mail':'Create a trip first, then share the email again',
     'Servono sia la data di inizio sia quella di fine':'Both the start and the end date are needed',
     'Ha spese collegate: modificale o eliminale prima':'It has linked expenses — change or delete those first'
@@ -3720,7 +3747,6 @@ const DIZIONARIO_MESSAGGI={
     'Avvisi aggiornati: guarda i raggi sulla mappa':'Avisos actualizados: mira los círculos en el mapa',
     'Controlla i dati e premi Salva per aggiungere':'Comprueba los datos y pulsa Guardar para añadirlo',
     'Le tappe di oggi sono tutte nello stesso posto':'Las paradas de hoy están todas en el mismo sitio',
-    'Link scaduto o già usato: richiedine uno nuovo':'Enlace caducado o ya usado: pide uno nuevo',
     'Crea prima un viaggio, poi ricondividi la mail':'Crea antes un viaje y vuelve a compartir el correo',
     'Servono sia la data di inizio sia quella di fine':'Hacen falta la fecha de inicio y la de fin',
     'Ha spese collegate: modificale o eliminale prima':'Tiene gastos vinculados: cámbialos o elimínalos antes'
@@ -3802,7 +3828,6 @@ const DIZIONARIO_MESSAGGI={
     'Avvisi aggiornati: guarda i raggi sulla mappa':'Alertes mises à jour : regarde les cercles sur la carte',
     'Controlla i dati e premi Salva per aggiungere':'Vérifie les infos et appuie sur Enregistrer',
     'Le tappe di oggi sono tutte nello stesso posto':'Les étapes du jour sont toutes au même endroit',
-    'Link scaduto o già usato: richiedine uno nuovo':'Lien expiré ou déjà utilisé : demandes-en un nouveau',
     'Crea prima un viaggio, poi ricondividi la mail':'Crée d’abord un voyage, puis repartage l’e-mail',
     'Servono sia la data di inizio sia quella di fine':'Il faut la date de début et celle de fin',
     'Ha spese collegate: modificale o eliminale prima':'Des dépenses y sont liées : modifie-les ou supprime-les d’abord'
@@ -3884,7 +3909,6 @@ const DIZIONARIO_MESSAGGI={
     'Avvisi aggiornati: guarda i raggi sulla mappa':'Avisos atualizados: vê os círculos no mapa',
     'Controlla i dati e premi Salva per aggiungere':'Confere os dados e carrega em Guardar',
     'Le tappe di oggi sono tutte nello stesso posto':'As paragens de hoje são todas no mesmo sítio',
-    'Link scaduto o già usato: richiedine uno nuovo':'Ligação expirada ou já usada: pede uma nova',
     'Crea prima un viaggio, poi ricondividi la mail':'Cria primeiro uma viagem e volta a partilhar o e-mail',
     'Servono sia la data di inizio sia quella di fine':'São precisas a data de início e a de fim',
     'Ha spese collegate: modificale o eliminale prima':'Tem despesas ligadas: altera-as ou elimina-as primeiro'
@@ -4479,7 +4503,6 @@ const DIZIONARIO_RACCOLTA={
     'Diario del viaggio (stampa / PDF)':'Trip diary (print / PDF)',
     'I viaggi vivono solo su questo telefono':'Trips live only on this phone',
     'https://... oppure il codice':'https://… or the code',
-    'sul link "Reset password" →':'the “Reset password” link →',
     'Tua spesa':'Your expense',
     'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Nothing yet: the map fills itself in while you look at it.',
     'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'One tap to see the day, another on the same day to open the timetable',
@@ -4550,7 +4573,6 @@ const DIZIONARIO_RACCOLTA={
     'Diario del viaggio (stampa / PDF)':'Diario del viaje (imprimir / PDF)',
     'I viaggi vivono solo su questo telefono':'Los viajes viven solo en este teléfono',
     'https://... oppure il codice':'https://… o el código',
-    'sul link "Reset password" →':'el enlace «Reset password» →',
     'Tua spesa':'Tu gasto',
     'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Todavía nada: el mapa se llena solo mientras lo miras.',
     'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Un toque para ver el día, otro en el mismo día para abrir la time-table',
@@ -4621,7 +4643,6 @@ const DIZIONARIO_RACCOLTA={
     'Diario del viaggio (stampa / PDF)':'Journal du voyage (impression / PDF)',
     'I viaggi vivono solo su questo telefono':'Les voyages vivent seulement sur ce téléphone',
     'https://... oppure il codice':'https://… ou le code',
-    'sul link "Reset password" →':'le lien « Reset password » →',
     'Tua spesa':'Ta dépense',
     'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Rien pour l’instant : la carte se remplit toute seule pendant que tu la regardes.',
     'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Une touche pour voir la journée, une autre sur le même jour pour ouvrir la time-table',
@@ -4692,7 +4713,6 @@ const DIZIONARIO_RACCOLTA={
     'Diario del viaggio (stampa / PDF)':'Diário da viagem (imprimir / PDF)',
     'I viaggi vivono solo su questo telefono':'As viagens vivem só neste telemóvel',
     'https://... oppure il codice':'https://… ou o código',
-    'sul link "Reset password" →':'a ligação «Reset password» →',
     'Tua spesa':'A tua despesa',
     'Ancora niente: la mappa si riempie da sola mentre la guardi.':'Ainda nada: o mapa enche-se sozinho enquanto olhas para ele.',
     'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table':'Um toque para ver o dia, outro no mesmo dia para abrir a time-table',
@@ -6708,11 +6728,80 @@ const DIZIONARIO_AVVIO={
   }
 };
 Object.keys(DIZIONARIO_AVVIO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_AVVIO[l]));
+/* I link delle email: entrare col link, il link che non vale piu', e «Ho un
+   codice» che vale per tutte e tre le email. */
+const DIZIONARIO_LINK={
+  en:{
+    'Account confermato':'Account confirmed',
+    'Il link della mail non vale più':'The email link no longer works',
+    'È già stato usato o è scaduto. Chiedine uno nuovo: arriva in pochi secondi.':'It has already been used or it has expired. Ask for a new one: it arrives in a few seconds.',
+    'Chiedi un link nuovo':'Ask for a new link',
+    'Ti ho mandato una nuova email a {1}.':'I’ve sent a new email to {1}.',
+    'Scrivi la tua email e tocca «Password dimenticata?» o «Entra con un link via email»: ti arriva un link nuovo.':'Enter your email and tap “Forgotten your password?” or “Sign in with an emailed link”: a new link will arrive.',
+    'Incolla il link della mail, o scrivi il codice a 6 cifre':'Paste the link from the email, or type the 6-digit code',
+    'Verifica...':'Checking…',
+    'Questo link non vale più: è già stato usato o è scaduto. Chiedi una nuova email e incolla il link senza aprirlo.':'This link no longer works: it has already been used or it has expired. Ask for a new email and paste the link without opening it.',
+    'Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui':'The 6-digit code needs your email: go back, type it in the Email field, and come back here',
+    'Il codice non è giusto o è scaduto: controlla le sei cifre, o chiedi una nuova email.':'The code is wrong or has expired: check the six digits, or ask for a new email.',
+    'Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre':'Format not recognised: paste the WHOLE link from the email, or just the 6 digits',
+    'sul link della mail →':'the link in the email →',
+    'Codice o link della mail':'Code or link from the email'
+  },
+  es:{
+    'Account confermato':'Cuenta confirmada',
+    'Il link della mail non vale più':'El enlace del correo ya no vale',
+    'È già stato usato o è scaduto. Chiedine uno nuovo: arriva in pochi secondi.':'Ya se ha usado o ha caducado. Pide uno nuevo: llega en unos segundos.',
+    'Chiedi un link nuovo':'Pedir un enlace nuevo',
+    'Ti ho mandato una nuova email a {1}.':'Te he enviado un correo nuevo a {1}.',
+    'Scrivi la tua email e tocca «Password dimenticata?» o «Entra con un link via email»: ti arriva un link nuovo.':'Escribe tu correo y toca «¿Olvidaste la contraseña?» o «Entra con un enlace por correo»: te llegará un enlace nuevo.',
+    'Incolla il link della mail, o scrivi il codice a 6 cifre':'Pega el enlace del correo, o escribe el código de 6 cifras',
+    'Verifica...':'Comprobando…',
+    'Questo link non vale più: è già stato usato o è scaduto. Chiedi una nuova email e incolla il link senza aprirlo.':'Este enlace ya no vale: ya se ha usado o ha caducado. Pide un correo nuevo y pega el enlace sin abrirlo.',
+    'Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui':'Para el código de 6 cifras hace falta el correo: vuelve atrás, escríbelo en el campo Correo y vuelve aquí',
+    'Il codice non è giusto o è scaduto: controlla le sei cifre, o chiedi una nuova email.':'El código no es correcto o ha caducado: revisa las seis cifras, o pide un correo nuevo.',
+    'Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre':'Formato no reconocido: pega el ENLACE entero del correo, o solo las 6 cifras',
+    'sul link della mail →':'el enlace del correo →',
+    'Codice o link della mail':'Código o enlace del correo'
+  },
+  fr:{
+    'Account confermato':'Compte confirmé',
+    'Il link della mail non vale più':'Le lien de l’e-mail ne marche plus',
+    'È già stato usato o è scaduto. Chiedine uno nuovo: arriva in pochi secondi.':'Il a déjà été utilisé ou il a expiré. Demandes-en un nouveau : il arrive en quelques secondes.',
+    'Chiedi un link nuovo':'Demander un nouveau lien',
+    'Ti ho mandato una nuova email a {1}.':'Je t’ai envoyé un nouvel e-mail à {1}.',
+    'Scrivi la tua email e tocca «Password dimenticata?» o «Entra con un link via email»: ti arriva un link nuovo.':'Écris ton e-mail et touche « Mot de passe oublié ? » ou « Connecte-toi avec un lien par e-mail » : un nouveau lien va arriver.',
+    'Incolla il link della mail, o scrivi il codice a 6 cifre':'Colle le lien de l’e-mail, ou écris le code à 6 chiffres',
+    'Verifica...':'Vérification…',
+    'Questo link non vale più: è già stato usato o è scaduto. Chiedi una nuova email e incolla il link senza aprirlo.':'Ce lien ne marche plus : il a déjà été utilisé ou il a expiré. Demande un nouvel e-mail et colle le lien sans l’ouvrir.',
+    'Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui':'Pour le code à 6 chiffres il faut l’e-mail : reviens en arrière, écris-le dans le champ E-mail, puis reviens ici',
+    'Il codice non è giusto o è scaduto: controlla le sei cifre, o chiedi una nuova email.':'Le code n’est pas bon ou il a expiré : vérifie les six chiffres, ou demande un nouvel e-mail.',
+    'Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre':'Format non reconnu : colle le LIEN complet de l’e-mail, ou seulement les 6 chiffres',
+    'sul link della mail →':'le lien de l’e-mail →',
+    'Codice o link della mail':'Code ou lien de l’e-mail'
+  },
+  pt:{
+    'Account confermato':'Conta confirmada',
+    'Il link della mail non vale più':'A ligação do email já não funciona',
+    'È già stato usato o è scaduto. Chiedine uno nuovo: arriva in pochi secondi.':'Já foi usada ou expirou. Pede uma nova: chega em poucos segundos.',
+    'Chiedi un link nuovo':'Pedir uma ligação nova',
+    'Ti ho mandato una nuova email a {1}.':'Enviei-te um email novo para {1}.',
+    'Scrivi la tua email e tocca «Password dimenticata?» o «Entra con un link via email»: ti arriva un link nuovo.':'Escreve o teu email e toca em «Esqueceste a palavra-passe?» ou «Entra com uma ligação por e-mail»: chega-te uma ligação nova.',
+    'Incolla il link della mail, o scrivi il codice a 6 cifre':'Cola a ligação do email, ou escreve o código de 6 dígitos',
+    'Verifica...':'A verificar…',
+    'Questo link non vale più: è già stato usato o è scaduto. Chiedi una nuova email e incolla il link senza aprirlo.':'Esta ligação já não funciona: já foi usada ou expirou. Pede um email novo e cola a ligação sem a abrir.',
+    'Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui':'Para o código de 6 dígitos é preciso o email: volta atrás, escreve-o no campo Email e volta aqui',
+    'Il codice non è giusto o è scaduto: controlla le sei cifre, o chiedi una nuova email.':'O código não está certo ou expirou: verifica os seis dígitos, ou pede um email novo.',
+    'Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre':'Formato não reconhecido: cola a LIGAÇÃO inteira do email, ou só os 6 dígitos',
+    'sul link della mail →':'na ligação do email →',
+    'Codice o link della mail':'Código ou ligação do email'
+  }
+};
+Object.keys(DIZIONARIO_LINK).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_LINK[l]));
 
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1092;
+const FRASI_IN_TUTTO=1103;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -8994,6 +9083,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
+- Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
@@ -18081,26 +18171,29 @@ async function supaBoot(){
   /* Due chiamate che aspettavano la libreria insieme: parte la prima. */
   if(sb)return;
   const indirizzo=supaIndirizzo;supaIndirizzo=null;
+  /* Il link delle email messo da parte all'apertura: si legge una volta. */
+  const link=leggiLinkEmail(window.GEPPGO_LINK_EMAIL);window.GEPPGO_LINK_EMAIL=null;
   if(cloudGiu){cloudGiu=false;clearTimeout(cloudRiprovaT);auMostra('auScelta');}
   try{
-    const rawUrl=indirizzo.hash+indirizzo.search;
-    const wasRecovery=/type=recovery/.test(rawUrl);
-    const errM=rawUrl.match(/error_description=([^&]+)/);
-    const authErr=errM?decodeURIComponent(errM[1].replace(/\+/g,' ')):'';
-    sb=supabase.createClient(window.GEPPGO_SUPA_URL,window.GEPPGO_SUPA_KEY,{auth:{flowType:'implicit',detectSessionInUrl:true}});
+    /* Il cancelletto lo legge l'app (link, qui sopra), non la libreria: cosi'
+       si legge una volta sola anche quando la libreria arriva dopo, e si sa
+       che link era. Il flusso resta «implicit»: i link si aprono in Safari
+       anche quando la richiesta e' partita dall'app sulla Home, che ha una
+       memoria sua, e un flusso che pretende la stessa memoria li' non va. */
+    sb=supabase.createClient(window.GEPPGO_SUPA_URL,window.GEPPGO_SUPA_KEY,{auth:{flowType:'implicit',detectSessionInUrl:false}});
     sb.auth.onAuthStateChange((ev,s2)=>{session=s2;myUid=s2?s2.user.id:null;if(ev==='PASSWORD_RECOVERY')openNewPass();afterAuth();});
     const{data}=await sb.auth.getSession();
     session=data.session||null;myUid=session?session.user.id:null;
-    if(!session){
-      const hp=new URLSearchParams(indirizzo.hash.replace(/^#/,''));
-      const at=hp.get('access_token'),rt=hp.get('refresh_token');
-      if(at&&rt){
-        try{
-          const{data:d2,error:e2}=await sb.auth.setSession({access_token:at,refresh_token:rt});
-          if(!e2&&d2&&d2.session){session=d2.session;myUid=session.user.id;history.replaceState(null,'',location.pathname);}
-        }catch(e){}
-      }
+    /* Un link con i token vince sulla sessione che c'era gia': e' l'ultima
+       cosa che la persona ha chiesto. */
+    if(link&&link.at&&link.rt){
+      try{
+        const{data:d2,error:e2}=await sb.auth.setSession({access_token:link.at,refresh_token:link.rt});
+        if(!e2&&d2&&d2.session){session=d2.session;myUid=session.user.id;app.skipAuth=false;save();}
+        else{console.log('Link della mail non valido:',e2&&e2.message);link.errore=true;}
+      }catch(e){console.log('Link della mail non valido:',e);link.errore=true;}
     }
+    if(link)pulisciIndirizzoLink();
     if(!session){
       const qc=new URLSearchParams(indirizzo.search).get('code');
       if(qc){
@@ -18118,15 +18211,40 @@ async function supaBoot(){
     }
     afterAuth();
     if(session)setTimeout(()=>{if(localStorage.getItem('geppgo2_fp')){localStorage.removeItem('geppgo2_fp');lastPush={};persistLastPush();}syncPush();},600);
-    if(wasRecovery&&session){setTimeout(openNewPass,400);}
-    else if(wasRecovery||authErr){
-      auVai('in');
-      const m=document.getElementById('auMsg');
-      if(m)m.textContent='Link già usato o scaduto. Richiedi una NUOVA email; poi tieni premuto sul link → Copia, e incollalo in \'Ho un codice o un link di recupero\'.';
-      app.skipAuth=false;save();afterAuth();
-      toast('Link scaduto o già usato: richiedine uno nuovo');
+    /* Dentro col link: secondo il tipo, il passo dopo. */
+    if(link&&link.at&&!link.errore&&session){
+      if(link.tipo==='recovery')setTimeout(openNewPass,400);
+      else if(link.tipo==='signup')toast('Account confermato');
+      else toast('Accesso effettuato');
+    }else if(link){
+      if(!session){app.skipAuth=false;save();afterAuth();}
+      linkEmailScaduto();
     }
   }catch(e){}
+}
+/* ===== I LINK DELLE EMAIL, LETTI =====
+   Quello che la configurazione ha messo da parte all'apertura (vedi I LINK
+   DELLE EMAIL), in chiaro: i due token, il tipo di link, e se e' arrivato un
+   errore (link gia' usato o scaduto). */
+function leggiLinkEmail(l){
+  if(!l)return null;
+  const h=new URLSearchParams((l.hash||'').replace(/^#/,'')),q=new URLSearchParams((l.search||'').replace(/^\?/,''));
+  const v=k=>h.get(k)||q.get(k)||'';
+  return {at:v('access_token'),rt:v('refresh_token'),tipo:v('type'),
+    errore:!!(v('error')||v('error_code')||v('error_description'))||!v('access_token')};
+}
+/* I token non restano nella barra degli indirizzi: si vedrebbero in uno
+   screenshot, e un preferito salvato li', riaperto, rifarebbe l'accesso. Al
+   loro posto torna la configurazione, come in ogni altra apertura. */
+const LINK_EMAIL_PARAMETRI=['access_token','refresh_token','expires_at','expires_in','token_type','type','error','error_code','error_description','provider_token','provider_refresh_token'];
+function pulisciIndirizzoLink(){
+  try{
+    const q=new URLSearchParams(location.search);
+    LINK_EMAIL_PARAMETRI.forEach(k=>q.delete(k));
+    const resto=q.toString();
+    history.replaceState(null,'',location.pathname+(resto?'?'+resto:''));
+  }catch(e){}
+  window.GEPPGO_SISTEMA_HASH();
 }
 function afterAuth(){
   updateAccountCard();
@@ -18375,22 +18493,74 @@ async function doJoin2(code){
     if(!memByTrip[cid]||!memByTrip[cid].participant_id)pickIdentity(remote);
   }catch(e){toast('Errore di rete, riprova');}
 }
+/* ===== LE EMAIL DI ACCESSO =====
+   Dove tornano i link delle email: l'indirizzo pubblico (vedi la
+   configurazione: sull'origine di Pages e' fisso). Fuori dal web, nell'app
+   nativa, non c'e', e Supabase usa la sua Site URL. */
+function indirizzoRitorno(){return window.GEPPGO_PUBLIC_URL||undefined;}
+/* L'ultima email chiesta da questo telefono, col suo tipo: serve a «Ho un
+   codice» per sapere che codice e' (un codice a 6 cifre non lo dice), e al
+   link scaduto per chiederne uno uguale. Su iPhone il link si apre in Safari,
+   che non vede la memoria dell'app sulla Home: li' la richiesta non c'e', e
+   si va per tentativi (vedi authVerifyCode). */
+const RICHIESTA_CHIAVE='geppgo2_richiesta_email';
+function salvaRichiesta(tipo,email){try{localStorage.setItem(RICHIESTA_CHIAVE,JSON.stringify({tipo,email,t:Date.now()}));}catch(e){}}
+function ultimaRichiesta(){try{const r=JSON.parse(localStorage.getItem(RICHIESTA_CHIAVE)||'null');return r&&r.tipo&&r.email?r:null;}catch(e){return null;}}
+/* Il tipo con cui si verifica, per ogni tipo di link. Da supabase-js 2.x
+   «magiclink» e «signup» sono deprecati: per l'accesso e per la conferma
+   della registrazione il tipo e' «email». */
+const TIPO_VERIFICA={recovery:'recovery',magiclink:'email',signup:'email',email:'email',invite:'invite',email_change:'email_change'};
+/* Senza una richiesta salvata, un codice a 6 cifre si prova in quest'ordine:
+   prima il recupero (che apre il foglio della password nuova), poi
+   l'accesso, poi la conferma. */
+const TIPI_IN_ORDINE=['recovery','email','signup'];
+/* Il link non vale piu' (gia' usato, scaduto, o consumato da un'anteprima
+   della posta): lo si dice, sopra la schermata d'accesso, col tasto per
+   chiederne uno nuovo. */
+function linkEmailScaduto(){
+  confirmDo('Il link della mail non vale più','È già stato usato o è scaduto. Chiedine uno nuovo: arriva in pochi secondi.',chiediLinkNuovo,'✉️','Chiedi un link nuovo','btn-grad');
+  document.getElementById('mConfirm').classList.add('sopra-accesso');
+}
+async function chiediLinkNuovo(){
+  const r=ultimaRichiesta();
+  if(r&&sb){
+    const red=indirizzoRitorno();
+    try{
+      let esito;
+      if(r.tipo==='recovery')esito=await sb.auth.resetPasswordForEmail(r.email,red?{redirectTo:red}:{});
+      else if(r.tipo==='signup')esito=await sb.auth.resend({type:'signup',email:r.email,options:red?{emailRedirectTo:red}:{}});
+      else esito=await sb.auth.signInWithOtp({email:r.email,options:Object.assign({shouldCreateUser:false},red?{emailRedirectTo:red}:{})});
+      if(esito&&esito.error){console.log('Link nuovo non inviato:',esito.error.message);toast(spiegaErroreAccesso(esito.error));return;}
+      salvaRichiesta(r.tipo,r.email);
+      toast(tv('Ti ho mandato una nuova email a {1}.',r.email));
+    }catch(e){console.log('Link nuovo non inviato:',e);toast('Errore di rete, riprova');}
+    return;
+  }
+  /* Nessuna richiesta su questo telefono: si apre l'accesso, e la persona
+     sceglie da li' che email farsi mandare. */
+  app.skipAuth=false;save();
+  auVai('in');
+  const g=document.getElementById('authGate');if(g)g.style.display='flex';
+  const m=document.getElementById('auMsg');
+  if(m){m.style.color='';m.textContent=tv('Scrivi la tua email e tocca «Password dimenticata?» o «Entra con un link via email»: ti arriva un link nuovo.');}
+}
 async function authForgot(){
   const em=document.getElementById('auEmail').value.trim(),msg=document.getElementById('auMsg');
   msg.style.color='';
   if(!em){msg.textContent='Scrivi prima la tua email nel campo qui sopra, poi ritocca qui';return;}
   msg.textContent='Invio email con il codice...';
   try{
-    const red=window.GEPPGO_PUBLIC_URL||(location.protocol.indexOf('http')===0?location.origin+location.pathname:undefined);
+    const red=indirizzoRitorno();
     const{error}=await sb.auth.resetPasswordForEmail(em,red?{redirectTo:red}:{});
     if(error){console.log('Recupero password non riuscito:',error.message);msg.textContent=spiegaErroreAccesso(error);return;}
+    salvaRichiesta('recovery',em);
     msg.textContent='';
     recEmail=em;openRecPanel(true);
   }catch(e){msg.textContent='Errore di rete';}
 }
 let recEmail='';
 function openRecPanel(fromSend){
-  if(!fromSend){recEmail=document.getElementById('auEmail').value.trim();}
+  if(!fromSend){const r=ultimaRichiesta();recEmail=document.getElementById('auEmail').value.trim()||(r?r.email:'');}
   document.getElementById('recMail').textContent=recEmail||'la tua email';
   document.getElementById('auCode').value='';
   document.getElementById('recMsg').textContent='';
@@ -18399,26 +18569,47 @@ function openRecPanel(fromSend){
   setTimeout(()=>document.getElementById('auCode').focus(),250);
 }
 function recBack(){auVai('in');}
+/* «Ho un codice o un link di recupero»: vale per tutte e tre le email.
+   Prima verificava tutto come recupero, e un link d'accesso o di conferma
+   incollato qui risultava «gia' usato o scaduto» anche quando era buono.
+   - Un link incollato dice da se' che tipo e' (type=...).
+   - Un codice a 6 cifre no: vale il tipo dell'ultima email chiesta da questo
+     telefono per quell'indirizzo; se non c'e', si provano i tipi in ordine. */
+/* Una verifica andata male per la rete non e' un codice sbagliato: lo si
+   dice diverso, se no si cerca l'errore nelle cifre. */
+function senzaRete(res){return navigator.onLine===false||!!(res&&res.error&&/fetch|network|offline/i.test(res.error.message||''));}
 async function authVerifyCode(){
   const raw=document.getElementById('auCode').value.trim(),m=document.getElementById('recMsg');
-  if(!raw){m.textContent='Incolla il link della mail, o scrivi il codice a 6 cifre';return;}
-  m.textContent='Verifica...';
+  if(!raw){m.textContent=tv('Incolla il link della mail, o scrivi il codice a 6 cifre');return;}
+  m.textContent=tv('Verifica...');
   try{
-    let res;
+    let res=null,quale='';
     const th=raw.match(/[?&#](?:token_hash|token)=([^&\s]+)/);
     if(th){
-      res=await sb.auth.verifyOtp({type:'recovery',token_hash:decodeURIComponent(th[1])});
+      quale=(raw.match(/[?&#]type=([a-z_]+)/)||[])[1]||'recovery';
+      res=await sb.auth.verifyOtp({type:TIPO_VERIFICA[quale]||quale,token_hash:decodeURIComponent(th[1])});
+      if(res&&res.error)console.log('Link incollato non valido:',res.error.message);
+      if(res.error||!res.data||!res.data.session){m.textContent=senzaRete(res)?spiegaErroreAccesso(res.error):tv('Questo link non vale più: è già stato usato o è scaduto. Chiedi una nuova email e incolla il link senza aprirlo.');return;}
     }else if(/^\d{6}$/.test(raw)){
-      if(!recEmail){m.textContent='Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui';return;}
-      res=await sb.auth.verifyOtp({email:recEmail,token:raw,type:'recovery'});
+      const r=ultimaRichiesta();
+      const email=recEmail||(r?r.email:'');
+      if(!email){m.textContent=tv('Per il codice a 6 cifre serve l\'email: torna indietro, scrivila nel campo Email, e rientra qui');return;}
+      const sua=r&&r.email.toLowerCase()===email.toLowerCase()?r.tipo:'';
+      const prove=sua?[TIPO_VERIFICA[sua]||sua]:TIPI_IN_ORDINE;
+      for(const tipo of prove){
+        res=await sb.auth.verifyOtp({email,token:raw,type:tipo});
+        if(res&&!res.error&&res.data&&res.data.session){quale=tipo==='recovery'?'recovery':(sua==='signup'||tipo==='signup'?'signup':'magiclink');break;}
+        if(res&&res.error)console.log('Codice non valido come',tipo+':',res.error.message);
+      }
+      if(!res||res.error||!res.data||!res.data.session){m.textContent=senzaRete(res)?spiegaErroreAccesso(res.error):tv('Il codice non è giusto o è scaduto: controlla le sei cifre, o chiedi una nuova email.');return;}
     }else{
-      m.textContent='Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre';return;
+      m.textContent=tv('Formato non riconosciuto: incolla il LINK intero della mail, oppure solo le 6 cifre');return;
     }
-    if(res.error||!res.data||!res.data.session){m.textContent='Già usato o scaduto. Richiedi una NUOVA email, cestina le vecchie, e copia il link senza mai aprirlo.';return;}
     m.textContent='';recBack();
     app.skipAuth=false;save();
-    setTimeout(openNewPass,300);
-  }catch(e){m.textContent='Errore di rete';}
+    if(quale==='recovery')setTimeout(openNewPass,300);
+    else toast(quale==='signup'?'Account confermato':'Accesso effettuato');
+  }catch(e){console.log('Verifica non riuscita:',e);m.textContent=tv('Errore di rete');}
 }
 
 function openNewPass(){const f=document.getElementById('npPass');if(f)f.value='';const m=document.getElementById('npMsg');if(m)m.textContent='';openSheet('mNewPass');}
@@ -18438,9 +18629,10 @@ async function authMagic(){
   if(!em){msg.textContent='Scrivi prima la tua email nel campo qui sopra';return;}
   msg.textContent='Invio del link di accesso...';
   try{
-    const red=window.GEPPGO_PUBLIC_URL||(location.protocol.indexOf('http')===0?location.origin+location.pathname:undefined);
+    const red=indirizzoRitorno();
     const{error}=await sb.auth.signInWithOtp({email:em,options:Object.assign({shouldCreateUser:false},red?{emailRedirectTo:red}:{})});
     if(error){console.log('Link di accesso non inviato:',error.message);msg.textContent=/not found|invalid/i.test(error.message)?'Nessun account con questa email':spiegaErroreAccesso(error);return;}
+    salvaRichiesta('magiclink',em);
     msg.style.color='var(--green-deep)';
     msg.textContent='Link inviato a '+em+'. Aprilo con un TOCCO DIRETTO (niente anteprima): vale una volta sola e per poco tempo.';
   }catch(e){msg.textContent='Errore di rete';}
@@ -18488,7 +18680,10 @@ async function authUp(){
   if(document.getElementById('auPass2').value!==pw){msg.textContent='Le due password non coincidono: ricontrolla';return;}
   msg.textContent='Creazione account...';
   try{
-    const{data,error}=await sb.auth.signUp({email:em,password:pw});
+    /* Il link di conferma torna allo stesso indirizzo degli altri due: prima
+       non lo diceva, e Supabase usava la sua Site URL. */
+    const red=indirizzoRitorno();
+    const{data,error}=await sb.auth.signUp({email:em,password:pw,options:red?{emailRedirectTo:red}:{}});
     if(error){console.log('Registrazione non riuscita:',error.message);msg.textContent=spiegaErroreAccesso(error);return;}
     if(data&&data.session){msg.textContent='';app.skipAuth=false;save();return;}
     /* Un utente senza identita' e' la risposta che si riceve per un'email
@@ -18499,6 +18694,7 @@ async function authUp(){
     /* Nessuna sessione: e' la conferma via email. Lo si dice chiaro, invece
        di lasciare lo stesso modulo davanti. */
     msg.textContent='';
+    salvaRichiesta('signup',em);
     document.getElementById('auMailA').textContent=em;
     auMostra('auMailInviata');
   }catch(e){console.log('Registrazione non riuscita:',e);msg.textContent='Errore di rete';}
@@ -20102,7 +20298,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-07 10:16';
+const VERSIONE_APP='2026-10-07 13:00';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

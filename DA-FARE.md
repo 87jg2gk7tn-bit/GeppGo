@@ -771,6 +771,38 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ I link delle email non facevano entrare nessuno, e per mesi non se n'è
+  accorto nessuno.** Supabase, col flusso «implicit», riapre l'app con i
+  token dopo il cancelletto (`#access_token=…&refresh_token=…&type=…`, o
+  `#error_description=…`). La configurazione riscriveva ogni cancelletto che
+  non fosse un invito in `#c=…` **durante il caricamento**, e il cloud
+  arrivava dopo: il link apriva l'app senza far entrare, e il link scaduto
+  non diceva niente. Adesso il cancelletto si mette da parte prima di ogni
+  riscrittura (`GEPPGO_LINK_EMAIL`) e non si tocca; lo legge `supaBoot`, che
+  entra con `setSession` e secondo `type` apre «Nuova password» (recovery),
+  dice «Account confermato» (signup) o entra e basta; poi toglie i token
+  dalla barra. Il client si crea con `detectSessionInUrl:false`: il
+  cancelletto lo legge l'app, una volta sola, anche quando la libreria
+  arriva dopo. Il flusso resta «implicit», ed è una scelta: su iPhone il link
+  si apre in Safari anche se la richiesta parte dall'app sulla Home, che ha
+  una memoria sua, e PKCE vorrebbe la stessa memoria. Per chi usa l'app
+  dalla Home la strada è «Ho un codice o un link di recupero», che ora vale
+  per tutte e tre le email: un link incollato dice il suo `type`, un codice
+  a 6 cifre usa il tipo dell'ultima richiesta salvata
+  (`geppgo2_richiesta_email`), se no prova recovery, email, signup. In
+  supabase-js 2.x `magiclink` e `signup` sono deprecati: si verifica con
+  `email`. L'indirizzo di ritorno è la costante `INDIRIZZO_PUBBLICO`
+  sull'origine di Pages, e va scritto **identico** (con `%20`) fra le
+  Redirect URLs di Supabase, se no Supabase lo scarta senza dirlo e manda
+  alla Site URL. `prova-link-email`.
+- **Una prova che passa la mattina e cade il pomeriggio.** La time-table si
+  apre sull'ora di adesso: `prova-tempi` trascinava col mouse la tappa delle
+  10, che dopo mezzogiorno sta sopra la vista, e il dito non la prendeva.
+  Rossa in CI e qui, identica, senza che il codice c'entrasse (lo stesso
+  rosso sul codice di prima). Prima di trascinare si porta la tappa in vista
+  (`scrollIntoViewIfNeeded`). Fermare l'orologio della pagina non si può:
+  ferma anche la coda dei percorsi, che conta il tempo con `Date.now`.
+
 - **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
   librerie bloccanti prima del codice: 523 KB compressi da aspettare per
   intero. A 400 kbps con 400 ms di latenza l'app era usabile dopo **21,1 s**;
