@@ -31,11 +31,17 @@ quel file è la memoria.
   service worker deve essere un file a sé), `manifest.webmanifest`,
   `privacy.html`, `index.html`, le funzioni Supabase in `supabase/functions/`,
   le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
-  jsQR, ZXing, bwip-js; pdf.js per i PDF), **mai bloccanti**: stanno in
+  jsQR, ZXing, bwip-js, SheetJS per i file di Excel; pdf.js per i PDF),
+  **mai bloccanti**: stanno in
   `LIBRERIE` dentro l'HTML, ognuna con la versione esatta e un file che esiste
   davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
   supabase-js all'avvio senza fermarlo, le altre quando servono. La stessa
   lista sta in `sw.js`, che le tiene per l'offline: una prova le confronta.
+  SheetJS viene da `cdn.sheetjs.com` (il pacchetto «xlsx» su npm è fermo
+  alla 0.18.5, con falle note): anche le prove lo installano da lì, quindi
+  l'ambiente di lavoro deve poter raggiungere quel dominio.
+  I caratteri di Google arrivano con un `<link>` che non ferma la pagina
+  (mai un `@import`), e la service worker li tiene da parte.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, la
   funzione `vicini`, «A raccolta». Senza account i dati restano solo sul
   telefono. `supabase-schema.sql` è la verità sul database: si rilancia quante

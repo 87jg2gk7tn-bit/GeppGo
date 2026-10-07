@@ -15,7 +15,7 @@
    6. dopo il primo avvio, senza rete: mappa, scanner, codici a barre;
    7. il cloud che non arriva: chi non ha l'account lo sa, chi ce l'ha entra;
    8. una libreria al momento che non arriva: il messaggio con «Riprova»;
-   9. il codice morto non c'e' piu', mImport e importTrip sono intatti, e
+   9. il codice morto non c'e' piu', importTrip e' intatto, e
       nessuna funzione e' chiamata senza esistere;
    10. le misure: l'app usabile prima e meno JavaScript all'avvio;
    11. i testi nuovi in cinque lingue. */
@@ -40,9 +40,10 @@ const VERSIONE = /const VERSIONE_APP='([^']+)'/.exec(HTML)[1];
    prese con misuraAvvio su questa stessa rete finta: 400 kbps, 400 ms di
    latenza, mediana di tre avvii. */
 const PRIMA = { prima: 1220, usabile: 21133, kbJs: 523 };
-/* Le impronte di mImport e importTrip com'erano prima di questa miglioria:
-   si riprendono nella prossima, e qui non si dovevano toccare. */
-const INTATTI = { mImport: 'bd36ffb4ddb6ac28', importTrip: 'a2ba31914123bb82' };
+/* L'impronta di importTrip com'era prima di questa miglioria. mImport e'
+   stato rifatto nella miglioria 6 (l'importazione da una tabella, vedi
+   prova-importa); importTrip no: chiama l'assistente, che e' della 7. */
+const INTATTI = { importTrip: 'a2ba31914123bb82' };
 
 const r = [];
 const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
@@ -204,8 +205,11 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
 
   /* ── 5. versioni esatte, file che esistono ───────────────────────────── */
   await prova('5', async () => {
-    const nellApp = [...new Set(HTML.match(/https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/[^'"`\s)]+/g))];
-    const nelSw = [...SW.matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
+    const nellApp = [...new Set(HTML.match(/https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net|cdn\.sheetjs\.com)\/[^'"`\s)]+/g))];
+    /* Solo la lista LIBRERIE di sw.js: li' c'e' anche l'indirizzo dei
+       caratteri, che non e' una libreria. */
+    const listaSw = (/const LIBRERIE = \[([\s\S]*?)\];/.exec(SW) || [, ''])[1];
+    const nelSw = [...listaSw.matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
     const lib = [...HTML.matchAll(/(?:js|css):'(https:\/\/[^']+)'/g)].map(m => m[1]);
     const inesatte = nellApp.concat(nelSw).filter(u => { const p = leggiIndirizzo(u); return !p || !/^\d+\.\d+\.\d+$/.test(p.versione); });
     ok('5. ogni indirizzo di libreria ha una versione esatta', !inesatte.length && nellApp.length >= 7, inesatte.join(' ') || nellApp.length + ' indirizzi');
@@ -217,7 +221,7 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const daControllare = nellApp.concat(nelSw).filter(u => !/pdfjs-dist/.test(u));
     const mancanti = daControllare.filter(u => { const p = leggiIndirizzo(u); return !p || !filePacchetto(p.nome, p.versione, p.dentro); });
     ok('5. e punta a un file che esiste davvero nel pacchetto di quella versione', !mancanti.length, mancanti.join(' ') || daControllare.length + ' controllati');
-    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 6,
+    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 7,
        lib.length + ' nell\'app, ' + nelSw.length + ' in sw.js');
   });
 
@@ -227,11 +231,11 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const p = await apri(viaggio(), { sw: true });
     await p.evaluate(() => navigator.serviceWorker.ready);
     let tenute = 0;
-    for (let i = 0; i < 60 && tenute < 6; i++) {
+    for (let i = 0; i < 60 && tenute < 7; i++) {
       await p.waitForTimeout(500);
       tenute = await p.evaluate(async c => (await (await caches.open(c)).keys()).length, CACHE_LIBRERIE);
     }
-    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 6, tenute + ' in ' + CACHE_LIBRERIE);
+    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 7, tenute + ' in ' + CACHE_LIBRERIE);
     // via la rete: ne' l'app ne' le CDN rispondono
     srv.stato.giu = true; srv.stato.cdnGiu = true;
     await p.reload({ waitUntil: 'domcontentloaded' });
@@ -331,10 +335,9 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const restano = ['renderTimeline', 'Sortable', 'searchFlights', 'saveFl'].filter(n => HTML.includes(n));
     ok('9. nessun riferimento a renderTimeline, Sortable, searchFlights e saveFl', !restano.length, restano.join(', '));
     const h = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
-    const i = HTML.indexOf('<div class="modal" id="mImport">'), j = HTML.indexOf('<div class="modal', i + 10);
     const a = HTML.search(/\n(async )?function importTrip\(/), resto = HTML.slice(a + 1), b = resto.search(/\n(async )?function [A-Za-z_$]/);
-    const ora = { mImport: i > 0 ? h(HTML.slice(i, j)) : '', importTrip: a > 0 ? h(resto.slice(0, b)) : '' };
-    ok('9. mImport e importTrip ci sono ancora, e sono come prima', ora.mImport === INTATTI.mImport && ora.importTrip === INTATTI.importTrip, JSON.stringify(ora));
+    const ora = { mImport: HTML.includes('<div class="modal" id="mImport">'), importTrip: a > 0 ? h(resto.slice(0, b)) : '' };
+    ok('9. mImport c\'è ancora e importTrip è come prima', ora.mImport && ora.importTrip === INTATTI.importTrip, JSON.stringify(ora));
     const an = await funzioniMancanti(HTML, browser);
     ok('9. nessuna funzione chiamata ma non definita', !an.mancanti.length && an.chiamate > 3000,
        an.mancanti.map(x => x.nome + ' (' + x.righe.join(',') + ')').join(' ') || `${an.chiamate} chiamate, ${an.definiti} nomi`);

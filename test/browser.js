@@ -83,7 +83,7 @@ async function apriBrowser(opzioni = {}) {
  * diretta, che e' quella che resta quando il ponte non c'e'. Che il ponte
  * funzioni lo prova test/prova-ponte.js, che se lo intercetta da solo. */
 const FUORI_AMMESSI = new Set([
-  'unpkg.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'
+  'unpkg.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'fonts.googleapis.com', 'fonts.gstatic.com'
 ]);
 
 async function recinta(page) {

@@ -859,6 +859,10 @@ const oreFinte = (data) => {
     await page2.goto(APP, { waitUntil: 'domcontentloaded' });
     await page2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await page2.waitForTimeout(1400);
+    /* Una vecchia si rifa' dopo aver cercato la citta' sulla mappa, e senza
+       ponte le domande a Nominatim vanno in fila, una al secondo (vedi
+       fetchGeo): si aspetta che arrivi, fino a qualche secondo. */
+    if (vecchiaDiOre > 1) await page2.waitForFunction(() => { const t = T(), k = Object.keys(t.weather)[0]; return t.weather[k] && t.weather[k].tempMax !== 9; }, null, { timeout: 6000 }).catch(() => {});
     const dopo = await page2.evaluate(() => {
       const t = T(), k = Object.keys(t.weather)[0];
       /* Se la funzione non c'è — il codice di prima non ce l'aveva — la prova

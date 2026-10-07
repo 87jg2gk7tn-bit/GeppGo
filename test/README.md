@@ -16,6 +16,9 @@ esattamente il momento in cui servivano.
 
 ## Cosa serve per lanciarle
 
+- **`npm install` deve raggiungere `cdn.sheetjs.com`**: SheetJS (i file di
+  Excel) si installa da lì, perché su npm è ferma a una versione con falle
+  note. Senza, `prova-importa` e `prova-avvio` non trovano il pacchetto.
 - **Node** e **Chromium**. Il browser si prende da `CHROMIUM_PATH` se c'è,
   altrimenti da dove l'ha messo Playwright.
 - **Postgres**, solo per le prove sul database: si dice dove sta con le
