@@ -860,7 +860,7 @@ qualcuno che risponde".
     arriva vuota perché i token sono finiti riprova una volta col doppio.
     `/prova` dice se il modello ragiona; se succede spesso, la variabile
     `OPZIONI_MODELLO` del Worker passa al modello le opzioni per spegnerlo
-    (`GUIDA-AI.md` §6), senza toccare il codice.
+    (`GUIDA-AI.md` §2g), senza toccare il codice.
   - **Il Worker si prova in Node** importandolo da un indirizzo `data:`, con
     un modello finto al posto del collegamento `AI` e un `fetch` finto al
     posto di Tavily (`prova-ponte-ai`). Nel file del Worker niente export con

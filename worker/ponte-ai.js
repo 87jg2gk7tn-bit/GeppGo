@@ -395,7 +395,7 @@ async function prova(env, url) {
     }
   };
   if (!env.AI || typeof env.AI.run !== 'function') {
-    righe.push('ASSISTENTE: NON FUNZIONA ❌ manca il collegamento «AI» del Worker (Impostazioni → Collegamenti → Workers AI, nome AI)');
+    righe.push('ASSISTENTE: NON FUNZIONA ❌ manca il collegamento «AI» del Worker (Bindings → Add binding → Workers AI, nome AI: GUIDA-AI.md §2d)');
   } else {
     await chiedi('ASSISTENTE', [{ role: 'user', content: 'Rispondi in italiano con una frase sola: cosa vale la pena vedere a Lisbona?' }]);
     if (url.searchParams.get('foto') === '1') {

@@ -343,7 +343,7 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
   await prova('7', async () => {
     const VIETATE = /\bpasso\b|\bguida\b|\bponte\b|\bworker\b|supabase/i;
     const TECNICI = ['new row violates row-level security policy', 'Bucket not found', 'relation "public.raccolte" does not exist',
-      'API key not valid. Please pass a valid API key.', 'models/gemini-x is no longer available', 'Failed to fetch',
+      'API key not valid. Please pass a valid API key.', 'models/modello-x is no longer available', 'Failed to fetch',
       'Invalid login credentials', 'User already registered', 'Email not confirmed', 'weird PGRST301 server error'];
     const trovate = [];
     for (const [l, loc] of [['it', 'it-IT'], ['en', 'en-US'], ['es', 'es-ES'], ['fr', 'fr-FR'], ['pt', 'pt-PT']]) {

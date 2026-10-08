@@ -9319,7 +9319,7 @@ function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filte
    testo: allora partono le prime pagine come immagini (vedi leggiPDF). E se
    e' lunghissimo se ne prende solo l'inizio, e lo si dice. */
 const PDF_CDN='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/';
-const PDF_MAX_PAGINE=40,PDF_MAX_CARATTERI=24000,PDF_PAGINE_FOTO=3,PDF_LATO_FOTO=1100;
+const PDF_MAX_PAGINE=40,PDF_MAX_CARATTERI=24000,PDF_PAGINE_FOTO=3,PDF_LATO_FOTO=1100,PDF_FOTO_MAX_CARATTERI=1000000;
 let pdfLibPronta=null;
 /* Si scarica solo quando serve davvero: chi non allega mai un PDF non paga
    mezzo megabyte di libreria a ogni apertura dell'app. */
@@ -9375,6 +9375,10 @@ async function leggiPDF(file){
      numeri, come fa col testo: la privacy lo dice. */
   const immagini=[];
   if(vuoto){
+    /* Le pagine insieme restano sotto un mega di testo base64: il ponte non
+       accetta richieste piu' grandi. Una pagina fitta prova prima con meno
+       qualita', e se non ci sta ci si ferma alle pagine gia' prese. */
+    let totale=0;
     for(let p=1;p<=Math.min(doc.numPages,PDF_PAGINE_FOTO);p++){
       try{
         const pagina=await doc.getPage(p);
@@ -9383,7 +9387,10 @@ async function leggiPDF(file){
         const c=document.createElement('canvas');c.width=Math.max(1,Math.round(v.width));c.height=Math.max(1,Math.round(v.height));
         const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
         await pagina.render({canvasContext:ctx,viewport:v}).promise;
-        immagini.push(c.toDataURL('image/jpeg',0.72).split(',')[1]);
+        let dati=c.toDataURL('image/jpeg',0.72).split(',')[1];
+        if(totale+dati.length>PDF_FOTO_MAX_CARATTERI)dati=c.toDataURL('image/jpeg',0.45).split(',')[1];
+        if(totale+dati.length>PDF_FOTO_MAX_CARATTERI)break;
+        immagini.push(dati);totale+=dati.length;
       }catch(e){console.log('Pagina del PDF non disegnata:',e);}
     }
   }
@@ -10167,8 +10174,6 @@ ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
       attesa:'locale',maxToken:1500,messaggi:aiMemoria(t).slice(-14)});
     attesa.remove();
     if(!r.ok){if(r.messaggio)ui.msg('ai','\u26a0\ufe0f '+r.messaggio);return;}
-    const nota=aiNotaRicerca(r.ricerca);
-    if(nota)ui.msg('ai nota','\u2139\ufe0f '+nota);
     let reply=r.testo;
     if(!reply){ui.msg('ai','Non ho capito, prova a dirlo in altre parole.');return;}
     /* Rete di sicurezza: se la frase era un ordine che il riconoscitore non ha
@@ -10189,6 +10194,11 @@ ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
       el.after(wrap);
       if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;
     }
+    /* Se la ricerca sul web non c'e' stata lo si dice sotto la risposta: e'
+       una nota su quella risposta, e in fondo alla chat e' dove si legge.
+       Sopra, con la chat che scorre in fondo, restava fuori vista. */
+    const nota=aiNotaRicerca(r.ricerca);
+    if(nota){ui.msg('ai nota','\u2139\ufe0f '+nota);if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;}
   }catch(e){attesa.remove();console.log('Assistente non raggiungibile:',e);ui.msg('ai','\u26a0\ufe0f '+tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'));}
 }
 
@@ -22338,7 +22348,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-08 01:25';
+const VERSIONE_APP='2026-10-08 16:08';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
