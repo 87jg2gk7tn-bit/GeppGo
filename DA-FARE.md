@@ -22,20 +22,28 @@ più: per conservare i dati non si esce dall'Europa.
 
 Restano due cose, e non sono codice:
 
+- ⚠️ **Pubblicare il nuovo ponte dell'assistente** (`worker/ponte-ai.js`,
+  ottobre 2026), con il collegamento «AI» e il secret `TAVILY_KEY`: i passi,
+  dal telefono, sono in `GUIDA-AI.md` §2. Finché su Cloudflare gira il ponte
+  vecchio l'app funziona lo stesso (il formato è uguale), ma le richieste
+  vanno ancora al servizio di prima mentre `privacy.html` descrive già quello
+  nuovo: va fatto subito, non «quando capita». Dopo, dal Worker si cancella
+  il vecchio secret con la chiave del servizio di prima (l'unico oltre a
+  `TAVILY_KEY`), e quella chiave si revoca da Google AI Studio.
 - **Far leggere a un avvocato la privacy policy**, in particolare la parte
   «A raccolta». Il riassunto pronto da mandargli, con le sei garanzie
   strutturali e le domande, sta in fondo a `PRIVACY-STORE.md` — dove ora c'è
   anche la domanda su Supabase Inc., che è una società statunitense pur
   tenendo i server in Svezia.
-- ⚠️ **Rileggere le condizioni dell'API di Gemini per l'Europa** (ottobre
-  2026; `ai.google.dev/gemini-api/terms`, che dall'ambiente di lavoro non si
-  apriva). Da quello che si trova cercando, chi rende un'app disponibile a
-  persone nello Spazio economico europeo, in Svizzera o nel Regno Unito **può
-  usare solo i servizi a pagamento**, e a chi sta in quei paesi Google applica
-  anche sul gratuito le regole sui dati del pagamento. Se è così: attivare la
-  fatturazione sul progetto della chiave (zero codice, `GUIDA-AI.md` 7a), e lo
-  stesso giorno togliere da `privacy.html` e `PRIVACY-STORE.md` la frase
-  sull'uso dei dati per migliorare i prodotti, che non sarebbe più vera.
+
+~~**Le condizioni del servizio dell'assistente per l'Europa**~~ ✅ **risolto
+l'8 ottobre cambiando servizio.** Sul piano gratuito quel servizio non era
+permesso a chi offre un'app a persone in Europa, Svizzera e Regno Unito, e
+pagare non era la strada scelta. Adesso il modello è Gemma 4 su Cloudflare
+Workers AI (gratis, niente addestramento sui dati) e la ricerca sul web è
+Tavily (le sue condizioni gli permettono di usare le ricerche per migliorare
+i suoi modelli: a lui vanno solo posti, destinazione e date, e la privacy lo
+dice). Il perché delle scelte è in `GUIDA-AI.md` §1.
 
 **Come si rilancia lo schema**, quando servirà di nuovo: Supabase → **SQL
 Editor** → **New query** → incolla **tutto** il contenuto di
@@ -786,10 +794,13 @@ qualcuno che risponde".
   (blocco `L'ASSISTENTE: UNA PORTA SOLA`; il quadro completo in
   `GUIDA-AI.md` §3), e in tutto il file c'è **una** `fetch` verso il ponte,
   dentro `aiRichiesta`: `prova-ai` lo conta. Le cose da sapere:
-  - **Il ponte manda la quota finita come 502**, col messaggio di Google
-    dentro («RESOURCE_EXHAUSTED», «Please retry in 21s»). Un 5xx si ritenta;
-    una quota finita no, perché insistere allunga la coda: `aiTipoErrore` la
-    riconosce dal testo e la tratta come un 429.
+  - **La quota finita ha un codice suo.** Il ponte nuovo risponde 429 con
+    `error.type: 'quota_finita'` e `riprova_alle` (la prossima mezzanotte
+    UTC, quando Workers AI ridà i Neuron del giorno), e l'app dice l'ora del
+    ritorno nell'ora del telefono. Il ponte vecchio la mandava come 502 col
+    messaggio del servizio dentro: `aiTipoErrore` la riconosce ancora dal
+    testo e la tratta come un 429. Un 5xx si ritenta; una quota finita no,
+    perché insistere allunga la coda.
   - **Il tempo massimo vale per tentativo**, e un tempo scaduto non si
     ritenta: se il modello è così lento, una seconda attesa uguale non la
     vuole nessuno.
@@ -815,6 +826,45 @@ qualcuno che risponde".
     non parte niente si contano gli eventi `request`. E i trenta secondi li fa
     passare l'orologio finto (`page.clock.install()` e `fastForward`), non
     l'attesa vera.
+  - **Le funzioni che non hanno bisogno di un modello non lo usano.** Gli
+    orari di apertura e il controllo dei posti di una lista incollata
+    passavano dalla ricerca web dell'assistente: adesso sono OpenStreetMap
+    (`orariOsm`/`orariDelGiorno`, `verificaPosti` con `geoSearch`). Gratis,
+    senza quota, e mandano fuori solo il nome del posto. Il campo
+    `opening_hours` si legge nelle forme che si trovano quasi sempre; per le
+    altre (feste, alba e tramonto, commenti) si tiene la scritta originale, e
+    un giorno che nessuna regola nomina, per OpenStreetMap, è chiuso.
+  - **La ricerca sul web non la decide l'app e non la scrive il modello.**
+    L'app manda l'elenco di cosa si può cercare (`aiRicercaPer`: posti che
+    stanno sulla mappa, destinazione, date; fuori le voci col nome di un
+    compagno, un'email, un telefono, un numero lungo). In chat il modello
+    chiede di cercare con una riga `CERCA: argomento | luogo | data`, e la
+    domanda per Tavily la compone il ponte solo con pezzi dell'elenco e un
+    argomento tradotto da una lista fissa: anche se il modello ci mette un
+    nome e un telefono, a Tavily non arrivano. Due prove lo controllano, una
+    sul ponte e una sull'app.
+  - **La `MAPPA_APP` intera erano 28 KB a ogni messaggio.** Sul piano
+    gratuito ogni token conta: adesso parte l'indice (la prima frase di ogni
+    voce, 4 KB) e le voci complete solo quando la domanda è sull'uso
+    dell'app, scelte con parole chiave nelle cinque lingue
+    (`mappaPerDomanda`). Una voce nuova della mappa va aggiunta anche in
+    `MAPPA_CHIAVI`, se no si vede solo nell'indice.
+  - **Un PDF scansionato parte come immagini** (le prime tre pagine, 1100
+    px, JPEG): da un'immagine nomi e numeri non si tolgono, e la privacy lo
+    dice. Le immagini stanno sotto il limite del ponte (4 per richiesta, 1,1
+    milioni di caratteri l'una, 1,5 MB in tutto): sul piano gratuito un
+    Worker ha 10 ms di calcolo, e un corpo enorme se li mangerebbe.
+  - **Se Gemma 4 su Workers AI «ragioni» prima di rispondere non si è
+    potuto verificare da qui** (documenti di Cloudflare non raggiungibili).
+    Il ponte si difende: toglie il ragionamento dal testo, e se la risposta
+    arriva vuota perché i token sono finiti riprova una volta col doppio.
+    `/prova` dice se il modello ragiona; se succede spesso, la variabile
+    `OPZIONI_MODELLO` del Worker passa al modello le opzioni per spegnerlo
+    (`GUIDA-AI.md` §6), senza toccare il codice.
+  - **Il Worker si prova in Node** importandolo da un indirizzo `data:`, con
+    un modello finto al posto del collegamento `AI` e un `fetch` finto al
+    posto di Tavily (`prova-ponte-ai`). Nel file del Worker niente export con
+    nome oltre al `default`: Cloudflare può rifiutare il deploy.
   - **SheetJS non si scarica più in sottofondo**: pesa più di tutte le altre
     librerie insieme e serve solo a chi importa. Sta in `LIBRERIE_AL_MOMENTO`
     di `sw.js` (che la porta da una versione all'altra della cache, ma non la
