@@ -570,7 +570,7 @@ chiede, e la sua scelta vince.
 ## L'assistente
 
 ```sh
-node test/prova-ai.js   # 87 controlli, col ponte dell'assistente finto
+node test/prova-ai.js   # 88 controlli, col ponte dell'assistente finto
 ```
 
 Le dodici chiamate all'assistente passano da una porta sola, `chiediAI`,
@@ -609,7 +609,7 @@ Due cose imparate scrivendola:
   anche che ora è, e dove: è così che si prova «torna disponibile domani
   alle 02:00».
 
-Sul codice di prima la prova passa 51 controlli su 87, e quelli che
+Sul codice di prima la prova passa 51 controlli su 88, e quelli che
 falliscono falliscono per quello che l'app fa: dove una funzione nuova
 manca, la prova guarda la scritta d'attesa che c'era anche prima. La 21 (la
 foto senza GPS) passa anche lì: quella protezione c'era già, e la prova la
