@@ -755,8 +755,14 @@ function misureJpeg(buf) {
     });
     ok('17. lunedì la Torre è chiusa (quella vicina alla tappa, non la copia a Porto), il museo pure; martedì apre alle 10:00',
        JSON.stringify(esito) === JSON.stringify([['Torre di Belém: chiuso il lunedì', 'Museu Nacional do Azulejo: chiuso il lunedì'], ['Torre di Belém: 10:00-18:30']]), JSON.stringify(esito));
-    ok('17. a OpenStreetMap va il nome del posto con la città, e si chiede il campo degli orari', chieste.length === 3
-       && chieste.every(c => c.extratags === '1') && chieste[0].q === 'Torre di Belém, Lisbona' && chieste[1].q === 'Museu Nacional do Azulejo, Lisbona', JSON.stringify(chieste));
+    /* Si guardano solo le domande che chiedono gli orari (extratags): l'app
+       intanto puo' cercare per conto suo la citta' del meteo, e quando quella
+       domanda arrivi dipende dalla macchina (sul server delle prove arrivava
+       dopo, e la prova contava una domanda in piu'). */
+    const perOrari = chieste.filter(c => c.extratags === '1');
+    ok('17. a OpenStreetMap va il nome del posto con la città, e si chiede il campo degli orari', perOrari.length === 3
+       && perOrari[0].q === 'Torre di Belém, Lisbona' && perOrari[1].q === 'Museu Nacional do Azulejo, Lisbona' && perOrari[2].q === 'Torre di Belém, Lisbona'
+       && chieste.every(c => c.extratags === '1' || !/Bel[ée]m|Azulejo/.test(c.q)), JSON.stringify(chieste));
     ok('17. e l\'assistente non viene chiamato', viste.length === 0, viste.length + ' richieste');
     const casi = await p.evaluate(() => typeof orariDelGiorno !== 'function' ? ['orariDelGiorno non c\'è'] : [
       orariDelGiorno('Mo-Fr 09:00-18:00; Sa 10:00-14:00; Su off', new Date('2026-11-07T12:00:00')),
