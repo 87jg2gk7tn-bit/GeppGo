@@ -681,12 +681,16 @@ function misureJpeg(buf) {
       return (await p.$$eval('#chatMsgs .msg.nota', x => x.map(e => e.textContent.trim()))).slice(prima);
     };
     const nc = await note({ testo: 'Apre alle 10:00, credo.', ricerca: 'non_configurata' }, 'A che ora apre la Torre di Belém?');
+    /* La riga sta sotto la risposta: sopra, con la chat che scorre in fondo,
+       restava fuori vista. */
+    const inFondo = await p.$eval('#chatMsgs', b => { const ms = [...b.querySelectorAll('.msg')]; return ms.slice(-2).map(m => m.className + ': ' + m.textContent.trim().slice(0, 30)); });
     const cf = await note({ testo: 'Di solito apre alle 10:00.', ricerca: 'crediti_finiti' }, 'E il Mosteiro dos Jerónimos?');
     const ft = await note({ testo: 'Apre alle 10:00 (torrebelem.gov.pt).', ricerca: 'fatta' }, 'E domenica?');
     const vecchio = await note({ testo: 'Apre alle 10:00.' }, 'E lunedì?');
     const risposte = await testoChat(p);
     ok('14. ricerca non attiva: la risposta arriva, con una riga che lo dice', nc.length === 1 && /La ricerca sul web non è attiva: rispondo con quello che so/.test(nc[0])
        && /Apre alle 10:00, credo/.test(risposte), JSON.stringify(nc));
+    ok('14. e la riga sta sotto la risposta, in fondo alla chat, dove si legge', inFondo.length === 2 && /Apre alle 10:00, credo/.test(inFondo[0]) && /\bnota\b/.test(inFondo[1]), JSON.stringify(inFondo));
     ok('14. crediti del mese finiti: idem', cf.length === 1 && /Le ricerche sul web di questo mese sono finite/.test(cf[0]), JSON.stringify(cf));
     ok('14. ricerca fatta, o un ponte vecchio che non lo dice: nessuna riga in più', !ft.length && !vecchio.length, JSON.stringify([ft, vecchio]));
     await ponteFinto(p, [{ testo: '{"prenotare":"consigliata","giorni_prima":2,"motivo":"In alta stagione c\'è coda.","sito":""}', ricerca: 'non_riuscita' }]);
