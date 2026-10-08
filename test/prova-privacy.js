@@ -71,9 +71,9 @@ const path = require('path');
     'commons.wikimedia.org': /Wikimedia/i, 'www.wikidata.org': /Wikidata/i,
     'cdn.jsdelivr.net': /jsDelivr/i, 'unpkg.com': /unpkg/i,
     'cdn.sheetjs.com': /SheetJS/i, 'fonts.gstatic.com': /Google Fonts/i,
-    /* Il ponte dell'assistente non e' il fornitore: chi legge le richieste
-       e' Google, e la pagina lo deve chiamare per nome. */
-    'workers.dev': /Google Gemini/i,
+    /* Il ponte dell'assistente non e' il fornitore: chi elabora le richieste
+       e' Workers AI di Cloudflare, e la pagina lo deve chiamare per nome. */
+    'workers.dev': /Cloudflare Workers AI/i,
     /* LE COPIE DELLA MAPPA TENUTE SU DA ALTRI. Non sono un dettaglio
        tecnico: quando il ponte non risponde è il TELEFONO a chiamarle, e
        allora vedono l'indirizzo IP di chi usa l'app. Vanno nominate una per
@@ -88,6 +88,27 @@ const path = require('path');
     .map(([host]) => host);
   ok('ogni servizio a cui l\'app parla è dichiarato', scordati.length === 0,
      scordati.join(', ') || 'nessuno dimenticato');
+
+  /* ── e quelli a cui parla il ponte dell'assistente ─────────────────────────
+     Tavily lo chiama il Worker, non l'app: guardando solo l'HTML non si
+     vedrebbe mai. Ogni indirizzo scritto nel ponte deve stare nella pagina,
+     e per Tavily la pagina deve dire anche cosa le sue condizioni gli
+     permettono di farne. */
+  const ponte = fs.readFileSync(path.join(RADICE, 'worker', 'ponte-ai.js'), 'utf8');
+  /* L'indirizzo dell'app stessa ci sta come origine ammessa: non e' un
+     servizio a cui si manda qualcosa. */
+  const dalPonte = [...new Set([...ponte.matchAll(/['"`]https:\/\/([a-z0-9.-]+)/gi)].map(m => m[1]))]
+    .filter(h => h !== '87jg2gk7tn-bit.github.io');
+  const nomePonte = { 'api.tavily.com': /Tavily/ };
+  const ignoti = dalPonte.filter(h => !nomePonte[h]);
+  const taciuti = dalPonte.filter(h => nomePonte[h] && !nomePonte[h].test(pag));
+  ok('ogni servizio a cui parla il ponte dell\'assistente è dichiarato', dalPonte.length > 0 && !ignoti.length && !taciuti.length,
+     (ignoti.length ? 'sconosciuti: ' + ignoti.join(', ') : '') + (taciuti.length ? ' non dichiarati: ' + taciuti.join(', ') : '') || dalPonte.join(', '));
+  ok('e la pagina dice che le condizioni di Tavily gli permettono di usare le ricerche per migliorare i suoi modelli',
+     /condizioni di Tavily gli permettono[^.]*migliorare i suoi modelli/i.test(pag));
+  ok('e che a Tavily non vanno nomi di persone, email o telefoni',
+     /A Tavily arriva[^.]*solo una riga di ricerca[^:]*:[^.]*mai nomi di persone, email, telefoni/i.test(pag));
+  ok('e Gemini non c\'è più', !/Gemini/i.test(pag));
 
   /* ── e anche quello che resta sul telefono ───────────────────────────────
      La cache delle ricerche vicine tiene da parte per un giorno il punto da

@@ -133,12 +133,20 @@ sei: il tasto avvisa che senza posizione non può dire agli altri dove
 sei, e non manda niente.</p>
 
 <h3>Quello che chiedi all'assistente</h3>
-<p>L'assistente di GeppGo è <strong>Google Gemini</strong>, il modello di
-intelligenza artificiale di Google. Le richieste non vanno dal tuo telefono a
-Google: passano da un ponte di GeppGo (un piccolo programma su Cloudflare che
-custodisce la chiave d'accesso), che le gira a Gemini e ti riporta la
+<p>L'assistente di GeppGo è <strong>Gemma</strong>, un modello di
+intelligenza artificiale aperto (l'ha fatto Google e l'ha pubblicato perché
+chiunque possa farlo girare), che gira su <strong>Cloudflare Workers
+AI</strong>: le richieste vanno a Cloudflare, non a Google. Non partono
+direttamente dal tuo telefono: passano da un ponte di GeppGo (un piccolo
+programma, anche lui su Cloudflare), che le gira al modello e ti riporta la
 risposta. Il ponte non tiene da parte quello che gli passa, e l'app non ci
 aggiunge né la tua email né il tuo account.</p>
+<p>Le <strong>condizioni di Workers AI</strong> dicono che Cloudflare non usa
+quello che gli mandiamo — domande, foto, risposte — per addestrare modelli né
+per migliorare i suoi servizi o quelli di altri, e che lo tiene da parte solo
+se chi usa il servizio lo mette in uno dei suoi archivi: il ponte non lo fa.
+Le richieste vengono elaborate sulla rete di Cloudflare, che può farlo
+anche fuori dall'Europa.</p>
 <p>All'assistente arriva solo quello che serve alla richiesta che fai:</p>
 <ul>
 <li><strong>in chat</strong>, quello che scrivi, gli ultimi messaggi della
@@ -155,17 +163,36 @@ riconosce come email, numero di carta, IBAN o numero di telefono (dalla mail
 dell'albergo i telefoni restano, perché serve quello della struttura). È un
 filtro automatico e qualcosa può sfuggirgli; i nomi delle persone possono
 restare: in un itinerario servono a creare i compagni del viaggio;</li>
-<li><strong>per i consigli e le ricerche sul web</strong> (orari di apertura,
-se serve prenotare), i nomi dei posti, la destinazione e i gusti del
-gruppo.</li>
+<li><strong>le pagine di un PDF scansionato</strong> (un PDF fatto di
+fotografie, senza testo dentro): le prime tre pagine partono come immagini,
+rimpicciolite. Da un'immagine il telefono non può togliere email, telefoni o
+numeri come fa col testo: se il PDF li contiene, arrivano anche quelli;</li>
+<li><strong>per i consigli</strong>, i nomi dei posti, la destinazione e i
+gusti del gruppo.</li>
 </ul>
-<p>GeppGo oggi usa il <strong>piano gratuito</strong> dell'API di Gemini.
-Con questo piano, <strong>Google può usare le richieste e le risposte per
-migliorare i suoi prodotti</strong>, compresi i suoi modelli di intelligenza
-artificiale, e <strong>possono essere lette da revisori</strong>: persone
-incaricate da Google di controllarne la qualità (Google dice di staccarle
-prima dall'account che le ha mandate). Valgono le condizioni di Google per
-l'API di Gemini e la privacy di Google.</p>
+
+<h3>Le ricerche sul web</h3>
+<p>Per i fatti che cambiano — se un posto va prenotato e, in chat, orari,
+eventi o chiusure di adesso — l'assistente cerca sul web con
+<strong>Tavily</strong>, un motore di ricerca fatto per gli assistenti di
+intelligenza artificiale. A Tavily arriva <strong>solo una riga di ricerca,
+fatta di nomi di posti, la destinazione del viaggio, una data e
+l'argomento</strong> (per esempio «Torre di Belém Lisbona opening hours
+2026-11-03»): mai nomi di persone, email, telefoni, quello che scrivi in chat
+o altri dati personali. La riga la compone il ponte, solo con i posti del
+viaggio che stanno sulla mappa e che non contengono il nome di un compagno;
+una prova automatica controlla che sia così a ogni modifica dell'app. La
+ricerca la fa il ponte: a Tavily non arriva l'indirizzo IP del tuo
+telefono.</p>
+<p><strong>Le condizioni di Tavily gli permettono di conservare le ricerche
+e i risultati e di usarli per migliorare i suoi modelli</strong>, anche
+attraverso i suoi fornitori di intelligenza artificiale. Tavily può trattarle
+anche fuori dall'Europa. Se la ricerca non c'è o ha finito i crediti del
+mese, l'assistente risponde lo stesso con quello che sa, e lo dice.</p>
+<p>Gli <strong>orari di apertura</strong> delle tappe e il controllo dei posti
+di una lista incollata invece non passano dall'assistente: li cerchiamo sulla
+mappa di OpenStreetMap (vedi la tabella qui sotto), con il nome del posto e
+la città.</p>
 <div class="box">
 <p><strong>Non mandare all'assistente dati sensibili</strong>: salute,
 documenti d'identità, numeri di carta, password e codici d'accesso, o cose
@@ -209,8 +236,9 @@ serve per fare la sua parte.</p>
 <table>
 <tr><th>Servizio</th><th>Cosa riceve</th><th>Per fare cosa</th></tr>
 <tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto</td><td>Database e archivio: è il cloud dell'app</td></tr>
-<tr><td>Il ponte IA di GeppGo, su Cloudflare, e da lì <b>Google Gemini</b></td><td>Quello che chiedi all'assistente, con il pezzo di viaggio che serve a rispondere, e le foto che gli fai riconoscere (vedi «Quello che chiedi all'assistente»). Il ponte vede anche l'indirizzo IP</td><td>Rispondere in chat, proporre e sistemare tappe, leggere un itinerario o la mail di un albergo, riconoscere un posto da una foto</td></tr>
-<tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino</td></tr>
+<tr><td>Il ponte IA di GeppGo e <b>Cloudflare Workers AI</b>, dove gira il modello Gemma</td><td>Quello che chiedi all'assistente, con il pezzo di viaggio che serve a rispondere, le foto che gli fai riconoscere e le pagine dei PDF scansionati (vedi «Quello che chiedi all'assistente»). Il ponte vede anche l'indirizzo IP</td><td>Rispondere in chat, proporre e sistemare tappe, leggere un itinerario o la mail di un albergo, riconoscere un posto da una foto</td></tr>
+<tr><td><b>Tavily</b>, attraverso il ponte IA</td><td>Solo una riga di ricerca: nomi di posti, la destinazione, una data e l'argomento — <b>non</b> chi sei né il tuo indirizzo IP (vedi «Le ricerche sul web»)</td><td>Le ricerche sul web dell'assistente: se un posto va prenotato e, in chat, i fatti che cambiano</td></tr>
+<tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino, gli orari di apertura delle tappe, il controllo dei posti di una lista incollata</td></tr>
 <tr><td>FOSSGIS (routing.openstreetmap.de), il servizio dei percorsi sulla mappa di OpenStreetMap</td><td>Le coordinate di due tappe del viaggio alla volta — <b>non</b> dove sei tu</td><td>Il tempo vero a piedi, in bici e in auto fra una tappa e l'altra della time-table. La risposta resta nel telefono, così non si chiede due volte</td></tr>
 <tr><td>Copie della mappa OpenStreetMap tenute su da altri: <b>kumi.systems</b> (Austria), <b>private.coffee</b> (Austria), <b>maps.mail.ru</b> (Russia)</td><td>Cosa stai cercando e un punto di una griglia di circa 200 metri. Se la richiesta parte dal telefono — cioè quando il ponte non risponde — vedono anche l'indirizzo IP</td><td>Gli stessi dati della mappa, quando il server principale non risponde. Senza di loro, quando quello è in coda l'app non trova niente</td></tr>
 <tr><td>Il ponte della mappa, su Supabase</td><td>Cosa stai cercando (un bagno, un bancomat, un indirizzo, il nome di un albergo) e, quando serve, un punto di una griglia di circa 200 metri — <b>non</b> dove sei di preciso. Niente che dica chi sei.</td><td>Chiedere alla mappa una volta sola per tutti, invece che da ogni telefono</td></tr>
@@ -264,9 +292,9 @@ GeppGo si trovano a <strong>Stoccolma, in Svezia</strong> (regione
 <code>eu-north-1</code>): dentro lo Spazio economico europeo. La tua email, i
 viaggi e le foto restano lì, e non vengono trasferiti fuori dall'Europa per
 essere conservati.</p>
-<p>Le richieste all'assistente invece le elabora Google, che può farlo anche
-fuori dall'Europa, con le regole scritte in «Quello che chiedi
-all'assistente».</p>
+<p>Le richieste all'assistente invece le elabora Cloudflare, e le ricerche
+sul web Tavily: tutti e due anche fuori dall'Europa, con le regole scritte in
+«Quello che chiedi all'assistente» e «Le ricerche sul web».</p>
 </div>
 
 <h2>Per quanto tempo</h2>

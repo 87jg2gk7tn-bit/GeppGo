@@ -138,7 +138,10 @@ Stessa sostanza, nomi diversi:
 - **File e documenti**: il testo dei file che si fanno leggere all'assistente
   (un itinerario, il PDF della lista per la valigia, la mail di un albergo),
   da cui il telefono toglie prima email, numeri di carta, IBAN e telefoni.
-  Il file in sé non esce: il testo si tira fuori sul telefono.
+  Il file in sé non esce: il testo si tira fuori sul telefono. **Un PDF
+  scansionato** (pagine fotografate, senza testo) invece parte come immagini
+  delle prime tre pagine, rimpicciolite: da un'immagine il telefono non può
+  togliere niente, quindi lì può esserci anche un nome o un numero.
 - **Foto e video → Foto**, anche: la foto di un posto che si fa riconoscere
   all'assistente, e lo screenshot di un reel. Va una copia ridisegnata, senza
   i dati nascosti del file (niente punto GPS).
@@ -147,18 +150,23 @@ Stessa sostanza, nomi diversi:
 - **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori
-elencati nella privacy policy (Supabase, Google Gemini attraverso il ponte su
-Cloudflare, i servizi di mappe e meteo). Sono responsabili del trattamento
-che lavorano per conto di GeppGo, non compratori di dati.
+elencati nella privacy policy (Supabase, Cloudflare Workers AI attraverso il
+ponte dell'assistente, Tavily per le ricerche sul web, i servizi di mappe e
+meteo). Sono responsabili del trattamento che lavorano per conto di GeppGo,
+non compratori di dati. Per Workers AI le condizioni di Cloudflare lo dicono
+chiaro: niente addestramento e niente miglioramento dei servizi con quello
+che gli mandiamo.
 
-⚠️ **Con una eccezione, finché l'assistente resta sul piano gratuito di
-Gemini.** Su quel piano Google può usare richieste e risposte anche per
-migliorare i suoi prodotti, e farle leggere a dei revisori: non lavora solo
-per conto nostro. Per le schede degli store questo può contare come
-condivisione vera, non come fornitore, e va dichiarato come tale (la privacy
-policy lo dice già). Con la fatturazione attiva sullo stesso progetto
-Google smette di usarle così e il problema sparisce: vedi `DA-FARE.md`, che
-spiega anche perché per un'app usata in Europa conviene farlo comunque.
+⚠️ **Tavily è il caso da guardare.** Le sue condizioni gli permettono di
+conservare le ricerche e i risultati e di usarli per migliorare i suoi
+modelli: non lavora solo per conto nostro, e per le schede degli store può
+contare come condivisione vera. Quello che riceve però è poco e senza
+persone: una riga fatta di nomi di posti, la destinazione, una data e
+l'argomento, composta dal ponte con i soli posti del viaggio che stanno sulla
+mappa (la prova `prova-ai` controlla che non ci finiscano nomi dei compagni,
+email o telefoni). Né un identificativo, né l'IP del telefono: la chiamata la
+fa il ponte. Nella scheda va dichiarato così, come «Other User Content»
+condiviso e non collegato all'utente; la privacy policy lo dice già.
 
 Alla domanda *"l'utente può chiedere la cancellazione?"*: sì, dall'app.
 
@@ -279,7 +287,8 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | A chi parla | Cosa gli manda |
 |---|---|
 | `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni |
-| `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, e da lì Google Gemini, piano gratuito) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
+| `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, `worker/ponte-ai.js`, e da lì il modello Gemma su Cloudflare Workers AI) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni; le prime tre pagine di un PDF scansionato, come immagini. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
+| `api.tavily.com` (dal ponte, mai dal telefono) | Una riga di ricerca fatta di nomi di posti del viaggio, la destinazione, una data e l'argomento: niente persone, email o telefoni. Le condizioni di Tavily gli permettono di conservarla e di usarla per migliorare i suoi modelli |
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |
 | `overpass-api.de`, `overpass.kumi.systems`, `overpass.private.coffee` | Coordinate (su una griglia di ~200 m) |
 | `maps.mail.ru/osm/tools/overpass` (Russia) | Coordinate (su una griglia di ~200 m). **Non è di OpenStreetMap**: è una copia della mappa tenuta su da mail.ru, aggiunta perché è l'unica che risponda con dati aggiornati al giorno. Quando il ponte risponde, la richiesta parte dal nostro server; quando il ponte è giù parte dal telefono, e allora vede anche l'IP |

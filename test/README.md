@@ -570,17 +570,31 @@ chiede, e la sua scelta vince.
 ## L'assistente
 
 ```sh
-node test/prova-ai.js   # 50 controlli, col ponte dell'assistente finto
+node test/prova-ai.js   # 88 controlli, col ponte dell'assistente finto
 ```
 
-Le quattordici chiamate all'assistente passano da una porta sola, `chiediAI`,
+Le dodici chiamate all'assistente passano da una porta sola, `chiediAI`,
 e questa prova la mette alla prova al posto del ponte vero: un ponte finto
 risponde quello che decide la prova, quando lo decide, o mai. Così si vedono
 a comando i casi che col ponte vero capitano a caso: il modello che non
-risponde, il server che inciampa e poi si riprende, la quota finita, il JSON
-fra ``` o mezzo rotto, il doppio tocco, «Annulla». E si guarda cosa parte:
-quante richieste, in che lingua chiedono la risposta, che nessuna nomini un
-modello.
+risponde, il server che inciampa e poi si riprende, la quota finita (con
+l'ora del ritorno, nell'ora di Roma), la richiesta troppo grande, il JSON
+fra ``` o mezzo rotto, il doppio tocco, «Annulla», la ricerca sul web che
+non c'è. E si guarda cosa parte: quante richieste, in che lingua chiedono la
+risposta, che nessuna nomini un modello.
+
+La parte che conta di più è la **13**: un viaggio pieno di quello che a una
+ricerca sul web non deve arrivare (compagni con nome e cognome, «Cena da
+Marco», un telefono, un'email, un numero lungo). Si guarda l'elenco che
+l'app manda al ponte, e poi **la stessa richiesta si passa al ponte vero**
+(`worker/ponte-ai.js`, caricato in Node) con un modello finto che nella riga
+`CERCA` ci mette nome, email e telefono di chi scrive: a Tavily deve
+arrivare solo «Torre di Belém Lisbona opening hours 2026-11-03».
+
+Poi: gli orari e i posti da OpenStreetMap senza assistente (con Nominatim
+finto), i PDF scansionati che partono come immagini (con un pdf.js finto:
+pagine senza testo), la mappa dell'app compatta, la foto di un reel
+ridisegnata e senza il blocco Exif col punto GPS.
 
 Due cose imparate scrivendola:
 
@@ -591,8 +605,34 @@ Due cose imparate scrivendola:
 - **Trenta secondi non si aspettano: si saltano.** Con `page.clock.install()`
   l'orologio della pagina scorre come quello vero finché la prova non lo fa
   saltare avanti (`fastForward`): il tempo massimo e «Annulla» dopo dieci
-  secondi si provano in un attimo.
+  secondi si provano in un attimo. Con `{ time }` e `timezoneId` si decide
+  anche che ora è, e dove: è così che si prova «torna disponibile domani
+  alle 02:00».
 
-Sul codice di prima la prova passa 8 controlli su 50, e quelli che falliscono
-falliscono per quello che l'app fa: dove una funzione nuova manca, la prova
-guarda la scritta d'attesa che c'era anche prima.
+Sul codice di prima la prova passa 51 controlli su 88, e quelli che
+falliscono falliscono per quello che l'app fa: dove una funzione nuova
+manca, la prova guarda la scritta d'attesa che c'era anche prima. La 21 (la
+foto senza GPS) passa anche lì: quella protezione c'era già, e la prova la
+tiene ferma.
+
+## Il ponte dell'assistente
+
+```sh
+node test/prova-ponte-ai.js   # 39 controlli, senza browser
+```
+
+`worker/ponte-ai.js` è il Worker che sta su Cloudflare. Qui gira in Node:
+si carica da un indirizzo `data:` (è un modulo con `export default`), con un
+modello finto al posto del collegamento `AI` di Workers AI e un `fetch` finto
+al posto di Tavily. La prova decide cosa rispondono e guarda cosa ricevono:
+le origini ammesse (anche nel preflight), i limiti (413 senza toccare il
+modello), la traduzione dei formati, il ragionamento tolto e il secondo
+tentativo quando ha mangiato i token, la quota finita (429 con l'ora del
+ritorno), le ricerche di «serve prenotare?» e della chat — fatte solo di
+pezzi dell'elenco, anche se il modello ci mette dei dati personali — e
+Tavily senza chiave, con la chiave sbagliata, senza crediti o giù.
+
+Per la controprova si lancia sul ponte di prima con `PONTE_AI=<file>` (il
+suo codice stava in `GUIDA-AI.md` fino all'ottobre 2026, si ritrova nella
+storia del progetto): lì non ne passa nessuno, 0 su 31 — alcuni gruppi si
+fermano prima di arrivare in fondo.

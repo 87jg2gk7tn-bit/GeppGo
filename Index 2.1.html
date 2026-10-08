@@ -298,6 +298,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .msg.ai{background:var(--surface);border:1px solid var(--line-soft);align-self:flex-start;border-bottom-left-radius:6px;box-shadow:var(--sh-xs)}
 .msg.me{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:6px}
 .msg.typing{color:var(--ink-faint)}
+.msg.nota{font-size:.78rem;color:var(--ink-soft);box-shadow:none;padding:.5rem .8rem}
 .chat-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem}
 .chat-place{display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:var(--brown-tint);border-radius:var(--r-md);padding:.6rem .8rem}
 .chat-place-n{font-weight:700;font-size:.85rem;color:var(--brown-deep)}
@@ -3120,10 +3121,11 @@ if(!window.GEPPGO_PUBLIC_URL&&location.protocol.indexOf('http')===0)
 if(location.hash.indexOf('#join')!==0&&!window.GEPPGO_LINK_EMAIL)window.GEPPGO_SISTEMA_HASH();
 </script>
 <script>
-/* Il ponte su Cloudflare che tiene la chiave al sicuro e traduce verso Gemini.
+/* Il ponte su Cloudflare (worker/ponte-ai.js) che parla con il modello di
+   Workers AI e con la ricerca sul web, e tiene le chiavi lontane da qui.
    L'app continua a parlare "anthropic": chi c'è dall'altra parte lo decide il
-   Worker, non questo file. Come rifarlo da zero, come cambiare motore e cosa
-   serve prima di pubblicare: GUIDA-AI.md, accanto a questo file. */
+   Worker, non questo file. Come pubblicarlo dal telefono, come cambiare
+   modello e cosa serve prima di pubblicare l'app: GUIDA-AI.md. */
 window.GEPPGO_AI_URL = "https://geppgo-ai.merati-giacomo94.workers.dev";
 
 /* ===== ENDPOINT AI =====
@@ -3171,29 +3173,82 @@ function tastoDelTocco(){
   const el=e&&e.target&&e.target.closest?e.target.closest('button'):null;
   return el||null;
 }
-function aiErrore(tipo,dettaglio){
+const AI_FRASI={
+  offline:'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.',
+  tempo:'L\'assistente non ha risposto in tempo: riprova fra poco.',
+  annullata:'Richiesta annullata.',
+  occupato:'L\'assistente è molto richiesto: riprova fra qualche minuto',
+  non_disponibile:'L\'assistente non è disponibile in questo momento: riprova più tardi.',
+  rete:'L\'assistente non è raggiungibile: controlla la rete e riprova.',
+  server:'L\'assistente non ha risposto: riprova fra poco.',
+  json:'La risposta dell\'assistente non si legge: riprova fra poco.',
+  troppo_grande:'La richiesta è troppo grande per l\'assistente: prova con meno testo o con meno pagine.'
+};
+function aiErrore(tipo,dettaglio,riprovaAlle){
   if(dettaglio)console.log('L\'assistente non ha risposto ('+tipo+'):',dettaglio);
-  const frasi={
-    offline:'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.',
-    tempo:'L\'assistente non ha risposto in tempo: riprova fra poco.',
-    annullata:'Richiesta annullata.',
-    occupato:'L\'assistente è molto richiesto: riprova fra qualche minuto',
-    non_disponibile:'L\'assistente non è disponibile in questo momento: riprova più tardi.',
-    rete:'L\'assistente non è raggiungibile: controlla la rete e riprova.',
-    server:'L\'assistente non ha risposto: riprova fra poco.',
-    json:'La risposta dell\'assistente non si legge: riprova fra poco.'
-  };
-  return {ok:false,errore:tipo,messaggio:frasi[tipo]?tv(frasi[tipo]):''};
+  const messaggio=tipo==='quota'?aiMessaggioQuota(riprovaAlle):(AI_FRASI[tipo]?tv(AI_FRASI[tipo]):'');
+  return {ok:false,errore:tipo,messaggio};
 }
-/* Il ponte sa perche' non ha risposto (quota finita, troppe richieste,
-   chiave scaduta, modello ritirato) e lo scrive nel messaggio d'errore,
-   anche quando lo manda come 502: qui lo si mette in una delle tre caselle
-   che contano per chi usa l'app. */
-function aiTipoErrore(status,msg){
+/* La quota gratuita del giorno finisce per tutti insieme, e torna a un'ora
+   precisa: dirla, nell'ora del telefono, e' l'unica cosa utile da sapere.
+   Senza l'ora (un ponte vecchio) resta il «molto richiesto» di sempre. */
+function aiMessaggioQuota(iso){
+  const t=Date.parse(iso||'');
+  if(!isFinite(t))return tv(AI_FRASI.occupato);
+  const quando=new Date(t),ora=quando.toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit'});
+  return new Date().toDateString()===quando.toDateString()
+    ?tv('L\'assistente ha raggiunto il limite di oggi: torna disponibile alle {1}.',ora)
+    :tv('L\'assistente ha raggiunto il limite di oggi: torna disponibile domani alle {1}.',ora);
+}
+/* Il ponte sa perche' non ha risposto e lo dice: quello nuovo con un tipo
+   preciso (quota finita, richiesta troppo grande, origine non ammessa),
+   quello vecchio solo nel testo del messaggio. Qui lo si mette in una delle
+   caselle che contano per chi usa l'app. */
+function aiTipoErrore(status,msg,tipo){
   const m=String(msg||'');
+  if(tipo==='quota_finita')return 'quota';
+  if(status===413||tipo==='troppo_grande')return 'troppo_grande';
   if(status===429||/quota|rate.?limit|RESOURCE_EXHAUSTED|\b429\b|too many requests|retry in/i.test(m))return 'occupato';
   if(status===401||status===403||/API.?key|API_KEY_INVALID|PERMISSION_DENIED|\b40[13]\b|no longer available|NOT_FOUND|not found/i.test(m))return 'non_disponibile';
   return 'server';
+}
+/* Quando la ricerca sul web non c'e' (non attivata, crediti del mese finiti,
+   non ha risposto) l'assistente risponde lo stesso, con quello che sa: e lo
+   si dice, perche' un orario «a memoria» va preso con le pinze. */
+function aiNotaRicerca(stato){
+  const frasi={
+    non_configurata:'La ricerca sul web non è attiva: rispondo con quello che so.',
+    crediti_finiti:'Le ricerche sul web di questo mese sono finite: rispondo con quello che so.',
+    non_riuscita:'La ricerca sul web non ha risposto: rispondo con quello che so.'
+  };
+  return frasi[stato]?tv(frasi[stato]):'';
+}
+/* Quello che la ricerca sul web puo' sapere del viaggio: nomi di posti, la
+   destinazione e le date. Mai persone, mai recapiti. Fra i posti entrano
+   solo quelli che stanno sulla mappa (i luoghi salvati, gli alberghi, le
+   tappe con una posizione): una tappa senza posizione e' spesso un
+   promemoria ("Cena da Marco"), non un posto. E restano fuori le voci che
+   contengono il nome di un compagno, un'email, un telefono o un numero
+   lungo. Il ponte ricontrolla, e compone lui la domanda per il motore di
+   ricerca: da qui parte solo l'elenco di cosa e' ammesso. */
+function aiRicercaPer(t,scopo,luoghiInPiu){
+  const nomi=[];
+  ((t&&t.participants)||[]).forEach(p=>String((p&&p.name)||'').split(/[^\p{L}']+/u).forEach(w=>{if(w.length>=3)nomi.push(w.toLowerCase());}));
+  const conPersona=s=>{const parole=String(s).toLowerCase().split(/[^\p{L}']+/u);return nomi.some(n=>parole.includes(n));};
+  const pulito=s=>{
+    s=String(s||'').replace(/\s+/g,' ').trim();
+    if(!s||s.length>80)return '';
+    if(aiSenzaDatiPersonali(s)!==s||/\d(?:[\s.\-/]?\d){5,}/.test(s)||/https?:\/\/|www\./i.test(s)||conPersona(s))return '';
+    return s;
+  };
+  const luoghi=[];
+  const metti=n=>{const x=pulito(n);if(x&&!luoghi.includes(x))luoghi.push(x);};
+  (luoghiInPiu||[]).forEach(metti);
+  ((t&&t.pois)||[]).forEach(p=>metti(p&&p.name));
+  ((t&&t.hotels)||[]).forEach(h=>metti(h&&h.name));
+  ((t&&t.days)||[]).forEach(d=>(d.activities||[]).forEach(a=>{if((a.lat!=null&&a.lng!=null)||a.poiId)metti(a.name);}));
+  const date=((t&&t.days)||[]).map(d=>d.date).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(String(x||'')));
+  return {scopo,luoghi:luoghi.slice(0,40),destinazione:pulito(t&&t.destination),date:date.slice(0,40)};
 }
 /* Il JSON, anche quando il modello lo mette fra ``` o ci scrive una frase
    prima e dopo: si prende il primo oggetto intero, contando le parentesi
@@ -3244,15 +3299,16 @@ async function aiRichiesta(corpo,tempo,ctrl,stato){
       return aiErrore(navigator.onLine===false?'offline':'rete',String((e&&e.message)||e));
     }finally{clearTimeout(tm);}
     if(stato.motivo==='annullata')return aiErrore('annullata');
-    const msg=data&&data.error?String(data.error.message||data.error.type||''):'';
-    if(!res.ok||(data&&data.error)){
-      const tipo=aiTipoErrore(res.status,msg);
+    const err=data&&data.error?data.error:null;
+    const msg=err?String(err.message||err.type||''):'';
+    if(!res.ok||err){
+      const tipo=aiTipoErrore(res.status,msg,err&&err.type);
       if(tipo==='server'&&res.status>=500&&giro===0){console.log('Il server dell\'assistente ha risposto '+res.status+', riprovo:',msg);await aiPausa(800,ctrl);continue;}
-      return aiErrore(tipo,res.status+' '+msg);
+      return aiErrore(tipo,res.status+' '+msg,err&&err.riprova_alle);
     }
     const testo=((data&&data.content)||[]).filter(b=>b&&b.type==='text').map(b=>b.text||'').join('').trim();
     if(!testo){if(giro===0){console.log('Risposta vuota, riprovo');continue;}return aiErrore('server','risposta vuota');}
-    return {ok:true,testo};
+    return {ok:true,testo,ricerca:typeof data.ricerca==='string'?data.ricerca:''};
   }
   return aiErrore('server');
 }
@@ -3285,8 +3341,10 @@ function aiAnnulla(){aiAttese.slice().forEach(v=>{if(v.attesa==='globale'||v.lun
    o.json     la risposta e' un JSON: torna gia' letto in .dati
    o.conFile  c'e' una foto o il testo di un PDF: tempo massimo piu' lungo
    o.cercaSulWeb, o.maxToken, o.tasto, o.attesa ('globale'|'locale'|'nessuna')
-   Torna {ok:true,testo,dati} oppure {ok:false,errore,messaggio}: il
-   messaggio e' gia' tradotto, e vuoto per un doppio tocco. */
+   o.ricerca  con o.cercaSulWeb: cosa si puo' cercare (vedi aiRicercaPer)
+   Torna {ok:true,testo,dati,ricerca} oppure {ok:false,errore,messaggio}: il
+   messaggio e' gia' tradotto, e vuoto per un doppio tocco; «ricerca» dice
+   se la ricerca sul web c'e' stata (vedi aiNotaRicerca). */
 async function chiediAI(o){
   const chiave=o.chiave||'assistente';
   if(AI_IN_CORSO.has(chiave))return {ok:false,errore:'doppione',messaggio:''};
@@ -3308,14 +3366,18 @@ async function chiediAI(o){
     let messaggi=o.messaggi||[{role:'user',content:String(o.domanda||'')}];
     const corpo=()=>{
       const c={max_tokens:o.maxToken||1500,system:sistema,messages:messaggi};
-      if(o.cercaSulWeb)c.tools=[{type:'web_search_20250305',name:'web_search'}];
+      if(o.cercaSulWeb){
+        c.tools=[{type:'web_search_20250305',name:'web_search'}];
+        /* Un campo in piu', facoltativo: il ponte vecchio lo ignora. */
+        if(o.ricerca)c.ricerca=o.ricerca;
+      }
       return c;
     };
     const tempo=o.conFile?AI_TEMPO_FILE_MS:AI_TEMPO_TESTO_MS;
     let r=await aiRichiesta(corpo(),tempo,ctrl,stato);
     if(!r.ok||!o.json)return r;
     let dati=aiLeggiJSON(r.testo);
-    if(dati)return {ok:true,testo:r.testo,dati};
+    if(dati)return {ok:true,testo:r.testo,dati,ricerca:r.ricerca};
     /* Una seconda volta, mostrandogli quello che ha scritto: correggere la
        propria risposta gli riesce meglio che rifarla da capo. */
     console.log('Risposta dell\'assistente non in JSON, la richiedo:',r.testo.slice(0,300));
@@ -3324,7 +3386,7 @@ async function chiediAI(o){
     r=await aiRichiesta(corpo(),tempo,ctrl,stato);
     if(!r.ok)return r;
     dati=aiLeggiJSON(r.testo);
-    return dati?{ok:true,testo:r.testo,dati}:aiErrore('json',r.testo.slice(0,300));
+    return dati?{ok:true,testo:r.testo,dati,ricerca:r.ricerca}:aiErrore('json',r.testo.slice(0,300));
   }finally{
     AI_IN_CORSO.delete(chiave);
     if(voce.timer)clearTimeout(voce.timer);
@@ -7522,7 +7584,20 @@ const DIZIONARIO_AI={
     'La risposta dell\'assistente non si legge: riprova fra poco.':'The assistant’s answer can’t be read: try again shortly.',
     'Ci sta mettendo più del solito…':'It’s taking longer than usual…',
     '✦ L\'assistente sta pensando…':'✦ The assistant is thinking…',
-    'Questa immagine non si apre: prova con uno screenshot':'This image won’t open: try a screenshot'
+    'Questa immagine non si apre: prova con uno screenshot':'This image won’t open: try a screenshot',
+    'La richiesta è troppo grande per l\'assistente: prova con meno testo o con meno pagine.':'The request is too big for the assistant: try with less text or fewer pages.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile alle {1}.':'The assistant has reached today’s limit: it’s back at {1}.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile domani alle {1}.':'The assistant has reached today’s limit: it’s back tomorrow at {1}.',
+    'La ricerca sul web non è attiva: rispondo con quello che so.':'Web search isn’t active: I’m answering with what I know.',
+    'Le ricerche sul web di questo mese sono finite: rispondo con quello che so.':'This month’s web searches have run out: I’m answering with what I know.',
+    'La ricerca sul web non ha risposto: rispondo con quello che so.':'Web search didn’t answer: I’m answering with what I know.',
+    'È una scansione: leggo la pagina come immagine.':'It’s a scan: I’m reading the page as an image.',
+    'È una scansione: leggo le prime {1} pagine come immagini.':'It’s a scan: I’m reading the first {1} pages as images.',
+    'Controllo i posti sulla mappa...':'Checking the places on the map...',
+    'Attività aggiunte: {1}':'Activities added: {1}',
+    'Con l\'indirizzo verificato: {1}':'With a verified address: {1}',
+    'Da controllare, non trovate sulla mappa: {1}':'To check, not found on the map: {1}',
+    'Dalla scansione non riesco a leggere la prenotazione: copia e incolla il testo della mail.':'I can’t read the booking from the scan: copy and paste the text of the email.'
   },
   es:{
     'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Estás sin conexión: el asistente necesita internet. Vuelve a intentarlo cuando vuelva la conexión.',
@@ -7532,7 +7607,20 @@ const DIZIONARIO_AI={
     'La risposta dell\'assistente non si legge: riprova fra poco.':'La respuesta del asistente no se puede leer: vuelve a intentarlo en un momento.',
     'Ci sta mettendo più del solito…':'Está tardando más de lo normal…',
     '✦ L\'assistente sta pensando…':'✦ El asistente está pensando…',
-    'Questa immagine non si apre: prova con uno screenshot':'Esta imagen no se abre: prueba con una captura de pantalla'
+    'Questa immagine non si apre: prova con uno screenshot':'Esta imagen no se abre: prueba con una captura de pantalla',
+    'La richiesta è troppo grande per l\'assistente: prova con meno testo o con meno pagine.':'La solicitud es demasiado grande para el asistente: prueba con menos texto o con menos páginas.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile alle {1}.':'El asistente ha alcanzado el límite de hoy: vuelve a estar disponible a las {1}.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile domani alle {1}.':'El asistente ha alcanzado el límite de hoy: vuelve a estar disponible mañana a las {1}.',
+    'La ricerca sul web non è attiva: rispondo con quello che so.':'La búsqueda web no está activa: respondo con lo que sé.',
+    'Le ricerche sul web di questo mese sono finite: rispondo con quello che so.':'Las búsquedas web de este mes se han agotado: respondo con lo que sé.',
+    'La ricerca sul web non ha risposto: rispondo con quello che so.':'La búsqueda web no ha respondido: respondo con lo que sé.',
+    'È una scansione: leggo la pagina come immagine.':'Es un escaneo: leo la página como imagen.',
+    'È una scansione: leggo le prime {1} pagine come immagini.':'Es un escaneo: leo las primeras {1} páginas como imágenes.',
+    'Controllo i posti sulla mappa...':'Compruebo los sitios en el mapa...',
+    'Attività aggiunte: {1}':'Actividades añadidas: {1}',
+    'Con l\'indirizzo verificato: {1}':'Con la dirección verificada: {1}',
+    'Da controllare, non trovate sulla mappa: {1}':'Por revisar, no encontradas en el mapa: {1}',
+    'Dalla scansione non riesco a leggere la prenotazione: copia e incolla il testo della mail.':'No consigo leer la reserva desde el escaneo: copia y pega el texto del correo.'
   },
   fr:{
     'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Tu es hors ligne : l’assistant a besoin d’internet. Réessaie quand la connexion revient.',
@@ -7542,7 +7630,20 @@ const DIZIONARIO_AI={
     'La risposta dell\'assistente non si legge: riprova fra poco.':'La réponse de l’assistant est illisible : réessaie dans un instant.',
     'Ci sta mettendo più del solito…':'Ça prend plus de temps que d’habitude…',
     '✦ L\'assistente sta pensando…':'✦ L’assistant réfléchit…',
-    'Questa immagine non si apre: prova con uno screenshot':'Cette image ne s’ouvre pas : essaie avec une capture d’écran'
+    'Questa immagine non si apre: prova con uno screenshot':'Cette image ne s’ouvre pas : essaie avec une capture d’écran',
+    'La richiesta è troppo grande per l\'assistente: prova con meno testo o con meno pagine.':'La demande est trop volumineuse pour l’assistant : essaie avec moins de texte ou moins de pages.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile alle {1}.':'L’assistant a atteint la limite d’aujourd’hui : il sera de nouveau disponible à {1}.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile domani alle {1}.':'L’assistant a atteint la limite d’aujourd’hui : il sera de nouveau disponible demain à {1}.',
+    'La ricerca sul web non è attiva: rispondo con quello che so.':'La recherche sur le web n’est pas active : je réponds avec ce que je sais.',
+    'Le ricerche sul web di questo mese sono finite: rispondo con quello che so.':'Les recherches sur le web de ce mois-ci sont épuisées : je réponds avec ce que je sais.',
+    'La ricerca sul web non ha risposto: rispondo con quello che so.':'La recherche sur le web n’a pas répondu : je réponds avec ce que je sais.',
+    'È una scansione: leggo la pagina come immagine.':'C’est un scan : je lis la page comme une image.',
+    'È una scansione: leggo le prime {1} pagine come immagini.':'C’est un scan : je lis les {1} premières pages comme des images.',
+    'Controllo i posti sulla mappa...':'Je vérifie les lieux sur la carte...',
+    'Attività aggiunte: {1}':'Activités ajoutées : {1}',
+    'Con l\'indirizzo verificato: {1}':'Avec l’adresse vérifiée : {1}',
+    'Da controllare, non trovate sulla mappa: {1}':'À vérifier, introuvables sur la carte : {1}',
+    'Dalla scansione non riesco a leggere la prenotazione: copia e incolla il testo della mail.':'Je n’arrive pas à lire la réservation depuis le scan : copie et colle le texte de l’e-mail.'
   },
   pt:{
     'Sei senza rete: l\'assistente ha bisogno di internet. Riprova quando torna la connessione.':'Estás sem rede: o assistente precisa de internet. Tenta outra vez quando a ligação voltar.',
@@ -7552,7 +7653,20 @@ const DIZIONARIO_AI={
     'La risposta dell\'assistente non si legge: riprova fra poco.':'A resposta do assistente não se consegue ler: tenta outra vez daqui a pouco.',
     'Ci sta mettendo più del solito…':'Está a demorar mais do que o costume…',
     '✦ L\'assistente sta pensando…':'✦ O assistente está a pensar…',
-    'Questa immagine non si apre: prova con uno screenshot':'Esta imagem não abre: experimenta com uma captura de ecrã'
+    'Questa immagine non si apre: prova con uno screenshot':'Esta imagem não abre: experimenta com uma captura de ecrã',
+    'La richiesta è troppo grande per l\'assistente: prova con meno testo o con meno pagine.':'O pedido é demasiado grande para o assistente: experimenta com menos texto ou menos páginas.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile alle {1}.':'O assistente atingiu o limite de hoje: volta a estar disponível às {1}.',
+    'L\'assistente ha raggiunto il limite di oggi: torna disponibile domani alle {1}.':'O assistente atingiu o limite de hoje: volta a estar disponível amanhã às {1}.',
+    'La ricerca sul web non è attiva: rispondo con quello che so.':'A pesquisa na web não está ativa: respondo com o que sei.',
+    'Le ricerche sul web di questo mese sono finite: rispondo con quello che so.':'As pesquisas na web deste mês esgotaram-se: respondo com o que sei.',
+    'La ricerca sul web non ha risposto: rispondo con quello che so.':'A pesquisa na web não respondeu: respondo com o que sei.',
+    'È una scansione: leggo la pagina come immagine.':'É uma digitalização: leio a página como imagem.',
+    'È una scansione: leggo le prime {1} pagine come immagini.':'É uma digitalização: leio as primeiras {1} páginas como imagens.',
+    'Controllo i posti sulla mappa...':'Estou a verificar os locais no mapa...',
+    'Attività aggiunte: {1}':'Atividades adicionadas: {1}',
+    'Con l\'indirizzo verificato: {1}':'Com a morada verificada: {1}',
+    'Da controllare, non trovate sulla mappa: {1}':'Por verificar, não encontradas no mapa: {1}',
+    'Dalla scansione non riesco a leggere la prenotazione: copia e incolla il testo della mail.':'Não consigo ler a reserva a partir da digitalização: copia e cola o texto do email.'
   }
 };
 Object.keys(DIZIONARIO_AI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_AI[l]));
@@ -7560,7 +7674,7 @@ Object.keys(DIZIONARIO_AI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_AI[
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1194;
+const FRASI_IN_TUTTO=1207;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -9196,16 +9310,16 @@ function delPackItem(id){const t=T();if(!t)return;const list=getPacking(t).filte
    testo e incollarlo a mano e' proprio la fatica che l'app dovrebbe togliere.
 
    Il testo si tira fuori qui nel telefono con pdf.js e poi si manda al modello
-   come se fosse stato incollato: cosi' non cambia niente nel ponte verso
-   Gemini, non si spediscono megabyte di file, e tutto quello che era gia'
+   come se fosse stato incollato: cosi' il ponte non deve saper leggere i
+   PDF, non si spediscono megabyte di file, e tutto quello che era gia'
    collaudato - il riconoscimento dei posti, l'anteprima con le spunte, il
    tasto Annulla - continua a valere.
 
-   Due cose il PDF non le puo' dare, e vanno dette invece che nascoste: se e'
-   una scansione (pagine che sono fotografie) dentro non c'e' nessun testo da
-   leggere, e se e' lunghissimo se ne prende solo l'inizio. */
+   Se e' una scansione (pagine che sono fotografie) dentro non c'e' nessun
+   testo: allora partono le prime pagine come immagini (vedi leggiPDF). E se
+   e' lunghissimo se ne prende solo l'inizio, e lo si dice. */
 const PDF_CDN='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/';
-const PDF_MAX_PAGINE=40,PDF_MAX_CARATTERI=24000;
+const PDF_MAX_PAGINE=40,PDF_MAX_CARATTERI=24000,PDF_PAGINE_FOTO=3,PDF_LATO_FOTO=1100,PDF_FOTO_MAX_CARATTERI=1000000;
 let pdfLibPronta=null;
 /* Si scarica solo quando serve davvero: chi non allega mai un PDF non paga
    mezzo megabyte di libreria a ogni apertura dell'app. */
@@ -9253,8 +9367,44 @@ async function leggiPDF(file){
   let testo=pezzi.join('\n').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
   const tagliato=testo.length>PDF_MAX_CARATTERI||quante<doc.numPages;
   if(testo.length>PDF_MAX_CARATTERI)testo=testo.slice(0,PDF_MAX_CARATTERI);
-  return {testo,pagine:doc.numPages,lette:quante,tagliato,
-          vuoto:testo.replace(/\s/g,'').length<40};
+  const vuoto=testo.replace(/\s/g,'').length<40;
+  /* Una scansione non ha testo dentro, ma l'assistente sa leggere le
+     immagini: le prime pagine si disegnano e si mandano cosi'. Solo le prime
+     tre e rimpicciolite: bastano per una conferma o un programma, e stanno
+     sotto il mega. Da un'immagine pero' il telefono non puo' togliere nomi e
+     numeri, come fa col testo: la privacy lo dice. */
+  const immagini=[];
+  if(vuoto){
+    /* Le pagine insieme restano sotto un mega di testo base64: il ponte non
+       accetta richieste piu' grandi. Una pagina fitta prova prima con meno
+       qualita', e se non ci sta ci si ferma alle pagine gia' prese. */
+    let totale=0;
+    for(let p=1;p<=Math.min(doc.numPages,PDF_PAGINE_FOTO);p++){
+      try{
+        const pagina=await doc.getPage(p);
+        const v1=pagina.getViewport({scale:1});
+        const v=pagina.getViewport({scale:Math.min(2,PDF_LATO_FOTO/Math.max(v1.width,v1.height,1))});
+        const c=document.createElement('canvas');c.width=Math.max(1,Math.round(v.width));c.height=Math.max(1,Math.round(v.height));
+        const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+        await pagina.render({canvasContext:ctx,viewport:v}).promise;
+        let dati=c.toDataURL('image/jpeg',0.72).split(',')[1];
+        if(totale+dati.length>PDF_FOTO_MAX_CARATTERI)dati=c.toDataURL('image/jpeg',0.45).split(',')[1];
+        if(totale+dati.length>PDF_FOTO_MAX_CARATTERI)break;
+        immagini.push(dati);totale+=dati.length;
+      }catch(e){console.log('Pagina del PDF non disegnata:',e);}
+    }
+  }
+  return {testo,pagine:doc.numPages,lette:quante,tagliato,vuoto,immagini};
+}
+/* Quello che si dice mentre partono le pagine di una scansione. Una pagina
+   sola ha la sua frase: «le prime 1 pagine» non si dice in nessuna lingua. */
+function pdfFraseScansione(n){
+  return n===1?tv('È una scansione: leggo la pagina come immagine.')
+              :tv('È una scansione: leggo le prime {1} pagine come immagini.',n);
+}
+/* Le pagine di una scansione come blocchi da mandare all'assistente. */
+function aiBlocchiImmagini(immagini){
+  return (immagini||[]).slice(0,PDF_PAGINE_FOTO).map(data=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data}}));
 }
 function motivoPDF(e){
   const m=String((e&&e.message)||e||'');
@@ -9325,11 +9475,12 @@ Rispondi SOLO con JSON, senza backtick:
    incollato riempirebbe la valigia di "Pagina 3 di 7". Qui si chiede al
    modello di fare le due cose insieme - trovare le voci vere e metterle in
    categoria - perche' sono lo stesso giudizio. */
-async function bagagliDaTesto(testo,gia){
+async function bagagliDaTesto(testo,gia,immagini){
   try{
     /* Il testo di un PDF porta con se' quello che non c'entra con la valigia:
        nomi, email, telefoni e numeri di chi ha prenotato restano qui. */
     testo=aiSenzaDatiPersonali(testo);
+    const scansione=immagini&&immagini.length;
     /* Il controllo dei doppioni qui sotto confronta i nomi esatti, quindi
        "magliette (5)" del PDF e "Magliette (4)" del suggerimento passavano
        tutti e due. Chi legge il testo puo' vedere che sono la stessa cosa:
@@ -9338,12 +9489,11 @@ async function bagagliDaTesto(testo,gia){
 
 In valigia ci sono già queste, non ripeterle nemmeno scritte in modo diverso:
 ${gia.join(', ')}`:'';
-    const r=await chiediAI({chiave:'bagagli',json:true,conFile:true,attesa:'locale',maxToken:2000,
-      domanda:`Questo è il testo di un PDF. Tirane fuori solo le cose da mettere in valigia, e per ognuna la sua categoria.
-
+    const domanda=`${scansione?'Queste immagini sono le prime pagine di un PDF scansionato.':'Questo è il testo di un PDF.'} Tirane fuori solo le cose da mettere in valigia, e per ognuna la sua categoria.
+${scansione?'':`
 --- TESTO ---
 ${testo}
---- FINE ---${dentro}
+--- FINE ---`}${dentro}
 
 Le categorie possibili sono solo queste, nessun'altra: ${PACK_CAT.join(', ')}.
 
@@ -9358,7 +9508,9 @@ Rispondi SOLO con JSON, senza backtick:
 - "Elettronica" per caricatori, cavi, adattatori, cuffie, macchine fotografiche
 - "Igiene" per lavarsi, creme, trucco e medicinali
 - "Abbigliamento" per tutto quello che si indossa, scarpe comprese
-- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`});
+- "Extra" solo per quello che non rientra chiaramente in nessuna delle altre`;
+    const r=await chiediAI({chiave:'bagagli',json:true,conFile:true,attesa:'locale',maxToken:2000,
+      messaggi:[{role:'user',content:scansione?aiBlocchiImmagini(immagini).concat([{type:'text',text:domanda}]):domanda}]});
     if(!r.ok)return {messaggio:r.messaggio};
     return {voci:(r.dati.voci||[]).map(v=>({label:String(v.nome||'').trim(),cat:v.cat})).filter(v=>v.label)};
   }catch(e){console.log('Bagagli dal PDF non letti:',e);return {messaggio:tv('L\'assistente non ha risposto: riprova fra poco.')};}
@@ -9415,9 +9567,10 @@ async function importPackingPDF(inp){
     let r;
     try{r=await leggiPDF(f);}
     catch(e){st.textContent='⚠️ '+motivoPDF(e);return;}
-    if(r.vuoto){st.textContent='⚠️ Questo PDF non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c\'è niente da leggere.';return;}
-    st.textContent=`✦ ${pdfLetto(r)} Cerco le cose da mettere in valigia...`;
-    const letto=await bagagliDaTesto(r.testo,getPacking(t).map(x=>x.label));
+    if(r.vuoto&&!r.immagini.length){st.textContent='⚠️ Questo PDF non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c\'è niente da leggere.';return;}
+    st.textContent=r.vuoto?'✦ '+pdfFraseScansione(r.immagini.length)
+      :`✦ ${pdfLetto(r)} Cerco le cose da mettere in valigia...`;
+    const letto=await bagagliDaTesto(r.testo,getPacking(t).map(x=>x.label),r.vuoto?r.immagini:null);
     if(letto.messaggio!=null){if(letto.messaggio)st.textContent='⚠️ '+letto.messaggio;return;}
     const voci=letto.voci;
     if(!voci.length){st.textContent='Non ho trovato cose da mettere in valigia in questo PDF.';return;}
@@ -9841,7 +9994,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
-- L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. Le richieste vanno a Google Gemini: niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
+- L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. C'e' un limite di richieste al giorno, uguale per tutti: quando finisce, l'assistente dice a che ora (del telefono) torna disponibile. Il modello gira su Cloudflare (Workers AI). Per i fatti che cambiano (orari, prezzi, se serve prenotare) cerca sul web con Tavily, a cui vanno solo nomi di posti, la destinazione e le date, mai nomi di persone o recapiti; se la ricerca sul web non e' attiva o ha finito i crediti del mese, risponde lo stesso con quello che sa e lo dice in una riga piccola. Gli orari di apertura per "Ordina il giro con l'IA" e i posti di una lista incollata ("Aggiungi così come sono") li controlla la mappa di OpenStreetMap, non l'assistente: dove la mappa non li sa, restano vuoti. Un PDF scansionato (pagine fotografate, senza testo) si legge lo stesso: le prime tre pagine vanno all'assistente come immagini, e da un'immagine nomi e numeri non si possono togliere. Niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
 - Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Il lettore dei file di Excel arriva la prima volta che si apre l'importazione da Excel, e da li' resta anche lui. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
 - Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
@@ -9850,6 +10003,70 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
+
+/* LA MAPPA, SOLO QUANDO SERVE.
+   Intera sono 28 KB, a ogni messaggio della chat: anche per chiedere dove
+   mangiare, e sul piano gratuito del modello ogni token conta. Di solito
+   basta l'indice - la prima frase di ogni voce - per sapere che una cosa
+   esiste e dove sta. Le voci complete si aggiungono quando la domanda
+   riguarda l'uso dell'app: quelle che c'entrano, riconosciute da parole
+   chiave nelle cinque lingue; tutta la mappa solo se la domanda e'
+   chiaramente sull'app ma non si capisce su quale parte. */
+const MAPPA_CHIAVI=[
+  ['La barra in basso',['barra','in basso','bottom bar','tab bar','barra inferior','barre du bas']],
+  ['Le TRE RIGHINE',['righine','cassetto','elenco dei viaggi','drawer','hamburger','menu lateral','tiroir','gaveta']],
+  ['Importare un viaggio',['excel','csv','numbers','foglio','tabella','importa','spreadsheet','import','hoja de calculo','importar','tableur','importer','folha de calculo']],
+  ['Il primo avvio',['primo avvio','presentazione','onboarding','first launch','primer inicio','premier lancement','primeiro inicio']],
+  ['La posizione',['posizione','gps','localizzazione','location','ubicacion','localisation','localizacao']],
+  ['Home',['home','prossima tappa','schermata iniziale','home screen','pantalla de inicio','accueil','ecra inicial','tela inicial','bagagli','valigia','packing','luggage','equipaje','maleta','bagages','valise','bagagem','mala']],
+  ['Time Table',['time table','timetable','giornata','naviga la giornata','schedule','day plan','horario del dia','emploi du temps','horario do dia']],
+  ['Scopri',['scopri','reel','su misura','discover','descubrir','decouvrir','descobrir']],
+  ['"Prenotazione"',['prenotazione','mail di conferma','booking','confirmation email','reserva','correo de confirmacion','reservation','e-mail de confirmation','email de confirmacao']],
+  ['Spese',['spese','spesa','saldi','rimborso','dividere','debiti','expense','expenses','split','balance','gastos','gasto','depense','depenses','despesa','despesas']],
+  ['Da fuori',['tasto condividi','comando rapido','shortcut','android','share sheet','atajo','raccourci','atalho']],
+  ['Hotel',['hotel','alloggio','notti','check-in','accommodation','alojamiento','hebergement','alojamento','biglietti','biglietto','ticket','tickets','entradas','billets','billet','bilhetes']],
+  ['Meteo',['meteo','previsioni','weather','forecast','pronostico','previsao']],
+  ['Le foto del diario',['foto','diario','photo','photos','journal','fotos']],
+  ['Il ricordo del viaggio',['ricordo','cartolina','racconto','memory','postcard','recuerdo','postal','souvenir','carte postale','recordacao']],
+  ['A raccolta',['raccolta','ritrovarsi','gather','meet up','reunir','rassembler']],
+  ['Chi e\' admin',['admin','togliere un compagno','remove a member','quitar a','retirer un','remover um']],
+  ['La lingua',['lingua','language','idioma','langue','lingua da app']],
+  ['La mappa senza rete',['senza rete','offline','sin conexion','hors ligne','sem rede']],
+  ['L\'assistente',['assistente','chat','intelligenza artificiale','assistant','asistente','chatbot','privacy','dati personali','personal data','datos personales','donnees personnelles','dados pessoais','ricerca sul web','web search','limite','limit','scansione','scansionato','scanned','escaneado','scanne','digitalizado']],
+  ['Le parti che arrivano al momento',['scanner','codice a barre','codici a barre','qr','barcode','escaner','codigo de barras','code-barres','leitor']],
+  ['Le email di accesso',['password','accesso','recupero','login','sign in','log in','reset','contrasena','acceso','mot de passe','connexion','palavra-passe','senha','acesso']],
+  ['Eliminare il proprio account',['eliminare','cancellare','account','delete','eliminar','cuenta','supprimer','compte','apagar','conta']],
+  ['In Profilo, sotto "Versione"',['versione','aggiornamento','aggiornare','version','update','version','actualizar','mise a jour','versao','atualizar']],
+  ['Profilo',['profilo','impostazioni','tema scuro','backup','notifiche','piano','calendario','esporta','esportare','profile','settings','dark mode','notifications','export','calendar','perfil','ajustes','modo oscuro','exportar','profil','parametres','mode sombre','exporter','definicoes','modo escuro']],
+  ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']]
+];
+const MAPPA_NORMALE=s=>' '+String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9'-]+/g,' ').trim()+' ';
+const MAPPA_SEZIONI=MAPPA_APP.split('\n').filter(l=>l.startsWith('- ')).map(testo=>{
+  const voce=MAPPA_CHIAVI.find(([inizio])=>testo.startsWith('- '+inizio));
+  return {testo,chiavi:voce?voce[1].map(k=>MAPPA_NORMALE(k).trim()):[]};
+});
+/* L'indice: per ogni voce la prima frase, che dice cos'e' e dove sta. */
+const MAPPA_COMPATTA=(()=>{
+  const righe=MAPPA_APP.split('\n');
+  const indice=MAPPA_SEZIONI.map(s=>{
+    const fine=s.testo.slice(30).search(/\. /);
+    let frase=fine<0?s.testo:s.testo.slice(0,30+fine+1);
+    if(frase.length>220)frase=frase.slice(0,217).replace(/\s+\S*$/,'')+'…';
+    return frase;
+  });
+  return [righe[0]+' (indice: per ogni voce la prima frase)'].concat(indice,['',righe[righe.length-1]]).join('\n');
+})();
+const MAPPA_DOMANDA_FORTE=/\b(app|geppgo|tasto|tasti|pulsante|bottone|schermat\w*|impostazion\w*|button|screen|settings|bot[oó]n|pantalla|ajustes|bouton|[ée]cran|param[eè]tres|r[ée]glages|bot[aã]o|ecr[aã]|tela|defini[cç][oõ]es)\b/i;
+const MAPPA_DOMANDA=/\bdove\b|\bcome (faccio|si fa|posso|si)\b|\bposso\b|\bsi pu[oò]\b|\bwhere\b|\bhow (do|can|to)\b|\bcan i\b|d[oó]nde|c[oó]mo\b|\bpuedo\b|(^|\s)où(\s|$)|\bcomment\b|\bje peux\b|\bpuis-je\b|\bonde\b|\bcomo (fa[cç]o|posso|se)\b|non (trovo|vedo|riesco)|can'?t find|no encuentro|je ne trouve|n[aã]o encontro/i;
+function mappaPerDomanda(domanda){
+  const forte=MAPPA_DOMANDA_FORTE.test(domanda||'');
+  if(!forte&&!MAPPA_DOMANDA.test(domanda||''))return MAPPA_COMPATTA;
+  const q=MAPPA_NORMALE(domanda);
+  const scelte=MAPPA_SEZIONI.map(s=>({s,punti:s.chiavi.filter(k=>q.includes(' '+k+' ')||(k.length>6&&q.includes(k))).length}))
+    .filter(x=>x.punti>0).sort((a,b)=>b.punti-a.punti).slice(0,3).map(x=>x.s.testo);
+  if(scelte.length)return MAPPA_COMPATTA+'\n\nLE VOCI COMPLETE CHE C\'ENTRANO CON LA DOMANDA:\n'+scelte.join('\n');
+  return forte?MAPPA_APP:MAPPA_COMPATTA;
+}
 
 const AI_MEMORIA_MAX=40;
 function aiMemoria(t){if(!t)return[];if(!Array.isArray(t.chat))t.chat=[];return t.chat;}
@@ -9950,10 +10167,11 @@ Regole:
 - quando consigli luoghi reali da visitare, alla fine aggiungi UNA riga che inizia ESATTAMENTE con "LUOGHI:" seguita dai nomi separati da " | " (massimo 5, nomi precisi cercabili su mappa, con la citta'). Niente riga LUOGHI se non consigli posti specifici
 - se ti viene chiesto di CAMBIARE il programma - spostare, accorciare, togliere, aggiungere una tappa, sistemare gli orari, alleggerire una giornata - non rispondere a parole e non spiegare: scrivi soltanto [MODIFICA] e nient'altro, ci pensa l'app${dove}
 
-${MAPPA_APP}
+${mappaPerDomanda(text)}
 
 ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
-    const r=await chiediAI({chiave:'chat',sistema:sys,cercaSulWeb:true,attesa:'locale',maxToken:1500,messaggi:aiMemoria(t).slice(-14)});
+    const r=await chiediAI({chiave:'chat',sistema:sys,cercaSulWeb:true,ricerca:t?aiRicercaPer(t,'chat'):null,
+      attesa:'locale',maxToken:1500,messaggi:aiMemoria(t).slice(-14)});
     attesa.remove();
     if(!r.ok){if(r.messaggio)ui.msg('ai','\u26a0\ufe0f '+r.messaggio);return;}
     let reply=r.testo;
@@ -9976,6 +10194,11 @@ ${t?mosseContesto(t,ui.giorno):'Nessun viaggio aperto.'}`;
       el.after(wrap);
       if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;
     }
+    /* Se la ricerca sul web non c'e' stata lo si dice sotto la risposta: e'
+       una nota su quella risposta, e in fondo alla chat e' dove si legge.
+       Sopra, con la chat che scorre in fondo, restava fuori vista. */
+    const nota=aiNotaRicerca(r.ricerca);
+    if(nota){ui.msg('ai nota','\u2139\ufe0f '+nota);if(ui.box)ui.box.scrollTop=ui.box.scrollHeight;}
   }catch(e){attesa.remove();console.log('Assistente non raggiungibile:',e);ui.msg('ai','\u26a0\ufe0f '+tv('L\'assistente non è raggiungibile: controlla la rete e riprova.'));}
 }
 
@@ -10011,24 +10234,32 @@ async function allegaPDF(inp,quale){
   allegatoBusy=true;
   const nota=(campo.value||'').trim();
   try{
-    const pezzi=[];
+    const pezzi=[],immagini=[];
     for(const f of files){
       msg('me','📄 '+f.name);
       const attesa=msg('ai typing','✦ Apro il PDF e leggo...');
       try{
         const r=await leggiPDF(f);
         attesa.remove();
-        if(r.vuoto){msg('ai',`"${f.name}" non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c'è niente da leggere. Se puoi, riesporta il PDF dal programma che l'ha fatto.`);continue;}
+        if(r.vuoto){
+          /* Una scansione: le prime pagine partono come immagini. Fra tutti i
+             file allegati insieme, al massimo tre pagine. */
+          const posto=Math.max(0,PDF_PAGINE_FOTO-immagini.length),prese=r.immagini.slice(0,posto);
+          if(!prese.length){msg('ai',`"${f.name}" non contiene testo: è una scansione, cioè pagine fotografate, e da lì non c'è niente da leggere. Se puoi, riesporta il PDF dal programma che l'ha fatto.`);continue;}
+          immagini.push(...prese);
+          msg('ai',pdfFraseScansione(prese.length));
+          continue;
+        }
         msg('ai',pdfLetto(r));
         pezzi.push(files.length>1?`--- ${f.name} ---\n${r.testo}`:r.testo);
       }catch(e){attesa.remove();msg('ai','⚠️ '+motivoPDF(e));}
     }
-    if(!pezzi.length)return;
+    if(!pezzi.length&&!immagini.length)return;
     campo.value='';campo.style.height='';
     msg('ai','Leggo il viaggio, ti dico cosa metterei in programma e cosa lascio fuori.');
     await pianificaDaTesto((nota?nota+'\n\n':'')+pezzi.join('\n\n'),
       {msg,box,giorno:adq?ttDay:((typeof ttDay==='number'&&T()&&T().days[ttDay])?ttDay:0)},
-      {daPdf:true});
+      {daPdf:true,immagini});
     if(!adq)misuraChat();
   }finally{allegatoBusy=false;}
 }
@@ -18132,50 +18363,107 @@ function mosseDistanze(t,d){
 function oraTonda(min){return Math.max(0,Math.min(1439,Math.round(min/PASSO_ORARIO)*PASSO_ORARIO));}
 
 /* ===== ORARI DI APERTURA =====
-   Nessuno, dentro l'app, sa a che ora apre un posto: il modello non ce l'ha in
-   testa, e OpenStreetMap li conosce solo per le tappe nate dalla ricerca. Senza
-   questo, "ordina il giro" piazza i negozi di Akihabara alle 10:00 quando
+   Nessuno, dentro l'app, sa a che ora apre un posto se non lo si chiede:
+   senza, "ordina il giro" piazza i negozi di Akihabara alle 10:00 quando
    aprono alle 11, e il giro è sbagliato pur essendo geometricamente perfetto.
-   Si chiedono al web una volta sola per tappa e si tengono da parte: gli orari
-   di apertura non cambiano da un giorno all'altro. */
+   Si chiedono a OpenStreetMap (il suo campo opening_hours), una volta sola
+   per tappa, e si tengono da parte: gli orari di apertura non cambiano da un
+   giorno all'altro. Prima li cercava l'assistente sul web; OpenStreetMap li
+   ha per musei, monumenti e molti negozi, gratis e senza mandare fuori
+   altro che il nome del posto. Dove non li ha, la tappa resta senza: un
+   orario inventato e' peggio di un orario mancante, perche' ci si organizza
+   sopra. */
 function orariDi(t,a){
   if(a.hours)return a.hours;
   if(a.poiId){const p=(t.pois||[]).find(x=>x.id===a.poiId);if(p&&p.hours)return p.hours;}
   return '';
 }
 const GIORNI_SETT=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
-async function verificaOrari(t,d,tasto){
-  if(!t||!d)return;
-  const da=(d.activities||[]).filter(a=>a.name&&!orariDi(t,a));
-  if(!da.length)return;
-  const dt=new Date(d.date);
-  const gs=isNaN(dt.getTime())?'':` di ${GIORNI_SETT[dt.getDay()]}`;
+const OH_GIORNI=['Su','Mo','Tu','We','Th','Fr','Sa'];
+const OH_MESI=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function ohIn(lista,n,nomi){
+  return lista.split(',').some(pezzo=>{
+    const [a,b]=pezzo.trim().split('-');
+    const i=nomi.indexOf(a),j=b==null?i:nomi.indexOf(b);
+    if(i<0||j<0)throw new Error('orari non letti');
+    return i<=j?(n>=i&&n<=j):(n>=i||n<=j);
+  });
+}
+/* Gli orari di OpenStreetMap per un giorno preciso. Si leggono le forme che
+   si trovano quasi sempre («Mo-Fr 09:00-18:00; Sa 10:00-14:00; Su off»,
+   «24/7», «Apr-Oct: Tu-Su 10:00-18:30»); per le altre (feste, alba e
+   tramonto, commenti) si tiene la scritta originale, che il modello e chi
+   la legge capiscono lo stesso. Un giorno che nessuna regola nomina, per
+   OpenStreetMap, e' un giorno di chiusura. */
+function orariDelGiorno(oh,data){
+  const s=String(oh||'').trim();
+  if(!s)return '';
+  if(/^24\/7$/.test(s))return 'sempre aperto';
+  const gs=data.getDay(),mese=data.getMonth();
+  const G='(?:Mo|Tu|We|Th|Fr|Sa|Su)',M='(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)';
+  const reMesi=new RegExp('^('+M+'(?:-'+M+')?(?:,'+M+'(?:-'+M+')?)*):?\\s+');
+  const reGiorni=new RegExp('^('+G+'(?:-'+G+')?(?:,'+G+'(?:-'+G+')?)*)(?:\\s+|$)');
+  let esito=null,lette=0;
   try{
-    const risposta=await chiediAI({chiave:'orari',json:true,cercaSulWeb:true,tasto,attesa:'globale',maxToken:1500,
-      domanda:`Cerca sul web a che ora aprono e chiudono questi posti${t.destination?`, a ${t.destination}`:''}, nella giornata${gs}.
-
-${da.map((a,i)=>`${i}. ${a.name}`).join('\n')}
-
-Rispondi SOLO con JSON, senza backtick:
-{"orari":[{"i":0,"apre":"11:00","chiude":"20:00"}]}
-
-- "i" è il numero della riga qui sopra
-- per un posto sempre accessibile (un quartiere, una strada, un parco pubblico senza cancelli) usa apre:"sempre"
-- se quel giorno è chiuso usa apre:"chiuso"
-- se non trovi un orario affidabile ometti del tutto la riga: un orario inventato è peggio di un orario mancante, perché ci si organizza sopra`});
-    if(!risposta.ok)return;
-    const r=risposta.dati;
-    let n=0;
-    (r.orari||[]).forEach(o=>{
-      const i=parseInt(o.i,10),a=da[i];
-      if(!a||!o.apre)return;
-      a.hours=o.apre==='sempre'?'sempre aperto'
-             :o.apre==='chiuso'?`chiuso ${gs.replace(' di ','il ')||'quel giorno'}`
-             :(o.chiude?`${o.apre}-${o.chiude}`:`apre ${o.apre}`);
-      n++;
-    });
-    if(n)save();
-  }catch(e){}
+    for(let r of s.split(/\s*(?:;|\|\|)\s*/)){
+      r=r.trim();
+      if(!r||/^(PH|SH)\b/.test(r))continue;
+      if(/["\[]|\bPH\b|\bSH\b|sunrise|sunset|dawn|dusk|\bweek\b|\b\d{4}\b/.test(r))return s;
+      const mm=r.match(reMesi);
+      if(mm){lette++;if(!ohIn(mm[1],mese,OH_MESI))continue;r=r.slice(mm[0].length).trim();}
+      const gm=r.match(reGiorni);
+      if(gm){lette++;if(!ohIn(gm[1],gs,OH_GIORNI))continue;r=r.slice(gm[0].length).trim();}
+      if(/^(off|closed)$/i.test(r)){lette++;esito='chiuso';continue;}
+      if(!r)continue;
+      const fasce=r.split(/\s*,\s*/).map(f=>f.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/));
+      if(fasce.some(f=>!f))return s;
+      lette++;
+      esito=fasce.map(f=>f[1].padStart(2,'0')+':'+f[2]+'-'+f[3].padStart(2,'0')+':'+f[4]).join(', ');
+    }
+  }catch(e){return s;}
+  if(!lette)return s;
+  if(esito===null||esito==='chiuso')return gs===0?'chiuso la domenica':'chiuso il '+GIORNI_SETT[gs];
+  return esito;
+}
+/* Il posto su OpenStreetMap, col suo campo degli orari: per nome e citta',
+   e se la tappa ha gia' una posizione si prende quello che le sta vicino
+   (uno «Starbucks» a Tokyo non e' uno solo). */
+async function orariOsm(t,a){
+  const citta=tripCityHint(t),nome=String(a.name||'').trim();
+  const q=citta&&!nome.toLowerCase().includes(String(citta).split(',')[0].trim().toLowerCase())?nome+', '+citta:nome;
+  let lista=[];
+  try{
+    const r=await fetchGeo(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&accept-language=it&limit=8&extratags=1`,{headers:{'Accept-Language':'it,en'}});
+    lista=((await r.json())||[]).filter(x=>x&&x.extratags&&x.extratags.opening_hours);
+  }catch(e){return '';}
+  if(!lista.length)return '';
+  const loc=actLoc(t,a);
+  if(loc){
+    const vicini=lista.map(x=>({x,m:hav(loc,{lat:+x.lat,lng:+x.lon})})).filter(v=>v.m<=400).sort((p,q2)=>p.m-q2.m);
+    return vicini.length?vicini[0].x.extratags.opening_hours:'';
+  }
+  const ranked=(typeof rankPlaces==='function')?rankPlaces(lista,nome):lista;
+  return ranked[0]?ranked[0].extratags.opening_hours:'';
+}
+let orariBusy=false;
+async function verificaOrari(t,d,tasto){
+  if(!t||!d||orariBusy)return 0;
+  const da=(d.activities||[]).filter(a=>a.name&&!orariDi(t,a)).slice(0,8);
+  if(!da.length)return 0;
+  const dt=new Date(d.date+'T12:00:00');
+  if(isNaN(dt.getTime()))return 0;
+  orariBusy=true;
+  const spegni=tasto&&tasto.nodeType===1&&!tasto.disabled;
+  if(spegni)tasto.disabled=true;
+  let n=0;
+  try{
+    for(const a of da){
+      const g=orariDelGiorno(await orariOsm(t,a),dt);
+      if(g){a.hours=g;n++;}
+    }
+  }finally{orariBusy=false;if(spegni)tasto.disabled=false;}
+  if(n)save();
+  return n;
 }
 
 let mosseProposte=null,mosseUndo=null,mosseGiorno=null,mosseBusy=false;
@@ -18556,7 +18844,7 @@ async function pianificaDaTesto(testo,ui,opt){
   const stato=document.getElementById(idS);
   /* Il turno si registra subito: se poi qualcosa va storto, in memoria resta
      traccia di cosa era stato chiesto invece del vuoto. */
-  aiRicorda(t,'user',testo.length>600?testo.slice(0,600)+'…':testo);
+  aiRicorda(t,'user',testo.length>600?testo.slice(0,600)+'…':(testo||'📄 PDF'));
   const fallito=(msg)=>{
     stato.textContent='';
     /* Un messaggio vero, non una riga grigia in fondo: l'errore scritto in
@@ -18590,8 +18878,10 @@ Questo testo arriva da un PDF, quindi guardalo con occhio critico:
        servono, e restano qui. Un testo incollato a mano lo si manda com'e',
        tolti solo email, telefoni e numeri di carta. */
     const daMandare=aiSenzaDatiPersonali(testo,{nomi:!!(opt&&opt.daPdf)});
-    const risposta=await chiediAI({chiave:'incollato',json:true,conFile:!!(opt&&opt.daPdf),attesa:'locale',maxToken:4000,
-      domanda:`Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
+    /* Una scansione arriva come immagini delle prime pagine (vedi
+       leggiPDF): si mandano davanti alla domanda, che lo dice. */
+    const immagini=(opt&&opt.immagini)||[];
+    const domanda=`${immagini.length?'Le immagini qui sopra sono le prime pagine di un PDF scansionato: leggile come se fossero il testo incollato.\n\n':''}Questo è quello che mi ha scritto qualcuno, insieme a cosa voglio che tu ne faccia. Il testo può contenere una descrizione a parole della giornata e un elenco di posti: i posti vanno cercati in tutti e due, perché spesso qualcuno è nominato solo nella descrizione e non compare nell'elenco.
 
 --- TESTO INCOLLATO ---
 ${daMandare}
@@ -18619,7 +18909,9 @@ Gli alloggi sono un'altra cosa:
 - un hotel, ryokan, ostello, B&B, guesthouse o appartamento va segnato con "tipo":"hotel"
 - su un hotel non mettere "ora" né "durata", e NON aggiungere una tappa "check-in" o "check-out" separata: le fa l'app da sola
 - se dal testo si capisce da che giorno a che giorno ci si dorme, scrivilo in "checkin" e "checkout" (AAAA-MM-GG). Se non si capisce, lasciali fuori e ci pensa l'app
-- un hotel va messo nel giorno in cui ci si arriva${daPdf}`});
+- un hotel va messo nel giorno in cui ci si arriva${daPdf}`;
+    const risposta=await chiediAI({chiave:'incollato',json:true,conFile:!!(opt&&opt.daPdf),attesa:'locale',maxToken:4000,
+      messaggi:[{role:'user',content:immagini.length?aiBlocchiImmagini(immagini).concat([{type:'text',text:domanda}]):domanda}]});
     if(!risposta.ok){if(risposta.messaggio)fallito('⚠️ '+risposta.messaggio);else stato.textContent='';return;}
     const r=risposta.dati;
     const giorniOk=(r.giorni||[]).filter(g=>t.days[g.giorno]&&(g.attivita||[]).length);
@@ -18886,43 +19178,41 @@ let dayImportBusy=false;
 /* Formato tollerante pensato per liste incollate da una conversazione con un'AI:
    un posto per riga, con un orario (HH:MM) in un punto qualsiasi della riga.
    Le righe senza orario riconoscibile vengono comunque aggiunte, senza orario. */
-/* ===== CONTROLLO DEI POSTI SUL WEB =====
-   Nominatim è un indice di indirizzi, non un motore di ricerca: cerca la
-   stringa che gli dai, e se una riga incollata ha un nome storpiato, un nome
-   in italiano di un posto che si chiama in un altro modo, o solo l'insegna
-   senza la città, non trova niente e la tappa entra senza posizione.
-   Qui si passa prima dall'IA con la ricerca sul web (che il ponte traduce nel
-   grounding con la Ricerca Google): torna il nome ufficiale e l'indirizzo, e
-   la mappa la si interroga con quelli. Una chiamata sola per tutta la lista.
-   Se l'IA non risponde si va avanti come prima: verificare è un miglioramento,
-   non un requisito, e una lista non deve restare fuori perché la quota è
-   finita. */
+/* ===== CONTROLLO DEI POSTI SULLA MAPPA =====
+   Una riga incollata ha spesso un nome storpiato, o solo l'insegna senza la
+   città. Ogni nome si cerca su OpenStreetMap, con la città del viaggio e se
+   non basta senza (la ricerca di sempre, geoSearch, con il suo ordine dei
+   risultati): torna il nome con cui il posto sta sulla mappa, l'indirizzo e
+   la posizione, e la tappa entra già piazzata. Prima ci pensava l'assistente
+   con la ricerca sul web; la mappa costa niente, non manda fuori altro che
+   il nome del posto, e dice dove sta.
+   Il nome della mappa si prende solo se somiglia davvero a quello scritto:
+   un nome sbagliato al posto di quello giusto è peggio di nessun controllo.
+   Se la mappa non risponde si va avanti come prima: verificare è un
+   miglioramento, non un requisito. */
 async function verificaPosti(t,nomi){
   if(!nomi||!nomi.length)return null;
-  const dove=t&&t.destination?` Il viaggio è a ${t.destination}, quindi quasi certamente sono lì o nei dintorni.`:'';
-  try{
-    const risposta=await chiediAI({chiave:'posti',json:true,cercaSulWeb:true,attesa:'locale',maxToken:2000,
-      domanda:`Cerca su internet ognuno di questi posti e dimmi come si chiama davvero e dov'è, come sta scritto sulla sua scheda su Google Maps.${dove}
-
-${nomi.map((n,i)=>`${i}. ${n}`).join('\n')}
-
-Rispondi SOLO con JSON, senza backtick:
-{"posti":[{"i":0,"nome":"nome ufficiale","indirizzo":"via e numero, quartiere, città","cerca":"nome ufficiale, via, città","sicuro":"alta"}]}
-
-- "i" è il numero della riga qui sopra: mettilo sempre, e non saltare nessuna riga
-- "cerca" è la stringa con cui lo si trova su una mappa: nome + via + città
-- "sicuro" vale "alta" se l'hai trovato e sei certo che sia quello, "media" se il posto esiste ma potrebbe essercene più di uno con quel nome, "bassa" se non l'hai trovato
-- con "bassa" lascia "indirizzo" vuoto e rimetti in "nome" esattamente quello che ti ho dato io
-- non inventare mai un indirizzo: meglio "bassa" che un numero civico plausibile e sbagliato`});
-    if(!risposta.ok)return null;
-    const r=risposta.dati;
-    const out=[];
-    (r.posti||[]).forEach(p=>{
-      const i=parseInt(p.i,10);
-      if(i>=0&&i<nomi.length)out[i]={nome:p.nome||'',indirizzo:p.indirizzo||'',cerca:p.cerca||'',sicuro:p.sicuro||'media'};
-    });
-    return out.length?out:null;
-  }catch(e){return null;}
+  const citta=tripCityHint(t),out=[];
+  for(let i=0;i<nomi.length;i++){
+    const nome=String(nomi[i]||'').trim();
+    let res=[];
+    try{
+      res=await geoSearch(citta?nome+', '+citta:nome);
+      if(!res.length&&citta)res=await geoSearch(nome);
+    }catch(e){res=[];}
+    const ranked=(typeof rankPlaces==='function')?rankPlaces(res,nome):res;
+    const r=ranked&&ranked[0];
+    if(!r){out[i]={nome,indirizzo:'',sicuro:'bassa'};}
+    else{
+      const parti=String(r.display_name||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const sulla=parti[0]||nome,a=sulla.toLowerCase(),b=nome.toLowerCase();
+      const simile=strSim(a,b)>=0.6||a.includes(b)||b.includes(a);
+      out[i]={nome:simile?sulla:nome,indirizzo:parti.slice(1,4).join(', '),lat:parseFloat(r.lat),lng:parseFloat(r.lon),sicuro:simile?'alta':'media'};
+    }
+    /* Una domanda al secondo, come chiede OpenStreetMap. */
+    if(i<nomi.length-1)await new Promise(ok=>setTimeout(ok,1100));
+  }
+  return out;
 }
 
 async function importDayText(){
@@ -18946,11 +19236,9 @@ async function importDayText(){
   const st=document.getElementById('dayImportStatus'),btn=document.getElementById('dayImportBtn');
   if(btn)btn.disabled=true;
   const whoAll=t.participants.map(p=>p.id);
-  /* Prima si spezzano tutte le righe, poi si chiede una volta sola all'IA di
-     verificarle sul web: una chiamata per l'intera lista, non una per riga.
-     Cosi' la ricerca su mappa parte dal nome ufficiale e dall'indirizzo, che
-     e' quello che Nominatim sa trovare - da un nome scritto a orecchio non
-     trovava niente e la tappa restava senza posizione. */
+  /* Prima si spezzano tutte le righe, poi si cerca ogni posto sulla mappa
+     (verificaPosti): il nome con cui sta su OpenStreetMap, l'indirizzo e la
+     posizione arrivano insieme, e qui sotto la tappa entra gia' piazzata. */
   const voci=lines.map(line=>{
     const m=line.match(timeRe);
     if(!m)return {time:'',name:line};
@@ -18958,23 +19246,24 @@ async function importDayText(){
     const name=(line.slice(0,m.index)+line.slice(m.index+m[0].length)).replace(/^[\s\-–—:·|]+|[\s\-–—:·|]+$/g,'').trim();
     return {time,name:name||line};
   }).filter(v=>v.name);
-  if(st)st.textContent='Controllo i posti su internet...';
+  if(st)st.textContent=tv('Controllo i posti sulla mappa...');
   const verificati=await verificaPosti(t,voci.map(v=>v.name));
   let added=0,conIndirizzo=0,incerti=0;
   for(let i=0;i<voci.length;i++){
     const time=voci[i].time,v=verificati?verificati[i]:null;
-    /* Il nome ufficiale si prende solo se l'IA dice di esserne sicura: su un
-       "bassa" avrebbe tirato a indovinare, e riscrivere quello che hai messo
-       tu con una supposizione e' peggio che lasciarlo com'e'. */
+    /* Il nome della mappa si prende solo se somiglia a quello scritto (lo
+       decide verificaPosti): riscrivere quello che hai messo tu con una
+       supposizione e' peggio che lasciarlo com'e'. */
     const name=(v&&v.sicuro!=='bassa'&&v.nome)?v.nome:voci[i].name;
     if(st)st.textContent=`${i+1}/${voci.length}...`;
     const a={id:uid(),name,time,timeEnd:'',type:'any',notes:(v&&v.indirizzo)||'',who:whoAll.slice(),completed:false,booking:{needed:false,done:false},lat:null,lng:null,poiId:null};
     if(v&&v.indirizzo)conIndirizzo++;
     if(v&&v.sicuro==='bassa')incerti++;
-    try{
+    const giaTrovato=!!(v&&isFinite(v.lat)&&isFinite(v.lng));
+    if(giaTrovato){a.lat=v.lat;a.lng=v.lng;}
+    else try{
       const city=tripCityHint(t);
-      let res=(v&&v.cerca)?await geoSearch(v.cerca):[];
-      if(!res.length)res=await geoSearch(city?name+', '+city:name);
+      let res=await geoSearch(city?name+', '+city:name);
       if(!res.length&&city)res=await geoSearch(name);
       const ranked=(typeof rankPlaces==='function')?rankPlaces(res,name):res;
       const r=ranked&&ranked[0];
@@ -18987,13 +19276,15 @@ async function importDayText(){
        che e' gia' entrato resta. Prima si salvava solo alla fine e un'uscita
        anticipata portava via tutto. */
     save();
-    if(i<voci.length-1)await new Promise(r2=>setTimeout(r2,1100));
+    /* La pausa serve solo se qui si e' cercato sulla mappa: i posti gia'
+       trovati da verificaPosti hanno gia' fatto la loro fila. */
+    if(!giaTrovato&&i<voci.length-1)await new Promise(r2=>setTimeout(r2,1100));
   }
   save();renderAll();dayImportBusy=false;if(btn)btn.disabled=false;
   document.getElementById('dayImportText').value='';
-  const nota=[`Aggiunte ${added} attività`];
-  if(conIndirizzo)nota.push(`${conIndirizzo} con l'indirizzo verificato`);
-  if(incerti)nota.push(`${incerti} che non ho trovato online: controllale`);
+  const nota=[tv('Attività aggiunte: {1}',added)];
+  if(conIndirizzo)nota.push(tv('Con l\'indirizzo verificato: {1}',conIndirizzo));
+  if(incerti)nota.push(tv('Da controllare, non trovate sulla mappa: {1}',incerti));
   if(st)st.textContent=nota.join(' · ')+'.';
   // L'indice del giorno puo' essere cambiato nel frattempo: si riapre quello giusto.
   const t3=app.trips.find(x=>x.id===tripId);
@@ -19430,13 +19721,21 @@ async function doCheckBooking(){
   const tasto=tastoDelTocco();
   const hint=document.getElementById('adBookHint');hint.textContent='Cerco online...';
   try{
-    const risposta=await chiediAI({chiave:'prenotare',json:true,cercaSulWeb:true,tasto,attesa:'locale',maxToken:900,
+    /* Alla ricerca sul web va solo il nome della tappa (se e' un posto, e
+       non contiene il nome di un compagno), la destinazione e il giorno:
+       vedi aiRicercaPer. */
+    const giorno=(t.days[adRef.di]||{}).date,nome=String(a.name||'').replace(/\s+/g,' ').trim();
+    const cosa=aiRicercaPer(t,'prenotare',[nome]);
+    cosa.luoghi=cosa.luoghi.includes(nome)?[nome]:[];
+    cosa.date=/^\d{4}-\d{2}-\d{2}$/.test(giorno||'')?[giorno]:[];
+    const risposta=await chiediAI({chiave:'prenotare',json:true,cercaSulWeb:true,ricerca:cosa,tasto,attesa:'locale',maxToken:900,
       domanda:`Cerca sul web se "${a.name}"${t.destination?` (${t.destination})`:''} richiede o consiglia la prenotazione per la visita. Rispondi SOLO con JSON, niente backtick: {"prenotare":"necessaria|consigliata|no","giorni_prima":numero o 0,"motivo":"una frase","sito":"URL ufficiale per prenotare, o stringa vuota se non lo trovi con certezza"}`});
     if(!risposta.ok){if(risposta.messaggio)hint.textContent=risposta.messaggio;return;}
     const r=risposta.dati;
-    if(r.prenotare==='no'){hint.textContent='Secondo le fonti online non serve prenotare. '+(r.motivo||'');document.getElementById('adBookChk').checked=false;document.getElementById('adBookFields').style.display='none';toast('Non serve prenotare');return;}
+    const nota=aiNotaRicerca(risposta.ricerca);
+    if(r.prenotare==='no'){hint.textContent='Secondo le fonti online non serve prenotare. '+(r.motivo||'')+(nota?' '+nota:'');document.getElementById('adBookChk').checked=false;document.getElementById('adBookFields').style.display='none';toast('Non serve prenotare');return;}
     document.getElementById('adBookChk').checked=true;
-    hint.textContent=(r.prenotare==='necessaria'?'Prenotazione necessaria. ':'Prenotazione consigliata. ')+(r.motivo||'');
+    hint.textContent=(r.prenotare==='necessaria'?'Prenotazione necessaria. ':'Prenotazione consigliata. ')+(r.motivo||'')+(nota?' '+nota:'');
     if(r.sito&&/^https?:\/\//.test(r.sito))document.getElementById('adBookUrl').value=r.sito;
     const g=parseInt(r.giorni_prima)||0;
     if(g>0){const day=new Date(t.days[adRef.di].date);day.setDate(day.getDate()-g);const today=new Date();today.setHours(0,0,0,0);const by=day<today?today:day;document.getElementById('adBookBy').value=by.toISOString().split('T')[0];}
@@ -21459,6 +21758,13 @@ async function mailHotelDaPdf(inp){
   st.textContent='Leggo il PDF…';
   try{
     const r=await leggiPDF(f);
+    /* Un voucher scansionato non ha testo da incollare: le prime pagine
+       vanno all'assistente come immagini, e le legge come la mail. */
+    if(r.vuoto&&r.immagini&&r.immagini.length){
+      document.getElementById('mhText').value='';
+      leggiMailAlloggio(r.immagini);
+      return;
+    }
     if(r.vuoto){st.textContent='⚠️ Quel PDF non ha testo dentro: è una scansione o un\'immagine. Copia e incolla il testo della mail.';return;}
     document.getElementById('mhText').value=r.testo;
     st.textContent='PDF letto ('+r.lette+(r.lette===1?' pagina':' pagine')+(r.tagliato?', troncato':'')+'). Ora leggo la prenotazione…';
@@ -21512,10 +21818,12 @@ function alloggioDaRegole(testo,t){
   }
   return p;
 }
-async function alloggioDaIA(testo,t,tasto){
+async function alloggioDaIA(testo,t,tasto,immagini){
   const oggi=new Date().toISOString().split('T')[0];
+  const scansione=Array.isArray(immagini)&&immagini.length>0;
   const domanda=[
-    'Questa e\' una mail (o un voucher) di conferma di un alloggio. Estrai i dati.',
+    scansione?'Queste immagini sono le prime pagine, scansionate, di una mail (o di un voucher) di conferma di un alloggio. Estrai i dati.'
+             :'Questa e\' una mail (o un voucher) di conferma di un alloggio. Estrai i dati.',
     '',
     'Oggi e\' '+oggi+'. Il viaggio va dal '+(t.start||'?')+' al '+(t.end||'?')+(t.destination?', destinazione '+t.destination:'')+'.',
     '',
@@ -21529,7 +21837,8 @@ async function alloggioDaIA(testo,t,tasto){
     '- le date in AAAA-MM-GG. Se l\'anno non e\' scritto, usa quello coerente col viaggio qui sopra.',
     '- gli orari in HH:MM su 24 ore, solo se la mail li dice (spesso e\' "check-in dalle 15:00").',
     '- "costo": il totale, solo il numero. "valuta": la sigla a tre lettere (EUR, JPY, USD...).',
-    '- "codice": il numero di prenotazione, se c\'e\'.',
+    '- "codice": il numero di prenotazione, se c\'e\'.'
+  ].concat(scansione?[]:[
     '',
     'Mail fra i marcatori:',
     '<<<MAIL',
@@ -21538,22 +21847,29 @@ async function alloggioDaIA(testo,t,tasto){
        quello dell'albergo e' uno dei dati da leggere. */
     aiSenzaDatiPersonali(String(testo).slice(0,12000),{telefoni:false}),
     'MAIL>>>'
-  ].join('\n');
-  const risposta=await chiediAI({chiave:'alloggio',json:true,tasto,attesa:'locale',maxToken:900,domanda});
-  if(!risposta.ok)throw new Error(risposta.errore);
+  ]).join('\n');
+  const risposta=await chiediAI({chiave:'alloggio',json:true,tasto,attesa:'locale',maxToken:900,conFile:scansione,
+    ...(scansione?{messaggi:[{role:'user',content:aiBlocchiImmagini(immagini).concat([{type:'text',text:domanda}])}]}:{domanda})});
+  if(!risposta.ok){const e=new Error(risposta.errore);e.messaggio=risposta.messaggio;throw e;}
   return risposta.dati;
 }
-async function leggiMailAlloggio(){
+async function leggiMailAlloggio(immagini){
   const t=T();if(!t||aiInCorso('alloggio'))return;
   const tasto=tastoDelTocco();
+  const scansione=Array.isArray(immagini)&&immagini.length>0;
   const testo=document.getElementById('mhText').value.trim();
   const st=document.getElementById('mhStato'),box=document.getElementById('mhResult');
-  if(testo.length<30){st.textContent='⚠️ Incolla il testo della mail (o carica il PDF): così com\'è non c\'è abbastanza da leggere.';return;}
+  if(!scansione&&testo.length<30){st.textContent='⚠️ Incolla il testo della mail (o carica il PDF): così com\'è non c\'è abbastanza da leggere.';return;}
   box.innerHTML='';
-  st.textContent='Leggo la prenotazione…';
-  let p=null,daIA=false;
-  try{p=await alloggioDaIA(testo,t,tasto);daIA=true;}catch(e){}
-  if(!p||!(p.struttura||p.checkin)){p=alloggioDaRegole(testo,t);daIA=false;}
+  st.textContent=scansione?pdfFraseScansione(immagini.length):'Leggo la prenotazione…';
+  let p=null,daIA=false,perche='';
+  try{p=await alloggioDaIA(testo,t,tasto,scansione?immagini:null);daIA=true;}catch(e){perche=(e&&e.messaggio)||'';}
+  if(!p||!(p.struttura||p.checkin)){
+    /* Di una scansione il lettore a regole non ha niente da leggere: resta
+       la strada del testo incollato, e lo si dice. */
+    if(scansione){st.textContent='⚠️ '+(perche||tv('Dalla scansione non riesco a leggere la prenotazione: copia e incolla il testo della mail.'));return;}
+    p=alloggioDaRegole(testo,t);daIA=false;
+  }
   /* Quello che il modello scrive non entra mai cosi' com'e': date e orari
      passano da un controllo, e se non reggono restano vuoti. */
   const anno=annoDelViaggio(t);
@@ -22032,7 +22348,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-08 01:25';
+const VERSIONE_APP='2026-10-08 16:08';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

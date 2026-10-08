@@ -59,14 +59,24 @@ quel file è la memoria.
   sta lì Supabase lo scarta senza dirlo. I link delle email usano il flusso
   «implicit»: si aprono in Safari anche quando la richiesta parte dall'app
   sulla Home, quindi un flusso che pretende la stessa memoria (PKCE) non va.
-- **AI**: passa dal Worker Cloudflare `geppgo-ai`, che tiene la chiave e parla
-  con Gemini (`GUIDA-AI.md`). Nell'app non c'è nessuna chiave, e l'utente non
-  ne deve inserire. Ogni richiesta passa da **`chiediAI`**, e c'è una sola
-  `fetch` verso il ponte: tempo massimo (30 s, 60 con una foto o un PDF), un
-  secondo tentativo solo per rete e 5xx, una richiesta per volta, «Annulla»
-  dopo 10 s, JSON letto anche sporco, risposta nella lingua dell'app, dati
-  personali tolti prima di spedire. Una chiamata nuova all'assistente si fa
-  con `chiediAI`, mai con un `fetch` suo (`test/prova-ai.js` lo controlla).
+- **AI**: passa dal Worker Cloudflare `geppgo-ai`, il cui codice è
+  **`worker/ponte-ai.js`** (si pubblica a mano dalla dashboard, `GUIDA-AI.md`).
+  Il modello è Gemma 4 su **Cloudflare Workers AI** (collegamento `AI` del
+  Worker, quota gratuita del giorno); la ricerca sul web è **Tavily** (secret
+  `TAVILY_KEY`), solo per «serve prenotare?» e per le domande in chat che
+  chiedono fatti aggiornati, e a Tavily vanno solo nomi di posti, destinazione
+  e date. Orari di apertura e controllo dei posti sono OpenStreetMap, senza
+  modello. Nell'app non c'è nessuna chiave, e l'utente non ne deve inserire;
+  le chiavi stanno solo nei secret del Worker. Ogni richiesta passa da
+  **`chiediAI`**, e c'è una sola `fetch` verso il ponte: tempo massimo (30 s,
+  60 con una foto o un PDF), un secondo tentativo solo per rete e 5xx, una
+  richiesta per volta, «Annulla» dopo 10 s, JSON letto anche sporco, risposta
+  nella lingua dell'app, dati personali tolti prima di spedire, quota finita
+  detta con l'ora del ritorno. Il formato fra app e ponte resta quello di
+  sempre: un campo nuovo è facoltativo, così app e ponte si pubblicano in
+  qualunque ordine. Una chiamata nuova all'assistente si fa con `chiediAI`,
+  mai con un `fetch` suo (`test/prova-ai.js` lo controlla; il ponte lo prova
+  `test/prova-ponte-ai.js`).
 - **Lingue**: ogni testo nuovo dell'interfaccia va aggiunto in tutte le lingue
   supportate (it, en, es, fr, pt) con il sistema di traduzioni esistente
   (`DIZIONARIO`; `tv()` per i testi con variabili). L'italiano resta la lingua
