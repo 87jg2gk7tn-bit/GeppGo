@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 8 ottobre 2026.
+Aggiornato: 12 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -787,6 +787,58 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **⚠️ I dati di chi non ha l'account stanno solo nel telefono, e si perdono
+  in modi che la persona non vede** (blocco `I DATI AL SICURO`, prova
+  `prova-dati`). Dove stanno: tutto `app` in localStorage (`geppgo2`), le
+  valigie accanto (`geppgo2_pack_<viaggio>_<account o local>`), le foto e i
+  pezzi di mappa in IndexedDB (`geppgo_ph`, negozi `ph` e `tessere`). Si
+  perdono cambiando telefono, cancellando i dati del browser, e su iPhone
+  anche da soli: **Safari, senza l'app sulla Home, dopo sette giorni senza
+  visite cancella tutto quello che il sito ha scritto**. E l'app sulla Home
+  ha una memoria sua: installarla non porta con sé i viaggi fatti in Safari.
+  Le cose da sapere:
+  - **Il vecchio «Esporta dati» era solo il JSON di `app`**: niente foto,
+    niente valigie (che stanno in altre chiavi). Chi cambiava telefono senza
+    account le perdeva convinto di averle salvate. Adesso è uno zip
+    (`geppgo.json` per primo, poi `foto/`), fatto con fflate: le foto sono
+    già JPEG e entrano senza ricomprimerle, una alla volta, e lo zip diventa
+    un Blob ogni 8 MB per non tenere tutto due volte in memoria. Oltre
+    300 MB stimati non si parte: lo si dice e si propone il file senza foto.
+  - **Il foglio Condividi vuole un tocco fresco**: preparare lo zip ne fa
+    passare troppo, quindi il tasto «Condividi o salva» compare a file
+    pronto. Chrome in Linux (le prove) non ha `navigator.share`: le prove lo
+    fingono, e senza si scarica.
+  - **Il ripristino legge lo zip a pezzi** (`f.stream()` e `Unzip`) e scrive
+    le foto mentre arrivano; i dati si sostituiscono solo alla fine, dopo un
+    punto di ripristino. Uno zip rifatto da un altro programma può avere le
+    foto prima del JSON e tutto dentro una cartella: si aspetta il JSON e i
+    nomi si leggono da `foto/` in poi.
+  - **Gli avvisi dell'avvio partono 2,5 secondi dopo l'apertura**: chi creava
+    il primo viaggio prima passava per uno che i viaggi li aveva già, e il
+    foglio «solo su questo telefono» non compariva. I viaggi dell'avvio si
+    contano subito (`VIAGGI_ALL_AVVIO`).
+  - **La valigia sta sotto il nome di chi l'ha fatta** (`local` senza
+    account): creando l'account sembrava vuota. `packingRecupera` la copia
+    (non la sposta) da `local`, e solo da lì: quella di un altro account
+    sullo stesso telefono resta sua.
+  - **Una foto si carica una volta sola** (`fotoSuCloud`): il giro dei due
+    minuti, le foto appena aggiunte, «Aspetta e sincronizza» e i viaggi che
+    arrivano nel cloud creando l'account possono incrociarsi sulla stessa.
+    Chi arriva secondo aspetta il caricamento in corso, e prima di partire la
+    foto si rilegge da IndexedDB: una copia vecchia in mano a un altro giro
+    la caricava due volte.
+  - **Le modifiche in attesa si contano rispetto a `lastPush`**, voce per
+    voce (una spesa, una tappa, un albergo, un campo del viaggio); un viaggio
+    mai arrivato al cloud conta uno. Le foto in attesa sono quelle senza
+    `cloudId` di un viaggio che c'è ancora (quelle dei viaggi cancellati non
+    partirebbero mai).
+- **In questo ambiente `npm install` si ferma con un 403 su
+  `cdn.sheetjs.com`** (il proxy non lo lascia passare, e il lockfile non ha
+  SheetJS, quindi npm lo riscarica). Un pacchetto nuovo si mette a mano:
+  `npm pack <nome>@<versione>` dal registro, controllo dell'impronta,
+  copiato in `node_modules`, e scritto in `package.json` e nel lockfile. Le
+  prove automatiche di GitHub invece SheetJS lo raggiungono.
 
 - **⚠️ L'assistente: quattordici copie dello stesso `fetch`, e nessuna con un
   tempo massimo.** Col campo debole una richiesta restava appesa per sempre,
