@@ -37,7 +37,11 @@ function titolo(t) { console.log(`\n${B}${t}${Z}`); }
 /* Ogni prova stampa in fondo "N/M passati": è l'unica cosa che serve leggere
    da fuori. Se non c'è, qualcosa è andato storto prima di arrivare in fondo. */
 function conta(uscita) {
-  const m = /(\d+)\/(\d+) passati/.exec(uscita);
+  /* Il totale è l'ultimo: una prova può citarne un'altra nelle sue note
+     (prova-cloud-personale scrive il «18/18 passati» del database), e
+     prendendo il primo che capitava si stampava quello al posto suo. */
+  const tutti = [...uscita.matchAll(/(\d+)\/(\d+) passati/g)];
+  const m = tutti[tutti.length - 1];
   return m ? { passate: +m[1], tutte: +m[2] } : null;
 }
 
