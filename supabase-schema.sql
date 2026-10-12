@@ -127,8 +127,8 @@ create index if not exists trips_owner_idx       on public.trips(owner);
 --
 --  Le tabelle sono TUTTE quelle che questo file governa, non solo le prime
 --  due. Il motivo e' preciso: qui sotto si buttano via anche le funzioni
---  is_trip_member e is_trip_admin, e i permessi di foto, segnalazioni e
---  raccolte ci si appoggiano. Lasciandoli in piedi, Postgres rifiuta di
+--  is_trip_member e is_trip_admin, e i permessi di foto, segnalazioni,
+--  raccolte e dati personali (la valigia) ci si appoggiano. Lasciandoli in piedi, Postgres rifiuta di
 --  togliere la funzione ("cannot drop function ... because other objects
 --  depend on it") e il file si ferma a meta'.
 --  Non e' un caso di scuola: succede la SECONDA volta che si lancia questo
@@ -139,7 +139,7 @@ declare p record;
 begin
   for p in select policyname, tablename from pg_policies
             where schemaname='public'
-              and tablename in ('trips','trip_members','foto','segnalazioni','raccolte')
+              and tablename in ('trips','trip_members','foto','segnalazioni','raccolte','dati_personali')
   loop
     execute format('drop policy if exists %I on public.%I', p.policyname, p.tablename);
   end loop;
@@ -1110,3 +1110,71 @@ create or replace function public.pulisci_vicini_cache()
 returns void language sql security definer set search_path = public as $$
   delete from public.vicini_cache where quando < now() - interval '30 days';
 $$;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+--  LA VALIGIA E LE IMPOSTAZIONI, PRIVATE
+-- ════════════════════════════════════════════════════════════════════════════
+--  La valigia è personale: non sta dentro il viaggio, che vedono tutti i
+--  compagni. Prima restava su un telefono solo, e cambiando telefono
+--  spariva. Qui ognuno tiene la sua, e le impostazioni che sono sue e non
+--  del telefono (il navigatore, la qualità delle foto, gli avvisi, il tema,
+--  il proprio nome).
+--
+--  Una riga per cosa: chiave = 'impostazioni', oppure 'valigia:<id del
+--  viaggio>'. Dentro, il contenuto con l'ora di ogni modifica: l'app unisce
+--  due telefoni voce per voce, e al database non serve conoscerne la forma.
+--
+--  Fatta così, e non altrimenti:
+--  - ogni riga è di una persona sola, e solo lei la legge e la scrive. Non
+--    c'è nessuna regola che apra le righe ai compagni di viaggio;
+--  - una valigia si lega solo a un viaggio di cui si fa parte;
+--  - se ne va da sola: cancellando l'account (on delete cascade dagli
+--    utenti, quindi anche da elimina_account) e cancellando il viaggio;
+--  - non è un magazzino: una riga non supera i 256 KB.
+create table if not exists public.dati_personali (
+  user_id       uuid        not null default auth.uid()
+                            references auth.users(id) on delete cascade,
+  chiave        text        not null,
+  trip_id       uuid        references public.trips(id) on delete cascade,
+  dati          jsonb       not null default '{}'::jsonb,
+  aggiornato_il timestamptz not null default now(),
+  primary key (user_id, chiave),
+  constraint dati_personali_chiave check (
+    (chiave = 'impostazioni' and trip_id is null)
+    or (trip_id is not null and chiave = 'valigia:' || trip_id::text)
+  ),
+  constraint dati_personali_peso check (pg_column_size(dati) <= 262144)
+);
+create index if not exists dati_personali_trip_idx on public.dati_personali(trip_id);
+
+alter table public.dati_personali enable row level security;
+revoke all on public.dati_personali from anon;
+grant select, insert, update, delete on public.dati_personali to authenticated;
+
+-- LEGGERE: solo le proprie righe.
+drop policy if exists pers_select on public.dati_personali;
+create policy pers_select on public.dati_personali
+  for select to authenticated
+  using (user_id = auth.uid());
+
+-- SCRIVERE: a nome proprio, e la valigia solo di un viaggio in cui si è.
+-- Senza la seconda condizione si potrebbe appendere una riga a un viaggio
+-- altrui, solo per sapere se quell'id esiste.
+drop policy if exists pers_insert on public.dati_personali;
+create policy pers_insert on public.dati_personali
+  for insert to authenticated
+  with check (user_id = auth.uid()
+              and (trip_id is null or public.is_trip_member(trip_id)));
+
+drop policy if exists pers_update on public.dati_personali;
+create policy pers_update on public.dati_personali
+  for update to authenticated
+  using      (user_id = auth.uid())
+  with check (user_id = auth.uid()
+              and (trip_id is null or public.is_trip_member(trip_id)));
+
+drop policy if exists pers_delete on public.dati_personali;
+create policy pers_delete on public.dati_personali
+  for delete to authenticated
+  using (user_id = auth.uid());

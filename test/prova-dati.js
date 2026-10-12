@@ -8,7 +8,8 @@
    1. la memoria persistente si chiede alla creazione del primo viaggio,
       dove il browser la conosce;
    2. senza account il foglio «I tuoi viaggi sono solo su questo telefono»
-      compare dopo il primo viaggio, e poi non piu' di una volta a settimana;
+      compare dopo il primo viaggio (o alla prima apertura, a chi i viaggi
+      li aveva gia'), e poi non piu' di una volta a settimana;
    3. creando l'account i viaggi del telefono finiscono nel cloud, foto
       comprese, e non si perde niente (nemmeno la valigia);
    4. in Safari su iPhone, senza l'app sulla Home, la spiegazione per
@@ -54,10 +55,11 @@ const unViaggio = (id, nome, extra = {}) => Object.assign({
     { id: 'd2', date: '2026-11-03', title: '', activities: [] }]
 }, extra);
 const foto = (id, tripId, extra = {}) => Object.assign({ id, tripId, date: '2026-11-02', data: JPEG, mini: JPEG, ts: 1, chi: null }, extra);
-/* Come cleanTrip dell'app: quello che del viaggio va nel cloud. */
+/* Come cleanTrip dell'app: quello che del viaggio va nel cloud. Senza le ore
+   delle modifiche (_ct), che non sono contenuto. */
 const pulito = t => {
   const c = JSON.parse(JSON.stringify(t));
-  ['cid', '_invite', '_owner', '_admin', 'canc_chiesta_da', 'packing', '_creating'].forEach(k => delete c[k]);
+  ['cid', '_invite', '_owner', '_admin', 'canc_chiesta_da', 'packing', '_creating', '_ct'].forEach(k => delete c[k]);
   (c.participants || []).forEach(p => delete p.isMe);
   return c;
 };
@@ -138,8 +140,14 @@ const errori = [];
 /* Apre l'app come un telefono: lo stato si mette solo al primo caricamento
    (ricaricando resta quello che l'app ha salvato). */
 async function apri(browser, { stato = null, extraLs = null, ua = null, installata = false, persist = 'finto', larghezza = 390, altezza = 844,
-  lingua = null, scuro = false, nuvola = null, condividi = false, intro = false, foto: fotoIdb = null, tessere = null } = {}) {
-  const opz = { viewport: { width: larghezza, height: altezza } };
+  lingua = null, scuro = false, nuvola = null, condividi = false, intro = false, foto: fotoIdb = null, tessere = null, maiVisto = false } = {}) {
+  /* L'avviso «solo su questo telefono» si da' per visto da poco, salvo dove
+     e' proprio lui che si prova (maiVisto, o una data in extraLs): chi ha
+     dei viaggi senza account lo vede all'apertura, e coprirebbe i tasti. */
+  if (!maiVisto && !(extraLs && 'geppgo2_avviso_account2' in extraLs)) extraLs = Object.assign({ geppgo2_avviso_account2: String(Date.now()) }, extraLs || {});
+  /* avvisi: true - qui gli avvisi si provano, non si danno per visti
+     (vedi test/browser.js). */
+  const opz = { viewport: { width: larghezza, height: altezza }, avvisi: true };
   if (ua) opz.userAgent = ua;
   const page = await browser.newPage(opz);
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
@@ -254,12 +262,12 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
 
   /* ── 2. senza account: dopo il primo viaggio, poi una volta a settimana ── */
   await prova('2', async () => {
-    let p = await apri(browser, { stato: vuoto({ premium: true }) });
+    let p = await apri(browser, { stato: vuoto({ premium: true }), maiVisto: true });
     const subito = await attivo(p, 'mSoloQui');
     await creaViaggio(p, 'Lisbona');
     const comparso = await aspettaFoglio(p, 'mSoloQui', 7000);
     const foglio = await p.evaluate(() => ({ t: document.querySelector('#mSoloQui .sheet-t').textContent.trim(),
-      tasti: [...document.querySelectorAll('#mSoloQui .sheet button.btn')].map(b => b.textContent.trim()), quando: +localStorage.getItem('geppgo2_avviso_account') }));
+      tasti: [...document.querySelectorAll('#mSoloQui .sheet button.btn')].map(b => b.textContent.trim()), quando: +localStorage.getItem('geppgo2_avviso_account2') }));
     ok('2. senza account, dopo il primo viaggio: «I tuoi viaggi sono solo su questo telefono», con «Crea un account» e «Più tardi»',
        !subito && comparso && /I tuoi viaggi sono solo su questo telefono/.test(foglio.t) && foglio.tasti.includes('Crea un account') && foglio.tasti.includes('Più tardi') && Date.now() - foglio.quando < 60000,
        JSON.stringify(foglio));
@@ -269,35 +277,34 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
     await creaViaggio(p, 'Porto');
     await p.waitForTimeout(4000);
     const secondo = await attivo(p, 'mSoloQui');
-    await p.evaluate(() => localStorage.setItem('geppgo2_avviso_account', String(Date.now() - 8 * 864e5)));
+    await p.evaluate(() => localStorage.setItem('geppgo2_avviso_account2', String(Date.now() - 8 * 864e5)));
     await creaViaggio(p, 'Madrid');
     const settimana = await aspettaFoglio(p, 'mSoloQui', 7000);
     ok('2. «Più tardi» lo chiude; un altro viaggio nella stessa settimana non lo fa ricomparire, dopo una settimana sì', chiuso && !secondo && settimana,
        JSON.stringify({ chiuso, secondo, settimana }));
     await p.close();
-    /* All'apertura: chi aveva gia' dei viaggi non lo vede a sorpresa (parte
-       solo il conto); poi non prima di una settimana dall'ultimo. */
+    /* All'apertura: chi aveva gia' dei viaggi lo vede la prima volta dopo
+       l'aggiornamento; poi non prima di una settimana dall'ultimo. */
     const conViaggio = vuoto({ trips: [unViaggio(11, 'Roma')], currentTripId: 11 });
-    p = await apri(browser, { stato: conViaggio });
-    await p.waitForTimeout(4500);
-    const primaVolta = await p.evaluate(() => ({ foglio: document.getElementById('mSoloQui').classList.contains('active'), quando: +localStorage.getItem('geppgo2_avviso_account') }));
+    p = await apri(browser, { stato: conViaggio, maiVisto: true });
+    const primaVolta = await aspettaFoglio(p, 'mSoloQui', 8000);
     await p.close();
-    p = await apri(browser, { stato: conViaggio, extraLs: { geppgo2_avviso_account: String(Date.now() - 3 * GIORNO) } });
+    p = await apri(browser, { stato: conViaggio, extraLs: { geppgo2_avviso_account2: String(Date.now() - 3 * GIORNO) } });
     await p.waitForTimeout(4500);
     const treGiorni = await attivo(p, 'mSoloQui');
     await p.close();
-    p = await apri(browser, { stato: conViaggio, extraLs: { geppgo2_avviso_account: String(Date.now() - 8 * GIORNO) } });
+    p = await apri(browser, { stato: conViaggio, extraLs: { geppgo2_avviso_account2: String(Date.now() - 8 * GIORNO) } });
     const ottoGiorni = await aspettaFoglio(p, 'mSoloQui', 8000);
     await p.close();
-    ok('2. all\'apertura: chi ha già dei viaggi non lo vede subito, a 3 giorni dall\'ultimo no, a 8 giorni sì',
-       !primaVolta.foglio && Date.now() - primaVolta.quando < 60000 && !treGiorni && ottoGiorni, JSON.stringify({ primaVolta, treGiorni, ottoGiorni }));
+    ok('2. all\'apertura: chi ha già dei viaggi lo vede la prima volta, a 3 giorni dall\'ultimo no, a 8 giorni sì',
+       primaVolta && !treGiorni && ottoGiorni, JSON.stringify({ primaVolta, treGiorni, ottoGiorni }));
   });
 
   /* ── 3. creando l'account i viaggi vanno nel cloud ───────────────────── */
   await prova('3', async () => {
     const a = unViaggio(101, 'Kyoto'), b = unViaggio(102, 'Osaka', { expenses: [] });
     const p = await apri(browser, { stato: vuoto({ trips: [a, b], currentTripId: 101 }),
-      extraLs: { geppgo2_avviso_account: String(Date.now() - 8 * GIORNO),
+      extraLs: { geppgo2_avviso_account2: String(Date.now() - 8 * GIORNO),
         geppgo2_pack_101_local: [{ id: 1, cat: 'Documenti', label: 'Passaporto', checked: true, custom: true }] },
       foto: [foto('ph-k1', 101)] });
     const prima = await p.evaluate(() => JSON.parse(JSON.stringify(app.trips)));
@@ -321,7 +328,7 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
     const fotoDopo = await fotoInIdb(p);
     const stessi = esito.locali.length === 2 && prima.every(t => {
       const l = esito.locali.find(x => x.id === t.id), c = esito.cloud.find(x => l && x.id === l.cid);
-      return l && c && uguali(pulito(l), pulito(t)) && uguali(c.data, pulito(t));
+      return l && c && uguali(pulito(l), pulito(t)) && uguali(pulito(c.data), pulito(t));
     });
     ok('3. dal foglio «Crea un account» si arriva al modulo di registrazione', comparso && modulo === 'Crea un account', modulo);
     ok('3. creato l\'account, i due viaggi del telefono sono nel cloud, uguali a com\'erano (spese, tappe, alberghi)',
@@ -338,7 +345,7 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
 
   /* ── 4. la Home in Safari ─────────────────────────────────────────────── */
   await prova('4', async () => {
-    const recente = { geppgo2_avviso_account: String(Date.now()) };
+    const recente = { geppgo2_avviso_account2: String(Date.now()) };
     let p = await apri(browser, { stato: vuoto({ premium: true }), ua: IPHONE, extraLs: recente });
     await creaViaggio(p, 'Lisbona');
     const comparso = await aspettaFoglio(p, 'mHome', 7000);

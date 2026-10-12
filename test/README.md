@@ -64,6 +64,16 @@ dalla rete* — dove la CDN di Supabase non si raggiunge il pannello non si apre
 e la prova passa, dove si raggiunge no. Una prova che dipende da cosa riesce a
 scaricare non è una prova.
 
+**Il foglio «I tuoi viaggi sono solo su questo telefono» nelle prove è già
+visto.** Dal 12 ottobre 2026 compare alla prima apertura a chi ha già dei
+viaggi senza account — cioè in quasi tutte le prove, che partono proprio
+così — e copriva lo schermo: metà della batteria è diventata rossa in un
+colpo, con tocchi andati in scadenza. `newPage` di `browser.js` lo segna come
+già visto (anche dopo gli `addInitScript` della prova, che di solito
+riscrivono localStorage); chi lo vuole vedere apre la pagina con
+`newPage({ avvisi: true })`, come fanno `prova-dati` e
+`prova-cloud-personale`.
+
 
 Il cloud di GeppGo si regge su una riga sola. L'app chiede i viaggi così:
 
@@ -656,7 +666,8 @@ l'ha: così la prova tiene il file che l'app gli dà.
 
 I gruppi: la memoria persistente chiesta al primo viaggio; il foglio «I tuoi
 viaggi sono solo su questo telefono» (dopo il primo viaggio, poi una volta a
-settimana, anche all'apertura); l'account creato da quel foglio, che porta
+settimana, e all'apertura: subito la prima volta, poi non prima di una
+settimana); l'account creato da quel foglio, che porta
 nel cloud viaggi, foto e valigia senza perdere niente; la spiegazione della
 Home in Safari su iPhone e non nell'app installata (`navigator.standalone`
 finto); «Avevi già dei viaggi in Safari?», sopra la schermata d'accesso; il
@@ -670,3 +681,61 @@ chiaro e scuro.
 Sul codice di prima passa 1 controllo su 16 — quello che chiede di non
 rompere niente dove `persist()` non esiste — e gli altri gruppi si fermano
 presto: i fogli nuovi lì non ci sono.
+
+## Due telefoni, la valigia e le impostazioni
+
+```sh
+node test/prova-cloud-personale.js           # 29 controlli, in undici gruppi
+psql -f test/supabase-prova-personale.sql    # 18 controlli sui permessi
+```
+
+Qui due telefoni dello stesso account e un compagno di viaggio parlano con
+lo **stesso** cloud: un cloud finto che vive in Node (`Nuvola`), passato a
+ogni pagina con `exposeBinding`, con le regole di chi vede cosa scritte come
+nel database vero e il tempo reale che avvisa le altre pagine. Ogni pagina
+può restare senza rete (`window.__offline`), ed è così che nascono i
+conflitti veri: due telefoni che cambiano lo stesso viaggio senza vedersi.
+`Nuvola.assente` fa rispondere `PGRST205` sulla tabella nuova, come un
+Supabase dove la migrazione non è ancora stata lanciata.
+
+I gruppi: il backup con le foto di chi lo fa e non quelle dei compagni; il
+ripristino con l'account (il viaggio condiviso torna come copia privata e
+quello del gruppo nel cloud non si muove, quello solo tuo torna com'era);
+l'avviso alla prima apertura dopo l'aggiornamento, e poi non prima di una
+settimana; la valigia da un telefono all'altro, e mai al compagno, e due
+valigie fatte prima su due telefoni che diventano una sola, senza doppioni;
+le
+impostazioni che passano e quelle del telefono che restano (e non vanno
+nemmeno nel cloud), e una navigazione al volo o i valori di serie di un
+telefono appena installato che non passano sopra alla scelta fatta altrove; la tabella che non c'è, senza errori a schermo e senza
+riprovare a ogni tocco; il database vero; compagni aggiunti da due telefoni
+senza rete, e uno tolto che non ricompare; il nome cambiato su uno e le date
+sull'altro; un viaggio del formato di prima, senza le ore dei campi, e un
+telefono rimasto all'app di prima che cambia il nome portandosi dietro le
+ore vecchie, e la valigia di una volta rimasta dentro il viaggio che non si
+perde unendo; i testi nuovi in cinque lingue e niente fuori schermo da 320 a
+430 px.
+
+Sul codice di prima passano 3 controlli su 20 (i due del database, che
+provano il file della migrazione e non l'app, e quello dello schermo); i
+gruppi della valigia, delle impostazioni e della tabella assente si fermano
+subito, perché lì le funzioni non ci sono. I cinque controlli aggiunti
+dopo (la navigazione al volo, i valori di serie, le ore vecchie, la valigia
+doppia, la valigia di una volta) falliscono ognuno rimettendo il suo pezzo
+di prima, e solo quello.
+
+Il gruppo 7 crea un database di prova suo, ci mette lo schema **senza** la
+parte nuova, ci lancia sopra due volte il file di
+`supabase/migrazioni/` — come farà chi lo incolla nel SQL Editor — e poi
+`supabase-prova-personale.sql`; controlla anche che il file della
+migrazione sia lo stesso testo che sta in fondo allo schema. Senza Postgres
+si salta e lo dice (con `PROVE_TUTTE` no).
+
+`supabase-prova-personale.sql` tiene vera una promessa sola: **ognuno legge
+e scrive solo le proprie righe.** Bruno, compagno di Anna, non legge, non
+cambia, non cancella e non riscrive a nome di lei, nemmeno passando
+dall'inserimento; tiene però la sua valigia per lo stesso viaggio. Carla non
+attacca una valigia a un viaggio non suo, chi non ha l'account non legge e
+non scrive niente, la chiave dice sempre lo stesso viaggio della riga, una
+riga non passa i 256 KB, chi è stato tolto dal viaggio non ci riscrive la
+valigia, e tutto se ne va col viaggio o con l'account.

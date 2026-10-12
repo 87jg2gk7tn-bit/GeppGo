@@ -29,7 +29,7 @@ Ricavato leggendo il codice, non a ricordo.
 | Contact Info → **Email Address** | L'email dell'account | App Functionality |
 | Identifiers → **User ID** | L'id dell'utente su Supabase | App Functionality |
 | User Content → **Photos or Videos** | Le foto del diario, e di ognuna una copia piccola | App Functionality |
-| User Content → **Other User Content** | Viaggi, tappe, spese, note, biglietti | App Functionality |
+| User Content → **Other User Content** | Viaggi, tappe, spese, note, biglietti; la valigia di ogni viaggio e alcune impostazioni (navigatore, qualità delle foto, avvisi di prossimità, tema, il proprio nome), che legge solo l'utente stesso | App Functionality |
 | User Content → **Customer Support** | Le segnalazioni sulle foto | App Functionality |
 
 Per ognuna: **Used for App Functionality**, non per pubblicità, non per
@@ -90,13 +90,15 @@ stesso nella privacy policy — ed è detto — perché la promessa "non viene m
 conservata", scritta senza distinguere, sarebbe falsa.
 
 Lo stesso vale per il **backup** (Profilo → Backup → Esporta dati): il
-telefono fa un file .zip con viaggi, liste dei bagagli e foto salvate sul
-telefono, e lo consegna al foglio Condividi del sistema o lo scarica. Va dove
+telefono fa un file .zip con viaggi, liste dei bagagli e le foto salvate sul
+telefono che ha messo l'utente, e lo consegna al foglio Condividi del sistema
+o lo scarica. Va dove
 lo manda l'utente; a noi non arriva niente, quindi **non è raccolta**. Anche
 la «memoria persistente» chiesta al browser alla creazione del primo viaggio
 (`navigator.storage.persist()`) resta nel telefono: ne teniamo solo l'esito,
-in localStorage. La privacy policy dice tutte e due le cose, e che nel file
-del backup ci sono anche le foto dei compagni già scaricate sul telefono.
+in localStorage. La privacy policy dice tutte e due le cose, e che le foto
+dei compagni nel file del backup non ci vanno, nemmeno quelle che il telefono
+ha già scaricato: sono loro, e un file che gira non deve portarsele dietro.
 
 Apple prevede inoltre un'eccezione per i dati che escono dal telefono ma non
 vengono memorizzati oltre il tempo della richiesta. GeppGo ricadeva
@@ -157,6 +159,12 @@ Stessa sostanza, nomi diversi:
 - **Posizione → Posizione precisa**: raccolta ma non conservata sui server
   (vedi sopra; quello che resta nel telefono non conta come raccolta).
 - **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
+- **Attività nell'app → Altri contenuti generati dall'utente**: la valigia di
+  ogni viaggio e alcune impostazioni (navigatore, qualità delle foto, avvisi
+  di prossimità, tema, il proprio nome), salvate nel cloud perché seguano
+  l'utente su un altro telefono. Le legge solo lui: la regola del database
+  (tabella `dati_personali`) non le apre nemmeno ai compagni di viaggio.
+  Cancellabili: se ne vanno col viaggio o con l'account.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori
 elencati nella privacy policy (Supabase, Cloudflare Workers AI attraverso il
@@ -295,7 +303,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 
 | A chi parla | Cosa gli manda |
 |---|---|
-| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni |
+| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte) |
 | `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, `worker/ponte-ai.js`, e da lì il modello Gemma su Cloudflare Workers AI) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni; le prime tre pagine di un PDF scansionato, come immagini. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
 | `api.tavily.com` (dal ponte, mai dal telefono) | Una riga di ricerca fatta di nomi di posti del viaggio, la destinazione, una data e l'argomento: niente persone, email o telefoni. Le condizioni di Tavily gli permettono di conservarla e di usarla per migliorare i suoi modelli |
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |

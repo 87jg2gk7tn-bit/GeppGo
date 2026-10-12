@@ -99,13 +99,29 @@ vedono le stesse persone, e quando cancelli la foto se ne va con lei.</p>
 
 <h3>Il backup</h3>
 <p>Da Profilo → Backup → <em>Esporta dati</em> il telefono fa <strong>un file
-solo</strong> (.zip) con i viaggi, le liste dei bagagli e le foto che sono
-salvate sul telefono, comprese quelle dei compagni che il telefono ha già
-scaricato. Il file si fa sul telefono e va dove scegli tu — in File, su
-iCloud Drive, in un messaggio a te stesso: <strong>noi non lo riceviamo</strong>.
-Da lì in poi è nelle tue mani, e chi ha il file vede tutto quello che
-contiene: tienilo dove lo terresti un album di foto. I pezzi di mappa non ci
-sono: si riscaricano.</p>
+solo</strong> (.zip) con i viaggi, le liste dei bagagli e le foto salvate
+sul telefono <strong>che hai messo tu</strong>. Quelle dei compagni restano
+fuori, anche se il telefono le ha già scaricate: sono loro, e un file che
+gira non deve portarsele dietro. Il file si fa sul telefono e va dove scegli
+tu — in File, su iCloud Drive, in un messaggio a te stesso: <strong>noi non lo
+riceviamo</strong>. Da lì in poi è nelle tue mani, e chi ha il file vede
+tutto quello che contiene: tienilo dove lo terresti un album di foto. I pezzi
+di mappa non ci sono: si riscaricano.</p>
+<p>Ripristinando un backup con l'account, un viaggio condiviso con altri
+<strong>non sovrascrive mai</strong> quello del gruppo: torna come copia
+privata, che vedi solo tu, e quello che vedono i compagni resta com'è.</p>
+
+<h3>La valigia e le impostazioni</h3>
+<p>Se hai un account, la tua valigia di ogni viaggio e alcune impostazioni
+(il navigatore da aprire, la qualità delle foto, gli avvisi di prossimità e
+il loro raggio, il tema scuro, il tuo nome) vanno anche nel cloud, così le
+ritrovi su un altro telefono. <strong>Sono solo tue</strong>: le leggi e le
+cambi solo tu, e i compagni di viaggio, che il viaggio lo vedono tutto, la
+tua valigia non la vedono. Con ogni voce si conserva l'ora dell'ultima
+modifica, che serve a unire due telefoni senza perdere niente. La lingua, i
+permessi del telefono e il piano restano su ogni telefono e non partono.
+Eliminando un viaggio se ne vanno le valigie di quel viaggio; eliminando
+l'account, tutto.</p>
 <p>Alla creazione del primo viaggio l'app chiede al browser di tenere i suoi
 dati come memoria da non buttare quando il telefono si riempie («memoria
 persistente»). È una richiesta che resta nel telefono: non manda niente a
@@ -236,7 +252,7 @@ restano nel telefono per un giorno e non arrivano a noi.</li>
 <h2>Su quali basi</h2>
 <ul>
 <li><strong>Per darti il servizio</strong> (art. 6.1.b GDPR): account,
-contenuto dei viaggi, foto, sincronizzazione.</li>
+contenuto dei viaggi, foto, valigia e impostazioni, sincronizzazione.</li>
 <li><strong>Con il tuo consenso</strong> (art. 6.1.a): la posizione e le
 notifiche, che il telefono ti chiede e che puoi togliere quando vuoi dalle
 impostazioni.</li>
@@ -251,7 +267,7 @@ serve per fare la sua parte.</p>
 
 <table>
 <tr><th>Servizio</th><th>Cosa riceve</th><th>Per fare cosa</th></tr>
-<tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto</td><td>Database e archivio: è il cloud dell'app</td></tr>
+<tr><td>Supabase</td><td>Email, contenuto dei viaggi, foto, la tua valigia e le tue impostazioni</td><td>Database e archivio: è il cloud dell'app</td></tr>
 <tr><td>Il ponte IA di GeppGo e <b>Cloudflare Workers AI</b>, dove gira il modello Gemma</td><td>Quello che chiedi all'assistente, con il pezzo di viaggio che serve a rispondere, le foto che gli fai riconoscere e le pagine dei PDF scansionati (vedi «Quello che chiedi all'assistente»). Il ponte vede anche l'indirizzo IP</td><td>Rispondere in chat, proporre e sistemare tappe, leggere un itinerario o la mail di un albergo, riconoscere un posto da una foto</td></tr>
 <tr><td><b>Tavily</b>, attraverso il ponte IA</td><td>Solo una riga di ricerca: nomi di posti, la destinazione, una data e l'argomento — <b>non</b> chi sei né il tuo indirizzo IP (vedi «Le ricerche sul web»)</td><td>Le ricerche sul web dell'assistente: se un posto va prenotato e, in chat, i fatti che cambiano</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordinate e nomi di luoghi cercati</td><td>Trovare posti, cosa c'è vicino, gli orari di apertura delle tappe, il controllo dei posti di una lista incollata</td></tr>
@@ -306,7 +322,7 @@ nostre.</p>
 <p><strong>Dove stanno i dati.</strong> I server di Supabase su cui gira
 GeppGo si trovano a <strong>Stoccolma, in Svezia</strong> (regione
 <code>eu-north-1</code>): dentro lo Spazio economico europeo. La tua email, i
-viaggi e le foto restano lì, e non vengono trasferiti fuori dall'Europa per
+viaggi, le foto, la valigia e le impostazioni restano lì, e non vengono trasferiti fuori dall'Europa per
 essere conservati.</p>
 <p>Le richieste all'assistente invece le elabora Cloudflare, e le ricerche
 sul web Tavily: tutti e due anche fuori dall'Europa, con le regole scritte in
@@ -318,7 +334,7 @@ sul web Tavily: tutti e due anche fuori dall'Europa, con le regole scritte in
 <li><strong>Finché li tieni tu.</strong> Un viaggio resta finché non lo
 elimini; una foto finché non la togli.</li>
 <li><strong>Cancellando l'account</strong> spariscono email, iscrizioni ai
-viaggi e le foto che hai caricato. I viaggi in cui c'è ancora qualcun altro
+viaggi, le foto che hai caricato, la tua valigia e le tue impostazioni. I viaggi in cui c'è ancora qualcun altro
 restano a loro: non è giusto portarsi via il viaggio di cinque persone.</li>
 <li><strong>Le segnalazioni restano</strong>, senza il nome di chi le ha
 fatte, per il tempo necessario a gestirle e a dimostrare come sono state
