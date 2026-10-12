@@ -51,8 +51,30 @@ async function apriBrowser(opzioni = {}) {
      perche' il server delle prove parla inglese. Chi vuole un'altra lingua la
      chiede, e la sua scelta vince. */
   const nuovaPagina = browser.newPage.bind(browser);
-  browser.newPage = async (opz = {}) => await recinta(await nuovaPagina(Object.assign({ locale: 'it-IT' }, opz)));
+  browser.newPage = async (opz = {}) => {
+    const { avvisi, ...resto } = opz;
+    const page = await recinta(await nuovaPagina(Object.assign({ locale: 'it-IT' }, resto)));
+    if (!avvisi) await avvisoGiaVisto(page);
+    return page;
+  };
   return browser;
+}
+
+/* L'AVVISO «I TUOI VIAGGI SONO SOLO SU QUESTO TELEFONO».
+   Chi ha dei viaggi senza account lo vede all'apertura (vedi I DATI AL
+   SICURO nell'app), e un foglio che compare da solo dopo due secondi e mezzo
+   copre i tasti che una prova sta toccando - come la presentazione, che ogni
+   prova salta scrivendo geppgo2_intro. Qui lo si da' per visto: lo stesso
+   segno che l'app scrive quando l'ha mostrato. Va scritto DOPO lo stato che
+   ogni prova semina (che di solito comincia con localStorage.clear()), quindi
+   lo si rimette dopo ogni addInitScript della prova; e solo se manca, cosi'
+   una prova che ricarica non lo vede cambiare.
+   Chi vuole provare proprio gli avvisi apre la pagina con { avvisi: true }. */
+const AVVISO_GIA_VISTO = () => { try { if (!localStorage.getItem('geppgo2_avviso_account2')) localStorage.setItem('geppgo2_avviso_account2', String(Date.now())); } catch (e) {} };
+async function avvisoGiaVisto(page) {
+  const aggiungi = page.addInitScript.bind(page);
+  await aggiungi(AVVISO_GIA_VISTO);
+  page.addInitScript = async (...a) => { const r = await aggiungi(...a); await aggiungi(AVVISO_GIA_VISTO); return r; };
 }
 
 /* IL RECINTO: dalle prove non si esce in rete.

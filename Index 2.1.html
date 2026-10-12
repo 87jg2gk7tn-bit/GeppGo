@@ -694,6 +694,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .bk-barra{height:10px;border-radius:100px;background:var(--line);overflow:hidden;margin-bottom:1.1rem}
 .bk-barra>div{height:100%;width:0;background:var(--grad);border-radius:inherit;transition:width .25s var(--ease)}
 .bk-ultimo{font-size:.8rem;font-weight:700;color:var(--ink-soft);margin-bottom:.7rem}
+.bk-nota{font-size:.86rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .9rem}
 .esci-quante{background:var(--clay-tint);color:var(--clay-deep);border-radius:var(--r-md);padding:.6rem .8rem;font-weight:700;font-size:.9rem;line-height:1.5;margin-bottom:.8rem}
 .esci-stato{font-size:.84rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem}
 .esci-stato:empty{display:none}
@@ -3634,6 +3635,8 @@ function fmtMoney(a,c){return curSym(c)+(a||0).toLocaleString(loc(),{minimumFrac
 let storageFull=false;
 function save(){
   snapNow(false);
+  campiTimbra();
+  if(impostazioniTimbra())personaleProgramma();
   const payload=JSON.stringify(app);
   let ok=false;
   try{localStorage.setItem('geppgo2',payload);ok=true;}
@@ -3655,6 +3658,291 @@ function save(){
   // Va tentato comunque: se il disco è pieno, il cloud è l'unica copia che resta.
   scheduleSync();
 }
+/* ===== I CAMPI DEL VIAGGIO, CAMPO PER CAMPO =====
+   Il viaggio va nel cloud intero, ma i conflitti si risolvono a pezzi. Le
+   liste (spese, tappe, alberghi, biglietti, posti e adesso anche le persone)
+   si uniscono per id, e un elemento sparisce solo se e' stato cancellato (le
+   lapidi _del*). Per tutto il resto - nome, date, destinazione, valuta,
+   ospiti, consigli, meteo, chat... - vince l'ultima modifica, campo per
+   campo: se un telefono cambia il nome e un altro le date, restano tutte e
+   due. Prima vinceva un viaggio intero sull'altro.
+   L'ora della modifica di ogni campo sta nel viaggio stesso, in _ct, e la
+   scrive save(): confronta ogni campo con com'era al salvataggio prima
+   (l'ombra) e timbra quelli cambiati. Cosi' non c'e' da ricordarsi di
+   timbrare in ogni punto dell'app in cui un campo cambia: si dimenticherebbe
+   sempre l'ultimo. Quello che arriva dal cloud entra nell'ombra senza timbri,
+   perche' non e' una modifica fatta qui.
+   I viaggi salvati prima, senza _ct, si uniscono a tre vie con l'ultima
+   copia arrivata al cloud (lastPush, la «base»): un campo cambiato da una
+   parte sola prende quella parte, e non si perde niente; solo se e'
+   cambiato da tutte e due le parti decide la regola di prima (vince). */
+const CAMPI_LISTE=['days','expenses','pois','hotels','tickets','participants'];
+const CAMPI_FUORI=new Set(['id','cid','_invite','_owner','_admin','canc_chiesta_da','packing','_creating','_ct'].concat(CAMPI_LISTE));
+function campiDi(t){return Object.keys(t||{}).filter(k=>!CAMPI_FUORI.has(k)&&!/^_del/.test(k));}
+/* Lo stesso contenuto scritto in un altro ordine e' lo stesso: il database
+   riordina le chiavi del json, e confrontando il testo nudo ogni viaggio
+   sembrava sempre cambiato. */
+function jsonStabile(x){
+  if(x===null||typeof x!=='object')return x===undefined?'null':JSON.stringify(x);
+  if(Array.isArray(x))return '['+x.map(jsonStabile).join(',')+']';
+  return '{'+Object.keys(x).filter(k=>x[k]!==undefined&&typeof x[k]!=='function').sort().map(k=>JSON.stringify(k)+':'+jsonStabile(x[k])).join(',')+'}';
+}
+function uguale(a,b){return jsonStabile(a)===jsonStabile(b);}
+const ombraCampi=new Map();
+function ombraDi(t){const o={};campiDi(t).forEach(k=>{o[k]=jsonStabile(t[k]);});return o;}
+function ombraAggiorna(t){if(t&&t.id!=null)ombraCampi.set(t.id,ombraDi(t));}
+function ombraInizia(){ombraCampi.clear();((app&&app.trips)||[]).forEach(ombraAggiorna);}
+/* Un viaggio appena nato non ha ombra: il primo salvataggio la fa, senza
+   timbri. Da li' in poi ogni campo cambiato prende l'ora. */
+function campiTimbra(){
+  const ora=Date.now();
+  ((app&&app.trips)||[]).forEach(t=>{
+    if(!t||t.id==null)return;
+    const prima=ombraCampi.get(t.id),adesso=ombraDi(t);
+    ombraCampi.set(t.id,adesso);
+    if(!prima)return;
+    const cambiati=Object.keys(adesso).filter(k=>prima[k]!==adesso[k]).concat(Object.keys(prima).filter(k=>!(k in adesso)));
+    if(!cambiati.length)return;
+    t._ct=t._ct||{};cambiati.forEach(k=>{t._ct[k]=ora;});
+  });
+}
+/* Tutti i campi come appena modificati (un viaggio che torna da un backup). */
+function campiOra(t){const ora=Date.now();t._ct=t._ct||{};campiDi(t).forEach(k=>{t._ct[k]=ora;});}
+/* Un campo, fra la nostra versione (l) e quella del cloud (r). b e' la base,
+   se c'e'; tL e tR le ore della modifica, se ci sono.
+   La stessa ora su due valori diversi vuol dire che uno dei due e' cambiato
+   senza ora nuova: un telefono rimasto alla versione di prima, che le ore
+   non le scrive ma se le porta dietro. Li' decide la base, come per i
+   viaggi senza ore: altrimenti vinceva sempre il nostro, e il nome cambiato
+   dall'altro telefono tornava indietro anche nel cloud. */
+function sceltaCampo(b,conBase,l,r,tL,tR,vince){
+  if(uguale(l,r))return l;
+  if(tL&&tR&&tL!==tR)return tL>tR?l:r;
+  if(conBase&&uguale(l,b))return r;
+  if(conBase&&uguale(r,b))return l;
+  if(tL!==tR)return tL>tR?l:r;
+  return vince==='remoto'?r:l;
+}
+/* Due versioni dello stesso viaggio, pulite (cleanTrip), piu' la base: ne
+   esce una sola. L'ordine delle chiavi e' quello del cloud: se alla fine il
+   contenuto e' lo stesso, anche il testo resta lo stesso. */
+function unisciViaggio(base,loc,rem,vince){
+  const out={};
+  Object.keys(rem).forEach(k=>{out[k]=rem[k];});
+  Object.keys(loc).forEach(k=>{if(!(k in out))out[k]=loc[k];});
+  Object.assign(out,mergedRecordFields(loc,rem,vince));
+  /* Le persone come le spese: per id, e chi e' stato tolto non torna. */
+  const pp=mergeArr(loc.participants,rem.participants,loc._delPart,rem._delPart,vince);
+  out.participants=pp.merged;
+  if(Object.keys(pp.tomb).length)out._delPart=pp.tomb;else delete out._delPart;
+  /* I campi di un giorno (il titolo, il mezzo) non hanno l'ora: a tre vie. */
+  const bd=new Map(((base&&base.days)||[]).map(d=>[d.id,d]));
+  const ld=new Map((loc.days||[]).map(d=>[d.id,d])),rd=new Map((rem.days||[]).map(d=>[d.id,d]));
+  out.days=(out.days||[]).map(d=>{
+    const l=ld.get(d.id),r=rd.get(d.id);if(!l||!r)return d;
+    const b=bd.get(d.id),g=Object.assign({},d);
+    new Set(Object.keys(l).concat(Object.keys(r))).forEach(k=>{
+      if(k==='activities')return;
+      const v=sceltaCampo(b?b[k]:undefined,!!b,l[k],r[k],0,0,vince);
+      if(v===undefined)delete g[k];else g[k]=v;
+    });
+    return g;
+  });
+  const ctL=loc._ct||{},ctR=rem._ct||{},ct={};
+  new Set(campiDi(loc).concat(campiDi(rem))).forEach(k=>{
+    const v=sceltaCampo(base?base[k]:undefined,!!base,loc[k],rem[k],ctL[k]||0,ctR[k]||0,vince);
+    if(v===undefined)delete out[k];else out[k]=v;
+    const ora=Math.max(ctL[k]||0,ctR[k]||0);if(ora)ct[k]=ora;
+  });
+  if(Object.keys(ct).length)out._ct=ct;else delete out._ct;
+  /* Le lapidi vuote che nessuna delle due versioni aveva non si aggiungono:
+     cambierebbero il viaggio senza cambiare niente, e partirebbe un invio. */
+  Object.keys(out).forEach(k=>{if(/^_del/.test(k)&&out[k]&&typeof out[k]==='object'&&!Object.keys(out[k]).length&&!(k in loc)&&!(k in rem))delete out[k];});
+  return out;
+}
+/* Il viaggio com'e' qui coincide con l'ultima copia arrivata al cloud. */
+function allineato(cid,t){
+  const p=lastPush[cid];if(!p)return false;
+  try{return jsonStabile(JSON.parse(p))===jsonStabile(cleanTrip(t));}catch(e){return false;}
+}
+function baseDi(cid){try{return lastPush[cid]?JSON.parse(lastPush[cid]):null;}catch(e){return null;}}
+/* Il risultato di un'unione dentro il viaggio di sempre (lo stesso oggetto,
+   che altre parti dell'app tengono in mano), coi campi che vengono dal
+   cloud e non dal contenuto: l'id della riga, il codice, chi l'ha creato. */
+function rimettiViaggio(t,unito,cloud){
+  const nuovo=Object.assign({},unito);
+  ['cid','_invite','_owner','canc_chiesta_da'].forEach(k=>{if(cloud[k]!==undefined)nuovo[k]=cloud[k];else delete nuovo[k];});
+  /* La valigia di una volta, dentro il viaggio, non va nel cloud (cleanTrip
+     la toglie) e getPacking la sposta al primo uso: fino ad allora resta. */
+  if(t.packing!==undefined)nuovo.packing=t.packing;
+  Object.keys(t).forEach(k=>{if(!(k in nuovo))delete t[k];});
+  Object.assign(t,nuovo);
+  decorateTrip(t);
+  ombraAggiorna(t);
+  return t;
+}
+ombraInizia();
+/* ===== LA VALIGIA E LE IMPOSTAZIONI NEL CLOUD =====
+   La valigia e' personale (vedi packingKey) e non sta nel viaggio che vedono
+   tutti: prima restava su un telefono solo, e cambiando telefono spariva.
+   Adesso, con l'account, va in una tabella sua (dati_personali, vedi
+   supabase-schema.sql) dove ognuno legge e scrive solo le proprie righe: i
+   compagni non la vedono. Lo stesso per le impostazioni che sono della
+   persona e non del telefono (IMP_CHIAVI).
+   Come i viaggi: prima nel telefono, poi nel cloud quando c'e' rete; e
+   all'arrivo si uniscono, la valigia voce per voce e le impostazioni chiave
+   per chiave, ognuna con l'ora della sua modifica (vince la piu' recente;
+   a pari ora vince il cloud, cosi' due telefoni non si rimbalzano lo stesso
+   valore all'infinito). Una voce tolta lascia una lapide, come le spese.
+   Restano del telefono: la lingua (segue quella del telefono, e cambiarla
+   vuol dire riaprire l'app), la posizione del tasto «+» (dipende dallo
+   schermo), il permesso delle notifiche, Premium, e tutto quello che e'
+   memoria di lavoro (cambi, mappa, ricerche, punti di ripristino).
+   Se nel cloud la tabella non c'e' ancora (lo schema non e' stato
+   rilanciato), si lascia stare fino alla prossima apertura: tutto resta sul
+   telefono come prima, e a schermo non compare niente. */
+const IMP_CHIAVI=['nav','fotoQualita','notifLevel','proxRadius','fuelConsumptionL100km','fuelPricePerL','dark','myName'];
+function impValore(k){return k==='myName'?(app&&app.myName):((app&&app.settings)||{})[k];}
+let ombraImp=null;
+function impOmbraAggiorna(){const o={};IMP_CHIAVI.forEach(k=>{o[k]=jsonStabile(impValore(k));});ombraImp=o;}
+/* Come per i campi del viaggio: l'ora la mette save(), guardando cosa e'
+   cambiato dall'ultima volta. */
+function impostazioniTimbra(){
+  if(!ombraImp){impOmbraAggiorna();return false;}
+  const ora=Date.now();let cambiate=false;
+  IMP_CHIAVI.forEach(k=>{
+    const j=jsonStabile(impValore(k));
+    if(j!==ombraImp[k]){ombraImp[k]=j;app.settingsT=app.settingsT||{};app.settingsT[k]=ora;cambiate=true;}
+  });
+  return cambiate;
+}
+/* Un valore di serie senza ora non e' una scelta: un telefono appena
+   installato ha il raggio a 200, e mandandolo passava sopra a quello scelto
+   prima dell'aggiornamento su un altro telefono, che l'ora non ce l'ha
+   nemmeno lui. Lo stesso valore scelto apposta (con l'ora) parte. */
+const IMP_DI_SERIE={nav:'ask',fotoQualita:'alta',notifLevel:'saved',proxRadius:200,dark:false};
+function impostazioniLocali(){
+  const v={},ore=app.settingsT||{};
+  IMP_CHIAVI.forEach(k=>{
+    const x=impValore(k);
+    if(x===undefined||x===null||x==='')return;
+    if(!ore[k]&&(k in IMP_DI_SERIE)&&x===IMP_DI_SERIE[k])return;
+    v[k]=x;
+  });
+  return{v,t:Object.assign({},ore)};
+}
+function unisciImpostazioni(a,b){
+  const v={},t={},av=a.v||{},bv=b.v||{},at=a.t||{},bt=b.t||{};
+  new Set(Object.keys(av).concat(Object.keys(bv))).forEach(k=>{
+    if(!IMP_CHIAVI.includes(k))return;
+    const daB=!(k in av)||((k in bv)&&(bt[k]||0)>=(at[k]||0));
+    v[k]=daB?bv[k]:av[k];
+    const ora=Math.max(at[k]||0,bt[k]||0);if(ora)t[k]=ora;
+  });
+  return{v,t};
+}
+function applicaImpostazioni(u){
+  app.settings=app.settings||{};
+  const scuroPrima=!!app.settings.dark;
+  IMP_CHIAVI.forEach(k=>{if(!(k in u.v))return;if(k==='myName')app.myName=u.v[k];else app.settings[k]=u.v[k];});
+  app.settingsT=Object.assign({},u.t);
+  impOmbraAggiorna();
+  save();
+  if(!!app.settings.dark!==scuroPrima)try{applyTheme();}catch(e){}
+  try{document.getElementById('proxRadius').value=app.settings.proxRadius||200;}catch(e){}
+  try{document.getElementById('notifLevel').value=app.settings.notifLevel||'saved';}catch(e){}
+  try{document.getElementById('navPref').value=(app.settings.nav==='internal'?'ask':app.settings.nav)||'ask';}catch(e){}
+  try{mostraFotoQual();renderProfile();}catch(e){}
+}
+/* La valigia: le voci (ognuna con t, l'ora della sua ultima modifica) e le
+   lapidi di quelle tolte, accanto, in una chiave che non comincia come le
+   valigie (geppgo2_pack_*): cosi' non la prendono per una valigia ne' il
+   backup ne' packingRecupera. */
+function tolteKey(t){return `geppgo2_packtolte_${t.id}_${myUid||'local'}`;}
+function leggiTolte(t){try{return JSON.parse(localStorage.getItem(tolteKey(t))||'{}')||{};}catch(e){return {};}}
+function valigiaLocale(t){return{voci:getPacking(t),tolte:leggiTolte(t)};}
+function scriviValigiaLocale(t,v){
+  try{localStorage.setItem(packingKey(t),JSON.stringify(v.voci));localStorage.setItem(tolteKey(t),JSON.stringify(v.tolte||{}));}catch(e){}
+}
+function unisciValigia(a,b){
+  const tolte=Object.assign({},a.tolte||{});
+  Object.keys(b.tolte||{}).forEach(id=>{tolte[id]=Math.max(tolte[id]||0,b.tolte[id]);});
+  const scelta=new Map(),ordine=[];
+  (a.voci||[]).forEach(x=>{if(x&&x.id!=null){scelta.set(String(x.id),x);ordine.push(String(x.id));}});
+  (b.voci||[]).forEach(x=>{
+    if(!x||x.id==null)return;
+    const k=String(x.id),c=scelta.get(k);
+    if(!c){scelta.set(k,x);ordine.push(k);}
+    else if((x.t||0)>=(c.t||0))scelta.set(k,x);
+  });
+  /* Una voce modificata dopo essere stata tolta altrove torna, e la sua
+     lapide se ne va. */
+  const voci=ordine.map(k=>scelta.get(k)).filter(x=>!(String(x.id) in tolte)||(x.t||0)>tolte[String(x.id)]);
+  voci.forEach(x=>{delete tolte[String(x.id)];});
+  /* La stessa voce scritta su due telefoni (stesso nome, id diversi: i
+     suggerimenti dell'app, o due valigie fatte prima che si unissero) resta
+     una sola, se no chi aveva gia' due telefoni si ritrovava tutto doppio.
+     Tiene l'id piu' piccolo, uguale su tutti i telefoni, col contenuto della
+     modifica piu' recente; le altre vanno fra le tolte con quell'ora, cosi'
+     nessun telefono le rimanda. «Stessa voce» come per l'importazione: il
+     nome, senza badare alle maiuscole. */
+  const gruppi=new Map();
+  voci.forEach(x=>{const k=String(x.label||'').trim().toLowerCase();if(!k)return;if(!gruppi.has(k))gruppi.set(k,[]);gruppi.get(k).push(x);});
+  const minore=(p,q)=>String(p.id).localeCompare(String(q.id),undefined,{numeric:true})<0?p:q;
+  const via=new Set(),alPosto=new Map();
+  gruppi.forEach(g=>{
+    if(g.length<2)return;
+    const resta=g.reduce(minore);
+    const ultima=g.reduce((m,x)=>(x.t||0)>(m.t||0)?x:((x.t||0)===(m.t||0)?minore(m,x):m));
+    const ora=Math.max(...g.map(x=>x.t||0));
+    g.forEach(x=>{if(x!==resta){via.add(x);tolte[String(x.id)]=Math.max(tolte[String(x.id)]||0,ora);}});
+    alPosto.set(resta,Object.assign({},ultima,{id:resta.id}));
+  });
+  return{voci:voci.filter(x=>!via.has(x)).map(x=>alPosto.get(x)||x),tolte};
+}
+let personaleAssente=false,personaleBusy=false,personaleT=null,personaleAncora=false;
+/* La tabella non c'e': PostgREST risponde PGRST205 (o 42P01 dal database). */
+function tabellaAssente(err){const m=String((err&&err.code)||'')+' '+String((err&&err.message)||'');return /PGRST205|42P01|schema cache|does not exist|could not find the table/i.test(m);}
+function personaleProgramma(){if(!sb||!session||personaleAssente)return;clearTimeout(personaleT);personaleT=setTimeout(personaleSync,1500);}
+async function personaleSync(){
+  if(!sb||!session||personaleAssente)return;
+  if(personaleBusy){personaleAncora=true;return;}
+  personaleBusy=true;
+  try{
+    const{data,error}=await sb.from('dati_personali').select('chiave,dati');
+    if(error){
+      if(tabellaAssente(error)){personaleAssente=true;console.log('Valigia e impostazioni restano sul telefono: nel cloud manca la tabella dati_personali.',error.message||error);}
+      else console.log('Valigia e impostazioni: il cloud non risponde, riprovo dopo.',error.message||error);
+      return;
+    }
+    const righe=new Map((data||[]).filter(r=>r&&typeof r.chiave==='string').map(r=>[r.chiave,r.dati||{}]));
+    const daScrivere=[];
+    const impL=impostazioniLocali(),impR=righe.get('impostazioni');
+    const impU=impR?unisciImpostazioni(impL,impR):impL;
+    if(!uguale(impU,impL))applicaImpostazioni(impU);
+    if(!impR||!uguale(impU,impR))daScrivere.push({chiave:'impostazioni',trip_id:null,dati:impU});
+    /* La valigia dei viaggi che sono nel cloud: quella di uno che c'e' solo
+       qui parte quando parte il viaggio. */
+    app.trips.forEach(t=>{
+      if(!t||!t.cid)return;
+      const k='valigia:'+t.cid,l=valigiaLocale(t),r=righe.get(k);
+      const u=r?unisciValigia(l,r):l;
+      if(!uguale(u,l)){scriviValigiaLocale(t,u);if(t.id===app.currentTripId)try{renderPacking();}catch(e){}}
+      if(r?!uguale(u,r):(u.voci.length||Object.keys(u.tolte).length))daScrivere.push({chiave:k,trip_id:t.cid,dati:u});
+    });
+    /* Una riga alla volta: un viaggio da cui sei stato tolto (la regola lo
+       rifiuta) non deve fermare le altre. */
+    for(const x of daScrivere){
+      const{error:e2}=await sb.from('dati_personali').upsert(Object.assign({user_id:myUid,aggiornato_il:new Date().toISOString()},x));
+      if(e2){
+        if(tabellaAssente(e2)){personaleAssente=true;console.log('Valigia e impostazioni restano sul telefono: nel cloud manca la tabella dati_personali.',e2.message||e2);break;}
+        console.log('Valigia o impostazioni non salvate nel cloud:',x.chiave,e2.message||e2);
+      }
+    }
+  }catch(e){console.log('Valigia e impostazioni: il cloud non risponde, riprovo dopo.',e);}
+  finally{personaleBusy=false;if(personaleAncora){personaleAncora=false;personaleProgramma();}}
+}
+impOmbraAggiorna();
 function restoreBak(){
   const b=localStorage.getItem('geppgo2_bak'),d=localStorage.getItem('geppgo2_bakd');
   if(!b){toast('Nessuna copia automatica ancora');return;}
@@ -7806,7 +8094,10 @@ const DIZIONARIO_DATI={
     'Per ripristinare un backup serve la rete, la prima volta: collegati e riprova.':'The first restore needs the internet: connect and try again.',
     'Ripristino le foto: {1} di {2}…':'Restoring photos: {1} of {2}…',
     'Il backup non si legge: il file potrebbe essere rovinato.':'The backup can’t be read: the file may be damaged.',
-    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Backup restored. Trips: {1} · photos: {2}.'
+    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Backup restored. Trips: {1} · photos: {2}.',
+    '{1} (copia dal backup)':'{1} (copy from backup)',
+    'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'A shared trip came back as a private copy: the group’s trip stays as it is.',
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} shared trips came back as private copies: the group’s trips stay as they are.'
   },
   es:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tus viajes solo están en este teléfono',
@@ -7863,7 +8154,10 @@ const DIZIONARIO_DATI={
     'Per ripristinare un backup serve la rete, la prima volta: collegati e riprova.':'La primera vez, para restaurar una copia de seguridad hace falta conexión: conéctate y vuelve a intentarlo.',
     'Ripristino le foto: {1} di {2}…':'Restaurando las fotos: {1} de {2}…',
     'Il backup non si legge: il file potrebbe essere rovinato.':'La copia de seguridad no se puede leer: el archivo podría estar dañado.',
-    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Copia de seguridad restaurada. Viajes: {1} · fotos: {2}.'
+    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Copia de seguridad restaurada. Viajes: {1} · fotos: {2}.',
+    '{1} (copia dal backup)':'{1} (de la copia de seguridad)',
+    'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Un viaje compartido ha vuelto como copia privada: el del grupo se queda como está.',
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viajes compartidos han vuelto como copias privadas: los del grupo se quedan como están.'
   },
   fr:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tes voyages sont seulement sur ce téléphone',
@@ -7920,7 +8214,10 @@ const DIZIONARIO_DATI={
     'Per ripristinare un backup serve la rete, la prima volta: collegati e riprova.':'La première fois, la restauration a besoin d’internet : connecte-toi et réessaie.',
     'Ripristino le foto: {1} di {2}…':'Restauration des photos : {1} sur {2}…',
     'Il backup non si legge: il file potrebbe essere rovinato.':'La sauvegarde est illisible : le fichier est peut-être abîmé.',
-    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Sauvegarde restaurée. Voyages : {1} · photos : {2}.'
+    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Sauvegarde restaurée. Voyages : {1} · photos : {2}.',
+    '{1} (copia dal backup)':'{1} (copie de la sauvegarde)',
+    'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Un voyage partagé est revenu comme copie privée : celui du groupe reste tel quel.',
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} voyages partagés sont revenus comme copies privées : ceux du groupe restent tels quels.'
   },
   pt:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 As tuas viagens estão só neste telemóvel',
@@ -7977,7 +8274,10 @@ const DIZIONARIO_DATI={
     'Per ripristinare un backup serve la rete, la prima volta: collegati e riprova.':'Da primeira vez, restaurar uma cópia de segurança precisa de rede: liga-te e tenta outra vez.',
     'Ripristino le foto: {1} di {2}…':'A restaurar as fotos: {1} de {2}…',
     'Il backup non si legge: il file potrebbe essere rovinato.':'A cópia de segurança não se consegue ler: o ficheiro pode estar danificado.',
-    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Cópia de segurança restaurada. Viagens: {1} · fotos: {2}.'
+    'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Cópia de segurança restaurada. Viagens: {1} · fotos: {2}.',
+    '{1} (copia dal backup)':'{1} (da cópia de segurança)',
+    'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Uma viagem partilhada voltou como cópia privada: a do grupo fica como está.',
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viagens partilhadas voltaram como cópias privadas: as do grupo ficam como estão.'
   }
 };
 Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DATI[l]));
@@ -7985,7 +8285,7 @@ Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_D
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1262;
+const FRASI_IN_TUTTO=1265;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -9544,8 +9844,9 @@ function genPackingList(t){
   if(dur>=6)add('Extra','Sacchetto per il bucato');
   return items;
 }
-/* La lista bagagli è personale: resta solo su questo dispositivo/account,
-   mai nel blob del viaggio che viene sincronizzato/condiviso con gli altri. */
+/* La lista bagagli è personale: mai nel blob del viaggio, che vedono tutti i
+   compagni. Con l'account va nel cloud in una riga sua, che legge solo chi
+   l'ha fatta (vedi LA VALIGIA E LE IMPOSTAZIONI NEL CLOUD). */
 function packingKey(t){return `geppgo2_pack_${t.id}_${myUid||'local'}`;}
 /* La lista sta sotto il nome di chi l'ha fatta: «local» prima dell'account,
    l'id dell'account dopo. Cosi' creando l'account la valigia sembrava vuota,
@@ -9567,11 +9868,26 @@ function getPacking(t){
   packingRecupera(t);
   try{return JSON.parse(localStorage.getItem(packingKey(t))||'[]');}catch(e){return [];}
 }
-function savePacking(t,arr){localStorage.setItem(packingKey(t),JSON.stringify(arr));}
+/* Ogni voce cambiata prende l'ora, ogni voce tolta lascia una lapide: e' cosi'
+   che due telefoni uniscono la stessa valigia (vedi LA VALIGIA E LE
+   IMPOSTAZIONI NEL CLOUD). Una voce nuova che porta gia' la sua ora la
+   tiene: i suggerimenti dell'app arrivano con 0, perche' non sono una
+   scelta di nessuno. */
+function savePacking(t,arr){
+  let prima=[];try{prima=JSON.parse(localStorage.getItem(packingKey(t))||'[]')||[];}catch(e){}
+  const vecchie=new Map(prima.map(x=>[String(x.id),x])),ora=Date.now(),tolte=leggiTolte(t);
+  const senzaOra=x=>{const c=Object.assign({},x);delete c.t;return jsonStabile(c);};
+  arr.forEach(x=>{const p=vecchie.get(String(x.id));if(!p){if(typeof x.t!=='number')x.t=ora;}else if(senzaOra(p)!==senzaOra(x))x.t=ora;else if(p.t)x.t=p.t;});
+  const restano=new Set(arr.map(x=>String(x.id)));
+  prima.forEach(p=>{if(!restano.has(String(p.id)))tolte[String(p.id)]=ora;});
+  localStorage.setItem(packingKey(t),JSON.stringify(arr));
+  try{localStorage.setItem(tolteKey(t),JSON.stringify(tolte));}catch(e){}
+  personaleProgramma();
+}
 function mergePackingSuggestions(t){
   const list=getPacking(t);
   const existing=new Set(list.map(p=>p.label.toLowerCase()));
-  genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){list.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false});existing.add(it.label.toLowerCase());}});
+  genPackingList(t).forEach(it=>{if(!existing.has(it.label.toLowerCase())){list.push({id:uid(),cat:it.cat,label:it.label,checked:false,custom:false,t:0});existing.add(it.label.toLowerCase());}});
   savePacking(t,list);
 }
 /* Chiusa di suo: la valigia si apre per spuntare quello che c'e', non per
@@ -10335,7 +10651,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
-- I dati al sicuro: il backup sta nel Profilo, nella scheda "Backup" ("Esporta dati" e "Importa dati"); senza account i viaggi stanno solo su quel telefono, e si perdono cambiandolo, perdendolo o cancellando i dati del browser. Dopo il primo viaggio, e poi al massimo una volta a settimana, chi non ha l'account vede il foglio "I tuoi viaggi sono solo su questo telefono" con "Crea un account" e "Più tardi": creando l'account i viaggi gia' fatti vanno nel cloud, foto comprese, e sul telefono non si perde niente (nemmeno la valigia). Su iPhone, chi usa l'app in Safari senza averla messa sulla Home dopo il primo viaggio vede come aggiungerla - Condividi (a volte dentro il menu "…"), poi "Aggiungi alla schermata Home" - e perche': in Safari, dopo 7 giorni senza visite, i dati possono essere cancellati. La stessa spiegazione resta nel Profilo, nella scheda "Backup", col tasto "Aggiungi alla schermata Home". L'app sulla Home ha una memoria sua, separata da Safari: aperta la prima volta e vuota chiede "Avevi già dei viaggi in Safari?", con "Accedi" e "Ripristina da un backup". "Esporta dati" fa un file solo, .zip, con i viaggi, la valigia e le foto salvate nel telefono (i pezzi di mappa no: si riscaricano), con una barra che avanza; a file pronto c'e' "Condividi o salva", che su iPhone apre il foglio Condividi (si salva in File o si manda dove si vuole), mentre dove non c'e' si scarica. Se il file sarebbe troppo grande l'app lo dice e propone "Esporta senza le foto". Nella scheda si legge la data dell'ultimo backup fatto da quel telefono. "Importa dati" ripristina sia il file .zip sia il vecchio file .json, che aveva solo i dati: prima di sostituire i viaggi del telefono chiede conferma e ne tiene una copia fra i punti di ripristino. Con l'account, sotto l'email nel Profilo si legge lo stato del cloud: "Tutto salvato nel cloud", "N modifiche in attesa" oppure "N foto da caricare". Toccando "Esci" con qualcosa non ancora nel cloud, l'app dice quante modifiche e quante foto sono, con "Aspetta e sincronizza" (manda tutto, poi esce) ed "Esci lo stesso" (restano solo su quel telefono finche' non si rientra con lo stesso account); senza niente in attesa si esce subito. Alla creazione del primo viaggio l'app chiede al browser di tenere i dati come memoria da non buttare: non compare niente.
+- I dati al sicuro: il backup sta nel Profilo, nella scheda "Backup" ("Esporta dati" e "Importa dati"); senza account i viaggi stanno solo su quel telefono, e si perdono cambiandolo, perdendolo o cancellando i dati del browser. Dopo il primo viaggio, e poi al massimo una volta a settimana, chi non ha l'account vede il foglio "I tuoi viaggi sono solo su questo telefono" con "Crea un account" e "Più tardi": creando l'account i viaggi gia' fatti vanno nel cloud, foto comprese, e sul telefono non si perde niente (nemmeno la valigia). Su iPhone, chi usa l'app in Safari senza averla messa sulla Home dopo il primo viaggio vede come aggiungerla - Condividi (a volte dentro il menu "…"), poi "Aggiungi alla schermata Home" - e perche': in Safari, dopo 7 giorni senza visite, i dati possono essere cancellati. La stessa spiegazione resta nel Profilo, nella scheda "Backup", col tasto "Aggiungi alla schermata Home". L'app sulla Home ha una memoria sua, separata da Safari: aperta la prima volta e vuota chiede "Avevi già dei viaggi in Safari?", con "Accedi" e "Ripristina da un backup". "Esporta dati" fa un file solo, .zip, con i viaggi, la valigia e le foto salvate nel telefono che hai messo tu (quelle dei compagni no: sono loro; i pezzi di mappa nemmeno: si riscaricano), con una barra che avanza; a file pronto c'e' "Condividi o salva", che su iPhone apre il foglio Condividi (si salva in File o si manda dove si vuole), mentre dove non c'e' si scarica. Se il file sarebbe troppo grande l'app lo dice e propone "Esporta senza le foto". Nella scheda si legge la data dell'ultimo backup fatto da quel telefono. "Importa dati" ripristina sia il file .zip sia il vecchio file .json, che aveva solo i dati: prima di sostituire i viaggi del telefono chiede conferma e ne tiene una copia fra i punti di ripristino. Con l'account, un viaggio del backup che e' condiviso con altri non sovrascrive mai quello del gruppo: torna come copia privata, solo tua, col nome "(copia dal backup)" in fondo, e quello del gruppo resta com'e'; i viaggi dove sei solo tu tornano come erano. Con l'account anche la valigia e le impostazioni (navigatore, qualita' delle foto, avvisi e raggio di prossimita', tema scuro, il proprio nome) passano da un telefono all'altro, e restano private: i compagni di viaggio non le vedono. La lingua, i permessi e il piano restano di ogni telefono. Se due telefoni cambiano lo stesso viaggio anche senza rete non si perde niente: si tengono tutte e due le modifiche, campo per campo (uno il nome, l'altro le date), i compagni aggiunti da due parti ci sono tutti e uno tolto non ricompare; sulla stessa cosa vince l'ultima modifica. Con l'account, sotto l'email nel Profilo si legge lo stato del cloud: "Tutto salvato nel cloud", "N modifiche in attesa" oppure "N foto da caricare". Toccando "Esci" con qualcosa non ancora nel cloud, l'app dice quante modifiche e quante foto sono, con "Aspetta e sincronizza" (manda tutto, poi esce) ed "Esci lo stesso" (restano solo su quel telefono finche' non si rientra con lo stesso account); senza niente in attesa si esce subito. Alla creazione del primo viaggio l'app chiede al browser di tenere i dati come memoria da non buttare: non compare niente.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 - Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 
@@ -10373,7 +10689,7 @@ const MAPPA_CHIAVI=[
   ['Le parti che arrivano al momento',['scanner','codice a barre','codici a barre','qr','barcode','escaner','codigo de barras','code-barres','leitor']],
   ['Le email di accesso',['password','accesso','recupero','login','sign in','log in','reset','contrasena','acceso','mot de passe','connexion','palavra-passe','senha','acesso']],
   ['Eliminare il proprio account',['eliminare','cancellare','account','delete','eliminar','cuenta','supprimer','compte','apagar','conta']],
-  ['I dati al sicuro',['backup','esporta','esportare','ripristina','ripristinare','sincronizza','sincronizzazione','in attesa','esci','uscire','schermata home','safari','solo su questo telefono','cambio telefono','restore','sync','sign out','log out','home screen','new phone','copia de seguridad','restaurar','sincronizar','cerrar sesion','pantalla de inicio','sauvegarde','restaurer','synchroniser','deconnecter','ecran d\'accueil','ecran d accueil','copia de seguranca','terminar sessao','ecra principal']],
+  ['I dati al sicuro',['backup','esporta','esportare','ripristina','ripristinare','sincronizza','sincronizzazione','in attesa','esci','uscire','schermata home','safari','solo su questo telefono','cambio telefono','altro telefono','due telefoni','copia dal backup','conflitto','restore','other phone','otro telefono','autre telephone','outro telefone','sync','sign out','log out','home screen','new phone','copia de seguridad','restaurar','sincronizar','cerrar sesion','pantalla de inicio','sauvegarde','restaurer','synchroniser','deconnecter','ecran d\'accueil','ecran d accueil','copia de seguranca','terminar sessao','ecra principal']],
   ['In Profilo, sotto "Versione"',['versione','aggiornamento','aggiornare','version','update','version','actualizar','mise a jour','versao','atualizar']],
   ['Profilo',['profilo','impostazioni','tema scuro','backup','notifiche','piano','calendario','esporta','esportare','profile','settings','dark mode','notifications','export','calendar','perfil','ajustes','modo oscuro','exportar','profil','parametres','mode sombre','exporter','definicoes','modo escuro']],
   ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']]
@@ -15784,7 +16100,10 @@ function navGo(kind,lat,lng,name,mode){
   if(navAskSalva||(ricorda&&ricorda.checked)){app.settings.nav=kind;save();const sel=document.getElementById('navPref');if(sel)sel.value=kind;}
   navAskSalva=false;
   closeSheet('mNav');
-  const saved=app.settings.nav;app.settings.nav=kind;openNav(lat,lng,name,mode);app.settings.nav=saved||'ask';
+  /* Si rimette com'era, anche vuoto: un «ask» scritto qui al posto del vuoto
+     sembrerebbe una scelta appena fatta, e nel cloud passerebbe sopra a
+     quella vera fatta su un altro telefono. */
+  const saved=app.settings.nav;app.settings.nav=kind;openNav(lat,lng,name,mode);app.settings.nav=saved;
 }
 function toggleGPS(){if(gpsId!==null)return stopGPS();if(app.consentNotif===undefined){pendingConsentCb=startGPS;openSheet('mNotif');return;}startGPS();}
 /* La bussola passa da chiediPosizione: iOS la concede solo dentro un tocco,
@@ -16096,9 +16415,11 @@ async function chiediPersistenza(){
 
 /* ----- i tre avvisi -----
    «I tuoi viaggi sono solo su questo telefono» a chi non ha l'account: dopo
-   il primo viaggio, poi al massimo una volta a settimana. A chi aveva gia'
-   dei viaggi prima di questo avviso il primo arriva dopo una settimana: al
-   primo avvio parte solo il conto, invece di un foglio a sorpresa.
+   il primo viaggio, poi al massimo una volta a settimana. Chi aveva gia' dei
+   viaggi lo vede alla prima apertura dopo l'aggiornamento, poi anche lui
+   una volta a settimana. La chiave e' nuova (account2): quella di prima
+   veniva scritta anche solo per far partire il conto, senza che il foglio
+   fosse mai comparso, e non si puo' piu' distinguere chi l'ha visto.
    La spiegazione per la Home, una volta, a chi usa l'app in Safari su
    iPhone senza averla installata: e' li' che i dati si cancellano da soli.
    «Avevi gia' dei viaggi in Safari?» a chi apre l'app installata e la trova
@@ -16106,7 +16427,8 @@ async function chiediPersistenza(){
    Un avviso aspetta lo schermo libero (mai sopra un altro foglio, l'accesso
    o la presentazione), al massimo un minuto: poi lascia stare, e ci si
    riprova alla prossima apertura. */
-const AVVISO_ACCOUNT='geppgo2_avviso_account',AVVISO_HOME='geppgo2_avviso_home',AVVISO_SAFARI='geppgo2_avviso_safari';
+const AVVISO_ACCOUNT='geppgo2_avviso_account2',AVVISO_HOME='geppgo2_avviso_home',AVVISO_SAFARI='geppgo2_avviso_safari';
+try{localStorage.removeItem('geppgo2_avviso_account');}catch(e){}
 const AVVISO_CHIAVE={mSoloQui:AVVISO_ACCOUNT,mHome:AVVISO_HOME,mDaSafari:AVVISO_SAFARI};
 const SETTIMANA_MS=7*864e5;
 function quandoAvviso(k){try{return +localStorage.getItem(k)||0;}catch(e){return 0;}}
@@ -16166,10 +16488,7 @@ function dopoNuovoViaggio(dopo){
 const VIAGGI_ALL_AVVIO=(app&&app.trips||[]).length;
 function avvisiAllAvvio(){
   if(appInstallata()&&!VIAGGI_ALL_AVVIO&&!app.trips.length&&!quandoAvviso(AVVISO_SAFARI))avvisoInCoda('mDaSafari');
-  if(VIAGGI_ALL_AVVIO&&app.trips.length&&senzaAccount()){
-    if(!quandoAvviso(AVVISO_ACCOUNT))segnaAvviso(AVVISO_ACCOUNT);
-    else if(Date.now()-quandoAvviso(AVVISO_ACCOUNT)>=SETTIMANA_MS)avvisoInCoda('mSoloQui');
-  }
+  if(VIAGGI_ALL_AVVIO&&app.trips.length&&senzaAccount()&&Date.now()-quandoAvviso(AVVISO_ACCOUNT)>=SETTIMANA_MS)avvisoInCoda('mSoloQui');
   if(app.trips.length&&inSafariSenzaHome()&&!quandoAvviso(AVVISO_HOME))avvisoInCoda('mHome');
 }
 function soloQuiCrea(){closeSheet('mSoloQui');accediOra();setTimeout(()=>{try{auVai('su');}catch(e){}},60);}
@@ -16185,8 +16504,8 @@ function mostraHomeRiga(){const el=document.getElementById('homeRiga');if(el)el.
    senza cloudId di un viaggio che c'e'. */
 function modificheViaggio(t){
   if(!t.cid)return 1;
+  if(allineato(t.cid,t))return 0;
   const prima=lastPush[t.cid],ora=cleanTrip(t);
-  if(prima===JSON.stringify(ora))return 0;
   let p=null;try{p=JSON.parse(prima||'null');}catch(e){}
   if(!p)return 1;
   const diversi=(a,b)=>{
@@ -16202,8 +16521,8 @@ function modificheViaggio(t){
   let n=diversi(tappe(p),tappe(ora))+diversi(giorni(p),giorni(ora));
   liste.forEach(k=>{n+=diversi(p[k],ora[k]);});
   new Set([...Object.keys(p),...Object.keys(ora)]).forEach(k=>{
-    if(k==='days'||liste.includes(k)||/^_del/.test(k))return;
-    if(JSON.stringify(p[k])!==JSON.stringify(ora[k]))n++;
+    if(k==='days'||k==='_ct'||liste.includes(k)||/^_del/.test(k))return;
+    if(!uguale(p[k],ora[k]))n++;
   });
   return Math.max(1,n);
 }
@@ -16273,6 +16592,7 @@ async function esciAspetta(){
     for(let i=0;i<50&&syncBusy;i++)await new Promise(r=>setTimeout(r,200));
     await syncPush();
     await fotoDaSpedire();
+    await personaleSync();
     const m=modificheInAttesa(),f=await fotoInAttesa();
     if(!m&&!f){closeSheet('mEsci');await esciDavvero(tv('Tutto salvato nel cloud: sei uscito dall\'account.'));return;}
     esciMostra(m,f);
@@ -16314,6 +16634,15 @@ function chiaviBagagli(){
   try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('geppgo2_pack_')===0){try{out[k]=JSON.parse(localStorage.getItem(k));}catch(e){}}}}catch(e){}
   return out;
 }
+/* Nel backup vanno le foto di chi usa il telefono, non quelle dei compagni:
+   le loro stanno nel viaggio, e un file che gira fuori dal viaggio non deve
+   portarsele dietro (vedi le due regole in CLAUDE.md). Una foto e' mia se
+   l'ho messa io (chi = il mio account, anche dopo esserne uscito), o se non
+   dice di chi e': quelle fatte senza account e le immagini dei biglietti. */
+const MIO_UID='geppgo2_mio_uid';
+function ricordaMioUid(){if(myUid)try{localStorage.setItem(MIO_UID,myUid);}catch(e){}}
+function mioUid(){if(myUid)return myUid;try{return localStorage.getItem(MIO_UID)||null;}catch(e){return null;}}
+function fotoMia(v){return !v.chi||v.chi===mioUid();}
 /* L'elenco delle foto, col nome che avranno dentro lo zip e quanto pesano:
    il peso serve a dire prima di cominciare se il file sarebbe troppo grande. */
 function fotoElenco(){
@@ -16321,6 +16650,7 @@ function fotoElenco(){
     const out=[];let i=0;const c=db.transaction('ph').objectStore('ph').openCursor();
     c.onsuccess=e=>{
       const cur=e.target.result;if(!cur)return res(out);
+      if(!fotoMia(cur.value)){cur.continue();return;}
       const v=cur.value,m={};
       Object.keys(v).forEach(k=>{if(k!=='data'&&k!=='mini')m[k]=v[k];});
       const nome='foto/'+(++i)+'-'+String(v.id).replace(/[^\w.-]/g,'_');
@@ -16446,13 +16776,13 @@ async function ripristinaBackup(f){
       let d=null;try{d=JSON.parse(await f.text());}catch(e){}
       if(d&&d.formato==='geppgo-backup'&&d.dati)d=d.dati;
       if(!d||!Array.isArray(d.trips)){bkStato(tv('Questo file non è un backup di GeppGo.'),null);bkAzioni(bkChiudiHtml());return;}
-      return applicaBackup(d,{},0);
+      return await applicaBackup(d,{},0);
     }
     try{await caricaLibreria('fflate');}
     catch(e){bkStato(tv('Per ripristinare un backup serve la rete, la prima volta: collegati e riprova.'),null);bkAzioni(bkChiudiHtml());return;}
     const esito=await leggiZipBackup(f,(fatte,tutte,letti)=>bkStato(tutte?tv('Ripristino le foto: {1} di {2}…',fatte,tutte):null,letti/Math.max(1,f.size)));
     if(!esito.dati||!esito.dati.dati||!Array.isArray(esito.dati.dati.trips)){bkStato(tv('Questo file non è un backup di GeppGo.'),null);bkAzioni(bkChiudiHtml());return;}
-    applicaBackup(esito.dati.dati,esito.dati.bagagli||{},esito.foto);
+    await applicaBackup(esito.dati.dati,esito.dati.bagagli||{},esito.foto);
   }catch(e){
     console.log('Ripristino non riuscito:',e);
     bkStato(tv('Il backup non si legge: il file potrebbe essere rovinato.'),null);bkAzioni(bkChiudiHtml());
@@ -16510,8 +16840,58 @@ async function leggiZipBackup(f,avanza){
   await scrivi();
   return {dati,foto:rimesse.size};
 }
-function applicaBackup(d,bagagli,nFoto){
+/* Con l'account, un viaggio condiviso con altri non torna mai sopra quello
+   del gruppo: il backup e' una fotografia di allora, e scriverla nel cloud
+   cancellerebbe quello che i compagni hanno fatto dopo. Torna come copia
+   privata, «[nome] (copia dal backup)», con un id nuovo e senza il legame
+   col cloud: alla prima sincronizzazione diventa un viaggio solo tuo. L'id
+   nuovo e' obbligatorio: con quello vecchio pullCloud la prenderebbe per un
+   doppione del viaggio del gruppo, e i doppioni li cancella. Il viaggio del
+   gruppo resta com'e', anche sul telefono se c'era gia'.
+   Un viaggio solo tuo torna com'era, come prima. Uno che nel cloud non c'e'
+   piu' (cancellato, o da cui sei stato tolto) torna come viaggio tuo, anche
+   lui con un id nuovo.
+   Chi c'e' in un viaggio lo dice il database, adesso. Se non risponde, ogni
+   viaggio che era nel cloud torna come copia: meglio una copia in piu' che
+   il viaggio di sei persone riscritto. */
+async function viaggiDalBackup(trips,bagagli){
+  const conCid=trips.filter(t=>t&&t.cid);
+  if(!sb||!session||!conCid.length)return{trips,copie:0};
+  let membri=null;
+  try{
+    const{data,error}=await sb.from('trip_members').select('trip_id,user_id').in('trip_id',conCid.map(t=>t.cid));
+    if(!error)membri=data||[];
+    else console.log('Ripristino: non leggo chi c\'e\' nei viaggi:',error.message);
+  }catch(e){console.log('Ripristino: non leggo chi c\'e\' nei viaggi:',e);}
+  const out=[];let copie=0;
+  trips.forEach(t=>{
+    if(!t||!t.cid){out.push(t);return;}
+    const m=membri?membri.filter(x=>String(x.trip_id)===String(t.cid)):null;
+    if(m&&m.length&&m.every(x=>x.user_id===myUid)){out.push(t);return;}
+    const condiviso=!m||m.length>0;
+    const c=JSON.parse(JSON.stringify(t)),vecchio=t.id;
+    c.id=uid();
+    ['cid','_invite','_owner','_admin','canc_chiesta_da','_creating'].forEach(k=>{delete c[k];});
+    if(condiviso){c.name=tv('{1} (copia dal backup)',t.name||'');copie++;}
+    /* La valigia segue la copia. */
+    const pre='geppgo2_pack_'+vecchio+'_';
+    Object.keys(bagagli).forEach(k=>{if(k.indexOf(pre)===0)bagagli['geppgo2_pack_'+c.id+'_'+k.slice(pre.length)]=bagagli[k];});
+    out.push(c);
+    if(condiviso){const ora=app.trips.find(x=>x.cid===t.cid);if(ora&&!out.includes(ora))out.push(ora);}
+  });
+  return{trips:out,copie};
+}
+async function applicaBackup(d,bagagli,nFoto){
   snapNow(true);
+  bagagli=bagagli||{};
+  const ora=app.trips.slice();
+  const{trips,copie}=await viaggiDalBackup(Array.isArray(d.trips)?d.trips:[],bagagli);
+  /* Quello che arriva dal backup conta come l'ultima modifica, campo per
+     campo (vedi I CAMPI DEL VIAGGIO): senza, al primo incontro col cloud
+     vincerebbero i valori di dopo, e il ripristino non avrebbe ripristinato
+     niente. Il viaggio del gruppo tenuto com'era no: quello non e' cambiato. */
+  trips.forEach(t=>{if(t&&!ora.includes(t))campiOra(t);});
+  d.trips=trips;
   app=d;
   if(!app.settings)app.settings={proxRadius:200};
   if(!Array.isArray(app.trips))app.trips=[];
@@ -16521,9 +16901,12 @@ function applicaBackup(d,bagagli,nFoto){
   try{document.getElementById('proxRadius').value=app.settings.proxRadius||200;}catch(e){}
   /* La schermata d'accesso segue quello che dice il backup: chi lo aveva
      fatto senza account continua senza. */
+  ombraInizia();
   afterAuth();
   bkStato(tv('Backup ripristinato. Viaggi: {1} · foto: {2}.',app.trips.length,nFoto||0),1);
-  bkAzioni(bkChiudiHtml());
+  const nota=copie===1?tv('Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.')
+    :copie>1?tv('{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.',copie):'';
+  bkAzioni((nota?`<p class="bk-nota">${esc(nota)}</p>`:'')+bkChiudiHtml());
   try{renderDayPhotos();}catch(e){}
 }
 function confirmReset(){confirmDo('Reset completo?','Cancella TUTTI i viaggi, spese e dati salvati. Non si può annullare.',()=>{localStorage.removeItem('geppgo2');app={trips:[],currentTripId:null,settings:{proxRadius:200},myName:''};save();renderAll();toast('🗑️ Tutto cancellato');openNewTrip();});}
@@ -20499,11 +20882,14 @@ async function removeParticipant(id){
       if(error){toast(erroreCloud(error,'togli dal viaggio'));return;}
       membriPerViaggio[t.cid]=(membriPerViaggio[t.cid]||[]).filter(x=>x.user_id!==mem.user_id);
       t.participants=t.participants.filter(x=>x.id!==id);
+      t._delPart=t._delPart||{};t._delPart[id]=Date.now();
       save();renderAll();renderPeople();toast(pp.name+' non è più nel viaggio');
     },'🚪','Togli','btn-danger');
     return;
   }
-  confirmDo(`Rimuovere ${pp.name}?`,'Potrai riaggiungerlo quando vuoi.',()=>{t.participants=t.participants.filter(x=>x.id!==id);save();renderAll();renderPeople();});
+  /* La lapide: senza, un altro telefono che lo aveva ancora lo rimandava
+     indietro alla prima sincronizzazione (vedi I CAMPI DEL VIAGGIO). */
+  confirmDo(`Rimuovere ${pp.name}?`,'Potrai riaggiungerlo quando vuoi.',()=>{t.participants=t.participants.filter(x=>x.id!==id);t._delPart=t._delPart||{};t._delPart[id]=Date.now();save();renderAll();renderPeople();});
 }
 
 /* ===== SALDI: segna come pagato (solo chi riceve) ===== */
@@ -20832,7 +21218,7 @@ let syncBusy=false;
 async function syncPush(){
   if(!sb||!session||syncBusy)return;
   syncBusy=true;
-  let creati=0;
+  let creati=0,uniti=0;
   try{
     for(const t of app.trips){
       if(!t.cid){
@@ -20841,18 +21227,36 @@ async function syncPush(){
         try{const r=await cloudCreate(t);if(r&&r.ok)creati++;}finally{delete t._creating;}
         continue;
       }
+      if(allineato(t.cid,t))continue;
+      /* Prima di scrivere si guarda com'e' adesso nel cloud. Se qualcuno l'ha
+         cambiato dopo il nostro ultimo invio (un compagno, o un altro nostro
+         telefono rimasto senza rete), si unisce invece di scrivergli sopra:
+         prima l'ultimo che scriveva cancellava le aggiunte dell'altro. Se la
+         lettura non riesce si scrive come prima. */
+      try{
+        const{data:riga,error:e0}=await sb.from('trips').select('data').eq('id',t.cid).maybeSingle();
+        if(!e0&&riga&&riga.data){
+          const nuvola=cleanTrip(riga.data),base=baseDi(t.cid);
+          if(!base||!uguale(nuvola,base)){
+            rimettiViaggio(t,unisciViaggio(base,cleanTrip(t),nuvola,'locale'),t);
+            uniti++;
+            if(uguale(cleanTrip(t),nuvola)){lastPush[t.cid]=JSON.stringify(nuvola);persistLastPush();continue;}
+          }
+        }
+      }catch(e){}
       const body=cleanTrip(t),j=JSON.stringify(body);
-      if(lastPush[t.cid]===j)continue;
       try{
         const{error}=await sb.from('trips').update({data:body,updated_at:new Date().toISOString(),updated_by:myUid}).eq('id',t.cid);
         if(!error){lastPush[t.cid]=j;persistLastPush();}
       }catch(e){}
     }
   }finally{syncBusy=false;}
+  /* Quello che e' arrivato unendo si vede subito. */
+  if(uniti){try{localStorage.setItem('geppgo2',JSON.stringify(app));}catch(e){}renderAll();}
   /* Un viaggio appena arrivato nel cloud - quelli fatti senza account,
      appena creato l'account - si porta dietro subito le sue foto: fino a
      un momento fa non avevano un viaggio nel cloud in cui stare. */
-  if(creati)fotoDaSpedire();
+  if(creati){fotoDaSpedire();personaleProgramma();}
   mostraStatoCloud();
 }
 async function cloudCreate(t){
@@ -21028,6 +21432,7 @@ function pulisciIndirizzoLink(){
   window.GEPPGO_SISTEMA_HASH();
 }
 function afterAuth(){
+  ricordaMioUid();
   updateAccountCard();
   const gate=document.getElementById('authGate');
   if(!sb){
@@ -21057,6 +21462,15 @@ async function cloudStart(){
      che era rimasto indietro (le foto fatte senza rete), poi si scarica
      quello che hanno messo i compagni. */
   fotoDaSpedire().then(fotoDalCloud);
+  /* La valigia e le impostazioni (vedi LA VALIGIA E LE IMPOSTAZIONI NEL
+     CLOUD): a ogni ingresso, e ogni volta che si torna sull'app, perche'
+     intanto un altro telefono puo' averle cambiate. */
+  personaleSync();
+  if(!window._persVis){
+    window._persVis=1;
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')personaleProgramma();});
+    window.addEventListener('online',personaleProgramma);
+  }
   /* Un push può fallire in silenzio (rete assente mentre si è in viaggio): senza
      un nuovo tentativo automatico, quella modifica resterebbe solo su questo
      telefono a tempo indefinito. Ci riprova da sola ogni 20s finché non va a segno
@@ -21104,27 +21518,22 @@ async function pullCloud(){
       const rawHash=JSON.stringify(cleanTrip(remote));
       if(i>=0){
         const localT=app.trips[i];
-        if(lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(localT))){
-          /* Questo dispositivo ha modifiche locali non ancora arrivate al cloud
-             (es. rete assente quando sono state fatte, o l'app chiusa prima che
-             il salvataggio partisse): NON le sovrascrivo con la versione remota,
-             che sarebbe più vecchia. Recupero però dal cloud eventuali spese/attività
-             aggiunte da un altro dispositivo che qui non ho ancora, così non si perdono
-             a vicenda. Il resto lo proteggo e lo rimando appena possibile. */
-          Object.assign(localT,mergedRecordFields(localT,remote,'locale'));
-          snapNow(true);needsResync=true;
-          return;
-        }
-        /* Qui invece siamo allineati col cloud (lastPush combacia con quello che
-           abbiamo in mano): quello che arriva è più recente, comprese le modifiche
-           degli altri a roba che abbiamo già. Se non risulta nessun push nostro non
-           possiamo saperlo, e allora restiamo prudenti tenendo la nostra. */
-        Object.assign(remote,mergedRecordFields(localT,remote,lastPush[r.id]?'remoto':'locale'));
-        app.trips[i]=remote;
+        /* Questo dispositivo puo' avere modifiche locali non ancora arrivate al
+           cloud (rete assente quando sono state fatte, o l'app chiusa prima che
+           il salvataggio partisse): non si buttano. Si unisce (vedi I CAMPI DEL
+           VIAGGIO): le liste per id, gli altri campi campo per campo, e quello
+           che e' cambiato da una parte sola resta. Se fra le due versioni non
+           c'e' modo di dire chi viene dopo, vince la nostra quando ha modifiche
+           in sospeso, quella del cloud quando siamo allineati; senza nessun
+           push nostro alle spalle non si puo' sapere, e si tiene la nostra. */
+        const pendenti=!!lastPush[r.id]&&!allineato(r.id,localT);
+        const unito=unisciViaggio(baseDi(r.id),cleanTrip(localT),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale'));
+        rimettiViaggio(localT,unito,remote);
+        if(pendenti){snapNow(true);needsResync=true;}
       }
       else{
         if(app.trips.some(x=>x.id===remote.id)){dupRows.push(r);return;}
-        app.trips.push(remote);
+        app.trips.push(remote);ombraAggiorna(remote);
       }
       lastPush[r.id]=rawHash;
     });
@@ -21162,30 +21571,23 @@ function handleRealtimeChange(payload){
   }
   const r=payload.new;if(!r)return;
   if(r.updated_by===myUid)return;
-  const i=app.trips.findIndex(x=>x.cid===r.id);
-  if(i>=0&&lastPush[r.id]&&lastPush[r.id]!==JSON.stringify(cleanTrip(app.trips[i]))){
-    /* Hai modifiche locali non ancora salvate mentre arriva un aggiornamento da un
-       altro dispositivo/persona: NON le sovrascrivo. Recupero comunque dall'aggiornamento
-       eventuali spese/attività/hotel/biglietti/POI che qui non ho ancora, così nessuno dei
-       due perde le proprie aggiunte. Il resto lo metto al sicuro con un punto di ripristino
-       e do priorità al salvarlo io per primo. */
-    const remoteData=r.data||{};
-    Object.assign(app.trips[i],mergedRecordFields(app.trips[i],remoteData,'locale'));
-    snapNow(true);scheduleSync();
-    toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
-    return;
-  }
   const remote=r.data||{};
   remote.cid=r.id;remote._invite=r.invite_code;remote._owner=(r.owner===myUid);remote.canc_chiesta_da=r.canc_chiesta_da||null;
   decorateTrip(remote);
   const i2=app.trips.findIndex(x=>x.cid===r.id);
   const rawHash=JSON.stringify(cleanTrip(remote));
   if(i2>=0){
-    /* come nel pull: qui non abbiamo modifiche in sospeso, quindi l'aggiornamento
-       che arriva in tempo reale è quello buono anche dentro le liste */
-    Object.assign(remote,mergedRecordFields(app.trips[i2],remote,lastPush[r.id]?'remoto':'locale'));
-    app.trips[i2]=remote;
-  }else app.trips.push(remote);
+    /* Come nel pull: si unisce (vedi I CAMPI DEL VIAGGIO). Con modifiche
+       nostre ancora in sospeso nessuno dei due perde le sue; allineati,
+       l'aggiornamento che arriva e' quello buono anche dentro le liste. */
+    const pendenti=!!lastPush[r.id]&&!allineato(r.id,app.trips[i2]);
+    const unito=unisciViaggio(baseDi(r.id),cleanTrip(app.trips[i2]),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale'));
+    rimettiViaggio(app.trips[i2],unito,remote);
+    if(pendenti){
+      snapNow(true);
+      toast('⚠️ Aggiornamento ricevuto da un altro dispositivo mentre modificavi: le tue modifiche sono protette e in salvataggio');
+    }
+  }else{app.trips.push(remote);ombraAggiorna(remote);}
   lastPush[r.id]=rawHash;persistLastPush();
   localStorage.setItem('geppgo2',JSON.stringify(app));
   renderAll();
@@ -21267,6 +21669,7 @@ async function doJoin2(code){
     decorateTrip(remote);
     const i=app.trips.findIndex(x=>x.cid===cid);
     if(i>=0)app.trips[i]=remote;else app.trips.push(remote);
+    ombraAggiorna(remote);
     lastPush[cid]=JSON.stringify(cleanTrip(remote));persistLastPush();
     app.currentTripId=remote.id;
     localStorage.setItem('geppgo2',JSON.stringify(app));
@@ -22159,11 +22562,19 @@ function migrateData(){
     }));
     t.days.forEach(d=>{const ids=new Set((d.activities||[]).map(x=>x.id));(d.activities||[]).forEach(a=>{if(a.parentId&&(!ids.has(a.parentId)||a.parentId===a.id))a.parentId=null;});});
     if(t.hotel&&t.hotel.lat&&!t.hotels.length){t.hotels.push({id:uid(),name:t.hotel.name,lat:t.hotel.lat,lng:t.hotel.lng,address:t.hotel.address||'',checkIn:t.start||'',checkOut:t.end||''});delete t.hotel;}
-    const seen={},remap={};
+    /* Due persone con lo stesso nome sono la stessa, aggiunta da due
+       telefoni. Resta quella con l'id piu' piccolo, la stessa su tutti i
+       telefoni, e l'altra va fra le tolte: senza, l'altro telefono la
+       rimandava a ogni giro; e scegliendo «la prima che capita» ognuno ne
+       teneva una diversa, e unendo le lapidi sparivano tutte e due. */
+    const tiene={},remap={};
+    t.participants.forEach(pp=>{const k=(pp.name||'').trim().toLowerCase(),c=tiene[k];if(!c||String(pp.id).localeCompare(String(c.id),undefined,{numeric:true})<0)tiene[k]=pp;});
     t.participants=t.participants.filter(pp=>{
-      const k=(pp.name||'').trim().toLowerCase();
-      if(seen[k]!=null){remap[pp.id]=seen[k];if(pp.isMe){const keep=t.participants.find(q=>q.id===seen[k]);if(keep)keep.isMe=true;}return false;}
-      seen[k]=pp.id;return true;
+      const keep=tiene[(pp.name||'').trim().toLowerCase()];
+      if(keep===pp)return true;
+      remap[pp.id]=keep.id;if(pp.isMe)keep.isMe=true;
+      t._delPart=t._delPart||{};t._delPart[pp.id]=Date.now();
+      return false;
     });
     const fix=id=>remap[id]!=null?remap[id]:id;
     t.expenses.forEach(e=>{
@@ -23166,7 +23577,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-12 11:04';
+const VERSIONE_APP='2026-10-12 19:26';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

@@ -20,8 +20,15 @@ dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
 lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
 più: per conservare i dati non si esce dall'Europa.
 
-Restano due cose, e non sono codice:
+Restano tre cose, e non sono codice:
 
+- ⚠️ **Lanciare su Supabase la tabella della valigia e delle impostazioni**
+  (12 ottobre 2026): SQL Editor → New query → incolla tutto
+  `supabase/migrazioni/2026-10-12-valigia-e-impostazioni.sql` → Run, deve
+  dire *Success. No rows returned*. Va bene anche rilanciare tutto
+  `supabase-schema.sql`, che in fondo ha lo stesso testo. Finché non si fa,
+  l'app tiene valigia e impostazioni sul telefono come prima e non dice
+  niente: semplicemente non passano da un telefono all'altro.
 - ⚠️ **Pubblicare il nuovo ponte dell'assistente** (`worker/ponte-ai.js`,
   ottobre 2026), con il collegamento «AI» e il secret `TAVILY_KEY`: i passi,
   dal telefono, sono in `GUIDA-AI.md` §2. Finché su Cloudflare gira il ponte
@@ -788,6 +795,94 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ Due telefoni sullo stesso viaggio: prima vinceva l'ultimo che
+  scriveva, e l'altro perdeva tutto** (blocchi `I CAMPI DEL VIAGGIO, CAMPO
+  PER CAMPO` e `LA VALIGIA E LE IMPOSTAZIONI NEL CLOUD`, prove
+  `prova-cloud-personale` e `supabase-prova-personale.sql`). Spese, tappe e
+  alberghi si univano già voce per voce; il resto del viaggio no: `syncPush`
+  riscriveva il viaggio intero sopra quello del cloud, e il nome cambiato da
+  uno spariva sotto le date cambiate dall'altro. Le cose da sapere:
+  - **Ogni campo del viaggio ha la sua ora** (`_ct`, dentro il viaggio
+    stesso, così arriva agli altri senza colonne nuove). La mette `save()`,
+    confrontando il viaggio con la sua ombra (`ombraCampi`): un campo
+    cambiato prende l'ora di adesso. Quello che arriva dal cloud aggiorna
+    l'ombra **senza** timbrare, altrimenti ogni telefono timbrerebbe le
+    modifiche degli altri come sue. Il primo giro dopo l'aggiornamento non
+    timbra niente: un viaggio che il telefono vede per la prima volta non ha
+    «modifiche».
+  - **L'ordine delle regole in `sceltaCampo`**: uguali → resta; tutti e due
+    con l'ora → vince la più recente; c'è la base (`lastPush`, l'ultima
+    versione arrivata al cloud) → vince chi l'ha cambiato; uno solo con l'ora
+    → vince lui; altrimenti chi deve vincere. La base è quella che fa unire
+    senza perdite **i viaggi salvati prima, senza ore**.
+  - **La stessa ora su due valori diversi non vuol dire «pari»**: vuol dire
+    che uno dei due è cambiato senza ora nuova, cioè un telefono rimasto
+    all'app di prima, che le ore non le scrive ma quelle che c'erano se le
+    porta dietro. Lì decide la base. Con «a parità vince il nostro» il nome
+    cambiato da quel telefono tornava indietro anche nel cloud.
+  - **Un valore di partenza scritto dall'app sembra una scelta appena
+    fatta**: `save()` timbra tutto quello che cambia, e un «ask» messo al
+    posto del vuoto passava sopra al navigatore scelto su un altro telefono
+    (`navGo` adesso rimette il valore com'era, anche vuoto). Le impostazioni
+    vuote non partono, e nemmeno quelle uguali al valore di serie e senza
+    ora (`IMP_DI_SERIE`): un telefono appena installato, arrivato per primo
+    nel cloud, riportava a 200 il raggio degli avvisi scelto prima
+    dell'aggiornamento sull'altro telefono. Prima di scrivere un valore di
+    partenza in un campo che si sincronizza, chiedersi se non vada lasciato
+    vuoto.
+  - **`syncPush` legge prima di scrivere**: rilegge il viaggio dal cloud, se
+    è cambiato dall'ultima volta lo unisce col suo, e manda l'unione. Se
+    l'unione è uguale al cloud non scrive niente.
+  - **L'unione rimette il risultato nello stesso oggetto** (`rimettiViaggio`),
+    perché altre parti dell'app lo tengono in mano, e ci rimette quello che
+    `cleanTrip` toglie e che non viene dal cloud: il legame col cloud, i
+    ruoli (`decorateTrip`) e la valigia di una volta (`packing`), che senza
+    andava persa al primo giro su chi non aveva più aperto la valigia.
+  - **Il database riordina le chiavi dei jsonb**: confrontare due viaggi con
+    `JSON.stringify` dà «diversi» anche quando sono uguali, e ogni giro
+    rimanderebbe tutto. Si confronta con `jsonStabile` (`allineato`).
+  - **Un compagno tolto lascia una lapide** (`_delPart`), come spese e tappe.
+    Senza, il telefono che l'aveva ancora lo rimetteva al giro dopo. Anche i
+    doppioni tolti da `migrateData` la lasciano, e si tiene sempre l'id più
+    piccolo: due telefoni che tengono id diversi se li rimandano a vicenda.
+  - **Il ripristino di un viaggio condiviso fa una copia con un id nuovo.**
+    Con lo stesso id (o lo stesso `cid`), al primo giro il controllo dei
+    doppioni di `pullCloud` avrebbe cancellato dal cloud il viaggio del
+    gruppo con `elimina_viaggio`. La copia non passa da `canCreateTrip`: conta
+    nel piano gratuito, ma non viene fermata al limite.
+  - **La valigia e le impostazioni stanno in `dati_personali`**, una riga per
+    persona e per cosa, che legge solo chi l'ha scritta. Ogni voce della
+    valigia ha la sua ora (`t`) e le voci tolte lasciano una lapide
+    (`geppgo2_packtolte_<viaggio>_<account>`); le impostazioni hanno le ore in
+    `app.settingsT`. **A parità d'ora vince il cloud**: con «vince il
+    telefono» due telefoni si rimandano lo stesso valore per sempre. Restano
+    di ogni telefono la lingua (segue il telefono, e cambiarla ricarica la
+    pagina), la posizione del tasto «+» (dipende dallo schermo), il permesso
+    delle notifiche, il piano, il viaggio aperto, la vista e tutte le
+    memorie (cambi, mappa, percorsi, punti di ripristino).
+  - **Due valigie della stessa persona hanno id diversi**: i suggerimenti
+    dell'app nascono con `uid()` su ogni telefono, e chi aveva già due
+    telefoni alla prima unione si ritrovava tutto doppio. La stessa voce
+    (stesso nome, senza maiuscole, come per l'importazione) resta una sola:
+    l'id più piccolo, il contenuto più recente, le altre fra le tolte. E i
+    suggerimenti nascono con `t:0`, perché non sono una scelta di nessuno:
+    con l'ora di adesso quelli fatti dopo su B cancellavano la spunta messa
+    prima su A.
+  - **Senza la tabella l'app non dice niente**: Supabase risponde `PGRST205`
+    (o `42P01`), l'app smette di provarci fino alla prossima apertura e
+    tiene tutto sul telefono.
+  - **Il tempo reale ignora gli altri telefoni dello stesso account**
+    (`updated_by===myUid` si scarta per non ricevere l'eco di sé): fra due
+    telefoni della stessa persona le modifiche arrivano al giro successivo,
+    non all'istante.
+  - **La pulizia di `supabase-schema.sql` deve elencare ogni tabella con
+    regole che usano `is_trip_member`**: al secondo lancio la funzione non si
+    toglie finché c'è una regola appesa, e lo schema si ferma a metà. È
+    successo di nuovo con `dati_personali`.
+  - **Nelle prove l'avviso «I tuoi viaggi sono solo su questo telefono» è
+    già visto** (`test/browser.js`): dal 12 ottobre compare alla prima
+    apertura a chi ha già viaggi, e copriva lo schermo in metà delle prove.
+    Per vederlo: `newPage({ avvisi: true })`.
 - **⚠️ I dati di chi non ha l'account stanno solo nel telefono, e si perdono
   in modi che la persona non vede** (blocco `I DATI AL SICURO`, prova
   `prova-dati`). Dove stanno: tutto `app` in localStorage (`geppgo2`), le

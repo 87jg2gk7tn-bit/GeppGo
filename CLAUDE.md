@@ -47,17 +47,32 @@ quel file è la memoria.
   I caratteri di Google arrivano con un `<link>` che non ferma la pagina
   (mai un `@import`), e la service worker li tiene da parte.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, la
-  funzione `vicini`, «A raccolta». Senza account i dati restano solo sul
-  telefono. `supabase-schema.sql` è la verità sul database: si rilancia quante
-  volte si vuole senza danni. Prima di modificare un progetto Supabase vero si
+  funzione `vicini`, «A raccolta», la valigia e le impostazioni. Senza
+  account i dati restano solo sul telefono. `supabase-schema.sql` è la verità
+  sul database: si rilancia quante volte si vuole senza danni. Una tabella
+  nuova si consegna anche come file a sé in `supabase/migrazioni/`, da
+  lanciare a mano nel SQL Editor; finché non c'è, l'app lavora in locale
+  senza dire niente. Prima di modificare un progetto Supabase vero si
   guarda com'è fatto (`test/guarda-il-database.sql`).
 - **I dati di chi non ha l'account** (blocco I DATI AL SICURO nell'HTML):
-  l'app lo dice dopo il primo viaggio e poi al massimo una volta a settimana,
-  spiega la Home a chi usa Safari su iPhone, chiede la memoria persistente, e
-  il backup è uno zip con dati, valigie e foto (fflate) che si consegna col
-  foglio Condividi; il ripristino accetta anche il vecchio JSON. Un viaggio
-  che arriva nel cloud creando l'account si porta dietro le sue foto. «Esci»
-  non lascia indietro modifiche o foto senza dirlo.
+  l'app lo dice alla prima apertura a chi ha già viaggi, dopo il primo
+  viaggio, e poi al massimo una volta a settimana; spiega la Home a chi usa
+  Safari su iPhone, chiede la memoria persistente, e il backup è uno zip con
+  dati, valigie e le foto messe dall'utente (fflate; quelle dei compagni no)
+  che si consegna col foglio Condividi; il ripristino accetta anche il
+  vecchio JSON. Con l'account un viaggio condiviso non si ripristina mai
+  sopra quello del gruppo: torna come copia privata, con un id nuovo. Un
+  viaggio che arriva nel cloud creando l'account si porta dietro le sue
+  foto. «Esci» non lascia indietro modifiche o foto senza dirlo.
+- **Due telefoni, nessuna perdita**: un viaggio si unisce lista per lista
+  (spese, tappe, alberghi, biglietti, posti, persone: per id, con le lapidi
+  `_del*` di quello che è stato tolto) e, per il resto, campo per campo con
+  l'ora della modifica (`_ct`, che mette `save()`); i viaggi senza ore si
+  uniscono a tre vie con l'ultima copia arrivata al cloud. `syncPush` legge
+  il cloud prima di scrivere. La valigia e le impostazioni della persona
+  stanno nella tabella `dati_personali`, che ognuno legge e scrive solo per
+  sé (i compagni no), unite voce per voce e chiave per chiave. Restano del
+  telefono lingua, permessi, piano e memorie di lavoro.
 - **Indirizzo pubblico**: la costante `INDIRIZZO_PUBBLICO` (nella
   configurazione, dentro l'HTML) vale
   `https://87jg2gk7tn-bit.github.io/GeppGo/Index%202.1.html`. È dove tornano
