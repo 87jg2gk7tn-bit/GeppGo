@@ -219,10 +219,10 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const daControllare = nellApp.concat(nelSw).filter(u => !/pdfjs-dist/.test(u));
     const mancanti = daControllare.filter(u => { const p = leggiIndirizzo(u); return !p || !filePacchetto(p.nome, p.versione, p.dentro); });
     ok('5. e punta a un file che esiste davvero nel pacchetto di quella versione', !mancanti.length, mancanti.join(' ') || daControllare.length + ' controllati');
-    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 7,
+    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 8,
        lib.length + ' nell\'app, ' + nelSw.length + ' in sw.js');
     ok('5. e quelle solo al momento (SheetJS) non si scaricano in sottofondo', alMomento.length === 1 && /sheetjs/.test(alMomento[0])
-       && JSON.stringify(alMomentoApp) === JSON.stringify(alMomento) && sottofondo.length === 6, JSON.stringify({ alMomento, alMomentoApp, sottofondo: sottofondo.length }));
+       && JSON.stringify(alMomentoApp) === JSON.stringify(alMomento) && sottofondo.length === 7, JSON.stringify({ alMomento, alMomentoApp, sottofondo: sottofondo.length }));
   });
 
   /* ── 6. dopo il primo avvio, senza rete ──────────────────────────────── */
@@ -231,11 +231,11 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const p = await apri(viaggio(), { sw: true });
     await p.evaluate(() => navigator.serviceWorker.ready);
     let tenute = 0;
-    for (let i = 0; i < 60 && tenute < 6; i++) {
+    for (let i = 0; i < 60 && tenute < 7; i++) {
       await p.waitForTimeout(500);
       tenute = await p.evaluate(async c => (await (await caches.open(c)).keys()).length, CACHE_LIBRERIE);
     }
-    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 6, tenute + ' in ' + CACHE_LIBRERIE);
+    ok('6. dopo il primo avvio la service worker tiene da parte tutte le librerie', tenute === 7, tenute + ' in ' + CACHE_LIBRERIE);
     // via la rete: ne' l'app ne' le CDN rispondono
     srv.stato.giu = true; srv.stato.cdnGiu = true;
     await p.reload({ waitUntil: 'domcontentloaded' });

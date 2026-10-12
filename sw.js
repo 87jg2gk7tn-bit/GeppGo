@@ -6,12 +6,13 @@
    sincronizzazione cloud - restano non disponibili offline come è normale
    che sia, ma non impediscono al resto dell'app di funzionare.
 
-   Le librerie esterne (mappa, cloud, lettori dei codici, codici a barre) si
-   tengono da parte anche loro, in una cache a sé: hanno la versione esatta
-   nell'indirizzo, quindi non invecchiano. Prima non si tenevano, e senza rete
-   lo scanner, i codici a barre e la mappa non c'erano proprio, anche con le
-   mattonelle della mappa gia' viste in memoria. */
-const CACHE_NAME = 'geppgo-shell-v42';
+   Le librerie esterne (mappa, cloud, lettori dei codici, codici a barre, lo
+   zip del backup) si tengono da parte anche loro, in una cache a sé: hanno
+   la versione esatta nell'indirizzo, quindi non invecchiano. Prima non si
+   tenevano, e senza rete lo scanner, i codici a barre e la mappa non
+   c'erano proprio, anche con le mattonelle della mappa gia' viste in
+   memoria. */
+const CACHE_NAME = 'geppgo-shell-v43';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -24,7 +25,8 @@ const LIBRERIE = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
   'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',
-  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js'
+  'https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js',
+  'https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js'
 ];
 /* SheetJS (i file di Excel) pesa piu' di tutte le altre insieme e serve solo
    a chi importa un viaggio: scaricarla in sottofondo sul telefono di tutti

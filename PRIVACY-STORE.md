@@ -89,6 +89,15 @@ Google contano come raccolti i dati che *escono* dal telefono. Va detto lo
 stesso nella privacy policy — ed è detto — perché la promessa "non viene mai
 conservata", scritta senza distinguere, sarebbe falsa.
 
+Lo stesso vale per il **backup** (Profilo → Backup → Esporta dati): il
+telefono fa un file .zip con viaggi, liste dei bagagli e foto salvate sul
+telefono, e lo consegna al foglio Condividi del sistema o lo scarica. Va dove
+lo manda l'utente; a noi non arriva niente, quindi **non è raccolta**. Anche
+la «memoria persistente» chiesta al browser alla creazione del primo viaggio
+(`navigator.storage.persist()`) resta nel telefono: ne teniamo solo l'esito,
+in localStorage. La privacy policy dice tutte e due le cose, e che nel file
+del backup ci sono anche le foto dei compagni già scaricate sul telefono.
+
 Apple prevede inoltre un'eccezione per i dati che escono dal telefono ma non
 vengono memorizzati oltre il tempo della richiesta. GeppGo ricadeva
 interamente in quel caso fino ad «A raccolta».
@@ -298,7 +307,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `it.wikipedia.org`, `commons.wikimedia.org`, `www.wikidata.org` | Nomi di luoghi |
 | `api.mymemory.translated.net` | Il testo da tradurre |
 | `open.er-api.com` | Niente di personale (solo le valute) |
-| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare) |
+| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare, fflate fa e legge il file del backup) |
 | `fonts.googleapis.com`, `fonts.gstatic.com` | Indirizzo IP (caratteri; dopo la prima volta restano sul telefono) |
 
 Google Maps, Google Calendar e i siti esterni si aprono **solo** quando è

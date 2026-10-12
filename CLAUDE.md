@@ -31,7 +31,8 @@ quel file è la memoria.
   service worker deve essere un file a sé), `manifest.webmanifest`,
   `privacy.html`, `index.html`, le funzioni Supabase in `supabase/functions/`,
   le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
-  jsQR, ZXing, bwip-js, SheetJS per i file di Excel; pdf.js per i PDF),
+  jsQR, ZXing, bwip-js, SheetJS per i file di Excel, fflate per il file del
+  backup; pdf.js per i PDF),
   **mai bloccanti**: stanno in
   `LIBRERIE` dentro l'HTML, ognuna con la versione esatta e un file che esiste
   davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
@@ -50,6 +51,13 @@ quel file è la memoria.
   telefono. `supabase-schema.sql` è la verità sul database: si rilancia quante
   volte si vuole senza danni. Prima di modificare un progetto Supabase vero si
   guarda com'è fatto (`test/guarda-il-database.sql`).
+- **I dati di chi non ha l'account** (blocco I DATI AL SICURO nell'HTML):
+  l'app lo dice dopo il primo viaggio e poi al massimo una volta a settimana,
+  spiega la Home a chi usa Safari su iPhone, chiede la memoria persistente, e
+  il backup è uno zip con dati, valigie e foto (fflate) che si consegna col
+  foglio Condividi; il ripristino accetta anche il vecchio JSON. Un viaggio
+  che arriva nel cloud creando l'account si porta dietro le sue foto. «Esci»
+  non lascia indietro modifiche o foto senza dirlo.
 - **Indirizzo pubblico**: la costante `INDIRIZZO_PUBBLICO` (nella
   configurazione, dentro l'HTML) vale
   `https://87jg2gk7tn-bit.github.io/GeppGo/Index%202.1.html`. È dove tornano

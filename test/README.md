@@ -636,3 +636,37 @@ Per la controprova si lancia sul ponte di prima con `PONTE_AI=<file>` (il
 suo codice stava in `GUIDA-AI.md` fino all'ottobre 2026, si ritrova nella
 storia del progetto): lì non ne passa nessuno, 0 su 31 — alcuni gruppi si
 fermano prima di arrivare in fondo.
+
+## I dati al sicuro
+
+```sh
+node test/prova-dati.js   # 37 controlli, in dieci gruppi
+```
+
+Chi usa GeppGo senza account ha i viaggi solo nel telefono. Qui si prova
+quello che lo protegge, con un finto supabase-js (servito al posto di quello
+della CDN) che tiene un database in memoria, `window.__nuvola`: tabelle,
+file caricati e l'elenco di tutto quello che l'app ha chiesto.
+`__nuvola.giu` fa fallire ogni scrittura (la rete che cade a metà),
+`__nuvola.fotoGiu` solo i caricamenti delle foto, `__nuvola.sessione` dice
+se all'apertura si è già dentro. fflate arriva dal pacchetto installato, e
+la prova lo usa anche in Node per aprire lo zip che l'app consegna. Il
+foglio Condividi si finge (`navigator.share`), perché Chrome in Linux non ce
+l'ha: così la prova tiene il file che l'app gli dà.
+
+I gruppi: la memoria persistente chiesta al primo viaggio; il foglio «I tuoi
+viaggi sono solo su questo telefono» (dopo il primo viaggio, poi una volta a
+settimana, anche all'apertura); l'account creato da quel foglio, che porta
+nel cloud viaggi, foto e valigia senza perdere niente; la spiegazione della
+Home in Safari su iPhone e non nell'app installata (`navigator.standalone`
+finto); «Avevi già dei viaggi in Safari?», sopra la schermata d'accesso; il
+backup aperto byte per byte (dati, valigie, foto piene e miniature, niente
+pezzi di mappa) e ripristinato su un profilo vuoto, anche rifatto da un
+altro programma, troppo grande, e scaricato dove Condividi non c'è; il
+vecchio JSON; «Esci» con modifiche e foto in attesa, coi numeri giusti; lo
+stato del cloud nel Profilo; le cinque lingue e gli schermi da 320 a 430 px,
+chiaro e scuro.
+
+Sul codice di prima passa 1 controllo su 16 — quello che chiede di non
+rompere niente dove `persist()` non esiste — e gli altri gruppi si fermano
+presto: i fogli nuovi lì non ci sono.
