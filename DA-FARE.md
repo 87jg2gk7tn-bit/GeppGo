@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 12 ottobre 2026.
+Aggiornato: 13 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -795,6 +795,60 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **⚠️ Su iPhone `new Notification` non funziona, e nessuno se ne accorgeva**
+  (blocchi `GLI AVVISI` e `IL FOGLIO DEI PERMESSI`, `notificationclick` in
+  `sw.js`, prova `prova-avvisi`). In Safari `Notification` non esiste
+  proprio; nell'app sulla Home iOS vuole la notifica fatta dalla service
+  worker, `registration.showNotification`. Il risultato era che su iPhone
+  restava solo un toast di due secondi e mezzo, e la prossimità e i
+  consigli sul web non avevano proprio una notifica. Le cose da sapere:
+  - **Tutti gli avvisi passano da `avvisa()`**: promemoria, ora di partire,
+    da prenotare, prenotazione in scadenza, tappa vicina, consiglio, A
+    raccolta. Una sola chiamata a `showNotification` in tutto il file, e una
+    prova la conta. L'app nativa ha il suo canale (`nNotify`, il ponte
+    Capacitor) e resta com'e': li' la notifica web non parte.
+  - **Servono tutti e due i sì**: `app.consentNotif` e il permesso del
+    telefono (`notifichePermesse`). Senza, o dove le notifiche non ci sono,
+    l'avviso e' un banner nell'app (nella fila di `proxQueue`, uno alla
+    volta), con «Apri» e «Chiudi». Con l'app davanti agli occhi il banner
+    c'e' comunque: iOS non promette di mostrare la notifica di un'app che si
+    sta guardando. Tappa vicina, consiglio e A raccolta, che a schermo hanno
+    gia' il loro foglio o banner, mandano la notifica solo con l'app in
+    secondo piano (`soloNascosta`).
+  - **Il tocco porta nel punto giusto** perche' la notifica porta con se'
+    `dove` (viaggio, tappa, posto, chiamata). La service worker, con l'app
+    aperta, la porta davanti e le manda un messaggio (niente ricarica); da
+    chiusa la apre con `#avviso=...`, che l'app mette da parte all'avvio
+    (`GEPPGO_AVVISO`) prima che l'indirizzo venga riscritto in `#c=...`.
+    Poi `vaiAllAvviso`: quello che nel frattempo non c'e' piu' (una tappa
+    cancellata, una chiamata scaduta) porta solo dentro l'app.
+  - **Gli avvisi arrivano solo con GeppGo aperta**: i controlli girano nella
+    pagina (un giro al minuto, e la posizione col GPS), e iOS ferma una PWA
+    poco dopo che va in secondo piano. Con l'app chiusa non arriva niente:
+    servono le notifiche push, cioe' l'app nativa. Il Profilo lo dice
+    («Avvisi e notifiche») e il foglio pure; il calendario esportato invece
+    avvisa anche ad app chiusa. Non promettere di piu': il vecchio foglio
+    diceva «anche a schermo bloccato», e sul web era falso.
+  - **I permessi in un foglio solo**: il GPS la prima volta apriva il foglio
+    delle notifiche e, sopra, quello della posizione, con la domanda di iOS
+    partita in mezzo. Adesso `chiediPosizioneEAvvisi` mostra un foglio che
+    spiega tutte e due; con «Continua» le notifiche (e la bussola, che vuole
+    anche lei il tocco) si chiedono dentro il tocco, la posizione dopo che
+    le notifiche hanno risposto. «Non ora» non accende niente e se ne
+    riparla la volta dopo. Solo notifiche (un promemoria, i consigli):
+    `chiediAvvisi`, lo stesso foglio senza la posizione.
+  - **Safari su iPhone senza Home non chiede le notifiche**: non ci sono. Lo
+    spiega una volta (`geppgo2_notif_safari`) e porta alla guida della Home
+    (`mHome`). Dopo un «Non ora» le notifiche si accendono dal Profilo:
+    prima, una volta detto no, restavano spente per sempre.
+  - **La prenotazione in scadenza gira a ogni apertura**: sul web prima non
+    diceva niente (solo `nNotify`, nativo); adesso parla, ma una volta al
+    giorno per prenotazione su ogni telefono (`geppgo2_scadenze_dette`).
+  - **Nelle prove la service worker si finge**: da `file://` una vera non si
+    registra, e `getRegistration` non da' niente. `prova-avvisi` finge
+    `navigator.serviceWorker` (con una registrazione che tiene le notifiche),
+    `Notification` col suo permesso e la posizione, e prova il gestore del
+    tocco di `sw.js` in Node con un `self` finto.
 - **⚠️ Due telefoni sullo stesso viaggio: prima vinceva l'ultimo che
   scriveva, e l'altro perdeva tutto** (blocchi `I CAMPI DEL VIAGGIO, CAMPO
   PER CAMPO` e `LA VALIGIA E LE IMPOSTAZIONI NEL CLOUD`, prove

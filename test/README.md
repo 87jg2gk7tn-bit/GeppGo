@@ -739,3 +739,41 @@ attacca una valigia a un viaggio non suo, chi non ha l'account non legge e
 non scrive niente, la chiave dice sempre lo stesso viaggio della riga, una
 riga non passa i 256 KB, chi è stato tolto dal viaggio non ci riscrive la
 valigia, e tutto se ne va col viaggio o con l'account.
+
+## Gli avvisi
+
+```sh
+node test/prova-avvisi.js   # 43 controlli, in otto gruppi
+```
+
+Su iPhone `new Notification` non funziona: in Safari non esiste, e
+nell'app sulla Home iOS vuole la notifica fatta dalla service worker. Qui si
+prova che ogni avviso passa da `avvisa()` e da `showNotification`, con
+titolo, testo e dove porta il tocco; che il tocco porta davvero li'; che
+senza permesso l'avviso e' un banner nell'app; e che i permessi si chiedono
+con un foglio solo.
+
+Da `file://` una service worker vera non si registra: la prova finge
+`navigator.serviceWorker` (con una registrazione che tiene le notifiche
+mostrate), `Notification` col suo permesso (e la risposta che dara'), la
+posizione e il suo permesso, e tiene l'elenco delle domande fatte al
+telefono e dei fogli aperti, in ordine. Il gestore del tocco e' quello vero
+di `sw.js`, caricato in Node con un `self` finto: con l'app aperta la porta
+davanti e le manda dove andare, da chiusa la apre con `#avviso=...`.
+
+I gruppi: nessun `new Notification(` nel codice, e una sola chiamata a
+`showNotification`; i sette tipi di avviso (tra poco, da prenotare, ora di
+partire, in scadenza, tappa vicina, consiglio, A raccolta); il tocco per
+ognuno, dal messaggio della service worker e da app chiusa, e una chiamata
+scaduta che non si riapre; il banner col permesso negato, senza notifiche e
+col «no» dato nell'app; il primo GPS con un foglio solo e poi notifiche e
+posizione in quest'ordine, e «Non ora» che non accende niente; Safari
+senza Home, che non chiede le notifiche e porta alla guida; la scheda del
+Profilo, tradotta, col tasto che riaccende le notifiche; i testi in cinque
+lingue e niente fuori schermo da 320 a 430 px, chiaro e scuro.
+
+Sul codice di prima passano 2 controlli su 22 (la tappa vicina con l'app
+davanti, che non aveva notifica nemmeno prima, e nessun errore in pagina):
+gli altri gruppi si fermano subito, perche' le funzioni non ci sono. I file
+(`Index 2.1.html`, `sw.js`) si leggono da dove sta l'app provata, cosi'
+anche la controprova con `APP_URL` li legge dalla copia.

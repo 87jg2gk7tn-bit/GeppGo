@@ -116,6 +116,18 @@ quel file è la memoria.
 - **Posizione**: mai chiesta all'apertura. La si chiede quando si usa una
   funzione che ne ha bisogno, dopo il foglio che spiega a cosa serve
   (`chiediPosizione`); chi ha già dato il permesso non vede niente di nuovo.
+  Quando servono anche le notifiche (il GPS con gli avvisi vicino alle
+  tappe) il foglio è uno solo (`chiediPosizioneEAvvisi`), poi le domande del
+  telefono una dopo l'altra.
+- **Avvisi**: passano tutti da `avvisa()`, mai da `new Notification`. Con
+  il sì dentro l'app e il permesso del telefono diventano notifiche della
+  service worker (`registration.showNotification`), e il tocco porta nel
+  punto giusto (`notificationclick` in `sw.js`, poi `vaiAllAvviso`); senza,
+  o con l'app davanti agli occhi, sono un banner nell'app. Arrivano solo con
+  GeppGo aperta: ad app chiusa servono le push, cioè l'app nativa, e niente
+  nell'app deve promettere di più. In Safari su iPhone senza Home le
+  notifiche non si chiedono: si spiega e si rimanda alla guida della Home.
+  Il ponte Capacitor (`nNotify`) resta com'è.
 - **Logo**: oro `#C9962C` con tratto `#14110B`, nell'SVG dentro l'HTML. Non si
   cambia senza che sia chiesto. (La variabile `--green` si chiama così per
   storia: vale `#B8863C`, un ocra.)

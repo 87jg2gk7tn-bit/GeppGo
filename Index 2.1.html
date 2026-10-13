@@ -2121,13 +2121,17 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
       <div class="section-label">Impostazioni</div>
       <div class="card"><div class="card-head"><div><div class="card-h">Piano</div><div class="card-sub" id="planSub">—</div></div><span class="prem-badge" id="planBadge">Gratis</span></div>
         <button class="btn btn-grad btn-block" id="planBtn" onclick="openPremium()">Scopri Premium</button></div>
+      <div class="card"><div class="card-h" style="margin-bottom:.6rem">🔔 Avvisi e notifiche</div>
+        <p style="font-size:.85rem;color:var(--ink-soft);line-height:1.55;margin-bottom:.6rem">Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l'ora e dove sei. Con l'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.</p>
+        <p id="notifStato" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem"></p>
+        <button class="btn btn-soft btn-block" id="notifBtn" style="display:none" onclick="notifDalProfilo()">Attiva le notifiche</button></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">Avvisi di prossimità</div>
         <div class="fg"><label>Cosa notificarti</label><select id="notifLevel" onchange="saveProx()"><option value="ess">Solo le tappe essenziali</option><option value="saved" selected>Tutti i luoghi salvati</option><option value="all">Salvati + consigli di GeppGo</option></select></div>
         <div class="fg"><label>Raggio per le tappe essenziali</label><select id="proxRadius" onchange="saveProx()"><option value="100">100 metri</option><option value="200" selected>200 metri</option><option value="300">300 metri</option><option value="500">500 metri</option><option value="1000">1 km</option></select></div>
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">Calendario</div>
         <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="exportICS()">Esporta attività nel calendario (.ics)</button>
-        <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell'app.</p></div>
+        <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il calendario ti avvisa anche con GeppGo chiusa.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.9rem">Navigatore</div>
         <div class="fg"><label>Quando accetti un avviso, apri con</label><select id="navPref" onchange="saveNav()"><option value="ask">Chiedimelo ogni volta</option><option value="apple">Mappe di Apple</option><option value="google">Google Maps</option></select></div>
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5">iOS non permette di sapere quale navigatore preferisci: scegli qui una volta e lo uso sempre.</p></div>
@@ -2708,12 +2712,22 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
   <div class="add-row"><input id="peopleNew" placeholder="Nome (anche occasionale)" onkeydown="if(event.key==='Enter')addPersonInline()"><button class="btn btn-blue" onclick="addPersonInline()">+</button></div>
   <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.8rem">Puoi rimuovere chi non ha spese collegate. Chi ne ha va prima sistemato nelle spese.</p>
 </div></div>
+<!-- Il foglio dei permessi (vedi IL FOGLIO DEI PERMESSI): le notifiche, e
+     anche la posizione quando la stessa cosa le vuole tutte e due (il GPS con
+     gli avvisi vicino alle tappe). Un foglio solo, poi le domande del
+     telefono una dopo l'altra. In Safari su iPhone, senza l'app sulla Home,
+     le notifiche non ci sono: lo si spiega invece di chiedere. -->
 <div class="modal" id="mNotif"><div class="sheet">
   <div class="sheet-grip"></div>
-  <div class="sheet-head"><div class="sheet-t">Notifiche di GeppGo</div></div>
-  <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.65;margin-bottom:.9rem">GeppGo può avvisarti in tre momenti: quando <strong>passi vicino a una tappa salvata</strong> (anche a schermo bloccato, nell'app installata), quando <strong>scade il termine per prenotare</strong> un'attività, e un po' <strong>prima che inizi un'attività</strong> se lo chiedi.</p>
-  <p style="font-size:.85rem;color:var(--ink-faint);line-height:1.6;margin-bottom:1rem">In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.</p>
-  <div style="display:flex;gap:.6rem"><button class="btn btn-grad" style="flex:1" onclick="consentYes()">Attiva le notifiche</button><button class="btn btn-soft" style="flex:1" onclick="consentNo()">Non ora</button></div>
+  <div class="sheet-head"><div class="sheet-t" id="permT">🔔 Gli avvisi di GeppGo</div></div>
+  <p class="pos-perche" id="permPos" style="display:none"></p>
+  <p class="pos-perche" id="permNotif">GeppGo ti avvisa quando è ora di partire per una tappa, poco prima che inizi, quando scade il termine per prenotare e quando passi vicino a un posto salvato. Gli avvisi arrivano mentre GeppGo è aperta: con l'app chiusa non arrivano ancora.</p>
+  <div id="permSafari" style="display:none">
+    <p class="pos-perche">Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home. Qui in Safari gli avvisi compaiono dentro l'app, mentre è aperta.</p>
+    <button class="btn btn-soft btn-block" style="margin-bottom:.9rem" onclick="permVaiHome()">Come aggiungerla alla Home</button>
+  </div>
+  <p class="pos-dopo" id="permDopo">Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.</p>
+  <div style="display:flex;gap:.6rem"><button class="btn btn-grad" style="flex:1" id="permSi" onclick="consentYes()">Attiva le notifiche</button><button class="btn btn-soft" style="flex:1" id="permNo" onclick="consentNo()">Non ora</button></div>
 </div></div>
 <div class="modal" id="mNav"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3152,6 +3166,15 @@ try{
     catch(e){window.GEPPGO_CONDIVISO=atob(h.slice(6));}
   }
 }catch(e){}
+/* L'avviso toccato quando GeppGo era chiusa (vedi GLI AVVISI, e
+   notificationclick in sw.js): la service worker la apre con «#avviso=...»,
+   che dice dove portare. Si mette da parte qui, come il testo condiviso,
+   prima che l'indirizzo venga riscritto. */
+window.GEPPGO_AVVISO=null;
+try{
+  const h=location.hash||'';
+  if(h.indexOf('#avviso=')===0)window.GEPPGO_AVVISO=JSON.parse(decodeURIComponent(h.slice(8)));
+}catch(e){}
 /* I LINK DELLE EMAIL (recupero, accesso, conferma). Toccato il link, Supabase
    riapre l'app con quello che serve dopo il cancelletto: «#access_token=...
    &refresh_token=...&type=recovery», oppure «#error=...&error_description=...»
@@ -3166,7 +3189,7 @@ window.GEPPGO_LINK_EMAIL=null;
 try{
   const h=location.hash||'',q=location.search||'';
   const daMail=s=>/(^|[#?&])(access_token|refresh_token|type|error|error_code|error_description)=/.test(s);
-  const nostro=/^#(join2?=|c=|testo=|mail=)/.test(h);
+  const nostro=/^#(join2?=|c=|testo=|mail=|avviso=)/.test(h);
   if((!nostro&&daMail(h))||/(^|[?&])(error|error_description)=/.test(q))
     window.GEPPGO_LINK_EMAIL={hash:nostro?'':h,search:q};
 }catch(e){}
@@ -5567,7 +5590,7 @@ const DIZIONARIO_PANNELLI={
     'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'On top of that, from Settings you can export the timed activities to your calendar (Apple or Google) as an extra reminder. Without consent you won’t get any notification.',
     'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Automatic snapshots of your data, on this phone (one every 10 minutes, I keep the last 6). If something goes wrong — a deletion by mistake, a mess — you go back in one tap.',
     'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Open the confirmation mail, select all, copy and paste it below. If the confirmation is an attached PDF, just upload it. I read the name, address, dates and times, look up the place on the map, and',
-    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Creates a file with the timed activities and the booking reminders: opening it, the iPhone adds them to the calendar you prefer (Apple or Google). The main channel stays the app’s notifications.',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il calendario ti avvisa anche con GeppGo chiusa.':'Creates a file with the timed activities and the booking reminders: opening it, the iPhone adds them to the calendar you prefer (Apple or Google). The calendar reminds you even with GeppGo closed.',
     'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'The read happens inside the phone, goes through no operator and “stamps” nothing: a ticket counts as used only when the gate of whoever sold it to you reads it. One precaution only: don’t show the codes to strangers.',
     'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Skippable places use about half the radius, suggestions even less. Each place is flagged at most once a day and only a few times in all; marked as visited, it never comes back. Far from everything, the checks pause to save battery.',
     'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Paste the text of the email: flight, train, bus, ferry, accommodation, car hire, restaurant or activity. I’ll get the dates, times, places, code and total out of it — even if the mail is in English, Spanish, French or Portuguese, and even if there’s an outbound and a return inside. You always check the data before saving — it all works on the phone, without sending anything anywhere.',
@@ -5604,7 +5627,7 @@ const DIZIONARIO_PANNELLI={
     'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'Además, desde Ajustes puedes exportar las actividades con hora a tu calendario (Apple o Google) como recordatorio adicional. Sin el consentimiento no recibirás ninguna notificación.',
     'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Fotografías automáticas de los datos, en este teléfono (una cada 10 minutos, guardo las últimas 6). Si algo sale mal — un borrado por error, un lío — vuelves atrás en un toque.',
     'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Abre el correo de confirmación, selecciona todo, copia y pega aquí abajo. Si la confirmación es un PDF adjunto, súbelo sin más. Leo nombre, dirección, fechas y horarios, busco la ubicación en el mapa, y',
-    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Crea un archivo con las actividades con hora y los recordatorios de reserva: al abrirlo, el iPhone los añade al calendario que prefieras (Apple o Google). El canal principal siguen siendo las notificaciones de la app.',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il calendario ti avvisa anche con GeppGo chiusa.':'Crea un archivo con las actividades con hora y los recordatorios de reserva: al abrirlo, el iPhone los añade al calendario que prefieras (Apple o Google). El calendario te avisa incluso con GeppGo cerrada.',
     'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'La lectura ocurre dentro del teléfono, no pasa por ninguna entidad y no «valida» nada: un billete consta como usado solo cuando lo lee el torno de quien te lo vendió. Única precaución: no enseñes los códigos a desconocidos.',
     'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Los lugares prescindibles usan alrededor de la mitad del radio, las sugerencias aún menos. Cada lugar se avisa como mucho una vez al día y pocas veces en total; marcado como visitado, no vuelve. Lejos de todo, los controles se pausan para ahorrar batería.',
     'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Pega el texto del correo: vuelo, tren, autobús, ferry, alojamiento, alquiler de coche, restaurante o actividad. Saco fechas, horarios, lugares, código y total — aunque el correo esté en inglés, español, francés o portugués, y aunque dentro haya ida y vuelta. Siempre compruebas los datos antes de guardar — todo funciona en el teléfono, sin mandar nada fuera.',
@@ -5641,7 +5664,7 @@ const DIZIONARIO_PANNELLI={
     'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'En plus, depuis les Réglages tu peux exporter les activités à horaire vers ton calendrier (Apple ou Google) comme rappel supplémentaire. Sans le consentement tu ne recevras aucune notification.',
     'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Photographies automatiques des données, sur ce téléphone (une toutes les 10 minutes, je garde les 6 dernières). Si quelque chose tourne mal — une suppression par erreur, un cafouillage — tu reviens en arrière en une touche.',
     'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Ouvre le mail de confirmation, sélectionne tout, copie et colle ci-dessous. Si la confirmation est un PDF joint, charge-le simplement. Je lis le nom, l’adresse, les dates et les horaires, je cherche l’endroit sur la carte, et',
-    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Crée un fichier avec les activités à horaire et les rappels de réservation : en l’ouvrant, l’iPhone les ajoute au calendrier que tu préfères (Apple ou Google). Le canal principal reste les notifications de l’app.',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il calendario ti avvisa anche con GeppGo chiusa.':'Crée un fichier avec les activités à horaire et les rappels de réservation : en l’ouvrant, l’iPhone les ajoute au calendrier que tu préfères (Apple ou Google). Le calendrier te prévient même quand GeppGo est fermée.',
     'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'La lecture se fait dans le téléphone, ne passe par aucun organisme et ne « composte » rien : un billet n’est utilisé que lorsque le portique de celui qui te l’a vendu le lit. Seule précaution : ne montre pas les codes à des inconnus.',
     'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Les lieux facultatifs utilisent environ la moitié du rayon, les suggestions encore moins. Chaque lieu est signalé au plus une fois par jour et peu de fois en tout ; marqué comme visité, il ne revient plus. Loin de tout, les contrôles se mettent en pause pour économiser la batterie.',
     'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Colle le texte de l’e-mail : vol, train, bus, ferry, hébergement, location de voiture, restaurant ou activité. J’en tire les dates, les horaires, les lieux, le code et le total — même si le mail est en anglais, espagnol, français ou portugais, et même s’il contient un aller et un retour. Tu vérifies toujours les données avant d’enregistrer — tout fonctionne sur le téléphone, sans rien envoyer ailleurs.',
@@ -5678,7 +5701,7 @@ const DIZIONARIO_PANNELLI={
     'In più, dalle Impostazioni puoi esportare le attività con orario nel tuo calendario (Apple o Google) come promemoria aggiuntivo. Senza il consenso non riceverai alcuna notifica.':'Além disso, nas Definições podes exportar as atividades com hora para o teu calendário (Apple ou Google) como lembrete extra. Sem o consentimento não receberás nenhuma notificação.',
     'Fotografie automatiche dei dati, su questo telefono (una ogni 10 minuti, tengo le ultime 6). Se qualcosa va storto — una cancellazione per sbaglio, un pasticcio — torni indietro in un tap.':'Fotografias automáticas dos dados, neste telemóvel (uma a cada 10 minutos, guardo as últimas 6). Se algo correr mal — um apagar por engano, uma trapalhada — voltas atrás num toque.',
     'Apri la mail di conferma, seleziona tutto, copia e incolla qui sotto. Se la conferma è un PDF allegato, caricalo e basta. Leggo nome, indirizzo, date e orari, cerco la posizione sulla mappa, e':'Abre o email de confirmação, seleciona tudo, copia e cola aqui em baixo. Se a confirmação for um PDF anexo, carrega-o e pronto. Leio o nome, a morada, as datas e os horários, procuro a posição no mapa, e',
-    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il canale principale restano le notifiche dell\'app.':'Cria um ficheiro com as atividades com hora e os lembretes de reserva: ao abri-lo, o iPhone acrescenta-os ao calendário que preferires (Apple ou Google). O canal principal continuam a ser as notificações da app.',
+    'Crea un file con le attività a orario fisso e i promemoria di prenotazione: aprendolo, l\'iPhone li aggiunge al calendario che preferisci (Apple o Google). Il calendario ti avvisa anche con GeppGo chiusa.':'Cria um ficheiro com as atividades com hora e os lembretes de reserva: ao abri-lo, o iPhone acrescenta-os ao calendário que preferires (Apple ou Google). O calendário avisa-te mesmo com o GeppGo fechado.',
     'La lettura avviene dentro il telefono, non passa da nessun ente e non "timbra" niente: un biglietto risulta usato solo quando lo legge il tornello di chi te l\'ha venduto. Unica accortezza: non mostrare i codici a estranei.':'A leitura acontece dentro do telemóvel, não passa por nenhuma entidade e não «valida» nada: um bilhete conta como usado só quando o torniquete de quem to vendeu o lê. Única precaução: não mostres os códigos a estranhos.',
     'I luoghi saltabili usano circa metà raggio, i consigli ancora meno. Ogni luogo viene avvisato al massimo una volta al giorno e poche volte in tutto; segnato come visitato, non torna più. Lontano da tutto, i controlli si mettono in pausa per risparmiare batteria.':'Os lugares dispensáveis usam cerca de metade do raio, as sugestões ainda menos. Cada lugar é avisado no máximo uma vez por dia e poucas vezes ao todo; marcado como visitado, não volta mais. Longe de tudo, as verificações fazem uma pausa para poupar bateria.',
     'Incolla il testo dell\'email: volo, treno, autobus, traghetto, alloggio, noleggio auto, ristorante o attività. Ne ricavo date, orari, luoghi, codice e totale — anche se la mail è in inglese, spagnolo, francese o portoghese, e anche se dentro ci sono andata e ritorno. Controlli sempre i dati prima di salvare — funziona tutto sul telefono, senza mandare nulla in giro.':'Cola o texto do email: voo, comboio, autocarro, ferry, alojamento, aluguer de carro, restaurante ou atividade. Dele tiro datas, horários, lugares, código e total — mesmo que o email esteja em inglês, espanhol, francês ou português, e mesmo que lá dentro haja ida e volta. Verificas sempre os dados antes de guardar — funciona tudo no telemóvel, sem mandar nada para fora.',
@@ -8097,7 +8120,44 @@ const DIZIONARIO_DATI={
     'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Backup restored. Trips: {1} · photos: {2}.',
     '{1} (copia dal backup)':'{1} (copy from backup)',
     'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'A shared trip came back as a private copy: the group’s trip stays as it is.',
-    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} shared trips came back as private copies: the group’s trips stay as they are.'
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} shared trips came back as private copies: the group’s trips stay as they are.',
+    '🔔 Gli avvisi di GeppGo':'🔔 GeppGo alerts',
+    'GeppGo ti avvisa quando è ora di partire per una tappa, poco prima che inizi, quando scade il termine per prenotare e quando passi vicino a un posto salvato. Gli avvisi arrivano mentre GeppGo è aperta: con l\'app chiusa non arrivano ancora.':'GeppGo lets you know when it’s time to leave for a stop, shortly before it starts, when the deadline to book runs out and when you walk past a saved place. Alerts arrive while GeppGo is open: with the app closed they don’t arrive yet.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home. Qui in Safari gli avvisi compaiono dentro l\'app, mentre è aperta.':'On iPhone, notifications only arrive with GeppGo added to the Home Screen. Here in Safari, alerts appear inside the app while it’s open.',
+    'Come aggiungerla alla Home':'How to add it to the Home Screen',
+    '🔔 Avvisi e notifiche':'🔔 Alerts and notifications',
+    'Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l\'ora e dove sei. Con l\'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.':'Reminders, time to leave, nearby stops and Gather round only arrive while GeppGo is open: it’s the app that keeps an eye on the time and on where you are. With the app closed, or left in the background for a long time, they don’t arrive yet.',
+    '📍 Posizione e avvisi':'📍 Location and alerts',
+    'Subito dopo il telefono ti chiederà i due permessi, uno dopo l\'altro. Puoi cambiare idea quando vuoi dalle impostazioni.':'Right after, your phone will ask for the two permissions, one after the other. You can change your mind any time in Settings.',
+    'Notifiche spente: gli avvisi compaiono dentro l\'app.':'Notifications off: alerts appear inside the app.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: qui gli avvisi compaiono dentro l\'app.':'On iPhone, notifications only arrive with GeppGo added to the Home Screen: here alerts appear inside the app.',
+    'Questo browser non mostra notifiche: gli avvisi compaiono dentro l\'app.':'This browser doesn’t show notifications: alerts appear inside the app.',
+    'Notifiche attive: con GeppGo in secondo piano gli avvisi arrivano come notifiche del telefono.':'Notifications on: with GeppGo in the background, alerts arrive as phone notifications.',
+    'Le notifiche di GeppGo sono spente nelle impostazioni del telefono: gli avvisi compaiono dentro l\'app.':'GeppGo’s notifications are turned off in your phone’s settings: alerts appear inside the app.',
+    'Apri':'Open',
+    'Questa chiamata a raccolta è scaduta':'This gather-round call has expired',
+    '⏰ Tra poco: {1}':'⏰ Coming up: {1}',
+    'Inizia alle {1}':'Starts at {1}',
+    '📍 Accendi il GPS':'📍 Turn on GPS',
+    'Per dirti quando partire per «{1}» mi serve sapere dove sei.':'To tell you when to leave for “{1}” I need to know where you are.',
+    '📍 Sei già sul posto':'📍 You’re already there',
+    '«{1}» inizia alle {2}, fra {3}.':'“{1}” starts at {2}, in {3}.',
+    'Sei a {1} e inizia alle {2}: arriveresti {3} in ritardo. Parti subito.':'You’re {1} away and it starts at {2}: you’d arrive {3} late. Leave right away.',
+    'Sei a {1}, inizia alle {2}. Parti adesso o arrivi in ritardo.':'You’re {1} away, it starts at {2}. Leave now or you’ll be late.',
+    'Per così poco la metro fa perdere tempo: meglio a piedi.':'For such a short way the metro wastes time: better on foot.',
+    '🚦 Ora di partire per «{1}»':'🚦 Time to leave for “{1}”',
+    '📍 {1} è vicino!':'📍 {1} is nearby!',
+    'A circa {1} m da te · tappa essenziale':'About {1} m from you · essential stop',
+    'A circa {1} m da te':'About {1} m from you',
+    'Nei dintorni: {1}':'Nearby: {1}',
+    'In linea col tuo viaggio · a circa {1} m':'In line with your trip · about {1} m away',
+    '🎟️ Prenotazione in scadenza':'🎟️ Booking deadline',
+    '{1}: prenota entro oggi':'{1}: book by today',
+    '{1}: prenota entro domani':'{1}: book by tomorrow',
+    '{1}: prenota entro {2} giorni':'{1}: book within {2} days',
+    '{1} chiama a raccolta':'{1} calls: gather round',
+    'Qualcuno':'Someone',
+    'Tocca per vedere dove':'Tap to see where'
   },
   es:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tus viajes solo están en este teléfono',
@@ -8157,7 +8217,44 @@ const DIZIONARIO_DATI={
     'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Copia de seguridad restaurada. Viajes: {1} · fotos: {2}.',
     '{1} (copia dal backup)':'{1} (de la copia de seguridad)',
     'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Un viaje compartido ha vuelto como copia privada: el del grupo se queda como está.',
-    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viajes compartidos han vuelto como copias privadas: los del grupo se quedan como están.'
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viajes compartidos han vuelto como copias privadas: los del grupo se quedan como están.',
+    '🔔 Gli avvisi di GeppGo':'🔔 Los avisos de GeppGo',
+    'GeppGo ti avvisa quando è ora di partire per una tappa, poco prima che inizi, quando scade il termine per prenotare e quando passi vicino a un posto salvato. Gli avvisi arrivano mentre GeppGo è aperta: con l\'app chiusa non arrivano ancora.':'GeppGo te avisa cuando es hora de salir hacia una parada, poco antes de que empiece, cuando vence el plazo para reservar y cuando pasas cerca de un sitio guardado. Los avisos llegan mientras GeppGo está abierta: con la app cerrada todavía no llegan.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home. Qui in Safari gli avvisi compaiono dentro l\'app, mentre è aperta.':'En el iPhone las notificaciones solo llegan con GeppGo añadida a la pantalla de inicio. Aquí en Safari los avisos aparecen dentro de la app, mientras está abierta.',
+    'Come aggiungerla alla Home':'Cómo añadirla a la pantalla de inicio',
+    '🔔 Avvisi e notifiche':'🔔 Avisos y notificaciones',
+    'Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l\'ora e dove sei. Con l\'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.':'Recordatorios, hora de salir, paradas cercanas y Reunión solo llegan mientras GeppGo está abierta: es ella la que mira la hora y dónde estás. Con la app cerrada, o mucho tiempo en segundo plano, todavía no llegan.',
+    '📍 Posizione e avvisi':'📍 Ubicación y avisos',
+    'Subito dopo il telefono ti chiederà i due permessi, uno dopo l\'altro. Puoi cambiare idea quando vuoi dalle impostazioni.':'Justo después el teléfono te pedirá los dos permisos, uno tras otro. Puedes cambiar de idea cuando quieras desde los ajustes.',
+    'Notifiche spente: gli avvisi compaiono dentro l\'app.':'Notificaciones desactivadas: los avisos aparecen dentro de la app.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: qui gli avvisi compaiono dentro l\'app.':'En el iPhone las notificaciones solo llegan con GeppGo añadida a la pantalla de inicio: aquí los avisos aparecen dentro de la app.',
+    'Questo browser non mostra notifiche: gli avvisi compaiono dentro l\'app.':'Este navegador no muestra notificaciones: los avisos aparecen dentro de la app.',
+    'Notifiche attive: con GeppGo in secondo piano gli avvisi arrivano come notifiche del telefono.':'Notificaciones activadas: con GeppGo en segundo plano los avisos llegan como notificaciones del teléfono.',
+    'Le notifiche di GeppGo sono spente nelle impostazioni del telefono: gli avvisi compaiono dentro l\'app.':'Las notificaciones de GeppGo están desactivadas en los ajustes del teléfono: los avisos aparecen dentro de la app.',
+    'Apri':'Abrir',
+    'Questa chiamata a raccolta è scaduta':'Esta llamada a reunirse ha caducado',
+    '⏰ Tra poco: {1}':'⏰ Dentro de poco: {1}',
+    'Inizia alle {1}':'Empieza a las {1}',
+    '📍 Accendi il GPS':'📍 Activa el GPS',
+    'Per dirti quando partire per «{1}» mi serve sapere dove sei.':'Para decirte cuándo salir hacia «{1}» necesito saber dónde estás.',
+    '📍 Sei già sul posto':'📍 Ya estás allí',
+    '«{1}» inizia alle {2}, fra {3}.':'«{1}» empieza a las {2}, dentro de {3}.',
+    'Sei a {1} e inizia alle {2}: arriveresti {3} in ritardo. Parti subito.':'Estás a {1} y empieza a las {2}: llegarías {3} tarde. Sal ya.',
+    'Sei a {1}, inizia alle {2}. Parti adesso o arrivi in ritardo.':'Estás a {1}, empieza a las {2}. Sal ahora o llegarás tarde.',
+    'Per così poco la metro fa perdere tempo: meglio a piedi.':'Para tan poco el metro hace perder tiempo: mejor a pie.',
+    '🚦 Ora di partire per «{1}»':'🚦 Hora de salir hacia «{1}»',
+    '📍 {1} è vicino!':'📍 ¡{1} está cerca!',
+    'A circa {1} m da te · tappa essenziale':'A unos {1} m de ti · parada esencial',
+    'A circa {1} m da te':'A unos {1} m de ti',
+    'Nei dintorni: {1}':'Por aquí cerca: {1}',
+    'In linea col tuo viaggio · a circa {1} m':'En línea con tu viaje · a unos {1} m',
+    '🎟️ Prenotazione in scadenza':'🎟️ Reserva a punto de vencer',
+    '{1}: prenota entro oggi':'{1}: reserva hoy mismo',
+    '{1}: prenota entro domani':'{1}: reserva como muy tarde mañana',
+    '{1}: prenota entro {2} giorni':'{1}: reserva en los próximos {2} días',
+    '{1} chiama a raccolta':'{1} llama a reunirse',
+    'Qualcuno':'Alguien',
+    'Tocca per vedere dove':'Toca para ver dónde'
   },
   fr:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tes voyages sont seulement sur ce téléphone',
@@ -8217,7 +8314,44 @@ const DIZIONARIO_DATI={
     'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Sauvegarde restaurée. Voyages : {1} · photos : {2}.',
     '{1} (copia dal backup)':'{1} (copie de la sauvegarde)',
     'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Un voyage partagé est revenu comme copie privée : celui du groupe reste tel quel.',
-    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} voyages partagés sont revenus comme copies privées : ceux du groupe restent tels quels.'
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} voyages partagés sont revenus comme copies privées : ceux du groupe restent tels quels.',
+    '🔔 Gli avvisi di GeppGo':'🔔 Les alertes de GeppGo',
+    'GeppGo ti avvisa quando è ora di partire per una tappa, poco prima che inizi, quando scade il termine per prenotare e quando passi vicino a un posto salvato. Gli avvisi arrivano mentre GeppGo è aperta: con l\'app chiusa non arrivano ancora.':'GeppGo te prévient quand il est l’heure de partir pour une étape, peu avant qu’elle commence, quand le délai pour réserver arrive à son terme et quand tu passes près d’un lieu enregistré. Les alertes arrivent tant que GeppGo est ouverte : avec l’app fermée, elles n’arrivent pas encore.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home. Qui in Safari gli avvisi compaiono dentro l\'app, mentre è aperta.':'Sur iPhone, les notifications n’arrivent qu’avec GeppGo ajoutée à l’écran d’accueil. Ici dans Safari, les alertes s’affichent dans l’app, tant qu’elle est ouverte.',
+    'Come aggiungerla alla Home':'Comment l’ajouter à l’écran d’accueil',
+    '🔔 Avvisi e notifiche':'🔔 Alertes et notifications',
+    'Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l\'ora e dove sei. Con l\'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.':'Rappels, heure de partir, étapes proches et On se retrouve n’arrivent que tant que GeppGo est ouverte : c’est elle qui surveille l’heure et l’endroit où tu es. Avec l’app fermée, ou laissée longtemps en arrière-plan, ils n’arrivent pas encore.',
+    '📍 Posizione e avvisi':'📍 Position et alertes',
+    'Subito dopo il telefono ti chiederà i due permessi, uno dopo l\'altro. Puoi cambiare idea quando vuoi dalle impostazioni.':'Juste après, ton téléphone te demandera les deux autorisations, l’une après l’autre. Tu peux changer d’avis quand tu veux dans les réglages.',
+    'Notifiche spente: gli avvisi compaiono dentro l\'app.':'Notifications désactivées : les alertes s’affichent dans l’app.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: qui gli avvisi compaiono dentro l\'app.':'Sur iPhone, les notifications n’arrivent qu’avec GeppGo ajoutée à l’écran d’accueil : ici, les alertes s’affichent dans l’app.',
+    'Questo browser non mostra notifiche: gli avvisi compaiono dentro l\'app.':'Ce navigateur n’affiche pas de notifications : les alertes s’affichent dans l’app.',
+    'Notifiche attive: con GeppGo in secondo piano gli avvisi arrivano come notifiche del telefono.':'Notifications activées : avec GeppGo en arrière-plan, les alertes arrivent comme notifications du téléphone.',
+    'Le notifiche di GeppGo sono spente nelle impostazioni del telefono: gli avvisi compaiono dentro l\'app.':'Les notifications de GeppGo sont désactivées dans les réglages du téléphone : les alertes s’affichent dans l’app.',
+    'Apri':'Ouvrir',
+    'Questa chiamata a raccolta è scaduta':'Cet appel à se retrouver a expiré',
+    '⏰ Tra poco: {1}':'⏰ Bientôt : {1}',
+    'Inizia alle {1}':'Commence à {1}',
+    '📍 Accendi il GPS':'📍 Active le GPS',
+    'Per dirti quando partire per «{1}» mi serve sapere dove sei.':'Pour te dire quand partir pour « {1} », j’ai besoin de savoir où tu es.',
+    '📍 Sei già sul posto':'📍 Tu es déjà sur place',
+    '«{1}» inizia alle {2}, fra {3}.':'« {1} » commence à {2}, dans {3}.',
+    'Sei a {1} e inizia alle {2}: arriveresti {3} in ritardo. Parti subito.':'Tu es à {1} et ça commence à {2} : tu arriverais avec {3} de retard. Pars tout de suite.',
+    'Sei a {1}, inizia alle {2}. Parti adesso o arrivi in ritardo.':'Tu es à {1}, ça commence à {2}. Pars maintenant ou tu seras en retard.',
+    'Per così poco la metro fa perdere tempo: meglio a piedi.':'Pour si peu, le métro fait perdre du temps : mieux vaut y aller à pied.',
+    '🚦 Ora di partire per «{1}»':'🚦 L’heure de partir pour « {1} »',
+    '📍 {1} è vicino!':'📍 {1} est tout près !',
+    'A circa {1} m da te · tappa essenziale':'À environ {1} m de toi · étape essentielle',
+    'A circa {1} m da te':'À environ {1} m de toi',
+    'Nei dintorni: {1}':'Dans les environs : {1}',
+    'In linea col tuo viaggio · a circa {1} m':'Dans l’esprit de ton voyage · à environ {1} m',
+    '🎟️ Prenotazione in scadenza':'🎟️ Réservation bientôt échue',
+    '{1}: prenota entro oggi':'{1} : réserve aujourd’hui au plus tard',
+    '{1}: prenota entro domani':'{1} : réserve demain au plus tard',
+    '{1}: prenota entro {2} giorni':'{1} : réserve d’ici {2} jours',
+    '{1} chiama a raccolta':'{1} appelle à se retrouver',
+    'Qualcuno':'Quelqu’un',
+    'Tocca per vedere dove':'Touche pour voir où'
   },
   pt:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 As tuas viagens estão só neste telemóvel',
@@ -8277,7 +8411,44 @@ const DIZIONARIO_DATI={
     'Backup ripristinato. Viaggi: {1} · foto: {2}.':'Cópia de segurança restaurada. Viagens: {1} · fotos: {2}.',
     '{1} (copia dal backup)':'{1} (da cópia de segurança)',
     'Un viaggio condiviso è tornato come copia privata: quello del gruppo resta com\'è.':'Uma viagem partilhada voltou como cópia privada: a do grupo fica como está.',
-    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viagens partilhadas voltaram como cópias privadas: as do grupo ficam como estão.'
+    '{1} viaggi condivisi sono tornati come copie private: quelli del gruppo restano come sono.':'{1} viagens partilhadas voltaram como cópias privadas: as do grupo ficam como estão.',
+    '🔔 Gli avvisi di GeppGo':'🔔 Os avisos do GeppGo',
+    'GeppGo ti avvisa quando è ora di partire per una tappa, poco prima che inizi, quando scade il termine per prenotare e quando passi vicino a un posto salvato. Gli avvisi arrivano mentre GeppGo è aperta: con l\'app chiusa non arrivano ancora.':'O GeppGo avisa-te quando é hora de partir para uma paragem, pouco antes de começar, quando acaba o prazo para reservar e quando passas perto de um sítio guardado. Os avisos chegam enquanto o GeppGo está aberto: com a app fechada ainda não chegam.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home. Qui in Safari gli avvisi compaiono dentro l\'app, mentre è aperta.':'No iPhone, as notificações só chegam com o GeppGo adicionado ao ecrã principal. Aqui no Safari, os avisos aparecem dentro da app, enquanto está aberta.',
+    'Come aggiungerla alla Home':'Como adicioná-la ao ecrã principal',
+    '🔔 Avvisi e notifiche':'🔔 Avisos e notificações',
+    'Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l\'ora e dove sei. Con l\'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.':'Lembretes, hora de partir, paragens próximas e Toca a reunir só chegam enquanto o GeppGo está aberto: é ele que vê as horas e onde estás. Com a app fechada, ou muito tempo em segundo plano, ainda não chegam.',
+    '📍 Posizione e avvisi':'📍 Localização e avisos',
+    'Subito dopo il telefono ti chiederà i due permessi, uno dopo l\'altro. Puoi cambiare idea quando vuoi dalle impostazioni.':'Logo a seguir o telemóvel vai pedir-te as duas autorizações, uma depois da outra. Podes mudar de ideias quando quiseres nas definições.',
+    'Notifiche spente: gli avvisi compaiono dentro l\'app.':'Notificações desligadas: os avisos aparecem dentro da app.',
+    'Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: qui gli avvisi compaiono dentro l\'app.':'No iPhone, as notificações só chegam com o GeppGo adicionado ao ecrã principal: aqui os avisos aparecem dentro da app.',
+    'Questo browser non mostra notifiche: gli avvisi compaiono dentro l\'app.':'Este navegador não mostra notificações: os avisos aparecem dentro da app.',
+    'Notifiche attive: con GeppGo in secondo piano gli avvisi arrivano come notifiche del telefono.':'Notificações ligadas: com o GeppGo em segundo plano, os avisos chegam como notificações do telemóvel.',
+    'Le notifiche di GeppGo sono spente nelle impostazioni del telefono: gli avvisi compaiono dentro l\'app.':'As notificações do GeppGo estão desligadas nas definições do telemóvel: os avisos aparecem dentro da app.',
+    'Apri':'Abrir',
+    'Questa chiamata a raccolta è scaduta':'Esta chamada para reunir já expirou',
+    '⏰ Tra poco: {1}':'⏰ Daqui a pouco: {1}',
+    'Inizia alle {1}':'Começa às {1}',
+    '📍 Accendi il GPS':'📍 Liga o GPS',
+    'Per dirti quando partire per «{1}» mi serve sapere dove sei.':'Para te dizer quando partir para «{1}» preciso de saber onde estás.',
+    '📍 Sei già sul posto':'📍 Já estás no sítio',
+    '«{1}» inizia alle {2}, fra {3}.':'«{1}» começa às {2}, daqui a {3}.',
+    'Sei a {1} e inizia alle {2}: arriveresti {3} in ritardo. Parti subito.':'Estás a {1} e começa às {2}: chegarias {3} atrasado. Parte já.',
+    'Sei a {1}, inizia alle {2}. Parti adesso o arrivi in ritardo.':'Estás a {1}, começa às {2}. Parte agora ou chegas atrasado.',
+    'Per così poco la metro fa perdere tempo: meglio a piedi.':'Para tão pouco, o metro faz perder tempo: melhor a pé.',
+    '🚦 Ora di partire per «{1}»':'🚦 Hora de partir para «{1}»',
+    '📍 {1} è vicino!':'📍 {1} está perto!',
+    'A circa {1} m da te · tappa essenziale':'A cerca de {1} m de ti · paragem essencial',
+    'A circa {1} m da te':'A cerca de {1} m de ti',
+    'Nei dintorni: {1}':'Aqui perto: {1}',
+    'In linea col tuo viaggio · a circa {1} m':'Em linha com a tua viagem · a cerca de {1} m',
+    '🎟️ Prenotazione in scadenza':'🎟️ Reserva quase a expirar',
+    '{1}: prenota entro oggi':'{1}: reserva até hoje',
+    '{1}: prenota entro domani':'{1}: reserva até amanhã',
+    '{1}: prenota entro {2} giorni':'{1}: reserva nos próximos {2} dias',
+    '{1} chiama a raccolta':'{1} toca a reunir',
+    'Qualcuno':'Alguém',
+    'Tocca per vedere dove':'Toca para ver onde'
   }
 };
 Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DATI[l]));
@@ -8285,7 +8456,7 @@ Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_D
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1265;
+const FRASI_IN_TUTTO=1302;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -8463,6 +8634,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   fillCurrencySelect(document.getElementById('expCur'));
   initSheetSwipe();initSheetClose();autoLocate();snapNow(true);supaBoot();checkBookRem();setInterval(checkBookRem,60000);checkActReminders();setInterval(checkActReminders,60000);checkLeaveAlerts();setInterval(checkLeaveAlerts,60000);
   renderAll();
+  mostraStatoNotifiche();
+  avvisoDellApertura();
   /* Un recupero della password lasciato a meta' (app chiusa prima di
      salvare): il foglio obbligatorio torna subito, sotto la schermata
      d'avvio, prima che si veda l'account. Senza un account salvato non c'e'
@@ -8815,7 +8988,7 @@ function go(p){
   if(p==='identify'&&idImg)setTimeout(drawIdCanvas,60);
   /* Lo stato del cloud si conta solo col Profilo davanti (vedi
      mostraStatoCloud): disegnato mentre si guardava altro, era rimasto vuoto. */
-  if(p==='trips')mostraStatoCloud();
+  if(p==='trips'){mostraStatoCloud();mostraStatoNotifiche();}
 }
 
 function openNewTrip(){if(!canCreateTrip()){openPremium();return;}ntPeople=[];document.getElementById('ntMe').value=app.myName||'';document.getElementById('ntName').value='';document.getElementById('ntDest').value='';document.getElementById('ntStart').value='';document.getElementById('ntEnd').value='';document.getElementById('ntCurInfo').innerHTML='';document.getElementById('ntCurInfo').dataset.cur='';document.getElementById('ntSuggest').checked=false;document.getElementById('ntInterests').value='';renderNtPeople();openSheet('mNewTrip');}
@@ -10642,7 +10815,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Meteo: si apre toccando il riquadro del cielo in cima alla Home (quello di fianco ai nomi dei viaggi, dov'e' anche il "+" per aggiungerne uno). Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. L'ora del posto NON viene mai dall'orologio del telefono: se la previsione non porta il fuso - perche' e' stata salvata prima - si ricava dalla longitudine del posto, che e' la sua ora solare (ogni quindici gradi un'ora). Cosi' funziona in tutto il mondo anche prima che la previsione si riscarichi. L'orario scritto a parole invece compare solo col fuso vero, perche' la stima puo' sbagliare di un'ora dove il fuso politico non segue il sole. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
-- A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple Maps o Google Maps). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta l'avviso arriva subito; a telefono spento servira' l'app nativa, che ancora non c'e'.
+- A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple Maps o Google Maps). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta la chiamata compare subito; con GeppGo in secondo piano arriva come notifica del telefono (se le notifiche sono attive) e toccandola si apre la chiamata. Ad app chiusa non arriva ancora: servira' l'app nativa.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
@@ -10652,7 +10825,8 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
 - I dati al sicuro: il backup sta nel Profilo, nella scheda "Backup" ("Esporta dati" e "Importa dati"); senza account i viaggi stanno solo su quel telefono, e si perdono cambiandolo, perdendolo o cancellando i dati del browser. Dopo il primo viaggio, e poi al massimo una volta a settimana, chi non ha l'account vede il foglio "I tuoi viaggi sono solo su questo telefono" con "Crea un account" e "Più tardi": creando l'account i viaggi gia' fatti vanno nel cloud, foto comprese, e sul telefono non si perde niente (nemmeno la valigia). Su iPhone, chi usa l'app in Safari senza averla messa sulla Home dopo il primo viaggio vede come aggiungerla - Condividi (a volte dentro il menu "…"), poi "Aggiungi alla schermata Home" - e perche': in Safari, dopo 7 giorni senza visite, i dati possono essere cancellati. La stessa spiegazione resta nel Profilo, nella scheda "Backup", col tasto "Aggiungi alla schermata Home". L'app sulla Home ha una memoria sua, separata da Safari: aperta la prima volta e vuota chiede "Avevi già dei viaggi in Safari?", con "Accedi" e "Ripristina da un backup". "Esporta dati" fa un file solo, .zip, con i viaggi, la valigia e le foto salvate nel telefono che hai messo tu (quelle dei compagni no: sono loro; i pezzi di mappa nemmeno: si riscaricano), con una barra che avanza; a file pronto c'e' "Condividi o salva", che su iPhone apre il foglio Condividi (si salva in File o si manda dove si vuole), mentre dove non c'e' si scarica. Se il file sarebbe troppo grande l'app lo dice e propone "Esporta senza le foto". Nella scheda si legge la data dell'ultimo backup fatto da quel telefono. "Importa dati" ripristina sia il file .zip sia il vecchio file .json, che aveva solo i dati: prima di sostituire i viaggi del telefono chiede conferma e ne tiene una copia fra i punti di ripristino. Con l'account, un viaggio del backup che e' condiviso con altri non sovrascrive mai quello del gruppo: torna come copia privata, solo tua, col nome "(copia dal backup)" in fondo, e quello del gruppo resta com'e'; i viaggi dove sei solo tu tornano come erano. Con l'account anche la valigia e le impostazioni (navigatore, qualita' delle foto, avvisi e raggio di prossimita', tema scuro, il proprio nome) passano da un telefono all'altro, e restano private: i compagni di viaggio non le vedono. La lingua, i permessi e il piano restano di ogni telefono. Se due telefoni cambiano lo stesso viaggio anche senza rete non si perde niente: si tengono tutte e due le modifiche, campo per campo (uno il nome, l'altro le date), i compagni aggiunti da due parti ci sono tutti e uno tolto non ricompare; sulla stessa cosa vince l'ultima modifica. Con l'account, sotto l'email nel Profilo si legge lo stato del cloud: "Tutto salvato nel cloud", "N modifiche in attesa" oppure "N foto da caricare". Toccando "Esci" con qualcosa non ancora nel cloud, l'app dice quante modifiche e quante foto sono, con "Aspetta e sincronizza" (manda tutto, poi esce) ed "Esci lo stesso" (restano solo su quel telefono finche' non si rientra con lo stesso account); senza niente in attesa si esce subito. Alla creazione del primo viaggio l'app chiede al browser di tenere i dati come memoria da non buttare: non compare niente.
-- Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
+- Gli avvisi: promemoria "Tra poco" (si chiede aprendo la tappa), "E' ora di partire" (guarda dove sei e col mezzo scelto), "Da prenotare" e "Prenotazione in scadenza", le tappe vicine e i consigli col GPS acceso, e A raccolta. Arrivano SOLO mentre GeppGo e' aperta: e' l'app a guardare l'ora e dove sei. Con l'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora (serve l'app nativa, che non c'e'); il calendario esportato dal Profilo invece avvisa anche ad app chiusa. Con le notifiche attive, e GeppGo in secondo piano, l'avviso arriva come notifica del telefono, e toccandola si apre nel punto giusto: la tappa, la giornata, il posto vicino, la chiamata. Senza notifiche, o con l'app davanti agli occhi, compare dentro l'app come banner in alto con "Apri" e "Chiudi". La prima volta che si accende il GPS un foglio solo spiega posizione e avvisi, poi il telefono chiede i due permessi uno dopo l'altro. Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: da Safari l'app non le chiede, lo spiega e mostra come aggiungerla. Dopo un "Non ora" le notifiche si accendono dal Profilo, scheda "Avvisi e notifiche"; se sono state bloccate nelle impostazioni del telefono, si riaccendono da li'.
+- Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, "Avvisi e notifiche" (quali avvisi arrivano e il tasto "Attiva le notifiche"), gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 - Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -10690,6 +10864,7 @@ const MAPPA_CHIAVI=[
   ['Le email di accesso',['password','accesso','recupero','login','sign in','log in','reset','contrasena','acceso','mot de passe','connexion','palavra-passe','senha','acesso']],
   ['Eliminare il proprio account',['eliminare','cancellare','account','delete','eliminar','cuenta','supprimer','compte','apagar','conta']],
   ['I dati al sicuro',['backup','esporta','esportare','ripristina','ripristinare','sincronizza','sincronizzazione','in attesa','esci','uscire','schermata home','safari','solo su questo telefono','cambio telefono','altro telefono','due telefoni','copia dal backup','conflitto','restore','other phone','otro telefono','autre telephone','outro telefone','sync','sign out','log out','home screen','new phone','copia de seguridad','restaurar','sincronizar','cerrar sesion','pantalla de inicio','sauvegarde','restaurer','synchroniser','deconnecter','ecran d\'accueil','ecran d accueil','copia de seguranca','terminar sessao','ecra principal']],
+  ['Gli avvisi',['avvisi','avviso','notifiche','notifica','promemoria','ora di partire','notifications','notification','alerts','alert','reminder','reminders','avisos','notificaciones','recordatorio','alertes','rappel','rappels','notificacoes','lembrete','lembretes']],
   ['In Profilo, sotto "Versione"',['versione','aggiornamento','aggiornare','version','update','version','actualizar','mise a jour','versao','atualizar']],
   ['Profilo',['profilo','impostazioni','tema scuro','backup','notifiche','piano','calendario','esporta','esportare','profile','settings','dark mode','notifications','export','calendar','perfil','ajustes','modo oscuro','exportar','profil','parametres','mode sombre','exporter','definicoes','modo escuro']],
   ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']]
@@ -12458,10 +12633,8 @@ function checkBookRem(){
       const at=new Date(b.by+'T'+(b.time||'09:00')+':00').getTime();
       if(isNaN(at)||now<at||now-at>432e5)return;
       b.notified=true;save();
-      const msg='Da prenotare: '+a.name;
-      if(app.consentNotif&&typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification('GeppGo',{body:msg});}catch(e){}}
       if(navigator.vibrate)navigator.vibrate([200,80,200]);
-      toast('🔔 '+msg);
+      avvisa({tipo:'prenota',titolo:tv('🎟️ Da prenotare'),testo:a.name,tag:'geppgo-prenota-'+a.id,dove:{tipo:'prenota',trip:t.id,att:a.id}});
     }));
   });
 }
@@ -12474,11 +12647,10 @@ function checkActReminders(){
       const at=new Date(d.date+'T'+a.time+':00').getTime()-a.remindMin*60000;
       if(isNaN(at)||now<at||now-at>432e5)return;
       a.remindNotified=true;save();
-      const msg=a.name+' · alle '+a.time;
-      if(app.consentNotif&&typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification('GeppGo',{body:'Tra poco: '+msg});}catch(e){}}
-      nNotify('⏰ Tra poco: '+a.name,'Inizia alle '+a.time);
+      const titolo=tv('⏰ Tra poco: {1}',a.name),testo=tv('Inizia alle {1}',a.time);
+      nNotify(titolo,testo);
       if(navigator.vibrate)navigator.vibrate([200,80,200]);
-      toast('🔔 Tra poco: '+msg);
+      avvisa({tipo:'promemoria',titolo,testo,tag:'geppgo-promemoria-'+a.id,dove:{tipo:'promemoria',trip:t.id,att:a.id}});
     }));
   });
 }
@@ -12500,11 +12672,10 @@ function actStartMs(d,a){
   if(!d||!a||!a.time)return NaN;
   return new Date(d.date+'T'+a.time+':00').getTime();
 }
-function avvisaPartenza(titolo,corpo){
-  if(app.consentNotif&&typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification('GeppGo',{body:titolo+' — '+corpo});}catch(e){}}
+function avvisaPartenza(titolo,corpo,t,a){
   nNotify(titolo,corpo);
   if(navigator.vibrate)navigator.vibrate([220,90,220]);
-  toast(titolo+' · '+corpo);
+  avvisa({tipo:'partenza',titolo,testo:corpo,tag:'geppgo-partenza-'+a.id,dove:{tipo:'partenza',trip:t.id,att:a.id}});
 }
 function checkLeaveAlerts(){
   const now=Date.now();
@@ -12523,7 +12694,7 @@ function checkLeaveAlerts(){
       if(!myPos||now-myPosAt>POS_FRESCA_MS){
         if(start-now<=54e5&&!a.leaveNoGps){
           a.leaveNoGps=true;save();
-          avvisaPartenza('📍 Accendi il GPS','Per dirti quando partire per "'+a.name+'" mi serve sapere dove sei.');
+          avvisaPartenza(tv('📍 Accendi il GPS'),tv('Per dirti quando partire per «{1}» mi serve sapere dove sei.',a.name),t,a);
         }
         return;
       }
@@ -12536,7 +12707,7 @@ function checkLeaveAlerts(){
            rovescia - alla stessa ora del promemoria normale. */
         if(mancano<=(a.remindMin||30)){
           a.leaveNotified=true;save();
-          avvisaPartenza('📍 Sei già sul posto','"'+a.name+'" inizia alle '+a.time+', fra '+fmtDurata(mancano)+'.');
+          avvisaPartenza(tv('📍 Sei già sul posto'),tv('«{1}» inizia alle {2}, fra {3}.',a.name,a.time,fmtDurata(mancano)),t,a);
         }
         return;
       }
@@ -12546,10 +12717,10 @@ function checkLeaveAlerts(){
       const dove=fmtDurata(st.minutes)+' '+modeEmo(st.mode)+' ('+st.km+' km)';
       const ritardo=st.minutes+PARTENZA_MARGINE_MIN-mancano;
       const corpo=ritardo>PARTENZA_MARGINE_MIN
-        ? 'Sei a '+dove+' e inizia alle '+a.time+': arriveresti '+fmtDurata(ritardo)+' in ritardo. Parti subito.'
-        : 'Sei a '+dove+', inizia alle '+a.time+'. Parti adesso o arrivi in ritardo.'
-          +(st.ripiego?' Per così poco la metro fa perdere tempo: meglio a piedi.':'');
-      avvisaPartenza('🚦 Ora di partire per "'+a.name+'"',corpo);
+        ? tv('Sei a {1} e inizia alle {2}: arriveresti {3} in ritardo. Parti subito.',dove,a.time,fmtDurata(ritardo))
+        : tv('Sei a {1}, inizia alle {2}. Parti adesso o arrivi in ritardo.',dove,a.time)
+          +(st.ripiego?' '+tv('Per così poco la metro fa perdere tempo: meglio a piedi.'):'');
+      avvisaPartenza(tv('🚦 Ora di partire per «{1}»',a.name),corpo,t,a);
     }));
   });
 }
@@ -14469,6 +14640,132 @@ async function initNativeNotifs(){
   }catch(e){}
 }
 
+/* ===== GLI AVVISI =====
+   Promemoria, ora di partire, tappe vicine, consigli, A raccolta: passano
+   tutti da avvisa(). Prima ognuno faceva da se' con new Notification, che su
+   iPhone non funziona: in Safari non esiste, e nell'app sulla Home iOS vuole
+   la notifica fatta dalla service worker (registration.showNotification).
+   Su iPhone restava solo un toast di due secondi e mezzo.
+   Adesso:
+   - con tutti e due i si' (quello dentro l'app e quello del telefono)
+     l'avviso arriva come notifica del telefono, fatta dalla service worker,
+     e il tocco porta nel punto giusto (notificationclick in sw.js, poi
+     vaiAllAvviso);
+   - senza permesso, o dove le notifiche non ci sono, compare dentro l'app
+     come banner; e con l'app davanti agli occhi compare comunque, perche'
+     iOS non promette di mostrare la notifica di un'app che si sta guardando;
+   - l'app nativa ha il suo canale (nNotify, il ponte Capacitor) e resta
+     com'e': li' la notifica web non parte, per non suonare due volte.
+   Tutto questo vale con GeppGo aperta: i controlli girano dentro la pagina,
+   e ad app chiusa iOS la ferma. Con l'app chiusa gli avvisi non arrivano
+   ancora, e il Profilo lo dice. */
+function notificheSupportate(){
+  try{return !NATIVE&&typeof Notification!=='undefined'&&!!navigator.serviceWorker;}catch(e){return false;}
+}
+/* Il permesso del telefono resta acceso anche dopo un «no» dato dentro
+   l'app: guardare solo quello vorrebbe dire suonare in faccia a chi ha
+   detto di no. */
+function notifichePermesse(){return notificheSupportate()&&app.consentNotif===true&&Notification.permission==='granted';}
+/* La registrazione della service worker, senza restare appesi: se non c'e'
+   entro tre secondi l'avviso va nell'app. */
+async function registrazioneAvvisi(){
+  try{
+    const r=await navigator.serviceWorker.getRegistration();
+    if(r&&r.active)return r;
+    return await Promise.race([navigator.serviceWorker.ready,new Promise(ok=>setTimeout(()=>ok(null),3000))]);
+  }catch(e){return null;}
+}
+function iconaAvvisi(){try{return new URL('icona.svg',location.href).href;}catch(e){return 'icona.svg';}}
+/* Un avviso: {tipo, titolo, testo, dove, tag}. `dove` e' dove porta il
+   tocco (vedi vaiAllAvviso). `soloNascosta` e' per quelli che con l'app
+   davanti hanno gia' il loro posto a schermo (la tappa vicina, il consiglio,
+   A raccolta): la notifica serve solo con l'app in secondo piano, e il
+   banner no. */
+async function avvisa(o){
+  const visibile=document.visibilityState!=='hidden';
+  let fatto=false;
+  if(notifichePermesse()&&!(o.soloNascosta&&visibile)){
+    const reg=await registrazioneAvvisi();
+    if(reg){
+      try{
+        await reg.showNotification(o.titolo,{body:o.testo||'',tag:o.tag||undefined,
+          data:{tipo:o.tipo,dove:o.dove||{}},icon:iconaAvvisi(),badge:iconaAvvisi()});
+        fatto=true;
+      }catch(e){console.log('Avviso: la notifica del telefono non parte, lo mostro nell\'app.',e);}
+    }
+  }
+  if(!o.soloNascosta&&(visibile||!fatto))avvisoNellApp(o);
+  return fatto;
+}
+/* Il banner sta nella stessa fila delle tappe vicine (proxQueue): uno alla
+   volta, perche' due banner uno sull'altro non li legge nessuno. Resta finche'
+   non lo si tocca, o per tre quarti di minuto passati a guardarlo: chi
+   torna sull'app dopo un po' lo trova ancora li'. */
+function avvisoNellApp(o){
+  proxQueue.push({kind:'avviso',o});if(proxQueue.length>5)proxQueue.shift();
+  showNextProx();
+}
+const AVVISO_BANNER_MS=45000;
+function renderAvviso(o){
+  const el=document.createElement('div');el.className='prox avv';el.setAttribute('role','alert');
+  el.innerHTML=`<div class="prox-t"></div><div class="prox-d"></div><div class="prox-a"><button class="btn btn-grad" style="flex:1">${esc(tv('Apri'))}</button><button class="btn btn-soft">${esc(tv('Chiudi'))}</button></div>`;
+  el.querySelector('.prox-t').textContent=o.titolo||'';
+  el.querySelector('.prox-d').textContent=o.testo||'';
+  const [apri,chiudi]=el.querySelectorAll('button');
+  apri.onclick=()=>{dismissProx(el);vaiAllAvviso(o.dove);};
+  chiudi.onclick=()=>dismissProx(el);
+  document.body.appendChild(el);
+  const via=()=>{if(el.parentNode)dismissProx(el);};
+  if(document.visibilityState!=='hidden')setTimeout(via,AVVISO_BANNER_MS);
+  else document.addEventListener('visibilitychange',function quando(){
+    if(document.visibilityState==='hidden')return;
+    document.removeEventListener('visibilitychange',quando);setTimeout(via,AVVISO_BANNER_MS);
+  });
+}
+/* Dove porta un avviso toccato, nella notifica o nel banner. Quello che nel
+   frattempo non c'e' piu' (il viaggio, la tappa, una chiamata scaduta)
+   porta solo dentro l'app, senza errori. */
+function vaiAllAvviso(dove){
+  dove=dove||{};
+  if(dove.tipo==='raccolta'){
+    const r=dove.raccolta;if(!r)return;
+    const t=app.trips.find(x=>x.cid===r.trip_id);if(!t)return;
+    if(r.scade_il&&new Date(r.scade_il).getTime()<Date.now()){toast(tv('Questa chiamata a raccolta è scaduta'));return;}
+    raccIn=r;mostraRaccolta(r,t);
+    return;
+  }
+  const t=app.trips.find(x=>String(x.id)===String(dove.trip));if(!t)return;
+  if(app.currentTripId!==t.id){app.currentTripId=t.id;save();renderAll();}
+  if(dove.att!=null){
+    const di=t.days.findIndex(d=>(d.activities||[]).some(a=>String(a.id)===String(dove.att)));
+    if(di<0){go('plan');return;}
+    const id=t.days[di].activities.find(a=>String(a.id)===String(dove.att)).id;
+    openDay(di);
+    if(dove.tipo==='prenota'||dove.tipo==='scadenza')openActDetail(di,id);else tapAct(di,id);
+    return;
+  }
+  if(dove.poi!=null){
+    const p=t.pois.find(x=>String(x.id)===String(dove.poi));if(!p)return;
+    go('plan');proxQueue.unshift({kind:'poi',poi:p,dist:dove.dist||0});showNextProx();
+    return;
+  }
+  if(dove.consiglio){
+    const idx=(t.suggested||[]).findIndex(sp=>sp.name===dove.consiglio);if(idx<0)return;
+    go('plan');proxQueue.unshift({kind:'sug',t,sp:t.suggested[idx],idx,dist:dove.dist||0});showNextProx();
+    return;
+  }
+  go('plan');
+}
+/* Con l'app aperta la service worker dice dove andare con un messaggio; da
+   chiusa la apre con «#avviso=...» (letto all'avvio in GEPPGO_AVVISO). */
+try{if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',e=>{
+  const d=e&&e.data;if(d&&d.tipo==='avviso')quandoAvviata(()=>vaiAllAvviso(d.dove));
+});}catch(e){}
+function avvisoDellApertura(){
+  const d=window.GEPPGO_AVVISO;if(!d)return;
+  window.GEPPGO_AVVISO=null;setTimeout(()=>vaiAllAvviso(d),300);
+}
+
 /* ===== NAVIGATORE ===== */
 /* ===== COSA C'È QUI INTORNO =====
    Non passa dall'IA: sono domande con una risposta secca, e OpenStreetMap
@@ -16105,11 +16402,13 @@ function navGo(kind,lat,lng,name,mode){
      quella vera fatta su un altro telefono. */
   const saved=app.settings.nav;app.settings.nav=kind;openNav(lat,lng,name,mode);app.settings.nav=saved;
 }
-function toggleGPS(){if(gpsId!==null)return stopGPS();if(app.consentNotif===undefined){pendingConsentCb=startGPS;openSheet('mNotif');return;}startGPS();}
-/* La bussola passa da chiediPosizione: iOS la concede solo dentro un tocco,
-   e il tocco giusto e' questo o «Continua» nel foglio della posizione. */
+function toggleGPS(){if(gpsId!==null)return stopGPS();startGPS();}
+/* Il GPS vuole la posizione e, per gli avvisi vicino alle tappe, le
+   notifiche: un foglio solo per tutte e due (vedi IL FOGLIO DEI PERMESSI).
+   La bussola passa di li': iOS la concede solo dentro un tocco, e il tocco
+   giusto e' questo o «Continua» nel foglio. */
 function startGPS(){
-  chiediPosizione('gps',startHeading).then(ok=>{
+  chiediPosizioneEAvvisi('gps',startHeading).then(ok=>{
     if(!ok)return;
     if(NATIVE&&nPlug('Geolocation'))return startGPSNative();
     if(!navigator.geolocation){toast('GPS non disponibile sul dispositivo');return;}
@@ -16360,8 +16659,20 @@ function checkProx(lat,lng){
 let proxQueue=[];
 function showNextProx(){
   if(document.querySelector('.prox'))return;
+  if(!proxQueue.length)return;
+  /* Sopra la schermata d'apertura, la presentazione o l'accesso un banner
+     non si legge e copre i tasti: aspetta che se ne vadano. Succede con gli
+     avvisi che partono appena aperta l'app (vedi GLI AVVISI). */
+  if(bannerAspetta()){clearTimeout(showNextProx._t);showNextProx._t=setTimeout(showNextProx,1500);return;}
   const item=proxQueue.shift();if(!item)return;
-  if(item.kind==='poi')renderProxPoi(item.poi,item.dist);else renderProxSug(item.t,item.sp,item.idx,item.dist);
+  if(item.kind==='poi')renderProxPoi(item.poi,item.dist);
+  else if(item.kind==='avviso')renderAvviso(item.o);
+  else renderProxSug(item.t,item.sp,item.idx,item.dist);
+}
+function bannerAspetta(){
+  if(document.getElementById('bootSplash'))return true;
+  const vede=x=>{const el=document.getElementById(x);return !!el&&getComputedStyle(el).display!=='none';};
+  return vede('intro')||vede('authGate');
 }
 function dismissProx(el){if(el&&el.parentNode)el.remove();setTimeout(showNextProx,250);}
 function renderProxPoi(poi,dist){
@@ -16373,7 +16684,10 @@ function renderProxPoi(poi,dist){
 function proxAlert(poi,dist){
   if(navigator.vibrate)navigator.vibrate([200,100,200]);
   const H=nPlug('Haptics');if(H){try{H.vibrate({duration:400});}catch(e){}}
-  nNotify(`📍 ${poi.name} è vicino!`,`A circa ${dist} m da te${poi.priority==='essential'?' · tappa essenziale':''}`,{lat:poi.lat,lng:poi.lng,name:poi.name});
+  const titolo=tv('📍 {1} è vicino!',poi.name),testo=poi.priority==='essential'?tv('A circa {1} m da te · tappa essenziale',dist):tv('A circa {1} m da te',dist);
+  nNotify(titolo,testo,{lat:poi.lat,lng:poi.lng,name:poi.name});
+  const t=app.trips.find(x=>(x.pois||[]).includes(poi));
+  if(t)avvisa({tipo:'vicino',titolo,testo,tag:'geppgo-vicino-'+poi.id,soloNascosta:true,dove:{tipo:'vicino',trip:t.id,poi:poi.id,dist}});
   proxQueue.push({kind:'poi',poi,dist});if(proxQueue.length>5)proxQueue.shift();
   showNextProx();
 }
@@ -16972,6 +17286,7 @@ function closeSheet(id){
   /* Il foglio della posizione chiuso in un altro modo vale «Non ora»: chi
      aspettava la risposta non deve restare appeso. */
   if(m.id==='mPosizione'&&_posRisposta){const r=_posRisposta;_posRisposta=null;_posGesto=null;r(false);}
+  if(m.id==='mNotif'&&permAttesa){const r=permAttesa.res;permAttesa=null;r(false);}
   m.classList.remove('active');
   /* Un avviso sui dati che aspettava lo schermo libero (vedi I DATI AL
      SICURO) non aspetta il giro dopo. */
@@ -17653,8 +17968,28 @@ function checkBookingAlerts(){
     const b=x.a.booking;if(b.done||!b.by)return;
     const d=Math.round((new Date(b.by)-today)/864e5);
     const key='bk'+x.a.id+b.by;
-    if(d>=0&&d<=3&&!notified.has(key)){notified.add(key);nNotify('🎟️ Prenotazione in scadenza',`${x.a.name}: prenota entro ${d===0?'oggi':d+' giorni'}`);}
+    if(d>=0&&d<=3&&!notified.has(key)){
+      notified.add(key);
+      const titolo=tv('🎟️ Prenotazione in scadenza');
+      const testo=d===0?tv('{1}: prenota entro oggi',x.a.name):d===1?tv('{1}: prenota entro domani',x.a.name):tv('{1}: prenota entro {2} giorni',x.a.name,d);
+      nNotify(titolo,testo);
+      if(scadenzaDaDire(key))avvisa({tipo:'scadenza',titolo,testo,tag:'geppgo-scadenza-'+x.a.id,dove:{tipo:'scadenza',trip:t.id,att:x.a.id}});
+    }
   });
+}
+/* Questo controllo gira a ogni apertura: senza un ricordo, chi apre l'app
+   cinque volte al giorno si sentirebbe dire cinque volte la stessa scadenza.
+   Una volta al giorno per prenotazione, su questo telefono. */
+const SCADENZE_DETTE='geppgo2_scadenze_dette';
+function scadenzaDaDire(key){
+  try{
+    const oggi=todayISO();
+    let m=JSON.parse(localStorage.getItem(SCADENZE_DETTE)||'{}')||{};
+    if(m._giorno!==oggi)m={_giorno:oggi};
+    if(m[key])return false;
+    m[key]=1;localStorage.setItem(SCADENZE_DETTE,JSON.stringify(m));
+    return true;
+  }catch(e){return true;}
 }
 
 /* ===== IMPORTA VIAGGIO (AI: testo libero, ChatGPT, Excel, CSV) ===== */
@@ -20741,7 +21076,7 @@ function saveActDetail(){
      else a.bookExpId=pushAutoExp(t,a.name,bc,bp==='paid',bcat,'bookRef',a.id,bcur,who);
    }else if(bex&&bex.paid===false){t.expenses=t.expenses.filter(x=>x.id!==bex.id);t._delExp=t._delExp||{};t._delExp[bex.id]=Date.now();a.bookExpId=null;}
   }
-  if((needed&&a.booking.by||remindOn||leaveOn)&&app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
+  if(needed&&a.booking.by||remindOn||leaveOn)chiediAvvisi();
   if(adPoiPick&&!adPoiPick.clear){
     const ex=t.pois.find(pp=>pp.name.toLowerCase()===adPoiPick.name.toLowerCase());
     if(ex){a.poiId=ex.id;if(!ex.assignedDay)ex.assignedDay=t.days[newDi].date;}
@@ -20902,10 +21237,124 @@ function markPaid(from,to,amount){
   },'✓','Conferma','btn-grad');
 }
 
-/* ===== CONSENSO NOTIFICHE ===== */
-let pendingConsentCb=null;
-function consentYes(){app.consentNotif=true;save();closeSheet('mNotif');if(NATIVE){const LN=nPlug('LocalNotifications');if(LN)LN.requestPermissions().catch(()=>{});}else if(typeof Notification!=='undefined'&&Notification.permission==='default'){try{Notification.requestPermission();}catch(e){}}const cb=pendingConsentCb;pendingConsentCb=null;if(cb)cb();toast('Notifiche attive');}
-function consentNo(){app.consentNotif=false;save();closeSheet('mNotif');const cb=pendingConsentCb;pendingConsentCb=null;if(cb)cb();}
+/* ===== IL FOGLIO DEI PERMESSI =====
+   Prima il GPS, la prima volta, apriva due fogli uno dopo l'altro: quello
+   delle notifiche e, sopra, quello della posizione; e la domanda delle
+   notifiche di iOS partiva mentre il secondo foglio saliva. Adesso, quando
+   una cosa vuole tutte e due (il GPS con gli avvisi vicino alle tappe), un
+   foglio solo spiega posizione e avvisi; con «Continua» partono le domande
+   del telefono, una dopo l'altra: le notifiche (e la bussola) dentro il
+   tocco, come vuole iOS, poi la posizione.
+   Quando serve solo la posizione resta il suo foglio (chiediPosizione);
+   solo le notifiche (un promemoria, i consigli), lo stesso foglio senza la
+   parte della posizione.
+   In Safari su iPhone, senza l'app sulla Home, le notifiche non esistono:
+   non si chiede niente, si spiega una volta e si rimanda alla guida per
+   metterla sulla Home (vedi I DATI AL SICURO). */
+const NOTIF_SAFARI='geppgo2_notif_safari';
+function notificheDaChiedere(){
+  if(app.consentNotif!==undefined)return false;
+  if(inSafariSenzaHome())return !quandoAvviso(NOTIF_SAFARI);
+  /* Un browser senza notifiche non ha niente da chiedere: gli avvisi saranno
+     banner, e il Profilo lo dice. */
+  if(!NATIVE&&typeof Notification==='undefined')return false;
+  return true;
+}
+let permAttesa=null;
+function apriPermessi(pos,perche){
+  const safari=inSafariSenzaHome();
+  const sp=document.getElementById('permPos');
+  sp.style.display=pos?'':'none';
+  if(pos)sp.textContent=tv(POS_PERCHE[perche]||POS_PERCHE.gps);
+  document.getElementById('permT').textContent=pos?tv('📍 Posizione e avvisi'):tv('🔔 Gli avvisi di GeppGo');
+  document.getElementById('permNotif').style.display=safari?'none':'';
+  document.getElementById('permSafari').style.display=safari?'':'none';
+  const dopo=document.getElementById('permDopo');
+  dopo.style.display=(safari&&!pos)?'none':'';
+  dopo.textContent=(pos&&!safari)
+    ?tv('Subito dopo il telefono ti chiederà i due permessi, uno dopo l\'altro. Puoi cambiare idea quando vuoi dalle impostazioni.')
+    :tv('Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.');
+  document.getElementById('permSi').textContent=pos?tv('Continua'):(safari?tv('Ho capito'):tv('Attiva le notifiche'));
+  document.getElementById('permNo').style.display=(safari&&!pos)?'none':'';
+  openSheet('mNotif');
+}
+/* La posizione e gli avvisi insieme. Risolve true per andare avanti, false
+   con «Non ora» (e allora non si accende niente: si richiede la prossima
+   volta). Quello che non serve piu' chiedere non si chiede. */
+function chiediPosizioneEAvvisi(perche,gesto){
+  if(!notificheDaChiedere())return chiediPosizione(perche,gesto);
+  const pos=!(statoPos==='granted'||statoPos==='denied'||posSpiegata);
+  if(permAttesa){const r=permAttesa.res;permAttesa=null;r(false);}
+  apriPermessi(pos,perche);
+  return new Promise(res=>{permAttesa={pos,gesto:gesto||null,res};});
+}
+/* Solo gli avvisi: un promemoria, l'ora di partire, i consigli. */
+function chiediAvvisi(){
+  if(!notificheDaChiedere())return;
+  if(permAttesa){const r=permAttesa.res;permAttesa=null;r(false);}
+  apriPermessi(false);
+}
+function consentYes(){
+  const att=permAttesa;permAttesa=null;
+  closeSheet('mNotif');
+  const safari=inSafariSenzaHome();
+  let risposta=Promise.resolve();
+  if(safari)segnaAvviso(NOTIF_SAFARI);
+  else{
+    app.consentNotif=true;save();
+    if(NATIVE){const LN=nPlug('LocalNotifications');if(LN)LN.requestPermissions().catch(()=>{});}
+    else if(typeof Notification!=='undefined'&&Notification.permission==='default'){
+      try{risposta=Promise.resolve(Notification.requestPermission()).catch(()=>{});}catch(e){}
+    }
+  }
+  /* La bussola vuole il tocco anche lei: si chiede adesso, e iOS mette le
+     sue domande in fila. */
+  if(att&&att.pos){posSpiegata=true;if(att.gesto)att.gesto();}
+  /* La posizione dopo, quando le notifiche hanno avuto la loro risposta. */
+  risposta.then(()=>{
+    mostraStatoNotifiche();
+    if(!safari&&!NATIVE)toast(notifichePermesse()?'Notifiche attive':tv('Notifiche spente: gli avvisi compaiono dentro l\'app.'));
+    if(att)att.res(true);
+  });
+}
+function consentNo(){
+  const att=permAttesa;permAttesa=null;
+  closeSheet('mNotif');
+  if(att){att.res(false);return;}
+  app.consentNotif=false;save();mostraStatoNotifiche();
+}
+function permVaiHome(){
+  segnaAvviso(NOTIF_SAFARI);
+  const att=permAttesa;permAttesa=null;
+  closeSheet('mNotif');
+  if(att)att.res(false);
+  setTimeout(apriHome,350);
+}
+/* Nel Profilo: dove sono gli avvisi, detto chiaro, e il modo di accendere le
+   notifiche anche dopo un «Non ora» (prima, una volta detto no, restavano
+   spente per sempre). */
+function mostraStatoNotifiche(){
+  const el=document.getElementById('notifStato'),b=document.getElementById('notifBtn');
+  if(!el||!b)return;
+  let testo='',tasto='';
+  if(NATIVE)testo='';
+  else if(inSafariSenzaHome()){testo=tv('Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: qui gli avvisi compaiono dentro l\'app.');tasto=tv('Come aggiungerla alla Home');}
+  else if(!notificheSupportate())testo=tv('Questo browser non mostra notifiche: gli avvisi compaiono dentro l\'app.');
+  else if(notifichePermesse())testo=tv('Notifiche attive: con GeppGo in secondo piano gli avvisi arrivano come notifiche del telefono.');
+  else if(Notification.permission==='denied')testo=tv('Le notifiche di GeppGo sono spente nelle impostazioni del telefono: gli avvisi compaiono dentro l\'app.');
+  else{testo=tv('Notifiche spente: gli avvisi compaiono dentro l\'app.');tasto=tv('Attiva le notifiche');}
+  el.textContent=testo;el.style.display=testo?'':'none';
+  b.textContent=tasto;b.style.display=tasto?'':'none';
+}
+function notifDalProfilo(){
+  if(inSafariSenzaHome()){apriHome();return;}
+  app.consentNotif=true;save();
+  let risposta=Promise.resolve();
+  if(typeof Notification!=='undefined'&&Notification.permission==='default'){
+    try{risposta=Promise.resolve(Notification.requestPermission()).catch(()=>{});}catch(e){}
+  }
+  risposta.then(()=>{mostraStatoNotifiche();if(notifichePermesse())toast('Notifiche attive');});
+}
 
 /* ===== CERCA ONLINE SE SERVE PRENOTARE (AI + web) ===== */
 async function doCheckBooking(){
@@ -21039,7 +21488,7 @@ function saveSuggestPrefs(){
   t.interests=document.getElementById('sgInt').value.trim();
   if(t.suggestOn&&!Array.isArray(t.suggested))t.suggested=[];
   save();renderAll();closeSheet('mSuggest');
-  if(t.suggestOn){if(app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}refreshSuggestions(t);toast('Consigli su misura attivi');}
+  if(t.suggestOn){chiediAvvisi();refreshSuggestions(t);toast('Consigli su misura attivi');}
   else toast('Consigli disattivati');
 }
 function toggleSuggest(){
@@ -21049,7 +21498,7 @@ function toggleSuggest(){
   save();renderAll();
   if(t.suggestOn){
     toast('Consigli nei dintorni attivi');
-    if(app.consentNotif===undefined){pendingConsentCb=null;openSheet('mNotif');}
+    chiediAvvisi();
     refreshSuggestions(t);
   } else toast('Consigli disattivati');
 }
@@ -21085,7 +21534,9 @@ function renderProxSug(t,sp,idx,dist){
 }
 function suggestAlert(t,sp,idx,dist){
   if(navigator.vibrate)navigator.vibrate(160);
-  nNotify('Nei dintorni: '+sp.name,'In linea col tuo viaggio · a circa '+dist+' m',{lat:sp.lat,lng:sp.lng,name:sp.name});
+  const titolo=tv('Nei dintorni: {1}',sp.name),testo=tv('In linea col tuo viaggio · a circa {1} m',dist);
+  nNotify(titolo,testo,{lat:sp.lat,lng:sp.lng,name:sp.name});
+  avvisa({tipo:'consiglio',titolo,testo,tag:'geppgo-consiglio-'+idx,soloNascosta:true,dove:{tipo:'consiglio',trip:t.id,consiglio:sp.name,dist}});
   proxQueue.push({kind:'sug',t,sp,idx,dist});if(proxQueue.length>5)proxQueue.shift();
   showNextProx();
 }
@@ -21280,7 +21731,7 @@ async function cloudCreate(t){
    volta sola, e si salta. Chi arriva da un invito (o da un link che lo sta
    facendo entrare) va dritto dove lo porta il link: ha gia' un motivo per
    essere qui, e tre schermate in mezzo lo farebbero solo aspettare. */
-const INTRO_SALTA=/^#(join2?=|testo=|mail=)|access_token=|type=recovery|error_description=/.test(location.hash||'')||/[?&]code=/.test(location.search||'');
+const INTRO_SALTA=/^#(join2?=|testo=|mail=|avviso=)|access_token=|type=recovery|error_description=/.test(location.hash||'')||/[?&]code=/.test(location.search||'');
 function introSegnaVista(){try{localStorage.setItem('geppgo2_intro','1');}catch(e){}}
 function introAvvia(){
   if(!PRIMO_AVVIO)return;
@@ -23577,7 +24028,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-12 19:26';
+const VERSIONE_APP='2026-10-13 11:17';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -24743,22 +25194,20 @@ function raccoltaPortami(){
   openNav(raccIn.lat,raccIn.lng,(raccIn.nome?raccIn.nome+' — ':'')+'a raccolta');
 }
 /* L'avviso vero del telefono, quello che si vede anche se l'app sta in
-   un'altra scheda. Non si chiede il permesso qui: si usa solo se e' gia'
-   stato dato. A telefono spento serve l'app nativa, che ancora non c'e'.
-
-   Servono tutti e due i sì: quello del telefono e quello dato dentro l'app
-   (app.consentNotif), come per gli altri avvisi. Il permesso del browser
-   resta acceso anche dopo che uno ha spento le notifiche dal Profilo, e
-   guardare solo quello vorrebbe dire suonare in faccia a chi ha detto di no.
+   un'altra scheda (vedi GLI AVVISI). Non si chiede il permesso qui: si usa
+   solo se e' gia' stato dato, e con l'app davanti agli occhi non serve,
+   perche' il foglio della chiamata e' gia' aperto. Ad app chiusa non arriva:
+   serve l'app nativa, che ancora non c'e'.
+   Servono tutti e due i sì, come per gli altri avvisi (notifichePermesse).
    Che la chiamata sia urgente non c'entra: chi ha detto di no la trova
-   comunque aperta quando riprende in mano il telefono. */
+   comunque aperta quando riprende in mano il telefono. Il tocco riapre la
+   chiamata, finche' vale. */
 function raccoltaAvvisoDiSistema(r){
   try{
-    if(!app.consentNotif)return;
-    if(!('Notification' in window)||Notification.permission!=='granted')return;
-    if(document.visibilityState==='visible')return;
-    new Notification((r.nome||'Qualcuno')+' chiama a raccolta',
-      {body:r.nota||'Tocca per vedere dove',tag:'geppgo-raccolta'});
+    avvisa({tipo:'raccolta',titolo:tv('{1} chiama a raccolta',r.nome||tv('Qualcuno')),testo:r.nota||tv('Tocca per vedere dove'),
+      tag:'geppgo-raccolta',soloNascosta:true,
+      dove:{tipo:'raccolta',raccolta:{id:r.id,trip_id:r.trip_id,chiamata_da:r.chiamata_da,nome:r.nome||null,nota:r.nota||null,
+        lat:r.lat,lng:r.lng,creata_il:r.creata_il||null,scade_il:r.scade_il||null}}});
   }catch(e){}
 }
 
