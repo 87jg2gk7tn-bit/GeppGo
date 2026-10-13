@@ -362,8 +362,13 @@ const stato = {
   const avvisi = await page.evaluate(async () => {
     const suonati = [];
     const vera = window.Notification;
-    window.Notification = function (t, o) { suonati.push({ t, o }); };
+    window.Notification = function () {};
     window.Notification.permission = 'granted';
+    /* La notifica la fa la service worker (vedi GLI AVVISI): qui, aperta da
+       file://, una vera non c'e', e se ne finge la registrazione. */
+    const reg = { active: {}, showNotification: (t, o) => { suonati.push({ t, o }); return Promise.resolve(); } };
+    Object.defineProperty(navigator, 'serviceWorker', { configurable: true,
+      get: () => ({ getRegistration: () => Promise.resolve(reg), ready: Promise.resolve(reg), addEventListener() {} }) });
     // l'app crede di stare in secondo piano, che è quando l'avviso serve
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
 
@@ -386,6 +391,7 @@ const stato = {
     const conSi = suonati.length;
 
     window.Notification = vera;
+    delete navigator.serviceWorker;
     delete document.visibilityState;
     return { conNo, conSi, titolo: (suonati[0] || {}).t, corpo: ((suonati[0] || {}).o || {}).body };
   });

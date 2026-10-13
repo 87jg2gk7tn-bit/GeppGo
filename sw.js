@@ -12,7 +12,7 @@
    tenevano, e senza rete lo scanner, i codici a barre e la mappa non
    c'erano proprio, anche con le mattonelle della mappa gia' viste in
    memoria. */
-const CACHE_NAME = 'geppgo-shell-v44';
+const CACHE_NAME = 'geppgo-shell-v45';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -166,6 +166,30 @@ async function libreria(req) {
   try { r = await fetch(req.url, { mode: 'cors', credentials: 'omit' }); } catch (e) {}
   if (r && r.ok) { cache.put(req.url, r.clone()).catch(() => {}); return r; }
   return fetch(req);
+}
+
+/* Il tocco su un avviso (vedi GLI AVVISI nell'app): porta GeppGo in primo
+   piano nel punto giusto - il viaggio, la giornata, la tappa, la chiamata a
+   raccolta. Dove andare sta nei dati della notifica (`dove`). Se l'app e'
+   gia' aperta le si dice con un messaggio, e non la si ricarica; se e'
+   chiusa la si apre con «#avviso=...», che lei legge all'avvio. */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(apriAvviso((event.notification && event.notification.data) || {}));
+});
+async function apriAvviso(dati) {
+  const dove = (dati && dati.dove) || {};
+  const finestre = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  // Solo la finestra dell'app: la pagina della privacy non saprebbe cosa farsene.
+  const app = finestre.find((c) => /Index(%20| )2\.1\.html/.test(c.url));
+  if (app) {
+    try { if (app.focus) await app.focus(); } catch (e) {}
+    app.postMessage({ tipo: 'avviso', dove });
+    return;
+  }
+  const url = new URL('Index%202.1.html', self.registration.scope);
+  url.hash = 'avviso=' + encodeURIComponent(JSON.stringify(dove));
+  if (self.clients.openWindow) await self.clients.openWindow(url.href);
 }
 
 self.addEventListener('fetch', (event) => {
