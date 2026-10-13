@@ -1139,8 +1139,13 @@ body.dark{--cielo-a:#1B2333;--cielo-b:#0E0C09}
      scritta. Erano per la fila dei viaggi, che non c'e' piu'. Scende a
      quanto serve perche' il sole - che sta a nove pixel dall'alto ed e'
      alto cinquantadue - resti intero sopra la scritta invece di finirle
-     dietro. */
-  padding:4rem 1.15rem 2.4rem;
+     dietro.
+     Sotto: 2rem, di cui 1.5rem li copre «Fra poco» (o la scheda della
+     valigia), che sale sul cielo. Erano 2.4rem; da quando sotto le azioni
+     c'e' la fila Bagagli · Compagni · Condividi, quel mezzo centimetro
+     serviva alla mappa, che su un telefono da 844 deve restare intera
+     sopra la barra (test/prova-piega.js). */
+  padding:4rem 1.15rem 2rem;
   background:linear-gradient(180deg,var(--cielo-a) 0%,var(--cielo-b) 82%);
   overflow:hidden;
 }
@@ -1195,9 +1200,11 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 }
 
 /* ── card "fra poco" ───────────────────────────────────────────── */
+/* Dentro .85rem e non piu' 1.05: sei pixel per la fila Bagagli · Compagni
+   · Condividi, che sta sopra (vedi il fondo di .hh). */
 .hh-soon{
   display:flex;align-items:center;gap:1rem;
-  margin:-1.5rem .1rem 0;padding:1.05rem 1.15rem;
+  margin:-1.5rem .1rem 0;padding:.85rem 1.15rem;
   background:var(--surface);border-radius:var(--r-xl);
   box-shadow:var(--sh-md);border:1px solid var(--line-soft);
   cursor:pointer;position:relative;z-index:2;transition:var(--ease);
@@ -1229,7 +1236,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-day.on{background:var(--ink);color:var(--paper)}
 
 /* ── titolo di sezione ─────────────────────────────────────────── */
-.hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:1rem .1rem .6rem}
+.hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:.6rem .1rem .6rem}
 .hh-sec-t{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:600;color:var(--ink)}
 .hh-sec-c{font-size:.66rem;font-weight:700;letter-spacing:.14em;color:var(--ink-faint)}
 
@@ -1694,7 +1701,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    sparsi. La ricerca prende lo spazio che resta; il richiamo e' pieno, nel
    verde che non si ribalta col tema scuro, perche' va trovato senza
    leggere. */
-.hh-azioni{display:flex;gap:.5rem;align-items:stretch;margin-top:.8rem}
+.hh-azioni{display:flex;gap:.5rem;align-items:stretch;margin-top:.65rem}
 .hh-azioni .hh-cerca{margin-top:0;flex:1;min-width:0}
 .hh-raccolta{
   flex:none;display:flex;align-items:center;gap:.35rem;min-height:44px;
@@ -1704,6 +1711,38 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   transition:var(--ease);
 }
 .hh-raccolta:active{transform:scale(.97)}
+/* Bagagli, Compagni, Condividi: sotto le due azioni di strada, piu'
+   leggeri di loro (si usano ogni tanto, non in mezzo a una piazza), ma con
+   la scritta e alti un dito. Tre caselle uguali finche' le parole ci stanno;
+   una parola che non ci sta («Companheiros», a 320 px) allarga la sua
+   casella e stringe le altre, invece di spezzarsi a meta' («Companheir»
+   sopra, «os» sotto): si va a capo solo fra una parola e l'altra. */
+.hh-rapidi{display:grid;grid-template-columns:repeat(3,minmax(min-content,1fr));gap:.4rem;margin-top:.4rem}
+.hh-rapido{
+  min-height:44px;padding:.45rem .35rem;border-radius:var(--r-md);
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:inherit;font-size:.8rem;font-weight:600;line-height:1.2;
+  text-align:center;cursor:pointer;overflow-wrap:break-word;transition:var(--ease);
+}
+.hh-rapido:active{transform:scale(.97)}
+.hh.cl-buio .hh-rapido{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+/* La scheda «Prepara la valigia» (vedi schedaValigiaHtml). Sale sul fondo
+   dell'intestazione come «Fra poco», che le viene dopo: messa sotto e basta
+   lasciava un buco di cielo sopra di se', e «Fra poco», che sale
+   sull'intestazione, le finiva addosso. Il conto sta sulla riga di quando si
+   parte, a destra: una riga in meno, e la mappa scende di meno. */
+.val-scheda{position:relative;z-index:2;margin:-1.5rem .1rem 0;padding:1rem 1.15rem;border-radius:var(--r-xl);box-shadow:var(--sh-md)}
+.val-scheda+.hh-soon{margin-top:.85rem}
+.val-testa{display:flex;align-items:center;gap:.5rem}
+.val-t{flex:1;min-width:0;font-weight:800;font-size:.98rem;color:var(--ink)}
+.val-x{flex:none;width:44px;height:44px;margin:-.5rem -.55rem -.5rem 0;border:none;background:none;color:var(--ink-faint);font-size:1rem;border-radius:50%;cursor:pointer}
+.val-x:active{background:var(--line-soft)}
+.val-riga{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.1rem .8rem;margin:.15rem 0 .5rem;font-size:.84rem;line-height:1.35}
+.val-quando{color:var(--ink-soft)}
+.val-conto{color:var(--ink);font-weight:700}
+.val-barra{height:6px;border-radius:6px;background:var(--line-soft);overflow:hidden;margin-bottom:.75rem}
+.val-barra i{display:block;height:100%;background:var(--green);border-radius:6px}
+.val-apri{min-height:44px}
 
 /* La temperatura resta sola all'angolo, dov'era la fila dei viaggi. */
 .hh-grado-solo{position:relative;display:flex;justify-content:flex-end;margin-bottom:.5rem;cursor:pointer}
@@ -1817,9 +1856,14 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
 .hh-map-wrap{position:relative}
 /* Nella mini-mappa della home il tasto della posizione sta in alto: in basso ci
    passa la striscia che avvisa quando una tappa non ha un posto, e finirebbero
-   uno sopra l'altro. Ed e' un filo piu' piccolo, perche' la mappa e' alta 180px. */
+   uno sopra l'altro. Ed e' un filo piu' piccolo, perche' la mappa e' alta 160px. */
 .hh-map-wrap .locate-fab{top:.5rem;bottom:auto;right:.5rem;width:34px;height:34px;font-size:.9rem}
-.hh-map-wrap #homeMap{height:180px;width:100%;background:var(--sand-tint)}
+/* 160 e non piu' 180: i venti pixel sono andati alla fila Bagagli · Compagni
+   · Condividi, insieme a un po' d'aria fra i pezzi della Home, perche' su un
+   telefono da 844 la mappa resti intera sopra la barra (test/prova-piega.js).
+   Una mappa tutta in vista e un po' piu' bassa serve piu' di una piu' alta
+   tagliata dalla barra. */
+.hh-map-wrap #homeMap{height:160px;width:100%;background:var(--sand-tint)}
 
 /* ══════════════════════════════════════════════════════════════════
    GEPPGO · HOME "CIELO" — FINE
@@ -1890,7 +1934,7 @@ body:not(.dark) #thLight,body.dark #thDark{background:var(--ink);color:var(--pap
    quello esterno perche' a schermo non si muova niente. I conti tornano al
    pixel apposta: la prima volta la striscia dei viaggi aveva spinto giu'
    tutta la pagina di 14 px, e non era una decisione - era una svista. */
-.hh-days{margin-top:1.05rem;padding-top:.45rem;padding-bottom:.5rem;margin-bottom:-.1rem}
+.hh-days{margin-top:.6rem;padding-top:.45rem;padding-bottom:.5rem;margin-bottom:-.1rem}
 .hh-trips{padding:.6rem 0;margin:-.6rem 0}
 /* Quando le scorciatoie vanno a capo, fra una riga e l'altra ci vuole lo
    spazio che le due aree occupano (9 px + 9 px): senza, la riga di sotto si
@@ -3886,6 +3930,7 @@ function leggiTolte(t){try{return JSON.parse(localStorage.getItem(tolteKey(t))||
 function valigiaLocale(t){return{voci:getPacking(t),tolte:leggiTolte(t)};}
 function scriviValigiaLocale(t,v){
   try{localStorage.setItem(packingKey(t),JSON.stringify(v.voci));localStorage.setItem(tolteKey(t),JSON.stringify(v.tolte||{}));}catch(e){}
+  if(t.id===app.currentTripId)try{valigiaAggiornaScheda();}catch(e){}
 }
 function unisciValigia(a,b){
   const tolte=Object.assign({},a.tolte||{});
@@ -8157,7 +8202,17 @@ const DIZIONARIO_DATI={
     '{1}: prenota entro {2} giorni':'{1}: book within {2} days',
     '{1} chiama a raccolta':'{1} calls: gather round',
     'Qualcuno':'Someone',
-    'Tocca per vedere dove':'Tap to see where'
+    'Tocca per vedere dove':'Tap to see where',
+    '🧳 Bagagli':'🧳 Packing',
+    '👥 Compagni':'👥 Travel mates',
+    '🔗 Condividi':'🔗 Share',
+    '🧳 Prepara la valigia':'🧳 Pack your bag',
+    'Si parte oggi':'Leaving today',
+    'Si parte domani':'Leaving tomorrow',
+    'Si parte fra {1} giorni':'Leaving in {1} days',
+    '{1} su {2} pronte':'{1} of {2} ready',
+    'La lista è ancora vuota':'The list is still empty',
+    'Apri la lista':'Open the list'
   },
   es:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tus viajes solo están en este teléfono',
@@ -8254,7 +8309,17 @@ const DIZIONARIO_DATI={
     '{1}: prenota entro {2} giorni':'{1}: reserva en los próximos {2} días',
     '{1} chiama a raccolta':'{1} llama a reunirse',
     'Qualcuno':'Alguien',
-    'Tocca per vedere dove':'Toca para ver dónde'
+    'Tocca per vedere dove':'Toca para ver dónde',
+    '🧳 Bagagli':'🧳 Equipaje',
+    '👥 Compagni':'👥 Compañeros',
+    '🔗 Condividi':'🔗 Compartir',
+    '🧳 Prepara la valigia':'🧳 Prepara la maleta',
+    'Si parte oggi':'Salida hoy',
+    'Si parte domani':'Salida mañana',
+    'Si parte fra {1} giorni':'Salida dentro de {1} días',
+    '{1} su {2} pronte':'{1} de {2} listas',
+    'La lista è ancora vuota':'La lista todavía está vacía',
+    'Apri la lista':'Abrir la lista'
   },
   fr:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 Tes voyages sont seulement sur ce téléphone',
@@ -8351,7 +8416,17 @@ const DIZIONARIO_DATI={
     '{1}: prenota entro {2} giorni':'{1} : réserve d’ici {2} jours',
     '{1} chiama a raccolta':'{1} appelle à se retrouver',
     'Qualcuno':'Quelqu’un',
-    'Tocca per vedere dove':'Touche pour voir où'
+    'Tocca per vedere dove':'Touche pour voir où',
+    '🧳 Bagagli':'🧳 Bagages',
+    '👥 Compagni':'👥 Compagnons',
+    '🔗 Condividi':'🔗 Partager',
+    '🧳 Prepara la valigia':'🧳 Prépare ta valise',
+    'Si parte oggi':'Départ aujourd’hui',
+    'Si parte domani':'Départ demain',
+    'Si parte fra {1} giorni':'Départ dans {1} jours',
+    '{1} su {2} pronte':'{1} sur {2} prêtes',
+    'La lista è ancora vuota':'La liste est encore vide',
+    'Apri la lista':'Ouvrir la liste'
   },
   pt:{
     '📱 I tuoi viaggi sono solo su questo telefono':'📱 As tuas viagens estão só neste telemóvel',
@@ -8448,7 +8523,17 @@ const DIZIONARIO_DATI={
     '{1}: prenota entro {2} giorni':'{1}: reserva nos próximos {2} dias',
     '{1} chiama a raccolta':'{1} toca a reunir',
     'Qualcuno':'Alguém',
-    'Tocca per vedere dove':'Toca para ver onde'
+    'Tocca per vedere dove':'Toca para ver onde',
+    '🧳 Bagagli':'🧳 Bagagem',
+    '👥 Compagni':'👥 Companheiros',
+    '🔗 Condividi':'🔗 Partilhar',
+    '🧳 Prepara la valigia':'🧳 Prepara a mala',
+    'Si parte oggi':'Partida hoje',
+    'Si parte domani':'Partida amanhã',
+    'Si parte fra {1} giorni':'Partida daqui a {1} dias',
+    '{1} su {2} pronte':'{1} de {2} prontas',
+    'La lista è ancora vuota':'A lista ainda está vazia',
+    'Apri la lista':'Abrir a lista'
   }
 };
 Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_DATI[l]));
@@ -8456,7 +8541,7 @@ Object.keys(DIZIONARIO_DATI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_D
 /* Quante frasi ci sono da dire in tutto: 474 ferme nelle schermate, 182
    messaggi, e il resto composto o scoperto per strada. Serve a una cosa
    sola, ed e' importante. */
-const FRASI_IN_TUTTO=1302;
+const FRASI_IN_TUTTO=1312;
 const LINGUA_PRONTA=0.8;
 /* Una lingua si accende da sola solo quando e' quasi tutta li'. Sotto quella
    soglia un'app mezza tradotta e' PEGGIO di una tutta in italiano: chi la
@@ -9864,9 +9949,9 @@ function renderHomeHero(){
      identica cosa - cercare qualcosa qui intorno - quindi erano UNA cosa
      travestita da cinque.
      Adesso e' un tasto solo che fa la domanda giusta, "cosa cerchi", e la
-     scelta arriva dopo, quando serve davvero. Condividi e A raccolta si
-     usano una volta per viaggio e stanno nel Profilo; i bagagli erano gia'
-     nella scheda del viaggio. */
+     scelta arriva dopo, quando serve davvero. Condividi, i compagni e i
+     bagagli sono tornati qui sotto, piccoli, nella fila «rapidi»: stando
+     solo nella scheda del viaggio non li trovava nessuno. */
   /* «A RACCOLTA» TORNA IN HOME. Era stato spostato nella scheda del
      viaggio, con l'idea che si usasse una volta per viaggio. Non e' cosi':
      si usa in strada, quando il gruppo si e' sparpagliato — «la funzione a
@@ -9879,9 +9964,21 @@ function renderHomeHero(){
      per cui non si trovava. */
   const raccoltaHome=(t.participants||[]).length>1
     ?`<button class="hh-raccolta" onclick="raccoltaDallaHome()">📣 ${esc(tv('A raccolta'))}</button>`:'';
+  /* I BAGAGLI, I COMPAGNI E L'INVITO, A PORTATA (vedi «Nessuna funzione
+     nascosta» in CLAUDE.md). Stavano solo dentro la scheda del viaggio, e i
+     bagagli li si e' trovati chiedendolo all'assistente. Sono nella fila delle
+     azioni, sotto «Cosa cerchi», discreti e con la scritta: tre caselle
+     uguali, e se una parola e' lunga (in portoghese, a 320 px) va a capo
+     dentro la sua casella invece di spingere fuori le altre. */
+  const rapidi=`<div class="hh-rapidi">
+    <button class="hh-rapido" onclick="openPacking()">${esc(tv('🧳 Bagagli'))}</button>
+    <button class="hh-rapido" onclick="openPeople()">${esc(tv('👥 Compagni'))}</button>
+    <button class="hh-rapido" onclick="openShare()">${esc(tv('🔗 Condividi'))}</button>
+  </div>`;
   const actsBar=`<div class="hh-azioni"><button class="hh-cerca" onclick="apriCerca()">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
-    <span class="hh-cerca-l">${esc(tv('Cosa cerchi qui intorno?'))}</span><span class="hh-cerca-c">${esc(tv('Cosa cerchi?'))}</span></button>${raccoltaHome}</div>`;
+    <span class="hh-cerca-l">${esc(tv('Cosa cerchi qui intorno?'))}</span><span class="hh-cerca-c">${esc(tv('Cosa cerchi?'))}</span></button>${raccoltaHome}</div>${rapidi}`;
+  const valigia=schedaValigiaHtml(t);
   if(!t.days||!t.days.length){
     const vNiente=cieloVestito(t,null);
     paint(`<div class="hh">${vNiente.velo}
@@ -9892,7 +9989,7 @@ function renderHomeHero(){
       <div class="hh-city" onclick="openTripZoom(${t.id})">${esc(t.destination||t.name||'')}</div>
       <div class="hh-meta">Nessun giorno ancora — apri il viaggio per aggiungerne.</div>
       ${actsBar}
-    </div>`);
+    </div>${valigia}`);
     return;
   }
   const i=homeDayIndex(t),day=t.days[i];
@@ -9918,6 +10015,7 @@ function renderHomeHero(){
     <div class="hh-meta">${bits.map(b=>esc(b)).join(' · ')}</div>
     ${actsBar}
   </div>
+  ${valigia}
   ${(()=>{
     /* Il riquadro c'è finché c'è una tappa da mostrare, anche se sono tutte
        passate: scorrendo la mappa lo si porta su quella, e sparire vorrebbe
@@ -10055,6 +10153,7 @@ function savePacking(t,arr){
   prima.forEach(p=>{if(!restano.has(String(p.id)))tolte[String(p.id)]=ora;});
   localStorage.setItem(packingKey(t),JSON.stringify(arr));
   try{localStorage.setItem(tolteKey(t),JSON.stringify(tolte));}catch(e){}
+  if(t.id===app.currentTripId)valigiaAggiornaScheda();
   personaleProgramma();
 }
 function mergePackingSuggestions(t){
@@ -10088,6 +10187,48 @@ function regenPacking(){
   renderPacking();
   const after=getPacking(t).length;
   toast(after>before?`Aggiunte ${after-before} voci nuove`:'Nessuna voce nuova da aggiungere');
+}
+/* «PREPARA LA VALIGIA», in Home. Nei sette giorni prima della partenza e il
+   primo giorno la valigia e' la cosa da fare: la scheda dice quante voci
+   sono pronte e apre la lista. Dal secondo giorno non serve piu', e prima di
+   una settimana sarebbe presto. Con la X si chiude fino al giorno dopo, su
+   questo telefono: domani se ne riparla, perche' manca un giorno di meno. */
+function giorniFra(da,a){
+  const u=s=>{const p=String(s||'').split('-').map(Number);return Date.UTC(p[0],(p[1]||1)-1,p[2]||1);};
+  return Math.round((u(a)-u(da))/864e5);
+}
+const VALIGIA_CHIUSA='geppgo2_valigia_chiusa_';
+function valigiaDaPreparare(t){
+  if(!t||t.status==='closed')return null;
+  const parte=t.start||(t.days&&t.days[0]&&t.days[0].date);
+  if(!parte)return null;
+  const giorni=giorniFra(todayISO(),parte);
+  if(isNaN(giorni)||giorni<0||giorni>7)return null;
+  try{if(localStorage.getItem(VALIGIA_CHIUSA+t.id)===todayISO())return null;}catch(e){}
+  const voci=getPacking(t);
+  return {giorni,pronte:voci.filter(x=>x.checked).length,tutte:voci.length};
+}
+function schedaValigiaHtml(t){
+  const v=valigiaDaPreparare(t);if(!v)return '';
+  const quando=v.giorni===0?tv('Si parte oggi'):v.giorni===1?tv('Si parte domani'):tv('Si parte fra {1} giorni',v.giorni);
+  const conto=v.tutte?tv('{1} su {2} pronte',v.pronte,v.tutte):tv('La lista è ancora vuota');
+  const barra=v.tutte?`<div class="val-barra"><i style="width:${Math.round(v.pronte/v.tutte*100)}%"></i></div>`:'';
+  return `<div class="card val-scheda" id="valScheda">
+    <div class="val-testa"><div class="val-t">${esc(tv('🧳 Prepara la valigia'))}</div><button class="val-x" onclick="valigiaChiudi(${t.id})" title="${esc(tv('Chiudi'))}" aria-label="${esc(tv('Chiudi'))}">✕</button></div>
+    <div class="val-riga"><span class="val-quando">${esc(quando)}</span><span class="val-conto">${esc(conto)}</span></div>${barra}
+    <button class="btn btn-soft btn-block val-apri" onclick="openPacking()">${esc(tv('Apri la lista'))}</button>
+  </div>`;
+}
+function valigiaChiudi(id){
+  try{localStorage.setItem(VALIGIA_CHIUSA+id,todayISO());}catch(e){}
+  const el=document.getElementById('valScheda');if(el)el.remove();
+}
+/* Spuntare una voce aggiorna il conto in Home, senza ridisegnarla tutta (la
+   mappa della Home si rifarebbe a ogni spunta, dietro il foglio). */
+function valigiaAggiornaScheda(){
+  const el=document.getElementById('valScheda');if(!el)return;
+  const nuova=schedaValigiaHtml(T());
+  if(nuova)el.outerHTML=nuova;else el.remove();
 }
 /* Le categorie si mostrano sempre nello stesso ordine - documenti, elettronica,
    igiene, abbigliamento, extra - e non in quello in cui capita che siano state
@@ -10805,7 +10946,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "+ Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nella time-table, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. "Condividi" non sta in home: e' il quadrettino di fianco a ogni viaggio nell'elenco del Profilo (e anche dentro la scheda del viaggio). I bagagli stanno nella scheda del viaggio, dov'erano gia'. Le cose che governano il viaggio (concludere, rinominare, i giorni, le persone, i consigli, il ripristino) NON stanno piu' in home: sono nella scheda del viaggio, che si apre dal Profilo toccando il viaggio, oppure in home toccando il nome del viaggio o della citta'. In cima alla lista c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria.
+- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura: si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. Subito sotto, una fila di tre tasti con la scritta: "🧳 Bagagli" (apre la lista bagagli), "👥 Compagni" (le persone del viaggio) e "🔗 Condividi" (l'invito al viaggio, col link e il QR). I bagagli stanno li', in Home, e anche nella scheda del viaggio ("🎒 Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche nel quadrettino di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre toccando il titolo in cima alla Time Table, oppure dal Profilo toccando il viaggio; in Home il titolo apre la Time Table, e apre la scheda solo se il viaggio non ha ancora giorni.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono DUE tasti, e sono le due cose che si fanno camminando: "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente". Gli altri due strumenti si usano da fermi, mentre il viaggio si costruisce, e stanno dietro "Costruisci la giornata": li' dentro ci sono "Ordina il giro con l'IA" (rimette in fila le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto tondo "+", che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto tondo con la freccia "↩" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta al "+", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno. Fra una tappa e l'altra c'e' la striscia del tratto: tempo e distanza, e l'icona del mezzo da toccare per cambiarlo. I mezzi sono sei: a piedi, in bici, in macchina, in treno, in metro e in bus. A piedi, in bici e in macchina il tempo e' quello vero sulle strade, calcolato da un servizio di percorsi e tenuto nel telefono (si vede anche senza rete); finche' non arriva, e coi mezzi pubblici sempre, il tempo e' una stima e ha davanti il segno "≈". La stima dei mezzi pubblici conta anche i minuti per arrivare alla fermata, aspettare e uscire. Il navigatore di GeppGo dentro l'app non c'e' piu': ogni tasto per farsi portare apre Apple Maps o Google Maps col mezzo del tratto (in bici Apple Maps apre il percorso a piedi). Quale dei due si sceglie nel Profilo, sotto Impostazioni; chi aveva scelto il navigatore di GeppGo, al primo percorso sceglie fra i due.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF con la graffetta 📎), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario) e "Prenotazione".
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -10816,7 +10957,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Le foto del diario: dal "+" in time-table si aggiunge una foto alla giornata. Restano sul telefono E vanno nel cloud, cosi' cambiando telefono non si perdono; se non c'e' rete partono da sole appena torna. Le vedono SOLO le persone di quel viaggio: non esiste nessuna bacheca pubblica e gli indirizzi con cui si scaricano durano un'ora. Nella striscia del giorno si vede una copia piccola e leggera: la foto vera si scarica quando la si apre, quindi la prima volta puo' metterci un attimo a diventare nitida, e dopo resta sul telefono. Chi la salva nel rullino la salva sempre intera, nella qualita' con cui e' stata caricata. Toccando una foto si legge chi l'ha messa e quando, si puo' eliminare (la propria sempre; quella di un altro solo se sei admin del viaggio) e c'e' "Segnala questa foto" per avvisare chi gestisce GeppGo. In Profilo, sotto "Segnalazioni e contatti", c'e' l'indirizzo per scrivere.
 - Il ricordo del viaggio: quando si conclude un viaggio si apre da solo, e si riapre quando si vuole dalla scheda del viaggio col tasto "Il ricordo del viaggio". Dentro ci sono i numeri (giorni, tappe, persone, chilometri, luoghi, spesa e spesa a testa), dove e' andata di piu' la spesa, il giorno piu' pieno, e una cartolina da mandare a chi non c'era, col filo delle tappe disegnato. Si puo' scegliere di metterci quattro foto del viaggio. La cartolina si disegna sul telefono e la manda la persona col tasto Condividi del suo telefono: GeppGo non pubblica nessuna pagina del viaggio e il racconto NON contiene il codice d'invito.
 - A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "📣 A raccolta" sta in home, fra le scorciatoie sotto il nome del giorno, e lo vede SOLO chi e' admin di un viaggio condiviso con altre persone. Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple Maps o Google Maps). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta la chiamata compare subito; con GeppGo in secondo piano arriva come notifica del telefono (se le notifiche sono attive) e toccandola si apre la chiamata. Ad app chiusa non arriva ancora: servira' l'app nativa.
-- Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (la X): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
+- Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (in Home "👥 Compagni"; la X accanto al nome): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date e i numeri seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. C'e' un limite di richieste al giorno, uguale per tutti: quando finisce, l'assistente dice a che ora (del telefono) torna disponibile. Il modello gira su Cloudflare (Workers AI). Per i fatti che cambiano (orari, prezzi, se serve prenotare) cerca sul web con Tavily, a cui vanno solo nomi di posti, la destinazione e le date, mai nomi di persone o recapiti; se la ricerca sul web non e' attiva o ha finito i crediti del mese, risponde lo stesso con quello che sa e lo dice in una riga piccola. Gli orari di apertura per "Ordina il giro con l'IA" e i posti di una lista incollata ("Aggiungi così come sono") li controlla la mappa di OpenStreetMap, non l'assistente: dove la mappa non li sa, restano vuoti. Un PDF scansionato (pagine fotografate, senza testo) si legge lo stesso: le prime tre pagine vanno all'assistente come immagini, e da un'immagine nomi e numeri non si possono togliere. Niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
@@ -10827,7 +10968,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - I dati al sicuro: il backup sta nel Profilo, nella scheda "Backup" ("Esporta dati" e "Importa dati"); senza account i viaggi stanno solo su quel telefono, e si perdono cambiandolo, perdendolo o cancellando i dati del browser. Dopo il primo viaggio, e poi al massimo una volta a settimana, chi non ha l'account vede il foglio "I tuoi viaggi sono solo su questo telefono" con "Crea un account" e "Più tardi": creando l'account i viaggi gia' fatti vanno nel cloud, foto comprese, e sul telefono non si perde niente (nemmeno la valigia). Su iPhone, chi usa l'app in Safari senza averla messa sulla Home dopo il primo viaggio vede come aggiungerla - Condividi (a volte dentro il menu "…"), poi "Aggiungi alla schermata Home" - e perche': in Safari, dopo 7 giorni senza visite, i dati possono essere cancellati. La stessa spiegazione resta nel Profilo, nella scheda "Backup", col tasto "Aggiungi alla schermata Home". L'app sulla Home ha una memoria sua, separata da Safari: aperta la prima volta e vuota chiede "Avevi già dei viaggi in Safari?", con "Accedi" e "Ripristina da un backup". "Esporta dati" fa un file solo, .zip, con i viaggi, la valigia e le foto salvate nel telefono che hai messo tu (quelle dei compagni no: sono loro; i pezzi di mappa nemmeno: si riscaricano), con una barra che avanza; a file pronto c'e' "Condividi o salva", che su iPhone apre il foglio Condividi (si salva in File o si manda dove si vuole), mentre dove non c'e' si scarica. Se il file sarebbe troppo grande l'app lo dice e propone "Esporta senza le foto". Nella scheda si legge la data dell'ultimo backup fatto da quel telefono. "Importa dati" ripristina sia il file .zip sia il vecchio file .json, che aveva solo i dati: prima di sostituire i viaggi del telefono chiede conferma e ne tiene una copia fra i punti di ripristino. Con l'account, un viaggio del backup che e' condiviso con altri non sovrascrive mai quello del gruppo: torna come copia privata, solo tua, col nome "(copia dal backup)" in fondo, e quello del gruppo resta com'e'; i viaggi dove sei solo tu tornano come erano. Con l'account anche la valigia e le impostazioni (navigatore, qualita' delle foto, avvisi e raggio di prossimita', tema scuro, il proprio nome) passano da un telefono all'altro, e restano private: i compagni di viaggio non le vedono. La lingua, i permessi e il piano restano di ogni telefono. Se due telefoni cambiano lo stesso viaggio anche senza rete non si perde niente: si tengono tutte e due le modifiche, campo per campo (uno il nome, l'altro le date), i compagni aggiunti da due parti ci sono tutti e uno tolto non ricompare; sulla stessa cosa vince l'ultima modifica. Con l'account, sotto l'email nel Profilo si legge lo stato del cloud: "Tutto salvato nel cloud", "N modifiche in attesa" oppure "N foto da caricare". Toccando "Esci" con qualcosa non ancora nel cloud, l'app dice quante modifiche e quante foto sono, con "Aspetta e sincronizza" (manda tutto, poi esce) ed "Esci lo stesso" (restano solo su quel telefono finche' non si rientra con lo stesso account); senza niente in attesa si esce subito. Alla creazione del primo viaggio l'app chiede al browser di tenere i dati come memoria da non buttare: non compare niente.
 - Gli avvisi: promemoria "Tra poco" (si chiede aprendo la tappa), "E' ora di partire" (guarda dove sei e col mezzo scelto), "Da prenotare" e "Prenotazione in scadenza", le tappe vicine e i consigli col GPS acceso, e A raccolta. Arrivano SOLO mentre GeppGo e' aperta: e' l'app a guardare l'ora e dove sei. Con l'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora (serve l'app nativa, che non c'e'); il calendario esportato dal Profilo invece avvisa anche ad app chiusa. Con le notifiche attive, e GeppGo in secondo piano, l'avviso arriva come notifica del telefono, e toccandola si apre nel punto giusto: la tappa, la giornata, il posto vicino, la chiamata. Senza notifiche, o con l'app davanti agli occhi, compare dentro l'app come banner in alto con "Apri" e "Chiudi". La prima volta che si accende il GPS un foglio solo spiega posizione e avvisi, poi il telefono chiede i due permessi uno dopo l'altro. Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: da Safari l'app non le chiede, lo spiega e mostra come aggiungerla. Dopo un "Non ora" le notifiche si accendono dal Profilo, scheda "Avvisi e notifiche"; se sono state bloccate nelle impostazioni del telefono, si riaccendono da li'.
 - Profilo (in fondo al cassetto delle tre righine, non nella barra in basso): l'account, il tema scuro, il diario del viaggio, i punti di ripristino, i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, "Avvisi e notifiche" (quali avvisi arrivano e il tasto "Attiva le notifiche"), gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
-- Invitare i compagni: "Condividi" (il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
+- Invitare i compagni: "🔗 Condividi" in Home (o il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -24028,7 +24169,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-13 11:17';
+const VERSIONE_APP='2026-10-13 16:09';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

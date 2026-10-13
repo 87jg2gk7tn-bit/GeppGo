@@ -107,6 +107,15 @@ quel file è la memoria.
   (`'Fatto: '+nome`) non si traduce mai.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
   schermo stretto, tocco).
+- **Nessuna funzione nascosta.** Ogni funzione deve essere raggiungibile
+  dalla Home o dalla barra in basso in al massimo 2 tocchi, tramite una voce
+  con un testo leggibile, non solo un'icona o un gesto. Prima di aggiungere
+  o spostare una funzione, verifica dove l'utente la cercherebbe. L'unica
+  eccezione voluta è mCloud, nascosto di proposito dietro la pressione lunga
+  sulla versione nel Profilo. (I bagagli stavano solo dentro la scheda del
+  viaggio, e per trovarli bisognava chiederlo all'assistente: adesso sono in
+  Home. L'elenco di quello che oggi non rispetta la regola, con le proposte,
+  sta in `DA-FARE.md`, alla voce «Nessuna funzione nascosta».)
 - **Messaggi per chi usa l'app**: dicono cosa è successo e cosa si può fare
   (riprovare, controllare la rete). Niente guide, passi, file o nomi di
   servizi tecnici (Supabase, Worker, ponte) e niente testo grezzo del server:
