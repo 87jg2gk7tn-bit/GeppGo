@@ -693,6 +693,111 @@ va rifatto vedere.
     spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
     acquisti dentro l'app per il Premium, e la presenza sugli store.
 
+### Nessuna funzione nascosta: quello che oggi non rispetta la regola
+
+**Decide Giacomo. Non è stato spostato niente.** La regola sta in
+`CLAUDE.md`: ogni funzione a non più di 2 tocchi dalla Home o dalla barra
+in basso, con una voce che ha una scritta. Il 13 ottobre la lista bagagli si
+trovava solo dentro la scheda del viaggio, e Giacomo l'ha dovuta chiedere
+all'assistente: da lì la fila «🧳 Bagagli · 👥 Compagni · 🔗 Condividi» in
+Home e la scheda «Prepara la valigia» (vedi `test/prova-reperibilita.js`).
+Il resto è stato contato così, dalla Home, compreso il tocco che apre la
+funzione. ⚠️ = più di 2 tocchi, o solo un'icona, un titolo da toccare, un
+gesto.
+
+**Barra in alto**
+- ⚠️ Cambiare viaggio, aggiungere un viaggio, importare da Excel, Profilo:
+  ☰ → voce, 2 tocchi ma il primo su un'icona sola. → Accanto alle righine
+  il nome del viaggio con «▾» («Lisbona ▾»); il Profilo con la scritta (o
+  con l'iniziale) in alto a destra, a un tocco.
+- ⚠️ GPS: la pillola è solo un'icona. → La scritta «GPS» sulla pillola.
+- Tema scuro/chiaro: ☾/☀ solo icone, ma la voce c'è anche nel Profilo. Va
+  bene così.
+
+**Barra in basso**
+- ⚠️ Home, Time Table, Scopri, Spese, Hotel, Biglietti, Identifica: sette
+  icone, nessuna scritta a schermo. → Una parola sotto ogni icona; se non ci
+  sta, almeno sotto quella accesa.
+
+**Home**
+- ⚠️ Meteo: si tocca la temperatura («22°»), un numero senza scritta. →
+  «22° · Meteo ›».
+- Time Table: titolo o città, o due tocchi sul giorno (scorciatoie), ma c'è
+  anche nella barra. Va bene.
+- ⚠️ Aggiungere una tappa: il «+» accanto a «La giornata» è solo un'icona.
+  → «+ Aggiungi».
+- 🧭 sulla mappa: solo icona, ma è quella che tutti conoscono. Va bene.
+- Cosa cerchi qui intorno (2), A raccolta (1), Fra poco (1), Da prenotare
+  (0–1), e ora Bagagli, Compagni, Condividi (1): a posto.
+
+**Scheda del viaggio** — si apre toccando il titolo della Time Table (2
+tocchi, tutti e due su titoli) o dal Profilo toccando il viaggio, l'aereo ✈️
+(3, il primo su un'icona); dalla Home solo se il viaggio non ha giorni.
+- ⚠️ Concludere/riaprire, Eliminare, Rinominare, Giorni e date, Consigli
+  sì/no, Punti di ripristino: 3 tocchi (4 dal Profilo), arrivando da titoli.
+  → «✈️ Viaggio» come quarta voce della fila nuova della Home: apre la
+  scheda e porta tutto a 2. I consigli anche con un interruttore in Scopri.
+  Nel Profilo, «Recupero» si chiami «Punti di ripristino».
+- ⚠️ Il ricordo del viaggio: si apre da solo dopo «Concludi», poi ☰ →
+  Profilo → viaggio concluso → «📖 Il ricordo del viaggio» (4); per un
+  viaggio in corso non c'è. → «📖 Il ricordo» nella scheda del viaggio,
+  anche in corso.
+
+**Time Table**
+- ⚠️ Ordina il giro con l'IA, Autopilota: «✦ Costruisci la giornata» →
+  voce, 3. → I due tasti subito sotto la data, al posto del menu.
+- ⚠️ Nuova attività, Attività salvata, Rientro in hotel, Foto del diario,
+  Importa lista: «＋» → voce, 3, e il «＋» è solo un'icona. → «＋ Aggiungi»
+  con la scritta; la Foto anche come tasto in Home sotto «La giornata».
+- ⚠️ Annullare l'ultimo spostamento: «↩», solo icona. → «↩ Annulla» quando
+  c'è qualcosa da annullare.
+- ⚠️ Cambiare mezzo fra due tappe: l'icona del mezzo nella striscia (c'è
+  anche nel menu della tappa). → Il nome del mezzo accanto all'icona.
+- ⚠️ Spostare o allungare una tappa: tenere premuto e trascinare, il bordo
+  di sotto, due dita. → Va bene come scorciatoia: gli orari si cambiano
+  anche da «✎ Modifica attività», nel menu della tappa.
+- Aprire una tappa (info, note, naviga, biglietto, modifica): tappa → menu
+  → voce, 3, ma il menu ha le scritte. Va bene.
+
+**Scopri**
+- ⚠️ Allegare un PDF in chat: Scopri → Assistente → 📎, 3 e solo icona. →
+  «📎 PDF» con la scritta.
+- ⚠️ Su misura: Scopri → Importa → «Su misura», 3. → Anche nel foglio
+  «Nuovo viaggio» e in Home per un viaggio senza giorni.
+- ⚠️ Prenotazione dalla mail: Scopri → Importa → «Prenotazione», 3. → Anche
+  in Biglietti, accanto a «Foto o PDF».
+
+**Spese**
+- ⚠️ Aggiungere una spesa: «+», solo icona. → «+ Spesa».
+- ⚠️ Segnare un rimborso nei saldi: il tic verde, solo un segno. →
+  «✓ Pagato».
+- ⚠️ Compagni, Condividi, Concludi dall'intestazione: tre icone. → Con la
+  fila nuova in Home possono restare scorciatoie, o prendere la scritta.
+
+**Hotel · Biglietti · Identifica** — a posto (2 tocchi con la scritta;
+Identifica a 3 perché la foto è il gesto stesso della funzione).
+
+**Profilo** (☰ → Profilo = 2, il primo su un'icona): account, avvisi,
+navigatore, foto, lingua, mappa senza rete a 2–3 si sistemano con la barra
+in alto. A 3 e da lasciare dove sono: Backup, Versione, Segnalazioni e
+privacy, Elimina il mio account (discreta apposta, ma trovabile: Apple la
+vuole così).
+- ⚠️ Diario del viaggio (PDF) e Esporta nel calendario (.ics): 3. → Anche
+  nella scheda del viaggio (il calendario anche in Time Table).
+- ⚠️ Ho un codice: 3 (in Home solo senza viaggi). → Anche nel cassetto ☰,
+  sotto «+ Aggiungi viaggio».
+- mCloud: pressione lunga sulla versione. L'eccezione voluta: resta nascosto.
+
+**Le quattro proposte che contano di più:** (1) una parola sotto le icone
+della barra in basso; (2) «Lisbona ▾» in alto e il Profilo a un tocco; (3)
+«✈️ Viaggio» come quarta voce della fila in Home; (4) le scritte su «+»
+(tappa, spesa), «↩ Annulla», GPS e Meteo.
+
+**Trovato per strada, non toccato:** in portoghese a 320 px «Cosa cerchi
+qui intorno?» si riduce a «O que pr…» accanto a «Toca a reunir»; e nel
+riquadro «Fra poco» le scritte «ADESSO» e «ora» restano in italiano in
+tutte le lingue (sono scritte così nel codice, senza traduzione).
+
 ---
 
 ## Le foto: perché sono fatte così
@@ -2447,6 +2552,42 @@ qualcuno che risponde".
   messaggio dice «#bootSplash» e il difetto si legge dalla riga. Quando si
   scrive il testo di un fallimento si mette **quello che identifica la cosa**,
   non quello che la descrive.
+- **`overflow-wrap:anywhere` spezza le parole a metà, e lo si vede solo
+  tradotto.** La fila «Bagagli · Compagni · Condividi» aveva tre caselle
+  uguali e quella regola, pensata per non far uscire il testo: in italiano
+  andava benissimo, a 320 px in portoghese il tasto diceva «Companheir» e
+  sotto «os» (e in spagnolo e francese lo stesso). `anywhere`, a differenza
+  di `break-word`, rimpicciolisce la misura minima della casella, quindi la
+  griglia non le dà mai più spazio: taglia. La strada giusta è
+  `break-word` con colonne `minmax(min-content,1fr)`: la casella con la
+  parola lunga si allarga e le altre si stringono. La prima versione della
+  prova misurava solo in italiano, e passava; adesso controlla, parola per
+  parola e in ogni lingua, che nessuna stia su due righe.
+- **«Fra poco» sale sull'intestazione della Home** (`margin-top:-1.5rem`):
+  qualunque cosa si metta fra l'intestazione e lui gli finisce sotto. La
+  scheda «Prepara la valigia» ci è finita: «Fra poco» le copriva il bordo
+  di sotto, e sopra di lei restava un buco di cielo. Adesso è la scheda a
+  salire sull'intestazione, e «Fra poco» le sta sotto con il suo spazio
+  (`.val-scheda+.hh-soon`). La prova confronta i riquadri delle due schede,
+  e guarda ogni tasto come un dito: `elementFromPoint` al centro del tasto
+  deve trovare il tasto.
+- **⚠️ Qui la Home si misura coi caratteri di ripiego; il telefono e la CI
+  hanno quelli veri, e la Home viene dieci pixel più alta.** Il Chromium
+  delle prove, su questa macchina, non scarica i caratteri di Google (il
+  proxy gli presenta un certificato che non accetta) e disegna con quelli di
+  sistema. Con Plus Jakarta Sans e Fraunces veri le righe con l'interlinea
+  «normal» crescono — la frase sotto la città, i tasti, «Fra poco», la fila
+  dei giorni, «La giornata» — e la mappa scende di 9–10 px. Prima della
+  fila «Bagagli · Compagni · Condividi» la mappa aveva 21 px d'aria qui e 11
+  sul telefono; con la fila e le prime strette ne aveva 8 qui e **−1 sul
+  telefono**: `prova-piega` passava qui, sarebbe caduta in CI, e sul
+  telefono la mappa era tagliata. Per misurare come sul telefono: si
+  scaricano i caratteri con curl (che il proxy lo fa passare) in una
+  cartella a parte e si servono alla pagina con `page.route` su
+  `fonts.googleapis.com` e `fonts.gstatic.com`. Adesso: 10 px d'aria coi
+  caratteri veri, 19 con quelli di ripiego. Lo spazio l'hanno dato la mappa
+  (da 180 a 160 px) e un po' d'aria fra i pezzi della Home (il fondo del
+  cielo, sopra e dentro «Fra poco», sopra i giorni e sopra «La giornata»).
 
 ---
 

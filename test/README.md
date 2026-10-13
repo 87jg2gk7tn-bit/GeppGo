@@ -777,3 +777,45 @@ davanti, che non aveva notifica nemmeno prima, e nessun errore in pagina):
 gli altri gruppi si fermano subito, perche' le funzioni non ci sono. I file
 (`Index 2.1.html`, `sw.js`) si leggono da dove sta l'app provata, cosi'
 anche la controprova con `APP_URL` li legge dalla copia.
+
+## I bagagli a portata di mano
+
+```sh
+node test/prova-reperibilita.js   # 35 controlli, in sette gruppi
+```
+
+La lista bagagli stava solo dentro la scheda del viaggio, e per trovarla si
+e' dovuto chiedere all'assistente. Adesso in Home, sotto l'intestazione del
+viaggio, c'e' la fila «🧳 Bagagli · 👥 Compagni · 🔗 Condividi», e nei sette
+giorni prima della partenza e il primo giorno la scheda «Prepara la
+valigia» col conto delle voci pronte. La regola che ne e' uscita
+(«Nessuna funzione nascosta») sta in `CLAUDE.md`.
+
+I gruppi: la fila si vede subito, sotto «Cosa cerchi qui intorno?», e i tre
+tasti aprono i loro fogli (anche in un viaggio senza giorni); fila e scheda
+da 320 a 430 px, chiaro e scuro, con tasti di almeno 44×44, nessuna parola
+spezzata a meta' e niente sopra i tasti (`elementFromPoint` al centro di
+ognuno), e la scheda che non sta addosso alla fila ne' a «Fra poco»; quando
+c'e' la scheda (da sette giorni prima al primo giorno, non otto giorni
+prima, non dal secondo giorno, non in un viaggio concluso), col conto giusto
+che segue le spunte e la lista vuota detta; la X che la chiude anche
+ridisegnando e riaprendo l'app, e l'orologio portato a domani (`page.clock`)
+che la fa tornare con un giorno di meno; la lista che si apre ancora dalla
+scheda del viaggio, arrivandoci come una persona (barra → Time Table →
+titolo → «🎒 Bagagli») e dal Profilo; `MAPPA_APP` col percorso nuovo, letto
+dall'assistente in cinque lingue; le dieci frasi nuove nel dizionario e a
+schermo in en, es, fr e pt, intere anche a 320 px.
+
+Sul codice di prima passano 9 controlli su 25: quelli dove la scheda non
+deve esserci, la scheda del viaggio (che c'era gia' e deve restare), le tre
+misure senza tasti da misurare e nessun errore in pagina. Le prime misure
+guardavano solo l'italiano e passavano anche con «Companheir / os» in
+portoghese: la controprova su quella versione adesso fallisce, e lo stesso
+con «Fra poco» sopra la scheda.
+
+La fila costa 52 px in altezza, e `prova-piega` (la mappa della Home intera
+sopra la barra a 390×844) e' caduta: 31 px nascosti. Lo spazio e' venuto
+dalla mappa (da 180 a 160 px) e da un po' d'aria fra i pezzi della Home.
+Attenzione a misurare: qui i caratteri di Google non arrivano, e coi
+caratteri veri (quelli del telefono e della CI) la Home e' 9–10 px piu'
+alta — vedi DA-FARE, «Cose scoperte a caro prezzo».
