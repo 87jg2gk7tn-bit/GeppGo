@@ -264,6 +264,29 @@ const stato = (titoloGiorno) => ({
   ok('e su un giorno che non è oggi la riga non c\'è', domaniNiente === true);
   await page.close();
 
+  // ══ la mappa della giornata, chiesta due volte di fila ═══════════════
+  /* La mappa nasce un attimo dopo, in un setTimeout. Due richieste di fila
+     (la giornata che si apre mentre Leaflet arriva, e mappaArrivata la
+     ridisegna) lasciavano in attesa due nascite sullo stesso riquadro: la
+     seconda si fermava con «Map container is already initialized». In
+     locale non capitava mai; sul server delle prove si', perche' li' i tempi
+     sono altri. Qui le due richieste si fanno apposta. */
+  page = await apri(stato());
+  const prima = err.length;
+  const dueVolte = await page.evaluate(async () => {
+    buildDayMap(); buildDayMap();
+    await new Promise(r2 => setTimeout(r2, 800));
+    const box = document.getElementById('dayMap');
+    return { pannelli: box.querySelectorAll('.leaflet-map-pane').length, viva: !!dayMapObj && dayMapObj.getContainer() === box };
+  });
+  const nuovi = err.slice(prima);
+  ok('la mappa della giornata chiesta due volte di fila nasce una volta sola, senza errori',
+     nuovi.length === 0 && dueVolte.pannelli === 1 && dueVolte.viva === true,
+     nuovi.length ? nuovi[0] : `${dueVolte.pannelli} mappa`);
+  /* L'errore e' gia' detto qui sopra: non lo si conta due volte. */
+  err.splice(prima);
+  await page.close();
+
   await browser.close();
   for (const e of err) r.push(' FALLITO  ' + e);
   const passati = r.filter(x => x.startsWith('  OK')).length;

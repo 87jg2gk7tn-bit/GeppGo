@@ -903,6 +903,14 @@ qualcuno che risponde".
   ripiego); coi caratteri veri, cioè in CI e sul telefono, no. Adesso
   l'occhiello della Home scorre come testo (`display:block`). Prima di dire
   che la Home ci sta, `prova-piega` va girata anche coi caratteri veri.
+- **Una nascita rimandata va annullata quando ne arriva un'altra**
+  (`buildDayMap`, prova `prova-giornata`). La mappa della giornata nasce in
+  un `setTimeout`; due chiamate di fila (la Time Table che si apre mentre
+  Leaflet arriva e `mappaArrivata` la ridisegna) lasciavano in attesa due
+  nascite sullo stesso riquadro, e la seconda si fermava con «Map container
+  is already initialized». In locale non capitava mai, sul server delle
+  prove sì: là i tempi sono altri. Adesso resta in attesa solo l'ultima
+  (`_dayMapAttesa`). Vale per ogni cosa disegnata «un attimo dopo».
 - **Le parole sotto le icone della barra in basso a 320 px non ci stanno**
   (sopra, «Nessuna funzione nascosta»): 281 px contro 311–389. Prima di
   riprovarci con sette voci, rifare il conto: servono meno voci, non parole
