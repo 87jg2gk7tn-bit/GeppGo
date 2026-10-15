@@ -151,9 +151,11 @@ const scheda = p => p.evaluate(() => {
         sopraLaPiega: rf.top >= 0 && rf.bottom <= innerHeight,
         sottoCerca: (() => { const c = document.querySelector('#homeHero .hh-cerca'); return !!c && c.getBoundingClientRect().bottom <= rf.top + 1; })() };
     });
-    ok('1. in Home c\'è la fila di accessi rapidi, con icona e testo', !!fila && JSON.stringify(fila.testi) === JSON.stringify(['🧳 Bagagli', '👥 Compagni', '🔗 Condividi']), fila ? fila.testi.join(' | ') : 'nessuna fila');
+    ok('1. in Home c\'è la fila di accessi rapidi, con icona e testo', !!fila && JSON.stringify(fila.testi) === JSON.stringify(['🧳 Bagagli', '👥 Compagni', '🔗 Condividi', '✈️ Viaggio']), fila ? fila.testi.join(' | ') : 'nessuna fila');
     ok('1. la fila si vede subito, senza scorrere, sotto «Cosa cerchi qui intorno?»', !!fila && fila.visibile && fila.sopraLaPiega && fila.sottoCerca, JSON.stringify(fila));
-    const casi = [['🧳 Bagagli', 'mPacking'], ['👥 Compagni', 'mPeople'], ['🔗 Condividi', 'mShare']];
+    /* «✈️ Viaggio», la quarta, viene dalla miglioria 9c: la scheda del
+       viaggio si apriva solo toccando un titolo. */
+    const casi = [['🧳 Bagagli', 'mPacking'], ['👥 Compagni', 'mPeople'], ['🔗 Condividi', 'mShare'], ['✈️ Viaggio', 'mTripZoom']];
     for (const [testo, foglio] of casi) {
       await p.locator('#homeHero .hh-rapido', { hasText: testo }).click();
       const aperto = await foglioAperto(p, foglio);
@@ -170,7 +172,7 @@ const scheda = p => p.evaluate(() => {
     // anche in un viaggio che non ha ancora i giorni la fila c'e'
     const p2 = await apri(browser, { viaggioExtra: { days: [], start: '', end: '' } });
     const senzaGiorni = await p2.evaluate(() => [...document.querySelectorAll('#homeHero .hh-rapido')].map(b => b.textContent.trim()).join(' | '));
-    ok('1. la fila c\'è anche in un viaggio senza giorni', senzaGiorni === '🧳 Bagagli | 👥 Compagni | 🔗 Condividi', senzaGiorni || 'nessuna');
+    ok('1. la fila c\'è anche in un viaggio senza giorni', senzaGiorni === '🧳 Bagagli | 👥 Compagni | 🔗 Condividi | ✈️ Viaggio', senzaGiorni || 'nessuna');
     await p.close(); await p2.close();
   });
 
@@ -185,7 +187,7 @@ const scheda = p => p.evaluate(() => {
         misurati++;
         const tag = `${larghezza}px ${m.tema}`;
         if (m.tema !== (scuro ? 'scuro' : 'chiaro')) fuori.push(tag + ': tema sbagliato');
-        if (m.tasti !== 5) fuori.push(tag + `: ${m.tasti} tasti invece di 5`);
+        if (m.tasti !== 6) fuori.push(tag + `: ${m.tasti} tasti invece di 6`);
         m.fuori.forEach(x => fuori.push(tag + ': ' + x));
         m.piccoli.forEach(x => piccoli.push(tag + ': ' + x));
         m.spezzate.forEach(x => spezzate.push(tag + ': ' + x));
@@ -299,7 +301,7 @@ const scheda = p => p.evaluate(() => {
       return { home, vecchia: /I bagagli stanno nella scheda del viaggio, dov'erano gia'/.test(MAPPA_APP),
         risposte: domande.map(d => /"🧳 Bagagli"/.test(mappaPerDomanda(d))) };
     });
-    ok('6. MAPPA_APP dice che in Home c\'è «🧳 Bagagli», sotto «Cosa cerchi qui intorno?»', /Subito sotto, una fila di tre tasti con la scritta: "🧳 Bagagli" \(apre la lista bagagli\), "👥 Compagni" .* e "🔗 Condividi"/.test(m.home), m.home.slice(0, 80));
+    ok('6. MAPPA_APP dice che in Home c\'è «🧳 Bagagli», sotto «Cosa cerchi qui intorno?»', /Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" \(apre la lista bagagli\), "👥 Compagni" .*, "🔗 Condividi" .* e "✈️ Viaggio"/.test(m.home), m.home.slice(0, 80));
     ok('6. … e che la lista resta anche nella scheda del viaggio, e c\'è la scheda «Prepara la valigia»', /anche nella scheda del viaggio \("🎒 Bagagli"\)/.test(m.home) && /"Prepara la valigia"/.test(m.home) && /si chiude con la X e torna il giorno dopo/.test(m.home));
     ok('6. il vecchio percorso («stanno nella scheda del viaggio») non c\'è più', !m.vecchia);
     ok('6. l\'assistente riceve il percorso nuovo chiedendo dei bagagli, in tutte e cinque le lingue', m.risposte.every(Boolean), m.risposte.map(x => x ? 'sì' : 'no').join(' '));
@@ -308,7 +310,7 @@ const scheda = p => p.evaluate(() => {
 
   /* ── 7. i testi nuovi in cinque lingue ─────────────────────────────────── */
   await prova('7', async () => {
-    const FRASI = ['🧳 Bagagli', '👥 Compagni', '🔗 Condividi', '🧳 Prepara la valigia', 'Si parte oggi', 'Si parte domani', 'Si parte fra {1} giorni', '{1} su {2} pronte', 'La lista è ancora vuota', 'Apri la lista'];
+    const FRASI = ['🧳 Bagagli', '👥 Compagni', '🔗 Condividi', '✈️ Viaggio', '🧳 Prepara la valigia', 'Si parte oggi', 'Si parte domani', 'Si parte fra {1} giorni', '{1} su {2} pronte', 'La lista è ancora vuota', 'Apri la lista'];
     const p = await apri(browser, { fra: 20 });
     const diz = await p.evaluate(fr => {
       const out = {};
@@ -320,7 +322,7 @@ const scheda = p => p.evaluate(() => {
       const segni = s => (s.match(/\{\d\}/g) || []).sort().join('');
       if (!v || v === f || segni(v) !== segni(f)) mancano.push(`${l}: ${f}`);
     }));
-    ok('7. le 10 frasi nuove sono nel dizionario di en, es, fr e pt, coi segnaposto', mancano.length === 0, mancano.slice(0, 4).join('; ') || '40 traduzioni');
+    ok(`7. le ${FRASI.length} frasi nuove sono nel dizionario di en, es, fr e pt, coi segnaposto`, mancano.length === 0, mancano.slice(0, 4).join('; ') || `${FRASI.length * 4} traduzioni`);
     await p.close();
     // e a schermo: fila e scheda nella lingua scelta, senza italiano rimasto
     const viste = [];
@@ -331,7 +333,7 @@ const scheda = p => p.evaluate(() => {
         scheda: (document.getElementById('valScheda') || {}).innerText || ''
       }));
       const d = diz[lingua].reduce((o, x) => (o[x.f] = x.v, o), {});
-      const atteso = [d['🧳 Bagagli'], d['👥 Compagni'], d['🔗 Condividi']];
+      const atteso = [d['🧳 Bagagli'], d['👥 Compagni'], d['🔗 Condividi'], d['✈️ Viaggio']];
       const conto = d['{1} su {2} pronte'].replace('{1}', '12').replace('{2}', '30');
       const quando = d['Si parte fra {1} giorni'].replace('{1}', '5');
       const giusto = JSON.stringify(v.fila) === JSON.stringify(atteso) && v.scheda.includes(d['🧳 Prepara la valigia']) && v.scheda.includes(conto)

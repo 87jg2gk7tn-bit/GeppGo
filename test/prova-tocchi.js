@@ -20,7 +20,7 @@ const { apriBrowser, APP } = require('./browser');
 /* Le classi che si toccano più spesso in tutta l'app. Non è un elenco
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
 const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'hh-day', 'hh-add', 'hh-grado',
-  'tt-az', 'tt-costruisci',
+  'tt-az', 'tb-profilo', 'hh-rapido',
                 'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'th-btn', 'ad-x'];
 
 const stato = { trips: [
@@ -108,7 +108,13 @@ const stato = { trips: [
         if (!vis(el)) continue;
         const b = el.getBoundingClientRect();
         const a = getComputedStyle(el, '::after');
-        const su = num(a.top), giu = num(a.bottom), sx = num(a.left), dx = num(a.right);
+        /* L'area invisibile parte dall'INTERNO del bordo (il suo riquadro di
+           riferimento e' quello dentro il bordo): su un tasto col bordo da
+           1 px, «inset:-3px» aggiunge 2 px fuori, non 3. Contando dal bordo
+           esterno questa prova vedeva 44 dove il dito trovava 42. */
+        const cs = getComputedStyle(el), bordo = k => (a.content !== 'none' && a.position === 'absolute') ? (parseFloat(cs['border' + k + 'Width']) || 0) : 0;
+        const su = Math.max(0, num(a.top) - bordo('Top')), giu = Math.max(0, num(a.bottom) - bordo('Bottom')),
+              sx = Math.max(0, num(a.left) - bordo('Left')), dx = Math.max(0, num(a.right) - bordo('Right'));
         /* L'area vera, non quella sulla carta: dentro una striscia che
            scorre, quello che sborda viene tagliato — e un'area tagliata non
            è area guadagnata. Si conta solo quello che resta dentro. */

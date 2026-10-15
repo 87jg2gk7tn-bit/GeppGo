@@ -176,13 +176,17 @@ const oreFinte = (data) => {
         if (!m) return false;
         const r = m.getBoundingClientRect();
         const b = document.querySelector('.brand');
-        return r.left < 20 && (!b || r.right <= b.getBoundingClientRect().left + 1);
+        /* Con un viaggio aperto il marchio lascia il posto al nome del
+           viaggio («Lisbona ▾»): allora non c'è niente con cui confrontarsi. */
+        return r.left < 20 && (!b || !b.getClientRects().length || r.right <= b.getBoundingClientRect().left + 1);
       })()
     };
   });
   ok('la temperatura c\'è, in cima alla home', riga.gradoCè === true);
   ok('ed è un tasto vero, non un cartello', riga.tag === 'BUTTON', String(riga.tag));
-  ok('dice la temperatura di quel giorno', riga.testo === '24°', riga.testo);
+  /* «24° · Meteo ›»: il numero da solo non diceva che lì c'è il meteo
+     (vedi «Nessuna funzione nascosta» in CLAUDE.md). */
+  ok('dice la temperatura di quel giorno, e che lì c\'è il meteo', riga.testo === '24° · Meteo ›', riga.testo);
   /* Il punto della modifica chiesta: il riquadro non c'è più, il numero sta
      sul cielo come ci sta il titolo. */
   ok('e non è dentro un riquadro: niente bordo, niente fondo', riga.senzaScatola === true);

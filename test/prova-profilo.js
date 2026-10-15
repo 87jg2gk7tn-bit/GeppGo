@@ -148,7 +148,7 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
   [['l\'account', /Il tuo account|Non connesso/],
    ['il tema scuro', /Tema scuro/],
    ['il diario', /Diario del viaggio/],
-   ['i punti di ripristino', /Recupero/],
+   ['i punti di ripristino', /Punti di ripristino/],
    ['i viaggi in corso', /In corso/i],
    ['i viaggi conclusi', /Conclusi/i],
    ['l\'etichetta che separa le impostazioni', /Impostazioni/i],

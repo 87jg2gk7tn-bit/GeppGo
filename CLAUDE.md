@@ -114,8 +114,12 @@ quel file è la memoria.
   eccezione voluta è mCloud, nascosto di proposito dietro la pressione lunga
   sulla versione nel Profilo. (I bagagli stavano solo dentro la scheda del
   viaggio, e per trovarli bisognava chiederlo all'assistente: adesso sono in
-  Home. L'elenco di quello che oggi non rispetta la regola, con le proposte,
-  sta in `DA-FARE.md`, alla voce «Nessuna funzione nascosta».)
+  Home. A che punto è la regola, e quello che resta da decidere — le parole
+  sotto le icone della barra in basso, che a 320 px non ci stanno — sta in
+  `DA-FARE.md`, alla voce «Nessuna funzione nascosta». `test/prova-a-portata.js`
+  tocca i percorsi come farebbe un dito.) Un tasto è da 44×44 quando lo è
+  toccandolo, non sommando i numeri del foglio di stile: l'area invisibile
+  (`::after`) parte dall'interno del bordo.
 - **Messaggi per chi usa l'app**: dicono cosa è successo e cosa si può fare
   (riprovare, controllare la rete). Niente guide, passi, file o nomi di
   servizi tecnici (Supabase, Worker, ponte) e niente testo grezzo del server:
