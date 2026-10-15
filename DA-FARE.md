@@ -538,7 +538,10 @@ va rifatto vedere.
     in vista, uguali fra loro e larghi uguale — un invito solo, in due modi —
     e i due da tavolino stanno dietro «Costruisci la giornata», dove ognuno
     ha una riga che dice cosa fa (perché «Autopilota» da solo non lo sa
-    nessuno).
+    nessuno). **Cambiato il 15 ottobre:** la porta voleva tre tocchi e dal
+    suo nome non si capiva cosa ci fosse dietro; adesso «✦ Ordina il giro» e
+    «🪄 Autopilota» sono due tasti con la scritta, nella seconda fila sotto
+    quelli da strada (vedi «Nessuna funzione nascosta»).
 
     **Rifatta l'aria della Time Table.** Era l'unico posto dell'app rimasto
     coi rettangoli color sabbia e il bordo di un pixel, mentre tutto il resto
@@ -693,110 +696,83 @@ va rifatto vedere.
     spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
     acquisti dentro l'app per il Premium, e la presenza sugli store.
 
-### Nessuna funzione nascosta: quello che oggi non rispetta la regola
+### Nessuna funzione nascosta: a che punto è
 
-**Decide Giacomo. Non è stato spostato niente.** La regola sta in
-`CLAUDE.md`: ogni funzione a non più di 2 tocchi dalla Home o dalla barra
-in basso, con una voce che ha una scritta. Il 13 ottobre la lista bagagli si
-trovava solo dentro la scheda del viaggio, e Giacomo l'ha dovuta chiedere
-all'assistente: da lì la fila «🧳 Bagagli · 👥 Compagni · 🔗 Condividi» in
-Home e la scheda «Prepara la valigia» (vedi `test/prova-reperibilita.js`).
-Il resto è stato contato così, dalla Home, compreso il tocco che apre la
-funzione. ⚠️ = più di 2 tocchi, o solo un'icona, un titolo da toccare, un
-gesto.
+La regola sta in `CLAUDE.md`: ogni funzione a non più di 2 tocchi dalla
+Home o dalla barra in basso, con una voce che ha una scritta. Il 13 ottobre
+(miglioria 9b) la lista bagagli si trovava solo dentro la scheda del
+viaggio, e Giacomo l'ha dovuta chiedere all'assistente: da lì la fila
+«🧳 Bagagli · 👥 Compagni · 🔗 Condividi» in Home e il conto di tutto il
+resto. Il 15 ottobre (miglioria 9c, «Tutto a portata») Giacomo ha scelto le
+proposte, e sono fatte. `test/prova-a-portata.js` tocca ogni percorso come
+farebbe un dito (30 funzioni, Playwright si rifiuta se sopra la voce c'è
+altro) e misura le schermate da 320 a 430 px in 5 lingue, chiaro e scuro.
 
-**Barra in alto**
-- ⚠️ Cambiare viaggio, aggiungere un viaggio, importare da Excel, Profilo:
-  ☰ → voce, 2 tocchi ma il primo su un'icona sola. → Accanto alle righine
-  il nome del viaggio con «▾» («Lisbona ▾»); il Profilo con la scritta (o
-  con l'iniziale) in alto a destra, a un tocco.
-- ⚠️ GPS: la pillola è solo un'icona. → La scritta «GPS» sulla pillola.
-- Tema scuro/chiaro: ☾/☀ solo icone, ma la voce c'è anche nel Profilo. Va
-  bene così.
+**Fatto il 15 ottobre**
+- In alto: «Lisbona ▾» accanto alle righine apre i viaggi, con «+ Aggiungi
+  viaggio», «📊 Importa da Excel» e «🔑 Ho un codice»; il Profilo è il tondo
+  con l'iniziale in alto a destra (senza un nome, la scritta «Profilo»), a
+  un tocco; la pillola dice «GPS». Perché tutto stia a 320 px il marchio
+  GeppGo compare solo senza un viaggio aperto, e il tema è un tasto solo
+  (☾ o ☀; c'è anche nel Profilo).
+- Home: «22° · Meteo ›»; «+ Aggiungi» accanto a «La giornata»; «✈️ Viaggio»
+  quarta voce della fila (sugli schermi stretti, o con le parole lunghe, due
+  righe da due); «✦ Su misura» in un viaggio senza giorni.
+- Scheda del viaggio: «📖 Il ricordo» anche a viaggio in corso, «📄 Diario
+  PDF», «🗓️ Esporta nel calendario»; la pillola dei punti di ripristino si
+  chiama così (diceva «✓ Salvato 2 min fa»); le pillole sono alte 36 px, con
+  44 da toccare.
+- Time Table: «✦ Ordina il giro» e «🪄 Autopilota» sono due tasti dove
+  stava la porta «Costruisci la giornata» (che non c'è più), sotto «Naviga
+  la giornata» e «Chiedi all'assistente»; «＋ Aggiungi»; «↩ Annulla»; l'icona
+  del mezzo resta senza scritta, con 44×44 da toccare.
+- Scopri: «📎 PDF» (anche nella chat della giornata) e l'interruttore
+  «Consigli nei dintorni», che è lo stesso della scheda del viaggio. «✦ Su
+  misura» anche come spunta nel «Nuovo viaggio». Biglietti: «📩 Prenotazione
+  dalla mail». Spese: «+ Spesa» e «✓ Pagato». Profilo: «Punti di ripristino»
+  al posto di «Recupero».
+- In portoghese a 320 px «Cosa cerchi» passa alla forma corta, intera («O
+  que procuras?»), e «Toca a reunir» va a capo; «ADESSO», «ora», «IN
+  PROGRAMMA» e le altre scritte del riquadro «Fra poco» sono tradotte.
 
-**Barra in basso**
-- ⚠️ Home, Time Table, Scopri, Spese, Hotel, Biglietti, Identifica: sette
-  icone, nessuna scritta a schermo. → Una parola sotto ogni icona; se non ci
-  sta, almeno sotto quella accesa.
+**Da decidere: le parole sotto le icone della barra in basso.** Misurate coi
+caratteri veri, a 10 px (`600 10px Plus Jakarta Sans`, ogni voce larga la sua
+parola più 8 px, e almeno 44): a 320 px dentro la pillola ci sono 281 px, e
+le sette parole ne chiedono 311 in italiano, 330 in inglese, 346 in
+spagnolo, 361 in portoghese, 389 in francese. Non ci stanno in nessuna
+lingua (in francese nemmeno a 430 px), e non è stato applicato niente. Le
+alternative, misurate allo stesso modo a 320 px:
+- **cinque voci**: Home · Time Table · Scopri · Spese · **Prenotazioni**
+  (Hotel e Biglietti nella stessa pagina, con due schede), e Identifica
+  dentro Scopri. Ci stanno: italiano 260 px su 281, inglese 261, spagnolo
+  239, portoghese 252; il francese solo con «Planning» al posto di
+  «Programme» (278 su 281, al pelo; con «Programme» 294);
+- sei voci (Hotel e Biglietti insieme, Identifica resta): da 297 a 346 px,
+  non ci stanno;
+- la parola solo sotto l'icona accesa: sei voci da 44 px più «Hébergement»
+  fanno 332 px, non ci sta nemmeno questa.
 
-**Home**
-- ⚠️ Meteo: si tocca la temperatura («22°»), un numero senza scritta. →
-  «22° · Meteo ›».
-- Time Table: titolo o città, o due tocchi sul giorno (scorciatoie), ma c'è
-  anche nella barra. Va bene.
-- ⚠️ Aggiungere una tappa: il «+» accanto a «La giornata» è solo un'icona.
-  → «+ Aggiungi».
-- 🧭 sulla mappa: solo icona, ma è quella che tutti conoscono. Va bene.
-- Cosa cerchi qui intorno (2), A raccolta (1), Fra poco (1), Da prenotare
-  (0–1), e ora Bagagli, Compagni, Condividi (1): a posto.
+**Restano a 3 tocchi dalla Home** (per questi la richiesta era la scritta):
+«📎 PDF» (barra › Scopri › «Assistente» › «📎 PDF») e «✓ Pagato» (barra ›
+Spese › «Saldi» › «✓ Pagato»); dalla loro pagina della barra sono 2. Per
+portarli a 2 anche dalla Home: Scopri e Spese potrebbero riaprirsi
+sull'ultima scheda usata, oppure le righe di «Come pareggiare» potrebbero
+comparire anche in cima a Spese quando c'è qualcosa da pareggiare.
 
-**Scheda del viaggio** — si apre toccando il titolo della Time Table (2
-tocchi, tutti e due su titoli) o dal Profilo toccando il viaggio, l'aereo ✈️
-(3, il primo su un'icona); dalla Home solo se il viaggio non ha giorni.
-- ⚠️ Concludere/riaprire, Eliminare, Rinominare, Giorni e date, Consigli
-  sì/no, Punti di ripristino: 3 tocchi (4 dal Profilo), arrivando da titoli.
-  → «✈️ Viaggio» come quarta voce della fila nuova della Home: apre la
-  scheda e porta tutto a 2. I consigli anche con un interruttore in Scopri.
-  Nel Profilo, «Recupero» si chiami «Punti di ripristino».
-- ⚠️ Il ricordo del viaggio: si apre da solo dopo «Concludi», poi ☰ →
-  Profilo → viaggio concluso → «📖 Il ricordo del viaggio» (4); per un
-  viaggio in corso non c'è. → «📖 Il ricordo» nella scheda del viaggio,
-  anche in corso.
+**Va bene così, deciso:** l'icona del mezzo senza scritta (44×44 da
+toccare); spostare e allungare le tappe col dito (gli orari si cambiano
+anche da «✎ Modifica attività»); il menu della tappa (3 tocchi, con le
+scritte); la Time Table dalla Home passa per l'occhiello «LISBONA · GIORNO
+1 DI 4 ›» o per la barra; mCloud nascosto apposta.
 
-**Time Table**
-- ⚠️ Ordina il giro con l'IA, Autopilota: «✦ Costruisci la giornata» →
-  voce, 3. → I due tasti subito sotto la data, al posto del menu.
-- ⚠️ Nuova attività, Attività salvata, Rientro in hotel, Foto del diario,
-  Importa lista: «＋» → voce, 3, e il «＋» è solo un'icona. → «＋ Aggiungi»
-  con la scritta; la Foto anche come tasto in Home sotto «La giornata».
-- ⚠️ Annullare l'ultimo spostamento: «↩», solo icona. → «↩ Annulla» quando
-  c'è qualcosa da annullare.
-- ⚠️ Cambiare mezzo fra due tappe: l'icona del mezzo nella striscia (c'è
-  anche nel menu della tappa). → Il nome del mezzo accanto all'icona.
-- ⚠️ Spostare o allungare una tappa: tenere premuto e trascinare, il bordo
-  di sotto, due dita. → Va bene come scorciatoia: gli orari si cambiano
-  anche da «✎ Modifica attività», nel menu della tappa.
-- Aprire una tappa (info, note, naviga, biglietto, modifica): tappa → menu
-  → voce, 3, ma il menu ha le scritte. Va bene.
-
-**Scopri**
-- ⚠️ Allegare un PDF in chat: Scopri → Assistente → 📎, 3 e solo icona. →
-  «📎 PDF» con la scritta.
-- ⚠️ Su misura: Scopri → Importa → «Su misura», 3. → Anche nel foglio
-  «Nuovo viaggio» e in Home per un viaggio senza giorni.
-- ⚠️ Prenotazione dalla mail: Scopri → Importa → «Prenotazione», 3. → Anche
-  in Biglietti, accanto a «Foto o PDF».
-
-**Spese**
-- ⚠️ Aggiungere una spesa: «+», solo icona. → «+ Spesa».
-- ⚠️ Segnare un rimborso nei saldi: il tic verde, solo un segno. →
-  «✓ Pagato».
-- ⚠️ Compagni, Condividi, Concludi dall'intestazione: tre icone. → Con la
-  fila nuova in Home possono restare scorciatoie, o prendere la scritta.
-
-**Hotel · Biglietti · Identifica** — a posto (2 tocchi con la scritta;
-Identifica a 3 perché la foto è il gesto stesso della funzione).
-
-**Profilo** (☰ → Profilo = 2, il primo su un'icona): account, avvisi,
-navigatore, foto, lingua, mappa senza rete a 2–3 si sistemano con la barra
-in alto. A 3 e da lasciare dove sono: Backup, Versione, Segnalazioni e
-privacy, Elimina il mio account (discreta apposta, ma trovabile: Apple la
-vuole così).
-- ⚠️ Diario del viaggio (PDF) e Esporta nel calendario (.ics): 3. → Anche
-  nella scheda del viaggio (il calendario anche in Time Table).
-- ⚠️ Ho un codice: 3 (in Home solo senza viaggi). → Anche nel cassetto ☰,
-  sotto «+ Aggiungi viaggio».
-- mCloud: pressione lunga sulla versione. L'eccezione voluta: resta nascosto.
-
-**Le quattro proposte che contano di più:** (1) una parola sotto le icone
-della barra in basso; (2) «Lisbona ▾» in alto e il Profilo a un tocco; (3)
-«✈️ Viaggio» come quarta voce della fila in Home; (4) le scritte su «+»
-(tappa, spesa), «↩ Annulla», GPS e Meteo.
-
-**Trovato per strada, non toccato:** in portoghese a 320 px «Cosa cerchi
-qui intorno?» si riduce a «O que pr…» accanto a «Toca a reunir»; e nel
-riquadro «Fra poco» le scritte «ADESSO» e «ora» restano in italiano in
-tutte le lingue (sono scritte così nel codice, senza traduzione).
+**Trovato per strada, non toccato:**
+- In Spese › Saldi restano in italiano in tutte le lingue «deve ricevere»,
+  «deve dare», «in pari», «+ Aggiungi persona» e «Come pareggiare»: frasi
+  cucite a pezzi, o col «+» davanti, che il dizionario non riconosce.
+  `prova-lingue` non apre i Saldi, per questo non l'ha visto.
+- Le righe con la spunta nei fogli della spesa («fra chi si divide») e
+  dell'attività sono alte circa 39 px, sotto i 44. Quelle del «Nuovo
+  viaggio» sono state portate a 44.
 
 ---
 
@@ -899,6 +875,46 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **L'area invisibile da 44 px parte dall'interno del bordo** (blocco «Tutto
+  quello che si tocca dev'essere grande abbastanza» nel foglio di stile,
+  prove `prova-tocchi` e `prova-a-portata`). Su un tasto da 38 px col bordo
+  da 1 px, `::after{inset:-3px}` aggiunge 2 px fuori, non 3: i tasti in alto,
+  «+ Aggiungi», «+ Spesa», «✓ Pagato» e le pillole della scheda del viaggio
+  arrivavano a 42 px. `prova-tocchi` li credeva da 44 perché sommava i numeri
+  del foglio di stile; adesso conta il bordo, e `prova-a-portata` tocca
+  davvero i punti intorno al centro (`elementFromPoint`), che è la misura che
+  non mente. Toccando ha trovato anche il resto: il nome della città, che
+  viene dopo nella pagina, si prendeva la parte di sotto dell'area di «22° ·
+  Meteo ›» (adesso la temperatura ha `z-index:1`), e i messaggi in basso
+  coprivano per tre secondi «＋ Aggiungi» e «↩ Annulla» (adesso
+  `pointer-events:none`: un messaggio si legge e basta).
+- **Un tasto che si trascina deve sapere se il dito è giù** (`initTTFab`).
+  `pointermove` col dito arriva solo a dito premuto, ma col mouse o col
+  trackpad dell'iPad arriva anche passandoci sopra: «＋ Aggiungi» della Time
+  Table scappava dal puntatore e il clic finiva sulla griglia. Su iPhone non
+  si vedeva; l'ha visto Playwright, che tocca col mouse.
+- **Un testo diviso in due pezzi dentro un contenitore flex diventa due
+  colonne** (`occhiello`, `.hh-tap`). Per non spezzare «GIORNO 2 DI 4» l'ho
+  chiuso in uno `<span>`: col nome corto andava bene, ma l'occhiello è
+  `inline-flex`, e con «Viaggio di nozze in Giappone e Corea 2026» il nome e
+  il giorno si sono messi affiancati, su tre righe strette, e la mappa della
+  Home è finita 4 px sotto la barra. In locale passava (caratteri di
+  ripiego); coi caratteri veri, cioè in CI e sul telefono, no. Adesso
+  l'occhiello della Home scorre come testo (`display:block`). Prima di dire
+  che la Home ci sta, `prova-piega` va girata anche coi caratteri veri.
+- **Una nascita rimandata va annullata quando ne arriva un'altra**
+  (`buildDayMap`, prova `prova-giornata`). La mappa della giornata nasce in
+  un `setTimeout`; due chiamate di fila (la Time Table che si apre mentre
+  Leaflet arriva e `mappaArrivata` la ridisegna) lasciavano in attesa due
+  nascite sullo stesso riquadro, e la seconda si fermava con «Map container
+  is already initialized». In locale non capitava mai, sul server delle
+  prove sì: là i tempi sono altri. Adesso resta in attesa solo l'ultima
+  (`_dayMapAttesa`). Vale per ogni cosa disegnata «un attimo dopo».
+- **Le parole sotto le icone della barra in basso a 320 px non ci stanno**
+  (sopra, «Nessuna funzione nascosta»): 281 px contro 311–389. Prima di
+  riprovarci con sette voci, rifare il conto: servono meno voci, non parole
+  più piccole (sotto i 10 px non si legge).
 
 - **⚠️ Su iPhone `new Notification` non funziona, e nessuno se ne accorgeva**
   (blocchi `GLI AVVISI` e `IL FOGLIO DEI PERMESSI`, `notificationclick` in

@@ -309,7 +309,10 @@ async function apri(browser, lingua, linguaTelefono) {
                 ...(t0.tickets || []).flatMap(x => [x.name, x.code]),
                 ...(t0.days || []).flatMap(d => (d.activities || []).map(a => a.name))
                ].filter(Boolean);
-  const eMio = x => MIEI.some(m => x.includes(m));
+  /* Anche in maiuscolo: l'occhiello della Home scrive il nome del viaggio
+     così, e da quando è diviso in due pezzi (perché non vada a capo dentro
+     «GIORNO 1 DI 5») il pezzo «GIAPPONE · » è identico in tutte le lingue. */
+  const eMio = x => MIEI.some(m => x.includes(m) || x.includes(String(m).toUpperCase()));
   /* Le unità si scrivono uguali in tutte e quattro le lingue: tolte quelle, se
      non resta una lettera la stringa è fatta solo di numeri e misure. Ce ne
      può essere più d'una nella stessa riga ("88 min · 6.1 km"). */

@@ -269,6 +269,14 @@ Resta il giro su **tre condizioni**: 390 px, 320 px (un iPhone SE, cioè un
 telefono vero) e 390 con le voci della barra allargate apposta, che simula i
 font che qui non arrivano.
 
+**L'area parte dall'interno del bordo.** Fino al 15 ottobre la prova sommava
+l'`inset` del `::after` al riquadro esterno del tasto; ma l'area invisibile si
+misura da dentro il bordo, e su un tasto col bordo da 1 px `inset:-3px`
+aggiunge 2 px fuori, non 3. I tasti col bordo (GPS, tema, Profilo, «+», le
+icone delle intestazioni, la matita) erano da 42 px e la prova li vedeva da
+44. Adesso il bordo si conta, e sul codice di prima la prova lo dice
+(`gps-pill 42×42`). L'ha scoperto `prova-a-portata`, che tocca davvero.
+
 ## A raccolta
 
 ```sh
@@ -781,7 +789,7 @@ anche la controprova con `APP_URL` li legge dalla copia.
 ## I bagagli a portata di mano
 
 ```sh
-node test/prova-reperibilita.js   # 35 controlli, in sette gruppi
+node test/prova-reperibilita.js   # 36 controlli, in sette gruppi
 ```
 
 La lista bagagli stava solo dentro la scheda del viaggio, e per trovarla si
@@ -791,8 +799,9 @@ giorni prima della partenza e il primo giorno la scheda «Prepara la
 valigia» col conto delle voci pronte. La regola che ne e' uscita
 («Nessuna funzione nascosta») sta in `CLAUDE.md`.
 
-I gruppi: la fila si vede subito, sotto «Cosa cerchi qui intorno?», e i tre
-tasti aprono i loro fogli (anche in un viaggio senza giorni); fila e scheda
+I gruppi: la fila si vede subito, sotto «Cosa cerchi qui intorno?», e i
+tasti aprono i loro fogli (anche in un viaggio senza giorni; dal 15 ottobre
+sono quattro, con «✈️ Viaggio» che apre la scheda del viaggio); fila e scheda
 da 320 a 430 px, chiaro e scuro, con tasti di almeno 44×44, nessuna parola
 spezzata a meta' e niente sopra i tasti (`elementFromPoint` al centro di
 ognuno), e la scheda che non sta addosso alla fila ne' a «Fra poco»; quando
@@ -803,8 +812,8 @@ ridisegnando e riaprendo l'app, e l'orologio portato a domani (`page.clock`)
 che la fa tornare con un giorno di meno; la lista che si apre ancora dalla
 scheda del viaggio, arrivandoci come una persona (barra → Time Table →
 titolo → «🎒 Bagagli») e dal Profilo; `MAPPA_APP` col percorso nuovo, letto
-dall'assistente in cinque lingue; le dieci frasi nuove nel dizionario e a
-schermo in en, es, fr e pt, intere anche a 320 px.
+dall'assistente in cinque lingue; le frasi nuove (dieci, e «✈️ Viaggio»)
+nel dizionario e a schermo in en, es, fr e pt, intere anche a 320 px.
 
 Sul codice di prima passano 9 controlli su 25: quelli dove la scheda non
 deve esserci, la scheda del viaggio (che c'era gia' e deve restare), le tre
@@ -819,3 +828,57 @@ dalla mappa (da 180 a 160 px) e da un po' d'aria fra i pezzi della Home.
 Attenzione a misurare: qui i caratteri di Google non arrivano, e coi
 caratteri veri (quelli del telefono e della CI) la Home e' 9–10 px piu'
 alta — vedi DA-FARE, «Cose scoperte a caro prezzo».
+
+## Tutto a portata
+
+```sh
+node test/prova-a-portata.js   # 62 controlli, in otto gruppi (circa 4 minuti)
+```
+
+La regola «Nessuna funzione nascosta» (`CLAUDE.md`) provata come la vive chi
+ha il telefono in mano. Il controllo del 13 ottobre aveva trovato funzioni a
+tre o quattro tocchi, o dietro un'icona sola; la miglioria 9c le ha portate a
+portata (l'elenco in DA-FARE, «Nessuna funzione nascosta»).
+
+1. **I percorsi, a tocchi veri.** Trenta funzioni, ognuna col suo percorso
+   dalla Home: «Lisbona ▾» › «🔑 Ho un codice», «✈️ Viaggio» › «📖 Il
+   ricordo», l'occhiello › «🪄 Autopilota»... Playwright tocca il punto dove
+   sta la voce e si rifiuta se lì sopra c'è altro, come farebbe un dito; ogni
+   voce deve avere una scritta (l'iniziale del Profilo conta). Quello che
+   partirebbe per la sua strada (il PDF, il calendario, la posizione,
+   l'assistente) è sostituito da una spia: si guarda che il tocco arrivi. La
+   barra in basso conta come un tocco su un'icona: le parole sotto le icone a
+   320 px non ci stanno, e come ridurre le voci lo decide Giacomo. «📎 PDF» e
+   «✓ Pagato» stanno dietro una scheda della loro pagina, e la prova lo dice:
+   2 tocchi da lì, 3 dalla Home.
+2. **Le misure**: 12 schermate × 3 larghezze (320, 375, 430) × 5 lingue ×
+   chiaro e scuro, 360 in tutto. Niente fuori dallo schermo, niente testo
+   troncato (coi puntini o tagliato) o sovrapposto, nessuna parola spezzata
+   fra due lettere (sul trattino sì: «l’e-» e sotto «mail»), testi che si
+   leggono, e intorno al centro di ogni tasto nove punti (a 21 px sui lati, a
+   15 in diagonale, perché gli angoli tondi di un tasto alto 44 non
+   rispondono) che cadono su di lui, l'icona del mezzo compresa. Si tocca con
+   `elementFromPoint` invece di sommare i numeri del foglio di stile: così
+   sono saltati fuori i tasti col bordo da 42 px, il nome della città che si
+   prendeva il fondo di «22° · Meteo ›», i messaggi in basso che coprivano
+   «＋ Aggiungi» e «↩ Annulla», e «＋ Aggiungi» che scappava dal puntatore.
+3. «Lisbona ▾» apre i viaggi con le tre voci a schermo e si richiude
+   ritoccandolo; il Profilo si apre con un tocco, e senza un nome il tondo
+   dice «Profilo», intero.
+4. «✈️ Viaggio» apre la scheda del viaggio, con le nove voci.
+5. «📖 Il ricordo» si apre a viaggio in corso, e aprirlo non lo conclude.
+6. In portoghese a 320 px «Cosa cerchi» passa alla forma corta, intera, e
+   «Toca a reunir» resta dentro il suo tasto; «ADESSO» e «ora» del riquadro
+   «Fra poco» sono nella lingua dell'app. L'orologio della pagina sta a
+   mezzogiorno (`page.clock`): la tappa delle 11:30 è in corso a qualunque
+   ora girino le prove.
+7. `MAPPA_APP` coi percorsi nuovi, quelli vecchi spariti, e l'assistente che
+   riceve la voce giusta chiedendo in cinque lingue.
+8. Le 22 frasi nuove nel dizionario di en, es, fr e pt, e a schermo nessuna
+   rimasta in italiano.
+
+Sul codice di prima passano 9 controlli su 58: quelli che restano veri
+comunque (niente fuori dallo schermo, nessuna parola spezzata, nessun errore
+in pagina...). Le misure sono state rifatte anche coi caratteri veri di
+Google, che qui non arrivano e in CI sì: a 430 px la spunta «✦ Su misura»
+del «Nuovo viaggio» stava su una riga sola e scendeva a 39 px.

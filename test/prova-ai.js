@@ -872,7 +872,7 @@ function misureJpeg(buf) {
     ok('20. per una domanda di viaggio parte solo l\'indice della mappa: un quinto o meno', !!m && m.viaggio.length === m.indice && m.indice * 5 <= m.piena,
        m ? `indice ${(m.indice / 1024).toFixed(1)} KB contro ${(m.piena / 1024).toFixed(1)} KB` : 'mappaPerDomanda non c\'è');
     ok('20. per una domanda sull\'app, in più le voci che c\'entrano, anche in altre lingue', !!m && /I bagagli stanno li', in Home/.test(m.bagagli)
-       && /- La lingua: in Profilo/.test(m.lingua) && /- Profilo \(in fondo al cassetto/.test(m.esporta) && m.bagagli.length < m.piena,
+       && /- La lingua: in Profilo/.test(m.lingua) && /- Profilo \(il tondo con l'iniziale/.test(m.esporta) && m.bagagli.length < m.piena,
        m ? [m.bagagli, m.lingua, m.esporta].map(x => (x.length / 1024).toFixed(1) + ' KB').join(', ') : '');
     ok('20. e tutta la mappa solo se è chiaramente sull\'app ma non si capisce dove', !!m && m.tasto.length === m.piena);
     const viste = await ponteFinto(p, [{ testo: 'Il Miradouro da Senhora do Monte, al tramonto.' }]);

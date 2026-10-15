@@ -6,8 +6,10 @@
    spingevano la giornata sotto la piega. Ma non sono quattro cose dello
    stesso tipo: «Naviga la giornata» e «Chiedi all'assistente» si usano
    CAMMINANDO, «Ordina il giro con l'IA» e «Autopilota» da fermi, mentre il
-   viaggio si costruisce. Quindi due restano in vista e due stanno dietro una
-   porta che dice cosa c'è dentro.
+   viaggio si costruisce. Per un po' i due da fermi sono stati dietro una
+   porta, «Costruisci la giornata»: ma erano tre tocchi, e dal nome della
+   porta non si capiva cosa ci fosse dietro. Adesso sono quattro tasti dello
+   stesso stile, in due file: sopra quelli da strada, sotto quelli da fermi.
 
    LA GRIGLIA. Era l'unico posto dell'app rimasto coi rettangoli color sabbia
    e il bordo di un pixel, mentre tutto il resto è passato a schede bianche
@@ -68,56 +70,38 @@ const stato = (titoloGiorno) => ({
   const tasti = await page.evaluate(() => {
     const az = [...document.querySelectorAll('.tt-az')];
     const b = az.map(x => x.getBoundingClientRect());
-    const testo = document.querySelector('#mDay .tt-sheet').innerText;
+    const file = [...document.querySelectorAll('#mDay .tt-azioni')].map(f =>
+      [...f.querySelectorAll('.tt-az')].map(x => x.textContent.replace(/\s+/g, ' ').trim()));
+    const ugualiInFila = (i, j) => !!b[i] && !!b[j] &&
+      Math.abs(b[i].width - b[j].width) < 1.5 && Math.abs(b[i].top - b[j].top) < 1.5;
     return {
       quanti: az.length,
-      etichette: az.map(x => x.textContent.replace(/\s+/g, ' ').trim()),
-      /* Stessa classe e stessa larghezza: è un invito solo, in due modi.
-         Prima erano tre stili diversi in fila. */
-      largheUguali: b.length === 2 && Math.abs(b[0].width - b[1].width) < 1.5,
-      inFila: b.length === 2 && Math.abs(b[0].top - b[1].top) < 1.5,
+      file,
+      /* Stessa classe e stessa larghezza, a due a due: è lo stesso tipo di
+         invito. Prima erano tre stili diversi in fila. */
+      largheUguali: ugualiInFila(0, 1) && ugualiInFila(2, 3),
+      stradaSopra: b.length === 4 && b[0].bottom <= b[2].top,
+      alti: b.length === 4 && b.every(x => x.height >= 44),
       porta: !!document.querySelector('.tt-costruisci'),
-      portaTesto: (document.querySelector('.tt-costruisci') || {}).textContent,
-      /* I due da tavolino NON devono stare a schermo. */
-      ordinaAschermo: /Ordina il giro/.test(testo),
-      autopilotaAschermo: /Autopilota/.test(testo)
+      foglio: !!document.getElementById('mCostruisci')
     };
   });
-  ok('sopra la griglia ci sono due tasti, non quattro', tasti.quanti === 2, tasti.quanti + ' tasti');
-  ok('e sono le due cose che si fanno camminando',
-     /Naviga la giornata/.test(tasti.etichette.join(' ')) &&
-     /Chiedi all'assistente/.test(tasti.etichette.join(' ')), tasti.etichette.join(' | '));
-  ok('sono uguali fra loro e larghi uguale, invece di tre stili in fila',
-     tasti.largheUguali === true && tasti.inFila === true);
-  ok('gli altri due non sono più a schermo',
-     tasti.ordinaAschermo === false && tasti.autopilotaAschermo === false,
-     `ordina ${tasti.ordinaAschermo}, autopilota ${tasti.autopilotaAschermo}`);
-  ok('ma c\'è una porta che dice cosa c\'è dietro',
-     tasti.porta === true && /Costruisci la giornata/.test(tasti.portaTesto || ''), tasti.portaTesto);
-
-  /* Se la porta non c'è, la prova deve DIRLO invece di schiantarsi: un
-     elenco di guasti spiega cosa manca, un'eccezione no. */
-  const dentro = await page.evaluate(async () => {
-    const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
-    const porta = document.querySelector('.tt-costruisci');
-    if (!porta) return { aperto: false, quanti: 0, titoli: [], spiegati: false };
-    porta.click();
-    await attendi(450);
-    const f = document.getElementById('mCostruisci');
-    const str = [...document.querySelectorAll('.tt-strumento')];
-    return {
-      aperto: !!f && f.classList.contains('active'),
-      quanti: str.length,
-      titoli: str.map(x => (x.querySelector('.ts-t') || {}).textContent),
-      /* Ognuno deve dire cosa fa: "Autopilota" da solo non lo sa nessuno. */
-      spiegati: str.every(x => ((x.querySelector('.ts-s') || {}).textContent || '').length > 30)
-    };
-  });
-  ok('toccandola si apre il foglio degli strumenti', dentro.aperto === true);
-  ok('e dentro ci sono tutti e due', dentro.quanti === 2 &&
-     /Ordina il giro/.test(dentro.titoli.join(' ')) && /Autopilota/.test(dentro.titoli.join(' ')),
-     dentro.titoli.join(' | '));
-  ok('e ognuno dice cosa fa, invece di essere solo un nome', dentro.spiegati === true);
+  const fila = n => (tasti.file[n] || []).join(' | ');
+  ok('sopra la griglia ci sono quattro tasti, in due file da due',
+     tasti.quanti === 4 && tasti.file.length === 2 && tasti.file.every(f => f.length === 2),
+     tasti.file.map(f => f.join(' | ')).join(' / '));
+  ok('nella prima le due cose che si fanno camminando',
+     /Naviga la giornata/.test(fila(0)) && /Chiedi all'assistente/.test(fila(0)), fila(0));
+  /* Stavano dietro la porta «Costruisci la giornata»: tre tocchi, e dal nome
+     della porta non si capiva cosa ci fosse dietro (vedi «Nessuna funzione
+     nascosta» in CLAUDE.md). */
+  ok('nella seconda le due da fermi, ognuna con la sua scritta',
+     /Ordina il giro/.test(fila(1)) && /Autopilota/.test(fila(1)), fila(1));
+  ok('a due a due sono uguali e larghi uguale, invece di tre stili in fila', tasti.largheUguali === true);
+  ok('quelli da strada stanno sopra, e i tasti sono alti un dito',
+     tasti.stradaSopra === true && tasti.alti === true);
+  ok('la porta «Costruisci la giornata» e il suo foglio non ci sono più',
+     tasti.porta === false && tasti.foglio === false);
 
   const parte = await page.evaluate(async () => {
     const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
@@ -125,27 +109,20 @@ const stato = (titoloGiorno) => ({
     const veroS = window.sistemaGiornata, veroA = window.openGenForDay;
     window.sistemaGiornata = () => { chiamato = 'ordina'; };
     window.openGenForDay = () => { chiamato = 'autopilota'; };
-    const strum = re => [...document.querySelectorAll('.tt-strumento')].find(x => re.test(x.textContent));
-    const s1 = strum(/Ordina il giro/);
-    if (s1) s1.click();
-    await attendi(400);
-    const foglio = document.getElementById('mCostruisci');
-    const uno = { chiamato, foglio: !!foglio && foglio.classList.contains('active') };
-    if (foglio) openSheet('mCostruisci');
-    await attendi(400); chiamato = '';
-    const s2 = strum(/Autopilota/);
-    if (s2) s2.click();
-    await attendi(400);
-    const due = { chiamato };
+    const tasto = re => [...document.querySelectorAll('.tt-az')].find(x => re.test(x.textContent));
+    const t1 = tasto(/Ordina il giro/);
+    if (t1) t1.click();
+    await attendi(200);
+    const uno = chiamato; chiamato = '';
+    const t2 = tasto(/Autopilota/);
+    if (t2) t2.click();
+    await attendi(200);
+    const due = chiamato;
     window.sistemaGiornata = veroS; window.openGenForDay = veroA;
-    if (foglio) closeSheet('mCostruisci');
-    await attendi(400);
     return { uno, due };
   });
-  ok('«Ordina il giro» fa partire l\'ordinamento e chiude il foglio',
-     parte.uno.chiamato === 'ordina' && parte.uno.foglio === false,
-     `${parte.uno.chiamato}, foglio aperto ${parte.uno.foglio}`);
-  ok('e «Autopilota» apre l\'Autopilota', parte.due.chiamato === 'autopilota', parte.due.chiamato);
+  ok('«Ordina il giro» fa partire l\'ordinamento con un tocco', parte.uno === 'ordina', parte.uno);
+  ok('e «Autopilota» apre l\'Autopilota', parte.due === 'autopilota', parte.due);
 
   // ══ la testata ══════════════════════════════════════════════════════
   const testata = await page.evaluate(() => {
@@ -285,6 +262,29 @@ const stato = (titoloGiorno) => ({
     return !document.getElementById('ttAdesso');
   });
   ok('e su un giorno che non è oggi la riga non c\'è', domaniNiente === true);
+  await page.close();
+
+  // ══ la mappa della giornata, chiesta due volte di fila ═══════════════
+  /* La mappa nasce un attimo dopo, in un setTimeout. Due richieste di fila
+     (la giornata che si apre mentre Leaflet arriva, e mappaArrivata la
+     ridisegna) lasciavano in attesa due nascite sullo stesso riquadro: la
+     seconda si fermava con «Map container is already initialized». In
+     locale non capitava mai; sul server delle prove si', perche' li' i tempi
+     sono altri. Qui le due richieste si fanno apposta. */
+  page = await apri(stato());
+  const prima = err.length;
+  const dueVolte = await page.evaluate(async () => {
+    buildDayMap(); buildDayMap();
+    await new Promise(r2 => setTimeout(r2, 800));
+    const box = document.getElementById('dayMap');
+    return { pannelli: box.querySelectorAll('.leaflet-map-pane').length, viva: !!dayMapObj && dayMapObj.getContainer() === box };
+  });
+  const nuovi = err.slice(prima);
+  ok('la mappa della giornata chiesta due volte di fila nasce una volta sola, senza errori',
+     nuovi.length === 0 && dueVolte.pannelli === 1 && dueVolte.viva === true,
+     nuovi.length ? nuovi[0] : `${dueVolte.pannelli} mappa`);
+  /* L'errore e' gia' detto qui sopra: non lo si conta due volte. */
+  err.splice(prima);
   await page.close();
 
   await browser.close();
