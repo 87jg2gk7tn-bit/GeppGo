@@ -29,7 +29,9 @@ quel file è la memoria.
 - **L'app sta tutta in `Index 2.1.html`**: niente file JS/CSS separati
   dell'app. Fuori ci sta solo quello che non può stare dentro: `sw.js` (il
   service worker deve essere un file a sé), `manifest.webmanifest`,
-  `privacy.html`, `index.html`, le funzioni Supabase in `supabase/functions/`,
+  `privacy.html` con le sue traduzioni (`privacy-en/es/fr/pt.html`: l'app
+  apre quella della sua lingua, e in caso di dubbio vale l'italiano),
+  `index.html`, le funzioni Supabase in `supabase/functions/`,
   le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
   jsQR, ZXing, bwip-js, SheetJS per i file di Excel, fflate per il file del
   backup; pdf.js per i PDF),
@@ -104,7 +106,21 @@ quel file è la memoria.
   supportate (it, en, es, fr, pt) con il sistema di traduzioni esistente
   (`DIZIONARIO`; `tv()` per i testi con variabili). L'italiano resta la lingua
   di riferimento. La chiave è la frase italiana intera: un testo cucito a pezzi
-  (`'Fatto: '+nome`) non si traduce mai.
+  (`'Fatto: '+nome`, o un template con `${nome}` dentro) non si traduce mai.
+  I plurali passano da `tp(n,'{1} giorno','{1} giorni')`, che sceglie con
+  `Intl.PluralRules`: in francese lo zero va col singolare, quindi anche la
+  frase al singolare ha il buco `{1}`. Una parola che in italiano non cambia
+  («foto», «attività») usa la stessa frase due volte, e la traduzione porta
+  le due forme separate da «|». Soldi, numeri ed elenchi di nomi passano da
+  `fmtMoney`, `fmtNum` ed `elenco`, date e ore da `loc()`: mai `toFixed` o
+  `'it-IT'` a mano. Dentro una funzione con `const t=T()` (il viaggio) la
+  traduzione si chiama con `tv()`, non con `t()`. Quello che non si traduce
+  (il logo, i nomi propri) ha `translate="no"`. `FRASI_IN_TUTTO` si conta da
+  solo. `test/prova-traduzioni.js` gira tutte le schermate di `MAPPA_APP` in
+  cinque lingue e boccia l'italiano rimasto, i messaggi cuciti e le frasi
+  senza traduzione. Le frasi del Premium sono rimaste in italiano (miglioria
+  10: «non toccare Premium e pubblicità»), e la prova le salta per nome di
+  funzione.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
   schermo stretto, tocco).
 - **Nessuna funzione nascosta.** Ogni funzione deve essere raggiungibile
@@ -196,6 +212,9 @@ quel file è la memoria.
 8. Se l'app inizia a raccogliere un dato nuovo o a parlare con un servizio
    nuovo, aggiorna `privacy.html` e `PRIVACY-STORE.md`: devono restare **veri**.
    Una prova confronta i servizi chiamati dal codice con quelli dichiarati.
+   Le quattro traduzioni (`privacy-en/es/fr/pt.html`) si cambiano insieme
+   all'italiano: devono dire la stessa cosa, e una prova controlla almeno che
+   abbiano le stesse sezioni.
 9. A fine lavoro, riassumi in poche righe cosa hai cambiato e la nuova
    versione.
 

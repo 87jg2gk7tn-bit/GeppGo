@@ -1,8 +1,13 @@
 # La privacy deve restare raggiungibile: senza queste righe la regola /*
 # qui sotto se la mangerebbe e servirebbe l'app al posto suo. Netlify prende
-# la prima regola che combacia, quindi vanno prima.
+# la prima regola che combacia, quindi vanno prima. Le traduzioni (una per
+# lingua, l'app apre quella giusta) valgono quanto l'originale.
 /privacy        /privacy.html   200
 /privacy.html   /privacy.html   200
+/privacy-en.html   /privacy-en.html   200
+/privacy-es.html   /privacy-es.html   200
+/privacy-fr.html   /privacy-fr.html   200
+/privacy-pt.html   /privacy-pt.html   200
 
 /   /Index%202.1.html   200
 /*  /Index%202.1.html   200

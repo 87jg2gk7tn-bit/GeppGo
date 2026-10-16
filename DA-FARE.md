@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 13 ottobre 2026.
+Aggiornato: 16 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -41,7 +41,17 @@ Restano tre cose, e non sono codice:
   «A raccolta». Il riassunto pronto da mandargli, con le sei garanzie
   strutturali e le domande, sta in fondo a `PRIVACY-STORE.md` — dove ora c'è
   anche la domanda su Supabase Inc., che è una società statunitense pur
-  tenendo i server in Svezia.
+  tenendo i server in Svezia. **Dal 16 ottobre i testi sono cinque**:
+  `privacy.html` e le traduzioni `privacy-en/es/fr/pt.html`, che in cima
+  dicono che in caso di dubbio vale l'italiano. Da chiedere anche se quella
+  frase basta, o se le traduzioni vanno rese vincolanti.
+- **Decidere le email di Supabase** (accesso, recupero, conferma): oggi c'è un
+  modello solo, in italiano, per tutte le lingue. La proposta (16 ottobre,
+  niente ancora cambiato su Supabase): subito un testo in italiano e in
+  inglese nello stesso messaggio; più avanti un testo per lingua, con l'app
+  che manda la lingua quando si registra (`options.data.lingua`) e i modelli
+  che scelgono la frase in base a quella. I dettagli sono nel riepilogo della
+  miglioria 10 e qui sotto, al punto 6.
 
 ~~**Le condizioni del servizio dell'assistente per l'Europa**~~ ✅ **risolto
 l'8 ottobre cambiando servizio.** Sul piano gratuito quel servizio non era
@@ -129,8 +139,11 @@ va rifatto vedere.
 ### Poi, per crescere
 
 6. ~~**Cinque lingue**~~ ✅ **finito** (italiano, inglese, spagnolo, francese,
-   portoghese). **803 frasi per lingua**, e a schermo **non resta più niente
-   in italiano**.
+   portoghese). **2299 frasi per lingua** (16 ottobre, contate da sole:
+   `FRASI_IN_TUTTO` è l'unione delle frasi del dizionario, non più un numero
+   scritto a mano), e a schermo **non resta più niente in italiano**: lo dice
+   `prova-traduzioni`, che apre tutte le schermate e le finestre di
+   `MAPPA_APP` in cinque lingue, da 320 a 430 px.
 
    ⚠️ **Questa riga ha già detto una bugia una volta, il 13 settembre.** La
    prova diceva zero, e Giacomo ha aperto l'app in inglese e ha trovato
@@ -145,6 +158,53 @@ va rifatto vedere.
    spagnolo, senza che nessuno abbia toccato una riga di codice per
    accenderla. Era il modo di finire il lavoro senza mai lasciare l'app in
    mezzo al guado, e ha funzionato.
+
+   ⚠️ **E il metro ha mentito una seconda volta, scoperto il 16 ottobre.** Il
+   confronto scartava ogni testo con dentro un nome del viaggio di prova,
+   perché un nome non si traduce e sarebbe sembrato italiano dimenticato. Ma
+   così passavano anche «Spostamento verso Nishiki» e «Zelda (tu)»: italiano
+   cucito a un nome, scartato intero. Adesso i nomi si coprono con un
+   segnaposto e il resto della frase si confronta lo stesso; e i nomi del
+   viaggio di prova sono strani apposta (Zelda, Yuri, Ximena, Teamlab),
+   perché un nome che è anche una parola («Museo», «Ingresso») coprirebbe le
+   parole vere dell'app.
+
+   **Miglioria 10, «Traduzioni al 100%» (16 ottobre).** La copertura,
+   misurata da `prova-traduzioni` girando le 103 schermate e finestre da 320
+   a 430 px (testi diversi da tradurre, circa 900 per lingua, coi nomi
+   coperti), sul codice di prima e su quello di adesso: inglese 82,5% →
+   100%, spagnolo 82,6% → 100%, francese 82,4% → 100%, portoghese 82,6% →
+   100%. Prima restavano in italiano circa 157 testi per lingua. Il numero
+   del Profilo (pezzi di testo, compresi quelli ripetuti, contati all'avvio)
+   passa da 91,8% a 99,9% (739 pezzi su 740). Cosa c'è dentro:
+   - 969 frasi nuove per lingua (il lotto `DIZIONARIO_CENTO`) e circa 300
+     punti del codice passati a `tv()`/`tp()`: i Saldi, la finestra
+     Condividi, le email, «Spostamento verso», le frasi composte e quelle
+     cucite a pezzi. Le etichette della valigia nascono già tradotte, e
+     quelle vecchie salvate in italiano si traducono quando si mostrano
+     (`etichettaVoce`); lo stesso per i nomi e le note dei posti vicini;
+   - **i plurali** con `tp(n,'{1} giorno','{1} giorni')`, che sceglie con
+     `Intl.PluralRules`. In francese lo zero va col singolare («0 jour»):
+     per questo anche la frase al singolare ha il buco `{1}`, e non un «1»
+     scritto dentro. Le parole che in italiano non cambiano («1 foto», «3
+     foto», «attività», «voucher») hanno una frase sola, ripetuta nei due
+     posti, e la traduzione porta le due forme separate da «|»;
+   - **le valute** con `Intl.NumberFormat` (`fmtMoney`): il simbolo dove lo
+     mette la lingua e i suoi separatori («1.234,50 €» in italiano,
+     «€1,234.50» in inglese, «1 234,50 €» in francese e portoghese), lo yen
+     senza decimali, il simbolo della lista `CURR` («A$» e non «$»), e le
+     migliaia sempre separate (`useGrouping:'always'`: per le regole comuni
+     lo spagnolo e il portoghese non separano sotto le cinque cifre, ma
+     «1234,50 €» sopra «12.345,00 €» nella stessa lista si legge male). Gli
+     spazi dentro l'importo non vanno a capo. I decimali di km e MB passano
+     da `fmtNum`, gli elenchi di nomi da `elenco` (`Intl.ListFormat`);
+   - l'anello di «Fra poco» in francese diceva «là», che vuol dire «lì»:
+     adesso «en cours», su due righe più piccole quando la parola è lunga
+     (`anelloLungo`), dentro il cerchio;
+   - il logo e i nomi propri hanno `translate="no"`: restano uguali e non
+     contano nella copertura. `traduciPagina` cerca anche senza il simbolo
+     davanti («⚠️ », «✦ »), che il codice attacca in decine di punti;
+   - **la privacy in cinque lingue**, aperta in quella dell'app (qui sotto).
    Decisione cambiata il 5 settembre: non solo inglese, ma le lingue in cui
    arriva la gente. Per non rifare il lavoro a ogni schermata che cambia,
    prima si è costruito l'impianto e le lingue si versano dentro.
@@ -179,11 +239,14 @@ va rifatto vedere.
    settembre» in mezzo a una schermata inglese è la prima cosa che salta
    all'occhio, e «2.400,00» letto da un inglese fa due virgola quattro.
 
-   Restano in italiano solo i nomi propri (GeppGo, Android, Google Maps), gli
-   indirizzi e gli esempi che non si traducono («es. MXP» è un codice di
-   aeroporto). La percentuale in Profilo si ferma sul 91% perché conta anche
-   quelli, insieme ai nomi delle persone e alle cifre: è un numero onesto per
-   difetto, non un lavoro a metà.
+   Restano uguali solo i nomi propri (GeppGo, Android, Google Maps) e gli
+   indirizzi. **E restano in italiano, su richiesta, le frasi del Premium**
+   («non toccare Premium e pubblicità», 16 ottobre): «Sei Premium ✨», il
+   testo lungo del foglio, «Piano Gratis», «Gestisci piano», «Eliminare è del
+   Premium» (in `openPremium`, `togglePremium`, `renderAds`,
+   `premiumNienteElimina`). Gli spazi pubblicitari e il resto del foglio
+   erano già tradotti. La percentuale in Profilo dice 99,9%: dal 99 in su la
+   nota dice solo quanto è tradotto, senza parlare di italiano.
 
    **Misurare, non leggere.** L'elenco di cosa mancava è stato tirato fuori
    girando l'app con un browser vero, non guardando il codice. Due trappole
@@ -198,11 +261,26 @@ va rifatto vedere.
    ridisegno, ma i pannelli che si riempiono al momento restavano indietro.
    C'è un `MutationObserver` che traduce quello che compare dopo.
 
-   **Quello che resta fuori, e non per dimenticanza: `privacy.html` è ancora
-   solo in italiano.** È un testo legale, e tradurlo vuol dire produrre
-   quattro testi legali: va fatto insieme all'avvocato che deve già guardare
-   la parte «A raccolta», non prima e non a parte. Da decidere con lui se
-   basta la versione italiana con un riassunto, o se servono le quattro.
+   **La privacy è in cinque lingue (16 ottobre).** `privacy.html` resta il
+   testo di riferimento; `privacy-en/es/fr/pt.html` sono traduzioni che lo
+   dicono in cima («se le due versioni non coincidono, vale l'italiano») e
+   hanno in testa i link alle altre lingue. L'app apre quella della sua
+   lingua (`indirizzoPrivacy`), dal Profilo e dal link sotto «Crea account».
+   **Chi cambia `privacy.html` cambia anche le quattro traduzioni**:
+   `prova-traduzioni` controlla che abbiano le stesse sezioni e i punti
+   fermi (email, età, 112, regione, servizi), ma non può controllare che
+   dicano la stessa cosa. All'avvocato vanno fatti vedere tutti e cinque i
+   testi, e chiesto se la frase «vale l'italiano» basta.
+
+   **Le email di Supabase** (accesso, recupero, conferma) hanno un modello
+   solo, in italiano. La proposta, niente ancora cambiato su Supabase:
+   subito un testo in italiano e in inglese nello stesso messaggio (due righe
+   in italiano, le stesse in inglese, un tasto solo); poi, quando servirà
+   davvero, un testo per lingua. Per quello l'app manda la lingua quando ci
+   si registra (`signUp` con `options.data.lingua`) e la aggiorna quando la
+   si cambia nel Profilo (`updateUser({data:{lingua}})`), e i modelli di
+   Supabase scelgono il testo con `{{ if eq .Data.lingua "en" }}…{{ end }}`.
+   Chi si è registrato prima, senza lingua salvata, riceve il testo doppio.
 
    Nelle prove le pagine nascono sempre in italiano (`test/browser.js`):
    ereditare la lingua del computer su cui girano vorrebbe dire provare l'app
@@ -766,10 +844,10 @@ scritte); la Time Table dalla Home passa per l'occhiello «LISBONA · GIORNO
 1 DI 4 ›» o per la barra; mCloud nascosto apposta.
 
 **Trovato per strada, non toccato:**
-- In Spese › Saldi restano in italiano in tutte le lingue «deve ricevere»,
-  «deve dare», «in pari», «+ Aggiungi persona» e «Come pareggiare»: frasi
-  cucite a pezzi, o col «+» davanti, che il dizionario non riconosce.
-  `prova-lingue` non apre i Saldi, per questo non l'ha visto.
+- ~~In Spese › Saldi restano in italiano in tutte le lingue «deve ricevere»,
+  «deve dare», «in pari», «+ Aggiungi persona» e «Come pareggiare»~~ ✅
+  sistemato il 16 ottobre (miglioria 10): frasi intere con `tv()` e `tp()`,
+  e `prova-traduzioni` apre i Saldi in ogni lingua.
 - Le righe con la spunta nei fogli della spesa («fra chi si divide») e
   dell'attività sono alte circa 39 px, sotto i 44. Quelle del «Nuovo
   viaggio» sono state portate a 44.
@@ -2604,6 +2682,51 @@ qualcuno che risponde".
   caratteri veri, 19 con quelli di ripiego. Lo spazio l'hanno dato la mappa
   (da 180 a 160 px) e un po' d'aria fra i pezzi della Home (il fondo del
   cielo, sopra e dentro «Fra poco», sopra i giorni e sopra «La giornata»).
+- **Una prova che scarta un testo intero perché contiene un nome non vede
+  l'italiano cucito al nome** (`prova-traduzioni`, 16 ottobre). «Spostamento
+  verso Nishiki» e «Zelda (tu)» passavano per «dati dell'utente». I nomi si
+  coprono, non si scartano: il resto della frase va confrontato lo stesso.
+  E i nomi del viaggio di prova non devono essere parole (niente «Museo»
+  come spesa, niente «Ingresso» come biglietto), se no coprono le parole
+  dell'app.
+- **`t` dentro una funzione è quasi sempre il viaggio** (`const t=T()`), e
+  allora `t('Cibo')` si rompe. In italiano non si vede, perché lì nessuno
+  chiama la traduzione; si rompe solo nelle altre lingue, dove nessuno
+  guarda. Dentro quelle funzioni si scrive `tv('Cibo')`, che fa lo stesso
+  lavoro. `prova-traduzioni` legge il codice con acorn e cerca ogni `t()`
+  chiamata dove `t` è una variabile della funzione.
+- **I messaggi cuciti non stanno solo nei `+`.** Una ricerca di `toast('…'+`
+  non vede ``toast(`⚠️ Si sovrappone a "${nome}"`)``: è un template, e il
+  `+` non c'è. Il codice va letto come lo legge il browser (l'albero di
+  acorn): così `prova-traduzioni` trova sia i `+` sia i template, e prende le
+  chiavi di `tv()` e `tp()` già sciolte (`gi\u00e0` diventa «già»).
+- **Una traduzione sbagliata si corregge nel suo lotto, non coprendola con
+  un lotto nuovo.** L'«ora» francese era «là» in `DIZIONARIO_DATI` e «en
+  cours» in `DIZIONARIO_CENTO`, che si unisce dopo e vince: l'app diceva
+  giusto, ma `prova-a-portata` legge il lotto vecchio e ci trovava ancora
+  «là». Due valori per la stessa chiave sono una trappola per chiunque legga
+  il lotto sbagliato. Lo stesso vale per le chiavi morte: quando «1 spesa
+  non ancora inclusa» è diventata `tp(n,'{1} spesa…','{1} spese…')`, la
+  forma con `{1}` ha preso il posto di quella vecchia nel suo lotto
+  (`prova-cambi` controlla che ogni chiave del lotto dei cambi sia usata).
+- **I puntini compaiono per un pezzo di pixel, `scrollWidth` arrotonda.**
+  «Cosa cerchi qui intorno?» a 375 px sbordava di 1,02 px e in spagnolo a
+  360 di 0,28: `scrollWidth > clientWidth + 1` diceva che ci stava, e la
+  frase restava lunga e tagliata. Si misura il testo vero (un `Range` sul
+  testo contro il riquadro, `adattaCerca`).
+- **Una misura delle sovrapposizioni deve guardare solo quello che si vede.**
+  La prima versione della prova 7 trovava 122 sovrapposizioni, tutte false:
+  testi dentro una tendina chiusa (`max-height:0` e `overflow:hidden`
+  tengono il riquadro anche quando non si vede), un elenco che scorre sotto
+  una fascia fissa. Adesso un testo conta solo nella parte dentro i
+  contenitori che lo tagliano e solo se in almeno un punto in cima c'è lui
+  (`elementFromPoint`). E la prova mette apposta un testo tagliato e uno
+  sovrapposto e controlla di trovarli: una misura che non trova mai niente
+  sembra uguale a una schermata perfetta.
+- **Lo strumento di scrittura di Claude trasforma `\u00e0` in «à»** quando
+  scrive codice: una sostituzione che contiene `\u2705` nel testo vecchio non
+  trova più niente. Le modifiche con le sequenze `\u` si fanno da node
+  (`String.fromCharCode(92)+'u…'`), non a mano.
 
 ---
 

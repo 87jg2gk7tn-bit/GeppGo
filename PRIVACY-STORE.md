@@ -14,7 +14,12 @@ Ricavato leggendo il codice, non a ricordo.
 
 - **Indirizzo della privacy policy:** `https://<il-dominio-di-geppgo>/privacy`
   (la pagina è `privacy.html`, e `_redirects` la tiene raggiungibile anche
-  sotto `/privacy`).
+  sotto `/privacy`). Dal 16 ottobre 2026 ci sono anche le traduzioni
+  `privacy-en.html`, `privacy-es.html`, `privacy-fr.html` e
+  `privacy-pt.html`: l'app apre quella della sua lingua, ognuna ha in cima i
+  link alle altre e dice che in caso di dubbio vale il testo italiano. Agli
+  store si può dare l'indirizzo italiano, o quello inglese per le schede in
+  inglese: il contenuto è lo stesso.
 - **Cancellazione dell'account dentro l'app:** c'è. Profilo → *Elimina il mio
   account*. Apple chiede di indicare dove si trova: è quello il percorso.
 

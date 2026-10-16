@@ -268,7 +268,7 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
     ok('5. con le coordinate del tratto (lon,lat;lon,lat)', piedi && piedi.coord === '139.7967,35.7148;139.777,35.7138', piedi && piedi.coord);
     const veri = await tratti(p);
     ok('5. i tempi mostrati sono quelli della risposta, senza «≈»',
-       trattoDi(veri, '🚶') === '🚶 25 min · 2.1 km' && trattoDi(veri, '🚲') === '🚲 10 min · 2.3 km' && /^🚗 7 min · 2\.6 km/.test(trattoDi(veri, '🚗')),
+       trattoDi(veri, '🚶') === '🚶 25 min · 2,1 km' && trattoDi(veri, '🚲') === '🚲 10 min · 2,3 km' && /^🚗 7 min · 2,6 km/.test(trattoDi(veri, '🚗')),
        ['🚶', '🚲', '🚗'].map(e => trattoDi(veri, e)).join(' | '));
     ok('6. con treno, metro e bus non parte nessuna richiesta', serv.chiamate.length === 3, serv.chiamate.length + ' richieste');
     ok('6. e il tempo è mostrato con «≈»', ['🚆', '🚇', '🚌'].every(e => /≈/.test(trattoDi(veri, e))), ['🚆', '🚇', '🚌'].map(e => trattoDi(veri, e)).join(' | '));
@@ -295,7 +295,7 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
     await p.evaluate(() => openDay(0));
     await p.waitForTimeout(2500);
     const offline = await tratti(p);
-    ok('7. senza rete i tempi veri restano visibili', trattoDi(offline, '🚶') === '🚶 25 min · 2.1 km' && trattoDi(offline, '🚲') === '🚲 10 min · 2.3 km', ['🚶', '🚲'].map(e => trattoDi(offline, e)).join(' | '));
+    ok('7. senza rete i tempi veri restano visibili', trattoDi(offline, '🚶') === '🚶 25 min · 2,1 km' && trattoDi(offline, '🚲') === '🚲 10 min · 2,3 km', ['🚶', '🚲'].map(e => trattoDi(offline, e)).join(' | '));
     ok('7. e non parte niente', serv.chiamate.length === 3, serv.chiamate.length + ' richieste');
     await p.context().setOffline(false);
     await p.close();
@@ -377,8 +377,8 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
     await p.waitForTimeout(3500);
     const dopo = trattoDi(await tratti(p), '🚶');
     const serv = p.__serv;
-    ok('10. spostata la tappa, il tempo vecchio non vale più (torna la stima)', prima === '🚶 25 min · 2.1 km' && /≈/.test(subito), prima + ' → ' + subito);
-    ok('10. e si ricalcola con le coordinate nuove', serv.chiamate.length === 2 && serv.chiamate[1].coord === '139.7967,35.7148;139.6917,35.6895' && dopo === '🚶 65 min · 5.4 km',
+    ok('10. spostata la tappa, il tempo vecchio non vale più (torna la stima)', prima === '🚶 25 min · 2,1 km' && /≈/.test(subito), prima + ' → ' + subito);
+    ok('10. e si ricalcola con le coordinate nuove', serv.chiamate.length === 2 && serv.chiamate[1].coord === '139.7967,35.7148;139.6917,35.6895' && dopo === '🚶 65 min · 5,4 km',
        serv.chiamate.map(c => c.coord).join(' | ') + ' → ' + dopo);
     await p.close();
   });

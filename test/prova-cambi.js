@@ -116,7 +116,10 @@ async function scriviSpesa(p, { desc, importo, valuta, cambio = null, salva = tr
   return anteprima;
 }
 const soldi = p => p.evaluate(() => ({
-  totale: (document.querySelector('#money .mh-tot') || {}).innerText || '',
+  /* Gli spazi dentro l'importo non vanno a capo (U+00A0): qui si leggono
+     come spazi normali. Dal 16 ottobre il simbolo va dove lo mette la
+     lingua: in italiano dopo la cifra («50,00 €»). */
+  totale: ((document.querySelector('#money .mh-tot') || {}).innerText || '').replace(/[\u00a0\u202f]/g, ' '),
   testo: document.getElementById('money').innerText,
   saldi: computeSettle(T()).bal
 }));
@@ -135,7 +138,7 @@ const prova = async (nome, fn) => {
     // 1. senza rete e senza tabella
     const a1 = await scriviSpesa(p, { desc: 'Ramen', importo: '10000', valuta: 'JPY' });
     ok('1. l\'anteprima non inventa una cifra in euro',
-       !/€\s?10\.000/.test(a1.testo) && !/≈/.test(a1.testo), a1.testo);
+       !/€\s?10\.000/.test(a1.testo) && !/10\.000(,00)?\s€/.test(a1.testo) && !/≈/.test(a1.testo), a1.testo);
     ok('1. e dice che il cambio non c\'è ancora, ben visibile',
        /Cambio non ancora disponibile/.test(a1.testo) && a1.attesa, a1.testo);
     const ramen = await spesa(p, 'Ramen');
@@ -151,12 +154,12 @@ const prova = async (nome, fn) => {
       return el ? el.innerText.replace(/\s+/g, ' ') : '';
     });
     ok('1. nell\'elenco si legge in yen, con «cambio in attesa»',
-       /¥10\.000,00/.test(riga) && /cambio in attesa/.test(riga) && !/€10\.000/.test(riga), riga);
+       /10\.000\s¥/.test(riga) && /cambio in attesa/.test(riga) && !/10\.000(,00)?\s€/.test(riga), riga);
 
     // 7. totali e saldi senza le spese in attesa (ne aggiungo una seconda)
     await scriviSpesa(p, { desc: 'Taxi', importo: '30', valuta: 'USD' });
     let s = await soldi(p);
-    ok('7. il totale del viaggio non conta le spese in attesa', s.totale === '€50,00', s.totale);
+    ok('7. il totale del viaggio non conta le spese in attesa', s.totale === '50,00 €', s.totale);
     ok('7. i saldi nemmeno: Jak deve ancora solo la sua metà della cena',
        vicino(s.saldi[2], -25) && vicino(s.saldi[1], 25), JSON.stringify(s.saldi));
     ok('7. e lo dice: «2 spese non ancora incluse»',
@@ -169,13 +172,13 @@ const prova = async (nome, fn) => {
     // 4. il cambio a mano
     const a4 = await scriviSpesa(p, { desc: 'Sushi', importo: '10000', valuta: 'JPY', cambio: '0,0062' });
     ok('4. c\'è il campo per scrivere il cambio, con la sua etichetta', a4.campo === true && /quanti EUR vale 1 JPY/.test(a4.etichetta), a4.etichetta);
-    ok('4. l\'anteprima usa il cambio scritto a mano', /€62,00/.test(a4.testo) && /scritto a mano/.test(a4.testo), a4.testo);
+    ok('4. l\'anteprima usa il cambio scritto a mano', /62,00\s€/.test(a4.testo) && /scritto a mano/.test(a4.testo), a4.testo);
     let sushi = await spesa(p, 'Sushi');
     ok('4. e la spesa si salva con quel cambio, segnato come scritto a mano',
        sushi && sushi.rate === 0.0062 && vicino(sushi.amount, 62) && sushi.cambioManuale === true && !sushi.cambioStato,
        sushi && JSON.stringify({ cambio: sushi.rate, importo: sushi.amount, mano: sushi.cambioManuale }));
     s = await soldi(p);
-    ok('4. entra subito nei conti, anche senza rete', s.totale === '€112,00', s.totale);
+    ok('4. entra subito nei conti, anche senza rete', s.totale === '112,00 €', s.totale);
 
     // 3. torna la rete
     await torna(p, rete);
@@ -189,7 +192,7 @@ const prova = async (nome, fn) => {
        rete.chiamate.filter(x => x === 'EUR').length >= 1 && rete.chiamate.every(x => x === 'EUR'), rete.chiamate.join(','));
     ok('3. con un avviso breve', (await avvisi(p)).includes('✅ Cambio arrivato: 2 spese entrano nei conti'), (await avvisi(p)).join(' | '));
     s = await soldi(p);
-    ok('3. ed entra nei conti: il totale la conta', s.totale === '€201,77', s.totale);
+    ok('3. ed entra nei conti: il totale la conta', s.totale === '201,77 €', s.totale);
     ok('3. e nei saldi: Jak deve la sua metà di tutto',
        vicino(s.saldi[2], -(25 + 31 + 31.25 + 15 / 1.1)), JSON.stringify(s.saldi));
     ok('3. e la riga «non ancora incluse» se ne va', !/non ancora inclus/.test(s.testo));
@@ -219,12 +222,12 @@ const prova = async (nome, fn) => {
     const data = await p.evaluate(ms => new Date(ms).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }), tre);
     const a2 = await scriviSpesa(p, { desc: 'Ramen', importo: '10000', valuta: 'JPY' });
     ok('2. l\'anteprima usa quel cambio e ne dice la data',
-       /€66,67/.test(a2.testo) && a2.testo.includes('cambio del ' + data) && !a2.attesa, a2.testo + ' (atteso: cambio del ' + data + ')');
+       /66,67\s€/.test(a2.testo) && a2.testo.includes('cambio del ' + data) && !a2.attesa, a2.testo + ' (atteso: cambio del ' + data + ')');
     const ramen = await spesa(p, 'Ramen');
     ok('2. la spesa si salva con quel cambio, non in attesa',
        ramen && vicino(ramen.amount, 66.67) && vicino(ramen.rate, 1 / 150) && !ramen.cambioStato && ramen.cambioData === tre,
        ramen && JSON.stringify({ importo: ramen.amount, stato: ramen.cambioStato, data: ramen.cambioData === tre }));
-    ok('2. ed entra nei conti', (await soldi(p)).totale === '€116,67', (await soldi(p)).totale);
+    ok('2. ed entra nei conti', (await soldi(p)).totale === '116,67 €', (await soldi(p)).totale);
 
     // 5. stessa valuta
     const a5 = await scriviSpesa(p, { desc: 'Caffè', importo: '25', valuta: 'EUR', salva: false });
@@ -356,7 +359,7 @@ const prova = async (nome, fn) => {
        sushiB && sushiB.cambioManuale === true && sushiB.rate === 0.0062 && sushiB.cambioData === manoA.cambioData,
        sushiB && JSON.stringify({ mano: sushiB.cambioManuale, cambio: sushiB.rate }));
     const totA = (await soldi(A.page)).totale, totB = (await soldi(B.page)).totale;
-    ok('8. i due telefoni mostrano lo stesso totale', totA === totB && totA === '€112,00', totA + ' / ' + totB);
+    ok('8. i due telefoni mostrano lo stesso totale', totA === totB && totA === '112,00 €', totA + ' / ' + totB);
 
     /* B ritrova la rete per primo: calcola il cambio e lo manda. A, che era
        allineato, deve vedere la spesa diventata vera, non tenersi la sua. */
@@ -371,7 +374,7 @@ const prova = async (nome, fn) => {
        ramenA && JSON.stringify({ stato: ramenA.cambioStato, importo: ramenA.amount }));
     ok('8. e il cambio a mano resta a mano su tutti e due', sushiA && sushiA.cambioManuale === true && sushiA.rate === 0.0062);
     const tA = (await soldi(A.page)).totale, tB = (await soldi(B.page)).totale;
-    ok('8. stesso stato, stesso totale', tA === tB && tA === '€174,50', tA + ' / ' + tB);
+    ok('8. stesso stato, stesso totale', tA === tB && tA === '174,50 €', tA + ' / ' + tB);
     await A.page.close(); await B.page.close();
   });
 
@@ -424,7 +427,7 @@ const prova = async (nome, fn) => {
         [visto.foglio, sub(tr('1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.'), 'EUR')],
         [visto.mano, tr('Salva i cambi')], [visto.mano, tr('‹ Indietro')],
         [visto.soldi, tr('cambio in attesa')], [visto.soldi, tr('non ancora nei conti')],
-        [visto.soldi, tr('1 spesa non ancora inclusa (cambio in attesa)')],
+        [visto.soldi, sub(tr('{1} spesa non ancora inclusa (cambio in attesa)'), 1)],
         [a.testo, tr('Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.')],
         [a.etichetta, sub(tr('Cambio: quanti {2} vale 1 {1}'), 'JPY', 'EUR')],
         [nota, tr('Lascialo vuoto per il cambio automatico. Se lo scrivi tu (per esempio quello della tua banca) non verrà mai cambiato da solo.')]

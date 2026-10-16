@@ -50,11 +50,13 @@ const stato = {trips:[{id:1730000000001,name:'Esempio',destination:'Osaka',curre
     budget: getComputedStyle(document.getElementById('moneyBudget')).display,
     segBudgetAttivo: document.getElementById('segBudget').classList.contains('active'),
     testo: document.getElementById('moneyBudget').innerText,
-    tot: (document.getElementById('bAmt').textContent.match(/[€$]\s*[\d.,]+/)||[''])[0]
+    tot: (document.getElementById('bAmt').textContent.match(/[€$]\s*[\d.,]+|[\d.,]+\s*[€$]/)||[''])[0]
   }));
   ok('passando a Budget le Spese spariscono', v.spese==='none' && v.budget!=='none');
   ok('l\'interruttore segna Budget', v.segBudgetAttivo);
   ok('e il Budget è quello di prima: le categorie', /Per categoria/.test(v.testo) && /Cibo/.test(v.testo) && /Attrazioni/.test(v.testo), v.testo.replace(/\n+/g,' / ').slice(0,100));
+  /* Il simbolo va dove lo mette la lingua (miglioria 10): in italiano dopo la
+     cifra, «30,00 €». */
   ok('con i conti giusti: 60 in due fa 30 a testa', /30/.test(v.tot), 'mostrato: '+v.tot);
   ok('e la tendina per persona', await p.evaluate(()=>!!document.getElementById('budgetWho')));
 
@@ -76,7 +78,7 @@ const stato = {trips:[{id:1730000000001,name:'Esempio',destination:'Osaka',curre
   });
   await p.evaluate(()=>moneyVista('budget'));
   await p.waitForTimeout(400);
-  const tot2 = await p.evaluate(()=>(document.getElementById('bAmt').textContent.match(/[€$]\s*[\d.,]+/)||[''])[0]);
+  const tot2 = await p.evaluate(()=>(document.getElementById('bAmt').textContent.match(/[€$]\s*[\d.,]+|[\d.,]+\s*[€$]/)||[''])[0]);
   ok('rientrando nel Budget i numeri sono aggiornati (90 in due fa 45)', /45/.test(tot2), 'mostrato: '+tot2);
 
   await p.evaluate(()=>moneyVista('spese'));
