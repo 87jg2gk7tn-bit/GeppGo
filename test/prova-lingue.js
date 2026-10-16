@@ -83,15 +83,17 @@ async function apri(browser, lingua, linguaTelefono) {
   /* Aprire una pagina costa tredici secondi: quello che si può chiedere a una
      già aperta, glielo si chiede qui invece di aprirne un'altra.
      La cifra è un milione e non duemila: in italiano e in spagnolo i gruppi
-     partono dalla quinta cifra, e "2400,00" o "2.400,00" dipendono dalla
+     partivano dalla quinta cifra, e "2400,00" o "2.400,00" dipendevano dalla
      versione di ICU del browser — la prova diceva cose diverse qui e sulla
-     macchina delle prove automatiche. */
+     macchina delle prove automatiche. Dal 16 ottobre fmtMoney usa
+     Intl.NumberFormat: lo yen non ha decimali, e in italiano il simbolo va
+     dopo la cifra, staccato da uno spazio che non va a capo. */
   const formatiIt = await it.evaluate(() => ({
     soldi: fmtMoney(1234567, 'JPY'),
     data: new Date('2026-09-01').toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' })
   }));
   ok('in italiano date e numeri non cambiano di una virgola',
-     formatiIt.soldi === '¥1.234.567,00' && /settembre/.test(formatiIt.data),
+     formatiIt.soldi.replace(/[\u00a0\u202f]/g, ' ') === '1.234.567 ¥' && /settembre/.test(formatiIt.data),
      formatiIt.soldi + ' · ' + formatiIt.data);
   await it.close();
 
@@ -191,10 +193,12 @@ async function apri(browser, lingua, linguaTelefono) {
      sel.nomi.includes('Español') && sel.nomi.includes('Français') && sel.nomi.includes('Português'));
   ok('e quella in uso è selezionata', sel.scelta === 'en', sel.scelta);
   /* Onestà: una persona che vede metà app in italiano deve sapere perché.
-     La nota stessa è tradotta — "itali" prende italiano, Italian, italien. */
-  ok('dice quanto è tradotto davvero, invece di far finta',
-     /%/.test(sel.nota) && /itali/i.test(sel.nota), sel.nota);
+     La nota stessa è tradotta — "itali" prende italiano, Italian, italien.
+     Dal 99% in su non c'è più niente da spiegare, e la nota dice solo quanto
+     è tradotto (miglioria 10). */
   const percento = parseInt((sel.nota.match(/(\d+)%/) || [])[1] || '0', 10);
+  ok('dice quanto è tradotto davvero, invece di far finta',
+     /%/.test(sel.nota) && (/itali/i.test(sel.nota) || percento >= 99), sel.nota);
   ok('e la percentuale è un numero sensato', percento > 0 && percento <= 100, percento + '%');
   await prof.close();
 
@@ -539,7 +543,7 @@ async function apri(browser, lingua, linguaTelefono) {
   ok('in inglese la data si legge in inglese',
      /September/.test(formati.en.data) && !/settembre/.test(formati.en.data), formati.en.data);
   ok('e i numeri si scrivono come li scrive chi legge',
-     formati.en.soldi === '¥1,234,567.00', formati.en.soldi);
+     formati.en.soldi === '¥1,234,567', formati.en.soldi);
   ok('e lo stesso in francese', /septembre/.test(formati.fr.data), formati.fr.data);
   ok('e in portoghese', /setembro/.test(formati.pt.data), formati.pt.data);
 

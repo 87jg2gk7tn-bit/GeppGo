@@ -545,12 +545,16 @@ una mai tradotta resti in italiano col buco riempito lo stesso, e che il
 conteggio della copertura sappia che sono già tradotte — senza quest'ultimo
 pezzo risulterebbero non tradotte *proprio perché* sono tradotte bene.
 
-Infine **date e numeri**: in inglese «Tuesday 1 September» e `¥1,234,567.00`,
-in italiano «martedì 1 settembre» e `¥1.234.567,00`. Erano trentasette
+Infine **date e numeri**: in inglese «Tuesday 1 September» e `¥1,234,567`,
+in italiano «martedì 1 settembre» e `1.234.567 ¥` (lo yen non ha decimali, e
+il simbolo va dove lo mette la lingua: dal 16 ottobre `fmtMoney` usa
+`Intl.NumberFormat`, vedi «Traduzioni al 100%» qui sotto). Erano trentasette
 `'it-IT'` scritti a mano. La cifra di prova è un milione e non duemila per un
-motivo: in italiano e in spagnolo i gruppi partono dalla **quinta** cifra, e
-se 2400 diventi `2400,00` o `2.400,00` dipende dalla versione di ICU del
-browser — la prova diceva cose diverse qui e in CI.
+motivo: in italiano e in spagnolo, per le regole comuni, i gruppi partono
+dalla **quinta** cifra, e se 2400 diventi `2400` o `2.400` dipendeva dalla
+versione di ICU del browser — la prova diceva cose diverse qui e in CI.
+Adesso l'app separa sempre le migliaia (`useGrouping:'always'`), ma la cifra
+resta quella.
 
 E un avvertimento che vale oltre le lingue: **certi cartelli dipendono dalla
 rete**. «⚠️ Viaggi solo su questo telefono» esce solo se la libreria di
@@ -882,3 +886,68 @@ comunque (niente fuori dallo schermo, nessuna parola spezzata, nessun errore
 in pagina...). Le misure sono state rifatte anche coi caratteri veri di
 Google, che qui non arrivano e in CI sì: a 430 px la spunta «✦ Su misura»
 del «Nuovo viaggio» stava su una riga sola e scendeva a 39 px.
+
+## Traduzioni al 100%
+
+```sh
+node test/prova-traduzioni.js       # 33 controlli, in sette gruppi (circa 3 minuti)
+node test/prova-traduzioni.js 2 7   # solo il giro delle schermate e le misure
+```
+
+La miglioria 10. Le sette domande, una per gruppo:
+
+1. **La copertura si conta da sola.** `FRASI_IN_TUTTO` non è più un numero
+   scritto a mano (era 981, poi 1334): è l'unione delle frasi del dizionario.
+   La prova lo legge nel codice, lo confronta con l'unione contata da lei, e
+   poi aggiunge una frase in una copia dell'app (in una cartella temporanea)
+   e guarda il numero salire di uno.
+2. **Nessuna schermata di `MAPPA_APP` mostra testi in italiano**, in inglese,
+   spagnolo, francese e portoghese. Il giro apre 96 schermate e finestre
+   (una per voce della mappa, riempite come le vede chi le usa) e poi, vuote,
+   tutte le finestre che nessun passo ha aperto: una finestra nuova entra
+   nella prova da sola. Si confronta con l'italiano, come in `prova-lingue`,
+   ma **i nomi si coprono invece di scartare la frase**: prima «Spostamento
+   verso Nishiki» passava per un dato dell'utente. Per questo i nomi del
+   viaggio di prova sono strani (Zelda, Yuri, Ximena, Teamlab): un nome che
+   è anche una parola («Museo») coprirebbe le parole dell'app. Il Premium
+   resta fuori, su richiesta.
+3. **I testi del passo 2**: Saldi, Condividi (con e senza account, e le frasi
+   col grassetto intere), «Spostamento verso», i messaggi d'invio delle
+   email, l'anello di «Fra poco» (in francese «en cours», dentro il cerchio a
+   320 e a 430 px). E il codice letto con acorn: ogni chiave di `tv()` e
+   `tp()` nel dizionario di tutte e quattro le lingue, con gli stessi buchi;
+   ogni messaggio scritto per intero tradotto; nessun messaggio cucito col
+   `+` o con un template; nessuna `t()` dove `t` è il viaggio.
+4. **I plurali con 0, 1, 2 e 5**, scritti per intero in cinque lingue (lo
+   zero francese al singolare, «foto» e «attività» con le due forme), e a
+   schermo: «La giornata» con 0, 1, 2 e 5 tappe.
+5. **Le valute**: «1.234,50 €», «€1,234.50», «1 234,50 €», lo yen senza
+   decimali, «A$», e gli spazi dentro l'importo che non vanno a capo. Anche
+   nella lista delle spese.
+6. **La privacy nella lingua dell'app**: il tasto del Profilo e i link sotto
+   «Crea account» aprono `privacy-xx.html`; ogni traduzione ha la lingua
+   giusta, i link alle altre, il riquadro «vale l'italiano», le stesse
+   sezioni dell'originale, i punti fermi (email, 14 anni, 112, regione,
+   servizi) e niente preso da fuori; `_redirects` le tiene raggiungibili.
+7. **Niente testi troncati o sovrapposti** da 320 a 430 px in cinque lingue:
+   il giro intero a 320 e a 430, le schermate principali anche a 360, 375,
+   390 e 414. Si guarda solo lo strato che si vede (la finestra più in alto,
+   o la pagina) e solo il testo visibile: dentro i contenitori che lo
+   tagliano, e scoperto (`elementFromPoint`). I puntini su un nome scritto da
+   chi usa l'app sono voluti e si dicono senza bocciare. E la prova mette
+   apposta un testo tagliato e uno sovrapposto e controlla di trovarli.
+
+Il giro delle cinque lingue va in parallelo (cinque pagine insieme): così
+dura un minuto e mezzo invece di sei.
+
+Sul codice di prima (11c949b) la prova boccia tutte e sette le parti: il
+conteggio scritto a mano, 156 testi in italiano per lingua, 720 traduzioni
+mancanti e i messaggi cuciti, `tp()` che non esiste, le valute («€1234,50»
+in spagnolo, «¥1.234.567,00»), la privacy che non c'è, «Cosa cerchi qui
+intorno?» tagliato a 375 px. Restano veri solo i controlli che lo erano
+comunque (niente esce di lato, niente si sovrappone, la misura che si
+accorge dei difetti messi apposta).
+
+⚠️ Qui i caratteri di Google non arrivano: le misure della parte 7 vanno
+rifatte coi caratteri veri prima di fidarsi (vedi DA-FARE, «Cose scoperte a
+caro prezzo»). In CI arrivano, e la prova misura con quelli.

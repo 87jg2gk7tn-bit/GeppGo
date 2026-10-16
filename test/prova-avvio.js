@@ -111,16 +111,18 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
       return { euro: est.cost, striscia, totale };
     });
     const atteso = conCambio.euro / 0.006;
-    const mostrato = numero((/~¥\s*([\d.,]+)/.exec(conCambio.striscia) || [])[1]);
+    /* Dal 16 ottobre il simbolo va dove lo mette la lingua (in italiano dopo
+       la cifra, «~204 ¥») e lo yen non ha decimali: si arrotonda allo yen. */
+    const mostrato = numero((/~([\d.,]+)\s¥/.exec(conCambio.striscia) || [])[1]);
     ok('1. in un viaggio in yen la benzina è convertita e mostrata in yen, con «~»',
-       /~¥/.test(conCambio.striscia) && Math.abs(mostrato - atteso) < 0.02 && /~¥/.test(conCambio.totale),
+       /~[\d.]+\s¥/.test(conCambio.striscia) && Math.abs(mostrato - atteso) < 0.51 && /~[\d.]+\s¥/.test(conCambio.totale),
        `${conCambio.striscia} | totale: ${conCambio.totale} | atteso ~¥${atteso.toFixed(2)}`);
     await p.close();
     p = await apri(viaggio({}, { currency: 'JPY' }));
     await p.evaluate(() => openDay(0));
     await p.waitForTimeout(700);
     const senza = await p.evaluate(() => [...document.querySelectorAll('#ttBody .tt-travel-quanto')].map(x => x.textContent).find(x => /km/.test(x) && /~/.test(x)) || '');
-    ok('1. senza un cambio la benzina resta in euro, col simbolo €', /~€\s*\d/.test(senza) && !/¥/.test(senza), senza);
+    ok('1. senza un cambio la benzina resta in euro, col simbolo €', /~[\d.]+,\d\d\s€/.test(senza) && !/¥/.test(senza), senza);
     await p.close();
   });
 

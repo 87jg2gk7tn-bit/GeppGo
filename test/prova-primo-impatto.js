@@ -125,7 +125,7 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
     await p.waitForTimeout(400);
     const anteprima = await p.evaluate(() => document.getElementById('expConv').textContent);
     ok('1. modificando, l\'anteprima usa il cambio salvato con la spesa, non quello di oggi',
-       /€133,33/.test(anteprima) && anteprima.includes(data), anteprima + ' (atteso il cambio del ' + data + ')');
+       /133,33\s€/.test(anteprima) && anteprima.includes(data), anteprima + ' (atteso il cambio del ' + data + ')');
     await p.click('#mExpense button[onclick="addExpense()"]');
     await p.waitForTimeout(500);
     let e = await p.evaluate(() => JSON.parse(JSON.stringify(T().expenses.find(x => x.id === 201))));
@@ -375,7 +375,13 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
        non si apre per sbaglio (prova 8). */
     const q = await apri(browser, { stato: viaggio() });
     const diz = await q.evaluate(() => {
-      const mcloud = document.getElementById('mCloud').innerText;
+      /* Il pannello tecnico è anche quello che dice mentre lo si usa (i
+         messaggi di saveCloudCfg e clearCloudCfg, tradotti dalla miglioria
+         10) e i suoi segnaposto. */
+      const pannello = document.getElementById('mCloud');
+      const mcloud = pannello.innerText + ' ' +
+        [...pannello.querySelectorAll('[placeholder],[title]')].map(e => (e.getAttribute('placeholder') || '') + ' ' + (e.getAttribute('title') || '')).join(' ') + ' ' +
+        [window.saveCloudCfg, window.clearCloudCfg, window.openCloudCfg].filter(Boolean).map(String).join(' ').replace(/\\'/g, "'");
       const out = [];
       ['en', 'es', 'fr', 'pt'].forEach(l => Object.entries(DIZIONARIO[l]).forEach(([k, v]) => out.push({ l, k, v, mcloud: mcloud.includes(k) })));
       return out;

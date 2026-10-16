@@ -158,7 +158,9 @@ const stato = {
     return { testoLuca, testoMia: document.getElementById('phChi').textContent };
   });
   ok('sotto la foto c\'è scritto chi l\'ha messa', /Messa da Luca/.test(scheda.testoLuca), scheda.testoLuca);
-  ok('e per le proprie dice "tu"', /Messa da tu/.test(scheda.testoMia), scheda.testoMia);
+  /* «Messa da te», in italiano corretto: prima era «Messa da tu», il nome
+     «tu» infilato al posto di quello della persona (miglioria 10). */
+  ok('e per le proprie dice "te"', /Messa da te\b/.test(scheda.testoMia) && !/Messa da tu\b/.test(scheda.testoMia), scheda.testoMia);
   ok('e dice se è al sicuro nel cloud', /salvata anche nel cloud/.test(scheda.testoMia));
 
   // ── segnalare ────────────────────────────────────────────────────────────

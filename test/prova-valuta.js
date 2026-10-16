@@ -32,15 +32,17 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Tokyo',c
   let v = await scheda();
   ok('nella scheda del viaggio c\'è la tendina della valuta', v.tendina);
   ok('le prime voci partono dalla valuta del viaggio', v.opzioni[0]==='JPY', v.opzioni.join(', '));
-  ok('di partenza la spesa è in yen', /¥\s?10\.?000/.test(v.testo.replace(/\s/g,' ')), (v.testo.match(/[¥€$]\s?[\d.,]+/g)||[]).join(' | '));
+  /* Il simbolo va dove lo mette la lingua (miglioria 10): in italiano dopo
+     la cifra, «10.000 ¥», «60,00 €». */
+  ok('di partenza la spesa è in yen', /¥\s?10\.?000|10\.?000\s?¥/.test(v.testo.replace(/\s/g,' ')), (v.testo.match(/[¥€$]\s?[\d.,]+|[\d.,]+\s?[¥€$]/g)||[]).join(' | '));
 
   // scelgo euro
   await p.evaluate(()=>setCurVista('EUR'));
   await p.waitForFunction(()=>/€/.test(document.getElementById('tripZoomBody').innerText),{timeout:8000});
   await p.waitForTimeout(300);
   v = await scheda();
-  ok('scegliendo EUR la cifra si legge in euro', /€/.test(v.testo), (v.testo.match(/[¥€$]\s?[\d.,]+/g)||[]).join(' | '));
-  ok('e il conto è giusto: 10.000 yen a 0,006 fanno 60 euro', /€\s?60/.test(v.testo.replace(/\s/g,' ')), (v.testo.match(/€\s?[\d.,]+/g)||[]).join(' | '));
+  ok('scegliendo EUR la cifra si legge in euro', /€/.test(v.testo), (v.testo.match(/[¥€$]\s?[\d.,]+|[\d.,]+\s?[¥€$]/g)||[]).join(' | '));
+  ok('e il conto è giusto: 10.000 yen a 0,006 fanno 60 euro', /€\s?60|60(,00)?\s?€/.test(v.testo.replace(/\s/g,' ')), (v.testo.match(/€\s?[\d.,]+|[\d.,]+\s?€/g)||[]).join(' | '));
   ok('la tendina resta su EUR', v.scelta==='EUR', String(v.scelta));
 
   // la scelta vale in tutta l'app

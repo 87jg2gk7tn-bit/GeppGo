@@ -665,7 +665,10 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
       ['en', 'es', 'fr', 'pt'].forEach(l => it.forEach(k => {
         const v = DIZIONARIO_DATI[l][k];
         if (!v || !v.trim()) buchi.push(l + ': ' + k);
-        else if ((k.match(/\{\d\}/g) || []).sort().join() !== (v.match(/\{\d\}/g) || []).sort().join()) buchi.push(l + ' segnaposto: ' + k);
+        /* Una parola che in italiano non cambia («1 foto», «3 foto») porta
+           nella traduzione le due forme separate da «|» (vedi tp): i buchi si
+           guardano forma per forma. */
+        else if (v.split('|').some(f => (k.match(/\{\d\}/g) || []).sort().join() !== (f.match(/\{\d\}/g) || []).sort().join())) buchi.push(l + ' segnaposto: ' + k);
         else if (DIZIONARIO[l][k] !== v) buchi.push(l + ' coperta: ' + k);
       }));
       return { n: it.length, buchi };
