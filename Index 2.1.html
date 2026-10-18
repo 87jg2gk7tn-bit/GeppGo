@@ -2,7 +2,11 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- Lo zoom con due dita non si blocca (miglioria 11): chi vede poco deve
+     poter ingrandire, ed e' una regola di WCAG. Lo zoom da solo di iPhone
+     quando si tocca un campo lo evitano i campi a 16 px; il doppio tocco che
+     ingrandisce per sbaglio lo evita touch-action:manipulation. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GeppGo</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,16 +27,32 @@
 <link id="caratteri" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
 <style>
 :root{
+  /* I colori del testo arrivano almeno a 4,5:1 col fondo su cui stanno
+     (WCAG AA). --ink-faint era #9B9184: 2,7:1 sul panna, e lo usavano date,
+     sottotitoli e note di tutta l'app. Adesso e' piu' scuro, e resta piu'
+     chiaro di --ink-soft perche' la gerarchia si legga ancora. */
   --paper:#F6EEDD; --surface:#FFFFFF;
-  --ink:#1E1A12; --ink-soft:#5C5346; --ink-faint:#9B9184;
+  --ink:#1E1A12; --ink-soft:#5C5346; --ink-faint:#6B6256;
   --line:#E8DFCB; --line-soft:#F1E9D8;
-  --green:#B8863C; --green-deep:#8C6229; --green-tint:#F2E6CC; --green-soft:#E3CFA0;
+  /* --green e' l'oro dei fondi e dei bordi; scritto come testo su un fondo
+     chiaro arriva a 3,2:1, e li' si usa --green-deep. */
+  --green:#B8863C; --green-deep:#885E25; --green-tint:#F2E6CC; --green-soft:#E3CFA0;
+  /* Sull'oro si scrive scuro, con l'inchiostro del logo: il bianco arrivava
+     a 3,2:1 nel tema chiaro e a 2,2:1 in quello scuro. L'oro resta lo
+     stesso; cambia solo la scritta (vedi DA-FARE, «Accessibilita'»). */
+  --oro-su:#14110B;
+  /* Il bordo di un campo da riempire e' l'unica cosa che dice dove si
+     scrive: almeno 3:1 col fondo intorno (WCAG 1.4.11). --line resta per le
+     righe che separano, dove non serve. */
+  --bordo-campo:#8A8270;
   --clay:#B85C38; --clay-deep:#8F4527; --clay-tint:#F8EBE4;
   --sand:#D9C9A8; --sand-tint:#F4EDDF; --beige:#E6DAC2;
-  --blue:#B8863C; --blue-deep:#8C6229; --blue-tint:#F2E6CC;
+  --blue:#B8863C; --blue-deep:#885E25; --blue-tint:#F2E6CC;
   --brown:#B85C38; --brown-deep:#8F4527; --brown-tint:#F8EBE4;
   --amber:#C08A3E; --red:#A83A2B; --red-tint:#F8EAE7;
-  --grad:linear-gradient(135deg,#8C6229 0%,#B8863C 100%);
+  /* La sfumatura dei tasti parte un po' piu' chiara di prima (#8C6229):
+     la scritta scura ci deve stare sopra in tutti e due i capi. */
+  --grad:linear-gradient(135deg,#A1763E 0%,#B8863C 100%);
   --grad-clay:linear-gradient(135deg,#B85C38 0%,#8F4527 100%);
   --grad-warm:linear-gradient(135deg,#F4EDDF 0%,#F8EBE4 100%);
   --sh-xs:0 1px 2px rgba(30,26,18,.05); --sh-sm:0 2px 10px rgba(30,26,18,.06);
@@ -43,6 +63,8 @@
   --ease:cubic-bezier(.4,0,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* via il doppio tocco che ingrandisce per sbaglio; le due dita restano */
+html{touch-action:manipulation}
 body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 .app{max-width:560px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative}
 #bootSplash{position:fixed;inset:0;z-index:99999;background:#14110B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
@@ -63,7 +85,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--p
 .tripbar{display:flex;gap:.5rem;margin-top:.75rem}
 .trip-pick{flex:1;appearance:none;cursor:pointer;background:var(--paper);border:1px solid var(--line);padding:.65rem 2.4rem .65rem .9rem;border-radius:var(--r-md);font-family:inherit;font-weight:700;font-size:.92rem;color:var(--ink);transition:var(--ease);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.5L7 9l3.5-3.5' stroke='%235E6E78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center}
 .trip-pick:focus{outline:none;border-color:var(--blue)}
-.trip-add{background:var(--grad);color:#fff;border:none;cursor:pointer;width:44px;border-radius:var(--r-md);font-size:1.3rem;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-blue);transition:var(--ease)}
+.trip-add{background:var(--grad);color:var(--oro-su);border:none;cursor:pointer;width:44px;border-radius:var(--r-md);font-size:1.3rem;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-blue);transition:var(--ease)}
 .trip-add:active{transform:scale(.92)}
 .trip-add.soft{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);box-shadow:none;font-size:1rem}
 .nav{display:flex;gap:.35rem;background:var(--surface);border-bottom:1px solid var(--line-soft);overflow-x:auto;scrollbar-width:none;z-index:15;padding:.55rem .7rem}
@@ -127,7 +149,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--p
 /* Era l'unico tasto dell'app che non diceva niente quando lo si toccava: su
    una connessione lenta uno lo tocca due volte perche' non sa se ha preso. */
 .seg-btn:active{transform:scale(.96)}
-.seg-btn.active{background:var(--surface);color:var(--blue);box-shadow:var(--sh-xs)}
+.seg-btn.active{background:var(--surface);color:var(--blue-deep);box-shadow:var(--sh-xs)}
 .results{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
 .res{padding:.95rem;border-bottom:1px solid var(--line-soft)}
 .res:last-child{border-bottom:none}
@@ -143,30 +165,50 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--p
 .chips{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
 .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.45rem .8rem;border-radius:100px;font-size:.76rem;font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);transition:var(--ease)}
 .chip:active{transform:scale(.94)}
-.chip.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
-.chip.green{background:var(--green);color:#fff;border-color:var(--green)}
+.chip.blue{background:var(--blue);color:var(--oro-su);border-color:var(--blue)}
+.chip.green{background:var(--green);color:var(--oro-su);border-color:var(--green)}
 .chip.brown{background:var(--brown);color:#fff;border-color:var(--brown)}
 .fg{margin-bottom:.95rem}
 label{display:block;font-weight:700;margin-bottom:.4rem;font-size:.82rem;color:var(--ink)}
-input,textarea,select{width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:var(--r-md);font-family:inherit;font-size:.95rem;background:var(--surface);transition:var(--ease);color:var(--ink)}
-input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-tint)}
+/* 16 px e non 15: sotto i 16 iPhone ingrandisce la pagina a ogni tocco su un
+   campo, adesso che lo zoom non e' piu' bloccato (vedi il meta viewport) */
+input,textarea,select{width:100%;padding:.8rem .9rem;border:1px solid var(--bordo-campo);border-radius:var(--r-md);font-family:inherit;font-size:1rem;background:var(--surface);transition:var(--ease);color:var(--ink)}
+/* il bordo del campo in uso: l'oro chiaro sul panna era a 2,6:1, e un bordo
+   deve arrivare a 3 (miglioria 11) */
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blue-deep);box-shadow:0 0 0 4px var(--blue-tint)}
+/* Chi si muove con la tastiera (o con una tastiera collegata al telefono)
+   deve vedere dove sta: un contorno solo quando il focus arriva cosi', non
+   al tocco del dito. */
+:focus-visible{outline:2px solid var(--green-deep);outline-offset:2px}
+/* Il titolo di un foglio prende il fuoco quando il foglio si apre (vedi
+   ACCESSIBILITÀ): serve a VoiceOver, e un riquadro intorno al titolo a
+   ogni apertura sarebbe solo rumore. */
+[tabindex="-1"]:focus{outline:none}
+/* Un tasto che a vederlo e' una riga di testo: il nome di un luogo o di un
+   biglietto dentro la sua scheda. */
+.come-testo{display:block;width:100%;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+/* Per chi non vede lo schermo: c'e', VoiceOver lo legge, e non occupa posto. */
+.solo-lettore{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 textarea{resize:vertical;min-height:76px}
+/* Il segnaposto e' un testo da leggere anche lui: il grigio di serie del
+   telefono arrivava a 3,9:1 nel tema scuro. */
+::placeholder{color:var(--ink-faint);opacity:1}
 select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.5L7 9l3.5-3.5' stroke='%235E6E78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.4rem}
 .btn{padding:.85rem 1.2rem;border:none;border-radius:var(--r-md);font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:var(--ease);display:inline-flex;align-items:center;justify-content:center;gap:.45rem}
 .btn:active{transform:scale(.96)}
-.btn-blue{background:var(--blue);color:#fff;box-shadow:var(--sh-blue)}
-.btn-green{background:var(--green);color:#fff;box-shadow:var(--sh-green)}
-.btn-grad{background:var(--grad);color:#fff;box-shadow:var(--sh-blue)}
+.btn-blue{background:var(--blue);color:var(--oro-su);box-shadow:var(--sh-blue)}
+.btn-green{background:var(--green);color:var(--oro-su);box-shadow:var(--sh-green)}
+.btn-grad{background:var(--grad);color:var(--oro-su);box-shadow:var(--sh-blue)}
 .btn-soft{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
 .btn-danger{background:var(--red-tint);color:var(--red)}
 .btn-block{width:100%}
 .ibtn{background:var(--paper);border:1px solid var(--line);width:38px;height:38px;border-radius:var(--r-md);font-size:1.05rem;cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
 .ibtn:active{transform:scale(.9)}
-.ibtn.blue{background:var(--blue);color:#fff;border-color:transparent}
+.ibtn.blue{background:var(--blue);color:var(--oro-su);border-color:transparent}
 .day{background:var(--surface);border-radius:var(--r-lg);padding:1.1rem;margin-bottom:.85rem;box-shadow:var(--sh-xs);border:1px solid var(--line-soft)}
 .day-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.9rem}
 .day-l{display:flex;gap:.8rem;align-items:center}
-.day-num{width:44px;height:44px;border-radius:var(--r-md);background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:1.1rem;box-shadow:var(--sh-blue);flex-shrink:0}
+.day-num{width:44px;height:44px;border-radius:var(--r-md);background:var(--grad);color:var(--oro-su);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:1.1rem;box-shadow:var(--sh-blue);flex-shrink:0}
 .day-t{font-weight:800;font-size:1rem;line-height:1.3}
 .day-m{font-size:.78rem;color:var(--ink-faint);margin-top:.15rem}
 .wchip{display:inline-flex;align-items:center;gap:.3rem;padding:.32rem .65rem;border-radius:100px;font-size:.76rem;font-weight:700;margin-top:.4rem;background:var(--blue-tint);color:var(--blue-deep)}
@@ -177,7 +219,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .act{background:var(--paper);border-radius:var(--r-md);padding:.85rem;border:1px solid transparent;display:flex;gap:.7rem;align-items:flex-start;transition:var(--ease);cursor:grab;touch-action:none;user-select:none}
 .act:active{cursor:grabbing}
 .act.dragging{opacity:.6;transform:scale(1.02);box-shadow:var(--sh-lg);background:#fff;border-color:var(--blue-tint)}
-.act.done{opacity:.5}.act.done .act-n{text-decoration:line-through}
+/* Una tappa fatta si riconosce dalla riga sopra il nome e dal grigio, non
+   da un velo a meta': a opacita' .5 il nome scendeva a 3,3:1 e l'orario
+   sotto a 2:1, e una cosa fatta si deve poter rileggere. */
+.act.done .act-n{text-decoration:line-through;color:var(--ink-soft)}
 .act.warn{background:var(--clay-tint);border-color:#EDD2C3}
 .grip{color:var(--ink-faint);font-size:1rem;padding-top:.1rem;cursor:grab}
 .act-check{margin-top:.05rem;width:19px;height:19px;flex-shrink:0;accent-color:var(--green);cursor:pointer}
@@ -192,20 +237,21 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .wbanner{background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.7rem;margin-top:.6rem;font-size:.78rem;color:var(--brown-deep);line-height:1.5}
 .wbanner strong{color:var(--brown-deep)}
 .wcard{border-radius:var(--r-lg);padding:1rem;margin-bottom:.65rem;display:flex;justify-content:space-between;align-items:center;color:#fff}
-.wcard.sun{background:linear-gradient(135deg,#D9A94A,#8C6229)}
+/* Sull'oro e sul grigio chiaro si scrive scuro, come sui tasti (vedi --oro-su). */
+.wcard.sun{background:linear-gradient(135deg,#D9A94A,#A1763E);color:var(--oro-su)}
 .wcard.cloud{background:linear-gradient(135deg,#5C6B63,#3C4842)}
 .wcard.rain{background:linear-gradient(135deg,#B85C38,#8F4527)}
-.wcard.na{background:linear-gradient(135deg,#CFC5AE,#A9A196)}
+.wcard.na{background:linear-gradient(135deg,#CFC5AE,#A9A196);color:var(--oro-su)}
 .wc-l{display:flex;align-items:center;gap:.85rem}
 .wc-emoji{font-size:2.2rem;line-height:1}
 .wc-t{font-weight:800;font-size:.95rem}
-.wc-d{font-family:'Fraunces',serif;font-style:italic;font-size:.82rem;opacity:.92;margin-top:.12rem}
+.wc-d{font-family:'Fraunces',serif;font-style:italic;font-size:.82rem;margin-top:.12rem}
 .wc-temp{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;line-height:1;text-align:right}
-.wc-min{font-size:.76rem;opacity:.88;margin-top:.2rem;text-align:right;white-space:nowrap}
-.budget-hero{background:var(--grad);color:#fff;padding:1.4rem;border-radius:var(--r-xl);margin-bottom:.95rem;box-shadow:var(--sh-blue);position:relative;overflow:hidden}
+.wc-min{font-size:.76rem;margin-top:.2rem;text-align:right;white-space:nowrap}
+.budget-hero{background:var(--grad);color:var(--oro-su);padding:1.4rem;border-radius:var(--r-xl);margin-bottom:.95rem;box-shadow:var(--sh-blue);position:relative;overflow:hidden}
 .budget-hero::after{content:'';position:absolute;right:-25px;bottom:-35px;width:150px;height:150px;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
 .bh-amt{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:600;letter-spacing:-.01em;line-height:1;position:relative}
-.bh-l{font-size:.82rem;opacity:.92;margin-top:.3rem;font-weight:600;position:relative}
+.bh-l{font-size:.82rem;margin-top:.3rem;font-weight:600;position:relative}
 .bh-split{display:flex;gap:1.4rem;margin-top:1rem;position:relative}
 .bh-s{font-size:.78rem;opacity:.95}
 .bh-s b{display:block;font-size:1rem;margin-top:.1rem;font-family:'Fraunces',serif;font-weight:600}
@@ -218,8 +264,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .cat-amt{font-weight:800;color:var(--blue-deep);font-size:.95rem}
 .person{display:flex;justify-content:space-between;align-items:center;padding:.85rem;background:var(--paper);border-radius:var(--r-md);margin-bottom:.5rem}
 .person-l{display:flex;align-items:center;gap:.7rem}
-.avatar{width:38px;height:38px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
-.avatar.me{background:linear-gradient(135deg,var(--brown),var(--brown-deep))}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--grad);color:var(--oro-su);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
+/* Il tondo di chi usa l'app e' color mattone: li' la scritta bianca regge
+   (4,5:1), quella scura no. Nel tema scuro il mattone e' chiaro, e torna lo
+   scuro. */
+.avatar.me{background:linear-gradient(135deg,var(--brown),var(--brown-deep));color:#fff}
+body.dark .avatar.me{color:var(--oro-su)}
 .person-n{font-weight:700;font-size:.92rem}
 .person-tag{font-size:.7rem;color:var(--ink-faint);font-weight:600}
 .bal{font-weight:800;font-size:.95rem}
@@ -235,7 +285,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .exp-orig{font-size:.7rem;color:var(--ink-faint);font-weight:600}
 .pchips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
 .pchip{display:inline-flex;align-items:center;gap:.4rem;background:var(--blue-tint);color:var(--blue-deep);padding:.4rem .7rem;border-radius:100px;font-size:.82rem;font-weight:700}
-.pchip button{background:none;border:none;color:var(--blue-deep);cursor:pointer;font-size:.9rem;padding:0;line-height:1;opacity:.6}
+.pchip button{background:none;border:none;color:var(--blue-deep);cursor:pointer;font-size:.9rem;padding:0;line-height:1}
 .add-row{display:flex;gap:.5rem;margin-top:.5rem}
 .add-row input{flex:1}
 .add-row button{flex-shrink:0;width:46px;padding:0;font-size:1.2rem}
@@ -307,7 +357,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    sbagliato. Il valore buono lo scrive misuraChat(). */
 .msg{max-width:85%;padding:.8rem 1rem;border-radius:var(--r-lg);font-size:.9rem;line-height:1.55;white-space:pre-wrap}
 .msg.ai{background:var(--surface);border:1px solid var(--line-soft);align-self:flex-start;border-bottom-left-radius:6px;box-shadow:var(--sh-xs)}
-.msg.me{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:6px}
+.msg.me{background:var(--grad);color:var(--oro-su);align-self:flex-end;border-bottom-right-radius:6px}
 .msg.typing{color:var(--ink-faint)}
 .msg.nota{font-size:.78rem;color:var(--ink-soft);box-shadow:none;padding:.5rem .8rem}
 .chat-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem}
@@ -334,10 +384,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    quello di prima, e basta un suggerimento qualsiasi - "scorri per cambiare
    giorno" - per portarsi via il tasto mentre lo si sta per premere. Barra sua,
    che nessun altro tocca. */
-.undo-bar{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:.7rem;background:var(--ink);color:#fff;padding:.7rem .8rem .7rem 1.2rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10001;font-weight:700;font-size:.88rem;max-width:92vw;animation:toast .35s var(--spring)}
+.undo-bar{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:.7rem;background:var(--ink);color:var(--paper);padding:.7rem .8rem .7rem 1.2rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10001;font-weight:700;font-size:.88rem;max-width:92vw;animation:toast .35s var(--spring)}
 .undo-bar.on{display:flex}
-.undo-bar button{font-family:inherit;font-weight:800;font-size:.82rem;border:none;cursor:pointer;border-radius:100px;padding:.45rem .85rem;background:#fff;color:var(--ink)}
-.undo-bar .ub-x{background:transparent;color:#fff;opacity:.6;padding:.45rem .5rem}
+.undo-bar button{font-family:inherit;font-weight:800;font-size:.82rem;border:none;cursor:pointer;border-radius:100px;padding:.45rem .85rem;background:var(--paper);color:var(--ink)}
+.undo-bar .ub-x{background:transparent;color:var(--paper);opacity:.6;padding:.45rem .5rem}
 .chip-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
 .starter{background:var(--blue-tint);color:var(--blue-deep);border:none;padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:var(--ease)}
 .starter:active{transform:scale(.95)}
@@ -358,9 +408,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 /* Biglietto a schermo intero, sempre bianco a massimo contrasto (anche col
    tema scuro): è pensato per essere letto da uno scanner al gate, quindi
    deve restare il più luminoso e leggibile possibile. */
-#mTicketBig .sheet{background:#fff;color:#111}
+/* Il biglietto grande e' bianco anche nel tema scuro (un lettore di codici
+   vuole il fondo chiaro): dentro valgono i colori del tema chiaro, se no le
+   scritte del tema scuro, chiare, finivano bianco su bianco. */
+#mTicketBig .sheet{background:#fff;color:#111;--ink:#1E1A12;--ink-soft:#5C5346;--ink-faint:#6B6256;--paper:#F6EEDD;--surface:#FFFFFF;--line:#E8DFCB;--line-soft:#F1E9D8;--bordo-campo:#8A8270}
 #mTicketBig .sheet-t,#mTicketBig .ticket-c{color:#111}
-#mTicketBig .x{color:#111}
+#mTicketBig .x{color:#111;background:#F6EEDD;border-color:#E8DFCB}
 .modal.active .sheet{transform:translateY(0)}
 .sheet-grip{width:36px;height:5px;border-radius:100px;background:var(--ink-faint);opacity:.55;background-clip:content-box;margin:0 auto 1rem}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
@@ -380,7 +433,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .empty-t{font-size:.95rem;color:var(--ink-soft);margin-bottom:1rem;font-weight:500}
 /* Il messaggio si legge e basta: il dito passa a quello che c'e' sotto.
    Aprendo la Time Table copriva per tre secondi «＋ Aggiungi» e «↩ Annulla». */
-.toast{pointer-events:none;position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.85rem 1.3rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10000;font-weight:700;font-size:.88rem;max-width:90vw;animation:toast .35s var(--spring)}
+/* Il testo e il fondo si scambiano col tema: era bianco su --ink, che nel
+   tema scuro e' panna - bianco su panna, 1,1:1, non si leggeva. Un tocco lo
+   chiude (vedi toast). */
+.toast{cursor:pointer;position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:.85rem 1.3rem;border-radius:100px;box-shadow:var(--sh-lg);z-index:10000;font-weight:700;font-size:.88rem;width:max-content;max-width:min(90vw,26rem);animation:toast .35s var(--spring)}
+/* width:max-content: con left:50% la larghezza disponibile e' meta' schermo,
+   e un messaggio di una riga ne prendeva tre. */
 @keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(20px) scale(.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 .prox{position:fixed;top:calc(env(safe-area-inset-top) + 1rem);left:1rem;right:1rem;max-width:480px;margin:0 auto;background:var(--surface);border-radius:var(--r-lg);padding:1.2rem;box-shadow:var(--sh-lg);z-index:10001;border:2px solid var(--green);animation:proxin .4s var(--spring)}
 @keyframes proxin{from{opacity:0;transform:translateY(-30px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -409,7 +467,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .id-canvas-wrap{position:relative;background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:.7rem;min-height:120px;display:flex;align-items:center;justify-content:center}
 #idCanvas{max-width:100%;display:block;touch-action:none;cursor:crosshair}
 .id-hint{padding:2rem 1rem;text-align:center;color:var(--ink-faint);font-size:.85rem;line-height:1.5}
-.file-btn{display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.85rem 1.2rem;border-radius:var(--r-md);font-weight:700;font-size:.9rem;cursor:pointer;background:var(--grad);color:#fff;box-shadow:var(--sh-blue);transition:var(--ease);width:100%}
+.file-btn{display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.85rem 1.2rem;border-radius:var(--r-md);font-weight:700;font-size:.9rem;cursor:pointer;background:var(--grad);color:var(--oro-su);box-shadow:var(--sh-blue);transition:var(--ease);width:100%}
 .file-btn:active{transform:scale(.96)}
 .prem-hero{background:var(--grad-warm);border-radius:var(--r-lg);padding:1.1rem;margin-bottom:1rem}
 .prem-t{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;margin-bottom:.25rem}
@@ -417,10 +475,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .prem-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.1rem}
 .prem-i{display:flex;align-items:center;gap:.75rem;padding:.7rem;background:var(--paper);border-radius:var(--r-md)}
 .prem-i>span{font-size:1.3rem}
-.prem-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--brown);color:#fff;padding:.25rem .6rem;border-radius:100px;font-size:.7rem;font-weight:800}
+.prem-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--brown);color:var(--surface);padding:.25rem .6rem;border-radius:100px;font-size:.7rem;font-weight:800}
 
 /* --- SPESE STILE TRICOUNT --- */
-.money-hero{background:var(--grad);color:#fff;border-radius:var(--r-xl);padding:1.3rem;margin-bottom:.9rem;box-shadow:var(--sh-green);position:relative;overflow:hidden}
+.money-hero{background:var(--grad);color:var(--oro-su);border-radius:var(--r-xl);padding:1.3rem;margin-bottom:.9rem;box-shadow:var(--sh-green);position:relative;overflow:hidden}
 .money-hero::after{content:'';position:absolute;right:-30px;top:-40px;width:170px;height:170px;background:radial-gradient(circle,rgba(217,201,168,.22),transparent 70%)}
 .mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:.9rem;gap:.6rem}
 /* Con «+ Spesa» i tasti sono piu' larghi: se col nome non ci stanno (320 px)
@@ -433,15 +491,15 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    essere il nome, che si accorcia e si legge lo stesso; i tasti no. */
 .mh-top>div:first-child{min-width:0}
 .mh-name{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mh-sub{font-size:.76rem;opacity:.85;margin-top:.15rem;font-weight:600}
+.mh-sub{font-size:.76rem;margin-top:.15rem;font-weight:600}
 .mh-tot{font-family:'Fraunces',serif;font-size:2.1rem;font-weight:600;line-height:1;position:relative}
-.mh-lbl{font-size:.75rem;opacity:.85;margin-top:.25rem;position:relative}
+.mh-lbl{font-size:.75rem;margin-top:.25rem;position:relative}
 .mh-me{display:inline-block;margin-top:.9rem;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:.4rem .85rem;border-radius:100px;font-size:.82rem;font-weight:800;position:relative}
-.mh-me.neg{background:rgba(184,92,56,.55)}
+.mh-me.neg{background:rgba(200,110,80,.5)}  /* un filo piu' chiaro (miglioria 11): sull'oro scuro «Devi 5.900 ¥» stava a 4,3:1 */
 /* 38 come tutti gli altri tasti a icona dell'app, non 34: a 34 l'area da
    toccare non ci arrivava a 44 senza pestare i piedi al tasto accanto, e
    sono le quattro azioni principali della schermata delle spese. */
-.ibtn.ghost{background:rgba(255,255,255,.18);border-color:transparent;color:#fff;width:38px;height:38px;font-size:.95rem;backdrop-filter:blur(8px)}
+.ibtn.ghost{background:rgba(255,255,255,.18);border-color:transparent;color:var(--oro-su);width:38px;height:38px;font-size:.95rem;backdrop-filter:blur(8px)}
 /* Il "+" della testata è l'azione principale, non un'utilità come le altre:
    stesso formato, ma più marcato. Croce disegnata, non il carattere "+",
    che a seconda del font non sta mai in mezzo al tondo. */
@@ -454,7 +512,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .exp-row:active{background:var(--paper);transform:scale(.99)}
 .exp-mine{font-size:.72rem;color:var(--ink-faint);font-weight:600;margin-top:.1rem}
 .exp-orig{font-size:.72rem;color:var(--ink-faint);font-weight:700}
-.fab{position:fixed;right:calc(50% - 280px + 1.1rem);bottom:calc(1.2rem + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:none;background:var(--grad);color:#fff;font-size:1.7rem;font-weight:300;cursor:pointer;box-shadow:var(--sh-lg),var(--sh-green);z-index:50;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.fab{position:fixed;right:calc(50% - 280px + 1.1rem);bottom:calc(1.2rem + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:none;background:var(--grad);color:var(--oro-su);font-size:1.7rem;font-weight:300;cursor:pointer;box-shadow:var(--sh-lg),var(--sh-green);z-index:50;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
 .fab:active{transform:scale(.9)}
 /* «＋ Aggiungi»: una pillola invece del tondo col solo segno. */
 .fab.fab-tx{width:auto;height:52px;padding:0 1.15rem 0 .95rem;border-radius:999px;display:flex;align-items:center;gap:.3rem;font-family:inherit;font-size:.95rem;font-weight:700}
@@ -535,9 +593,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    livello e vince l'ordine nel documento, che non è un criterio. */
 #mMosse{z-index:10060}
 .amt-hero{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.4rem}
-.amt-big{flex:1;border:none!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
-.amt-big:focus{outline:none;box-shadow:none!important}
-.amt-cur{width:auto!important;border:none!important;background:var(--surface)!important;font-weight:800;font-size:.85rem!important;padding:.5rem 2rem .5rem .7rem!important;border-radius:100px!important;box-shadow:var(--sh-xs)}
+/* L'importo e la valuta sono campi anche se non hanno la scatola: la riga
+   sotto la cifra e il bordo della pillola dicono dove si scrive (3:1). */
+.amt-big{flex:1;border:none!important;border-bottom:2px solid var(--bordo-campo)!important;border-radius:0!important;background:transparent!important;font-family:'Fraunces',serif!important;font-size:2.1rem!important;font-weight:600;padding:0!important;color:var(--ink)}
+.amt-big:focus{outline:none;box-shadow:none!important;border-bottom-color:var(--green-deep)!important}
+.amt-cur{width:auto!important;border:1px solid var(--bordo-campo)!important;background:var(--surface)!important;font-weight:800;font-size:.85rem!important;padding:.5rem 2rem .5rem .7rem!important;border-radius:100px!important;box-shadow:var(--sh-xs)}
 .amt-conv{font-size:.8rem;color:var(--ink-faint);font-weight:600;margin-bottom:1rem;min-height:1rem;padding-left:.2rem}
 /* Senza cambio non c'e' una cifra da mostrare, c'e' una cosa da sapere: si
    legge come un avviso, non come un numero sbiadito. */
@@ -559,7 +619,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .cat-chips{display:flex;flex-wrap:wrap;gap:.4rem}
 .cat-chip{background:var(--paper);border:1px solid var(--line);padding:.5rem .8rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.8rem;color:var(--ink-soft);cursor:pointer;transition:var(--ease)}
 .cat-chip:active{transform:scale(.94)}
-.cat-chip.on{background:var(--green);color:#fff;border-color:var(--green)}
+.cat-chip.on{background:var(--green);color:var(--oro-su);border-color:var(--green)}
 .split-item{border:1px solid transparent;transition:var(--ease)}
 .split-item.on{background:var(--green-tint);border-color:var(--green-soft)}
 /* Le due spunte del «Nuovo viaggio» si toccano su tutta la riga: su una riga
@@ -575,13 +635,14 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .book-badge.urgent{background:var(--clay);color:#fff}
 .book-row{display:flex;align-items:center;gap:.7rem;padding:.7rem;background:var(--paper);border-radius:var(--r-md);margin-bottom:.5rem}
 .book-row input{width:19px;height:19px;flex-shrink:0;accent-color:var(--green)}
+/* La spunta resta piccola a vedersi, ma si tocca un quadrato da 44 intorno. */
+.spunta{display:grid;place-items:center;width:44px;height:44px;margin:-.75rem -.4rem -.75rem -.6rem;flex-shrink:0;cursor:pointer}
 
 .trip-hero::after,.money-hero::after,.budget-hero::after{pointer-events:none}
-.trip-hero{cursor:pointer}
 .chiprow-x{display:flex;gap:.45rem;overflow-x:auto;padding:.1rem .1rem .7rem;scrollbar-width:none}
 .chiprow-x::-webkit-scrollbar{display:none}
 .tchip{flex:0 0 auto;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);padding:.5rem .9rem;border-radius:100px;font-family:inherit;font-weight:700;font-size:.8rem;cursor:pointer;transition:var(--ease)}
-.tchip.on{background:var(--green);border-color:var(--green);color:#fff}
+.tchip.on{background:var(--green);border-color:var(--green);color:var(--oro-su)}
 .tchip:active{transform:scale(.95)}
 
 /* ── Time Table: testata come l'occhiello di home, non più "Giorno" ──── */
@@ -607,6 +668,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
 .tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
 .tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
+/* La testata della Time Table sta sul cielo della pagina (in cima #AEB9C6):
+   l'inchiostro tenue li' arrivava a 3,9:1, quello pieno a 8,7. */
+#mDay #ttEyebrow,#mDay #dayTt{color:var(--ink)}
+#mDay #ttEyebrow .hh-chev{opacity:1}
 .tt-daynav{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
 .tt-daynav .x{flex-shrink:0}
 /* ── pillole dei giorni della time-table: come quelle di home, in cerchio ── */
@@ -616,10 +681,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   line-height:1.05;transition:var(--ease);
 }
-.tt-day-wd{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
+.tt-day-wd{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .tt-day-n{font-size:1.05rem;font-weight:800;margin-top:.05rem}
 .tt-day-wx{position:absolute;top:-3px;right:-3px;font-size:.72rem}
-.tt-day.on{background:var(--grad);color:#fff;box-shadow:var(--sh-green)}
+.tt-day.on{background:var(--grad);color:var(--oro-su);box-shadow:var(--sh-green)}
 .tt-day:active{transform:scale(.94)}
 .tt-day-add{
   flex:0 0 auto;width:38px;height:38px;align-self:center;border-radius:50%;cursor:pointer;
@@ -633,7 +698,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tt-slot{flex:1;min-height:38px;display:flex;flex-direction:column;gap:.4rem;padding:.3rem 0}
 .tt-act{background:var(--green-tint);border:1px solid var(--green-soft);border-radius:12px;padding:.55rem .7rem;display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.85rem;font-weight:700;transition:var(--ease)}
 .tt-act:active{transform:scale(.98)}
-.tt-act.done{opacity:.5}
+.tt-act.done .tname{text-decoration:line-through;color:var(--ink-soft)}
 .tt-act.done .tname{text-decoration:line-through}
 .tt-act .tgrip{cursor:grab;color:var(--green-deep);opacity:.7;touch-action:none;padding:.1rem .15rem}
 .tt-act .tmeta{margin-left:auto;font-size:.68rem;color:var(--green-deep);font-weight:800;white-space:nowrap}
@@ -656,7 +721,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    guardare l'orologio e poi cercare l'ora nella colonna. */
 .tt-ora{position:absolute;left:46px;right:0;height:0;border-top:2px solid var(--clay);z-index:6;pointer-events:none}
 .tt-ora::before{content:'';position:absolute;left:-3px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--clay)}
-.tt-ora b{position:absolute;left:-46px;top:-8px;width:38px;text-align:right;font-size:.62rem;font-weight:800;letter-spacing:.02em;color:var(--clay)}
+.tt-ora b{position:absolute;left:-46px;top:-8px;width:38px;text-align:right;font-size:.62rem;font-weight:800;letter-spacing:.02em;color:var(--clay-deep)}
 /* Le tappe: schede bianche con l'ombra morbida come tutte le altre schede
    dell'app, e il nome nel serif con cui l'app scrive i nomi. Erano
    rettangoli color sabbia con un bordo di un pixel: l'unico posto
@@ -678,7 +743,8 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    due riquadri non c'e' spazio per la targhetta: piu' chiara dell'orario, cosi'
    si distingue a colpo d'occhio che e' un'altra cosa. */
 .tt-block .tsub-tratto{color:var(--ink-faint);font-weight:700}
-.tt-block.done{opacity:.5;box-shadow:none}
+.tt-block.done{box-shadow:none}
+.tt-block.done .tname{text-decoration:line-through;color:var(--ink-soft)}
 .tt-block.done::before{background:var(--line)}
 .tt-block.done .tname{text-decoration:line-through}
 /* Agganciato dalla pressione lunga: si stacca dalla pagina, cosi' si vede a
@@ -843,8 +909,8 @@ body.dark .imp-entra b{color:var(--green)}
    sono l'unica cosa da toccare. Sotto i 430px la scritta lunga si accorcia
    nella sola crocetta: si perde una parola, non un comando. */
 @media (max-width:430px){.tt-travel-x .lungo{display:none}}
-.tt-travel-skip{cursor:pointer;opacity:.55;text-decoration:underline;text-underline-offset:2px}
-.tt-travel-toggle{cursor:pointer;opacity:.6}
+.tt-travel-skip{cursor:pointer;color:var(--ink-faint);text-decoration:underline;text-underline-offset:2px}
+.tt-travel-toggle{cursor:pointer;color:var(--ink-faint)}
 .tt-travel-toggle:active{opacity:1}
 .tt-hotel-travel{display:flex;align-items:center;font-size:.76rem;font-weight:700;color:var(--ink-soft);background:var(--paper);border:none;box-shadow:var(--sh-xs);border-radius:10px;padding:.42rem .6rem;margin-bottom:.6rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 /* Targhetta per le tappe attaccate: sta sopra le altre cose e ha il fondo
@@ -873,7 +939,7 @@ body.dark .imp-entra b{color:var(--green)}
 .tt-travel-mezzo{position:relative;min-width:28px;min-height:20px;justify-content:center}
 .tt-travel-mezzo::after{content:'';position:absolute;inset:-12px -8px}
 .tt-travel-shown,.tt-hotel-travel{overflow:visible}
-.tt-travel-mezzo i{font-style:normal;font-size:.55rem;opacity:.55}
+.tt-travel-mezzo i{font-style:normal;font-size:.55rem}
 .tt-travel-tight.tt-travel-shown .tt-travel-mezzo{pointer-events:auto}
 .tt-hotel-travel .tt-travel-mezzo{margin-left:auto}
 .tt-travel-quanto{overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -903,7 +969,7 @@ body.dark .imp-entra b{color:var(--green)}
    copiare a mano (vedi copiaAMano). */
 .copia-manuale{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-md);padding:.8rem;margin-bottom:1rem}
 .copia-manuale .cm-t{font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin-bottom:.5rem}
-.copia-manuale textarea{width:100%;min-height:4.5rem;font-size:.8rem;word-break:break-all;margin-bottom:.5rem}
+.copia-manuale textarea{width:100%;min-height:4.5rem;font-size:1rem;word-break:break-all;margin-bottom:.5rem}
 .share-qr{display:flex;flex-direction:column;align-items:center;gap:.35rem;margin-top:.9rem}
 .share-qr canvas{border-radius:var(--r-md);background:#fff;padding:.35rem}
 .share-qr div{font-size:.75rem;color:var(--ink-faint);font-weight:700}
@@ -930,8 +996,8 @@ input[type="date"],input[type="time"]{-webkit-appearance:none;appearance:none;mi
 
 body.dark{
   --paper:#0E0C09;--surface:#1C1712;
-  --ink:#F0E9DC;--ink-soft:#C9BFA9;--ink-faint:#8C8171;
-  --line:#332B1E;--line-soft:#2A2317;
+  --ink:#F0E9DC;--ink-soft:#C9BFA9;--ink-faint:#A19585;
+  --line:#332B1E;--line-soft:#2A2317;--bordo-campo:#776D5F;
   --green:#D9A94A;--green-deep:#F0D9A0;--green-tint:#2A2013;--green-soft:#3A2E1C;
   --clay:#D98A63;--clay-deep:#F2C7B0;--clay-tint:#33261E;
   --sand:#4A4433;--sand-tint:#25231C;--beige:#2A281F;
@@ -972,7 +1038,7 @@ body.dark .tt-cont{background:var(--beige)!important}
 .tt-multi{display:flex;gap:.7rem;overflow-x:auto;align-items:flex-start}
 .tt-col{flex:1 1 0;min-width:190px}
 .tt-col-h{font-size:.78rem;font-weight:800;text-align:center;padding:.4rem;border-radius:10px;background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);margin-bottom:.5rem}
-.tt-col-active .tt-col-h{background:var(--green);color:#fff;border-color:var(--green)}
+.tt-col-active .tt-col-h{background:var(--green);color:var(--oro-su);border-color:var(--green)}
 .tt-peek{opacity:.88}
 .tt-peek .tt-col-h{cursor:pointer}
 .tt-peek .tgrip,.tt-peek .tszr{visibility:hidden}
@@ -1025,6 +1091,9 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 .trip-hero .pill-ghost,.trip-hero .status-pill{position:relative;min-height:36px;display:inline-flex;align-items:center}
 .trip-hero .pill-ghost::after,.trip-hero .status-pill::after{content:'';position:absolute;inset:-5px -2px}
 .trip-hero .status-pill{border-color:var(--green);color:var(--green-deep)}
+/* «Consigli attivi» acceso: era un velo bianco pensato per la vecchia scheda
+   dorata, e nel tema scuro diventava grigio con la scritta grigia sopra. */
+.trip-hero .pill-ghost.on{background:var(--green-tint);border-color:var(--green-soft);color:var(--green-deep)}
 /* le statistiche: sotto una linea, respirate */
 .trip-hero-stats{
   gap:2.2rem;
@@ -1116,6 +1185,10 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 /* ── 4 · CHI STAVA IN BASSO SALE ────────────────────────────────── */
 .fab{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
 .toast,.undo-bar{bottom:calc(5.6rem + env(safe-area-inset-bottom))}
+/* Quando sopra la barra c'e' un tasto, il messaggio va in alto (vedi
+   messaggioAlPosto): prima sotto la testata, se no in cima. */
+.toast.sotto-testata{bottom:auto;top:calc(env(safe-area-inset-top) + 4.6rem)}
+.toast.in-cima{bottom:auto;top:calc(env(safe-area-inset-top) + .6rem)}
 /* dentro il foglio del giorno il fab resta dov'era: lì la pillola non c'è */
 /* La time-table è una pagina, non più un foglio sovrapposto: si toglie di
    dosso il vestito da foglio e il "+" sale sopra la barra in basso. */
@@ -1132,7 +1205,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 .tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:1.15rem;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-md);z-index:50;opacity:.55;transition:var(--ease)}
 /* «↩ Annulla»: la pillola tiene la scritta, alta come il tondo di prima. */
 .tt-undo{width:auto;padding:0 .95rem 0 .8rem;border-radius:999px;display:flex;align-items:center;gap:.35rem;font-family:inherit;font-size:.85rem;font-weight:700}
-.tt-undo.on{opacity:1;background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:var(--sh-lg)}
+.tt-undo.on{opacity:1;background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:var(--sh-lg)}  /* --paper e non bianco: nel tema scuro --ink e' panna */
 .tt-undo:active{transform:scale(.92)}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
@@ -1215,7 +1288,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-riga1 .hh-grado-solo{flex-shrink:0;margin-bottom:0}
 .hh-eyebrow{
   position:relative;font-size:.68rem;font-weight:700;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink-soft);opacity:.85;margin-bottom:.5rem;
+  text-transform:uppercase;color:var(--ink-soft);margin-bottom:.5rem;
 }
 /* L'interlinea stretta (.88) e' quella che fa sembrare il nome della citta'
    un titolo di giornale invece di una riga di testo, e resta. Ma un'interlinea
@@ -1306,7 +1379,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-card-s{font-size:.84rem;color:var(--ink-faint);margin-top:.3rem;line-height:1.4}
 .hh-avs{display:flex;margin-top:auto;padding-top:.9rem}
 .hh-av{
-  width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;
+  width:26px;height:26px;border-radius:50%;background:var(--grad);color:var(--oro-su);
   display:grid;place-items:center;font-size:.7rem;font-weight:800;
   border:2px solid var(--surface);margin-right:-7px;
 }
@@ -1397,7 +1470,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   border:1px dashed var(--line);background:transparent;color:var(--ink-faint);
 }
 .ht-n.ok{border-style:solid;border-color:var(--green-soft);background:var(--green-tint);color:var(--green-deep)}
-.ht-n>i{font-style:normal;font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.8}
+.ht-n>i{font-style:normal;font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .ht-n>b{font-size:.98rem;font-weight:800;line-height:1.05}
 .ht-riga{display:flex;align-items:center;gap:.6rem;margin-top:.7rem;font-size:.78rem;line-height:1.35}
 .ht-riga>span{flex:1;min-width:0}
@@ -1449,6 +1522,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.forte{--vel:.58;--cl-goccia:#fff}
 .cielo.notte.forte{--cl-goccia:rgba(226,240,255,.92)}
 .cielo.c-ignoto {--cl-alto:#9FAEB8;--cl-g:linear-gradient(168deg,#93A6B4 0%,#C6C9C2 55%,#E6DFCD 100%)}
+/* Le nuvole della pioggia e del temporale sono grigie, non bianche: e' come
+   sono davvero, e la scritta bianca dell'intestazione ci si legge sopra. */
+.cielo.c-pioggia{--cl-nuv:rgba(160,171,184,.78)}
+.cielo.c-tempo{--cl-nuv:rgba(84,93,106,.92)}
 /* Di notte il sole diventa luna, le nuvole si spengono, il cielo scende. */
 .cielo.notte{--cl-astro:#EEF2F7;--cl-alone:rgba(228,238,248,.26);
   --cl-nuv:rgba(188,202,219,.4);--cl-goccia:rgba(216,234,253,.8);--cl-alone2:rgba(228,238,248,.1);
@@ -1461,6 +1538,21 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .cielo.notte.c-neve   {--cl-alto:#233042;--cl-g:linear-gradient(168deg,#1A2534 0%,#334458 60%,#5D7186 100%)}
 .cielo.notte.c-tempo  {--cl-alto:#12171E;--cl-g:linear-gradient(168deg,#0D1117 0%,#232A34 60%,#414A57 100%)}
 .cielo.notte.c-ignoto {--cl-alto:#252B30;--cl-g:linear-gradient(168deg,#1D2328 0%,#3A3E40 100%)}
+/* Nel tema scuro anche il cielo di giorno sta basso di luce. La pagina
+   sotto e' quasi nera, e un azzurro chiaro in cima faceva passare la
+   sfumatura per i grigi medi proprio dove stanno le scritte: li' non si
+   leggono ne' il bianco ne' il nero. Il colore del tempo resta, piu' cupo;
+   le nuvole e la nebbia si spengono come di notte. */
+body.dark .cielo:not(.notte).c-sereno {--cl-alto:#1F5B8D}
+body.dark .cielo:not(.notte).c-velato {--cl-alto:#2B5E86}
+body.dark .cielo:not(.notte).c-nuvolo {--cl-alto:#4C5A67}
+body.dark .cielo:not(.notte).c-nebbia {--cl-alto:#535A5C}
+body.dark .cielo:not(.notte).c-pioggia{--cl-alto:#475B6D}
+body.dark .cielo:not(.notte).c-neve   {--cl-alto:#465B71}
+body.dark .cielo:not(.notte).c-ignoto {--cl-alto:#4D5B64}
+body.dark .cielo{--cl-nuv:rgba(188,202,219,.4)}
+body.dark .cielo.c-tempo{--cl-nuv:rgba(84,93,106,.92)}
+body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22) 18px 48px,transparent 70px),linear-gradient(transparent 62px,rgba(255,255,255,.14) 88px 114px,transparent 150px)}
 
 .cl-astro,.cl-nuv,.cl-g,.cl-nev,.cl-neb,.cl-lampo,.cl-saetta,.cl-stelle{
   position:absolute;pointer-events:none;
@@ -1560,11 +1652,14 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 /* Scende scivolando di lato di esattamente una piastrella: il giro si
    chiude lo stesso, e la neve non cade a piombo come la pioggia. */
 @keyframes cl-nevica{from{background-position:0 0}to{background-position:100% 100%}}
+/* Le due strisce di nebbia stanno in cima, sopra le scritte (che cominciano
+   a 64 px): dietro «GIAPPONE · GIORNO 1» la prima faceva grigio medio, e li'
+   non si leggeva ne' il bianco ne' il nero. */
 .cl-neb{
   inset:0;
   background:
-    linear-gradient(transparent 6%,rgba(255,255,255,.5) 18% 32%,transparent 44%),
-    linear-gradient(transparent 38%,rgba(255,255,255,.36) 50% 62%,transparent 74%);
+    linear-gradient(transparent 0,rgba(255,255,255,.5) 18px 48px,transparent 70px),
+    linear-gradient(transparent 62px,rgba(255,255,255,.3) 88px 114px,transparent 150px);
   animation:cl-nebbia 18s ease-in-out infinite alternate;
 }
 @keyframes cl-nebbia{from{translate:calc(-20px*var(--s)) 0;opacity:.7}to{translate:calc(20px*var(--s)) 0;opacity:1}}
@@ -1617,8 +1712,12 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   position:absolute;inset:0;overflow:hidden;pointer-events:none;--s:1;
   /* Sfuma verso il basso invece di finire con un taglio: e' la
      differenza fra un cielo e un'immagine incollata sopra. */
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.3) 48%,transparent 72%);
-  mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.3) 48%,transparent 72%);
+  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 56px,rgba(0,0,0,.2) 70px,rgba(0,0,0,.06) 96px,transparent 130px);
+  mask-image:linear-gradient(180deg,#000 0,#000 56px,rgba(0,0,0,.2) 70px,rgba(0,0,0,.06) 96px,transparent 130px);
+  /* In pixel e non in percentuale: le scritte cominciano sempre a 64 px
+     dall'alto (il padding dell'intestazione), e il tempo che fa si disegna
+     SOPRA di loro, come il sole. Arrivava fino a meta' intestazione, e una
+     nuvola che passava dietro «GIAPPONE · GIORNO 1» la cancellava. */
 }
 /* Quando il cielo in alto e' scuro, quello che ci sta sopra deve
    schiarirsi: le pillole dei viaggi erano inchiostro tenue su un fondo
@@ -1688,7 +1787,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 /* Le ore di buio stanno un gradino indietro: così alba e tramonto si
    vedono scorrendo la fila, senza bisogno di leggere un orario. */
 .mt-ora.buia{background:var(--sand-tint);border-color:var(--sand)}
-.mt-ora.buia .mt-o-h{opacity:.75}
+.mt-ora.buia .mt-o-h{color:var(--ink-soft)}
 .mt-ora.adesso{border-color:var(--green);background:var(--surface);box-shadow:var(--sh-sm)}
 .mt-ora.passata{opacity:.4}
 .mt-o-h{font-size:.68rem;font-weight:700;color:var(--ink-faint)}
@@ -1750,8 +1849,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-cerca.corto .hh-cerca-l{display:none}
 .hh-cerca.corto .hh-cerca-c{display:inline}
 .hh-cerca:active{transform:scale(.99)}
-.hh.cl-buio .hh-cerca{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
-.hh.cl-buio .hh-cerca svg{opacity:.85}
+.hh .hh-cerca.vetro{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.hh .hh-cerca.vetro svg{opacity:.85}
 /* «A raccolta» accanto a «Cosa cerchi»: sulla stessa riga, perche' sono le
    due cose che si fanno in strada, col telefono in mano e gli altri
    sparsi. La ricerca prende lo spazio che resta; il richiamo e' pieno, nel
@@ -1762,7 +1861,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-raccolta{
   flex:none;display:flex;align-items:center;gap:.35rem;min-height:44px;
   padding:.85rem .9rem;border-radius:var(--r-lg);border:1px solid var(--green);
-  background:var(--green);color:#fff;font-family:inherit;font-size:.9rem;
+  background:var(--green);color:var(--oro-su);font-family:inherit;font-size:.9rem;
   font-weight:800;white-space:nowrap;cursor:pointer;box-shadow:var(--sh-xs);
   transition:var(--ease);
 }
@@ -1791,7 +1890,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .hh-rapidi.due{grid-template-columns:repeat(2,minmax(0,1fr))}
 .hh-rapidi.due .hh-rapido{flex-direction:row;gap:.35rem}
 .hh-rapido:active{transform:scale(.97)}
-.hh.cl-buio .hh-rapido{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.hh .hh-rapido.vetro{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
 .hh-sumisura{margin-top:.8rem}
 /* La scheda «Prepara la valigia» (vedi schedaValigiaHtml). Sale sul fondo
    dell'intestazione come «Fra poco», che le viene dopo: messa sotto e basta
@@ -1859,7 +1958,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    scuro: --ink invece si ribalta, e sul telefono in notturna sarebbe stato
    bianco su chiaro. */
 .hh-act-forte{
-  background:var(--green);color:#fff;border-color:var(--green);font-weight:800;
+  background:var(--green);color:var(--oro-su);border-color:var(--green);font-weight:800;
 }
 
 /* ── l'occhiello apre la scheda del viaggio (Persone, Bagagli, …) ── */
@@ -1934,6 +2033,9 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 .nav-item svg{width:27px;height:27px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ni-tx{font-size:1.4rem;font-weight:600;line-height:27px;display:block}
 .nav-item.active{background:var(--ink);color:var(--paper)}
+/* Le voci sono tasti veri (VoiceOver le legge come tasti e la tastiera ci
+   arriva): via il fondo e il bordo che un tasto si porta da casa. */
+button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:none;appearance:none}
 
 /* ── "La giornata": il + di aggiunta le sta accanto, non più in barra ── */
 .hh-sec-l{display:flex;align-items:center;gap:.6rem}
@@ -2055,6 +2157,76 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    prenderebbe i tocchi di quella di sopra. */
 .hh-acts{row-gap:1.2rem}
 
+/* ── TOCCHI DA 44 PER TUTTI (miglioria 11) ───────────────────────────
+   Gli altri tasti piccoli, misurati come sopra: col dito, 44×44 intorno
+   al centro, contando il bordo (vedi test/prova-accessibilita.js). Quasi
+   sempre e' un'area invisibile che sborda; dove intorno c'e' poco posto,
+   il tasto cresce davvero di qualche pixel. */
+.x,.chip,.cat-chip,.starter,.tic-ic,.hist-share,.tt-day-add,.hh-tap,.pri-badge,.tt-travel-x,.tt-travel-skip,.tt-travel-toggle{position:relative}
+.x::after,.chip::after,.cat-chip::after,.starter::after,.tic-ic::after,.hist-share::after,
+.tt-day-add::after,.locate-fab::after,.hh-tap::after,button.pri-badge::after,
+.tt-travel-x::after,.tt-travel-skip::after,.tt-travel-toggle::after{content:'';position:absolute}
+.x::after          {inset:-7px}        /* 32 col bordo → 44 */
+.chip::after       {inset:-8px -1px}   /* 30 → 44 */
+.cat-chip::after   {inset:-7px -1px}   /* 33 → 45 */
+.starter::after    {inset:-7px 0}      /* 30 → 44 */
+.tic-ic::after     {inset:-8px}        /* 30 → 44 */
+.hist-share::after {inset:-5px}        /* 36 → 44 */
+.tt-day-add::after {inset:-4px}        /* 38 → 44 */
+.locate-fab::after {inset:-4px}        /* 38 → 44 */
+.hh-map-wrap .locate-fab::after{inset:-6px}   /* 34 → 44 */
+button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
+.tt-travel-x::after,.tt-travel-skip::after,.tt-travel-toggle::after{inset:-16px -18px}
+/* Nella striscia dall'albergo il mezzo sta a destra, accanto alla ✕: un po'
+   d'aria fra i due, se no le due aree da 44 si pestano. */
+.tt-hotel-travel .tt-travel-x{margin-left:1.6rem}
+/* E lo spazio lo paga la scritta, che a 320 px va a capo invece di finire
+   coi puntini: «682 min · 47,7 km» tagliato a metà non dice niente. */
+.tt-hotel-travel .tt-travel-quanto{white-space:normal;line-height:1.35}
+/* Il giorno sul bordo della striscia («+ Aggiungi giorno» in fondo, il primo
+   in cima) arrivava addosso a «‹» e «›»: a 320 px toccarne uno voleva dire
+   rischiare l'altro. La striscia scorre e si ferma dove vuole il dito,
+   quindi lo stacco sta fra lei e le frecce; e dentro di lei un margine ai
+   due capi, perche' chi scorre taglia l'area invisibile di chi sta sul bordo. */
+.tt-daynav{gap:.6rem}
+.tt-daynav .chiprow-x{padding-left:.4rem;padding-right:.4rem;scroll-padding:0 .4rem}
+/* L'occhiello del viaggio in Home e nella Time Table: una riga di testo
+   alta 12-16 px che apre il giorno. La citta' sotto apre la stessa cosa,
+   quindi se le due aree si toccano non si sbaglia. */
+.hh-tap::after     {inset:-16px 0}
+/* ...e sta sopra la citta' (che viene dopo e la coprirebbe). */
+.hh-riga1{z-index:2}
+.btn,.split-item,.trip-pick,.amt-big{min-height:44px}
+.trip-hero-name{padding:.15rem 0}
+/* Il riepilogo che apre e chiude (Come si usa, Codice): la riga intera. */
+.spiega>summary{min-height:44px}
+.share-code summary{padding:.95rem 0}
+/* I link sotto l'accesso («Password dimenticata?», «Entra con un link»):
+   alti come la loro scritta, 15 px. */
+.auth-link{display:flex;align-items:center;justify-content:center;min-height:44px;width:fit-content;margin:.2rem auto 0;padding:0 .8rem}
+/* Un link dentro una frase: piu' alto senza spostare le righe. */
+.au-privacy a{display:inline-block;padding:.85rem .2rem;margin:-.85rem -.2rem}
+/* La ✕ della valigia scende sotto la sua riga (margine negativo): sopra
+   la riga che viene dopo, se no il dito in basso prendeva quella. */
+.val-x{position:relative;z-index:1}
+/* Le tendine piccole (la valuta dentro le schede d'oro): il velo che prende
+   il tocco (vedi wireBottomSheetSelect) sborda fino a 44. */
+.amt-cur~.sel-velo{inset:-7px -2px!important}
+.cur-vis~.sel-velo{inset:-11px -6px!important}
+/* Due tasti da 44 uno accanto all'altro (o uno sopra l'altro) vogliono
+   almeno 44 px fra i loro centri: dove erano piu' stretti, un po' di
+   spazio in piu' fra di loro. */
+.exp-btns{gap:.75rem}
+.cat-chips,.chip-row{row-gap:.9rem}
+.x{flex-shrink:0}
+/* La pubblicita' in fondo a Scopri stava attaccata al tasto d'invio
+   dell'assistente, e «Rimuovi con Premium» (che si tocca su 44 px) se ne
+   prendeva il bordo. Resta dov'e', solo un po' piu' giu'. */
+#discover>.ad-slot{margin-top:1rem}
+/* Lo stesso in Home senza viaggio: «Importa da Excel o CSV» finiva appoggiato
+   a «Rimuovi con Premium». */
+#plan>.ad-slot{margin-top:.9rem}
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{
     animation-duration:.01ms!important;
@@ -2084,8 +2256,10 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   </svg>
   <div class="bootSplash-name" translate="no">Gepp<span style="color:#F0D9A0;font-style:italic">Go</span></div>
 </div>
+<!-- Dove VoiceOver legge i messaggi in basso (vedi annuncia) -->
+<div id="annunci" class="solo-lettore" role="status" aria-live="polite"></div>
 <div class="app">
-  <div class="topbar">
+  <div class="topbar" role="banner">
     <div class="topbar-row">
       <!-- Il viaggio si cambia da qui. Prima i nomi stavano tutti in fila in
            cima alla home: con tre viaggi occupavano una riga intera per una
@@ -2125,21 +2299,21 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
       <button class="tb-profilo" id="tbProfilo" onclick="apriProfilo()" title="Profilo" aria-label="Profilo"></button>
     </div>
   </div>
-  <div class="nav"><div class="nav-track">
-    <div class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></div>
-    <div class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></div>
-    <div class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></div>
-    <div class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><svg viewBox="0 0 24 24"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8"/></svg></div>
-    <div class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></div>
-    <div class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></div>
-    <div class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></div>
+  <nav class="nav"><div class="nav-track">
+    <button type="button" class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></button>
+    <button type="button" class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></button>
+    <button type="button" class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></button>
+    <button type="button" class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8"/></svg></button>
+    <button type="button" class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></button>
+    <button type="button" class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></button>
+    <button type="button" class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></button>
     <!-- Il Profilo non sta piu' qui: sta in fondo al cassetto delle tre
          righine. La barra in basso e' per i posti dove si va camminando, e
          nel Profilo non ci si va camminando: ci si va una volta ogni tanto,
          per l'account o per una impostazione. Occupava un ottavo di una
          barra che gia' scorreva. -->
-  </div></div>
-  <div class="scroll">
+  </div></nav>
+  <main class="scroll">
     <div class="page active" id="plan">
       <div id="homeHero"></div>
       <div id="cloudWarn"></div>
@@ -2162,7 +2336,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
       <div class="card" style="margin-top:.9rem"><div class="card-h" style="margin-bottom:.5rem">Incolla un elenco di posti</div>
         <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.</p>
         <textarea id="bulkList" placeholder="Louvre&#10;Musée d'Orsay&#10;Sainte-Chapelle" style="min-height:90px"></textarea>
-        <div style="display:flex;gap:.5rem;margin-top:.6rem"><select id="bulkPri" style="flex:1"><option value="skippable">Saltabili (avviso leggero)</option><option value="essential">Essenziali</option></select><button class="btn btn-blue" onclick="importBulk()">Aggiungi tutti</button></div>
+        <div style="display:flex;gap:.5rem;margin-top:.6rem"><select id="bulkPri" aria-label="Priorità" style="flex:1"><option value="skippable">Saltabili (avviso leggero)</option><option value="essential">Essenziali</option></select><button class="btn btn-blue" onclick="importBulk()">Aggiungi tutti</button></div>
         <div id="bulkStatus" style="font-size:.78rem;color:var(--ink-soft);margin-top:.5rem;line-height:1.5"></div>
       </div>
         <div class="card" style="margin-top:1rem">
@@ -2180,7 +2354,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
         <div class="chip-row" id="aiStarters"></div>
         <div class="chat-wrap">
           <div class="chat-msgs" id="chatMsgs"></div>
-          <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('chatPdf').click()" title="Allega un PDF"><span aria-hidden="true">📎</span> PDF</button><input type="file" id="chatPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'chat')"><textarea id="chatInput" rows="1" placeholder="Chiedi, incolla un itinerario o allega un PDF..." onkeydown="chatTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="sendChat()">➤</button></div>
+          <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('chatPdf').click()" title="Allega un PDF"><span aria-hidden="true">📎</span> PDF</button><input type="file" id="chatPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'chat')"><textarea id="chatInput" rows="1" placeholder="Chiedi, incolla un itinerario o allega un PDF..." onkeydown="chatTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="sendChat()" title="Invia" aria-label="Invia">➤</button></div>
         </div>
       </div>
       <div id="impMode" style="display:none">
@@ -2229,7 +2403,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
       </div>
       <div id="moneySpese"><div id="tricountBody"></div></div>
       <div id="moneyBudget" style="display:none">
-      <select class="trip-pick" id="budgetWho" onchange="renderBudget()" style="margin-bottom:.7rem"></select>
+      <select class="trip-pick" id="budgetWho" aria-label="Di chi vuoi vedere il budget" onchange="renderBudget()" style="margin-bottom:.7rem"></select>
       <div class="budget-hero"><div class="bh-amt" id="bAmt">€0</div><div class="bh-l" id="bCurLabel">Spesa totale del viaggio</div>
         <div class="bh-split"><div class="bh-s">Totale gruppo<b id="bPer">€0</b></div><div class="bh-s">Persone<b id="bPpl">0</b></div><div class="bh-s">Sue spese<b id="bCnt">0</b></div></div>
       </div>
@@ -2320,7 +2494,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
         <p style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-top:.4rem">È solo la proposta di partenza: ogni volta che aggiungi una foto l'app te lo richiede, così una foto importante e un cartello dell'autobus non pesano uguale.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.3rem">🌍 Lingua</div>
         <div class="card-sub" style="margin-bottom:.7rem">Di suo GeppGo prende la lingua del telefono. Le parti non ancora tradotte restano in italiano.</div>
-        <select id="sceltaLingua" onchange="cambiaLingua(this.value)"></select>
+        <select id="sceltaLingua" aria-label="Lingua" onchange="cambiaLingua(this.value)"></select>
         <p id="linguaCopertura" style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem"></p></div>
       <div class="card"><div class="card-h" style="margin-bottom:.3rem">🗺️ La mappa senza rete</div>
         <div class="card-sub" style="margin-bottom:.7rem">Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l'hai lì.</div>
@@ -2357,8 +2531,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
       <div class="card"><div class="card-h" style="margin-bottom:.6rem">⚑ Segnalazioni e contatti</div>
         <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6">Le foto di GeppGo si vedono solo dentro il viaggio in cui stanno: non c'è nessuna bacheca pubblica e nessun indirizzo che si possa girare a estranei.</p>
         <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Se in un viaggio trovi una foto che non dovrebbe esserci, aprila e tocca <strong>Segnala</strong>. Le segnalazioni che riguardano minori o reati vengono guardate per prime e, quando serve, riferite alle autorità.</p>
-        <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Per qualsiasi altra cosa: <a href="mailto:merati.giacomo94@gmail.com" style="color:var(--brown);font-weight:700">merati.giacomo94@gmail.com</a></p>
-        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.</p>
+        <p style="font-size:.84rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">Per qualsiasi altra cosa: <a href="mailto:merati.giacomo94@gmail.com" style="color:var(--brown);font-weight:700;display:inline-block;padding:.85rem 0;margin:-.85rem 0;position:relative">merati.giacomo94@gmail.com</a></p>
+        <p style="font-size:.78rem;color:var(--ink-faint);line-height:1.5;margin-top:1rem">Se c'è pericolo per qualcuno adesso, chiama il <strong>112</strong>. In Italia il materiale che riguarda minori si segnala anche alla Polizia Postale, su commissariatodips.it.</p>
         <button class="btn btn-soft btn-block" style="margin-top:.8rem" onclick="apriPrivacy()">Come tratto i tuoi dati</button></div>
       <div class="ad-slot"><span>Spazio pubblicitario</span><button class="ad-x" onclick="openPremium()">Rimuovi con Premium</button></div>
     </div>
@@ -2377,9 +2551,9 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home">✕</button>
   </div>
   <div class="tt-daynav">
-    <button class="x" onclick="ttNav(-1)">‹</button>
+    <button class="x" onclick="ttNav(-1)" title="Giorno precedente" aria-label="Giorno precedente">‹</button>
     <div class="chiprow-x" id="dayChips" style="flex:1"></div>
-    <button class="x" onclick="ttNav(1)">›</button>
+    <button class="x" onclick="ttNav(1)" title="Giorno successivo" aria-label="Giorno successivo">›</button>
   </div>
   <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
@@ -2409,9 +2583,9 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 </div>
 <!-- Le scritte accanto ai segni: «↩» e «＋» da soli non dicevano cosa
      facevano (vedi «Nessuna funzione nascosta» in CLAUDE.md). -->
-<button class="tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare">↩ Annulla</button>
+<button class="tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare" aria-disabled="true">↩ Annulla</button>
 <button class="fab fab-tx" id="ttFab"><span class="fab-piu" aria-hidden="true">＋</span> Aggiungi</button></div>
-  </div>
+  </main>
 </div>
 <!-- La presentazione: tre schermate al primissimo avvio, prima
      dell'accesso (vedi LA PRESENTAZIONE). Si scorrono col dito o con
@@ -2505,7 +2679,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     <button class="auth-link" style="margin-top:.7rem" onclick="auVai('in')">Hai già un account? Accedi</button>
     <p class="au-privacy">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--brown);font-weight:700">privacy di GeppGo</a>.</p>
   </div>
-  <button class="auth-link" style="margin-top:.2rem" onclick="auMostra('auScelta')">‹ Indietro</button>
+  <button class="auth-link" style="margin-top:.9rem" onclick="auMostra('auScelta')">‹ Indietro</button>
   </div>
   <!-- Con la conferma via email attiva, la registrazione non fa entrare:
        senza dirlo, chi si era appena registrato restava davanti allo stesso
@@ -2519,7 +2693,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   </div>
   <div id="auRec" style="display:none">
     <p style="font-size:.9rem;color:var(--ink-soft);line-height:1.6;margin-bottom:1rem">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link della mail → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
-    <div class="fg"><label>Codice o link della mail</label><input id="auCode" autocapitalize="off" autocorrect="off" autocomplete="one-time-code" placeholder="Incolla il link, o il codice a 6 cifre" style="font-size:.92rem"></div>
+    <div class="fg"><label>Codice o link della mail</label><input id="auCode" autocapitalize="off" autocorrect="off" autocomplete="one-time-code" placeholder="Incolla il link, o il codice a 6 cifre"></div>
     <div id="recMsg" style="font-size:.8rem;color:var(--red);min-height:1.1rem;margin-bottom:.5rem;line-height:1.4"></div>
     <button class="btn btn-grad btn-block" onclick="authVerifyCode()">Verifica e continua</button>
     <button class="auth-link" onclick="recBack()">‹ Torna all'accesso</button>
@@ -2528,7 +2702,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 <div class="modal modal-top" id="mMeteo"><div class="sheet sheet-top">
   <div class="sheet-head">
     <div><div class="sheet-t">Meteo</div><div class="card-sub" id="wxTripName">—</div></div>
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div style="display:flex;align-items:center;gap:.65rem">
       <button class="ibtn blue" onclick="refreshWeather()" title="Aggiorna il meteo" aria-label="Aggiorna il meteo">🔄</button>
       <button class="x x-close" onclick="closeSheet('mMeteo')">✕</button>
     </div>
@@ -2664,7 +2838,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     </div></div>
   </div>
   <div style="display:flex;gap:.5rem;margin-bottom:.8rem">
-    <select id="packAddCat" style="flex:0 0 auto;max-width:38%"><option>Documenti</option><option>Elettronica</option><option>Igiene</option><option>Abbigliamento</option><option selected>Extra</option></select>
+    <select id="packAddCat" aria-label="Categoria" style="flex:0 0 auto;max-width:38%"><option>Documenti</option><option>Elettronica</option><option>Igiene</option><option>Abbigliamento</option><option selected>Extra</option></select>
     <input id="packAddInp" placeholder="Aggiungi una voce..." style="flex:1" onkeydown="if(event.key==='Enter')addPackItem()">
     <button class="btn btn-soft" onclick="addPackItem()">+</button>
   </div>
@@ -2722,8 +2896,8 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="expTitle">Nuova spesa</div><button class="x x-close" onclick="closeSheet('mExpense')">✕</button></div>
   <div class="amt-hero">
-    <input class="amt-big" type="text" inputmode="decimal" id="expAmt" placeholder="0,00" oninput="updateConv()">
-    <select class="amt-cur" id="expCur" onchange="updateConv()"></select>
+    <input class="amt-big" type="text" inputmode="decimal" id="expAmt" placeholder="0,00" aria-label="Importo" oninput="updateConv()">
+    <select class="amt-cur" id="expCur" aria-label="Valuta" onchange="updateConv()"></select>
   </div>
   <div id="expConv" class="amt-conv"></div>
   <!-- Il cambio a mano: quello che ha applicato davvero la banca o il
@@ -2875,9 +3049,9 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
     <input type="file" id="adTkImgInp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="actTicketFromImages(this)">
     <p style="font-size:.72rem;color:var(--ink-faint);line-height:1.5;margin-top:.6rem">Ogni biglietto che aggiungi qui si collega a questa attività e va subito a una persona. Se sul PDF c'è scritto il nome di chi entra, il biglietto va a lui; se non c'è, il primo al primo, il secondo al secondo, e chi ne carichi dopo va a chi non ne ha ancora. Il codice del voucher o della prenotazione lo riconosco e lo tengo da parte: non è un ingresso. Lo stesso codice letto due volte non viene contato due volte.</p>
   </div>
-  <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.4rem"><label style="margin:0">Collega una spesa già inserita <span style="font-weight:500;color:var(--ink-faint)">(es. l'hai già pagata e registrata in Spese)</span></label><span id="adExpCur"></span></div>
+  <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.4rem"><label id="adExpLbl" style="margin:0">Collega una spesa già inserita <span style="font-weight:500;color:var(--ink-faint)">(es. l'hai già pagata e registrata in Spese)</span></label><span id="adExpCur"></span></div>
     <div id="adExpListWrap"></div>
-    <div style="display:flex;gap:.5rem"><select id="adExpPick" style="flex:1"><option value="">Nessuna spesa da collegare</option></select><button class="chip" style="white-space:nowrap" onclick="linkAdExpense()">Collega</button></div>
+    <div style="display:flex;gap:.5rem"><select id="adExpPick" aria-labelledby="adExpLbl" style="flex:1"><option value="">Nessuna spesa da collegare</option></select><button class="chip" style="white-space:nowrap" onclick="linkAdExpense()">Collega</button></div>
   </div>
   <div class="fg"><label>Note</label><textarea id="adNotes"></textarea></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -3057,7 +3231,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   <input type="file" id="mhPdf" accept="application/pdf,.pdf" style="display:none" onchange="mailHotelDaPdf(this)">
   <div id="mhStato" style="font-size:.8rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.5rem"></div>
   <div id="mhResult"></div>
-  <details style="margin-top:.9rem"><summary style="font-size:.8rem;font-weight:700;color:var(--green-deep);cursor:pointer">📲 Far comparire GeppGo nel tasto "Condividi" della posta</summary>
+  <details style="margin-top:.4rem"><summary style="font-size:.8rem;font-weight:700;color:var(--green-deep);cursor:pointer;padding:.9rem 0">📲 Far comparire GeppGo nel tasto "Condividi" della posta</summary>
     <div style="font-size:.78rem;color:var(--ink-soft);line-height:1.6;margin-top:.5rem">
       <b>Android</b> — se hai installato GeppGo dal browser, compare da solo fra le app del tasto Condividi: apri la mail, Condividi, GeppGo. Il testo arriva qui dentro già letto.<br><br>
       <b>iPhone</b> — Apple non lascia che un'app web stia nel foglio di condivisione. Ci si arriva in un minuto con l'app <b>Comandi</b> (quella già installata sul telefono):<br>
@@ -3182,7 +3356,7 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   <div class="sheet-head"><div class="sheet-t" id="adqTitle">Assistente</div><button class="x x-close" onclick="closeSheet('mAiDay')">✕</button></div>
   <div class="chip-row" id="adqStarters" style="margin-bottom:.6rem"></div>
   <div class="chat-msgs" id="adqMsgs" style="min-height:110px;max-height:38dvh"></div>
-  <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('adqPdf').click()" title="Allega un PDF"><span aria-hidden="true">📎</span> PDF</button><input type="file" id="adqPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'adq')"><textarea id="adqInput" rows="1" placeholder="Chiedi qualcosa o allega un PDF..." onkeydown="adqTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="adqInvia()">➤</button></div>
+  <div class="chat-in-row"><button class="btn btn-soft clip" onclick="document.getElementById('adqPdf').click()" title="Allega un PDF"><span aria-hidden="true">📎</span> PDF</button><input type="file" id="adqPdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="allegaPDF(this,'adq')"><textarea id="adqInput" rows="1" placeholder="Chiedi qualcosa o allega un PDF..." onkeydown="adqTasto(event)" oninput="chatCresci(this)"></textarea><button class="btn btn-grad" onclick="adqInvia()" title="Invia" aria-label="Invia">➤</button></div>
 </div></div>
 <div class="modal" id="mConfirm"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3838,15 +4012,17 @@ function loc(){try{return LOCALI[linguaScelta()]||'it-IT';}catch(e){return 'it-I
    Lo decide Intl.NumberFormat; il simbolo resta quello della tabella CURR,
    lo stesso della scelta della valuta, cosi' «A$» non diventa un «$» che
    si confonde col dollaro americano.
-   Le migliaia si separano sempre, anche a quattro cifre: lo spagnolo e il
-   portoghese di regola non lo fanno («1234 €»), ma in mezzo a importi da
-   cinque cifre col punto un «1234» senza si legge storto. */
+   Le migliaia come le separa la lingua, senza forzarle: in spagnolo e in
+   portoghese un numero di quattro cifre si scrive attaccato («1234 €») e i
+   gruppi partono dalla quinta cifra («12.345 €», «12 345 €»). Per un po'
+   le si e' separate sempre, e «1.234 €» in spagnolo e' uno sbaglio, non una
+   scelta di stile. */
 const formatiSoldi={};
 function formatoSoldi(c){
   const l=loc(),k=l+'|'+c;
   if(formatiSoldi[k]!==undefined)return formatiSoldi[k];
   let f=null;
-  for(const o of [{useGrouping:'always',currencyDisplay:'narrowSymbol'},{currencyDisplay:'narrowSymbol'},{}]){
+  for(const o of [{currencyDisplay:'narrowSymbol'},{}]){
     try{f=new Intl.NumberFormat(l,Object.assign({style:'currency',currency:c},o));break;}catch(e){f=null;}
   }
   return (formatiSoldi[k]=f);
@@ -12689,6 +12865,129 @@ const DIZIONARIO_CENTO={
   }
 };
 Object.keys(DIZIONARIO_CENTO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_CENTO[l]));
+/* Accessibilità (ottobre 2026). I nomi che VoiceOver legge sui tasti fatti
+   solo di un simbolo (✕, ‹, ›, ⋯), e le frasi del Premium: erano rimaste in
+   italiano con la miglioria 10, che non doveva toccare il Premium - ma la
+   richiesta riguardava come funziona, non le parole. */
+const DIZIONARIO_ACCESSIBILE={
+  en:{
+    'Sei Premium ✨':'You’re Premium ✨',
+    'Hai raggiunto 2 viaggi tuoi attivi':'You already have 2 trips of your own open',
+    'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Unlimited trips, no ads and GPS alerts on all your open trips.',
+    'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.':'The free plan covers 2 trips you created at a time — the ones you were invited to don’t count and have no limit. Finish one from “Your trips”, or go Premium.',
+    '↩︎ Torna al piano Gratis (demo)':'↩︎ Back to the Free plan (demo)',
+    '✨ Premium attivo':'✨ Premium is on',
+    'Piano Gratis':'Free plan',
+    '✨ Premium':'✨ Premium',
+    'Viaggi illimitati · niente pubblicità':'Unlimited trips · no ads',
+    'Gestisci piano':'Manage plan',
+    'Eliminare è del Premium':'Deleting is a Premium feature',
+    'Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?':'On the free plan you finish trips instead of deleting them: they stay among your finished trips and free up the slot. Finish it now?',
+    'Segna come prenotata':'Mark as booked',
+    'Importo':'Amount',
+    'Di chi vuoi vedere il budget':'Whose budget do you want to see',
+    'Giorno precedente':'Previous day',
+    'Giorno successivo':'Next day',
+    'Invia':'Send',
+    'Mi piace':'I like it',
+    'Mi piace ({1})':'I like it ({1})',
+    'Non mi piace':'I don’t like it',
+    'Non mi piace ({1})':'I don’t like it ({1})',
+    'Forse':'Maybe',
+    'Forse ({1})':'Maybe ({1})',
+    'Come ci vai: {1}':'How you get there: {1}',
+    'Apri la foto':'Open the photo',
+    '↪️ Sposta a {1}':'↪️ Move to {1}'
+  },
+  es:{
+    'Sei Premium ✨':'Eres Premium ✨',
+    'Hai raggiunto 2 viaggi tuoi attivi':'Ya tienes 2 viajes tuyos en curso',
+    'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Viajes ilimitados, sin publicidad y avisos GPS en todos los viajes en curso.',
+    'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.':'El plan gratuito incluye 2 viajes creados por ti a la vez; los viajes a los que te han invitado no cuentan y no tienen límite. Termina uno desde «Tus viajes» o pásate a Premium.',
+    '↩︎ Torna al piano Gratis (demo)':'↩︎ Volver al plan Gratis (demo)',
+    '✨ Premium attivo':'✨ Premium activado',
+    'Piano Gratis':'Plan Gratis',
+    '✨ Premium':'✨ Premium',
+    'Viaggi illimitati · niente pubblicità':'Viajes ilimitados · sin publicidad',
+    'Gestisci piano':'Gestionar plan',
+    'Eliminare è del Premium':'Eliminar es cosa de Premium',
+    'Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?':'En el plan gratuito los viajes se terminan en lugar de eliminarse: se quedan entre los viajes terminados y liberan el hueco. ¿Quieres terminarlo ahora?',
+    'Segna come prenotata':'Marcar como reservada',
+    'Importo':'Importe',
+    'Di chi vuoi vedere il budget':'De quién quieres ver el presupuesto',
+    'Giorno precedente':'Día anterior',
+    'Giorno successivo':'Día siguiente',
+    'Invia':'Enviar',
+    'Mi piace':'Me gusta',
+    'Mi piace ({1})':'Me gusta ({1})',
+    'Non mi piace':'No me gusta',
+    'Non mi piace ({1})':'No me gusta ({1})',
+    'Forse':'Quizás',
+    'Forse ({1})':'Quizás ({1})',
+    'Come ci vai: {1}':'Cómo llegas: {1}',
+    'Apri la foto':'Abrir la foto',
+    '↪️ Sposta a {1}':'↪️ Pasar al {1}'
+  },
+  fr:{
+    'Sei Premium ✨':'Tu es Premium ✨',
+    'Hai raggiunto 2 viaggi tuoi attivi':'Tu as déjà 2 voyages à toi en cours',
+    'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Voyages illimités, sans pubs et alertes GPS sur tous les voyages en cours.',
+    'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.':'Le forfait gratuit couvre 2 voyages créés par toi à la fois — ceux auxquels on t’a invité ne comptent pas et n’ont pas de limite. Termines-en un depuis « Tes voyages », ou passe à Premium.',
+    '↩︎ Torna al piano Gratis (demo)':'↩︎ Revenir au forfait Gratuit (démo)',
+    '✨ Premium attivo':'✨ Premium activé',
+    'Piano Gratis':'Forfait Gratuit',
+    '✨ Premium':'✨ Premium',
+    'Viaggi illimitati · niente pubblicità':'Voyages illimités · sans pubs',
+    'Gestisci piano':'Gérer le forfait',
+    'Eliminare è del Premium':'Supprimer, c’est avec Premium',
+    'Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?':'Avec le forfait gratuit, on termine les voyages au lieu de les supprimer : ils restent parmi les voyages terminés et libèrent la place. Tu veux le terminer maintenant ?',
+    'Segna come prenotata':'Marquer comme réservée',
+    'Importo':'Montant',
+    'Di chi vuoi vedere il budget':'De qui veux-tu voir le budget',
+    'Giorno precedente':'Jour précédent',
+    'Giorno successivo':'Jour suivant',
+    'Invia':'Envoyer',
+    'Mi piace':'J’aime',
+    'Mi piace ({1})':'J’aime ({1})',
+    'Non mi piace':'Je n’aime pas',
+    'Non mi piace ({1})':'Je n’aime pas ({1})',
+    'Forse':'Peut-être',
+    'Forse ({1})':'Peut-être ({1})',
+    'Come ci vai: {1}':'Comment tu y vas : {1}',
+    'Apri la foto':'Ouvrir la photo',
+    '↪️ Sposta a {1}':'↪️ Déplacer à {1}'
+  },
+  pt:{
+    'Sei Premium ✨':'És Premium ✨',
+    'Hai raggiunto 2 viaggi tuoi attivi':'Já tens 2 viagens tuas a decorrer',
+    'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.':'Viagens ilimitadas, sem publicidade e avisos GPS em todas as viagens a decorrer.',
+    'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.':'O plano gratuito inclui 2 viagens criadas por ti de cada vez — aquelas para que te convidaram não contam e não têm limite. Termina uma em «As tuas viagens» ou passa a Premium.',
+    '↩︎ Torna al piano Gratis (demo)':'↩︎ Voltar ao plano Grátis (demo)',
+    '✨ Premium attivo':'✨ Premium ativado',
+    'Piano Gratis':'Plano Grátis',
+    '✨ Premium':'✨ Premium',
+    'Viaggi illimitati · niente pubblicità':'Viagens ilimitadas · sem publicidade',
+    'Gestisci piano':'Gerir o plano',
+    'Eliminare è del Premium':'Eliminar é do Premium',
+    'Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?':'No plano gratuito as viagens terminam-se em vez de serem eliminadas: ficam entre as viagens terminadas e libertam o lugar. Queres terminá-la agora?',
+    'Segna come prenotata':'Marcar como reservada',
+    'Importo':'Montante',
+    'Di chi vuoi vedere il budget':'De quem queres ver o orçamento',
+    'Giorno precedente':'Dia anterior',
+    'Giorno successivo':'Dia seguinte',
+    'Invia':'Enviar',
+    'Mi piace':'Gosto',
+    'Mi piace ({1})':'Gosto ({1})',
+    'Non mi piace':'Não gosto',
+    'Non mi piace ({1})':'Não gosto ({1})',
+    'Forse':'Talvez',
+    'Forse ({1})':'Talvez ({1})',
+    'Come ci vai: {1}':'Como vais: {1}',
+    'Apri la foto':'Abrir a foto',
+    '↪️ Sposta a {1}':'↪️ Mudar para {1}'
+  }
+};
+Object.keys(DIZIONARIO_ACCESSIBILE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_ACCESSIBILE[l]));
 
 /* Quante frasi ci sono da dire in tutto. Era un numero scritto a mano (981,
    poi 1334) e restava indietro a ogni frase nuova: chi aggiungeva una riga
@@ -12927,6 +13226,8 @@ document.addEventListener('DOMContentLoaded',()=>{
      cambiare lingua ricarica la pagina. */
   document.querySelectorAll('a[href="'+PRIVACY_URL+'"]').forEach(a=>a.setAttribute('href',indirizzoPrivacy()));
   osservaPerTradurre();
+  /* dopo le traduzioni: i nomi dei tasti si prendono dai title gia' tradotti */
+  avviaAccessibilita();
   introAvvia();
   navAvvia();
   if(NATIVE)initNativeNotifs();
@@ -13180,6 +13481,10 @@ function fermaMappa(m){
    disegnato senza di lui - quella del viaggio, la mini-mappa della home,
    quella della giornata aperta - si fanno adesso. */
 function mappaArrivata(){
+  /* Chi ha chiesto meno movimento sul telefono non vuole nemmeno lo zoom
+     che scivola, o la mappa che continua a correre dopo il dito: vale per
+     tutte le mappe che nascono da qui in poi. */
+  if(menoMovimento()&&L.Map&&L.Map.mergeOptions)L.Map.mergeOptions({zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,inertia:false});
   try{initMap();}catch(e){}
   const giu=document.getElementById('mappaGiu');if(giu)giu.remove();
   /* La posizione arrivata prima della mappa: il pallino si mette adesso,
@@ -13291,14 +13596,16 @@ function navAvvia(){
   navPortaInVista(true);navBordi();
 }
 function go(p){
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  /* aria-current: VoiceOver dice «pagina corrente» sulla voce accesa, che a
+     vederla si riconosce solo dal colore */
+  document.querySelectorAll('.nav-item').forEach(n=>{n.classList.remove('active');n.removeAttribute('aria-current');});
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   /* Non tutte le pagine hanno una voce nella barra: il Profilo si apre dal
      cassetto e nella barra non c'e' piu'. Prima questa riga dava per
      scontato che la voce esistesse, e senza di lei go() si fermava a meta'
      - la pagina non si apriva nemmeno. */
   const voce=document.querySelector(`[data-p="${p}"]`);
-  if(voce)voce.classList.add('active');
+  if(voce){voce.classList.add('active');voce.setAttribute('aria-current','page');}
   document.getElementById(p).classList.add('active');
   navPortaInVista();navBordi();
   if(p==='plan'&&map)setTimeout(()=>map.invalidateSize(),120);
@@ -13446,7 +13753,7 @@ function renderTripZoomBody(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost" style="${t.suggestOn?'background:rgba(255,255,255,.38)':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button>${raccoltaPossibile(t)?`<button class="pill-ghost pill-forte" onclick="closeSheet('mTripZoom');apriRaccolta()">📣 ${esc(tv('A raccolta'))}</button>`:''}<button class="pill-ghost" onclick="openRestore()">🛟 ${esc(tv('Punti di ripristino'))}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost${t.suggestOn?' on':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button>${raccoltaPossibile(t)?`<button class="pill-ghost pill-forte" onclick="closeSheet('mTripZoom');apriRaccolta()">📣 ${esc(tv('A raccolta'))}</button>`:''}<button class="pill-ghost" onclick="openRestore()">🛟 ${esc(tv('Punti di ripristino'))}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
   <!-- Il ricordo anche a viaggio in corso (prima si apriva solo concludendo,
        o dal Profilo per i viaggi conclusi), e il diario e il calendario, che
        stavano solo in fondo al Profilo. -->
@@ -13764,7 +14071,7 @@ function homeMapSelect(cardIdx){
   homeMoveT=setTimeout(()=>{
     if(!homeMapObj)return;
     const zc=(typeof homeMapObj.getZoom==='function'?homeMapObj.getZoom():0)||0;
-    try{homeMapObj.setView(meta,Math.max(zc,16),{animate:true,duration:.4});}catch(e){}
+    try{homeMapObj.setView(meta,Math.max(zc,16),{animate:!menoMovimento(),duration:.4});}catch(e){}
   },180);
 }
 /* Qual è la card più a sinistra fra quelle visibili nella striscia. */
@@ -14190,6 +14497,97 @@ function posaSole(){
   if(!_soleOsserva&&typeof ResizeObserver!=='undefined')_soleOsserva=new ResizeObserver(()=>requestAnimationFrame(posaSole));
   if(_soleOsserva)_soleOsserva.observe(g);
 }
+/* ===== IL TESTO SUL CIELO =====
+   L'intestazione della home e' una sfumatura: in alto il colore del tempo
+   che fa (--cl-alto, o --cielo-a quando il meteo non c'e'), che si scioglie
+   nella carta della pagina (--cielo-b) all'82% dell'altezza. Una scritta in
+   alto sta sul blu della notte, una piu' in basso sulla carta: lo stesso
+   colore non puo' andare bene a tutte e due. C'era un interruttore solo per
+   tutta l'intestazione (cl-buio), e la sera, nel tema chiaro, «sera limpida»
+   era oro sul grigio (1:1) e le scorciatoie in fondo bianche sul panna.
+   Qui ogni scritta guarda il fondo che ha dietro, in cima, a meta' e in
+   fondo alla sua riga, e prende il primo dei suoi colori che ci arriva alla
+   soglia WCAG (4,5:1; 3:1 per le scritte grandi e per «›»). Il primo e'
+   quello di sempre: cambia solo dove non si leggeva. I tasti col loro fondo
+   passano al vetro (bianco su velo chiaro) solo dove il cielo e' scuro
+   abbastanza da reggere la scritta bianca.
+   Dentro il cielo passano anche le nuvole, la nebbia, la neve e l'alone del
+   sole (.hh-velo), e si muovono: una scritta deve leggersi anche quando una
+   nuvola le passa dietro. Si contano come veli chiari sopra la sfumatura,
+   forti in cima e sempre piu' tenui dove il velo sfuma (la stessa maschera
+   del CSS: piena fino a 56 px dalla cima, niente da 130). Il lampo no:
+   dura un attimo. */
+const CIELO_SCRITTE=[
+  /* selettore, colori sul chiaro, colori sullo scuro, soglia */
+  ['.hh-eyebrow',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],4.5],
+  ['.hh-chev',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],3],
+  ['.hh-grado',['var(--ink)','#000000'],['#FFFFFF'],3],
+  ['.hh-grado-m',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],4.5],
+  ['.hh-city',['var(--ink)','#000000'],['#FFFFFF'],3],
+  ['.hh-mood',['var(--green)','var(--green-deep)','var(--ink)','#000000'],['#F0D9A0','#FFFFFF'],3],
+  ['.hh-meta',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],4.5]
+];
+let _sondaColore=null,_cieloOsserva=null;
+/* Un colore scritto come lo scrive il CSS (anche var(--ink)) in numeri. */
+function coloreCss(c){
+  if(!_sondaColore){_sondaColore=document.createElement('i');_sondaColore.style.display='none';document.body.appendChild(_sondaColore);}
+  _sondaColore.style.color='';_sondaColore.style.color=c;
+  return (getComputedStyle(_sondaColore).color.match(/[\d.]+/g)||[0,0,0]).slice(0,3).map(Number);
+}
+function luceRel(c){return c.reduce((s,v,i)=>{v/=255;v=v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);return s+v*[0.2126,0.7152,0.0722][i];},0);}
+function contrastoDi(a,b){const x=luceRel(a),y=luceRel(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+function tingiCielo(box){
+  const hh=box&&box.querySelector('.hh');if(!hh)return;
+  const q=hh.getBoundingClientRect();if(!q.height)return;
+  const cs=getComputedStyle(hh);
+  const alto=coloreCss(cs.getPropertyValue(hh.classList.contains('cielo')?'--cl-alto':'--cielo-a').trim());
+  const basso=coloreCss(cs.getPropertyValue('--cielo-b').trim());
+  const fondo=y=>{const k=Math.max(0,Math.min(1,(y-q.top)/(q.height*.82)));return alto.map((v,i)=>v+(basso[i]-v)*k);};
+  /* i veli: [colore, quanto copre, dove] */
+  const velo=hh.querySelector('.hh-velo'),veli=[];
+  if(velo){
+    const vs=getComputedStyle(velo);
+    const rgba=s=>{const m=(String(s).match(/[\d.]+/g)||[]).map(Number);return {c:m.slice(0,3),a:m.length>3?m[3]:1};};
+    if(velo.querySelector('.cl-nuv')){const n=rgba(vs.getPropertyValue('--cl-nuv'));veli.push([n.c,n.a*.9,()=>1]);}
+    /* le due strisce di .cl-neb, punto per punto */
+    if(velo.querySelector('.cl-neb'))veli.push([[255,255,255],1,(f,p)=>p<18?.5*p/18:(p<=48?.5:(p<70?.5*(70-p)/22:(p<88?(p<62?0:.3*(p-62)/26):(p<=114?.3:(p<150?.3*(150-p)/36:0)))))]);
+    if(velo.querySelector('.cl-nev'))veli.push([[255,255,255],.15,()=>1]);
+    if(velo.querySelector('.cl-astro')){const a=rgba(vs.getPropertyValue('--cl-alone'));veli.push([a.c,a.a,f=>f<.3?1:0]);}
+  }
+  /* la stessa maschera di .hh-velo, in pixel dalla cima */
+  const maschera=p=>p<=56?1:(p<=70?1-(p-56)/14*.8:(p<=96?.2-(p-70)/26*.14:(p<=130?.06*(1-(p-96)/34):0)));
+  const fondiA=y=>{
+    const b=fondo(y),f=(y-q.top)/q.height,m=maschera(y-q.top),out=[b];
+    veli.forEach(([c,a,dove])=>{const k=a*m*dove(f,y-q.top);if(k>0.01)out.push(b.map((v,i)=>v*(1-k)+c[i]*k));});
+    return out;
+  };
+  const sotto=el=>{const r=el.getBoundingClientRect();return [r.top+1,(r.top+r.bottom)/2,r.bottom-1].flatMap(fondiA);};
+  const buio=hh.classList.contains('cl-buio');
+  CIELO_SCRITTE.forEach(([sel,chiari,scuri,soglia])=>hh.querySelectorAll(sel).forEach(el=>{
+    let op=1;for(let x=el;x&&x!==hh;x=x.parentElement)op*=parseFloat(getComputedStyle(x).opacity)||1;
+    const fondi=sotto(el);
+    let scelto=null,meglio=0;
+    for(const c of (buio?scuri.concat(chiari):chiari.concat(scuri))){
+      const rgb=coloreCss(c);
+      const r=Math.min(...fondi.map(b=>contrastoDi(rgb.map((v,i)=>v*op+b[i]*(1-op)),b)));
+      if(r>=soglia){scelto=c;break;}
+      if(r>meglio){meglio=r;scelto=c;}
+    }
+    el.style.color=scelto;
+  }));
+  const bianco=[255,255,255];
+  hh.querySelectorAll('.hh-cerca,.hh-rapido').forEach(el=>{
+    const regge=sotto(el).every(b=>contrastoDi(bianco,b.map(v=>v*.86+255*.14))>=4.5);
+    el.classList.toggle('vetro',buio&&regge);
+  });
+  /* Le scritte cambiano posto quando cambia la larghezza o arrivano i
+     caratteri: si rifa' il conto. */
+  if(typeof ResizeObserver!=='undefined'){
+    if(_cieloOsserva)_cieloOsserva.disconnect();
+    _cieloOsserva=new ResizeObserver(()=>requestAnimationFrame(()=>{if(hh.isConnected)tingiCielo(box);}));
+    _cieloOsserva.observe(hh);
+  }
+}
 /* «Su misura» (l'itinerario fatto dall'assistente) anche da fuori di Scopri:
    dalla Home di un viaggio senza giorni e da «Nuovo viaggio». */
 function apriSuMisura(){go('discover');setDiscover('imp');setImpSub('itin');}
@@ -14231,6 +14629,7 @@ function renderHomeHero(){
       adattaCerca(box);
       adattaRapidi(box);
       posaSole();
+      tingiCielo(box);
     };
     place();
     // Se il layout non era ancora pronto la prima assegnazione viene ignorata.
@@ -14519,7 +14918,7 @@ function togglePackImport(apri){
   const on=(apri==null)?!box.classList.contains('on'):!!apri;
   box.classList.toggle('on',on);b.classList.toggle('on',on);
   b.setAttribute('aria-expanded',on?'true':'false');
-  if(on)setTimeout(()=>{try{box.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(e){}},140);
+  if(on)setTimeout(()=>{try{box.scrollIntoView({block:'nearest',behavior:comeScorrere()});}catch(e){}},140);
 }
 function openPacking(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
@@ -14605,7 +15004,7 @@ function renderPacking(){
   const cats=packCategorie(list);
   box.innerHTML=cats.map(cat=>{
     const voci=list.filter(p=>(p.cat||'Extra')===cat),fatte=voci.filter(p=>p.checked).length;
-    return `<div class="pack-cat${fatte===voci.length?' done':''}"><b>${esc(cat)}</b><i>${fatte}/${voci.length}</i></div>${voci.map(p=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;opacity:.6':''}">${esc(etichettaVoce(p.label))}</span></label><button class="edit-ic" style="flex-shrink:0" onclick="editPackItem(${p.id})">✎</button><button class="ibtn" style="flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`;
+    return `<div class="pack-cat${fatte===voci.length?' done':''}"><b>${esc(cat)}</b><i>${fatte}/${voci.length}</i></div>${voci.map(p=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0"><label class="split-item ${p.checked?'on':''}" style="flex:1;margin:0"><input type="checkbox" ${p.checked?'checked':''} onchange="togglePackItem(${p.id},this.checked)"><span style="${p.checked?'text-decoration:line-through;color:var(--ink-soft)':''}">${esc(etichettaVoce(p.label))}</span></label><button class="edit-ic" style="flex-shrink:0" onclick="editPackItem(${p.id})">✎</button><button class="ibtn" style="flex-shrink:0" onclick="delPackItem(${p.id})">🗑️</button></div>`).join('')}`;
   }).join('');
 }
 function addPackItem(){
@@ -14913,7 +15312,7 @@ function setDiscover(m){
 function onSearch(){
   const q=document.getElementById('poiSearch').value.trim();if(searchT)clearTimeout(searchT);
   if(q.length<3){document.getElementById('searchResults').innerHTML='';return;}
-  document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--blue)">🔍 Ricerca...</div></div>`;
+  document.getElementById('searchResults').innerHTML=`<div class="results"><div class="res" style="text-align:center;color:var(--blue-deep)">🔍 Ricerca...</div></div>`;
   searchT=setTimeout(()=>doSearch(q),500);
 }
 async function geoSearch(fullQ,langHint){
@@ -15330,6 +15729,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Gli avvisi: promemoria "Tra poco" (si chiede aprendo la tappa), "E' ora di partire" (guarda dove sei e col mezzo scelto), "Da prenotare" e "Prenotazione in scadenza", le tappe vicine e i consigli col GPS acceso, e A raccolta. Arrivano SOLO mentre GeppGo e' aperta: e' l'app a guardare l'ora e dove sei. Con l'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora (serve l'app nativa, che non c'e'); il calendario esportato dal Profilo invece avvisa anche ad app chiusa. Con le notifiche attive, e GeppGo in secondo piano, l'avviso arriva come notifica del telefono, e toccandola si apre nel punto giusto: la tappa, la giornata, il posto vicino, la chiamata. Senza notifiche, o con l'app davanti agli occhi, compare dentro l'app come banner in alto con "Apri" e "Chiudi". La prima volta che si accende il GPS un foglio solo spiega posizione e avvisi, poi il telefono chiede i due permessi uno dopo l'altro. Su iPhone le notifiche arrivano solo con GeppGo aggiunta alla schermata Home: da Safari l'app non le chiede, lo spiega e mostra come aggiungerla. Dopo un "Non ora" le notifiche si accendono dal Profilo, scheda "Avvisi e notifiche"; se sono state bloccate nelle impostazioni del telefono, si riaccendono da li'.
 - Profilo (il tondo con l'iniziale in alto a destra, o in fondo al cassetto delle tre righine; non nella barra in basso): l'account, il tema scuro, il diario del viaggio (c'e' anche nella scheda del viaggio), la scheda "Punti di ripristino", i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, "Avvisi e notifiche" (quali avvisi arrivano e il tasto "Attiva le notifiche"), gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 - Invitare i compagni: "🔗 Condividi" in Home (o il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
+- L'accessibilita': l'app si usa anche con VoiceOver e con una tastiera. Ogni tasto ha un nome che VoiceOver legge (la ✕ dice "Chiudi"); un foglio si chiude anche con Esc, e il fuoco torna al tasto che l'aveva aperto. I messaggi in basso restano da 2,6 a 8 secondi secondo quanto sono lunghi, VoiceOver li legge, e un tocco li chiude. Con "Riduci movimento" acceso sul telefono (su iPhone: Impostazioni › Accessibilità › Movimento) l'app non fa scivolare niente. Si puo' ingrandire con due dita. Le scritte non seguono la grandezza del testo scelta nelle impostazioni del telefono.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
 
@@ -15369,7 +15769,8 @@ const MAPPA_CHIAVI=[
   ['Gli avvisi',['avvisi','avviso','notifiche','notifica','promemoria','ora di partire','notifications','notification','alerts','alert','reminder','reminders','avisos','notificaciones','recordatorio','alertes','rappel','rappels','notificacoes','lembrete','lembretes']],
   ['In Profilo, sotto "Versione"',['versione','aggiornamento','aggiornare','version','update','version','actualizar','mise a jour','versao','atualizar']],
   ['Profilo',['profilo','impostazioni','tema scuro','backup','notifiche','piano','calendario','esporta','esportare','profile','settings','dark mode','notifications','export','calendar','perfil','ajustes','modo oscuro','exportar','profil','parametres','mode sombre','exporter','definicoes','modo escuro','punti di ripristino','restore points','restore point','puntos de restauracion','points de restauration','pontos de recuperacao']],
-  ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']]
+  ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']],
+  ['L\'accessibilita',['accessibilita','accessibility','accesibilidad','accessibilite','acessibilidade','voiceover','lettore di schermo','screen reader','lector de pantalla','lecteur d ecran','leitor de ecra','tastiera','keyboard','teclado','clavier','riduci movimento','reduce motion','reducir movimiento','reduire les animations','reduzir movimento','zoom','ingrandire','enlarge','ampliar','agrandir']]
 ];
 const MAPPA_NORMALE=s=>' '+String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9'-]+/g,' ').trim()+' ';
 const MAPPA_SEZIONI=MAPPA_APP.split('\n').filter(l=>l.startsWith('- ')).map(testo=>{
@@ -15758,7 +16159,7 @@ function backfillPoiPhotos(t){
 function cercaUnPosto(){
   const i=document.getElementById('poiSearch');
   if(!i)return;
-  i.scrollIntoView({block:'center',behavior:'smooth'});
+  i.scrollIntoView({block:'center',behavior:comeScorrere()});
   setTimeout(()=>i.focus(),250);
 }
 function renderSaved(){
@@ -15769,7 +16170,7 @@ function renderSaved(){
   c.innerHTML=t.pois.map(p=>{
     const pd=JSON.stringify({name:p.name,lat:p.lat,lng:p.lng,address:p.address||'',type:p.type||'',hours:p.hours||'',website:p.website||'',phone:p.phone||'',photo:p.photo||''}).replace(/'/g,'&apos;').replace(/"/g,'&quot;');
     const thumb=p.photo?`<img src="${esc(p.photo)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">${placeIcon(p.type,p.type)}</div>`;
-    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><div style="font-weight:700;margin-top:.3rem">${esc(p.name)}</div>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.6rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
+    return `<div style="padding:.85rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;cursor:pointer" onclick='openPlaceInfo(${pd})'><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem"><div style="flex:1;min-width:0;display:flex;gap:.6rem;align-items:flex-start">${thumb}<div style="flex:1;min-width:0"><span class="pri-badge ${p.priority==='essential'?'ess':'skip'}">${p.priority==='essential'?'Essenziale':'Saltabile'}</span><button class="come-testo" style="font-weight:700;margin-top:.3rem" onclick='event.stopPropagation();openPlaceInfo(${pd})'>${esc(p.name)}</button>${p.address?`<div style="font-size:.78rem;color:var(--ink-faint);margin-top:.15rem">${esc(p.address)}</div>`:''}${p.hours?`<div style="font-size:.78rem;color:var(--blue-deep);margin-top:.2rem">🕐 ${esc(p.hours)}</div>`:''}</div></div><div style="display:flex;gap:.6rem"><button class="edit-ic" onclick="event.stopPropagation();openEditPOI(${p.id})">✎</button><button class="ibtn" onclick="event.stopPropagation();delPOI(${p.id})">🗑️</button></div></div><div class="chips" style="margin-top:.5rem"><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">🗺️ Maps</a><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">🧭 Indicazioni</a>${p.website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(p.website)}" target="_blank">🌐</a>`:''}</div></div>`;
   }).join('');
 }
 /* ===== NEL PROGRAMMA: i posti che sono gia' in time-table =====
@@ -15804,7 +16205,7 @@ function renderProgramPlaces(){
     return `<div style="padding:.7rem;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:.5rem;display:flex;gap:.6rem;align-items:center;cursor:pointer" onclick="openActDetail(${di},${a.id})">
       ${thumb}
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name||'')}</div>
+        <button class="come-testo" style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="event.stopPropagation();openActDetail(${di},${a.id})">${esc(a.name||'')}</button>
         <div style="font-size:.76rem;color:var(--ink-faint);margin-top:.1rem">${quando}</div>
       </div>
       <button class="pri-badge ${cls}" style="border:none;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();cyclePriority(${di},${a.id})">${lbl}</button>
@@ -16149,9 +16550,9 @@ function amBuildTravel(t,di,a){
   box.innerHTML=`<div style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.4rem">${tv('Spostamento verso {1}',esc(dopo.a.name))}</div>
     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
       <span style="font-weight:800;font-size:.9rem;color:var(--ink)">${stato==='skip'?'non necessario':trattoTesto(est,true)}</span>
-      <span style="margin-left:auto;display:flex;flex-wrap:wrap;gap:.3rem">${MEZZI.map(chip).join('')}</span>
+      <span style="margin-left:auto;display:flex;flex-wrap:wrap;gap:.9rem .3rem">${MEZZI.map(chip).join('')}</span>
     </div>
-    <button class="chip" style="margin-top:.5rem" onclick="amToggleTravel()">${stato==='skip'?'necessario ↺':'non necessario ✕'}</button>`;
+    <button class="chip" style="margin-top:.9rem" onclick="amToggleTravel()">${stato==='skip'?'necessario ↺':'non necessario ✕'}</button>`;
 }
 /* La scelta del mezzo dalla time-table: sei mezzi non stanno nella striscia,
    quindi si tocca quello scelto e si apre l'elenco. `quale` e' la tappa a cui
@@ -16526,7 +16927,7 @@ function apriMeteo(){
 function meteoGiorno(date){
   mtGiorno=date;renderWeather();meteoOreMostra();
   const h=document.getElementById('mtHero');
-  if(h&&h.scrollIntoView)h.scrollIntoView({block:'nearest',behavior:'smooth'});
+  if(h&&h.scrollIntoView)h.scrollIntoView({block:'nearest',behavior:comeScorrere()});
 }
 function meteoGiornoScelto(t){
   if(!t||!t.days||!t.days.length)return null;
@@ -16970,7 +17371,7 @@ function renderTricount(){
       ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:.75rem">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><div class="bal-col" style="margin-left:auto"><span style="font-weight:800;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span><button class="tic-ic tic-tx" title="Segna come pagato" onclick="event.stopPropagation();markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})">✓ ${esc(tv('Pagato'))}</button></div></div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:.88rem;padding:.8rem">Tutti in pari 🎉</div></div>'}`;
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
-  const tripSel=act2.length>1?`<select class="trip-pick" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
+  const tripSel=act2.length>1?`<select class="trip-pick" aria-label="${esc(tv('Viaggio'))}" style="margin-bottom:.7rem" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
   c.innerHTML=`${tripSel}<div class="money-hero"><div class="mh-top"><div><div class="mh-name">${esc(t.name)}</div><div class="mh-sub">${tp(t.participants.length,'{1} persona','{1} persone')}</div></div><div style="display:flex;gap:.4rem"><button class="ibtn ghost add mh-spesa" onclick="openExpense()" title="Aggiungi spesa" aria-label="Aggiungi spesa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(tv('Spesa'))}</span></button><button class="ibtn ghost" onclick="openPeople()" title="Compagni di viaggio">👥</button><button class="ibtn ghost" onclick="openShare()" title="Condividi" (da' un link con dentro l'invito al viaggio, un QR e le due righe per attaccare l'app alla schermata iniziale del telefono)>🔗</button><button class="ibtn ghost" onclick="toggleStatus()" title="Concludi/Riapri">${t.status==='open'?'🏁':'✅'}</button></div></div>
     <div class="mh-tot-row"><div class="mh-tot">${fmtVista(total,cur)}</div>${vistaSel(cur)}</div><div class="mh-lbl">spesa totale del viaggio</div>${notaNonIncluse(t)}${planned>0?`<div class="mh-lbl" style="opacity:.8">${esc(tv('+ {1} previste dal gruppo · tua parte {2}',fmtVista(planned,cur),fmtVista(plannedMine,cur)))}</div>`:``}
     <div class="mh-me ${myBal>=0?'':'neg'}">${Math.abs(myBal)<0.01?'Sei in pari':(myBal>0?tv('Ti devono {1}',fmtVista(myBal,cur)):tv('Devi {1}',fmtVista(Math.abs(myBal),cur)))}</div></div>
@@ -17569,7 +17970,7 @@ function bloccoInstalla(){
     <div class="share-inst-t">📱 Come se la mettono sul telefono</div>
     <div>${tv('<b>iPhone</b> · aprire il link con <b>Safari</b> (non da dentro WhatsApp), poi <b>Condividi</b> {1} → <b>Aggiungi a Home</b>.','⤴︎')}</div>
     <div style="margin-top:.35rem">${tv('<b>Android</b> · aprire il link con <b>Chrome</b>, poi il menù <b>⋮</b> → <b>Installa app</b> (o "Aggiungi a schermata Home").')}</div>
-    <div style="margin-top:.45rem;opacity:.8">${esc(tv('Da lì in poi si apre come un\'app, a schermo intero e senza barra del browser.'))}${(ios&&!gia)?' <span>'+esc(tv('Vale anche per te: sei ancora dentro il browser.'))+'</span>':''}</div>
+    <div style="margin-top:.45rem">${esc(tv('Da lì in poi si apre come un\'app, a schermo intero e senza barra del browser.'))}${(ios&&!gia)?' <span>'+esc(tv('Vale anche per te: sei ancora dentro il browser.'))+'</span>':''}</div>
   </div>`;
 }
 /* L'indirizzo con cui passare l'app. Se si e' dentro il file vero
@@ -17724,7 +18125,7 @@ function renderTripsList(){
     let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
     // In corso: ci si passa sopra e si apre la scheda del viaggio (era quello
     // che facevano i quadrati in home). Concluso: resta il riepilogo in sola lettura.
-    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><div class="hist-n">${esc(t.name)}</div><div class="hist-m">${tv('{1} · {2} giorni · {3}',dates||tv('Senza date'),t.days.length,fmtMoney(spent,cur))}</div></div>${isClosed?'':`<button class="hist-share" onclick="event.stopPropagation();openShare(${t.id})" title="${esc(tv('Condividi'))}" aria-label="${esc(tv('Condividi'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5"/><path d="m8.2 7.3 3.8-3.8 3.8 3.8"/><path d="M5.5 12.6v6.4a1.4 1.4 0 0 0 1.4 1.4h10.2a1.4 1.4 0 0 0 1.4-1.4v-6.4"/></svg></button>`}<div style="color:var(--ink-faint)">›</div></div>`;
+    return `<div class="hist-card" onclick="${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}"><div class="hist-ic">${isClosed?'🏁':'✈️'}</div><div class="hist-body"><button class="hist-n come-testo" onclick="event.stopPropagation();${isClosed?`openDetail(${t.id})`:`openTripZoom(${t.id})`}">${esc(t.name)}</button><div class="hist-m">${tv('{1} · {2} giorni · {3}',dates||tv('Senza date'),t.days.length,fmtMoney(spent,cur))}</div></div>${isClosed?'':`<button class="hist-share" onclick="event.stopPropagation();openShare(${t.id})" title="${esc(tv('Condividi'))}" aria-label="${esc(tv('Condividi'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5"/><path d="m8.2 7.3 3.8-3.8 3.8 3.8"/><path d="M5.5 12.6v6.4a1.4 1.4 0 0 0 1.4 1.4h10.2a1.4 1.4 0 0 0 1.4-1.4v-6.4"/></svg></button>`}<div style="color:var(--ink-faint)">›</div></div>`;
   };
   document.getElementById('openTrips').innerHTML=open.length?open.map(t=>card(t,false)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio in corso</div></div>`;
   document.getElementById('closedTrips').innerHTML=closed.length?closed.map(t=>card(t,true)).join(''):`<div class="empty" style="padding:1.5rem"><div class="empty-t">Nessun viaggio concluso</div></div>`;
@@ -18879,7 +19280,7 @@ function ticketCardHtml(tk,label){
   const personLine=eVoucher(tk)
     ?`<div style="font-size:.72rem;color:var(--ink-faint);font-weight:700;margin-top:-.25rem;margin-bottom:.4rem">Codice della prenotazione — non è un ingresso</div>`
     :(person?`<div style="font-size:.72rem;color:var(--green-deep);font-weight:700;margin-top:-.25rem;margin-bottom:.4rem">${esc(person.name)}</div>`:'');
-  return `<div class="ticket" style="cursor:pointer" onclick="openTicketBig(${tk.id})"><div class="ticket-n">${title}</div>${personLine}${tk.img?`<img data-tkimg="${tk.img}" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="event.stopPropagation();openTkLink(${tk.id})">${tkLinkLabel(t,tk)}</button><button class="chip" style="color:var(--red)" onclick="event.stopPropagation();delTicket(${tk.id})">Elimina</button></div></div>`;
+  return `<div class="ticket" style="cursor:pointer" onclick="openTicketBig(${tk.id})"><button class="ticket-n come-testo" onclick="event.stopPropagation();openTicketBig(${tk.id})">${title}</button>${personLine}${tk.img?`<img data-tkimg="${tk.img}" style="width:100%;max-width:300px;border-radius:12px;margin:.45rem auto;display:block;background:var(--paper);min-height:60px" alt="biglietto">`:`<div class="qr-box" id="qr-${tk.id}"></div><div class="ticket-c">${esc(tk.code)}</div>`}<div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.45rem"><button class="chip" onclick="event.stopPropagation();openTkLink(${tk.id})">${tkLinkLabel(t,tk)}</button><button class="chip" style="color:var(--red)" onclick="event.stopPropagation();delTicket(${tk.id})">Elimina</button></div></div>`;
 }
 function findTicketActivity(t,tk){
   if(tk.actId==null)return null;
@@ -21802,13 +22203,15 @@ function avvisaLinkNonValido(){
    obbliga il browser a guardarlo cosi' com'e' (leggere offsetHeight lo
    costringe a fare i conti), e solo dopo si accende "active" — che e' il
    momento da cui la salita ha un senso. */
-function openSheet(id){
+function openSheet(id,daDove){
   const m=(typeof id==='string')?document.getElementById(id):id;
   if(!m)return;
   clearTimeout(m._uscita);
+  const eraAperto=m.classList.contains('active');
   m.classList.add('in-scena');
   void m.offsetHeight;
   m.classList.add('active');
+  if(!eraAperto)fuocoNelFoglio(m,daDove);
 }
 function closeSheet(id){
   const m=(typeof id==='string')?document.getElementById(id):id;
@@ -21825,7 +22228,9 @@ function closeSheet(id){
      aspettava la risposta non deve restare appeso. */
   if(m.id==='mPosizione'&&_posRisposta){const r=_posRisposta;_posRisposta=null;_posGesto=null;r(false);}
   if(m.id==='mNotif'&&permAttesa){const r=permAttesa.res;permAttesa=null;r(false);}
+  const eraAperto=m.classList.contains('active');
   m.classList.remove('active');
+  if(eraAperto)fuocoIndietro(m);
   /* Un avviso sui dati che aspettava lo schermo libero (vedi I DATI AL
      SICURO) non aspetta il giro dopo. */
   if(avvisiCoda.length)setTimeout(avvisiProva,600);
@@ -21835,6 +22240,179 @@ function closeSheet(id){
      transitionend non arriverebbe mai e il foglio resterebbe li' per sempre. */
   clearTimeout(m._uscita);
   m._uscita=setTimeout(()=>{m.classList.remove('in-scena');},400);
+}
+/* ===== ACCESSIBILITÀ (miglioria 11) =====
+   Chi usa VoiceOver, o una tastiera attaccata al telefono, deve poter fare
+   quello che fa un dito. Mancavano tre cose in tutta l'app:
+   - i riquadri che si toccano erano div con un onclick: a schermo tasti, per
+     VoiceOver erano testo, e la tastiera non ci arrivava;
+   - i tasti fatti di un simbolo (✕, ✎, ‹) VoiceOver li leggeva come
+     «moltiplicato», «matita», o non li leggeva affatto;
+   - le etichette dei campi non erano legate ai campi: VoiceOver diceva
+     «campo di testo» senza dire quale.
+   Come per le traduzioni (vedi «Chi traduce quello che nasce dopo») si
+   guarda la pagina cambiare e si sistema quello che arriva, chiunque l'abbia
+   scritto: rincorrere a mano le centinaia di punti che scrivono HTML vorrebbe
+   dire dimenticarne uno al primo tasto nuovo. test/prova-accessibilita.js
+   gira tutte le schermate e boccia quello che resta fuori. */
+/* Riduci movimento, sul telefono: le animazioni del foglio di stile le
+   spegne la regola in fondo allo stile; queste sono quelle fatte da qui
+   (scorrimenti, mappe). */
+function menoMovimento(){return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}
+function comeScorrere(){return menoMovimento()?'auto':'smooth';}
+const TASTI_VERI='button,a[href],input,select,textarea,label,summary';
+/* Un onclick che ferma soltanto il tocco (il corpo dei fogli, la maniglia
+   che allunga una tappa) da solo non fa niente: non e' un tasto. */
+const fermaSoltanto=el=>/^\s*event\.stopPropagation\(\);?\s*$/.test(el.getAttribute('onclick')||'');
+const toccabileDentro=el=>[...el.querySelectorAll(TASTI_VERI+',[role=button],[onclick],[tabindex]:not([tabindex="-1"])')].some(x=>!fermaSoltanto(x));
+const VARIANTI_EMOJI=new RegExp('['+String.fromCharCode(0xFE0E,0xFE0F)+']','g');
+const NOMI_DEI_SIMBOLI={'✎':'Modifica','✏':'Modifica','🗑':'Elimina','+':'Aggiungi','＋':'Aggiungi','➕':'Aggiungi','‹':'Indietro','›':'Avanti','➤':'Invia'};
+/* Il nome di un tasto che a schermo e' solo un simbolo: il suo title, se ce
+   l'ha, se no quello che il simbolo vuol dire. La ✕ in testa a un foglio
+   chiude, accanto a un nome toglie. */
+function nomeDelSimbolo(el){
+  const s=(el.textContent||'').replace(VARIANTI_EMOJI,'').replace(/\s+/g,'');
+  if(/\p{L}/u.test(s))return '';
+  const tit=el.getAttribute('title');
+  if(tit&&/\p{L}/u.test(tit))return t(tit);
+  if(!s)return '';
+  if(s==='✕'||s==='×'||s==='✖')return t(el.classList.contains('x-close')||el.closest('.sheet-head,.undo-bar,.val-testa')?'Chiudi':'Togli');
+  return NOMI_DEI_SIMBOLI[s]?t(NOMI_DEI_SIMBOLI[s]):'';
+}
+let etichetteFatte=0;
+function rendiAccessibile(radice){
+  if(!radice||radice.nodeType!==1)return;
+  const tutti=sel=>{const l=[...radice.querySelectorAll(sel)];if(radice.matches(sel))l.unshift(radice);return l;};
+  /* 1. I riquadri che si toccano diventano tasti. Una scheda con dentro
+     altri tasti no (la spesa col suo ✎, il biglietto coi suoi chip): un
+     tasto dentro un tasto VoiceOver non lo legge. Il tocco di quelle schede
+     lo fa anche un tasto vero li' dentro - il ✎ della spesa, il nome del
+     biglietto - e la prova controlla che ci sia. */
+  tutti('[onclick]').forEach(el=>{
+    if(el.matches(TASTI_VERI)||el.hasAttribute('role')||fermaSoltanto(el)||toccabileDentro(el))return;
+    el.setAttribute('role','button');el.dataset.ruoloAuto='1';
+    if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');
+    if(el.tagName==='IMG'&&!el.getAttribute('alt'))el.setAttribute('aria-label',t('Apri la foto'));
+  });
+  /* 2. Un nome a ogni tasto fatto di un simbolo. Quello messo da qui si
+     rifa' se il tasto cambia (☾ che diventa ☀): un nome vecchio direbbe una
+     cosa e il tasto ne farebbe un'altra. */
+  tutti('button,[role=button]').forEach(el=>{
+    if(el.hasAttribute('aria-labelledby')||(el.hasAttribute('aria-label')&&!el.dataset.nomeAuto))return;
+    const n=nomeDelSimbolo(el);
+    if(n){el.setAttribute('aria-label',n);el.dataset.nomeAuto='1';}
+    else if(el.dataset.nomeAuto){el.removeAttribute('aria-label');delete el.dataset.nomeAuto;}
+  });
+  /* 3. L'etichetta scritta sopra il campo, dentro lo stesso .fg: le manca
+     il for, e VoiceOver non sapeva di chi fosse.
+     aria-labelledby e non for: col for un tocco sull'etichetta aprirebbe la
+     tendina del telefono, che l'app sostituisce con la sua. */
+  tutti('input:not([type=hidden]),select,textarea').forEach(c=>{
+    if(c.closest('label')||c.hasAttribute('aria-label')||c.hasAttribute('aria-labelledby')||(c.labels&&c.labels.length))return;
+    const fg=c.closest('.fg');if(!fg)return;
+    const lab=[...fg.children].find(x=>x.tagName==='LABEL'&&!x.querySelector('input,select,textarea'));
+    if(!lab||[...fg.querySelectorAll('input:not([type=hidden]),select,textarea')].find(x=>!x.closest('label'))!==c)return;
+    if(!lab.id)lab.id='etichetta-'+(++etichetteFatte);
+    c.setAttribute('aria-labelledby',lab.id);
+  });
+}
+/* I fogli sono finestre: VoiceOver lo dice, legge il titolo, e finche'
+   restano aperti non va a leggere la pagina che sta sotto. */
+function preparaFoglio(m){
+  if(!m.hasAttribute('role')){m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');}
+  const tit=m.querySelector('.sheet-t,.confirm-t,.trip-hero-name');
+  if(tit){if(!tit.id)tit.id=(m.id||'foglio')+'-titolo';m.setAttribute('aria-labelledby',tit.id);}
+}
+function foglioInCima(){
+  let su=null,zSu=-Infinity;
+  document.querySelectorAll('.modal.active').forEach(m=>{const z=parseInt(getComputedStyle(m).zIndex,10)||0;if(z>=zSu){zSu=z;su=m;}});
+  return su;
+}
+/* Un tocco fuori dal foglio, o Esc. I fogli che aspettano una risposta
+   (l'invito, gli avvisi, la posizione) da qui non si chiudono. */
+function chiudiDaFuori(m){
+  if(m.id==='mJoin'||m.id==='mNotif'||m.id==='mPosizione')return;
+  if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else closeSheet(m);
+}
+/* Il fuoco entra nel foglio, sul titolo: VoiceOver lo legge e la tastiera
+   riparte da li'. Chi l'ha aperto si ricorda, per tornarci alla chiusura.
+   Sull'iPhone un tasto toccato non prende il fuoco: chi ha aperto il foglio
+   e' allora l'ultimo tasto toccato, se e' stato appena. */
+let ultimoTasto=null,ultimoTastoAlle=0;
+document.addEventListener('click',e=>{
+  const x=e.target&&e.target.closest?e.target.closest('button,a[href],summary,select,input,textarea,[role=button],[tabindex]:not([tabindex="-1"])'):null;
+  if(x){ultimoTasto=x;ultimoTastoAlle=Date.now();}
+},true);
+function fuocoNelFoglio(m,daDove){
+  preparaFoglio(m);
+  const a=document.activeElement,libero=!a||a===document.body||a===document.documentElement;
+  m._daDove=daDove||(!libero&&!m.contains(a)?a:(ultimoTasto&&Date.now()-ultimoTastoAlle<1500&&!m.contains(ultimoTasto)?ultimoTasto:null));
+  if(!libero&&m.contains(a))return;
+  const dove=m.querySelector('.sheet-t,.confirm-t')||m.querySelector('.sheet')||m;
+  if(!dove.hasAttribute('tabindex'))dove.setAttribute('tabindex','-1');
+  try{dove.focus({preventScroll:true});}catch(e){}
+}
+function fuocoIndietro(m){
+  const a=document.activeElement;
+  /* il fuoco e' gia' altrove (un foglio aperto sopra): resta li' */
+  if(a&&a!==document.body&&a!==document.documentElement&&!m.contains(a))return;
+  /* chi l'aveva aperto puo' essere sparito, o stare in un foglio chiuso
+     nel frattempo: si risale a chi aveva aperto quello */
+  let da=m._daDove;
+  for(let i=0;da&&i<6;i++){
+    if(da.isConnected&&da.getClientRects().length&&!da.closest('.modal:not(.active)'))break;
+    const su=da.closest?da.closest('.modal'):null;da=su&&su!==m?su._daDove:null;
+  }
+  if(da){try{da.focus({preventScroll:true});}catch(e){}}
+  else if(a&&m.contains(a))a.blur();
+}
+/* La tastiera: Invio e spazio su un riquadro-tasto fanno quello che fa il
+   dito; Esc chiude il foglio in cima; Tab gira dentro il foglio aperto
+   invece di finire sulla pagina che sta sotto. */
+document.addEventListener('keydown',e=>{
+  const el=e.target;
+  if((e.key==='Enter'||e.key===' ')&&el&&el.nodeType===1&&el.getAttribute('role')==='button'&&!el.matches(TASTI_VERI)){
+    e.preventDefault();if(!e.repeat)el.click();return;
+  }
+  if(e.key!=='Escape'&&e.key!=='Tab')return;
+  const m=foglioInCima();if(!m)return;
+  if(e.key==='Escape'){e.preventDefault();chiudiDaFuori(m);return;}
+  const giro=[...m.querySelectorAll('button,a[href],input:not([type=hidden]),select,textarea,summary,[tabindex]:not([tabindex="-1"])')]
+    .filter(x=>!x.disabled&&x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden');
+  if(!giro.length)return;
+  const i=giro.indexOf(document.activeElement);
+  if(e.shiftKey&&i<=0){e.preventDefault();giro[giro.length-1].focus();}
+  else if(!e.shiftKey&&(i<0||i===giro.length-1)){e.preventDefault();giro[0].focus();}
+});
+function avviaAccessibilita(){
+  document.querySelectorAll('.modal').forEach(preparaFoglio);
+  rendiAccessibile(document.body);
+  if(typeof MutationObserver==='undefined')return;
+  const coda=new Set();let previsto=false;
+  new MutationObserver(muts=>{
+    for(const x of muts){
+      const tg=x.target;
+      if(x.type==='attributes'){if(tg.dataset&&tg.dataset.nomeAuto)coda.add(tg);continue;}
+      for(const n of x.addedNodes)if(n.nodeType===1)coda.add(n);
+      /* il testo di un tasto cambiato sul posto */
+      if(tg.nodeType===1&&tg.dataset&&(tg.dataset.nomeAuto||tg.dataset.ruoloAuto))coda.add(tg);
+    }
+    if(!coda.size||previsto)return;
+    /* una volta per fotogramma, come le traduzioni: una schermata che si
+       ridisegna fa centinaia di mutazioni */
+    previsto=true;
+    requestAnimationFrame(()=>{
+      previsto=false;const da=[...coda];coda.clear();
+      da.forEach(n=>{
+        if(!n.isConnected)return;
+        /* un riquadro diventato tasto, che adesso ha dentro un tasto vero,
+           smette di esserlo (vedi sopra) */
+        const su=n.parentElement&&n.parentElement.closest('[data-ruolo-auto]');
+        if(su&&toccabileDentro(su)){su.removeAttribute('role');su.removeAttribute('tabindex');delete su.dataset.ruoloAuto;}
+        try{rendiAccessibile(n);}catch(e){console.log('accessibilita:',e);}
+      });
+    });
+  }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['title']});
 }
 /* ===== Tendine (select) sempre dal basso, come il resto dell'app =====
    Ogni <select> nativo viene "avvolto" in un contenitore invisibile con
@@ -21852,7 +22430,8 @@ function openSelectPicker(sel){
   _pickerSel=sel;_pickerOpts=opts;
   document.getElementById('pickerTitle').textContent=sel.dataset.pickerTitle||sel.getAttribute('aria-label')||'Scegli';
   document.getElementById('pickerList').innerHTML=opts.map((o,i)=>`<button class="picker-opt ${o.selected?'sel':''}" ${o.disabled?'disabled':''} onclick="pickSelectOption(${i})">${esc(o.text)}</button>`).join('');
-  openSheet('mPicker');
+  /* chiusa la scelta, il fuoco torna sulla tendina e non sul velo che la copre */
+  openSheet('mPicker',sel);
 }
 function pickSelectOption(i){
   const sel=_pickerSel,o=_pickerOpts[i];if(!sel||!o)return;
@@ -21886,6 +22465,9 @@ function wireBottomSheetSelect(sel){
      gia' stretto, e della tendina si vedeva solo la prima lettera. */
   if(inRiga){sel.style.flex='';sel.style.minWidth='0';sel.style.maxWidth='none';sel.style.width='100%';}
   const overlay=document.createElement('div');
+  /* Il velo e' solo per il dito: VoiceOver e la tastiera vanno sul <select>,
+     che e' quello col nome e il valore. */
+  overlay.className='sel-velo';overlay.setAttribute('aria-hidden','true');
   overlay.style.cssText='position:absolute;inset:0;cursor:pointer;z-index:2';
   overlay.addEventListener('click',e=>{e.preventDefault();openSelectPicker(sel);});
   wrap.appendChild(overlay);
@@ -21915,7 +22497,89 @@ function cancelActDetail(){
    stato centottantadue occasioni di dimenticarsene. Il riquadro si chiama
    "el" e non piu' "t" perche' t() e' la traduzione, e i due nomi si
    pestavano i piedi. */
-function toast(msg){const old=document.querySelector('.toast');if(old)old.remove();const el=document.createElement('div');el.className='toast';el.textContent=t(msg);document.body.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},2600);}
+/* Come si comportano (miglioria 11):
+   - restano il tempo di leggerli, circa 60 ms per carattere: mai meno di
+     2,6 secondi, che era quanto duravano tutti, anche quelli di tre righe,
+     e mai piu' di 8;
+   - un tocco li chiude;
+   - non coprono i tasti: stanno sopra la barra in basso, e se li' sotto c'e'
+     un tasto (il «Salva» di un foglio, il + della giornata) vanno in alto;
+   - VoiceOver li legge (vedi annuncia). */
+function durataMessaggio(testo){return Math.min(8000,Math.max(2600,String(testo||'').length*60));}
+function toast(msg){
+  const old=document.querySelector('.toast');if(old)old.remove();
+  const testo=t(msg);
+  const el=document.createElement('div');el.className='toast';el.textContent=testo;
+  /* lo legge #annunci: letto due volte sarebbe solo confusione */
+  el.setAttribute('aria-hidden','true');
+  let tempo=0,finito=false;
+  const chiudi=()=>{
+    if(finito)return;finito=true;clearTimeout(tempo);
+    el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);
+  };
+  el.addEventListener('click',chiudi);
+  document.body.appendChild(el);
+  messaggioAlPosto(el);
+  /* un foglio che sta ancora salendo sposta i suoi tasti: finito di salire,
+     si riguarda */
+  setTimeout(()=>{if(el.isConnected&&!finito)messaggioAlPosto(el);},450);
+  annuncia(testo);
+  tempo=setTimeout(chiudi,durataMessaggio(testo));
+}
+/* Dove sta il messaggio: il primo di tre posti che non copre un tasto - sopra
+   la barra in basso, sotto la testata, in cima - o, se li coprono tutti,
+   quello che ne copre meno. Si guarda quello che il dito troverebbe sotto
+   il messaggio, non dove i tasti dovrebbero essere.
+   Contano i tasti principali: le barre, quelli che galleggiano, e nel
+   foglio aperto la ✕ e i tasti delle azioni (Salva, Conferma, Annulla). I
+   campi e il contenuto no: un foglio alto quanto lo schermo e' tutto campi,
+   e la pagina sotto scorre e fra un attimo torna in vista. */
+const POSTI_MESSAGGIO=['','sotto-testata','in-cima'];
+const TASTI_PRINCIPALI={
+  foglio:'.sheet-head button,.btn,.confirm-a button',
+  ingresso:'.btn,.auth-link,button',
+  pagina:'.nav-item,.topbar button,.fab,.tt-undo,.locate-fab,.undo-bar button'
+};
+/* Quanti tasti principali copre il messaggio dov'e' adesso. Si confrontano i
+   riquadri, non qualche punto: «↩ Annulla» coperto sul bordo per 18 px
+   passava fra un punto e l'altro. Conta lo strato in vista: il foglio
+   aperto, o le schermate d'ingresso, o la pagina con le sue barre. */
+function tastiSottoIlMessaggio(el){
+  const q=el.getBoundingClientRect(),m=foglioInCima();
+  const ingresso=m?null:['intro','authGate'].map(id=>document.getElementById(id)).find(x=>x&&getComputedStyle(x).display!=='none');
+  const tasti=m?m.querySelectorAll(TASTI_PRINCIPALI.foglio):ingresso?ingresso.querySelectorAll(TASTI_PRINCIPALI.ingresso):document.querySelectorAll(TASTI_PRINCIPALI.pagina);
+  let n=0;
+  tasti.forEach(b=>{
+    if(!b.getClientRects().length||getComputedStyle(b).visibility==='hidden')return;
+    const r=b.getBoundingClientRect();
+    if(Math.min(r.right,q.right)-Math.max(r.left,q.left)>1&&Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top)>1)n++;
+  });
+  return n;
+}
+function messaggioAlPosto(el){
+  let meglio='',quanti=Infinity;
+  for(const p of POSTI_MESSAGGIO){
+    POSTI_MESSAGGIO.forEach(x=>{if(x)el.classList.remove(x);});
+    if(p)el.classList.add(p);
+    const n=tastiSottoIlMessaggio(el);
+    if(n<quanti){quanti=n;meglio=p;}
+    if(!n)return;
+  }
+  POSTI_MESSAGGIO.forEach(x=>{if(x)el.classList.remove(x);});
+  if(meglio)el.classList.add(meglio);
+}
+/* VoiceOver legge i messaggi da #annunci, una regione che c'e' sempre: una
+   regione nata insieme al messaggio spesso non la sente, e il messaggio
+   passava muto. Con un foglio aperto la regione ci entra dentro, se no
+   VoiceOver - che col foglio aperto non guarda la pagina sotto - la salta. */
+function annuncia(testo){
+  const a=document.getElementById('annunci');if(!a)return;
+  const m=foglioInCima(),casa=m?(m.querySelector('.sheet')||m):document.body;
+  if(a.parentNode!==casa)casa.appendChild(a);
+  /* svuotata e riscritta: lo stesso messaggio due volte di fila si sente due volte */
+  a.textContent='';
+  setTimeout(()=>{a.textContent=testo;},80);
+}
 /* ===== CIRCLE TO FIND — identifica un monumento dalla foto ===== */
 let idImg=null,idSel=null,idDrag=false,idStart=null;
 function onIdImage(ev){
@@ -22502,7 +23166,7 @@ function renderBookings(){
   const t=T(),c=document.getElementById('bookings');if(!c)return;
   const list=allBookings(t).filter(x=>!x.a.booking.done);
   if(!list.length){c.innerHTML='';return;}
-  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${tp(list.length,'{1} attività in attesa','{1} attività in attesa')}</div></div></div>${list.map(x=>`<div class="book-row"><input type="checkbox" onchange="markBooked(${x.a.id})"><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString(loc(),{day:'numeric',month:'short'})}${x.a.booking.seats>1?' · '+esc(tv('{1} nominativi',x.a.booking.seats)):''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
+  c.innerHTML=`<div class="card"><div class="card-head"><div><div class="card-h">🎟️ Da prenotare</div><div class="card-sub">${tp(list.length,'{1} attività in attesa','{1} attività in attesa')}</div></div></div>${list.map(x=>`<div class="book-row"><label class="spunta" title="${esc(tv('Segna come prenotata'))}"><input type="checkbox" onchange="markBooked(${x.a.id})" aria-label="${esc(tv('Segna come prenotata'))}"></label><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">${esc(x.a.name)}</div><div style="font-size:.75rem;color:var(--ink-faint);margin-top:.1rem">${new Date(x.d.date).toLocaleDateString(loc(),{day:'numeric',month:'short'})}${x.a.booking.seats>1?' · '+esc(tv('{1} nominativi',x.a.booking.seats)):''}</div></div>${bookBadge(x.a)}${x.a.booking.url?`<a class="chip green" href="${esc(x.a.booking.url)}" target="_blank">Apri</a>`:''}</div>`).join('')}</div>`;
 }
 function markBooked(id){
   const t=T();t.days.forEach(d=>(d.activities||[]).forEach(a=>{if(a.id===id&&a.booking)a.booking.done=true;}));
@@ -23671,7 +24335,7 @@ function buildTTDayInner(t,di){
         return;
       }
       const segMode=d.hotelSegTravelMode,est=tempoTratta(d,refHotel,it.loc,segMode,dwx&&dwx.precipitation>5,true);
-      html+=`<div class="tt-hotel-travel tt-travel-shown"><span class="tt-travel-quanto">\uD83C\uDFE8 \u2192 ${esc(it.a.name)}: ${trattoTesto(est,false)}${est.cost!=null?' \u00b7 '+costoBenzina(est.cost,t.currency):''}</span><span class="tt-travel-mezzo" title="${esc(tv('Come ci vai'))}" onclick="event.stopPropagation();apriMezzi(${di},'hotel')">${modeEmo(est.mode)}<i>▾</i></span>${n===0?`<span class="tt-travel-x" onclick="event.stopPropagation();skipHotelTravel(${di})"><span class="lungo">non necessario </span>\u2715</span>`:''}</div>`;
+      html+=`<div class="tt-hotel-travel tt-travel-shown"><span class="tt-travel-quanto">\uD83C\uDFE8 \u2192 ${esc(it.a.name)}: ${trattoTesto(est,false)}${est.cost!=null?' \u00b7 '+costoBenzina(est.cost,t.currency):''}</span><span class="tt-travel-mezzo" title="${esc(tv('Come ci vai'))}" aria-label="${esc(tv('Come ci vai: {1}',tv(modeNome(est.mode))))}" onclick="event.stopPropagation();apriMezzi(${di},'hotel')">${modeEmo(est.mode)}<i>▾</i></span>${n===0?`<span class="tt-travel-x" aria-label="${esc(tv('non necessario'))}" onclick="event.stopPropagation();skipHotelTravel(${di})"><span class="lungo">non necessario </span>\u2715</span>`:''}</div>`;
     });
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:.2rem">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':tv('da prenotare')):((a.senzaPosizione&&a.lat==null)?tv('senza posizione'):'')}</span><button class="edit-ic" style="margin-left:.4rem" onclick="event.stopPropagation();openActDetail(${di},${a.id})">✎</button></div>`).join('');
@@ -23782,14 +24446,14 @@ function buildTTDayInner(t,di){
       /* In mezza colonna il tasto del mezzo non c'e' (vedi sotto): l'icona sta
          nella scritta. */
       const quanto=trattoTesto(est,aCol)+costo;
-      const mezzo=`<span class="tt-travel-mezzo" title="${esc(tv('Come ci vai'))}" onclick="event.stopPropagation();apriMezzi(${di},${nxt.a.id})">${modeEmo(est.mode)}<i>▾</i></span>`;
+      const mezzo=`<span class="tt-travel-mezzo" title="${esc(tv('Come ci vai'))}" aria-label="${esc(tv('Come ci vai: {1}',tv(modeNome(est.mode))))}" onclick="event.stopPropagation();apriMezzi(${di},${nxt.a.id})">${modeEmo(est.mode)}<i>▾</i></span>`;
       /* In mezza colonna - le giornate in cui il gruppo si divide - i tre
          tasti del mezzo non ci stanno e finivano tagliati a meta' contro il
          bordo. Li' resta quanto ci vuole e la crocetta per spegnere il
          tratto; il mezzo si cambia dalla giornata, non da qui. */
       html+=aCol
-        ? `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span class="tt-travel-quanto">${quanto}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})">✕</span></div>`
-        : `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}">${mezzo}<span class="tt-travel-quanto">${quanto}</span><span class="tt-travel-x" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})"><span class="lungo">non necessario </span>✕</span></div>`;
+        ? `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}"><span class="tt-travel-quanto">${quanto}</span><span class="tt-travel-x" aria-label="${esc(tv('non necessario'))}" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})">✕</span></div>`
+        : `<div class="tt-travel tt-travel-shown${tcls}" style="${geo}">${mezzo}<span class="tt-travel-quanto">${quanto}</span><span class="tt-travel-x" aria-label="${esc(tv('non necessario'))}" onclick="event.stopPropagation();skipTravel(${di},${nxt.a.id})"><span class="lungo">non necessario </span>✕</span></div>`;
     }
   });
   const pd=t.days[di-1];
@@ -23801,7 +24465,7 @@ function buildTTDayInner(t,di){
     html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="tapAct(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">${esc(tv('continua da ieri · {1}',lbl))}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
-  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px">Elimina questo giorno</button></div>';
+  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla</div><div style="text-align:center;padding:.1rem 0 .5rem"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:.72rem;font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 .7rem">Elimina questo giorno</button></div>';
   return {html,tops,d};
 }
 function buildTT(){
@@ -23856,7 +24520,7 @@ function markDrag(a,prev,tipo){
   lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId,tipo:tipo||'sposta'};
   const b=document.getElementById('ttUndo');
   if(b){
-    b.classList.add('on');
+    b.classList.add('on');b.removeAttribute('aria-disabled');
     const q=lastDrag.tipo==='durata'?tv('Annulla l\'allungamento'):tv('Annulla lo spostamento');
     b.title=q;b.setAttribute('aria-label',q);
   }
@@ -23865,7 +24529,10 @@ function markDrag(a,prev,tipo){
 function clearDragUndo(){
   lastDrag=null;
   const b=document.getElementById('ttUndo');
-  if(b){b.classList.remove('on');const n=tv('Niente da annullare');b.title=n;b.setAttribute('aria-label',n);}
+  /* Spento e' «niente da annullare»: per chi usa VoiceOver un tasto spento
+     (aria-disabled), e come tale puo' restare tenue. Toccato risponde lo
+     stesso, con un messaggio (vedi undoDrag). */
+  if(b){b.classList.remove('on');b.setAttribute('aria-disabled','true');const n=tv('Niente da annullare');b.title=n;b.setAttribute('aria-label',n);}
 }
 function undoDrag(){
   /* Da spento risponde lo stesso, invece di fare finta di niente: chi lo tocca
@@ -26132,7 +26799,7 @@ function initSheetSwipe(){
 function initSheetClose(){
   document.querySelectorAll('.modal').forEach(m=>{
     if(m.id==='mJoin'||m.id==='mNotif'||m.id==='mPosizione')return;
-    m.addEventListener('click',e=>{if(e.target===m){if(m.id==='mScanner')closeScanner();else if(m.id==='mActDetail')cancelActDetail();else closeSheet(m);}});
+    m.addEventListener('click',e=>{if(e.target===m)chiudiDaFuori(m);});
     const head=m.querySelector('.sheet-head');
     if(!head||head.querySelector('.x-close'))return;
     const b=document.createElement('button');
@@ -26315,7 +26982,7 @@ function introSegui(){
 function introAvanti(){
   const p=document.getElementById('introPista'),n=document.querySelectorAll('#introPista .intro-pag').length,i=introPagina();
   if(i>=n-1)return introFine();
-  p.scrollTo({left:(i+1)*p.clientWidth,behavior:'smooth'});
+  p.scrollTo({left:(i+1)*p.clientWidth,behavior:comeScorrere()});
 }
 function introFine(){
   introSegnaVista();
@@ -27455,13 +28122,15 @@ function renderRainTip(){
   t.days.forEach((dd,j)=>{if(j===ttDay)return;const w2=t.weather[dd.date];if(!w2)return;if(w2.precipitation<bw){bw=w2.precipitation;best=j;}});
   const asciutto=best>=0&&bw<=2&&bw<w.precipitation-2;
   const bd=asciutto?new Date(t.days[best].date).toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'short'}):'';
+  /* il giorno da solo, per il tasto: tagliato da bd, in inglese restava la virgola («Saturday,») */
+  const giornoAsciutto=asciutto?new Date(t.days[best].date).toLocaleDateString(loc(),{weekday:'long'}):'';
   const quante=tp(outs.length,"{1} tappa all'aperto","{1} tappe all'aperto");
   box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid #EDD2C3;border-radius:var(--r-md);padding:.85rem;margin-bottom:.8rem">
     <div style="font-weight:800;font-size:.9rem;color:var(--clay-deep)">${tv('⛈️ {1}, {2} mm di pioggia',wxDesc(w.code),w.precipitation)}</div>
     <div style="font-size:.82rem;color:var(--ink-soft);margin:.3rem 0 .7rem;line-height:1.5"><span>${tv('{1} in questa giornata: {2}{3}.',quante,esc(outs.slice(0,3).map(a=>a.name).join(', ')),outs.length>3?tv(' e altre {1}',outs.length-3):'')}</span>${asciutto?` <b>${bd}</b><span> ${bw<1?tv('è previsto asciutto.'):tv('è previsto quasi asciutto.')}</span>`:''}</div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
       <button class="btn btn-grad" style="flex:1;min-width:150px;padding:.6rem" onclick="alternativeMeteo(${ttDay})">✦ Alternative al coperto</button>
-      ${asciutto?`<button class="btn btn-soft" style="flex:1;min-width:130px;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">↪️ Sposta a ${bd.split(' ')[0]}</button>`:''}
+      ${asciutto?`<button class="btn btn-soft" style="flex:1;min-width:130px;padding:.6rem" onclick="moveOutdoor(${ttDay},${best})">${esc(tv('↪️ Sposta a {1}',giornoAsciutto))}</button>`:''}
       <button class="btn btn-soft" style="padding:.6rem" onclick="rainHide['${d.date}']=1;renderRainTip()">Ignora</button>
     </div>
     <div style="font-size:.75rem;color:var(--ink-faint);margin-top:.6rem;line-height:1.45">Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.</div>
@@ -27666,7 +28335,7 @@ function cercaLetto(){
   const s=document.querySelector('#hotels .scroll')||document.querySelector('.scroll');
   if(s)s.scrollTop=0;
   const i=document.getElementById('hotSearch');
-  if(i){i.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>i.focus(),250);}
+  if(i){i.scrollIntoView({block:'center',behavior:comeScorrere()});setTimeout(()=>i.focus(),250);}
 }
 function renderNotti(t){
   const c=document.getElementById('hotelNotti');if(!c)return;
@@ -27731,7 +28400,7 @@ function renderHotels(){
     const ex=(t.expenses||[]).find(x=>x.hotelId===h.id);
     const soldi=ex?`<span class="ht-tag${ex.paid===false?' pre':''}">${esc(fmtMoney(ex.origAmount!=null?ex.origAmount:ex.amount,ex.origCurrency||t.currency))}${ex.paid===false?' · '+esc(tv('da pagare')):''}</span>`:'';
     const notti=nn?`<span class="ht-tag forte">${esc(tp(nn,'{1} notte','{1} notti'))}</span>`:'';
-    return `<div class="card"><div class="card-head"><div style="min-width:0"><div class="card-h">${esc(h.name)}</div><div class="card-sub">${esc(fmtRange(h.checkIn,h.checkOut))}${h.address?' · '+esc(String(h.address).split(',').slice(0,2).join(',')):''}</div></div><div style="display:flex;gap:.35rem"><button class="edit-ic" onclick="editHotel(${h.id})" aria-label="${esc(tv('Modifica'))}">✎</button><button class="edit-ic" onclick="delHotel(${h.id})" aria-label="${esc(tv('Elimina'))}">🗑️</button></div></div>${(notti||soldi)?`<div class="ht-tags">${notti}${soldi}</div>`:''}${nota}${fondo}</div>`;
+    return `<div class="card"><div class="card-head"><div style="min-width:0"><div class="card-h">${esc(h.name)}</div><div class="card-sub">${esc(fmtRange(h.checkIn,h.checkOut))}${h.address?' · '+esc(String(h.address).split(',').slice(0,2).join(',')):''}</div></div><div style="display:flex;gap:.65rem"><button class="edit-ic" onclick="editHotel(${h.id})" aria-label="${esc(tv('Modifica'))}">✎</button><button class="edit-ic" onclick="delHotel(${h.id})" aria-label="${esc(tv('Elimina'))}">🗑️</button></div></div>${(notti||soldi)?`<div class="ht-tags">${notti}${soldi}</div>`:''}${nota}${fondo}</div>`;
   }).join('');
 }
 /* ===== TROVARE UN HOTEL =====
@@ -28262,7 +28931,7 @@ function onHotelSearch(){
     }
     box.innerHTML=res.slice(0,8).map((r,i)=>{
       const parts=String(r.display_name||'').split(','),nota=[HOT_LIV[r._liv]||'',r._come].filter(Boolean).join(' · ');
-      return `<div class="exp-row" onclick="openHotelAdd(${i})"><div class="cat-ic">🏨</div><div class="exp-info"><div class="exp-d">${esc(parts[0]||'')}</div><div class="exp-meta">${esc(parts.slice(1,3).join(','))}${nota?'<br>'+esc(nota):''}</div></div><button class="chip">Scegli</button></div>`;
+      return `<div class="exp-row" onclick="openHotelAdd(${i})"><div class="cat-ic">🏨</div><div class="exp-info"><div class="exp-d">${esc(parts[0]||'')}</div><div class="exp-meta">${esc(parts.slice(1,3).join(','))}${nota?'<br>'+esc(nota):''}</div></div><button class="chip" onclick="event.stopPropagation();openHotelAdd(${i})">Scegli</button></div>`;
     }).join('')+tastoAMano('Non è nessuno di questi?');
   },500);
 }
@@ -28555,7 +29224,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · ${esc(VERSIONE_APP)}</div>${em?`<div class="stato-cloud${ultimoStatoCloud.attesa?' in-attesa':''}" id="statoCloud" role="status">${esc(ultimoStatoCloud.t)}</div>`:''}</div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:.7rem;min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:1.05rem;flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:.68rem;color:var(--ink-faint);margin-top:.2rem">GeppGo · ${esc(VERSIONE_APP)}</div>${em?`<div class="stato-cloud${ultimoStatoCloud.attesa?' in-attesa':''}" id="statoCloud" role="status">${esc(ultimoStatoCloud.t)}</div>`:''}</div></div></div>${em?`<div style="display:flex;gap:.5rem"><button class="btn btn-soft" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-soft" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:.8rem"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:.76rem;color:var(--red);cursor:pointer;text-decoration:underline;min-height:44px;padding:0 .7rem">Elimina il mio account</button></div>`:`<button class="btn btn-grad btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:.7rem"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-soft btn-block" style="margin-top:.7rem" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
   <div class="card"><div class="card-h" style="margin-bottom:.2rem">Punti di ripristino</div><p style="font-size:.76rem;color:var(--ink-faint);line-height:1.5;margin-bottom:.6rem">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
   tessereMostraStato();
   versioneMostra();
@@ -28597,7 +29266,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-16 11:34';
+const VERSIONE_APP='2026-10-18 14:01';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -29349,7 +30018,7 @@ function chiediQualita(bytesOriginale,quante){
     const q=k==='originale'?peso(bytesOriginale):tv('circa {1}',peso(stima[k]*n));
     return `<button class="btn ${k===ultima?'btn-grad':'btn-soft'} btn-block" style="margin-bottom:.5rem;text-align:left;padding:.7rem .9rem" onclick="scegliQualita('${k}')">
       <div style="font-weight:800"><span>${esc(tv(L.nome))}</span>${k===ultima?' ·':''}</div>
-      <div style="font-size:.78rem;font-weight:600;opacity:.75;margin-top:.15rem">${esc(k==='originale'?tv('la foto intatta — {1}',q):tv('{1} pixel — {2}',L.lato,q))}</div></button>`;
+      <div style="font-size:.78rem;font-weight:500;margin-top:.15rem">${esc(k==='originale'?tv('la foto intatta — {1}',q):tv('{1} pixel — {2}',L.lato,q))}</div></button>`;
   }).join('');
   openSheet('mFotoQual');
   return new Promise(res=>{fqRisolvi=res;});
@@ -29844,7 +30513,9 @@ function renderAdVotes(a){
   if(!a||(t.participants||[]).length<2){el.innerHTML='';return;}
   const v=a.votes||{},me=myPid(t);
   const cnt=k=>Object.values(v).filter(x=>x===k).length;
-  const btn=(k,lab)=>`<button class="chip" style="${v[me]===k?'background:var(--green-tint);border-color:var(--green);font-weight:800':''}" onclick="castVote('${k}')">${lab}${cnt(k)?' '+cnt(k):''}</button>`;
+  /* il nome per VoiceOver, che di 👍 legge «pollice in su» e non che e' un voto */
+  const nomi={up:['Mi piace','Mi piace ({1})'],down:['Non mi piace','Non mi piace ({1})'],q:['Forse','Forse ({1})']};
+  const btn=(k,lab)=>`<button class="chip" style="${v[me]===k?'background:var(--green-tint);border-color:var(--green);font-weight:800':''}" aria-pressed="${v[me]===k}" aria-label="${esc(cnt(k)?tv(nomi[k][1],cnt(k)):tv(nomi[k][0]))}" onclick="castVote('${k}')">${lab}${cnt(k)?' '+cnt(k):''}</button>`;
   el.innerHTML=`<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap"><span style="font-size:.74rem;font-weight:800;color:var(--ink-faint)">Il gruppo:</span>${btn('up','👍')}${btn('down','👎')}${btn('q','🤔')}</div>`;
 }
 function castVote(k){

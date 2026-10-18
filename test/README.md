@@ -909,8 +909,8 @@ La miglioria 10. Le sette domande, una per gruppo:
    ma **i nomi si coprono invece di scartare la frase**: prima «Spostamento
    verso Nishiki» passava per un dato dell'utente. Per questo i nomi del
    viaggio di prova sono strani (Zelda, Yuri, Ximena, Teamlab): un nome che
-   è anche una parola («Museo») coprirebbe le parole dell'app. Il Premium
-   resta fuori, su richiesta.
+   è anche una parola («Museo») coprirebbe le parole dell'app. Dalla
+   miglioria 11 dentro c'è anche il Premium.
 3. **I testi del passo 2**: Saldi, Condividi (con e senza account, e le frasi
    col grassetto intere), «Spostamento verso», i messaggi d'invio delle
    email, l'anello di «Fra poco» (in francese «en cours», dentro il cerchio a
@@ -923,7 +923,10 @@ La miglioria 10. Le sette domande, una per gruppo:
    schermo: «La giornata» con 0, 1, 2 e 5 tappe.
 5. **Le valute**: «1.234,50 €», «€1,234.50», «1 234,50 €», lo yen senza
    decimali, «A$», e gli spazi dentro l'importo che non vanno a capo. Anche
-   nella lista delle spese.
+   nella lista delle spese. Le migliaia come le separa ogni lingua (dalla
+   miglioria 11): «1234,50 €» in spagnolo e portoghese, «12.345,50 €» e
+   «12 345,50 €» dalla quinta cifra; l'italiano a quattro cifre cambia col
+   browser (i dati delle lingue del 2025), e lì vanno bene tutti e due.
 6. **La privacy nella lingua dell'app**: il tasto del Profilo e i link sotto
    «Crea account» aprono `privacy-xx.html`; ogni traduzione ha la lingua
    giusta, i link alle altre, il riquadro «vale l'italiano», le stesse
@@ -951,3 +954,69 @@ accorge dei difetti messi apposta).
 ⚠️ Qui i caratteri di Google non arrivano: le misure della parte 7 vanno
 rifatte coi caratteri veri prima di fidarsi (vedi DA-FARE, «Cose scoperte a
 caro prezzo»). In CI arrivano, e la prova misura con quelli.
+
+## Accessibilità
+
+```sh
+node test/prova-accessibilita.js       # 29 controlli, in nove gruppi (circa 5 minuti)
+node test/prova-accessibilita.js 2 3   # solo axe e il contrasto
+```
+
+La miglioria 11. axe-core sta fra le dipendenze delle prove e non entra
+nell'app. Le nove domande:
+
+1. **Il Premium tradotto** in cinque lingue: si portano a schermo tutte le
+   sue frasi (il foglio gratis e Premium, il Profilo, i messaggi del cambio
+   di piano, «eliminare è del Premium») e si legge quello che si vede. E le
+   migliaia: in spagnolo e portoghese «1234 €» senza separatore, «12.345 €»
+   e «12 345 €» col loro.
+2. **axe-core** su tutte le schermate e le finestre di `MAPPA_APP`, nei due
+   temi, sullo strato che si vede; e una volta sul documento intero, perché
+   il meta viewport (lo zoom bloccato) sta nella testa della pagina. In più
+   quello che axe non vede: ogni tasto ha un nome fatto di parole, ogni div o
+   span con `onclick` è un tasto (o ha dentro un tasto vero che fa lo
+   stesso), ci sono le zone main e nav. E il giro non deve rompersi da
+   nessuna parte: un passo rotto adesso si dice (vedi `schermate.js`).
+3. **Il contrasto**: `--ink-faint` e il testo sui tasti oro, nei due temi; e
+   ogni testo a schermo, colori composti salendo dai genitori. Sui fondi
+   sfumati o con un'immagine (il cielo della Home, i tasti oro) si fotografa
+   la schermata col testo reso trasparente e si legge il colore sotto ogni
+   riga; chi esce bocciato si riguarda a schermata ferma, perché nel giro un
+   foglio può essere ancora a metà della salita.
+4. **Il dito**: nove punti intorno al centro di ogni tasto, a 320, 390 e 430
+   px, devono rispondere a lui (o a un tasto vicino che fa la stessa cosa).
+5. **`lang`** segue la lingua dell'app, anche cambiandola dal Profilo.
+6. **Il fuoco nei fogli**, toccando come un dito: entra aprendo, torna al
+   tasto di partenza chiudendo con la ✕, con Esc, toccando fuori e
+   scegliendo da una tendina; tutti i fogli sono `role="dialog"` con un nome;
+   Tab non esce dal foglio; Invio e spazio aprono un riquadro-tasto.
+7. **I messaggi in basso**, con l'orologio della pagina: la durata, il tocco
+   che chiude, `#annunci` per VoiceOver, i tasti principali scoperti (la
+   Home, la giornata col + Aggiungi, un foglio alto quanto lo schermo, una
+   conferma), il contrasto nei due temi.
+8. **Riduci movimento** (`reducedMotion: 'reduce'` di Playwright): nessuna
+   animazione o transizione più lunga di un millesimo di secondo, gli
+   scorrimenti senza `smooth`, le mappe senza zoom animato.
+9. **Niente testi troncati o sovrapposti** in cinque lingue, tutte le
+   schermate a 320 e 430 px, le principali a 375: è la misura di
+   `prova-traduzioni` (in `schermate.js`). Un tasto che galleggia sopra la
+   pagina (in Time Table «↩ Annulla» e «＋ Aggiungi») copre quello che ci
+   scorre sotto, come la barra in basso: non gli si sovrappone.
+
+Mentre si misura, i messaggi in basso non arrivano (`toast` diventa muto in
+quella pagina): passano, e la prova 7 guarda loro. Il nome «GeppGo»
+accanto al logo resta fuori dal contrasto: è il logo, e WCAG non chiede
+contrasto alle scritte di un logo.
+
+`require('./prova-accessibilita').misura(page, {...})` misura una schermata
+sola, per chi la sta sistemando.
+
+Sul codice di prima (dab776f) la prova boccia sette gruppi su nove: il
+Premium in italiano (11 frasi × 4 lingue) e le migliaia separate in spagnolo
+e portoghese; 310 violazioni di axe (contrasto, `aria-label` sui div della
+barra, tendine e campi senza nome); `--ink-faint` a 2,7:1, il bianco
+sull'oro a 3,2:1 e 1230 testi sotto soglia; i bordi dei campi a 1,3:1;
+1261 tasti piccoli; i fogli senza fuoco né nome; i messaggi di durata fissa;
+le animazioni fatte da JavaScript. Restano veri solo i controlli che lo erano
+già: il giro non si rompe, `lang` segue la lingua (c'era dalla miglioria 10),
+niente testi tagliati.

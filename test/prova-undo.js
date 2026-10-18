@@ -56,7 +56,8 @@ const err = [];
       // "si vede" davvero: ha dimensioni, sta nello schermo, ed e' lui in cima
       siVede: r.width > 0 && r.y > 0 && r.y + r.height < innerHeight
               && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === b,
-      opacita: getComputedStyle(b).opacity
+      opacita: getComputedStyle(b).opacity,
+      spenta: b.getAttribute('aria-disabled') === 'true'
     };
   });
 
@@ -90,7 +91,11 @@ const err = [];
   check('la freccina ↩ SI VEDE appena aperta la time-table', v0.siVede, `opacita ${v0.opacita}`);
   check('ma parte spenta, non c\'e\' niente da annullare', !v0.on);
   check('e lo dice', /niente da annullare/i.test(v0.title), v0.title);
-  await page.click('#ttUndo');   // premerla da spenta non deve rompere niente
+  check('e per VoiceOver è un tasto spento (aria-disabled)', v0.spenta);
+  /* premerla da spenta non deve rompere niente. force: da spenta è
+     aria-disabled (miglioria 11), e Playwright i tasti spenti non li tocca;
+     un dito sì, e la risposta è un messaggio */
+  await page.click('#ttUndo', { force: true });
   await page.waitForTimeout(250);
   check('premuta da spenta non cambia gli orari', JSON.stringify(await leggi(1)) === '{"time":"10:00","timeEnd":"11:00"}');
   // il messaggio va aspettato, non fotografato al volo: appare e poi svanisce
@@ -177,6 +182,12 @@ const err = [];
     a.time = '10:00'; a.timeEnd = '11:00'; save(); buildTT();
   });
   const bb = await page.evaluate(() => {
+    /* Un messaggio in basso si chiude con un tocco, quindi i tocchi li prende
+       (miglioria 11); in Time Table, dove in basso ci sono «＋ Aggiungi» e
+       «↩ Annulla», sta sotto la testata, e «↩ Durata di prima» copriva proprio
+       la tappa da premere. Un dito lo chiuderebbe col primo tocco: qui lo si
+       chiude prima, perché la prova è sullo spostamento. */
+    document.querySelectorAll('.toast').forEach(x => x.remove());
     const r = document.querySelector('.tt-block[data-id="1"]').getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + 6 };
   });
