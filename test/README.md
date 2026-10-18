@@ -198,6 +198,13 @@ due modi in cui questo poteva rompere le cose vecchie: una foto caricata prima
 che le miniature esistessero si scarica lo stesso, e un database su cui lo
 schema non è stato rilanciato accetta la foto comunque, senza la miniatura.
 
+Il cloud di `prova-foto` è finto (`sb` e `session` scritti a mano). La
+libreria vera si ferma, e il finto si mette quando l'avvio ha smesso di
+aspettarla (`cloudGiu`): prima, se il «non arriva» capitava col finto già al
+suo posto, l'avvio faceva partire la sincronizzazione col finto e la prova
+cadeva a caso, qui e sul server delle prove (vedi `DA-FARE.md`, «`prova-ruoli`
+rossa a caso»).
+
 ## Come si muove l'app
 
 ```sh
@@ -985,6 +992,11 @@ nell'app. Le nove domande:
    foglio può essere ancora a metà della salita.
 4. **Il dito**: nove punti intorno al centro di ogni tasto, a 320, 390 e 430
    px, devono rispondere a lui (o a un tasto vicino che fa la stessa cosa).
+   Nelle mappe contano i tasti dello zoom; i segnaposto no (ripetono tappe e
+   alberghi che hanno i loro tasti negli elenchi), né la parola «Leaflet»
+   nella scritta dei diritti. Leaflet arriva in locale col suo foglio di
+   stile: senza, qui i controlli non stavano nei loro angoli, e la scritta
+   che sul server delle prove copriva il 🧭 non si vedeva.
 5. **`lang`** segue la lingua dell'app, anche cambiandola dal Profilo.
 6. **Il fuoco nei fogli**, toccando come un dito: entra aprendo, torna al
    tasto di partenza chiudendo con la ✕, con Esc, toccando fuori e

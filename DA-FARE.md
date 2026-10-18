@@ -805,6 +805,9 @@ lingue.
   l'area invisibile (`::after`) parte dall'interno del bordo, e due tasti
   vicini devono avere i centri a 44 px. Dentro una striscia che scorre l'area
   invisibile di chi sta sul bordo viene tagliata: serve un margine ai capi.
+  Nelle due mappe col 🧭 (del viaggio e della giornata) la scritta «Leaflet |
+  © OSM» sta in basso a sinistra: a destra copriva il bordo del tasto e se ne
+  prendeva il tocco. I tasti dello zoom sono da 44 (Leaflet li fa da 30).
 - **VoiceOver.** Un div o uno span con `onclick` diventa da solo un tasto
   (`role="button"`, `tabindex`, Invio e spazio) e un tasto fatto di un
   simbolo prende un nome (il suo `title`, o quello che il simbolo vuol dire):
@@ -859,6 +862,12 @@ del fuoco, 0 su 64 → 64.
 - I due campi di mCloud (il pannello nascosto per chi ha un Supabase suo)
   restano a 12 px: toccandoli l'iPhone ingrandisce. È voluto, è un pannello
   da sviluppatore.
+- I segnaposto sulle mappe restano piccoli (da 23 a 34 px) e VoiceOver li
+  legge con quello che hanno dentro («1», «🏠»): sono disegni sulla mappa, e
+  tappe e alberghi hanno già i loro tasti negli elenchi. Dare a ognuno il
+  nome della tappa è poco lavoro, se servirà: un `aria-label` sull'elemento
+  del segnaposto (`getElement()`), perché il `title` perde contro il testo
+  che c'è dentro.
 - **Un messaggio in basso prende i tocchi**, perché si chiude con un tocco:
   quello che c'è sotto (mai un tasto principale, ma il contenuto della
   pagina sì) per qualche secondo non si tocca, e il primo tocco chiude il
@@ -1067,6 +1076,14 @@ qualcuno che risponde".
 - **Un elemento `position:fixed` con `left:50%` ha a disposizione metà
   schermo**: il messaggio in basso andava su tre righe anche quando ne
   bastava una. Con `width:max-content` prende la larghezza del testo.
+- **Una libreria servita a metà nelle prove mostra un'altra app.** Il giro
+  delle schermate serviva in locale `leaflet.js` ma non `leaflet.css`: qui
+  la mappa girava senza il suo foglio di stile, coi controlli fuori dai loro
+  angoli, e sul server delle prove (dove la CDN risponde) col foglio vero. Lì
+  la scritta «Leaflet | © OSM» stava sopra il tasto 🧭 e gli mangiava il
+  bordo e il tocco: un difetto vero, sui telefoni di tutti, che qui non si
+  vedeva. Di una libreria si servono tutti i pezzi, o la prova guarda una
+  pagina che nessuno vede.
 
 - **L'area invisibile da 44 px parte dall'interno del bordo** (blocco «Tutto
   quello che si tocca dev'essere grande abbastanza» nel foglio di stile,
@@ -1480,6 +1497,13 @@ qualcuno che risponde".
   (non le serve). Le altre che scrivono `myUid` a mano (`account`, `foto`,
   `inviti`, `raccolta`) finora non hanno dato segni, ma il rischio è lo
   stesso: se una diventa rossa a caso, si guarda prima qui.
+  **È successo a `foto`** (18 ottobre): sul server delle prove la foto del
+  compagno non scendeva più e la prova si fermava a metà; qui, 1 giro su 6,
+  «Messa da qualcuno del viaggio». Fermare la libreria non basta, quando la
+  prova si fa anche `sb` e `session` finti: se il «non arriva» capita col
+  finto già al suo posto, «il cloud non risponde» chiama `afterAuth`, che col
+  finto fa partire la sincronizzazione, e quella si porta via i compagni del
+  viaggio. Il finto si mette dopo che l'avvio si è arreso (`cloudGiu`).
 
 - **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
   librerie bloccanti prima del codice: 523 KB compressi da aspettare per

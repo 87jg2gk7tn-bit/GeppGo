@@ -23,10 +23,20 @@ const stato = {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
+  /* Il cloud qui è finto (sb e session scritti a mano, più sotto), e l'avvio
+     non deve passarci sopra. Prima lo faceva a caso, anche sul codice di
+     prima: se la libreria vera mancava quando il finto c'era già, «il cloud
+     non risponde» faceva partire la sincronizzazione col finto, che si
+     portava via i compagni del viaggio («Messa da qualcuno del viaggio», 1
+     giro su 6 qui); sul server delle prove, dove la CDN risponde, la libreria
+     arrivava, e la foto del compagno non scendeva più (la prova si fermava a
+     metà). Qui la libreria non arriva, e il finto si mette quando l'avvio
+     ha smesso di aspettarla. */
+  await page.route('**/supabase-js@*/**', ro => ro.abort('blockedbyclient'));
 
   await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => typeof myPos !== 'undefined', { timeout: 20000 });
+  await page.waitForFunction(() => typeof myPos !== 'undefined' && cloudGiu === true, { timeout: 20000 });
 
   const r = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);

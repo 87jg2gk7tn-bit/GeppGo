@@ -31,14 +31,20 @@
 
    axe-core sta solo qui, fra le dipendenze delle prove: nell'app non entra.
 
-   DUE SCELTE DA SAPERE.
+   TRE SCELTE DA SAPERE.
    - Il nome «GeppGo» scritto accanto al logo non conta per il contrasto: è
      il logo, e WCAG non chiede contrasto alle scritte di un logo («Go» è
      nel colore del marchio, e il marchio non si tocca).
    - Una scheda con dentro altri tasti (la spesa col suo ✎, il biglietto coi
      suoi chip) non può essere un tasto: un tasto dentro un tasto VoiceOver
      non lo legge. Il suo tocco resta per il dito, e la prova controlla che
-     lo stesso lo faccia un tasto vero lì dentro. */
+     lo stesso lo faccia un tasto vero lì dentro.
+   - Dentro le mappe si misurano i tasti dello zoom, non i segnaposto (sono
+     disegni sulla mappa, e ripetono tappe e alberghi che hanno i loro tasti
+     negli elenchi) né la parola «Leaflet» nella scritta dei diritti. Le
+     mappe girano con Leaflet e il suo foglio di stile serviti in locale,
+     come sul telefono: senza il foglio, i controlli non stanno nei loro
+     angoli e la scritta che copriva il 🧭 qui non si vedeva. */
 const fs = require('fs');
 const path = require('path');
 const { apriBrowser, RADICE } = require('./browser');
@@ -210,7 +216,13 @@ const MISURA_A11Y = unioni => {
   const pulita = x => (x.getAttribute('onclick') || '').replace(/^\s*event\.stopPropagation\(\);?\s*/, '').trim();
   const tasti = [];
   radici.forEach(rad => rad.querySelectorAll(SEL).forEach(el => {
-    if (tasti.includes(el) || !visibile(el) || spento(el) || el.closest('.leaflet-container')) return;
+    if (tasti.includes(el) || !visibile(el) || spento(el)) return;
+    /* Della mappa contano i tasti dello zoom. Il riquadro della mappa non è
+       un tasto (Leaflet gli dà il tabindex per le frecce della tastiera); i
+       segnaposto e i loro fumetti ripetono tappe e alberghi che hanno già i
+       loro tasti negli elenchi; «Leaflet» è una parola dentro la scritta dei
+       diritti. */
+    if (el.matches('.leaflet-container') || el.closest('.leaflet-marker-pane,.leaflet-popup-pane,.leaflet-control-attribution')) return;
     /* un'etichetta è un tasto quando accende una spunta o sceglie un file */
     if (el.tagName === 'LABEL' && !el.hasAttribute('onclick') && !(el.control && ['checkbox', 'radio', 'file'].includes(el.control.type))) return;
     /* un onclick che ferma soltanto il tocco (la maniglia che allunga una tappa) non è un tasto */

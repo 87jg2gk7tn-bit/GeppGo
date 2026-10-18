@@ -2175,6 +2175,10 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 .tt-day-add::after {inset:-4px}        /* 38 → 44 */
 .locate-fab::after {inset:-4px}        /* 38 → 44 */
 .hh-map-wrap .locate-fab::after{inset:-6px}   /* 34 → 44 */
+/* Lo zoom della mappa del viaggio: Leaflet lo fa da 30 px, e qui cresce
+   davvero (i due tasti si toccano, un'area che sborda finirebbe sull'altro).
+   Il foglio di Leaflet arriva dopo questo: la regola deve pesare di piu'. */
+.leaflet-container .leaflet-bar.leaflet-control-zoom a{width:44px;height:44px;line-height:44px}
 button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 .tt-travel-x::after,.tt-travel-skip::after,.tt-travel-toggle::after{inset:-16px -18px}
 /* Nella striscia dall'albergo il mezzo sta a destra, accanto alla ✕: un po'
@@ -13508,7 +13512,11 @@ function mappaAssente(){
 function riprovaMappa(){
   caricaLibreria('leaflet').then(mappaArrivata).catch(()=>toast('La mappa non si è caricata: controlla la rete e riprova.'));
 }
-function initMap(){if(map||typeof L==='undefined')return;map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);stratoMappa().addTo(map);drawMarkers();}
+/* La scritta «Leaflet | © OSM» sta in basso a sinistra: nel suo angolo di
+   sempre, a destra, finiva sopra il tasto 🧭, gli copriva il bordo e si
+   prendeva il tocco della sua parte bassa (miglioria 11). Deve restare
+   leggibile, quindi si sposta lei e non il tasto. */
+function initMap(){if(map||typeof L==='undefined')return;map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);map.attributionControl.setPosition('bottomleft');stratoMappa().addTo(map);drawMarkers();}
 function drawMarkers(){
   if(!map||typeof L==='undefined')return;
   markers.forEach(m=>map.removeLayer(m));markers=[];const t=T();if(!t)return;
@@ -24752,6 +24760,8 @@ function buildDayMap(){
     _dayMapAttesa=null;
     const c0=pts[0]||hh;
     dayMapObj=L.map('dayMap',{zoomControl:false}).setView([c0.lat,c0.lng],13);
+    /* a sinistra, come nella mappa del viaggio (vedi initMap): a destra c'e' il 🧭 */
+    dayMapObj.attributionControl.setPosition('bottomleft');
     stratoMappa().addTo(dayMapObj);
     pts.forEach((a,i2)=>{
       const ic=L.divIcon({html:`<div style="background:${a.type==='outdoor'?'#B85C38':'#B8863C'};color:#fff;width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.3)">${i2+1}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
@@ -29266,7 +29276,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-18 14:01';
+const VERSIONE_APP='2026-10-18 15:01';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
