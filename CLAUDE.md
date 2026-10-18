@@ -118,9 +118,12 @@ quel file è la memoria.
   (il logo, i nomi propri) ha `translate="no"`. `FRASI_IN_TUTTO` si conta da
   solo. `test/prova-traduzioni.js` gira tutte le schermate di `MAPPA_APP` in
   cinque lingue e boccia l'italiano rimasto, i messaggi cuciti e le frasi
-  senza traduzione. Le frasi del Premium sono rimaste in italiano (miglioria
-  10: «non toccare Premium e pubblicità»), e la prova le salta per nome di
-  funzione.
+  senza traduzione. Anche le frasi del Premium sono tradotte (dalla
+  miglioria 11: «non toccare il Premium» riguarda come funziona, non le
+  parole). Le migliaia seguono la regola di ogni lingua (`Intl`, senza
+  forzarle): in spagnolo e portoghese «1234 €» e «12.345 €»/«12 345 €».
+  Il portoghese dell'app è quello del Portogallo (`pt-PT`, «telemóvel»,
+  «ecrã»), anche per chi ha il telefono in portoghese del Brasile.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
   schermo stretto, tocco).
 - **Nessuna funzione nascosta.** Ogni funzione deve essere raggiungibile
@@ -136,6 +139,22 @@ quel file è la memoria.
   tocca i percorsi come farebbe un dito.) Un tasto è da 44×44 quando lo è
   toccandolo, non sommando i numeri del foglio di stile: l'area invisibile
   (`::after`) parte dall'interno del bordo.
+- **Accessibilità** (miglioria 11, `test/prova-accessibilita.js`, axe-core
+  solo nelle prove): contrasto WCAG AA nei due temi — 4,5:1 il testo, 3:1 il
+  testo grande, i simboli e i bordi dei campi. I colori vengono dai token:
+  `--ink-faint` per il testo tenue, `--oro-su` (l'inchiostro del logo) per
+  il testo sull'oro, mai bianco; `--bordo-campo` per i bordi dei campi. Un
+  div o uno span con `onclick` diventa tasto da solo (`rendiAccessibile`:
+  ruolo, tastiera, nome dal `title` per i tasti fatti di un simbolo); una
+  scheda con dentro altri tasti no, e allora il suo tocco lo fa anche un
+  tasto vero lì dentro. Un campo prende il nome dall'etichetta del suo `.fg`.
+  I fogli si aprono e chiudono con `openSheet`/`closeSheet`, che li fanno
+  finestre (`role="dialog"`) e portano il fuoco dentro e indietro. I messaggi
+  in basso passano da `toast()` (durata in base alla lunghezza, un tocco li
+  chiude, VoiceOver li legge, non coprono i tasti principali). Gli
+  scorrimenti fatti da JavaScript usano `comeScorrere()`: con «Riduci
+  movimento» niente scivola. Lo zoom con due dita non si blocca, e i campi
+  stanno a 16 px perché iPhone non ingrandisca da solo.
 - **Messaggi per chi usa l'app**: dicono cosa è successo e cosa si può fare
   (riprovare, controllare la rete). Niente guide, passi, file o nomi di
   servizi tecnici (Supabase, Worker, ponte) e niente testo grezzo del server:

@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 16 ottobre 2026.
+Aggiornato: 18 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -192,11 +192,14 @@ va rifatto vedere.
    - **le valute** con `Intl.NumberFormat` (`fmtMoney`): il simbolo dove lo
      mette la lingua e i suoi separatori («1.234,50 €» in italiano,
      «€1,234.50» in inglese, «1 234,50 €» in francese e portoghese), lo yen
-     senza decimali, il simbolo della lista `CURR` («A$» e non «$»), e le
-     migliaia sempre separate (`useGrouping:'always'`: per le regole comuni
-     lo spagnolo e il portoghese non separano sotto le cinque cifre, ma
-     «1234,50 €» sopra «12.345,00 €» nella stessa lista si legge male). Gli
-     spazi dentro l'importo non vanno a capo. I decimali di km e MB passano
+     senza decimali, il simbolo della lista `CURR` («A$» e non «$»). Le
+     migliaia qui erano sempre separate (`useGrouping:'always'`); **dal 18
+     ottobre (miglioria 11) seguono la regola di ogni lingua**, come ha
+     chiesto Giacomo: in spagnolo e portoghese quattro cifre stanno
+     attaccate («1234 €») e i gruppi partono dalla quinta («12.345 €»,
+     «12 345 €»). L'italiano a quattro cifre dipende dal browser: «1.234»
+     con i dati delle lingue di prima del 2025, «1234» con quelli nuovi, e
+     tutte e due sono giuste. Gli spazi dentro l'importo non vanno a capo. I decimali di km e MB passano
      da `fmtNum`, gli elenchi di nomi da `elenco` (`Intl.ListFormat`);
    - l'anello di «Fra poco» in francese diceva «là», che vuol dire «lì»:
      adesso «en cours», su due righe più piccole quando la parola è lunga
@@ -774,6 +777,104 @@ va rifatto vedere.
     spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
     acquisti dentro l'app per il Premium, e la presenza sugli store.
 
+### Accessibilità: a che punto è
+
+Miglioria 11, 18 ottobre 2026. `test/prova-accessibilita.js` gira tutte le
+schermate e le finestre di `MAPPA_APP` nei due temi e da 320 a 430 px, e
+boccia quello che resta fuori: axe-core (sta solo nelle prove, nell'app non
+entra), il contrasto di ogni testo (sui fondi sfumati, come il cielo della
+Home, si guardano i pixel veri col testo nascosto), il dito in nove punti
+intorno al centro di ogni tasto, i nomi e i ruoli per VoiceOver, il fuoco dei
+fogli, i messaggi in basso, «Riduci movimento», i testi tagliati in cinque
+lingue.
+
+**Le regole, d'ora in poi** (le prove le controllano):
+- **Colori.** `--ink-faint` è `#6B6256` (era `#9B9184`: 2,7:1 sul panna,
+  3,1:1 sul bianco): adesso 5,2:1 e 6:1; nel tema scuro `#A19585` (era
+  `#8C8171`). Il testo sull'oro è `--oro-su` (`#14110B`, l'inchiostro del
+  logo), non più bianco (3,2:1 nel chiaro, 2,2:1 nello scuro): 4,6–5,8:1
+  sulla sfumatura dei tasti, che adesso parte da `#A1763E` (era `#8C6229`) e
+  arriva a `#B8863C` come prima; 8,7:1 sull'oro del tema scuro. I bordi dei
+  campi sono `--bordo-campo` (`#8A8270`, scuro `#776D5F`; prima `--line`,
+  fra 1,2 e 1,4:1), a 3:1 col fondo. Il colore del logo e di «Go» non si è toccato:
+  WCAG non chiede contrasto alle scritte di un logo.
+- **Il cielo della Home** sceglie per ogni scritta il colore che si legge su
+  quello che ha dietro (`tingiCielo`): le nuvole e la nebbia restano sopra
+  la riga delle scritte, e nel tema scuro i cieli di giorno sono più scuri.
+- **Tocchi da 44.** Il blocco «TOCCHI DA 44 PER TUTTI» nel foglio di stile:
+  l'area invisibile (`::after`) parte dall'interno del bordo, e due tasti
+  vicini devono avere i centri a 44 px. Dentro una striscia che scorre l'area
+  invisibile di chi sta sul bordo viene tagliata: serve un margine ai capi.
+  Nelle due mappe col 🧭 (del viaggio e della giornata) la scritta «Leaflet |
+  © OSM» sta in basso a sinistra: a destra copriva il bordo del tasto e se ne
+  prendeva il tocco. I tasti dello zoom sono da 44 (Leaflet li fa da 30).
+- **VoiceOver.** Un div o uno span con `onclick` diventa da solo un tasto
+  (`role="button"`, `tabindex`, Invio e spazio) e un tasto fatto di un
+  simbolo prende un nome (il suo `title`, o quello che il simbolo vuol dire):
+  lo fa `rendiAccessibile`, che guarda la pagina cambiare come le traduzioni.
+  Una scheda con dentro altri tasti non può diventare un tasto: il suo tocco
+  deve farlo anche un tasto vero lì dentro (il nome del biglietto, del luogo,
+  del viaggio nel Profilo; il ✎ della spesa). Un campo prende il nome
+  dall'etichetta del suo `.fg` (`aria-labelledby`, non `for`: col `for` un
+  tocco sull'etichetta aprirebbe la tendina del telefono).
+- **Fogli.** Sono `role="dialog"` con `aria-modal` e un nome; aprendoli il
+  fuoco va sul titolo, chiudendoli torna al tasto che li ha aperti (anche
+  sull'iPhone, dove un tasto toccato non prende il fuoco: si ricorda
+  l'ultimo toccato). Esc chiude, Tab gira dentro.
+- **Messaggi in basso** (`toast`): da 2,6 a 8 secondi, 60 ms per carattere;
+  un tocco li chiude; VoiceOver li legge da `#annunci`, una regione che c'è
+  sempre; non coprono i tasti principali (le barre, il + della giornata, la
+  ✕ e i tasti delle azioni del foglio aperto): se sopra la barra ce n'è uno,
+  vanno sotto la testata o in cima. Prima erano bianchi su `--ink`, che nel
+  tema scuro è panna: 1,1:1.
+- **Zone**: `nav` (la barra in basso, fatta di tasti veri con
+  `aria-current`), `main` (le pagine), la testata `banner`. La lingua della
+  pagina (`lang`) segue quella dell'app — c'era già.
+- **Movimento.** Con «Riduci movimento» il foglio di stile spegne animazioni e
+  transizioni (c'era già), e da qui anche quelle fatte da JavaScript: gli
+  scorrimenti morbidi (`comeScorrere()`) e lo zoom che scivola delle mappe.
+- **Zoom.** Il meta viewport non blocca più lo zoom con due dita (era
+  `user-scalable=no`, che WCAG non permette e che axe, guardato sul documento
+  intero, dà come critico). Per non far ingrandire la pagina da sola a ogni
+  tocco su un campo, i campi sono a 16 px (erano 15,2); il doppio tocco non
+  ingrandisce più (`touch-action:manipulation`).
+
+**Le misure, prima e dopo**, con la stessa misura sul codice di prima e su
+quello di adesso (119 schermate e finestre a 390 px nei due temi; i tocchi
+anche a 320 e 430): coppie testo/fondo sotto soglia, chiaro 145 coppie
+diverse (919 testi) → 0, scuro 95 (311 testi) → 0; bordi dei campi sotto
+3:1, 94 → 0; tasti sotto 44×44 toccando, 106 (108 a 320 px, 105 a 430) → 0;
+tasti senza nome 62 → 0, con un nome fatto solo di simboli 23 → 0, div e
+span toccabili senza ruolo 56 → 0; axe, violazioni gravi o critiche, 758
+nodi in 5 regole nel chiaro e 371 nello scuro → 0; fogli con la gestione
+del fuoco, 0 su 64 → 64.
+
+**Quello che resta**
+- **Provarla con VoiceOver vero, su un iPhone.** Le prove dicono che i nomi,
+  i ruoli e il fuoco ci sono; come suona davvero lo dice solo il telefono.
+- **La grandezza del testo del telefono** (Impostazioni › Accessibilità ›
+  Testo più grande) non arriva all'app: le scritte sono in `rem` fissi. Si
+  può ingrandire con due dita. Seguirla vorrebbe dire rivedere tutte le
+  schermate a testo grande: una miglioria a sé.
+- I tasti a due stati (le schede di Scopri, i chip accesi) si vedono accesi
+  dal colore, ma VoiceOver non lo dice (manca `aria-pressed`, che c'è solo sui
+  voti del gruppo e sulla barra in basso).
+- I due campi di mCloud (il pannello nascosto per chi ha un Supabase suo)
+  restano a 12 px: toccandoli l'iPhone ingrandisce. È voluto, è un pannello
+  da sviluppatore.
+- I segnaposto sulle mappe restano piccoli (da 23 a 34 px) e VoiceOver li
+  legge con quello che hanno dentro («1», «🏠»): sono disegni sulla mappa, e
+  tappe e alberghi hanno già i loro tasti negli elenchi. Dare a ognuno il
+  nome della tappa è poco lavoro, se servirà: un `aria-label` sull'elemento
+  del segnaposto (`getElement()`), perché il `title` perde contro il testo
+  che c'è dentro.
+- **Un messaggio in basso prende i tocchi**, perché si chiude con un tocco:
+  quello che c'è sotto (mai un tasto principale, ma il contenuto della
+  pagina sì) per qualche secondo non si tocca, e il primo tocco chiude il
+  messaggio. In Time Table, dove in basso ci sono «＋ Aggiungi» e «↩ Annulla»,
+  il messaggio sta sotto la testata, sopra le prime tappe. Se dà fastidio,
+  l'alternativa è un messaggio che lascia passare i tocchi e ha una ✕ sua.
+
 ### Nessuna funzione nascosta: a che punto è
 
 La regola sta in `CLAUDE.md`: ogni funzione a non più di 2 tocchi dalla
@@ -954,6 +1055,36 @@ qualcuno che risponde".
 
 ## Cose scoperte a caro prezzo, da non riscoprire
 
+- **Il giro delle schermate inghiottiva gli errori dei passi** (scoperto il
+  17 ottobre). Un passo che si rompeva finiva in un `console.log`, e la misura
+  guardava la schermata di prima credendola quella nuova. Così un `t()` messo
+  dove `t` è il viaggio (in `buildTT`: lì la traduzione è `tv()`, lo dice
+  anche CLAUDE.md) ha rotto la Time Table per un pomeriggio senza che il giro
+  dicesse niente. Adesso `giro()` mette il passo rotto fra gli errori, e
+  `prova-accessibilita` boccia il giro se ce n'è anche uno. Lo stesso giro ha
+  trovato un passo rotto da sempre: «nuovo hotel» apriva il foglio senza
+  l'albergo che l'app prepara prima.
+- **axe guardato sulle singole schermate non vede la pagina.** Il meta
+  viewport bloccava lo zoom (`user-scalable=no`), una violazione critica, ma
+  sta nella testa del documento e non dentro uno strato. La prova adesso fa
+  anche un giro di axe sul documento intero.
+- **Un commento con dentro un `<div` falsa il conto dei div** del punto 3 di
+  CLAUDE.md, che è un `grep`: nei commenti si scrive «div» senza il segno.
+- **Dentro un `<details>` chiuso le cose hanno un riquadro** ma non si vedono:
+  `getClientRects()` non basta per dire visibile, ci vuole anche
+  `checkVisibility()`.
+- **Un elemento `position:fixed` con `left:50%` ha a disposizione metà
+  schermo**: il messaggio in basso andava su tre righe anche quando ne
+  bastava una. Con `width:max-content` prende la larghezza del testo.
+- **Una libreria servita a metà nelle prove mostra un'altra app.** Il giro
+  delle schermate serviva in locale `leaflet.js` ma non `leaflet.css`: qui
+  la mappa girava senza il suo foglio di stile, coi controlli fuori dai loro
+  angoli, e sul server delle prove (dove la CDN risponde) col foglio vero. Lì
+  la scritta «Leaflet | © OSM» stava sopra il tasto 🧭 e gli mangiava il
+  bordo e il tocco: un difetto vero, sui telefoni di tutti, che qui non si
+  vedeva. Di una libreria si servono tutti i pezzi, o la prova guarda una
+  pagina che nessuno vede.
+
 - **L'area invisibile da 44 px parte dall'interno del bordo** (blocco «Tutto
   quello che si tocca dev'essere grande abbastanza» nel foglio di stile,
   prove `prova-tocchi` e `prova-a-portata`). Su un tasto da 38 px col bordo
@@ -965,8 +1096,11 @@ qualcuno che risponde".
   non mente. Toccando ha trovato anche il resto: il nome della città, che
   viene dopo nella pagina, si prendeva la parte di sotto dell'area di «22° ·
   Meteo ›» (adesso la temperatura ha `z-index:1`), e i messaggi in basso
-  coprivano per tre secondi «＋ Aggiungi» e «↩ Annulla» (adesso
-  `pointer-events:none`: un messaggio si legge e basta).
+  coprivano per tre secondi «＋ Aggiungi» e «↩ Annulla». Allora la cura è
+  stata `pointer-events:none`; dal 18 ottobre (miglioria 11) un messaggio
+  si chiude con un tocco, quindi i tocchi li prende, e per questo **si
+  sposta** dove non copre un tasto principale (`messaggioAlPosto`: sopra la
+  barra, sotto la testata o in cima, il primo libero).
 - **Un tasto che si trascina deve sapere se il dito è giù** (`initTTFab`).
   `pointermove` col dito arriva solo a dito premuto, ma col mouse o col
   trackpad dell'iPad arriva anche passandoci sopra: «＋ Aggiungi» della Time
@@ -1363,6 +1497,13 @@ qualcuno che risponde".
   (non le serve). Le altre che scrivono `myUid` a mano (`account`, `foto`,
   `inviti`, `raccolta`) finora non hanno dato segni, ma il rischio è lo
   stesso: se una diventa rossa a caso, si guarda prima qui.
+  **È successo a `foto`** (18 ottobre): sul server delle prove la foto del
+  compagno non scendeva più e la prova si fermava a metà; qui, 1 giro su 6,
+  «Messa da qualcuno del viaggio». Fermare la libreria non basta, quando la
+  prova si fa anche `sb` e `session` finti: se il «non arriva» capita col
+  finto già al suo posto, «il cloud non risponde» chiama `afterAuth`, che col
+  finto fa partire la sincronizzazione, e quella si porta via i compagni del
+  viaggio. Il finto si mette dopo che l'avvio si è arreso (`cloudGiu`).
 
 - **⚠️ L'avvio col campo debole lo decidevano le librerie, non l'app.** Sei
   librerie bloccanti prima del codice: 523 KB compressi da aspettare per

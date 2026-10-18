@@ -124,7 +124,10 @@ const spia = p => p.evaluate(n => { window.__spie = []; n.forEach(k => { window[
    Ogni passo è una voce con la sua scritta, tranne BARRA: un'icona della
    barra in basso, che le parole non le ha (vedi sopra). */
 const BARRA = p => ({ barra: p });
-const VOCE = (sel, re) => ({ sel, re });
+/* prima: quello che c'e' da fare perche' la voce si accenda (non e' un tocco
+   e non si conta): «↩ Annulla» con niente da annullare e' spento
+   (aria-disabled, miglioria 11), e un dito vero non lo cerca. */
+const VOCE = (sel, re, prima) => ({ sel, re, prima });
 const NOME = VOCE('#menuViaggi', /Lisbona/);
 const VIAGGIO = VOCE('#homeHero .hh-rapido', /Viaggio/);
 const GIORNATA = VOCE('#homeHero .hh-eyebrow', /GIORNO 1 DI 4/);
@@ -156,7 +159,7 @@ const FUNZIONI = [
   ['ordinare il giro', 1, [GIORNATA, VOCE('#mDay .tt-az', /Ordina il giro/)], 'spia:sistemaGiornata'],
   ['l\'Autopilota', 1, [GIORNATA, VOCE('#mDay .tt-az', /Autopilota/)], 'spia:openGenForDay'],
   ['aggiungere in Time Table', 1, [GIORNATA, VOCE('#ttFab', /Aggiungi/)], 'mAddScelta'],
-  ['annullare uno spostamento', 1, [GIORNATA, VOCE('#ttUndo', /Annulla/)], 'spia:undoDrag'],
+  ['annullare uno spostamento', 1, [GIORNATA, VOCE('#ttUndo', /Annulla/, "markDrag(T().days[ttDay].activities[0],{time:'09:00',timeEnd:'10:30'})")], 'spia:undoDrag'],
   ['i consigli, da Scopri', 1, [BARRA('discover'), VOCE('#sgRiga', /Consigli nei dintorni/)], 'spia:toggleSuggest'],
   ['Su misura, nel «Nuovo viaggio»', 1, [NOME, VOCE('#mViaggi .vg-nuovo', /Aggiungi viaggio/)], 'nuovo:suMisura'],
   ['la prenotazione dalla mail, da Biglietti', 1, [BARRA('tickets'), VOCE('#tickets .tk-mail', /Prenotazione dalla mail/)], 'importa:booking'],
@@ -191,6 +194,7 @@ async function percorri(p, passi) {
       await p.locator(`.nav-item[data-p="${s.barra}"]`).click({ timeout: 3000 });
       visti.push({ testo: 'barra: ' + s.barra, barra: true });
     } else {
+      if (s.prima) await p.evaluate(js => eval(js), s.prima);
       const el = p.locator(s.sel).filter({ hasText: s.re }).first();
       await el.scrollIntoViewIfNeeded({ timeout: 3000 });
       const testo = (await el.innerText()).replace(/\s+/g, ' ').trim();

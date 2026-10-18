@@ -391,7 +391,9 @@ const oreFinte = (data) => {
              altezze: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).height)),
              opacita: [...document.querySelectorAll('.hh-velo .cl-g')].map(x => parseFloat(getComputedStyle(x).opacity)),
              sole: !!document.querySelector('.hh-velo .cl-astro'),
-             inchiostroSopra: sopra ? getComputedStyle(sopra).color : '' };
+             inchiostroSopra: sopra ? getComputedStyle(sopra).color : '',
+             vetroSopra: sopra ? sopra.classList.contains('vetro') : null,
+             fondoSopra: sopra ? getComputedStyle(sopra).backgroundColor : '' };
   }, [LUCE]);
   ok('con la pioggia il cielo è di pioggia', /c-pioggia/.test(pioggia.classi), pioggia.classi);
   /* Prima erano trattini tutti uguali che scendevano alla stessa velocità:
@@ -454,11 +456,20 @@ const oreFinte = (data) => {
   ok('e la notte è più scura del giorno, a parità di tempo che fa',
      tavolozza.serenoNotte < tavolozza.sereno - 40,
      `notte ${tavolozza.serenoNotte}, giorno ${tavolozza.sereno}`);
-  /* Se il cielo in alto si fa scuro, quello che ci sta sopra deve
-     schiarirsi: inchiostro tenue su un temporale non si legge più. */
-  ok('e quello che ci sta sopra passa all\'inchiostro chiaro',
-     /cl-buio/.test(pioggia.classi) && /255, 255, 255/.test(pioggia.inchiostroSopra),
-     pioggia.inchiostroSopra);
+  /* Se il cielo in alto si fa scuro, quello che ci sta sopra deve restare
+     leggibile: inchiostro tenue su un temporale non si legge più. Fino alla
+     miglioria 11 il tasto della ricerca diventava sempre vetro con la
+     scritta bianca; adesso lo diventa solo dove il bianco regge sul cielo
+     che ha dietro (tingiCielo), e se no resta la pillola chiara con
+     l'inchiostro scuro. Tutte e due si leggono: quello che non va è il
+     bianco su un cielo chiaro. */
+  const rgbDi = s => (String(s).match(/[\d.]+/g) || []).map(Number);
+  const lumDi = c => { const f = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+  const fondo = rgbDi(pioggia.fondoSopra), inchiostro = rgbDi(pioggia.inchiostroSopra);
+  const contrasto = (Math.max(lumDi(inchiostro), lumDi(fondo)) + 0.05) / (Math.min(lumDi(inchiostro), lumDi(fondo)) + 0.05);
+  ok('e quello che ci sta sopra resta leggibile: vetro con l\'inchiostro chiaro, o la pillola chiara con quello scuro',
+     /cl-buio/.test(pioggia.classi) && (pioggia.vetroSopra ? /255, 255, 255/.test(pioggia.inchiostroSopra) : ((fondo[3] === undefined || fondo[3] >= 0.95) && contrasto >= 4.5)),
+     (pioggia.vetroSopra ? 'vetro, ' : 'pillola, ') + pioggia.inchiostroSopra + ' su ' + pioggia.fondoSopra + ' (' + contrasto.toFixed(1) + ':1)');
   await page.close();
 
   /* QUANTA pioggia si vede dipende da quanta ne cade, e non a due gradini:
