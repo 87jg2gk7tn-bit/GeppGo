@@ -20,17 +20,15 @@ dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
 lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
 più: per conservare i dati non si esce dall'Europa.
 
+~~**Rinnovare il token che pubblica le funzioni Supabase**~~ ✅ **fatto il 19
+ottobre**: token nuovo col solo permesso Edge Functions, in lettura e
+scrittura, e `SUPABASE_ACCESS_TOKEN` aggiornato su GitHub. «Funzioni» è
+tornata verde (esecuzione 10): `vicini`, `geo` e `link-mappe` pubblicate. Il
+permesso basta per quello che fa `funzioni.yml`; se un giorno la CI dovesse
+fare altro su Supabase, il token va allargato.
+
 Restano queste cose, e non sono codice:
 
-- ⚠️ **Rinnovare il token che pubblica le funzioni Supabase** (19 ottobre
-  2026): al merge della miglioria 12 «Funzioni» ha risposto «401 Invalid
-  access token», e la funzione nuova `link-mappe` (i link corti di Google
-  Maps) non è partita. Su supabase.com, Account › Access Tokens › un token
-  nuovo con una scadenza lunga; su GitHub, Settings › Secrets and variables
-  › Actions › `SUPABASE_ACCESS_TOKEN` › Update; poi Actions › «Funzioni» ›
-  Run workflow, e «Il ponte risponde?» per vedere che c'è. Finché non si
-  fa, a un link corto l'app risponde che non riesce a leggerlo; il resto
-  funziona.
 - ⚠️ **Lanciare su Supabase la tabella della valigia e delle impostazioni**
   (12 ottobre 2026): SQL Editor → New query → incolla tutto
   `supabase/migrazioni/2026-10-12-valigia-e-impostazioni.sql` → Run, deve
@@ -928,18 +926,10 @@ Miglioria 12, 19 ottobre 2026. `test/prova-installazione.js` lo controlla.
   è un link, e un link dentro una scheda-tasto VoiceOver non lo legge.
 
 **Quello che resta**
-- **Pubblicare `link-mappe`: il token di Supabase non vale più.** Al merge
-  (19 ottobre) «Funzioni» si è fermata al primo passo, su `vicini`, con «401
-  Invalid access token»: il segreto `SUPABASE_ACCESS_TOKEN` del repo è
-  scaduto o revocato (l'ultima pubblicazione riuscita è del 23 settembre).
-  `vicini` e `geo` girano come prima, perché non sono cambiate; `link-mappe`
-  invece non c'è, e finché manca a un link corto l'app risponde «Da questo
-  link non riesco a capire il posto: aprilo, copia l'indirizzo e incollalo
-  qui.» (i link lunghi si leggono lo stesso, sul telefono). Si sistema una
-  volta: su supabase.com, Account › Access Tokens › un token nuovo, con una
-  scadenza lunga; su GitHub, Settings › Secrets and variables › Actions ›
-  `SUPABASE_ACCESS_TOKEN` › Update; poi Actions › «Funzioni» › Run workflow,
-  e «Il ponte risponde?» per vedere che c'è.
+- ~~**Pubblicare `link-mappe`**~~ ✅ **fatto il 19 ottobre.** Al merge
+  «Funzioni» si era fermata con «401 Invalid access token»: il token di
+  Supabase era scaduto o revocato. Rinnovato lo stesso giorno (vedi in cima),
+  e l'esecuzione 10 ha pubblicato `vicini`, `geo` e `link-mappe`.
 - **Provarla col link vero.** Da qui Google non si raggiunge (il proxy delle
   sessioni ferma `maps.app.goo.gl`): il comportamento dei rimandi viene da
   quello che si legge in giro e dalla prova col Google finto. Pubblicata la
