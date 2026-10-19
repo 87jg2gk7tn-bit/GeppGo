@@ -1088,8 +1088,10 @@ Photon diretti: quale delle due strade prende l'app dipende da com'è andata
 prima (un ponte caduto si salta per un minuto), e una prova che finge una
 strada sola diventa rossa per il motivo sbagliato.
 
-Sul codice di prima (ad43299) la prova passa 12 controlli su 34: restano veri
+Sul codice di prima (ad43299) la prova passa 13 controlli su 35: restano veri
 solo quelli che lo erano già (il verde non c'era, l'SVG come icona della
-scheda, la mail condivisa, l'avvio senza niente, il link lungo letto sul
-telefono) e quelli sulle regole della funzione, che la controprova usa come
-server.
+scheda, git che prende le icone — allora erano SVG —, la mail condivisa,
+l'avvio senza niente, il link lungo letto sul telefono, nessun errore in
+pagina) e quelli sulle regole della funzione, che la controprova usa come
+server. Ci mette una decina di minuti: sul codice vecchio ogni attesa arriva
+fino in fondo.
