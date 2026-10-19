@@ -20,8 +20,17 @@ dentro lo Spazio economico europeo — il caso migliore. `privacy.html` adesso
 lo dice per nome e il paragrafo sulle clausole contrattuali standard non c'è
 più: per conservare i dati non si esce dall'Europa.
 
-Restano tre cose, e non sono codice:
+Restano queste cose, e non sono codice:
 
+- ⚠️ **Rinnovare il token che pubblica le funzioni Supabase** (19 ottobre
+  2026): al merge della miglioria 12 «Funzioni» ha risposto «401 Invalid
+  access token», e la funzione nuova `link-mappe` (i link corti di Google
+  Maps) non è partita. Su supabase.com, Account › Access Tokens › un token
+  nuovo con una scadenza lunga; su GitHub, Settings › Secrets and variables
+  › Actions › `SUPABASE_ACCESS_TOKEN` › Update; poi Actions › «Funzioni» ›
+  Run workflow, e «Il ponte risponde?» per vedere che c'è. Finché non si
+  fa, a un link corto l'app risponde che non riesce a leggerlo; il resto
+  funziona.
 - ⚠️ **Lanciare su Supabase la tabella della valigia e delle impostazioni**
   (12 ottobre 2026): SQL Editor → New query → incolla tutto
   `supabase/migrazioni/2026-10-12-valigia-e-impostazioni.sql` → Run, deve
