@@ -34,7 +34,7 @@ Ricavato leggendo il codice, non a ricordo.
 | Contact Info → **Email Address** | L'email dell'account | App Functionality |
 | Identifiers → **User ID** | L'id dell'utente su Supabase | App Functionality |
 | User Content → **Photos or Videos** | Le foto del diario, e di ognuna una copia piccola | App Functionality |
-| User Content → **Other User Content** | Viaggi, tappe, spese, note, biglietti; la valigia di ogni viaggio e alcune impostazioni (navigatore, qualità delle foto, avvisi di prossimità, tema, il proprio nome), che legge solo l'utente stesso | App Functionality |
+| User Content → **Other User Content** | Viaggi, tappe, spese (coi tetti di spesa del gruppo), note, biglietti; la valigia di ogni viaggio, il proprio tetto di spesa e alcune impostazioni (navigatore, qualità delle foto, avvisi di prossimità, tema, il proprio nome), che legge solo l'utente stesso | App Functionality |
 | User Content → **Customer Support** | Le segnalazioni sulle foto | App Functionality |
 
 Per ognuna: **Used for App Functionality**, non per pubblicità, non per
@@ -165,10 +165,11 @@ Stessa sostanza, nomi diversi:
   (vedi sopra; quello che resta nel telefono non conta come raccolta).
 - **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
 - **Attività nell'app → Altri contenuti generati dall'utente**: la valigia di
-  ogni viaggio e alcune impostazioni (navigatore, qualità delle foto, avvisi
-  di prossimità, tema, il proprio nome), salvate nel cloud perché seguano
-  l'utente su un altro telefono. Le legge solo lui: la regola del database
-  (tabella `dati_personali`) non le apre nemmeno ai compagni di viaggio.
+  ogni viaggio, il proprio tetto di spesa e alcune impostazioni (navigatore,
+  qualità delle foto, avvisi di prossimità, tema, il proprio nome), salvate
+  nel cloud perché seguano l'utente su un altro telefono. Le legge solo lui:
+  la regola del database (tabella `dati_personali`) non le apre nemmeno ai
+  compagni di viaggio.
   Cancellabili: se ne vanno col viaggio o con l'account.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori
@@ -308,7 +309,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 
 | A chi parla | Cosa gli manda |
 |---|---|
-| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte); il link corto di Google Maps da aprire (funzione `link-mappe`, che non lo conserva) |
+| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia, il tetto di spesa personale e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte); il link corto di Google Maps da aprire (funzione `link-mappe`, che non lo conserva) |
 | Google (`maps.app.goo.gl`, `www.google.com`, `maps.google.com`), **dalla funzione `link-mappe`, mai dal telefono** | Il link corto di Google Maps che l'utente ha incollato o condiviso, per sapere dove porta. Niente IP del telefono, niente account |
 | `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, `worker/ponte-ai.js`, e da lì il modello Gemma su Cloudflare Workers AI) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni; le prime tre pagine di un PDF scansionato, come immagini. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
 | `api.tavily.com` (dal ponte, mai dal telefono) | Una riga di ricerca fatta di nomi di posti del viaggio, la destinazione, una data e l'argomento: niente persone, email o telefoni. Le condizioni di Tavily gli permettono di conservarla e di usarla per migliorare i suoi modelli |

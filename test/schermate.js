@@ -66,6 +66,13 @@ const SU = "document.getElementById('authGate').style.display='flex';", GIU = "d
 const cielo = (codice, giorno) => "(()=>{const w=T().weather[T().days[0].date];w._prima=w._prima||{code:w.code,sunrise:w.sunrise,sunset:w.sunset};w.code=" + codice + ';' +
   (giorno ? "w.sunrise=w.sunrise.slice(0,11)+'00:00';w.sunset=w.sunset.slice(0,11)+'23:59';" : '') + "renderAll();go('plan')})()";
 const CIELO_VIA = '(()=>{const w=T().weather[T().days[0].date];if(w._prima){Object.assign(w,w._prima);delete w._prima;}renderAll()})()';
+/* I tetti di spesa, tutti e tre i tipi, con una spesa prevista: il gruppo
+   all'87%, Cibo oltre il tetto, la propria parte al 92%. Gli avvisi delle
+   soglie risultano gia' dati, perche' i banner non coprano la schermata. */
+const TETTI = "(()=>{const t=T();t.tetto=20000;t.tettoCat_Cibo=2000;t.tettoCat_Trasporti=12500;" +
+  "t.expenses.push({id:299,desc:'Onsen',amount:1500,currency:'JPY',payerId:1,category:'Attrazioni',paid:false,splitAmong:[1,2,3],date:t.days[2].date});" +
+  "app.tettiMiei={1:{v:9000,t:1}};app.tettiAvvisi={1:{gruppo:{80:20000,100:20000},mio:{80:9000,100:9000},'cat:Cibo':{80:2000,100:2000},'cat:Trasporti':{80:12500,100:12500}}};save();renderAll();})();";
+const TETTI_VIA = "(()=>{const t=T();delete t.tetto;delete t.tettoCat_Cibo;delete t.tettoCat_Trasporti;delete t._admin;t.expenses=t.expenses.filter(e=>e.id!==299);app.tettiMiei={};app.tettiAvvisi={};save();renderAll();})()";
 const PASSI = [
   /* Il primo avvio: la presentazione e la schermata di accesso, che non sono
      finestre e che l'avvio delle prove salta. Sono la prima cosa che legge
@@ -86,6 +93,9 @@ const PASSI = [
   ['budget', "go('money');moneyVista('budget')"], ['aggiungi persona', "go('money');openSheet('mPerson')"],
   ['pareggia', 'openPareggia(2)'], ['quote della spesa', 'openSaldoSpesa(201)'], ['nuova spesa', 'openExpense()'], ['modifica spesa', 'openExpense(202)'],
   ['categoria', "openCatExp('Cibo')"],
+  ['budget coi tetti', TETTI + "go('money');moneyVista('budget');document.getElementById('tettiCard').scrollIntoView({block:'start'})", TETTI_VIA],
+  ['tetti di spesa', TETTI + 'apriTetti()', TETTI_VIA], ['tetti di spesa da compagno', TETTI + 'T()._admin=false;apriTetti()', TETTI_VIA],
+  ['home col tetto', TETTI + "go('plan')", TETTI_VIA],
   ['biglietti', "go('tickets')"], ['nuovo biglietto', 'openTicketSheet()'], ['biglietto grande', 'openTicketBig(7)'],
   ['hotel', "go('hotels')"], ['nuovo hotel', "pendingHotel={name:'Ryokan Hoshi',lat:35,lng:135.76,address:'Kyoto',editId:null};apriFoglioHotel(T())"], ['modifica hotel', 'editHotel(5)'], ['mail hotel', 'apriMailHotel()'],
   ['identifica', "go('identify')"],
@@ -98,6 +108,10 @@ const PASSI = [
   ['nota della tappa', 'tapAct(0,12);actMenuNote()'], ['modifica tappa', 'openActDetail(0,11)'], ['nuova tappa', 'openActDetail(0,null)'],
   ['aggiungi in time table', 'openDay(0);addFromDay()'], ['mezzi', 'openDay(0);apriMezzi(0,12)'], ['assistente della giornata', 'openDay(0);openAssistenteGiorno()'],
   ['autopilota', 'openDay(0);openGenForDay()'], ['giorno due', 'openDay(1)'],
+  /* La mappa nasce subito, senza aspettare il foglio: il passo misura dopo
+     un quarto di secondo. */
+  ['mappa del viaggio', 'apriMappaViaggio();vmCreaMappa()'], ['mappa del viaggio, un giorno', 'apriMappaViaggio();vmCreaMappa();vmScegli(0)'],
+  ['elenco del viaggio', "apriMappaViaggio();vmVista('elenco')", "vmVista('mappa')"],
   ['luogo salvato', 'openDetail(91)'], ['modifica luogo', 'openEditPOI(91)'], ['ricordo', 'apriRicordo(1)'],
   ['permessi', "apriPermessi(true,'gps')"], ['avvisi', 'apriPermessi(false)'], ['posizione', "chiediPosizione('cerca')"],
   ['navigatore', "navAsk(34.96,135.77,'Fushimi Inari','walk')"], ['nuovo viaggio', 'openNewTrip()'], ['importa', 'openImport()'],
