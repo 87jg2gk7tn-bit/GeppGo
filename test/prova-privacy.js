@@ -110,6 +110,16 @@ const path = require('path');
      /A Tavily arriva[^.]*solo una riga di ricerca[^:]*:[^.]*mai nomi di persone, email, telefoni/i.test(pag));
   ok('e Gemini non c\'è più', !/Gemini/i.test(pag));
 
+  /* ── e quello a cui parla la funzione dei link di Google Maps ──────────────
+     Google lo chiama la funzione link-mappe, non l'app: guardando solo l'HTML
+     non si vedrebbe mai. Finché la funzione c'è, la pagina deve dire che il
+     link corto va a Google, che a Google arriva il nostro server e non il
+     telefono, e che il link non si tiene. */
+  const funzioneLink = fs.existsSync(path.join(RADICE, 'supabase', 'functions', 'link-mappe', 'regole.mjs'));
+  ok('se l\'app apre i link corti di Google Maps, la pagina lo dice: a Google va solo il link, dal nostro server, e non si tiene',
+     !funzioneLink || (/maps\.app\.goo\.gl/.test(pag) && /I link di Google Maps/.test(pag) && /indirizzo IP Google non lo vede/.test(pag) && /Non lo teniamo/.test(pag)),
+     funzioneLink ? 'la funzione c\'è' : 'nessuna funzione');
+
   /* ── e anche quello che resta sul telefono ───────────────────────────────
      La cache delle ricerche vicine tiene da parte per un giorno il punto da
      cui hai cercato. Non esce dal dispositivo, ma "la posizione non viene mai

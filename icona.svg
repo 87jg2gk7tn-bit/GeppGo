@@ -1,7 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="112" fill="#8C6229"/>
-  <circle cx="256" cy="238" r="118" fill="none" stroke="#F6EEDD" stroke-width="20"/>
-  <path d="M256 120c40 34 40 202 0 236M256 120c-40 34-40 202 0 236" fill="none" stroke="#F6EEDD" stroke-width="16"/>
-  <path d="M141 200h230M141 276h230" fill="none" stroke="#F6EEDD" stroke-width="16"/>
-  <path d="M256 356v58M214 414h84" fill="none" stroke="#F6EEDD" stroke-width="20" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Il logo di GeppGo, copiato dalla testata dell'app da test/fai-le-icone.js (npm run icone). Non si modifica qui. -->
+  <circle cx="24" cy="24" r="23" fill="#C9962C"/>
+  <g stroke="#14110B" fill="none" stroke-linecap="round">
+  <g transform="rotate(22 24 19)">
+  <circle cx="24" cy="19" r="10" stroke-width="1.6"/>
+  <ellipse cx="24" cy="19" rx="4.2" ry="10" stroke-width="1.3"/>
+  <line x1="14" y1="19" x2="34" y2="19" stroke-width="1.3"/>
+  <path d="M16 13.4 Q24 16.7 32 13.4" stroke-width="1.3"/>
+  <path d="M16 24.6 Q24 21.3 32 24.6" stroke-width="1.3"/>
+  <path d="M24 6.6 A12.4 12.4 0 0 1 24 31.4" stroke-width="2.1"/>
+  </g>
+  <line x1="19.3" y1="30.6" x2="19.3" y2="36" stroke-width="2.1"/>
+  <line x1="13" y1="37.4" x2="25.5" y2="37.4" stroke-width="2.4"/>
+  </g>
 </svg>

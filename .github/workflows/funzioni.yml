@@ -1,4 +1,5 @@
-# Le due funzioni del ponte, pubblicate da sole.
+# Le funzioni su Supabase, pubblicate da sole: le due del ponte della mappa
+# e quella che apre i link corti di Google Maps.
 #
 # PERCHE' NON A MANO. Pubblicarle dal terminale vuol dire avere un computer
 # davanti, ricordarsi il comando e ricordarsi di lanciarlo — e la volta che ci
@@ -51,6 +52,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase functions deploy geo --project-ref cyolhqndurgwbivxcssf
+
+      # Segue i rimandi dei link corti (maps.app.goo.gl) solo dentro Google
+      # Maps: le regole stanno in supabase/functions/link-mappe/regole.mjs.
+      - name: Pubblica «link-mappe» — i link corti di Google Maps
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy link-mappe --project-ref cyolhqndurgwbivxcssf
 
       - name: Dì com'è andata
         run: |

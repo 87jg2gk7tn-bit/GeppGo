@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node test/tutte.js",
     "test:app": "node test/tutte.js --solo-app",
-    "test:db": "node test/tutte.js --solo-db"
+    "test:db": "node test/tutte.js --solo-db",
+    "icone": "node test/fai-le-icone.js"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.117.2",

@@ -286,7 +286,7 @@ const MISURA = nomi => {
    - valigia: la valigia vecchia, in italiano (vedi VALIGIA);
    - errori: dove finiscono gli errori della pagina;
    - opzioni: quelle di Playwright per la pagina (reducedMotion, ...). */
-async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {} } = {}) {
+async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {}, indirizzo = APP } = {}) {
   const page = await browser.newPage(Object.assign({ viewport: { width: larghezza, height: altezza } }, opzioni));
   if (errori) page.on('pageerror', e => errori.push(`PAGEERROR(${lingua}${tema === 'scuro' ? ', scuro' : ''}): ` + e.message.split('\n')[0]));
   page.on('dialog', d => d.dismiss().catch(() => {}));
@@ -307,7 +307,11 @@ async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 8
     localStorage.setItem('geppgo2_avviso_home', String(Date.now()));
     if (val) localStorage.setItem('geppgo2_pack_1_local', JSON.stringify(val));
   }, [viaggi || [VIAGGIO, PORTO], valigia ? VALIGIA : null, lingua, tema === 'scuro', chiave]);
-  await page.goto(APP, { waitUntil: 'domcontentloaded' });
+  /* indirizzo: un altro ingresso, per esempio index.html con quello che
+     arriva dal tasto Condividi (vedi prova-installazione). index.html rimanda
+     all'app: si aspetta di esserci arrivati. */
+  await page.goto(indirizzo, { waitUntil: 'domcontentloaded' });
+  if (indirizzo !== APP) await page.waitForURL(/Index%202\.1\.html/, { timeout: 30000 });
   await page.waitForFunction(() => typeof renderAll === 'function' && !document.getElementById('bootSplash'), null, { timeout: 30000 });
   await page.waitForTimeout(attesa);
   return page;

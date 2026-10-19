@@ -301,6 +301,7 @@ lui sert pour faire sa part.</p>
 <tr><td>FOSSGIS (routing.openstreetmap.de), le service d’itinéraires de la carte OpenStreetMap</td><td>Les coordonnées de deux étapes du voyage à la fois — <b>pas</b> l’endroit où tu es</td><td>Le vrai temps à pied, à vélo et en voiture entre une étape et la suivante du programme. La réponse reste dans le téléphone, pour ne pas la demander deux fois</td></tr>
 <tr><td>Copies de la carte OpenStreetMap tenues par d’autres : <b>kumi.systems</b> (Autriche), <b>private.coffee</b> (Autriche), <b>maps.mail.ru</b> (Russie)</td><td>Ce que tu cherches et un point d’une grille d’environ 200 mètres. Si la demande part du téléphone — c’est-à-dire quand le pont ne répond pas — elles voient aussi l’adresse IP</td><td>Les mêmes données de la carte, quand le serveur principal ne répond pas. Sans elles, quand celui-ci est saturé, l’appli ne trouve rien</td></tr>
 <tr><td>Le pont de la carte, sur Supabase</td><td>Ce que tu cherches (des toilettes, un distributeur, une adresse, le nom d’un hôtel) et, quand il le faut, un point d’une grille d’environ 200 mètres — <b>pas</b> l’endroit exact où tu es. Rien qui dise qui tu es.</td><td>Interroger la carte une seule fois pour tout le monde, au lieu de le faire depuis chaque téléphone</td></tr>
+<tr><td><b>Google</b>, par une fonction à nous sur Supabase</td><td>Seulement le lien court Google Maps que tu colles ou que tu partages (<code>maps.app.goo.gl/…</code>) — <b>pas</b> qui tu es ni ton adresse IP (voir « Les liens Google Maps »)</td><td>Savoir où mène le lien, pour mettre le lieu sur la carte</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texte cherché et coordonnées ; pour « que cherches-tu par ici » seulement le type de lieu et un point d’une grille d’environ 200 mètres</td><td>Recherche d’adresses quand l’autre ne suffit pas, et lieux aux alentours quand la carte ne répond pas</td></tr>
 <tr><td>Open-Meteo</td><td>Coordonnées</td><td>La météo des jours du voyage, et heure par heure celle du jour que tu regardes</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nom du lieu</td><td>Description et photos des lieux</td></tr>
@@ -343,6 +344,29 @@ colonne « qui », parce que cette donnée n’existe pas.</li>
 </ul>
 <p>Si le pont ne répond pas, l’appli recommence à interroger directement la
 carte, comme avant : elle ne reste pas bloquée.</p>
+
+<h3>Les liens Google Maps</h3>
+<p>Un lien long de Google Maps collé dans GeppGo se lit sur le téléphone, et
+rien ne part. Les liens courts (<code>maps.app.goo.gl/…</code>, ceux du bouton
+« Partager » de Google Maps) ne contiennent pas le lieu : pour le savoir il
+faut les ouvrir, et depuis l’appli le téléphone ne le peut pas. Le lien passe
+donc par une fonction à nous sur Supabase, qui l’ouvre chez Google et renvoie
+la vraie adresse, d’où l’appli lit le lieu.</p>
+<ul>
+<li><b>Seul le lien arrive.</b> Aucun nom, aucun e-mail, aucun identifiant
+du compte.</li>
+<li><b>C’est notre serveur qui arrive chez Google, pas ton téléphone :</b>
+Google ne voit pas ton adresse IP.</li>
+<li><b>Nous ne le gardons pas.</b> Le lien et l’adresse où il mène ne sont
+écrits nulle part ; dans le journal de la fonction ne reste que la façon
+dont ça s’est passé (réussi, délai dépassé, refusé), jamais le lien.</li>
+<li>La fonction voit ton adresse IP, comme tout serveur, et ne s’en sert que
+pour compter les demandes (trente au plus en dix minutes, pour que personne
+ne s’en serve pour envoyer du trafic à Google en notre nom) : elle reste dans
+sa mémoire dix minutes et n’est pas enregistrée.</li>
+<li>La fonction n’ouvre que des adresses Google Maps, et s’arrête si une
+redirection mène ailleurs.</li>
+</ul>
 
 <p>Google Maps, Google Agenda et les sites des musées ne s’ouvrent que quand
 c’est toi qui touches un bouton : à partir de ce moment, ce sont leurs règles

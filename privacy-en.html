@@ -281,6 +281,7 @@ needs to do its part.</p>
 <tr><td>FOSSGIS (routing.openstreetmap.de), the route service on the OpenStreetMap map</td><td>The coordinates of two stops of the trip at a time — <b>not</b> where you are</td><td>The real time on foot, by bike and by car between one stop and the next in the timetable. The answer stays on the phone, so it isn’t asked twice</td></tr>
 <tr><td>Copies of the OpenStreetMap map run by others: <b>kumi.systems</b> (Austria), <b>private.coffee</b> (Austria), <b>maps.mail.ru</b> (Russia)</td><td>What you are looking for and a point on a grid of about 200 metres. If the request comes from the phone — that is, when the bridge doesn’t respond — they also see the IP address</td><td>The same map data, when the main server doesn’t respond. Without them, when that one is queued the app finds nothing</td></tr>
 <tr><td>The map bridge, on Supabase</td><td>What you are looking for (a toilet, a cash machine, an address, the name of a hotel) and, when needed, a point on a grid of about 200 metres — <b>not</b> exactly where you are. Nothing that says who you are.</td><td>Asking the map once for everyone, instead of from every phone</td></tr>
+<tr><td><b>Google</b>, through a function of ours on Supabase</td><td>Only the short Google Maps link you paste or share (<code>maps.app.goo.gl/…</code>) — <b>not</b> who you are or your IP address (see “Google Maps links”)</td><td>Finding out where the link leads, to put the place on the map</td></tr>
 <tr><td>Photon (Komoot)</td><td>Text searched and coordinates; for «what are you looking for around here» only the type of place and a point on a grid of about 200 metres</td><td>Address search when the other one isn’t enough, and places around here when the map doesn’t respond</td></tr>
 <tr><td>Open-Meteo</td><td>Coordinates</td><td>The weather for the trip’s days, and hour by hour for the day you are looking at</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Name of the place</td><td>Description and photos of places</td></tr>
@@ -322,6 +323,29 @@ exist.</li>
 </ul>
 <p>If the bridge doesn’t respond, the app goes back to asking the map
 directly, as it did before: it doesn’t get stuck.</p>
+
+<h3>Google Maps links</h3>
+<p>A long Google Maps link pasted into GeppGo is read on the phone, and
+nothing is sent anywhere. Short ones (<code>maps.app.goo.gl/…</code>, the ones
+from the “Share” button in Google Maps) don’t contain the place: you have to
+open them to find out, and from inside the app the phone can’t. So the link
+goes through a function of ours on Supabase, which opens it at Google and
+returns the real address, from which the app reads the place.</p>
+<ul>
+<li><b>Only the link arrives.</b> No name, no email, no account
+identifier.</li>
+<li><b>Google sees our server, not your phone:</b> your IP address doesn’t
+reach Google.</li>
+<li><b>We don’t keep it.</b> The link and the address it leads to aren’t
+written down anywhere; the function’s log only keeps how it went (done,
+timed out, refused), never the link.</li>
+<li>The function sees your IP address, like any server, and uses it only to
+count requests (at most thirty in ten minutes, so that nobody can use it to
+send traffic to Google with our face): it stays in the function’s memory for
+ten minutes and isn’t saved.</li>
+<li>The function only opens Google Maps addresses, and stops if a redirect
+leads somewhere else.</li>
+</ul>
 
 <p>Google Maps, Google Calendar and museum websites only open when you tap a
 button: from then on their rules apply, not ours.</p>
