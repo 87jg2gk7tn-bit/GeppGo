@@ -686,6 +686,82 @@ body.dark .avatar.me{color:var(--oro-su)}
 .tz-azioni{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem}
 .tz-azioni .btn{flex:1 1 auto;min-height:44px;padding:.6rem .8rem;font-size:.84rem}
 
+/* ── I tetti di spesa (miglioria 13a) ──────────────────────────────────
+   Una voce per tetto: il nome, la percentuale, la barra e due righe di
+   conti. La barra cambia colore all'80% e al 100%, ma non e' lei a dirlo:
+   la percentuale e le frasi sono scritte, e si leggono anche senza colori. */
+.tet-testa{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap}
+.tet-testa .btn{min-height:44px;padding:.5rem .9rem;font-size:.82rem}
+.tet-vuoto{font-size:.86rem;color:var(--ink-soft);line-height:1.5}
+.tet-voce{padding:.75rem 0;border-top:1px solid var(--line-soft)}
+.tet-voce:first-of-type{border-top:none}
+.tet-riga{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem}
+.tet-n{font-weight:800;font-size:.92rem;color:var(--ink);min-width:0}
+.tet-chi{display:block;font-weight:600;font-size:.74rem;color:var(--ink-faint);margin-top:.1rem}
+.tet-p{font-weight:800;font-size:.95rem;color:var(--ink);flex-shrink:0}
+.tet-barra{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;margin:.45rem 0 .4rem}
+.tet-barra i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.tet-barra.quasi i{background:var(--amber)}
+.tet-barra.oltre i{background:var(--red)}
+.tet-s{font-size:.82rem;color:var(--ink-soft);line-height:1.45}
+.tet-s.oltre{color:var(--red);font-weight:700}
+.tet-prev{font-size:.78rem;color:var(--ink-faint);line-height:1.45;margin-top:.15rem}
+.tet-foglio .fg input{font-size:16px}
+.tet-cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 .6rem}
+.tet-nota{font-size:.78rem;color:var(--ink-faint);line-height:1.45;margin:-.3rem 0 .8rem}
+.tet-sez{font-weight:800;font-size:.9rem;color:var(--ink);margin:.4rem 0 .5rem}
+/* In Home, solo oltre l'80%: una riga, che porta al Budget. Sta dove sta la
+   scheda della valigia (sale sul fondo dell'intestazione, vedi .val-scheda),
+   e «Fra poco», che le viene dopo, le lascia lo spazio invece di salirle
+   addosso. */
+.bud-scheda{display:flex;align-items:center;gap:.6rem;width:calc(100% - .2rem);text-align:left;font-family:inherit;color:var(--ink);cursor:pointer;border:1px solid var(--line);padding:.75rem .9rem;min-height:44px;position:relative;z-index:2;margin:-1.5rem .1rem 0;border-radius:var(--r-xl);box-shadow:var(--sh-md)}
+.val-scheda+.bud-scheda{margin-top:.85rem}
+.bud-scheda+.hh-soon{margin-top:.85rem}
+.bud-scheda .bs-ic{font-size:1.1rem;flex-shrink:0}
+.bud-scheda .bs-t{flex:1;min-width:0}
+.bud-scheda .bs-n{display:block;font-weight:800;font-size:.86rem;line-height:1.3}
+.bud-scheda .bs-s{display:block;font-size:.78rem;color:var(--ink-soft);margin-top:.1rem}
+.bud-scheda .bs-p{font-weight:800;font-size:.9rem;flex-shrink:0}
+.bud-scheda .bs-chev{color:var(--ink-faint);flex-shrink:0}
+
+/* ── La mappa di tutto il viaggio (miglioria 13a) ──────────────────────
+   Un foglio alto quasi quanto lo schermo: la mappa deve avere spazio, e i
+   giorni da scegliere stanno in una fila che scorre di lato. */
+.vm-sheet{max-width:640px}
+.vm-seg{margin-bottom:.6rem}
+.vm-giorni{padding-bottom:.6rem}
+.vm-giorni .tchip{min-height:44px;display:inline-flex;align-items:center;gap:.4rem}
+.vm-pallino{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,.25)}
+.vm-mappa-wrap{position:relative}
+#vmMappa{height:min(58vh,520px);min-height:260px;border-radius:var(--r-md);overflow:hidden;background:var(--sand-tint)}
+.vm-vuota{font-size:.86rem;color:var(--ink-soft);line-height:1.5;padding:.8rem 0}
+.vm-pin{width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.vm-grappolo{width:34px;height:34px;border-radius:50%;border:2px solid #fff;background:#1E1A12;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;box-shadow:0 1px 5px rgba(0,0,0,.4)}
+.vm-casa{background:#F4EDDE;border:2px solid #B85C38;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.vm-pop{min-width:180px;max-width:240px}
+.vm-pop-n{font-weight:800;font-size:.92rem;color:#1E1A12;line-height:1.3;padding-right:14px}
+/* la crocetta della scheda: quella di Leaflet e' da 24 px, qui risponde su 44 */
+#vmMappa .leaflet-popup-close-button{width:34px;height:34px;font-size:22px;line-height:34px;color:#5C5346}
+#vmMappa .leaflet-popup-close-button::after{content:'';position:absolute;inset:-5px}
+.vm-pop-q{font-size:.8rem;color:#5C5346;margin:.2rem 0 .55rem}
+.vm-pop .btn{width:100%;min-height:44px;font-size:.84rem}
+.vm-pop-lista{display:flex;flex-direction:column;gap:.4rem;max-height:220px;overflow-y:auto}
+.vm-giorno-t{font-weight:800;font-size:.9rem;color:var(--ink);margin:.9rem 0 .4rem;display:flex;align-items:center;gap:.45rem}
+.vm-voce{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;font-family:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .75rem;margin-bottom:.4rem;min-height:44px;color:var(--ink);cursor:pointer}
+.vm-voce-num{width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.vm-voce-t{flex:1;min-width:0}
+.vm-voce-n{display:block;font-weight:700;font-size:.88rem}
+.vm-voce-s{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:.1rem}
+/* «Tutto il viaggio ›» sulle mappe della Home e della giornata. */
+.mappa-tutto{position:relative;pointer-events:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:800;font-size:.76rem;padding:.4rem .7rem;border-radius:100px;box-shadow:var(--sh-sm);cursor:pointer;white-space:nowrap;min-height:34px}
+/* l'area invisibile parte dall'interno del bordo: 32 px dentro, piu' 6 sopra e 6 sotto, fa 44 */
+.mappa-tutto::after{content:'';position:absolute;inset:-6px -2px}
+.hh-map-giu{position:absolute;left:.5rem;right:.5rem;bottom:.5rem;display:flex;align-items:flex-end;gap:.4rem;z-index:500;pointer-events:none}
+.hh-map-giu .hh-map-note{position:static;flex:1;min-width:0}
+.hh-map-giu .mappa-tutto{margin-left:auto}
+#dayMapWrap .mappa-tutto{position:absolute;top:.5rem;right:.5rem;z-index:500}
+.tt-tutto{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;min-height:44px;margin-bottom:.6rem;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:.84rem;cursor:pointer}
+
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
 .tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
 .tt-sub{font-size:.86rem;color:var(--ink-soft);margin-top:.35rem}
@@ -2432,6 +2508,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
       <div class="budget-hero"><div class="bh-amt" id="bAmt">€0</div><div class="bh-l" id="bCurLabel">Spesa totale del viaggio</div>
         <div class="bh-split"><div class="bh-s">Totale gruppo<b id="bPer">€0</b></div><div class="bh-s">Persone<b id="bPpl">0</b></div><div class="bh-s">Sue spese<b id="bCnt">0</b></div></div>
       </div>
+      <!-- I tetti di spesa (miglioria 13a): del gruppo, il tuo, per categoria. -->
+      <div class="card" id="tettiCard"></div>
       <div class="card"><div class="card-head"><div class="card-h">Per categoria</div></div><div id="catList"></div>
         <p style="font-size:.8rem;color:var(--ink-faint);margin-top:.8rem;line-height:1.5">I totali si aggiornano da soli con le spese aggiunte nella sezione Spese.</p></div>
       </div>
@@ -2580,7 +2658,10 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <div class="chiprow-x" id="dayChips" style="flex:1"></div>
     <button class="x" onclick="ttNav(1)" title="Giorno successivo" aria-label="Giorno successivo">›</button>
   </div>
-  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button></div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:14px;margin-bottom:.8rem;overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione">🧭</button><button class="mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div>
+  <!-- La mappa di tutto il viaggio anche nei giorni senza la mappa del giorno
+       (nessuna tappa con una posizione): al suo posto, una riga. -->
+  <button class="tt-tutto" id="ttTutto" style="display:none" onclick="apriMappaViaggio()"><span aria-hidden="true">🗺️</span> Tutto il viaggio ›</button>
   <div id="dayWx" style="display:none;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:.6rem"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
@@ -2990,6 +3071,23 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="ricordoTitolo">Il ricordo</div><button class="x x-close" onclick="closeSheet('mRicordo')">✕</button></div>
   <div id="ricordoBody"></div>
+</div></div>
+<!-- I tetti di spesa (miglioria 13a): il foglio si riempie da apriTetti(). -->
+<div class="modal" id="mTetti"><div class="sheet tet-foglio" style="max-width:460px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🎯 Tetti di spesa</div><button class="x x-close" onclick="closeSheet('mTetti')" title="Chiudi" aria-label="Chiudi">✕</button></div>
+  <div id="tetBody"></div>
+</div></div>
+<!-- La mappa di tutto il viaggio (miglioria 13a), con l'elenco accanto:
+     le stesse tappe, giorno per giorno, per chi la mappa non la vede. -->
+<div class="modal" id="mViaggioMappa"><div class="sheet vm-sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🗺️ Tutto il viaggio</div><button class="x x-close" onclick="closeSheet('mViaggioMappa')" title="Chiudi" aria-label="Chiudi">✕</button></div>
+  <div class="seg vm-seg" role="group" aria-label="Come vedere le tappe"><button class="seg-btn active" id="vmSegMappa" onclick="vmVista('mappa')" aria-pressed="true">Mappa</button><button class="seg-btn" id="vmSegElenco" onclick="vmVista('elenco')" aria-pressed="false">Elenco</button></div>
+  <div class="chiprow-x vm-giorni" id="vmGiorni" role="group" aria-label="Quale giorno"></div>
+  <div class="vm-mappa-wrap" id="vmMappaWrap"><div id="vmMappa" role="region" aria-label="Mappa delle tappe: le stesse tappe stanno anche in Elenco"></div></div>
+  <div id="vmVuota" class="vm-vuota" style="display:none"></div>
+  <div id="vmElenco" style="display:none"></div>
 </div></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
@@ -4205,6 +4303,23 @@ function unisciViaggio(base,loc,rem,vince){
   Object.keys(out).forEach(k=>{if(/^_del/.test(k)&&out[k]&&typeof out[k]==='object'&&!Object.keys(out[k]).length&&!(k in loc)&&!(k in rem))delete out[k];});
   return out;
 }
+/* I tetti di spesa del gruppo li cambiano solo gli admin, e il cloud li
+   rimette com'erano se a mandarli cambiati e' un altro (I TETTI DI SPESA).
+   Per chi admin non e', quindi, fra la sua copia e quella del cloud vale
+   sempre quella del cloud, ore della modifica comprese: altrimenti un
+   telefono rimasto con un tetto suo (un admin tornato compagno mentre era
+   senza rete) lo terrebbe per sempre, e lo rimanderebbe a ogni invio. */
+function tettiDalCloud(unito,nuvola,viaggio){
+  if(sonoAdmin(viaggio))return unito;
+  const tetto=k=>k==='tetto'||/^tettoCat_/.test(k);
+  Object.keys(unito).filter(tetto).forEach(k=>{if(!(k in nuvola))delete unito[k];});
+  Object.keys(nuvola).filter(tetto).forEach(k=>{unito[k]=nuvola[k];});
+  const ct=Object.assign({},unito._ct),ctR=nuvola._ct||{};
+  Object.keys(ct).filter(tetto).forEach(k=>{delete ct[k];});
+  Object.keys(ctR).filter(tetto).forEach(k=>{ct[k]=ctR[k];});
+  if(Object.keys(ct).length)unito._ct=ct;else delete unito._ct;
+  return unito;
+}
 /* Il viaggio com'e' qui coincide con l'ultima copia arrivata al cloud. */
 function allineato(cid,t){
   const p=lastPush[cid];if(!p)return false;
@@ -4346,7 +4461,7 @@ function unisciValigia(a,b){
   });
   return{voci:voci.filter(x=>!via.has(x)).map(x=>alPosto.get(x)||x),tolte};
 }
-let personaleAssente=false,personaleBusy=false,personaleT=null,personaleAncora=false;
+let personaleAssente=false,personaleBusy=false,personaleT=null,personaleAncora=false,tettoMioRifiutato=false;
 /* La tabella non c'e': PostgREST risponde PGRST205 (o 42P01 dal database). */
 function tabellaAssente(err){const m=String((err&&err.code)||'')+' '+String((err&&err.message)||'');return /PGRST205|42P01|schema cache|does not exist|could not find the table/i.test(m);}
 function personaleProgramma(){if(!sb||!session||personaleAssente)return;clearTimeout(personaleT);personaleT=setTimeout(personaleSync,1500);}
@@ -4376,12 +4491,28 @@ async function personaleSync(){
       if(!uguale(u,l)){scriviValigiaLocale(t,u);if(t.id===app.currentTripId)try{renderPacking();}catch(e){}}
       if(r?!uguale(u,r):(u.voci.length||Object.keys(u.tolte).length))daScrivere.push({chiave:k,trip_id:t.cid,dati:u});
     });
+    /* Il tuo tetto di spesa (miglioria 13a): una riga per viaggio, privata
+       come la valigia. Vince l'ora piu' recente; a pari ora il cloud. */
+    let tettiCambiati=false;
+    app.trips.forEach(t=>{
+      if(!t||!t.cid)return;
+      const k='tetto:'+t.cid,l=(app.tettiMiei||{})[t.id]||null,r=righe.get(k);
+      let u=l;
+      if(r&&typeof r.t==='number'&&(!l||r.t>=(l.t||0)))u={v:Number(r.v)>0?Number(r.v):null,t:r.t};
+      if(u&&!uguale(u,l)){app.tettiMiei=app.tettiMiei||{};app.tettiMiei[t.id]=u;tettiCambiati=true;}
+      if(u&&!tettoMioRifiutato&&(!r||!uguale(u,r)))daScrivere.push({chiave:k,trip_id:t.cid,dati:u});
+    });
+    if(tettiCambiati){save();try{renderBudget();}catch(e){}}
     /* Una riga alla volta: un viaggio da cui sei stato tolto (la regola lo
        rifiuta) non deve fermare le altre. */
     for(const x of daScrivere){
       const{error:e2}=await sb.from('dati_personali').upsert(Object.assign({user_id:myUid,aggiornato_il:new Date().toISOString()},x));
       if(e2){
         if(tabellaAssente(e2)){personaleAssente=true;console.log('Valigia e impostazioni restano sul telefono: nel cloud manca la tabella dati_personali.',e2.message||e2);break;}
+        /* Un database con lo schema di prima della miglioria 13a accetta solo
+           valigia e impostazioni: il tetto resta sul telefono, e non lo si
+           richiede a ogni salvataggio fino alla prossima apertura. */
+        if(x.chiave.indexOf('tetto:')===0&&/23514|check constraint/i.test(String(e2.code||'')+' '+String(e2.message||''))){tettoMioRifiutato=true;console.log('Il tuo tetto resta sul telefono: nel cloud la tabella dati_personali non accetta ancora i tetti (va rilanciato lo schema).',e2.message||e2);continue;}
         console.log('Valigia o impostazioni non salvate nel cloud:',x.chiave,e2.message||e2);
       }
     }
@@ -6908,7 +7039,7 @@ const DIZIONARIO_CIELO={
     'Meteo del viaggio':'Weather for the trip',
     'Aggiorna il meteo':'Refresh the weather',
     'Ora per ora':'Hour by hour',
-    'Tutti i giorni':'Every day',
+    'Tutti i giorni':'All days',
     'adesso':'now',
     'non ancora caricato':'not loaded yet',
     'Carico le ore…':'Loading the hours…',
@@ -13054,6 +13185,228 @@ const DIZIONARIO_MAPPE={
   }
 };
 Object.keys(DIZIONARIO_MAPPE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_MAPPE[l]));
+/* I tetti di spesa e la mappa di tutto il viaggio (miglioria 13a). «Tappa»
+   e «admin» come nel resto dell'app: stop/parada/étape/paragem, admin e
+   administrador. */
+const DIZIONARIO_TETTI={
+  en:{
+    'Tutto il viaggio ›':'Whole trip ›',
+    '🎯 Tetti di spesa':'🎯 Spending caps',
+    '🗺️ Tutto il viaggio':'🗺️ Whole trip',
+    'Mappa':'Map',
+    'Elenco':'List',
+    'Come vedere le tappe':'How to see the stops',
+    'Quale giorno':'Which day',
+    'Mappa delle tappe: le stesse tappe stanno anche in Elenco':'Map of the stops: the same stops are also in List',
+    'Tetti di spesa':'Spending caps',
+    'Tetto del gruppo':'Group cap',
+    'Per tutto il gruppo':'For the whole group',
+    'Il tuo tetto':'Your cap',
+    'La tua parte · lo vedi solo tu':'Your share · only you can see it',
+    'Speso {1} di {2}':'{1} spent of {2}',
+    '{1} oltre il tetto':'{1} over the cap',
+    'Restano {2} per {1} giorno':'{2} left for {1} day',
+    'Restano {2} per i prossimi {1} giorni, cioè {3} al giorno':'{2} left for the next {1} days, that’s {3} a day',
+    'Restano {1}':'{1} left',
+    'Con le previste arriveresti a {1} ({2})':'With the planned ones you’d reach {1} ({2})',
+    'Modifica i tetti':'Edit caps',
+    'Imposta i tetti':'Set caps',
+    'Nessun tetto. Puoi fissarne uno per tutto il gruppo, uno per ogni categoria e uno tuo, che vedi solo tu.':'No caps yet. You can set one for the whole group, one for each category and one of your own, which only you can see.',
+    'Nessun tetto. Puoi fissarne uno tuo, che vedi solo tu: quelli del gruppo li decidono gli admin del viaggio.':'No caps yet. You can set one of your own, which only you can see: the group’s caps are decided by the trip admins.',
+    'Nessun tetto':'No cap',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin, come te.':'All your travel mates can see them. Only admins can change them, like you.',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin del viaggio.':'All your travel mates can see them. Only the trip admins can change them.',
+    'Tetto del viaggio ({1})':'Trip cap ({1})',
+    'Conta la tua parte delle spese. È privato: lo vedi solo tu.':'It counts your share of the expenses. It’s private: only you can see it.',
+    'Il tuo tetto ({1})':'Your cap ({1})',
+    'Scrivi una cifra più grande di zero, oppure lascia il campo vuoto':'Write an amount greater than zero, or leave the field empty',
+    '✅ Tetti salvati':'✅ Caps saved',
+    'Tetto del gruppo superato':'Group cap exceeded',
+    'Tetto del gruppo quasi raggiunto':'Group cap almost reached',
+    'Hai superato il tuo tetto':'You’ve gone over your cap',
+    'Il tuo tetto è quasi raggiunto':'Your cap is almost reached',
+    'Tetto per {1} superato':'{1} cap exceeded',
+    'Tetto per {1} quasi raggiunto':'{1} cap almost reached',
+    'Il gruppo ha superato il tetto di spesa: {1} su {2}.':'The group has gone over the spending cap: {1} of {2}.',
+    'Il gruppo ha passato l\'80% del tetto: restano {1}.':'The group has passed 80% of the cap: {1} left.',
+    'Hai superato il tuo tetto di spesa: {1} su {2}.':'You’ve gone over your spending cap: {1} of {2}.',
+    'Hai passato l\'80% del tuo tetto: restano {1}.':'You’ve passed 80% of your cap: {1} left.',
+    'Per {1} il gruppo ha superato il tetto: {2} su {3}.':'For {1} the group has gone over the cap: {2} of {3}.',
+    'Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.':'For {1} the group has passed 80% of the cap: {2} left.',
+    '🎯 Tetti di spesa · {1}':'🎯 Spending caps · {1}',
+    'Giorno {1} · {2}':'Day {1} · {2}',
+    'Albergo: {1}':'Hotel: {1}',
+    'Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.':'These stops don’t have a location yet: open them and paste the address, and they’ll show up here. You’ll find them all in List.',
+    'Qui non ci sono ancora tappe.':'There are no stops here yet.',
+    '{1}. {2} · Giorno {3}':'{1}. {2} · Day {3}',
+    'Apri la tappa':'Open the stop',
+    '{1} tappa qui vicino: tocca per avvicinarti':'{1} stop nearby: tap to zoom in',
+    '{1} tappe qui vicine: tocca per avvicinarti':'{1} stops nearby: tap to zoom in'
+  },
+  es:{
+    'Tutto il viaggio ›':'Todo el viaje ›',
+    '🎯 Tetti di spesa':'🎯 Topes de gasto',
+    '🗺️ Tutto il viaggio':'🗺️ Todo el viaje',
+    'Mappa':'Mapa',
+    'Elenco':'Lista',
+    'Come vedere le tappe':'Cómo ver las paradas',
+    'Quale giorno':'Qué día',
+    'Mappa delle tappe: le stesse tappe stanno anche in Elenco':'Mapa de las paradas: las mismas paradas están también en Lista',
+    'Tetti di spesa':'Topes de gasto',
+    'Tetto del gruppo':'Tope del grupo',
+    'Per tutto il gruppo':'Para todo el grupo',
+    'Il tuo tetto':'Tu tope',
+    'La tua parte · lo vedi solo tu':'Tu parte · solo lo ves tú',
+    'Speso {1} di {2}':'Gastado {1} de {2}',
+    '{1} oltre il tetto':'{1} por encima del tope',
+    'Restano {2} per {1} giorno':'Quedan {2} para {1} día',
+    'Restano {2} per i prossimi {1} giorni, cioè {3} al giorno':'Quedan {2} para los próximos {1} días, es decir, {3} al día',
+    'Restano {1}':'Quedan {1}',
+    'Con le previste arriveresti a {1} ({2})':'Con los previstos llegarías a {1} ({2})',
+    'Modifica i tetti':'Editar los topes',
+    'Imposta i tetti':'Fijar los topes',
+    'Nessun tetto. Puoi fissarne uno per tutto il gruppo, uno per ogni categoria e uno tuo, che vedi solo tu.':'Ningún tope. Puedes fijar uno para todo el grupo, uno para cada categoría y uno tuyo, que solo ves tú.',
+    'Nessun tetto. Puoi fissarne uno tuo, che vedi solo tu: quelli del gruppo li decidono gli admin del viaggio.':'Ningún tope. Puedes fijar uno tuyo, que solo ves tú: los del grupo los deciden los administradores del viaje.',
+    'Nessun tetto':'Sin tope',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin, come te.':'Los ven todos los compañeros de viaje. Solo los cambian los administradores, como tú.',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin del viaggio.':'Los ven todos los compañeros de viaje. Solo los cambian los administradores del viaje.',
+    'Tetto del viaggio ({1})':'Tope del viaje ({1})',
+    'Conta la tua parte delle spese. È privato: lo vedi solo tu.':'Cuenta tu parte de los gastos. Es privado: solo lo ves tú.',
+    'Il tuo tetto ({1})':'Tu tope ({1})',
+    'Scrivi una cifra più grande di zero, oppure lascia il campo vuoto':'Escribe una cifra mayor que cero, o deja el campo vacío',
+    '✅ Tetti salvati':'✅ Topes guardados',
+    'Tetto del gruppo superato':'Tope del grupo superado',
+    'Tetto del gruppo quasi raggiunto':'Tope del grupo casi alcanzado',
+    'Hai superato il tuo tetto':'Has superado tu tope',
+    'Il tuo tetto è quasi raggiunto':'Tu tope está casi alcanzado',
+    'Tetto per {1} superato':'Tope de {1} superado',
+    'Tetto per {1} quasi raggiunto':'Tope de {1} casi alcanzado',
+    'Il gruppo ha superato il tetto di spesa: {1} su {2}.':'El grupo ha superado el tope de gasto: {1} de {2}.',
+    'Il gruppo ha passato l\'80% del tetto: restano {1}.':'El grupo ha pasado el 80 % del tope: quedan {1}.',
+    'Hai superato il tuo tetto di spesa: {1} su {2}.':'Has superado tu tope de gasto: {1} de {2}.',
+    'Hai passato l\'80% del tuo tetto: restano {1}.':'Has pasado el 80 % de tu tope: quedan {1}.',
+    'Per {1} il gruppo ha superato il tetto: {2} su {3}.':'En {1} el grupo ha superado el tope: {2} de {3}.',
+    'Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.':'En {1} el grupo ha pasado el 80 % del tope: quedan {2}.',
+    '🎯 Tetti di spesa · {1}':'🎯 Topes de gasto · {1}',
+    'Giorno {1} · {2}':'Día {1} · {2}',
+    'Albergo: {1}':'Alojamiento: {1}',
+    'Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.':'Estas paradas aún no tienen ubicación: ábrelas y pega la dirección, y aparecerán aquí. Las tienes todas en Lista.',
+    'Qui non ci sono ancora tappe.':'Aquí todavía no hay paradas.',
+    '{1}. {2} · Giorno {3}':'{1}. {2} · Día {3}',
+    'Apri la tappa':'Abrir la parada',
+    '{1} tappa qui vicino: tocca per avvicinarti':'{1} parada aquí cerca: toca para acercarte',
+    '{1} tappe qui vicine: tocca per avvicinarti':'{1} paradas aquí cerca: toca para acercarte'
+  },
+  fr:{
+    'Tutto il viaggio ›':'Tout le voyage ›',
+    '🎯 Tetti di spesa':'🎯 Plafonds de dépenses',
+    '🗺️ Tutto il viaggio':'🗺️ Tout le voyage',
+    'Mappa':'Carte',
+    'Elenco':'Liste',
+    'Come vedere le tappe':'Comment voir les étapes',
+    'Quale giorno':'Quel jour',
+    'Mappa delle tappe: le stesse tappe stanno anche in Elenco':'Carte des étapes : les mêmes étapes sont aussi dans Liste',
+    'Tetti di spesa':'Plafonds de dépenses',
+    'Tetto del gruppo':'Plafond du groupe',
+    'Per tutto il gruppo':'Pour tout le groupe',
+    'Il tuo tetto':'Ton plafond',
+    'La tua parte · lo vedi solo tu':'Ta part · visible seulement par toi',
+    'Speso {1} di {2}':'Dépensé {1} sur {2}',
+    '{1} oltre il tetto':'{1} au-dessus du plafond',
+    'Restano {2} per {1} giorno':'Il reste {2} pour {1} jour',
+    'Restano {2} per i prossimi {1} giorni, cioè {3} al giorno':'Il reste {2} pour les {1} prochains jours, soit {3} par jour',
+    'Restano {1}':'Il reste {1}',
+    'Con le previste arriveresti a {1} ({2})':'Avec les dépenses prévues, tu arriverais à {1} ({2})',
+    'Modifica i tetti':'Modifier les plafonds',
+    'Imposta i tetti':'Fixer les plafonds',
+    'Nessun tetto. Puoi fissarne uno per tutto il gruppo, uno per ogni categoria e uno tuo, che vedi solo tu.':'Aucun plafond. Tu peux en fixer un pour tout le groupe, un pour chaque catégorie et un à toi, visible seulement par toi.',
+    'Nessun tetto. Puoi fissarne uno tuo, che vedi solo tu: quelli del gruppo li decidono gli admin del viaggio.':'Aucun plafond. Tu peux en fixer un à toi, visible seulement par toi : ceux du groupe sont décidés par les admins du voyage.',
+    'Nessun tetto':'Aucun plafond',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin, come te.':'Tous les compagnons de voyage les voient. Seuls les admins peuvent les changer, comme toi.',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin del viaggio.':'Tous les compagnons de voyage les voient. Seuls les admins du voyage peuvent les changer.',
+    'Tetto del viaggio ({1})':'Plafond du voyage ({1})',
+    'Conta la tua parte delle spese. È privato: lo vedi solo tu.':'Il compte ta part des dépenses. Il est privé : visible seulement par toi.',
+    'Il tuo tetto ({1})':'Ton plafond ({1})',
+    'Scrivi una cifra più grande di zero, oppure lascia il campo vuoto':'Écris un montant supérieur à zéro, ou laisse le champ vide',
+    '✅ Tetti salvati':'✅ Plafonds enregistrés',
+    'Tetto del gruppo superato':'Plafond du groupe dépassé',
+    'Tetto del gruppo quasi raggiunto':'Plafond du groupe presque atteint',
+    'Hai superato il tuo tetto':'Tu as dépassé ton plafond',
+    'Il tuo tetto è quasi raggiunto':'Ton plafond est presque atteint',
+    'Tetto per {1} superato':'Plafond pour {1} dépassé',
+    'Tetto per {1} quasi raggiunto':'Plafond pour {1} presque atteint',
+    'Il gruppo ha superato il tetto di spesa: {1} su {2}.':'Le groupe a dépassé le plafond de dépenses : {1} sur {2}.',
+    'Il gruppo ha passato l\'80% del tetto: restano {1}.':'Le groupe a dépassé 80 % du plafond : il reste {1}.',
+    'Hai superato il tuo tetto di spesa: {1} su {2}.':'Tu as dépassé ton plafond de dépenses : {1} sur {2}.',
+    'Hai passato l\'80% del tuo tetto: restano {1}.':'Tu as dépassé 80 % de ton plafond : il reste {1}.',
+    'Per {1} il gruppo ha superato il tetto: {2} su {3}.':'Pour {1}, le groupe a dépassé le plafond : {2} sur {3}.',
+    'Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.':'Pour {1}, le groupe a dépassé 80 % du plafond : il reste {2}.',
+    '🎯 Tetti di spesa · {1}':'🎯 Plafonds de dépenses · {1}',
+    'Giorno {1} · {2}':'Jour {1} · {2}',
+    'Albergo: {1}':'Hébergement : {1}',
+    'Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.':'Ces étapes n’ont pas encore de position : ouvre-les et colle l’adresse, et elles apparaîtront ici. Tu les trouves toutes dans Liste.',
+    'Qui non ci sono ancora tappe.':'Il n’y a pas encore d’étapes ici.',
+    '{1}. {2} · Giorno {3}':'{1}. {2} · Jour {3}',
+    'Apri la tappa':'Ouvrir l’étape',
+    '{1} tappa qui vicino: tocca per avvicinarti':'{1} étape tout près : touche pour t’approcher',
+    '{1} tappe qui vicine: tocca per avvicinarti':'{1} étapes tout près : touche pour t’approcher'
+  },
+  pt:{
+    'Tutto il viaggio ›':'Toda a viagem ›',
+    '🎯 Tetti di spesa':'🎯 Tetos de despesa',
+    '🗺️ Tutto il viaggio':'🗺️ Toda a viagem',
+    'Mappa':'Mapa',
+    'Elenco':'Lista',
+    'Come vedere le tappe':'Como ver as paragens',
+    'Quale giorno':'Que dia',
+    'Mappa delle tappe: le stesse tappe stanno anche in Elenco':'Mapa das paragens: as mesmas paragens estão também em Lista',
+    'Tetti di spesa':'Tetos de despesa',
+    'Tetto del gruppo':'Teto do grupo',
+    'Per tutto il gruppo':'Para todo o grupo',
+    'Il tuo tetto':'O teu teto',
+    'La tua parte · lo vedi solo tu':'A tua parte · só tu o vês',
+    'Speso {1} di {2}':'Gasto {1} de {2}',
+    '{1} oltre il tetto':'{1} acima do teto',
+    'Restano {2} per {1} giorno':'Restam {2} para {1} dia',
+    'Restano {2} per i prossimi {1} giorni, cioè {3} al giorno':'Restam {2} para os próximos {1} dias, ou seja, {3} por dia',
+    'Restano {1}':'Restam {1}',
+    'Con le previste arriveresti a {1} ({2})':'Com as previstas chegarias a {1} ({2})',
+    'Modifica i tetti':'Alterar os tetos',
+    'Imposta i tetti':'Definir os tetos',
+    'Nessun tetto. Puoi fissarne uno per tutto il gruppo, uno per ogni categoria e uno tuo, che vedi solo tu.':'Nenhum teto. Podes definir um para todo o grupo, um para cada categoria e um teu, que só tu vês.',
+    'Nessun tetto. Puoi fissarne uno tuo, che vedi solo tu: quelli del gruppo li decidono gli admin del viaggio.':'Nenhum teto. Podes definir um teu, que só tu vês: os do grupo são decididos pelos administradores da viagem.',
+    'Nessun tetto':'Sem teto',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin, come te.':'Todos os companheiros de viagem os veem. Só os administradores os alteram, como tu.',
+    'Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin del viaggio.':'Todos os companheiros de viagem os veem. Só os administradores da viagem os alteram.',
+    'Tetto del viaggio ({1})':'Teto da viagem ({1})',
+    'Conta la tua parte delle spese. È privato: lo vedi solo tu.':'Conta a tua parte das despesas. É privado: só tu o vês.',
+    'Il tuo tetto ({1})':'O teu teto ({1})',
+    'Scrivi una cifra più grande di zero, oppure lascia il campo vuoto':'Escreve um valor maior do que zero, ou deixa o campo vazio',
+    '✅ Tetti salvati':'✅ Tetos guardados',
+    'Tetto del gruppo superato':'Teto do grupo ultrapassado',
+    'Tetto del gruppo quasi raggiunto':'Teto do grupo quase atingido',
+    'Hai superato il tuo tetto':'Ultrapassaste o teu teto',
+    'Il tuo tetto è quasi raggiunto':'O teu teto está quase atingido',
+    'Tetto per {1} superato':'Teto de {1} ultrapassado',
+    'Tetto per {1} quasi raggiunto':'Teto de {1} quase atingido',
+    'Il gruppo ha superato il tetto di spesa: {1} su {2}.':'O grupo ultrapassou o teto de despesa: {1} de {2}.',
+    'Il gruppo ha passato l\'80% del tetto: restano {1}.':'O grupo passou os 80% do teto: restam {1}.',
+    'Hai superato il tuo tetto di spesa: {1} su {2}.':'Ultrapassaste o teu teto de despesa: {1} de {2}.',
+    'Hai passato l\'80% del tuo tetto: restano {1}.':'Passaste os 80% do teu teto: restam {1}.',
+    'Per {1} il gruppo ha superato il tetto: {2} su {3}.':'Em {1} o grupo ultrapassou o teto: {2} de {3}.',
+    'Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.':'Em {1} o grupo passou os 80% do teto: restam {2}.',
+    '🎯 Tetti di spesa · {1}':'🎯 Tetos de despesa · {1}',
+    'Giorno {1} · {2}':'Dia {1} · {2}',
+    'Albergo: {1}':'Alojamento: {1}',
+    'Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.':'Estas paragens ainda não têm localização: abre-as e cola a morada, e aparecerão aqui. Encontras todas em Lista.',
+    'Qui non ci sono ancora tappe.':'Aqui ainda não há paragens.',
+    '{1}. {2} · Giorno {3}':'{1}. {2} · Dia {3}',
+    'Apri la tappa':'Abrir a paragem',
+    '{1} tappa qui vicino: tocca per avvicinarti':'{1} paragem aqui perto: toca para te aproximares',
+    '{1} tappe qui vicine: tocca per avvicinarti':'{1} paragens aqui perto: toca para te aproximares'
+  }
+};
+Object.keys(DIZIONARIO_TETTI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_TETTI[l]));
 
 /* Quante frasi ci sono da dire in tutto. Era un numero scritto a mano (981,
    poi 1334) e restava indietro a ogni frase nuova: chi aggiungeva una riga
@@ -13853,11 +14206,12 @@ function renderTripZoomBody(){
   const me0=t.participants.find(pp=>pp.isMe);
   const spent=t.expenses.reduce((s2,e)=>{if(e.type==='transfer'||e.paid===false)return s2;const u=[...new Set(e.splitAmong||[])];return s2+((me0&&u.includes(me0.id))?e.amount/u.length:0);},0);
   let dates='';if(t.start&&t.end){dates=`${new Date(t.start).toLocaleDateString(loc(),{day:'numeric',month:'short'})} – ${new Date(t.end).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})}`;}
-  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost${t.suggestOn?' on':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button>${raccoltaPossibile(t)?`<button class="pill-ghost pill-forte" onclick="closeSheet('mTripZoom');apriRaccolta()">📣 ${esc(tv('A raccolta'))}</button>`:''}<button class="pill-ghost" onclick="openRestore()">🛟 ${esc(tv('Punti di ripristino'))}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
+  el.innerHTML=`<div class="trip-hero" style="margin-bottom:.8rem"><div class="th-top"><div style="min-width:0;flex:1"><div class="trip-hero-name" style="cursor:pointer" onclick="closeSheet('mTripZoom');openTimetable()">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"><button class="status-pill" onclick="toggleStatus()">${tripPhase(t)}</button><button class="pill-ghost" onclick="renameTrip(${t.id})" title="Rinomina viaggio" aria-label="Rinomina viaggio">✎ Rinomina</button><button class="pill-ghost" onclick="openTripDates()">📅 Giorni</button><button class="pill-ghost" onclick="openShare()">Condividi</button></div>${dates?`<div class="trip-hero-dates">${dates}${t.destination?' · '+esc(t.destination):''}</div>`:(t.destination?`<div class="trip-hero-dates">${esc(t.destination)}</div>`:'')}<div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap;position:relative"><button class="pill-ghost" onclick="openPeople()">Persone</button><button class="pill-ghost${t.suggestOn?' on':''}" onclick="openSuggestSheet()">${t.suggestOn?tv('Consigli attivi'):tv('Consigli off')}</button><button class="pill-ghost" onclick="openPacking()">🎒 Bagagli</button><button class="pill-ghost" onclick="apriTetti()">🎯 ${esc(tv('Tetti di spesa'))}</button>${raccoltaPossibile(t)?`<button class="pill-ghost pill-forte" onclick="closeSheet('mTripZoom');apriRaccolta()">📣 ${esc(tv('A raccolta'))}</button>`:''}<button class="pill-ghost" onclick="openRestore()">🛟 ${esc(tv('Punti di ripristino'))}</button></div></div></div><div class="trip-hero-stats"><div><div class="ths-n">${t.days.length}</div><div class="ths-l">Giorni</div></div><div><div class="ths-n">${t.pois.length}</div><div class="ths-l">Luoghi</div></div><div><div class="ths-n">${fmtVista(spent,cur)}</div><div class="ths-l" style="display:flex;align-items:center;gap:.35rem;justify-content:center">Tua spesa ${vistaSel(cur)}</div></div></div></div>
   <!-- Il ricordo anche a viaggio in corso (prima si apriva solo concludendo,
        o dal Profilo per i viaggi conclusi), e il diario e il calendario, che
        stavano solo in fondo al Profilo. -->
   <div class="tz-azioni">
+    <button class="btn btn-soft" onclick="closeSheet('mTripZoom');apriMappaViaggio()">${esc(tv('🗺️ Tutto il viaggio'))}</button>
     <button class="btn btn-soft" onclick="closeSheet('mTripZoom');apriRicordo(${t.id})">${esc(tv('📖 Il ricordo'))}</button>
     <button class="btn btn-soft" onclick="openDiary()">${esc(tv('📄 Diario PDF'))}</button>
     <button class="btn btn-soft" onclick="exportICS()">${esc(tv('🗓️ Esporta nel calendario'))}</button>
@@ -14836,7 +15190,7 @@ function renderHomeHero(){
            dentro Importa. -->
       <button class="btn btn-soft btn-block hh-sumisura" onclick="apriSuMisura()">${esc(tv('✦ Su misura'))}</button>
       ${actsBar}
-    </div>${valigia}`);
+    </div>${valigia}${schedaTettoHtml(t)}`);
     return;
   }
   const i=homeDayIndex(t),day=t.days[i];
@@ -14863,6 +15217,7 @@ function renderHomeHero(){
     ${actsBar}
   </div>
   ${valigia}
+  ${schedaTettoHtml(t)}
   ${(()=>{
     /* Il riquadro c'è finché c'è una tappa da mostrare, anche se sono tutte
        passate: scorrendo la mappa lo si porta su quella, e sparire vorrebbe
@@ -14891,7 +15246,7 @@ function renderHomeHero(){
     <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(tv('Aggiungi'))}</span></button></div>
     <div class="hh-sec-c">${tp(acts.length,'{1} TAPPA','{1} TAPPE')}</div>
   </div>
-  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione">🧭</button><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div></div>
+  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione">🧭</button><div class="hh-map-giu"><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div><button class="mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div></div>
   <div class="hh-cards">${acts.map(a=>{
     const av=avOf(a);
     // La foto del luogo collegato: si riconosce la tappa senza leggerne il nome.
@@ -15842,11 +16197,11 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "+ Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nella time-table, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
-- Home: il viaggio in corso, la prossima tappa, la mappa. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" (apre la lista bagagli), "👥 Compagni" (le persone del viaggio), "🔗 Condividi" (l'invito al viaggio, col link e il QR) e "✈️ Viaggio" (apre la scheda del viaggio: rinomina, giorni, concludi, elimina, consigli, punti di ripristino, il ricordo, il diario e il calendario). Sugli schermi stretti diventano due righe da due. I bagagli stanno li', in Home, e anche nella scheda del viaggio ("🎒 Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche nel quadrettino di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dalla Home col tasto "✈️ Viaggio", toccando il titolo in cima alla Time Table, oppure dal Profilo toccando il viaggio; in Home il titolo apre la Time Table, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "📖 Il ricordo" (anche a viaggio in corso), "📄 Diario PDF" e "🗓️ Esporta nel calendario". Accanto a "La giornata" c'e' "+ Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "✦ Su misura": l'assistente prepara l'itinerario.
-- Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sopra la griglia ci sono QUATTRO tasti, due righe da due: le due cose che si fanno camminando, "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente" (una chat su quella giornata, dove "📎 PDF" allega un PDF), e sotto le due che si usano mentre il viaggio si costruisce, "✦ Ordina il giro" (rimette in fila con l'IA le tappe che ci sono gia') e "🪄 Autopilota" (gli incolli un elenco di posti e li mette lui in orario). "Costruisci la giornata" non c'e' piu'. Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto "＋ Aggiungi", in basso a destra, che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto "↩ Annulla" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta a "＋ Aggiungi", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno. Fra una tappa e l'altra c'e' la striscia del tratto: tempo e distanza, e l'icona del mezzo da toccare per cambiarlo (e' piccola, ma risponde anche un po' intorno). I mezzi sono sei: a piedi, in bici, in macchina, in treno, in metro e in bus. A piedi, in bici e in macchina il tempo e' quello vero sulle strade, calcolato da un servizio di percorsi e tenuto nel telefono (si vede anche senza rete); finche' non arriva, e coi mezzi pubblici sempre, il tempo e' una stima e ha davanti il segno "≈". La stima dei mezzi pubblici conta anche i minuti per arrivare alla fermata, aspettare e uscire. Il navigatore di GeppGo dentro l'app non c'e' piu': ogni tasto per farsi portare apre Apple Maps o Google Maps col mezzo del tratto (in bici Apple Maps apre il percorso a piedi). Quale dei due si sceglie nel Profilo, sotto Impostazioni; chi aveva scelto il navigatore di GeppGo, al primo percorso sceglie fra i due.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sulla mappa della Home c'e' "Tutto il viaggio ›": apre la mappa di tutto il viaggio. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" (apre la lista bagagli), "👥 Compagni" (le persone del viaggio), "🔗 Condividi" (l'invito al viaggio, col link e il QR) e "✈️ Viaggio" (apre la scheda del viaggio: rinomina, giorni, concludi, elimina, consigli, punti di ripristino, il ricordo, il diario e il calendario). Sugli schermi stretti diventano due righe da due. I bagagli stanno li', in Home, e anche nella scheda del viaggio ("🎒 Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche nel quadrettino di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dalla Home col tasto "✈️ Viaggio", toccando il titolo in cima alla Time Table, oppure dal Profilo toccando il viaggio; in Home il titolo apre la Time Table, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "📖 Il ricordo" (anche a viaggio in corso), "📄 Diario PDF" e "🗓️ Esporta nel calendario". Accanto a "La giornata" c'e' "+ Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "✦ Su misura": l'assistente prepara l'itinerario.
+- Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sulla mappa della giornata c'e' "Tutto il viaggio ›", che apre la mappa di tutto il viaggio (nei giorni senza mappa, una riga al suo posto). Sopra la griglia ci sono QUATTRO tasti, due righe da due: le due cose che si fanno camminando, "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente" (una chat su quella giornata, dove "📎 PDF" allega un PDF), e sotto le due che si usano mentre il viaggio si costruisce, "✦ Ordina il giro" (rimette in fila con l'IA le tappe che ci sono gia') e "🪄 Autopilota" (gli incolli un elenco di posti e li mette lui in orario). "Costruisci la giornata" non c'e' piu'. Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto "＋ Aggiungi", in basso a destra, che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto "↩ Annulla" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta a "＋ Aggiungi", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno. Fra una tappa e l'altra c'e' la striscia del tratto: tempo e distanza, e l'icona del mezzo da toccare per cambiarlo (e' piccola, ma risponde anche un po' intorno). I mezzi sono sei: a piedi, in bici, in macchina, in treno, in metro e in bus. A piedi, in bici e in macchina il tempo e' quello vero sulle strade, calcolato da un servizio di percorsi e tenuto nel telefono (si vede anche senza rete); finche' non arriva, e coi mezzi pubblici sempre, il tempo e' una stima e ha davanti il segno "≈". La stima dei mezzi pubblici conta anche i minuti per arrivare alla fermata, aspettare e uscire. Il navigatore di GeppGo dentro l'app non c'e' piu': ogni tasto per farsi portare apre Apple Maps o Google Maps col mezzo del tratto (in bici Apple Maps apre il percorso a piedi). Quale dei due si sceglie nel Profilo, sotto Impostazioni; chi aveva scelto il navigatore di GeppGo, al primo percorso sceglie fra i due.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF col tasto "📎 PDF"), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario; c'e' anche in Home nei viaggi senza giorni e come spunta nel foglio "Nuovo viaggio") e "Prenotazione" (c'e' anche in Biglietti, "📩 Prenotazione dalla mail"). In "Cerca", sotto la ricerca, c'e' l'interruttore "Consigli nei dintorni": acceso, l'app propone posti in linea con quelli salvati e avvisa quando ci si passa vicino (e' lo stesso di "Consigli attivi/off" nella scheda del viaggio).
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
-- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" su ogni persona e su ogni riga di "come pareggiare" c'e' il tasto verde "✓ Pagato": si tocca e si registra il rimborso, anche fra due altri. Per aggiungere una spesa c'e' "+ Spesa" in cima, accanto al nome del viaggio, e "Aggiungi spesa" in fondo. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. Una spesa fatta in un'altra valuta si converte col cambio del giorno, che l'app scarica quando c'e' rete e tiene in memoria: senza rete usa l'ultimo che ha e sotto la cifra scrive "cambio del" con la data. Se un cambio non l'ha proprio, la spesa si salva lo stesso ma resta "cambio in attesa": si vede nella sua valuta, non entra in totali, saldi e budget (lo dice una riga "N spese non ancora incluse") e ci entra da sola appena torna la rete. Il cambio si puo' anche scrivere a mano nel campo "Cambio" della spesa (per esempio quello della propria banca): scritto a mano non viene mai cambiato da solo. Il cambio di una spesa resta quello con cui e' stata segnata: correggerne descrizione, persone, data o cifra non lo rifa' col cambio di oggi. Si ricalcola solo cambiando la valuta della spesa, o con "Ricalcola col cambio attuale". Le spese vecchie in un'altra valuta salvate con cambio 1 sono segnate "da verificare": aprendo il viaggio un avviso le elenca e offre "Ricalcola col cambio attuale", "Inserisco io il cambio" o "Va bene così". In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola.
+- Spese: chi ha pagato cosa e i conti del gruppo. Aggiungendo una spesa la si puo' agganciare a una o piu' tappe del viaggio: comparira' dentro ognuna di quelle tappe in time-table, restando una spesa sola nei conti. Come e' divisa la spesa non cambia mai per via di un collegamento: lo decide chi la scrive. Su ogni spesa divisa c'e' un tasto verde con la spunta: si apre l'elenco di chi deve ancora dare la sua parte e si tocca il nome di chi ha pagato. Sotto la cifra si legge quante persone mancano. Nella scheda "Saldi" su ogni persona e su ogni riga di "come pareggiare" c'e' il tasto verde "✓ Pagato": si tocca e si registra il rimborso, anche fra due altri. Per aggiungere una spesa c'e' "+ Spesa" in cima, accanto al nome del viaggio, e "Aggiungi spesa" in fondo. Budget: quanto si sta spendendo rispetto al previsto. In tutte e due, di fianco alla cifra grossa c'e' una tendina con la valuta: si sceglie e tutti i numeri della pagina si leggono in quella, convertiti. Le spese restano registrate nella valuta del viaggio: cambia solo come si leggono. Una spesa fatta in un'altra valuta si converte col cambio del giorno, che l'app scarica quando c'e' rete e tiene in memoria: senza rete usa l'ultimo che ha e sotto la cifra scrive "cambio del" con la data. Se un cambio non l'ha proprio, la spesa si salva lo stesso ma resta "cambio in attesa": si vede nella sua valuta, non entra in totali, saldi e budget (lo dice una riga "N spese non ancora incluse") e ci entra da sola appena torna la rete. Il cambio si puo' anche scrivere a mano nel campo "Cambio" della spesa (per esempio quello della propria banca): scritto a mano non viene mai cambiato da solo. Il cambio di una spesa resta quello con cui e' stata segnata: correggerne descrizione, persone, data o cifra non lo rifa' col cambio di oggi. Si ricalcola solo cambiando la valuta della spesa, o con "Ricalcola col cambio attuale". Le spese vecchie in un'altra valuta salvate con cambio 1 sono segnate "da verificare": aprendo il viaggio un avviso le elenca e offre "Ricalcola col cambio attuale", "Inserisco io il cambio" o "Va bene così". In cima alla sezione c'e' un interruttore fra "Spese" e "Budget": Spese e' l'elenco di chi ha pagato cosa con le sue schede "Spese" e "Saldi", Budget e' il totale del viaggio diviso per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping) con la tendina per vedere i conti di una persona sola. Nel Budget c'e' anche la scheda dei tetti di spesa (vedi "I tetti di spesa").
 - Da fuori: su Android, con GeppGo installato, l'app compare fra le opzioni del tasto Condividi della posta e il testo condiviso arriva dentro l'app gia' letto. Su iPhone la stessa cosa si fa con un Comando (Shortcut) chiamato GeppGo, spiegato dentro il pannello della mail dell'hotel. Una conferma di alloggio apre il lettore delle prenotazioni, tutto il resto va nell'assistente.
 - Hotel: gli alloggi. In cima, prima di tutto, c'e' la striscia delle NOTTI del viaggio: una casella per notte, piena se quella notte un letto ce l'hai e vuota tratteggiata se non ce l'hai, e sotto una riga che dice quali mancano e il tasto per cercarne uno. Un viaggio dal 14 al 18 ha quattro notti, non cinque: la notte si conta da dove si dorme, e l'ultimo giorno si torna a casa. Un albergo con check-in il 14 e check-out il 16 copre le notti del 14 e del 15. Ogni scheda dice quante notti copre quell'albergo, quanto costa e se e' ancora da pagare (il costo e' la spesa collegata, quella che si vede anche in Spese). Il tasto pieno "Portami qui, e' stanotte" compare solo sull'albergo dove si dorme stanotte; sugli altri il tasto c'e' lo stesso, ma piu' piano. Poi c'e' "Ho la mail di conferma: leggila tu" - si incolla il testo della mail dell'albergo (o si carica il PDF del voucher) e l'app ne ricava nome, indirizzo, date, orari di check-in/check-out, codice e costo, cerca la posizione sulla mappa e mostra tutto da controllare e correggere prima di salvare. Poi si cerca anche per nome, per indirizzo, o incollando il link di Google Maps (da li' l'app legge le coordinate esatte). Se l'albergo non si trova - la mappa libera non ha tutti gli hotel - c'e' "Aggiungilo a mano", e la posizione si incolla dopo nel campo "Posizione sulla mappa" del foglio dell'hotel. Un albergo che compare in una lista incollata all'assistente finisce qui, non fra le tappe: in time-table restano solo il suo check-in e il suo check-out, e il costo lo si mette aprendo l'hotel, scegliendo li' come dividerlo. Biglietti: i biglietti delle ATTRAZIONI - l'ingresso a un castello, un museo, una torre - e i voucher. In cima ci sono tre tasti uguali, che sono tre modi per fare la stessa cosa: "Scansiona" (col codice davanti), "Foto o PDF" (se ce l'hai gia' nel telefono) e "A mano". Sotto c'e' "📩 Prenotazione dalla mail", che apre il lettore delle mail di conferma (lo stesso di Scopri › Importa › Prenotazione). Di fianco, la scritta "Come funziona la lettura" si apre toccandola. L'elenco parte da TUTTI i biglietti del viaggio, non solo dai tuoi: un ingresso preso per il gruppo non e' di nessuno in particolare. Se le persone sono piu' di una, sopra l'elenco c'e' una tendina per guardare i biglietti di una persona alla volta; da li' si torna a tutti con un tasto, e quello che aggiungi mentre stai guardando una persona viene intestato a lei. I biglietti stanno sotto l'attrazione a cui servono, e il titolo del gruppo dice anche quando ci vai: giorno, data e ora. Quelli non attaccati a nessuna tappa stanno insieme, sotto un titolo loro. Il voucher si vede sempre. Si aggiungono scansionando il codice, da foto, o da un PDF scaricato dalla mail (anche con piu' biglietti dentro). Legge sia i QR sia i codici a barre (Code 128, EAN, PDF417 delle carte d'imbarco, Aztec dei treni) e li ridisegna con la stessa forma dell'originale; se sbaglia forma la si corregge aprendo il biglietto. Da un PDF legge anche il testo intorno a ogni codice: se c'e' scritto il nome di un viaggiatore il biglietto va a lui, e il codice del voucher/prenotazione viene riconosciuto come tale e non assegnato a nessuno. Leggere un codice qui non lo consuma e non lo convalida: e' solo una copia, il codice resta nel telefono. Un biglietto aggiunto dentro un'attivita' va da solo a una persona dell'attivita', uno a testa; lo stesso codice letto due volte non viene contato due volte.
 - Meteo: si apre toccando "22° · Meteo ›" in cima alla Home, sulla riga del nome del viaggio. Scende una tendina dall'alto: prima il giorno che la Home stava mostrando, con le ore una per una, poi tutti gli altri giorni del viaggio - toccandone uno si passa a quello. Le previsioni sono prese sul posto dove sta il grosso delle tappe di quella giornata - non c'e' niente da dire e niente da toccare, lo capisce da solo. Il posto scelto si legge sotto la data in time-table. Coprono sedici giorni: piu' in la' il riquadro dice fra quanto arriveranno. TUTTI GLI ORARI DEL METEO SONO ORARI DEL POSTO, non del telefono: sul giorno che li' e' oggi il riquadro dice se e' giorno o notte e che ora e' la' ("E' notte - a Tokyo sono le 02:00"), nella fila delle ore la casella "adesso" e' l'ora del posto e le ore prima dell'alba e dopo il tramonto sono disegnate col buio. IL CIELO DISEGNATO SEGUE L'ORA DI ADESSO NEL POSTO SU QUALUNQUE GIORNATA, anche una che deve ancora arrivare: se a Parigi sono le due di notte, il cielo e' notturno anche guardando le previsioni di venerdi'. L'ora del posto NON viene mai dall'orologio del telefono: se la previsione non porta il fuso - perche' e' stata salvata prima - si ricava dalla longitudine del posto, che e' la sua ora solare (ogni quindici gradi un'ora). Cosi' funziona in tutto il mondo anche prima che la previsione si riscarichi. L'orario scritto a parole invece compare solo col fuso vero, perche' la stima puo' sbagliare di un'ora dove il fuso politico non segue il sole. Il tempo che fa - pioggia, nuvole, neve - resta invece quello della giornata che si sta guardando. Anche la frase sotto il nome della citta' ("notte limpida", "mattina piovosa") prende l'ora dal posto. Il fuso lo dice il servizio del meteo insieme alle previsioni; se per qualche motivo non arriva, l'app non scrive che ora e' li' invece di indovinarla. Identifica: si fotografa un posto e l'app dice cos'e'.
@@ -15866,6 +16221,8 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Profilo (il tondo con l'iniziale in alto a destra, o in fondo al cassetto delle tre righine; non nella barra in basso): l'account, il tema scuro, il diario del viaggio (c'e' anche nella scheda del viaggio), la scheda "Punti di ripristino", i viaggi in corso e quelli conclusi, le segnalazioni e i contatti, e sotto la scritta "Impostazioni" tutto il resto: il piano, "Avvisi e notifiche" (quali avvisi arrivano e il tasto "Attiva le notifiche"), gli avvisi di prossimita' (cosa notificare e con che raggio), l'esportazione nel calendario, quale navigatore aprire, le copie di sicurezza e il reset. Prima c'era anche una sezione Impostazioni separata che ripeteva l'Account: non c'e' piu'. Se l'app dice di essere in modalita' locale, il tasto "Accedi o crea account" porta anche a incollare un link d'invito o a configurare il cloud a mano.
 - Invitare i compagni: "🔗 Condividi" in Home (o il quadrettino di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "+ Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 - I link di Google Maps: si incollano, anche quelli corti di "Condividi" (maps.app.goo.gl), nella ricerca di Scopri › "Cerca", nella ricerca degli hotel, nella "Posizione sulla mappa" del foglio dell'hotel, nella posizione a mano della mail dell'hotel e nell'indirizzo di una tappa: l'app legge il posto dal link (le coordinate, oppure il nome, che poi cerca). Su Android, condividendo un posto da Google Maps a GeppGo, si apre Scopri › "Cerca" con quel posto, da aprire e salvare nel viaggio. Se un link non si riesce a leggere l'app lo dice, e si incolla l'indirizzo.
+- I tetti di spesa: in Spese › Budget, la scheda "🎯 Tetti di spesa" (si apre anche dalla scheda del viaggio: "✈️ Viaggio" in Home › "🎯 Tetti di spesa"). Tre tipi di tetto, tutti facoltativi e nella valuta del viaggio: il tetto del gruppo, per tutto il viaggio; un tetto per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping), sempre del gruppo; e il tuo tetto, per la tua parte delle spese, che e' privato: lo vedi solo tu, i compagni no. I tetti del gruppo li vedono tutti, ma li impostano e li cambiano solo gli admin del viaggio. Per ogni tetto si legge quanto e' speso, quanto resta, la percentuale e "restano X per i prossimi N giorni, cioe' Y al giorno". Le spese previste (non ancora pagate) non contano nello speso: una riga dice "con le previste arriveresti a Z". Le spese in attesa di cambio restano fuori finche' il cambio non arriva, e una riga lo dice. All'80% e al 100% arriva un avviso, una volta sola per soglia, come gli altri avvisi (notifica se e' permessa, se no un banner nell'app); se un admin cambia il tetto, gli avvisi ripartono per quello nuovo. Quando un tetto passa l'80%, in Home compare una riga che porta al Budget.
+- La mappa di tutto il viaggio: tutte le tappe di tutti i giorni su una mappa, un colore per giorno, coi numeri nell'ordine della giornata, la linea che le unisce giorno per giorno e gli alberghi con la casetta. Si apre da "Tutto il viaggio ›" sulla mappa della Home e su quella della giornata in Time Table, e dalla scheda del viaggio ("✈️ Viaggio" in Home › "🗺️ Tutto il viaggio"). In cima si sceglie "Tutti i giorni" o un giorno solo ("Giorno 1", "Giorno 2"...); all'apertura la mappa inquadra tutto. Toccando un numero compare una scheda con nome, giorno e ora, e il tasto "Apri la tappa". Dove le tappe sono tante e vicine diventano un tondo scuro col numero delle tappe: toccandolo ci si avvicina. "Elenco" mostra le stesse tappe in fila, giorno per giorno (anche quelle senza posizione): e' anche il modo di usarla con VoiceOver. Senza rete si vedono le zone della mappa gia' viste.
 - L'accessibilita': l'app si usa anche con VoiceOver e con una tastiera. Ogni tasto ha un nome che VoiceOver legge (la ✕ dice "Chiudi"); un foglio si chiude anche con Esc, e il fuoco torna al tasto che l'aveva aperto. I messaggi in basso restano da 2,6 a 8 secondi secondo quanto sono lunghi, VoiceOver li legge, e un tocco li chiude. Con "Riduci movimento" acceso sul telefono (su iPhone: Impostazioni › Accessibilità › Movimento) l'app non fa scivolare niente. Si puo' ingrandire con due dita. Le scritte non seguono la grandezza del testo scelta nelle impostazioni del telefono.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -15907,6 +16264,8 @@ const MAPPA_CHIAVI=[
   ['In Profilo, sotto "Versione"',['versione','aggiornamento','aggiornare','version','update','version','actualizar','mise a jour','versao','atualizar']],
   ['Profilo',['profilo','impostazioni','tema scuro','backup','notifiche','piano','calendario','esporta','esportare','profile','settings','dark mode','notifications','export','calendar','perfil','ajustes','modo oscuro','exportar','profil','parametres','mode sombre','exporter','definicoes','modo escuro','punti di ripristino','restore points','restore point','puntos de restauracion','points de restauration','pontos de recuperacao']],
   ['Invitare i compagni',['invitare','invito','invite','invitar','inviter','convidar','codice d\'invito','invite code']],
+  ['I tetti di spesa',['tetto','tetti','tetto di spesa','limite di spesa','budget massimo','spending cap','spending limit','budget cap','tope de gasto','limite de gasto','plafond','limite de despesa','teto de gastos','teto']],
+  ['La mappa di tutto il viaggio',['mappa del viaggio','tutto il viaggio','tutte le tappe','mappa di tutte','trip map','whole trip','all stops','mapa del viaje','todo el viaje','carte du voyage','tout le voyage','mapa da viagem','toda a viagem']],
   ['I link di Google Maps',['google maps','maps.app','goo.gl','link di google','link corto','link corti','short link','enlace de google','enlace corto','lien google','lien court','ligacao do google','ligacao curta']],
   ['L\'accessibilita',['accessibilita','accessibility','accesibilidad','accessibilite','acessibilidade','voiceover','lettore di schermo','screen reader','lector de pantalla','lecteur d ecran','leitor de ecra','tastiera','keyboard','teclado','clavier','riduci movimento','reduce motion','reducir movimiento','reduire les animations','reduzir movimento','zoom','ingrandire','enlarge','ampliar','agrandir']]
 ];
@@ -18071,7 +18430,7 @@ function moneyVista(quale){
 function renderBudget(){
   const t=T(),cats=['Voli','Hotel','Cibo','Attrazioni','Trasporti','Shopping'],ic={Voli:'✈️',Hotel:'🏨',Cibo:'🍜',Attrazioni:'🎭',Trasporti:'🚇',Shopping:'🛍️'};
   const sel=document.getElementById('budgetWho');
-  if(!t){if(sel)sel.innerHTML='';document.getElementById('bAmt').textContent='€0';document.getElementById('catList').innerHTML='';document.getElementById('bPer').textContent='€0';document.getElementById('bPpl').textContent='0';document.getElementById('bCnt').textContent='0';document.getElementById('bCurLabel').textContent='Spesa personale';return;}
+  if(!t){if(sel)sel.innerHTML='';document.getElementById('bAmt').textContent='€0';document.getElementById('catList').innerHTML='';document.getElementById('bPer').textContent='€0';document.getElementById('bPpl').textContent='0';document.getElementById('bCnt').textContent='0';document.getElementById('bCurLabel').textContent='Spesa personale';renderTetti(null);return;}
   const cur=t.currency||'EUR';
   const me=t.participants.find(p=>p.isMe)||t.participants[0];
   const prev=sel.value;
@@ -18094,6 +18453,208 @@ function renderBudget(){
   const catSum=c=>t.expenses.filter(e=>e.category===c).reduce((s2,e)=>s2+share(e),0);
   const max=Math.max(...cats.map(catSum),1);
   document.getElementById('catList').innerHTML=notaNonIncluse(t)+cats.map(c=>{const s3=catSum(c);return `<div class="cat" style="cursor:pointer" onclick="openCatExp('${c}')"><div class="cat-l"><div class="cat-ic">${ic[c]}</div><div><div class="cat-n">${c}</div><div class="cat-bar"><div class="cat-bar-fill" style="width:${(s3/max*100).toFixed(0)}%"></div></div></div></div><div class="cat-amt">${fmtVista(s3,cur)}</div></div>`;}).join('');
+  renderTetti(t);
+}
+/* ===== I TETTI DI SPESA (miglioria 13a) =====
+   Tre tipi, tutti facoltativi, tutti nella valuta del viaggio:
+   - il tetto del gruppo, per tutto il viaggio (t.tetto);
+   - i tetti per categoria, del gruppo (t.tettoCat_Cibo, t.tettoCat_Voli...);
+   - il tuo tetto, per la tua parte delle spese. E' privato: non sta nel
+     viaggio, che vedono tutti, ma in app.tettiMiei, e nel cloud nella
+     tabella dati_personali, che ognuno legge solo per se' (personaleSync).
+   Quelli del gruppo sono campi del viaggio, uno per tetto, e si uniscono fra
+   due telefoni campo per campo come gli altri (I CAMPI DEL VIAGGIO): due admin
+   che cambiano due tetti diversi non si cancellano a vicenda. Li cambiano solo
+   gli admin; nel cloud lo fa rispettare anche il database
+   (trips_tetti_custoditi in supabase-schema.sql), che a un compagno lascia
+   passare tutto il resto ma i tetti li rimette com'erano, e il telefono di
+   un compagno i tetti li prende sempre dal cloud (tettiDalCloud).
+   Nei conti lo speso sono le spese pagate. Le previste (non ancora pagate)
+   si dicono a parte, perche' possono non succedere. Quelle in attesa di
+   cambio non hanno ancora una cifra nella valuta del viaggio: restano fuori,
+   e una riga lo dice (notaNonIncluse).
+   Chi ha creato il viaggio e' admin anche dove il database non ha i ruoli:
+   cosi' dice anche la regola del cloud. */
+function sonoAdmin(t){return !!t&&(t._owner===true||viaggioMio(t));}
+function campoTettoCat(c){return 'tettoCat_'+c;}
+function tettoGruppo(t){const v=Number(t&&t.tetto);return v>0?v:0;}
+function tettoCat(t,c){const v=Number(t&&t[campoTettoCat(c)]);return v>0?v:0;}
+function tettoMio(t){const x=t&&app.tettiMiei&&app.tettiMiei[t.id];const v=Number(x&&x.v);return v>0?v:0;}
+function impostaTettoMio(t,v){
+  app.tettiMiei=app.tettiMiei||{};
+  app.tettiMiei[t.id]={v:v>0?v:null,t:Date.now()};
+}
+/* I giorni che restano, oggi compreso: dal primo giorno del viaggio se non e'
+   ancora cominciato, fino all'ultimo. Zero se e' finito o non ha date: allora
+   la quota al giorno non si dice. */
+function giorniRestanti(t){
+  if(!t||!t.end)return 0;
+  const oggi=todayISO(),da=(t.start&&t.start>oggi)?t.start:oggi;
+  if(da>t.end)return 0;
+  const g=s=>{const p=String(s).split('-').map(Number);return Date.UTC(p[0],p[1]-1,p[2]);};
+  const n=Math.round((g(t.end)-g(da))/86400000)+1;
+  return n>0?n:0;
+}
+/* Speso e previsto, per le spese che passano il filtro e per la parte che
+   tocca (quota: 1 per il gruppo, la propria fetta per una persona). */
+function contiTetto(t,filtro,quota){
+  let speso=0,previste=0;
+  (t.expenses||[]).forEach(e=>{
+    if(!e||e.type==='transfer'||inAttesa(e)||!filtro(e))return;
+    const x=(Number(e.amount)||0)*quota(e);
+    if(e.paid===false)previste+=x;else speso+=x;
+  });
+  return {speso,previste};
+}
+function statoTetti(viaggio){
+  if(!viaggio)return [];
+  const out=[],giorni=giorniRestanti(viaggio);
+  const voce=(chiave,nome,chi,tetto,c)=>{
+    const resta=tetto-c.speso;
+    out.push({chiave,nome,chi,tetto,speso:c.speso,previste:c.previste,resta,pct:c.speso/tetto*100,
+      conPrev:c.speso+c.previste,pctPrev:(c.speso+c.previste)/tetto*100,giorni,
+      alGiorno:(resta>0&&giorni>0)?resta/giorni:0});
+  };
+  const g=tettoGruppo(viaggio);
+  if(g)voce('gruppo',tv('Tetto del gruppo'),tv('Per tutto il gruppo'),g,contiTetto(viaggio,()=>true,()=>1));
+  const m=tettoMio(viaggio),me=(viaggio.participants||[]).find(p=>p.isMe);
+  if(m&&me){
+    const fra=e=>[...new Set(e.splitAmong||[])];
+    voce('mio',tv('Il tuo tetto'),tv('La tua parte · lo vedi solo tu'),m,contiTetto(viaggio,e=>fra(e).includes(me.id),e=>1/fra(e).length));
+  }
+  CATS.forEach(c=>{
+    const v=tettoCat(viaggio,c.k);
+    if(v)voce('cat:'+c.k,c.i+' '+tv(c.k),tv('Per tutto il gruppo'),v,contiTetto(viaggio,e=>e.category===c.k,()=>1));
+  });
+  return out;
+}
+/* La percentuale come la scrive chi legge: «85%», «85 %» in francese. */
+function fmtPct(x){
+  try{return new Intl.NumberFormat(loc(),{style:'percent',maximumFractionDigits:0}).format((Number(x)||0)/100);}
+  catch(e){return Math.round(Number(x)||0)+'%';}
+}
+function voceTettoHtml(v,cur){
+  const p=Math.max(0,v.pct),cls=p>=100?'oltre':(p>=80?'quasi':'');
+  const righe=[`<div class="tet-s">${esc(tv('Speso {1} di {2}',fmtVista(v.speso,cur),fmtVista(v.tetto,cur)))}</div>`];
+  if(v.resta<0)righe.push(`<div class="tet-s oltre">${esc(tv('{1} oltre il tetto',fmtVista(-v.resta,cur)))}</div>`);
+  else if(v.giorni>0)righe.push(`<div class="tet-s">${esc(tp(v.giorni,'Restano {2} per {1} giorno','Restano {2} per i prossimi {1} giorni, cioè {3} al giorno',fmtVista(v.resta,cur),fmtVista(v.alGiorno,cur)))}</div>`);
+  else righe.push(`<div class="tet-s">${esc(tv('Restano {1}',fmtVista(v.resta,cur)))}</div>`);
+  if(v.previste>0)righe.push(`<div class="tet-prev">${esc(tv('Con le previste arriveresti a {1} ({2})',fmtVista(v.conPrev,cur),fmtPct(v.pctPrev)))}</div>`);
+  return `<div class="tet-voce" data-tetto="${esc(v.chiave)}"><div class="tet-riga"><div class="tet-n">${esc(v.nome)}<span class="tet-chi">${esc(v.chi)}</span></div><div class="tet-p">${esc(fmtPct(p))}</div></div><div class="tet-barra ${cls}" aria-hidden="true"><i style="width:${Math.min(100,p).toFixed(0)}%"></i></div>${righe.join('')}</div>`;
+}
+function renderTetti(viaggio){
+  const box=document.getElementById('tettiCard');if(!box)return;
+  if(!viaggio){box.innerHTML='';box.style.display='none';return;}
+  box.style.display='';
+  const cur=viaggio.currency||'EUR',lista=statoTetti(viaggio);
+  const testa=`<div class="tet-testa"><div class="card-h">${esc(tv('🎯 Tetti di spesa'))}</div><button class="btn btn-soft" onclick="apriTetti()">${esc(lista.length?tv('Modifica i tetti'):tv('Imposta i tetti'))}</button></div>`;
+  if(!lista.length){
+    box.innerHTML=testa+`<div class="tet-vuoto">${esc(sonoAdmin(viaggio)
+      ?tv('Nessun tetto. Puoi fissarne uno per tutto il gruppo, uno per ogni categoria e uno tuo, che vedi solo tu.')
+      :tv('Nessun tetto. Puoi fissarne uno tuo, che vedi solo tu: quelli del gruppo li decidono gli admin del viaggio.'))}</div>`;
+    return;
+  }
+  box.innerHTML=testa+lista.map(v=>voceTettoHtml(v,cur)).join('')+notaNonIncluse(viaggio);
+}
+/* Una cifra nel campo, senza separatori delle migliaia: «1.500» letto da
+   num() diventerebbe uno e mezzo. */
+function numeroCampo(v){
+  if(!(v>0))return '';
+  const s=String(Math.round(v*100)/100);
+  let virgola=false;try{virgola=(1.5).toLocaleString(loc()).indexOf(',')>=0;}catch(e){}
+  return virgola?s.replace('.',','):s;
+}
+/* Una cifra scritta da una persona: «1.500» e «1 500» in italiano sono
+   millecinquecento, non uno e mezzo come li leggerebbe num(). */
+function numTetto(s){
+  const x=String(s||'').trim().replace(/[\s  ']/g,'');
+  if(/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(x))return parseFloat(x.replace(/\./g,'').replace(',','.'));
+  if(/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(x))return parseFloat(x.replace(/,/g,''));
+  return num(x);
+}
+function apriTetti(){
+  const viaggio=T();if(!viaggio){toast('Crea prima un viaggio');return;}
+  const cur=viaggio.currency||'EUR',adm=sonoAdmin(viaggio);
+  const campo=(id,etichetta,v,attivo)=>`<div class="fg"><label for="${id}">${esc(etichetta)}</label><input id="${id}" type="text" inputmode="decimal" autocomplete="off" placeholder="${esc(tv('Nessun tetto'))}" value="${esc(numeroCampo(v))}"${attivo?'':' disabled'}></div>`;
+  document.getElementById('tetBody').innerHTML=
+    `<div class="tet-sez">${esc(tv('Per tutto il gruppo'))}</div>
+    <p class="tet-nota">${esc(adm?tv('Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin, come te.'):tv('Li vedono tutti i compagni di viaggio. Li cambiano solo gli admin del viaggio.'))}</p>
+    ${campo('tetGruppo',tv('Tetto del viaggio ({1})',cur),tettoGruppo(viaggio),adm)}
+    <div class="tet-cat">${CATS.map(c=>campo('tetCat_'+c.k,c.i+' '+tv(c.k),tettoCat(viaggio,c.k),adm)).join('')}</div>
+    <div class="tet-sez">${esc(tv('Il tuo tetto'))}</div>
+    <p class="tet-nota">${esc(tv('Conta la tua parte delle spese. È privato: lo vedi solo tu.'))}</p>
+    ${campo('tetMio',tv('Il tuo tetto ({1})',cur),tettoMio(viaggio),true)}
+    <button class="btn btn-grad btn-block" onclick="salvaTetti()">${esc(tv('Salva'))}</button>`;
+  openSheet('mTetti');
+}
+function salvaTetti(){
+  const viaggio=T();if(!viaggio)return;
+  /* Vuoto e' «nessun tetto»; una cifra che non si legge non si salva. */
+  let rotto=false;
+  const leggi=id=>{const el=document.getElementById(id);if(!el)return 0;const s=String(el.value||'').trim();if(!s)return 0;const v=numTetto(s);if(!(v>0))rotto=true;return v>0?v:0;};
+  const adm=sonoAdmin(viaggio),gruppo=adm?leggi('tetGruppo'):0,cat={};
+  if(adm)CATS.forEach(c=>{cat[c.k]=leggi('tetCat_'+c.k);});
+  const mio=leggi('tetMio');
+  if(rotto){toast(tv('Scrivi una cifra più grande di zero, oppure lascia il campo vuoto'));return;}
+  if(adm){
+    if(gruppo>0)viaggio.tetto=gruppo;else delete viaggio.tetto;
+    CATS.forEach(c=>{const k=campoTettoCat(c.k);if(cat[c.k]>0)viaggio[k]=cat[c.k];else delete viaggio[k];});
+  }
+  /* L'ora si rinnova solo se il tuo tetto e' cambiato davvero: e' lei che
+     decide fra due telefoni (personaleSync). */
+  if(mio!==tettoMio(viaggio))impostaTettoMio(viaggio,mio);
+  save();personaleProgramma();renderAll();closeSheet('mTetti');
+  toast(tv('✅ Tetti salvati'));
+}
+/* In Home, solo quando un tetto passa l'80%: una riga che porta al Budget.
+   Se sono piu' d'uno, quello piu' avanti. */
+function schedaTettoHtml(viaggio){
+  const v=statoTetti(viaggio).filter(x=>x.pct>=80).sort((a,b)=>b.pct-a.pct)[0];
+  if(!v)return '';
+  const cur=viaggio.currency||'EUR',oltre=v.pct>=100;
+  const nome=v.chiave==='gruppo'?(oltre?tv('Tetto del gruppo superato'):tv('Tetto del gruppo quasi raggiunto'))
+    :v.chiave==='mio'?(oltre?tv('Hai superato il tuo tetto'):tv('Il tuo tetto è quasi raggiunto'))
+    :(oltre?tv('Tetto per {1} superato',tv(v.chiave.slice(4))):tv('Tetto per {1} quasi raggiunto',tv(v.chiave.slice(4))));
+  const sotto=oltre?tv('{1} oltre il tetto',fmtVista(-v.resta,cur)):tv('Restano {1}',fmtVista(v.resta,cur));
+  return `<button class="card bud-scheda" id="budScheda" onclick="vaiAlBudget()"><span class="bs-ic" aria-hidden="true">🎯</span><span class="bs-t"><span class="bs-n">${esc(nome)}</span><span class="bs-s">${esc(sotto)}</span></span><span class="bs-p">${esc(fmtPct(v.pct))}</span><span class="bs-chev" aria-hidden="true">›</span></button>`;
+}
+function vaiAlBudget(){go('money');moneyVista('budget');}
+/* Gli avvisi dei tetti: all'80% e al 100%, una volta per soglia, su ogni
+   telefono. Si ricorda con quale tetto e' partito l'avviso: se un admin lo
+   alza, le soglie si riarmano per il tetto nuovo. Superate tutte e due in un
+   colpo (una spesa grossa) parte solo quella del 100%: due avvisi uno
+   dietro l'altro per la stessa spesa sarebbero uno di troppo. */
+let tettiControlloT=null;
+function controllaTettiPresto(){clearTimeout(tettiControlloT);tettiControlloT=setTimeout(controllaTetti,400);}
+function controllaTetti(){
+  let detto=false;
+  app.tettiAvvisi=app.tettiAvvisi||{};
+  (app.trips||[]).forEach(viaggio=>{
+    if(!viaggio||viaggio.status==='closed')return;
+    const gia=app.tettiAvvisi[viaggio.id]||{};
+    statoTetti(viaggio).forEach(v=>{
+      const soglia=v.pct>=100?100:(v.pct>=80?80:0);
+      if(!soglia)return;
+      const g=gia[v.chiave]||{};
+      if(g[soglia]===v.tetto)return;
+      g[80]=v.tetto;if(soglia===100)g[100]=v.tetto;
+      gia[v.chiave]=g;detto=true;
+      avvisaTetto(viaggio,v,soglia);
+    });
+    app.tettiAvvisi[viaggio.id]=gia;
+  });
+  if(detto)save();
+}
+function avvisaTetto(viaggio,v,soglia){
+  const cur=viaggio.currency||'EUR',sp=fmtMoney(v.speso,cur),tt=fmtMoney(v.tetto,cur),resta=fmtMoney(Math.max(0,v.resta),cur);
+  const cat=v.chiave.indexOf('cat:')===0?tv(v.chiave.slice(4)):'';
+  const testo=v.chiave==='gruppo'
+    ?(soglia===100?tv('Il gruppo ha superato il tetto di spesa: {1} su {2}.',sp,tt):tv('Il gruppo ha passato l\'80% del tetto: restano {1}.',resta))
+    :v.chiave==='mio'
+    ?(soglia===100?tv('Hai superato il tuo tetto di spesa: {1} su {2}.',sp,tt):tv('Hai passato l\'80% del tuo tetto: restano {1}.',resta))
+    :(soglia===100?tv('Per {1} il gruppo ha superato il tetto: {2} su {3}.',cat,sp,tt):tv('Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.',cat,resta));
+  avvisa({tipo:'budget',titolo:tv('🎯 Tetti di spesa · {1}',String(viaggio.name||'')),testo,
+    dove:{tipo:'budget',trip:viaggio.id},tag:'tetto-'+viaggio.id+'-'+v.chiave+'-'+soglia});
 }
 /* ===== METTERLA SUL TELEFONO =====
    GeppGo e' un sito che si comporta da app, e questo e' il suo punto debole
@@ -19796,6 +20357,8 @@ function vaiAllAvviso(dove){
   }
   const t=app.trips.find(x=>String(x.id)===String(dove.trip));if(!t)return;
   if(app.currentTripId!==t.id){app.currentTripId=t.id;save();renderAll();}
+  /* Un tetto di spesa all'80% o superato: si apre il Budget, coi conti. */
+  if(dove.tipo==='budget'){vaiAlBudget();return;}
   if(dove.att!=null){
     const di=t.days.findIndex(d=>(d.activities||[]).some(a=>String(a.id)===String(dove.att)));
     if(di<0){go('plan');return;}
@@ -24885,8 +25448,13 @@ function buildDayMap(){
   clearTimeout(_dayMapAttesa);_dayMapAttesa=null;
   if(dayMapObj){fermaMappa(dayMapObj);try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
   dayMeMarker=null;dayMeHalo=null;
-  if(!pts.length&&!hh){wrap.style.display='none';return;}
-  if(typeof L==='undefined'){wrap.style.display='none';return;}
+  /* Senza la mappa del giorno, «Tutto il viaggio» resta: una riga al suo
+     posto, se nel viaggio c'e' almeno una tappa con una posizione. */
+  const tutto=document.getElementById('ttTutto');
+  const senza=()=>{wrap.style.display='none';if(tutto)tutto.style.display=vmTappe(t).some(x=>x.loc)?'':'none';};
+  if(!pts.length&&!hh){senza();return;}
+  if(typeof L==='undefined'){senza();return;}
+  if(tutto)tutto.style.display='none';
   wrap.style.display='block';
   _dayMapAttesa=setTimeout(()=>{
     _dayMapAttesa=null;
@@ -24916,6 +25484,201 @@ function buildDayMap(){
     else if(all.length===1)dayMapObj.setView(all[0],16);
     setTimeout(()=>{if(dayMapObj)dayMapObj.invalidateSize();},120);
   },320);
+}
+/* ===== LA MAPPA DI TUTTO IL VIAGGIO (miglioria 13a) =====
+   Tutte le tappe di tutti i giorni: un colore per giorno, il numero
+   nell'ordine della giornata (lo stesso della Home), la linea che le unisce
+   giorno per giorno, gli alberghi con la casetta. Si sceglie un giorno o
+   «Tutti», e all'apertura la mappa inquadra tutto.
+   Con molte tappe i segnaposto vicini si raccolgono in un tondo col numero
+   delle tappe dentro: duecento numeri uno sopra l'altro non li legge
+   nessuno, e il telefono li muove a fatica. Il raggruppamento si rifa' a ogni
+   zoom ed e' fatto qui, in poche righe, invece che con una libreria in piu'
+   da scaricare (e da tenere per l'offline). Toccando un tondo ci si
+   avvicina; se le tappe dentro stanno nello stesso punto (lo stesso posto in
+   due giorni), si apre il loro elenco.
+   Per chi la mappa non la vede c'e' «Elenco»: le stesse tappe, giorno per
+   giorno, ognuna un tasto che apre la tappa.
+   I colori portano il numero bianco a piu' di 5:1, e il bordo bianco li
+   stacca dalla mappa. */
+const COLORI_GIORNI=['#B5452A','#1F6EA6','#2D7A4C','#7A49AD','#9A5E00','#B8336A','#22777A','#5A6A1E'];
+function coloreGiorno(i){return COLORI_GIORNI[i%COLORI_GIORNI.length];}
+let vmMappa=null,vmLinee=null,vmSegni=null,vmFiltro='tutti',vmVistaOra='mappa',vmPunti=[];
+/* Le schede si aprono a 16 px dal bordo della mappa (Leaflet ne lascia 5):
+   a filo del bordo, la crocetta in alto restava mezza fuori, e col dito non
+   la si prendeva. */
+const VM_SCHEDA={maxWidth:260,autoPanPadding:[16,16]};
+/* Le tappe del viaggio, giorno per giorno: n e' il numero dentro la giornata,
+   loc la posizione (anche quella del posto o dell'albergo collegato). */
+function vmTappe(viaggio){
+  const out=[];
+  ((viaggio&&viaggio.days)||[]).forEach((d,di)=>homeActs(d).forEach((a,k)=>out.push({a,di,n:k+1,loc:actLoc(viaggio,a)})));
+  return out;
+}
+function vmGiornoNome(viaggio,di){
+  const d=viaggio.days[di],dt=d?new Date(d.date):null;
+  const data=dt&&!isNaN(dt.getTime())?dt.toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short'}):'';
+  return data?tv('Giorno {1} · {2}',di+1,data):tv('Giorno {1}',di+1);
+}
+function vmOra(a){return a.time?tv('ore {1}',a.time):tv('senza orario');}
+function apriMappaViaggio(){
+  const viaggio=T();if(!viaggio){toast('Crea prima un viaggio');return;}
+  vmFiltro='tutti';
+  vmDisegnaGiorni(viaggio);
+  openSheet('mViaggioMappa');
+  vmVista(vmVistaOra);
+  /* La mappa nasce quando il foglio e' gia' a schermo: Leaflet deve sapere
+     quanto e' grande il riquadro. Se Leaflet non c'e' (mai scaricato, e
+     niente rete) lo si dice, e l'elenco resta. */
+  setTimeout(()=>{caricaLibreria('leaflet').then(vmCreaMappa).catch(vmMappaAssente);},350);
+}
+function vmMappaAssente(){
+  const w=document.getElementById('vmMappaWrap');if(!w||w.querySelector('.mappa-giu'))return;
+  w.insertAdjacentHTML('beforeend',`<div class="mappa-giu"><span>${esc(tv('La mappa non si è caricata: controlla la rete e riprova.'))}</span><button class="btn btn-soft" onclick="this.parentNode.remove();caricaLibreria('leaflet').then(vmCreaMappa).catch(vmMappaAssente)">${esc(tv('Riprova'))}</button></div>`);
+}
+function vmCreaMappa(){
+  const m=document.getElementById('mViaggioMappa');
+  if(!T()||typeof L==='undefined'||!m||!m.classList.contains('active'))return;
+  if(!vmMappa){
+    vmMappa=L.map('vmMappa',{zoomControl:false});
+    /* lo zoom in alto a destra, la citazione in basso a sinistra: lontani,
+       e nessuno dei due copre l'altro */
+    L.control.zoom({position:'topright',zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(vmMappa);
+    dirittiMappa(vmMappa,'bottomleft');
+    stratoMappa().addTo(vmMappa);
+    vmMappa.on('zoomend',vmDisegnaSegni);
+    /* la crocetta delle schede Leaflet la chiama «Close popup», in inglese
+       per tutti: VoiceOver la leggerebbe cosi' */
+    vmMappa.on('popupopen',e=>{const b=e.popup.getElement()&&e.popup.getElement().querySelector('.leaflet-popup-close-button');if(b){b.setAttribute('aria-label',tv('Chiudi'));b.title=tv('Chiudi');}});
+  }
+  vmMappa.invalidateSize();
+  vmDisegna(true);
+}
+function vmScegli(v){
+  vmFiltro=v;
+  const viaggio=T();if(!viaggio)return;
+  vmDisegnaGiorni(viaggio);
+  if(vmMappa)vmDisegna(true);
+  vmDisegnaElenco();
+}
+function vmDisegnaGiorni(viaggio){
+  const box=document.getElementById('vmGiorni');if(!box)return;
+  const chip=(val,testo,col)=>`<button class="tchip${vmFiltro===val?' on':''}" aria-pressed="${vmFiltro===val}" onclick="vmScegli(${val==='tutti'?"'tutti'":val})">${col?`<span class="vm-pallino" style="background:${col}" aria-hidden="true"></span>`:''}${esc(testo)}</button>`;
+  box.innerHTML=chip('tutti',tv('Tutti i giorni'),'')+(viaggio.days||[]).map((d,di)=>chip(di,tv('Giorno {1}',di+1),coloreGiorno(di))).join('');
+}
+function vmVista(quale){
+  vmVistaOra=quale==='elenco'?'elenco':'mappa';
+  const el=vmVistaOra==='elenco';
+  const w=document.getElementById('vmMappaWrap'),lista=document.getElementById('vmElenco'),vuota=document.getElementById('vmVuota');
+  if(w)w.style.display=el?'none':'';
+  if(lista)lista.style.display=el?'':'none';
+  if(vuota&&el)vuota.style.display='none';
+  [['vmSegMappa',!el],['vmSegElenco',el]].forEach(([id,on])=>{const b=document.getElementById(id);if(b){b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));}});
+  if(el)vmDisegnaElenco();
+  else if(vmMappa)setTimeout(()=>{if(vmMappa){vmMappa.invalidateSize();vmDisegna(true);}},60);
+}
+/* Le linee e gli alberghi si disegnano una volta per giorno scelto; i
+   segnaposto si rifanno a ogni zoom (vmDisegnaSegni), perche' i gruppi
+   dipendono da quanto sono vicini a schermo. */
+function vmDisegna(inquadra){
+  const viaggio=T();if(!viaggio||!vmMappa)return;
+  const tutte=vmTappe(viaggio).filter(x=>vmFiltro==='tutti'||x.di===vmFiltro);
+  vmPunti=tutte.filter(x=>x.loc);
+  if(vmLinee)vmMappa.removeLayer(vmLinee);
+  vmLinee=L.layerGroup().addTo(vmMappa);
+  const perGiorno={};
+  vmPunti.forEach(p=>{(perGiorno[p.di]=perGiorno[p.di]||[]).push([p.loc.lat,p.loc.lng]);});
+  Object.keys(perGiorno).forEach(di=>{if(perGiorno[di].length>1)L.polyline(perGiorno[di],{color:coloreGiorno(Number(di)),weight:3,opacity:.8,interactive:false}).addTo(vmLinee);});
+  const giornoData=vmFiltro==='tutti'?null:(viaggio.days[vmFiltro]||{}).date;
+  const case_=(viaggio.hotels||[]).filter(h=>h.lat!=null&&h.lng!=null&&(!giornoData||(h.checkIn&&h.checkOut&&giornoData>=h.checkIn&&giornoData<h.checkOut)));
+  case_.forEach(h=>{
+    const ic=L.divIcon({html:'<div class="vm-casa">🏠</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});
+    L.marker([h.lat,h.lng],{icon:ic,title:tv('Albergo: {1}',String(h.name||'')),keyboard:true})
+      .bindPopup(`<div class="vm-pop"><div class="vm-pop-n">🏠 ${esc(h.name||'')}</div>${h.checkIn&&h.checkOut?`<div class="vm-pop-q">${esc(fmtRange(h.checkIn,h.checkOut))}</div>`:''}</div>`,VM_SCHEDA)
+      .addTo(vmLinee);
+  });
+  vmDisegnaSegni();
+  const vuota=document.getElementById('vmVuota');
+  if(vuota){
+    const niente=!vmPunti.length;
+    vuota.style.display=niente&&vmVistaOra==='mappa'?'':'none';
+    vuota.textContent=!niente?'':(tutte.length?tv('Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.'):tv('Qui non ci sono ancora tappe.'));
+  }
+  if(!inquadra)return;
+  const tutti=vmPunti.map(p=>[p.loc.lat,p.loc.lng]).concat(case_.map(h=>[h.lat,h.lng]));
+  if(tutti.length>1)vmMappa.fitBounds(L.latLngBounds(tutti),{padding:[36,36],maxZoom:16});
+  else if(tutti.length===1)vmMappa.setView(tutti[0],15);
+  else if(viaggio.destBB)vmMappa.fitBounds([[viaggio.destBB[0],viaggio.destBB[2]],[viaggio.destBB[1],viaggio.destBB[3]]],{padding:[18,18]});
+  else if(viaggio.destLoc)vmMappa.setView([viaggio.destLoc.lat,viaggio.destLoc.lng],5);
+  else vmMappa.setView([20,0],2);
+}
+function vmDisegnaSegni(){
+  if(!vmMappa)return;
+  if(vmSegni)vmMappa.removeLayer(vmSegni);
+  vmSegni=L.layerGroup().addTo(vmMappa);
+  /* Due segnaposto a meno di 30 px l'uno dall'altro vanno nello stesso
+     gruppo: a quella distanza i tondi si coprono e il dito non sa piu' quale
+     tocca. */
+  const z=vmMappa.getZoom(),R=30,gruppi=[];
+  vmPunti.forEach(p=>{
+    const px=vmMappa.project([p.loc.lat,p.loc.lng],z);
+    const g=gruppi.find(x=>Math.abs(x.px.x-px.x)<R&&Math.abs(x.px.y-px.y)<R);
+    if(g)g.punti.push(p);else gruppi.push({px,punti:[p]});
+  });
+  gruppi.forEach(g=>(g.punti.length===1?vmSegnoTappa(g.punti[0]):vmSegnoGruppo(g.punti)).addTo(vmSegni));
+}
+/* Tappe e gruppi stanno sopra gli alberghi (VM_SOPRA): l'albergo e' quasi
+   sempre in mezzo alle tappe, e da lontano la sua casetta copriva il tondo
+   del gruppo, che col dito non si riusciva piu' a toccare. */
+const VM_SOPRA=1000;
+function vmSegnoTappa(p){
+  const ic=L.divIcon({html:`<div class="vm-pin" style="background:${coloreGiorno(p.di)}">${p.n}</div>`,className:'',iconSize:[26,26],iconAnchor:[13,13]});
+  const mk=L.marker([p.loc.lat,p.loc.lng],{icon:ic,keyboard:true,riseOnHover:true,zIndexOffset:VM_SOPRA,
+    title:tv('{1}. {2} · Giorno {3}',p.n,String(p.a.name||''),p.di+1)});
+  mk._tappa={di:p.di,id:p.a.id};
+  mk.bindPopup(()=>vmScheda(p),VM_SCHEDA);
+  return mk;
+}
+function vmScheda(p){
+  const viaggio=T(),d=document.createElement('div');d.className='vm-pop';
+  d.innerHTML=`<div class="vm-pop-n">${esc(p.n+'. '+String(p.a.name||''))}</div><div class="vm-pop-q">${esc(vmGiornoNome(viaggio,p.di)+' · '+vmOra(p.a))}</div><button class="btn btn-grad" onclick="vmApri(${p.di},${jesc(String(p.a.id))})">${esc(tv('Apri la tappa'))}</button>`;
+  return d;
+}
+function vmSegnoGruppo(punti){
+  const lat=punti.reduce((s,p)=>s+p.loc.lat,0)/punti.length,lng=punti.reduce((s,p)=>s+p.loc.lng,0)/punti.length;
+  const ic=L.divIcon({html:`<div class="vm-grappolo">${punti.length}</div>`,className:'',iconSize:[34,34],iconAnchor:[17,17]});
+  const mk=L.marker([lat,lng],{icon:ic,keyboard:true,zIndexOffset:VM_SOPRA,
+    title:tp(punti.length,'{1} tappa qui vicino: tocca per avvicinarti','{1} tappe qui vicine: tocca per avvicinarti')});
+  mk.on('click',()=>{
+    const b=L.latLngBounds(punti.map(p=>[p.loc.lat,p.loc.lng]));
+    const stesso=b.getNorthEast().distanceTo(b.getSouthWest())<15;
+    if(stesso||vmMappa.getZoom()>=vmMappa.getMaxZoom()){mk.bindPopup(vmSchedaGruppo(punti),VM_SCHEDA).openPopup();return;}
+    vmMappa.fitBounds(b,{padding:[48,48],maxZoom:18});
+  });
+  return mk;
+}
+function vmSchedaGruppo(punti){
+  const viaggio=T(),d=document.createElement('div');d.className='vm-pop';
+  d.innerHTML=`<div class="vm-pop-lista">${punti.map(p=>`<button class="btn btn-soft" onclick="vmApri(${p.di},${jesc(String(p.a.id))})">${esc(p.n+'. '+String(p.a.name||''))}<br><span style="font-weight:600;font-size:.76rem">${esc(vmGiornoNome(viaggio,p.di)+' · '+vmOra(p.a))}</span></button>`).join('')}</div>`;
+  return d;
+}
+function vmDisegnaElenco(){
+  const viaggio=T(),box=document.getElementById('vmElenco');if(!box||!viaggio)return;
+  const tutte=vmTappe(viaggio).filter(x=>vmFiltro==='tutti'||x.di===vmFiltro);
+  if(!tutte.length){box.innerHTML=`<div class="vm-vuota">${esc(tv('Qui non ci sono ancora tappe.'))}</div>`;return;}
+  const perGiorno={};tutte.forEach(x=>{(perGiorno[x.di]=perGiorno[x.di]||[]).push(x);});
+  box.innerHTML=Object.keys(perGiorno).map(Number).sort((a,b)=>a-b).map(di=>
+    `<h3 class="vm-giorno-t"><span class="vm-pallino" style="background:${coloreGiorno(di)}" aria-hidden="true"></span>${esc(vmGiornoNome(viaggio,di))}</h3>
+    <ol role="list" style="list-style:none;padding:0;margin:0">${perGiorno[di].map(x=>`<li><button class="vm-voce" onclick="vmApri(${di},${jesc(String(x.a.id))})"><span class="vm-voce-num" style="background:${coloreGiorno(di)}">${x.n}</span><span class="vm-voce-t"><span class="vm-voce-n">${esc(x.a.name||'')}</span><span class="vm-voce-s">${esc([vmOra(x.a),x.loc?'':tv('senza posizione')].filter(Boolean).join(' · '))}</span></span></button></li>`).join('')}</ol>`).join('');
+}
+/* Si apre la tappa come dalla Home (il suo menu), lasciando la mappa: il
+   menu porta altrove (la giornata, la modifica), e la mappa rimasta sotto
+   coprirebbe dove si arriva. */
+function vmApri(di,id){
+  const viaggio=T();if(!viaggio||!viaggio.days[di])return;
+  const a=(viaggio.days[di].activities||[]).find(x=>String(x.id)===String(id));if(!a)return;
+  closeSheet('mViaggioMappa');
+  tapAct(di,a.id);
 }
 /* Il "+" apriva dritto la scheda di una nuova attività, e le altre cose che si
    possono aggiungere a una giornata stavano in fila sopra la griglia: due righe
@@ -27063,7 +27826,7 @@ async function syncPush(){
         if(!e0&&riga&&riga.data){
           const nuvola=cleanTrip(riga.data),base=baseDi(t.cid);
           if(!base||!uguale(nuvola,base)){
-            rimettiViaggio(t,unisciViaggio(base,cleanTrip(t),nuvola,'locale'),t);
+            rimettiViaggio(t,tettiDalCloud(unisciViaggio(base,cleanTrip(t),nuvola,'locale'),nuvola,t),t);
             uniti++;
             if(uguale(cleanTrip(t),nuvola)){lastPush[t.cid]=JSON.stringify(nuvola);persistLastPush();continue;}
           }
@@ -27352,7 +28115,7 @@ async function pullCloud(){
            in sospeso, quella del cloud quando siamo allineati; senza nessun
            push nostro alle spalle non si puo' sapere, e si tiene la nostra. */
         const pendenti=!!lastPush[r.id]&&!allineato(r.id,localT);
-        const unito=unisciViaggio(baseDi(r.id),cleanTrip(localT),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale'));
+        const unito=tettiDalCloud(unisciViaggio(baseDi(r.id),cleanTrip(localT),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale')),remote,remote);
         rimettiViaggio(localT,unito,remote);
         if(pendenti){snapNow(true);needsResync=true;}
       }
@@ -27406,7 +28169,7 @@ function handleRealtimeChange(payload){
        nostre ancora in sospeso nessuno dei due perde le sue; allineati,
        l'aggiornamento che arriva e' quello buono anche dentro le liste. */
     const pendenti=!!lastPush[r.id]&&!allineato(r.id,app.trips[i2]);
-    const unito=unisciViaggio(baseDi(r.id),cleanTrip(app.trips[i2]),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale'));
+    const unito=tettiDalCloud(unisciViaggio(baseDi(r.id),cleanTrip(app.trips[i2]),cleanTrip(remote),pendenti?'locale':(lastPush[r.id]?'remoto':'locale')),remote,remote);
     rimettiViaggio(app.trips[i2],unito,remote);
     if(pendenti){
       snapNow(true);
@@ -29579,7 +30342,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-19 09:58';
+const VERSIONE_APP='2026-10-19 22:16';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -30915,7 +31678,11 @@ function renderAll(){
   traduciPagina();
   /* Le spese col cambio sbagliato si guardano quando il viaggio si apre, ed
      e' il disegno che lo sa: si controlla dopo, una volta per viaggio. */
-  const tc=T();if(tc&&!cambiControllati.has(tc.id))setTimeout(controllaCambiDaVerificare,700);}
+  const tc=T();if(tc&&!cambiControllati.has(tc.id))setTimeout(controllaCambiDaVerificare,700);
+  /* Un tetto di spesa puo' essere passato con una spesa nuova, con una
+     arrivata da un compagno o con un tetto cambiato: lo si guarda dopo ogni
+     disegno, un attimo dopo, una volta sola anche se i disegni sono tanti. */
+  controllaTettiPresto();}
 
 </script>
 </body>

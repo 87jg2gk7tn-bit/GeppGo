@@ -51,7 +51,8 @@ quel file è la memoria.
   (mai un `@import`), e la service worker li tiene da parte.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
   funzioni `vicini` e `geo` (il ponte della mappa) e `link-mappe` (apre i
-  link corti di Google Maps), «A raccolta», la valigia e le impostazioni.
+  link corti di Google Maps), «A raccolta», la valigia, il tetto di spesa
+  personale e le impostazioni.
   Le funzioni si pubblicano da sole con `.github/workflows/funzioni.yml` a
   ogni push su `main` che le tocca: una funzione nuova va aggiunta lì. Senza
   account i dati restano solo sul telefono. `supabase-schema.sql` è la verità
@@ -75,10 +76,16 @@ quel file è la memoria.
   `_del*` di quello che è stato tolto) e, per il resto, campo per campo con
   l'ora della modifica (`_ct`, che mette `save()`); i viaggi senza ore si
   uniscono a tre vie con l'ultima copia arrivata al cloud. `syncPush` legge
-  il cloud prima di scrivere. La valigia e le impostazioni della persona
-  stanno nella tabella `dati_personali`, che ognuno legge e scrive solo per
-  sé (i compagni no), unite voce per voce e chiave per chiave. Restano del
-  telefono lingua, permessi, piano e memorie di lavoro.
+  il cloud prima di scrivere. La valigia, le impostazioni e il tetto di spesa
+  della persona (chiave `tetto:<id del viaggio>`) stanno nella tabella
+  `dati_personali`, che ognuno legge e scrive solo per sé (i compagni no),
+  unite voce per voce e chiave per chiave. Restano del telefono lingua,
+  permessi, piano e memorie di lavoro. I tetti di spesa del gruppo sono campi
+  del viaggio, uno per tetto (`tetto`, `tettoCat_<categoria>`): li cambiano
+  solo gli admin (`sonoAdmin`), nel cloud il guardiano `trips_tetti_custoditi`
+  li rimette com'erano, ore in `_ct` comprese, senza respingere il resto
+  dell'aggiornamento, e il telefono di chi admin non è li prende sempre dal
+  cloud (`tettiDalCloud`).
 - **Indirizzo pubblico**: la costante `INDIRIZZO_PUBBLICO` (nella
   configurazione, dentro l'HTML) vale
   `https://87jg2gk7tn-bit.github.io/GeppGo/Index%202.1.html`. È dove tornano

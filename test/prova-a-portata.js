@@ -155,6 +155,10 @@ const FUNZIONI = [
   ['il ricordo, a viaggio in corso', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Il ricordo/)], 'mRicordo'],
   ['il diario in PDF', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Diario PDF/)], 'spia:openDiary'],
   ['esportare nel calendario', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Esporta nel calendario/)], 'spia:exportICS'],
+  ['i tetti di spesa, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tetti di spesa/)], 'mTetti'],
+  ['la mappa di tutto il viaggio, dalla mappa della Home', 1, [VOCE('#homeMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
+  ['la mappa di tutto il viaggio, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tutto il viaggio/)], 'mViaggioMappa'],
+  ['la mappa di tutto il viaggio, dalla Time Table', 1, [GIORNATA, VOCE('#dayMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
   ['Su misura, in un viaggio senza giorni', 2, [VOCE('#homeHero .hh-sumisura', /Su misura/)], 'importa:itin'],
   ['ordinare il giro', 1, [GIORNATA, VOCE('#mDay .tt-az', /Ordina il giro/)], 'spia:sistemaGiornata'],
   ['l\'Autopilota', 1, [GIORNATA, VOCE('#mDay .tt-az', /Autopilota/)], 'spia:openGenForDay'],
@@ -219,11 +223,11 @@ async function percorri(p, passi) {
      invisibile intorno, e conta se sopra c'è altro);
    - invisibili: testo dello stesso colore del fondo. */
 const SCHERMI = [
-  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#thTema', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add'] },
+  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#thTema', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
   { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca', '#homeHero .hh-rapido'] },
   { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
   { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .status-pill', '#tripZoomBody .pill-ghost', '#tripZoomBody .btn'] },
-  { nome: 'Time Table', prepara: 'giornata', sel: ['#mDay .tt-az', '#ttFab', '#ttUndo'], mezzi: true },
+  { nome: 'Time Table', prepara: 'giornata', sel: ['#mDay .tt-az', '#ttFab', '#ttUndo', '#dayMapWrap .mappa-tutto'], mezzi: true },
   { nome: 'Scopri', prepara: 'scopri', sel: ['#segSearch', '#segAI', '#segImp', '#sgRiga'] },
   { nome: 'Scopri › Assistente', prepara: 'assistente', sel: ['#aiMode .clip'] },
   { nome: 'Spese', prepara: 'spese', sel: ['#money .mh-spesa', '#money .seg-btn'] },

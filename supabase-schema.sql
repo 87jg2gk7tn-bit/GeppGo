@@ -513,6 +513,82 @@ create trigger trips_campi_bloccati_trg
 
 
 -- ────────────────────────────────────────────────────────────────────────────
+--  I TETTI DI SPESA DEL GRUPPO: li cambiano gli admin (miglioria 13a)
+-- ────────────────────────────────────────────────────────────────────────────
+--  Stanno dentro data: «tetto» (tutto il viaggio) e «tettoCat_<categoria>».
+--  Le regole su trips dicono chi puo' modificare un viaggio - tutti i
+--  compagni: spese e tappe le scrivono tutti - ma non quali campi.
+--
+--  Qui non si rifiuta niente: nello stesso aggiornamento c'e' anche quello
+--  che un compagno ha tutto il diritto di mandare (una spesa, una tappa), e
+--  rifiutarlo intero lo terrebbe fuori dal viaggio. Si rimettono i tetti
+--  com'erano, e il resto passa.
+--
+--  E' un guardiano a se', separato da quello qui sopra, perche' si possa
+--  posare anche da solo (supabase/migrazioni/2026-10-19-tetti-di-spesa.sql)
+--  su un database che non ha tutte le colonne di adesso. Per lo stesso
+--  motivo, se il controllo degli admin non si puo' fare (un database senza
+--  i ruoli), lascia passare: un guardiano che si rompe fermerebbe ogni
+--  aggiornamento di ogni viaggio, cioe' la sincronizzazione di tutti.
+create or replace function public.trips_tetti_custoditi()
+returns trigger
+language plpgsql
+as $$
+declare
+  k text;
+  admin boolean;
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  begin
+    admin := public.is_trip_admin(old.id) or old.owner = auth.uid();
+  exception when others then
+    return new;
+  end;
+  if admin then
+    return new;
+  end if;
+  for k in
+    select c from (
+      select jsonb_object_keys(coalesce(old.data, '{}'::jsonb)) as c
+      union
+      select jsonb_object_keys(coalesce(new.data, '{}'::jsonb))
+      union
+      select jsonb_object_keys(case when jsonb_typeof(old.data -> '_ct') = 'object' then old.data -> '_ct' else '{}'::jsonb end)
+      union
+      select jsonb_object_keys(case when jsonb_typeof(new.data -> '_ct') = 'object' then new.data -> '_ct' else '{}'::jsonb end)
+    ) chiavi
+    where c = 'tetto' or c like 'tettoCat\_%'
+  loop
+    if coalesce(old.data, '{}'::jsonb) ? k then
+      new.data := jsonb_set(coalesce(new.data, '{}'::jsonb), array[k], old.data -> k);
+    else
+      new.data := coalesce(new.data, '{}'::jsonb) - k;
+    end if;
+    -- Anche l'ora della modifica (in _ct, vedi I CAMPI DEL VIAGGIO nell'app)
+    -- torna quella di prima: un'ora nuova su un tetto rimasto com'era
+    -- vincerebbe sulla modifica vera di un admin arrivata dopo, da un
+    -- telefono rimasto senza rete.
+    if jsonb_typeof(old.data -> '_ct') = 'object' and (old.data -> '_ct') ? k then
+      new.data := jsonb_set(new.data, array['_ct'],
+        (case when jsonb_typeof(new.data -> '_ct') = 'object' then new.data -> '_ct' else '{}'::jsonb end)
+        || jsonb_build_object(k, old.data -> '_ct' -> k));
+    elsif jsonb_typeof(new.data -> '_ct') = 'object' then
+      new.data := jsonb_set(new.data, array['_ct'], (new.data -> '_ct') - k);
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+drop trigger if exists trips_tetti_custoditi_trg on public.trips;
+create trigger trips_tetti_custoditi_trg
+  before update on public.trips
+  for each row execute function public.trips_tetti_custoditi();
+
+
+-- ────────────────────────────────────────────────────────────────────────────
 --  IL GUARDIANO DEI RUOLI
 -- ────────────────────────────────────────────────────────────────────────────
 --  Chi entra: admin se sta creando il proprio viaggio, compagno in tutti gli
@@ -1122,8 +1198,10 @@ $$;
 --  il proprio nome).
 --
 --  Una riga per cosa: chiave = 'impostazioni', oppure 'valigia:<id del
---  viaggio>'. Dentro, il contenuto con l'ora di ogni modifica: l'app unisce
---  due telefoni voce per voce, e al database non serve conoscerne la forma.
+--  viaggio>', oppure 'tetto:<id del viaggio>' (il proprio tetto di spesa,
+--  dalla miglioria 13a). Dentro, il contenuto con l'ora di ogni modifica:
+--  l'app unisce due telefoni voce per voce, e al database non serve
+--  conoscerne la forma.
 --
 --  Fatta così, e non altrimenti:
 --  - ogni riga è di una persona sola, e solo lei la legge e la scrive. Non
@@ -1142,11 +1220,21 @@ create table if not exists public.dati_personali (
   primary key (user_id, chiave),
   constraint dati_personali_chiave check (
     (chiave = 'impostazioni' and trip_id is null)
-    or (trip_id is not null and chiave = 'valigia:' || trip_id::text)
+    or (trip_id is not null and chiave in ('valigia:' || trip_id::text, 'tetto:' || trip_id::text))
   ),
   constraint dati_personali_peso check (pg_column_size(dati) <= 262144)
 );
 create index if not exists dati_personali_trip_idx on public.dati_personali(trip_id);
+
+-- Dalla miglioria 13a la tabella tiene anche il tetto di spesa di ognuno, uno
+-- per viaggio ('tetto:<id del viaggio>'): e' privato come la valigia. Il
+-- vincolo si rifa' da capo perche' su un database che la tabella ce l'ha
+-- gia', «create table if not exists» qui sopra non lo cambierebbe.
+alter table public.dati_personali drop constraint if exists dati_personali_chiave;
+alter table public.dati_personali add constraint dati_personali_chiave check (
+  (chiave = 'impostazioni' and trip_id is null)
+  or (trip_id is not null and chiave in ('valigia:' || trip_id::text, 'tetto:' || trip_id::text))
+);
 
 alter table public.dati_personali enable row level security;
 revoke all on public.dati_personali from anon;

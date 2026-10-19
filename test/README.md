@@ -1095,3 +1095,69 @@ l'avvio senza niente, il link lungo letto sul telefono, nessun errore in
 pagina) e quelli sulle regole della funzione, che la controprova usa come
 server. Ci mette una decina di minuti: sul codice vecchio ogni attesa arriva
 fino in fondo.
+
+## Tetti di spesa e mappa del viaggio
+
+```sh
+node test/prova-budget-mappa.js          # 66 controlli, in dieci gruppi
+node test/prova-budget-mappa.js 1 6      # solo il tetto del gruppo e i due telefoni
+psql -f test/supabase-prova-tetti.sql    # 17 controlli sul database (li lancia anche tutte.js)
+```
+
+La miglioria 13a. I gruppi 1, 2 e 6 girano col cloud finto di
+`prova-cloud-personale` (due persone, tre telefoni), che fa anche il
+guardiano dei tetti come il database vero: a chi non è admin rimette tetti e
+ore della modifica com'erano, e lascia passare il resto. Le dieci domande:
+
+1. **Il tetto del gruppo**: l'admin lo fissa dal foglio e arriva nel Budget
+   del compagno; al compagno il foglio lo mostra spento, e forzando il campo
+   non cambia niente; un viaggio mandato coi tetti cambiati passa col resto
+   (il nome nuovo) ma col tetto di prima, e il telefono del compagno torna
+   al tetto giusto (`tettiDalCloud`).
+2. **Il tetto personale** va in `dati_personali` a nome di chi lo fissa, non
+   sta nel viaggio, il compagno non lo vede, l'altro telefono dello stesso
+   account lo riceve.
+3. **I conti**: speso, resta, percentuale e quota al giorno per gruppo,
+   persona e categoria, con le previste a parte e la spesa in attesa di
+   cambio fuori; le stesse cifre a schermo; a viaggio finito niente quota al
+   giorno; le cifre scritte a mano («1.500», «1 500», «1500,5»).
+4. **Gli avvisi**: all'80% e al 100%, una volta per soglia, per gruppo,
+   persona e categoria; le due soglie insieme fanno un avviso solo; un
+   tetto nuovo le riarma; il tocco porta al Budget; banner senza permesso,
+   notifica col permesso.
+5. **La scheda in Home**: non c'è al 79%, c'è all'81% e porta al Budget,
+   sparisce tornando sotto.
+6. **Due telefoni e un compagno**: un tetto alzato su un telefono, quello
+   del Cibo sull'altro, il nome e una spesa dal compagno, tutti senza rete;
+   alla fine tutto insieme, uguale nel cloud e sui tre telefoni.
+7. **La mappa**: tutte le tappe con la posizione (sciolte o nei tondi) e
+   l'albergo; lo sfondo è lo strato che tiene da parte le zone già viste
+   (quello di `prova-mappa`), con «© OpenStreetMap»; nel Giorno 1 i numeri 1, 2, 3 nell'ordine della giornata col
+   colore del giorno e la linea; il filtro; l'albergo solo nelle notti in cui
+   ci si dorme; la scheda del segnaposto, con la crocetta che si chiama
+   «Chiudi» e risponde su 44 px, e «Apri la tappa» sulla tappa giusta; un
+   tocco sul tondo avvicina la mappa (il tondo sta sopra la casetta
+   dell'albergo, che prima lo copriva).
+8. **200 tappe**: si apre in meno di 3 secondi, ci sono tutte, i segnaposto
+   vicini si raccolgono, zoom e spostamenti senza blocchi da mezzo secondo.
+9. **Dove si trova**, a tocchi veri: dalla mappa della Home e da quella della
+   giornata (1 tocco), da ✈️ Viaggio (2), dalla riga della Time Table nei
+   giorni senza mappa; i tetti da ✈️ Viaggio. «Elenco» ha tutte le tappe,
+   anche quella senza posizione, giorno per giorno, e apre la tappa.
+10. **Lingue e schermi**: le frasi nuove nelle quattro lingue e tutte nel
+    dizionario; cinque schermate in cinque lingue a 320, 390 e 430 px, nei
+    due temi: niente italiano rimasto, niente fuori schermo o tagliato (la
+    fila dei giorni scorre di lato apposta), axe senza violazioni gravi.
+
+`supabase-prova-tetti.sql` tiene vere due promesse: il tetto di una persona
+è suo (un compagno non lo vede e non lo cambia, la chiave deve dire lo stesso
+viaggio della riga), e i tetti del gruppo li cambiano solo gli admin, ore
+della modifica comprese, senza respingere il resto dell'aggiornamento di un
+compagno.
+
+Sul codice di prima (527b5c4) la prova passa 4 controlli su 29 (molti gruppi
+si fermano al primo che manca): nessun avviso sotto l'80%, i due controlli
+dei due telefoni — i tetti del gruppo viaggiano sui campi del viaggio, che
+si univano già campo per campo, ed è voluto — e nessun errore in pagina. Il
+controllo «il telefono del compagno torna al tetto giusto» fallisce anche
+sul codice nuovo senza `tettiDalCloud`: il compagno resta col tetto suo.

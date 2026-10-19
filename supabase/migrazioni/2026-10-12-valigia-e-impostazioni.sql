@@ -10,6 +10,12 @@
 --  Finché non lo si lancia, l'app tiene valigia e impostazioni sul telefono
 --  come prima, e a schermo non dice niente: se ne accorge dalla risposta del
 --  cloud («la tabella non c'è») e riprova alla prossima apertura.
+--
+--  Dal 19 ottobre la tabella tiene anche il tetto di spesa di ognuno
+--  ('tetto:<id del viaggio>', miglioria 13a), e il testo qui sotto lo accetta:
+--  e' lo stesso dello schema, cosi' lanciare questo file dopo quello del 19
+--  non rimette il vincolo di prima. Per un database nuovo basta il file del
+--  19 ottobre, che contiene anche questa tabella.
 -- ============================================================================
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -22,8 +28,10 @@
 --  il proprio nome).
 --
 --  Una riga per cosa: chiave = 'impostazioni', oppure 'valigia:<id del
---  viaggio>'. Dentro, il contenuto con l'ora di ogni modifica: l'app unisce
---  due telefoni voce per voce, e al database non serve conoscerne la forma.
+--  viaggio>', oppure 'tetto:<id del viaggio>' (il proprio tetto di spesa,
+--  dalla miglioria 13a). Dentro, il contenuto con l'ora di ogni modifica:
+--  l'app unisce due telefoni voce per voce, e al database non serve
+--  conoscerne la forma.
 --
 --  Fatta così, e non altrimenti:
 --  - ogni riga è di una persona sola, e solo lei la legge e la scrive. Non
@@ -42,11 +50,21 @@ create table if not exists public.dati_personali (
   primary key (user_id, chiave),
   constraint dati_personali_chiave check (
     (chiave = 'impostazioni' and trip_id is null)
-    or (trip_id is not null and chiave = 'valigia:' || trip_id::text)
+    or (trip_id is not null and chiave in ('valigia:' || trip_id::text, 'tetto:' || trip_id::text))
   ),
   constraint dati_personali_peso check (pg_column_size(dati) <= 262144)
 );
 create index if not exists dati_personali_trip_idx on public.dati_personali(trip_id);
+
+-- Dalla miglioria 13a la tabella tiene anche il tetto di spesa di ognuno, uno
+-- per viaggio ('tetto:<id del viaggio>'): e' privato come la valigia. Il
+-- vincolo si rifa' da capo perche' su un database che la tabella ce l'ha
+-- gia', «create table if not exists» qui sopra non lo cambierebbe.
+alter table public.dati_personali drop constraint if exists dati_personali_chiave;
+alter table public.dati_personali add constraint dati_personali_chiave check (
+  (chiave = 'impostazioni' and trip_id is null)
+  or (trip_id is not null and chiave in ('valigia:' || trip_id::text, 'tetto:' || trip_id::text))
+);
 
 alter table public.dati_personali enable row level security;
 revoke all on public.dati_personali from anon;

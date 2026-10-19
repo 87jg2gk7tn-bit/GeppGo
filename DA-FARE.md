@@ -29,13 +29,18 @@ fare altro su Supabase, il token va allargato.
 
 Restano queste cose, e non sono codice:
 
-- ⚠️ **Lanciare su Supabase la tabella della valigia e delle impostazioni**
-  (12 ottobre 2026): SQL Editor → New query → incolla tutto
-  `supabase/migrazioni/2026-10-12-valigia-e-impostazioni.sql` → Run, deve
-  dire *Success. No rows returned*. Va bene anche rilanciare tutto
-  `supabase-schema.sql`, che in fondo ha lo stesso testo. Finché non si fa,
-  l'app tiene valigia e impostazioni sul telefono come prima e non dice
-  niente: semplicemente non passano da un telefono all'altro.
+- ⚠️ **Lanciare su Supabase la tabella personale e il guardiano dei tetti di
+  spesa** (12 e 19 ottobre 2026): SQL Editor → New query → incolla tutto
+  `supabase/migrazioni/2026-10-19-tetti-di-spesa.sql` → Run, deve dire
+  *Success. No rows returned*. Quel file contiene anche la tabella della
+  valigia e delle impostazioni del 12 ottobre, che non è mai stata lanciata:
+  basta lui, e quello del 12 non serve più. Va bene anche rilanciare tutto
+  `supabase-schema.sql`, che ha lo stesso testo (ed è la strada più sicura se
+  il file desse un errore). Finché non si fa, valigia, impostazioni e tetto
+  di spesa personale restano sul telefono e l'app non dice niente:
+  semplicemente non passano da un telefono all'altro. I tetti del gruppo
+  funzionano già (stanno nel viaggio) e l'app li fa cambiare solo agli admin;
+  il guardiano serve perché lo stesso valga anche per chi l'app la modifica.
 - ⚠️ **Pubblicare il nuovo ponte dell'assistente** (`worker/ponte-ai.js`,
   ottobre 2026), con il collegamento «AI» e il secret `TAVILY_KEY`: i passi,
   dal telefono, sono in `GUIDA-AI.md` §2. Finché su Cloudflare gira il ponte
@@ -943,6 +948,66 @@ Miglioria 12, 19 ottobre 2026. `test/prova-installazione.js` lo controlla.
 - **L'icona sulla Home di iPhone e la barra di stato** vanno guardate su un
   telefono vero: come iPhone usi theme-color nelle app sulla Home non è
   scritto da nessuna parte di sicuro.
+
+### Tetti di spesa e mappa del viaggio: a che punto è
+
+Miglioria 13a, 19 ottobre 2026. `test/prova-budget-mappa.js` e
+`test/supabase-prova-tetti.sql` lo controllano.
+
+- **I tetti di spesa**, tutti facoltativi e nella valuta del viaggio: quello
+  del gruppo (`t.tetto`), quelli per categoria (`t.tettoCat_Cibo`… uno per
+  campo: il viaggio si unisce campo per campo, e due admin che cambiano due
+  tetti diversi non si cancellano a vicenda) e il proprio (`app.tettiMiei`,
+  privato). Si fissano nel foglio «🎯 Tetti di spesa», da ✈️ Viaggio (2
+  tocchi) o dal Budget. Nel Budget, per ognuno: speso, quanto resta,
+  percentuale e «restano X per i prossimi N giorni, cioè Y al giorno» (N
+  conta oggi; a viaggio finito la riga non c'è); le previste a parte («con
+  le previste arriveresti a…»), perché possono non succedere; le spese in
+  attesa di cambio fuori, con la riga che lo dice.
+- **Chi li cambia.** Quelli del gruppo solo gli admin (`sonoAdmin`: il ruolo,
+  o chi ha creato il viaggio, come nella regola del cloud). Al compagno il
+  foglio li mostra spenti. Nel cloud il guardiano `trips_tetti_custoditi`
+  rimette tetti e ore della modifica com'erano quando a mandarli cambiati non
+  è un admin, e lascia passare il resto: rifiutare l'aggiornamento intero
+  terrebbe il compagno fuori dal viaggio. Il telefono di un compagno i tetti
+  li prende sempre dal cloud (`tettiDalCloud`), anche se gliene è rimasto uno
+  suo da quando era admin.
+- **Il tetto personale** va in `dati_personali` con la chiave `tetto:<id del
+  viaggio>` (la regola della tabella adesso accetta anche quella), unito fra
+  due telefoni con l'ora della modifica. I compagni non lo vedono.
+- **Gli avvisi** all'80% e al 100%, una volta per soglia e per valore del
+  tetto (un tetto nuovo riarma le soglie), passano da `avvisa()`: notifica
+  col permesso, banner senza, e il tocco porta al Budget. Se le due soglie
+  passano insieme, l'avviso è uno, quello del 100%. In Home, solo sopra
+  l'80%, una scheda col tetto messo peggio, che porta al Budget.
+- **La mappa di tutto il viaggio** («🗺️ Tutto il viaggio»): un colore per
+  giorno (otto, poi si ripetono), i numeri nell'ordine della giornata (gli
+  stessi della Home), una linea per giorno, la casetta degli alberghi nelle
+  notti in cui ci si dorme; «Tutti i giorni» o un giorno solo; toccando un
+  segnaposto la scheda con nome, giorno e ora, e «Apri la tappa». I
+  segnaposto a meno di 30 px si raccolgono in un tondo col numero, rifatto a
+  ogni zoom: poche righe, niente libreria in più da scaricare e da tenere per
+  l'offline. Con 200 tappe si apre in meno di mezzo secondo. Si arriva dalla
+  pillola «Tutto il viaggio ›» sulla mappa della Home e su quella della
+  giornata (1 tocco), da ✈️ Viaggio (2 tocchi, c'è sempre) e, nei giorni
+  senza mappa, da una riga nella Time Table. Per VoiceOver c'è «Elenco»: le
+  stesse tappe giorno per giorno, anche quelle senza posizione, ognuna un
+  tasto.
+
+**Quello che resta**
+- Lanciare la migrazione (vedi in cima).
+- Se una spesa fa passare una soglia a più tetti insieme (gruppo, proprio,
+  categoria) arrivano più avvisi, uno per tetto. Si potrebbe farne uno solo,
+  col più grave.
+- Da lontano la casetta di un albergo può finire sotto il tondo delle tappe
+  (le tappe stanno sopra apposta); avvicinandosi esce.
+- Dopo l'ottavo giorno i colori si ripetono: in un viaggio lungo due giorni
+  hanno lo stesso colore, e li distinguono il filtro e il numero del giorno
+  nella scheda.
+- Le schede delle altre mappe (Home, giornata, hotel) hanno ancora la
+  crocetta di Leaflet: 24 px, e per VoiceOver «Close popup», in inglese.
+  Nella mappa del viaggio risponde su 44 px e si chiama «Chiudi»
+  (`VM_SCHEDA` e `popupopen` in `vmCreaMappa`): da portare anche lì.
 
 ### Nessuna funzione nascosta: a che punto è
 
@@ -2962,6 +3027,18 @@ qualcuno che risponde".
   scrive codice: una sostituzione che contiene `\u2705` nel testo vecchio non
   trova più niente. Le modifiche con le sequenze `\u` si fanno da node
   (`String.fromCharCode(92)+'u…'`), non a mano.
+- **Un guardiano che rimette un campo del viaggio deve rimettere anche la sua
+  ora in `_ct`** (tetti di spesa, 19 ottobre). Altrimenti nel cloud resta il
+  valore vecchio con l'ora nuova di chi l'aveva cambiato, e quell'ora vince
+  sulla modifica vera di un admin arrivata dopo da un telefono rimasto senza
+  rete. E il telefono rimandato indietro dal guardiano non lo sa: l'unione
+  deve dargli torto da sola (`tettiDalCloud`), se no tiene il suo valore per
+  sempre e lo rimanda a ogni invio.
+- **In Leaflet sta sopra il segnaposto più in basso sullo schermo**, non
+  l'ultimo aggiunto. La casetta dell'albergo, un po' più a sud, copriva il
+  tondo delle tappe raccolte e il dito apriva l'albergo: Playwright si
+  rifiutava di toccare il tondo, ed è così che si è visto. Quello che si
+  deve poter toccare prende `zIndexOffset`.
 
 ---
 
