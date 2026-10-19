@@ -31,8 +31,9 @@ quel file è la memoria.
   service worker deve essere un file a sé), `manifest.webmanifest`,
   `privacy.html` con le sue traduzioni (`privacy-en/es/fr/pt.html`: l'app
   apre quella della sua lingua, e in caso di dubbio vale l'italiano),
-  `index.html`, le funzioni Supabase in `supabase/functions/`,
-  le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
+  `index.html`, le icone (`icona.svg` e i PNG in `icone/`, fatti dal logo
+  con `npm run icone`, cioè `test/fai-le-icone.js`), le funzioni Supabase
+  in `supabase/functions/`, le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
   jsQR, ZXing, bwip-js, SheetJS per i file di Excel, fflate per il file del
   backup; pdf.js per i PDF),
   **mai bloccanti**: stanno in
@@ -48,8 +49,11 @@ quel file è la memoria.
   l'ambiente di lavoro deve poter raggiungere quel dominio.
   I caratteri di Google arrivano con un `<link>` che non ferma la pagina
   (mai un `@import`), e la service worker li tiene da parte.
-- **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, la
-  funzione `vicini`, «A raccolta», la valigia e le impostazioni. Senza
+- **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
+  funzioni `vicini` e `geo` (il ponte della mappa) e `link-mappe` (apre i
+  link corti di Google Maps), «A raccolta», la valigia e le impostazioni.
+  Le funzioni si pubblicano da sole con `.github/workflows/funzioni.yml` a
+  ogni push su `main` che le tocca: una funzione nuova va aggiunta lì. Senza
   account i dati restano solo sul telefono. `supabase-schema.sql` è la verità
   sul database: si rilancia quante volte si vuole senza danni. Una tabella
   nuova si consegna anche come file a sé in `supabase/migrazioni/`, da
@@ -176,12 +180,29 @@ quel file è la memoria.
   nell'app deve promettere di più. In Safari su iPhone senza Home le
   notifiche non si chiedono: si spiega e si rimanda alla guida della Home.
   Il ponte Capacitor (`nNotify`) resta com'è.
-- **Logo**: oro `#C9962C` con tratto `#14110B`, nell'SVG dentro l'HTML. Non si
-  cambia senza che sia chiesto. (La variabile `--green` si chiama così per
-  storia: vale `#B8863C`, un ocra.)
+- **Logo**: Il logo è oro #C9962C con il tratto #14110B, con la scritta GeppGo: non va modificato.
+  Sta nell'SVG dentro l'HTML (`.brand-logo`); `icona.svg` e le icone PNG in
+  `icone/` (quella per la Home di iPhone e quelle del manifest) si rifanno da
+  lì con `npm run icone`, e `test/prova-installazione.js` boccia le icone
+  rimaste indietro. (La variabile `--green` si chiama così per storia: vale
+  `#B8863C`, un ocra.)
 - **Temi**: chiaro color panna (`--paper:#F6EEDD`) come predefinito, «Tema
   scuro» come dark mode. «Cielo» non è un tema: è la veste della home, con la
-  foto del cielo in cima.
+  foto del cielo in cima. La barra di stato del telefono (`theme-color`)
+  prende il colore della testata del tema scelto (`coloreBarra`); finché c'è
+  la schermata d'apertura resta `#14110B`, come `background_color` e
+  `theme_color` del manifest. Su iPhone `apple-mobile-web-app-status-bar-style`
+  resta `default`: con `black-translucent` le scritte del telefono sono
+  bianche e sul panna sparirebbero.
+- **Link di Google Maps**: si leggono tutti con `leggiLinkMappa` (Scopri,
+  ricerca e foglio degli hotel, mail dell'hotel, indirizzo di una tappa, tasto
+  Condividi). Quelli corti li apre la funzione `link-mappe`, che segue i
+  rimandi solo dentro Google Maps, legge «continue» dalla pagina dei consensi,
+  si ferma a 8 secondi e ha un limite di richieste (le regole in
+  `link-mappe/regole.mjs`, provate da `test/prova-installazione.js`). Senza
+  coordinate ma col nome, il posto lo cerca la ricerca di sempre. Ogni mappa
+  porta «© OpenStreetMap» col link ai diritti (`dirittiMappa`), in un angolo
+  senza tasti.
 
 ## Due regole che non si toccano
 

@@ -287,6 +287,7 @@ precisa para fazer a sua parte.</p>
 <tr><td>FOSSGIS (routing.openstreetmap.de), o serviço de percursos do mapa do OpenStreetMap</td><td>As coordenadas de duas paragens da viagem de cada vez — <b>não</b> onde estás tu</td><td>O tempo real a pé, de bicicleta e de carro entre uma paragem e a seguinte do roteiro. A resposta fica no telemóvel, para não se perguntar duas vezes</td></tr>
 <tr><td>Cópias do mapa do OpenStreetMap mantidas por outros: <b>kumi.systems</b> (Áustria), <b>private.coffee</b> (Áustria), <b>maps.mail.ru</b> (Rússia)</td><td>O que estás a procurar e um ponto de uma grelha de cerca de 200 metros. Se o pedido sair do telemóvel — ou seja, quando a ponte não responde — veem também o endereço IP</td><td>Os mesmos dados do mapa, quando o servidor principal não responde. Sem elas, quando esse está em fila de espera, a app não encontra nada</td></tr>
 <tr><td>A ponte do mapa, no Supabase</td><td>O que estás a procurar (uma casa de banho, um multibanco, uma morada, o nome de um hotel) e, quando é preciso, um ponto de uma grelha de cerca de 200 metros — <b>não</b> onde estás exatamente. Nada que diga quem és.</td><td>Perguntar ao mapa uma só vez para todos, em vez de a partir de cada telemóvel</td></tr>
+<tr><td><b>Google</b>, através de uma função nossa no Supabase</td><td>Só a ligação curta do Google Maps que colas ou partilhas (<code>maps.app.goo.gl/…</code>) — <b>não</b> quem és nem o teu endereço IP (ver «As ligações do Google Maps»)</td><td>Saber para onde leva a ligação, para pôr o sítio no mapa</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texto procurado e coordenadas; para «o que procuras aqui à volta» só o tipo de sítio e um ponto de uma grelha de cerca de 200 metros</td><td>Pesquisa de moradas quando a outra não chega, e os sítios aqui à volta quando o mapa não responde</td></tr>
 <tr><td>Open-Meteo</td><td>Coordenadas</td><td>O tempo dos dias da viagem, e hora a hora o do dia que estás a ver</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nome do local</td><td>Descrição e fotos dos sítios</td></tr>
@@ -327,6 +328,29 @@ não existe.</li>
 </ul>
 <p>Se a ponte não responder, a app volta a perguntar diretamente ao mapa,
 como fazia antes: não fica bloqueada.</p>
+
+<h3>As ligações do Google Maps</h3>
+<p>Uma ligação longa do Google Maps colada no GeppGo lê-se no telemóvel, e
+não sai nada. As curtas (<code>maps.app.goo.gl/…</code>, as do botão
+«Partilhar» do Google Maps) não têm o sítio lá dentro: para o saber é
+preciso abri-las, e de dentro da app o telemóvel não consegue. Por isso a
+ligação passa por uma função nossa no Supabase, que a abre no Google e
+devolve a morada verdadeira, da qual a app lê o sítio.</p>
+<ul>
+<li><b>Só chega a ligação.</b> Nenhum nome, nenhum e-mail, nenhum
+identificador da conta.</li>
+<li><b>Ao Google chega o nosso servidor, não o teu telemóvel:</b> o Google
+não vê o teu endereço IP.</li>
+<li><b>Não a guardamos.</b> A ligação e a morada para onde leva não são
+escritas em lado nenhum; no registo da função fica só como correu (bem,
+tempo esgotado, recusada), nunca a ligação.</li>
+<li>A função vê o teu endereço IP, como qualquer servidor, e usa-o só para
+contar os pedidos (no máximo trinta em dez minutos, para que ninguém a use
+para mandar tráfego ao Google em nosso nome): fica na memória dela dez
+minutos e não é guardado.</li>
+<li>A função só abre endereços do Google Maps, e para se um
+redirecionamento levar para outro lado.</li>
+</ul>
 
 <p>O Google Maps, o Google Calendar e os sites dos museus só se abrem quando
 és tu a tocar num botão: a partir daí valem as regras deles, não as

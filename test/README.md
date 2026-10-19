@@ -165,7 +165,7 @@ lo schema i permessi siano **esattamente** sette, con i nomi giusti e nessun
 
 ```sh
 psql -f test/supabase-prova-foto.sql   # 33 controlli sui permessi delle foto
-node test/prova-foto.js                # 76 controlli sul comportamento dell'app
+node test/prova-foto.js                # 77 controlli sul comportamento dell'app
 ```
 
 Le foto sono la cosa più delicata che GeppGo custodisca, e la parte che le
@@ -1032,3 +1032,66 @@ sull'oro a 3,2:1 e 1230 testi sotto soglia; i bordi dei campi a 1,3:1;
 le animazioni fatte da JavaScript. Restano veri solo i controlli che lo erano
 già: il giro non si rompe, `lang` segue la lingua (c'era dalla miglioria 10),
 niente testi tagliati.
+
+## Installazione e link di Google Maps
+
+```sh
+node test/prova-installazione.js       # 35 controlli, in nove gruppi (circa 2 minuti)
+node test/prova-installazione.js 3 6   # solo le icone e i link corti
+npm run icone                          # rifà icona.svg e i PNG in icone/ dal logo
+```
+
+La miglioria 12. Google non si chiama mai: le regole della funzione
+`link-mappe` (`supabase/functions/link-mappe/regole.mjs`) girano qui in Node
+con un Google finto, che fa i rimandi veri (il link corto, Google Maps, la
+pagina dei consensi europei), e la pagina parla con loro al posto della
+funzione vera. Le nove domande:
+
+1. **La regola del logo** in `CLAUDE.md`, scritta com'è stata chiesta, e
+   niente più verde #006747.
+2. **«© OpenStreetMap» su ogni mappa** (Home, viaggio, giornata, anteprima
+   di un posto, mappine dei risultati), col link alla pagina dei diritti, a
+   320 e 430 px: si vede tutta, e non tocca le aree da 44 px dei tasti sulla
+   mappa e intorno (lo stesso dito di `prova-accessibilita`).
+3. **Le icone**: quella per iPhone è un PNG 180×180 senza canale alfa;
+   quelle del manifest sono PNG delle misure dichiarate; la maskable ha il
+   logo tutto dentro il cerchio centrale dell'80%. E sono quelle del logo di
+   adesso: la prova le ridisegna dalla testata (`fai-le-icone.js`) e le
+   confronta con quelle nel repo, con un margine per i bordi sfumati. E git
+   le prende: il `.gitignore` scarta i PNG delle schermate, e un'icona
+   scartata sul disco c'è e sul sito no.
+4. **Il manifest e i meta**: nome, start_url dentro lo scope, standalone, i
+   colori della schermata d'apertura; i meta per iPhone; la barra di stato
+   che segue il tema.
+5. **Il tasto Condividi**: la mail di un albergo arriva al lettore delle
+   prenotazioni; un posto condiviso da Google Maps (come lo manda Android:
+   nome e link corto) arriva in Scopri › Cerca col posto; lo stesso col link
+   nel campo «url» e col Comando di iPhone (`#testo=`); senza niente, l'app
+   si apre normale.
+6. **Il link corto con la pagina dei consensi**: il servizio prende
+   l'indirizzo vero da «continue» (senza aprire la pagina dei consensi), e
+   l'app ne ricava le coordinate giuste nei cinque punti dove si incolla un
+   posto: luoghi, ricerca degli hotel, foglio dell'hotel, mail dell'hotel,
+   tappe.
+7. **Senza coordinate, col nome**: la ricerca di sempre trova il posto, e
+   l'app dice che l'ha trovato col nome.
+8. **I rifiuti, il tempo, il limite**: undici indirizzi che non sono di
+   Google Maps rifiutati; un rimando che esce non viene seguito (la pagina di
+   fuori non viene chiesta); Google lento: il servizio si ferma a 8 secondi;
+   il limite di 30 richieste in 10 minuti. E nell'app le frasi giuste, mai
+   il testo del server.
+9. **Le lingue e le misure**: le frasi nuove in cinque lingue, a schermo
+   nella lingua giusta, senza uscire dallo schermo da 320 a 430 px.
+
+La ricerca finta risponde sia dal ponte degli indirizzi sia da Nominatim e
+Photon diretti: quale delle due strade prende l'app dipende da com'è andata
+prima (un ponte caduto si salta per un minuto), e una prova che finge una
+strada sola diventa rossa per il motivo sbagliato.
+
+Sul codice di prima (ad43299) la prova passa 13 controlli su 35: restano veri
+solo quelli che lo erano già (il verde non c'era, l'SVG come icona della
+scheda, git che prende le icone — allora erano SVG —, la mail condivisa,
+l'avvio senza niente, il link lungo letto sul telefono, nessun errore in
+pagina) e quelli sulle regole della funzione, che la controprova usa come
+server. Ci mette una decina di minuti: sul codice vecchio ogni attesa arriva
+fino in fondo.

@@ -5,3 +5,6 @@ node_modules
 # con i propri occhi quando si sta lavorando, non a stare nel repo.
 *.png
 !icona.svg
+# Le icone dell'app invece servono al telefono, e sono PNG perché iOS e
+# Android non usano l'SVG: le rifà «npm run icone» quando cambia il logo.
+!icone/*.png

@@ -137,6 +137,21 @@ jobs:
               if not nome:
                   print('  ma il Colosseo si trova sempre: qualcosa non torna.'); guai += 1
 
+          # ── i link corti di Google Maps ──────────────────────────────
+          # Non si chiede a Google: si controlla che la funzione ci sia e che
+          # rifiuti un indirizzo che non e' di Google Maps. E' la cosa che
+          # deve fare sempre, e non dipende da un link vero che domani
+          # potrebbe non esistere piu'.
+          print()
+          print('— i link corti di Google Maps (un indirizzo che non e\' di Google)')
+          d, quanto, guaio = chiedi('link-mappe', {'url': 'https://example.com/'})
+          if guaio and guaio.startswith('400') and 'non_ammesso' in guaio:
+              print('  c\'e\', e lo rifiuta come deve (%.1fs)' % quanto)
+          elif guaio and guaio.startswith('404'):
+              print('  NON C\'E\': la funzione non e\' stata pubblicata (Actions → Funzioni → Run workflow)'); guai += 1
+          else:
+              print('  risponde in un modo che non va:', guaio or json.dumps(d)[:200]); guai += 1
+
           # ── e i server della mappa, uno per uno ──────────────────────
           # SERVE PERCHE' UNO PUO' MENTIRE BENE. Un server con il database
           # vuoto risponde 200, senza nessun errore, con la lista vuota:

@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 18 ottobre 2026.
+Aggiornato: 19 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -875,6 +875,64 @@ del fuoco, 0 su 64 → 64.
   il messaggio sta sotto la testata, sopra le prime tappe. Se dà fastidio,
   l'alternativa è un messaggio che lascia passare i tocchi e ha una ✕ sua.
 
+### Installazione e link di Google Maps: a che punto è
+
+Miglioria 12, 19 ottobre 2026. `test/prova-installazione.js` lo controlla.
+
+- **Le icone** si fanno dal logo della testata (`.brand-logo`) con `npm run
+  icone` (`test/fai-le-icone.js`, che disegna con Chromium): `icona.svg` (la
+  scheda del browser), `icone/apple-touch-icon.png` (180×180, pieno, sul
+  fondo `#14110B` della schermata d'apertura: iPhone l'SVG non lo usa e la
+  trasparenza la riempie di nero), `icone/icona-192.png` e `icona-512.png`
+  (il tondo su fondo trasparente), `icone/icona-maskable-512.png` (fondo fino
+  ai bordi, logo dentro il cerchio dell'80%). Prima c'era un globo marrone di
+  una versione vecchia, e per iPhone un SVG che iPhone ignorava. La prova
+  ridisegna le icone e le confronta con quelle nel repo: se il logo cambia,
+  si rifanno.
+- **Il manifest** ha `id` (lo stesso `./index.html` di prima, così chi l'ha
+  già installata non si ritrova un'app nuova), solo PNG fra le icone,
+  `background_color` e `theme_color` `#14110B` come la schermata d'apertura,
+  che è uguale nei due temi. Dopo l'apertura la barra di stato prende il
+  colore della testata del tema scelto (`coloreBarra`). Su iPhone resta
+  `default`: con `black-translucent` le scritte del telefono sono bianche e
+  sul panna non si leggerebbero.
+- **share_target** resta (Android). Un posto condiviso da Google Maps adesso
+  va in Scopri › Cerca, da aprire e salvare; prima finiva al lettore delle
+  prenotazioni. Su iPhone non c'è, e non fa danni: l'app si apre normale, e
+  il Comando (`#testo=`) arriva nello stesso punto.
+- **I link corti di Google Maps** li apre la funzione `link-mappe` su
+  Supabase, che si pubblica da sola con `funzioni.yml` (una riga in più là
+  dentro): non c'è niente da pubblicare a mano. Segue i rimandi solo dentro
+  Google Maps, si ferma a 8 secondi, 30 richieste in 10 minuti per indirizzo
+  IP (nella memoria della funzione, mai scritte), e dalla pagina dei consensi
+  europei legge «continue». L'app (`leggiLinkMappa`) prende le coordinate
+  dall'indirizzo finale, o il nome del posto da cercare con la ricerca di
+  sempre; vale nei cinque punti dove si incolla un posto.
+- **«© OpenStreetMap»** col link ai diritti su tutte le mappe
+  (`dirittiMappa`), senza la scritta di Leaflet davanti, in un angolo senza
+  tasti: in basso a sinistra nella mappa del viaggio e della giornata (a
+  destra c'è il 🧭), in alto a sinistra nella Home, in basso a destra
+  nell'anteprima di un posto e nelle mappine dei risultati. Ha i colori del
+  tema su un fondo pieno: quello di Leaflet (bianco all'80%, link azzurro)
+  sopra la mappa scura della Home non arrivava a 4,5:1, e axe l'ha visto.
+  Nelle schede dei risultati il nome è diventato un tasto vero: la citazione
+  è un link, e un link dentro una scheda-tasto VoiceOver non lo legge.
+
+**Quello che resta**
+- **Provarla col link vero.** Da qui Google non si raggiunge (il proxy delle
+  sessioni ferma `maps.app.goo.gl`): il comportamento dei rimandi viene da
+  quello che si legge in giro e dalla prova col Google finto. Dopo il merge,
+  dal telefono: Google Maps › un posto › Condividi › Copia, e incollarlo
+  nella ricerca di Scopri. Se non funziona, «Il ponte risponde?» dice almeno
+  se la funzione c'è.
+- **Il link senza coordinate** (succede spesso: il rimando di Google porta il
+  nome del posto e un codice suo, non la posizione) si affida alla ricerca
+  per nome, che con un nome comune può sbagliare: l'app lo dice («trovato
+  dal nome nel link») e segna l'albergo come posizione approssimativa.
+- **L'icona sulla Home di iPhone e la barra di stato** vanno guardate su un
+  telefono vero: come iPhone usi theme-color nelle app sulla Home non è
+  scritto da nessuna parte di sicuro.
+
 ### Nessuna funzione nascosta: a che punto è
 
 La regola sta in `CLAUDE.md`: ogni funzione a non più di 2 tocchi dalla
@@ -1076,6 +1134,25 @@ qualcuno che risponde".
 - **Un elemento `position:fixed` con `left:50%` ha a disposizione metà
   schermo**: il messaggio in basso andava su tre righe anche quando ne
   bastava una. Con `width:max-content` prende la larghezza del testo.
+- **I link corti di Google spesso non portano le coordinate.** Il rimando
+  di `maps.app.goo.gl` va a `google.com/maps/place/Nome,+Indirizzo/data=…`
+  con dentro il nome e un codice di Google (`!1s0x…:0x…`), non la posizione:
+  le coordinate stanno solo nella pagina, e leggerle da lì vorrebbe dire
+  smontare l'HTML di Google. Per questo la ricerca per nome non è un ripiego
+  raro, è la strada normale per molti link. E dall'Europa (la funzione gira a
+  Stoccolma) Google manda alla pagina dei consensi: l'indirizzo vero sta nel
+  parametro `continue`, e non si accetta niente a nome di nessuno.
+- **Un ponte caduto si salta per un minuto, anche nelle prove.** La prima
+  prova sui link col solo nome era rossa: la ricerca finta rispondeva solo
+  dal ponte degli indirizzi, ma all'avvio una richiesta al ponte era andata
+  a vuoto (`ponteGeoRotto`) e per un minuto l'app chiedeva diretta a
+  Nominatim. L'app aveva ragione; la prova fingeva una strada sola. Una
+  ricerca finta risponde da tutte e due.
+- **Il `.gitignore` scarta ogni PNG** (le schermate che le prove salvano):
+  le icone nuove sul disco c'erano, le prove passavano, e nel commit non
+  sarebbero entrate. Hanno un'eccezione (`!icone/*.png`), e
+  `prova-installazione` chiede a git se le prende. Un PNG che deve stare nel
+  repo fuori da `icone/` vuole la sua eccezione.
 - **Una libreria servita a metà nelle prove mostra un'altra app.** Il giro
   delle schermate serviva in locale `leaflet.js` ma non `leaflet.css`: qui
   la mappa girava senza il suo foglio di stile, coi controlli fuori dai loro

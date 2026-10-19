@@ -280,6 +280,7 @@ necesita para hacer su parte.</p>
 <tr><td>FOSSGIS (routing.openstreetmap.de), el servicio de rutas del mapa de OpenStreetMap</td><td>Las coordenadas de dos paradas del viaje cada vez — <b>no</b> dónde estás</td><td>El tiempo real a pie, en bici y en coche entre una parada y la siguiente del horario. La respuesta se queda en el teléfono, para no preguntarla dos veces</td></tr>
 <tr><td>Copias del mapa de OpenStreetMap gestionadas por otros: <b>kumi.systems</b> (Austria), <b>private.coffee</b> (Austria), <b>maps.mail.ru</b> (Rusia)</td><td>Lo que buscas y un punto en una cuadrícula de unos 200 metros. Si la petición sale del teléfono — es decir, cuando el puente no responde — ven también la dirección IP</td><td>Los mismos datos del mapa, cuando el servidor principal no responde. Sin ellas, cuando ese está en cola la app no encuentra nada</td></tr>
 <tr><td>El puente de los mapas, en Supabase</td><td>Lo que buscas (un baño, un cajero, una dirección, el nombre de un hotel) y, cuando hace falta, un punto en una cuadrícula de unos 200 metros — <b>no</b> dónde estás exactamente. Nada que diga quién eres.</td><td>Preguntar al mapa una vez para todos, en lugar de desde cada teléfono</td></tr>
+<tr><td><b>Google</b>, a través de una función nuestra en Supabase</td><td>Solo el enlace corto de Google Maps que pegas o compartes (<code>maps.app.goo.gl/…</code>) — <b>no</b> quién eres ni tu dirección IP (ver «Los enlaces de Google Maps»)</td><td>Saber adónde lleva el enlace, para poner el lugar en el mapa</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texto buscado y coordenadas; para «qué buscas por aquí» solo el tipo de lugar y un punto en una cuadrícula de unos 200 metros</td><td>Búsqueda de direcciones cuando la otra no basta, y lugares por aquí cuando el mapa no responde</td></tr>
 <tr><td>Open-Meteo</td><td>Coordenadas</td><td>El tiempo de los días del viaje, y hora por hora del día que estás mirando</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nombre del lugar</td><td>Descripción y fotos de los lugares</td></tr>
@@ -319,6 +320,29 @@ ese dato no existe.</li>
 </ul>
 <p>Si el puente no responde, la app vuelve a preguntar directamente al mapa,
 como hacía antes: no se queda bloqueada.</p>
+
+<h3>Los enlaces de Google Maps</h3>
+<p>Un enlace largo de Google Maps pegado en GeppGo se lee en el teléfono, y
+no sale nada. Los cortos (<code>maps.app.goo.gl/…</code>, los del botón
+«Compartir» de Google Maps) no llevan el lugar dentro: para saberlo hay que
+abrirlos, y desde dentro de la app el teléfono no puede. Por eso el enlace
+pasa por una función nuestra en Supabase, que lo abre en Google y devuelve la
+dirección real, de la que la app lee el lugar.</p>
+<ul>
+<li><b>Solo llega el enlace.</b> Ningún nombre, ningún correo, ningún
+identificador de la cuenta.</li>
+<li><b>A Google le llega nuestro servidor, no tu teléfono:</b> Google no ve
+tu dirección IP.</li>
+<li><b>No lo guardamos.</b> El enlace y la dirección a la que lleva no se
+escriben en ninguna parte; en el registro de la función solo queda cómo fue
+(bien, tiempo agotado, rechazado), nunca el enlace.</li>
+<li>La función ve tu dirección IP, como cualquier servidor, y la usa solo
+para contar las peticiones (como mucho treinta en diez minutos, para que
+nadie la use para mandar tráfico a Google con nuestra cara): se queda en su
+memoria diez minutos y no se guarda.</li>
+<li>La función solo abre direcciones de Google Maps, y se detiene si una
+redirección lleva a otro sitio.</li>
+</ul>
 
 <p>Google Maps, Google Calendar y las webs de los museos solo se abren cuando
 tocas un botón: a partir de ahí valen sus reglas, no las nuestras.</p>

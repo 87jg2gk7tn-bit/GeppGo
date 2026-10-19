@@ -56,13 +56,24 @@ GitHub: non entra nel codice e non lo vede chi legge il repo.
 ```
 supabase functions deploy vicini
 supabase functions deploy geo
+supabase functions deploy link-mappe
 ```
 
-Sono **due** funzioni e condividono la stessa tabella: `vicini` per le
+Le prime **due** funzioni condividono la stessa tabella: `vicini` per le
 ricerche «qui intorno» (Overpass), `geo` per gli indirizzi (Nominatim e
 Photon). La seconda è la più urgente: Nominatim è usato in diciassette punti
 dell'app — fra cui la ricerca degli alberghi — e permette una richiesta al
 secondo.
+
+La terza, `link-mappe` (ottobre 2026), non usa la tabella: apre i link corti
+di Google Maps (`maps.app.goo.gl/...`, quelli di «Condividi» su iPhone) e
+restituisce l'indirizzo vero, da cui l'app legge le coordinate o il nome del
+posto. Segue i rimandi solo dentro Google Maps, otto secondi al massimo, con
+un limite di richieste; dalla pagina dei consensi europei
+(`consent.google.com`) legge l'indirizzo dal parametro `continue`. Le regole
+stanno in `link-mappe/regole.mjs` e le prova `test/prova-installazione.js`.
+Finché non è pubblicata, l'app dice che quel link non si riesce ad aprire e
+chiede di incollare l'indirizzo: non si rompe niente.
 
 `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **ci sono già** dentro le Edge
 Functions: non vanno messe a mano da nessuna parte, e soprattutto **non vanno
@@ -89,7 +100,21 @@ comportamento giusto, non un guasto.
 
 Lo stesso si può chiedere senza computer: su GitHub, **Actions → «Il ponte
 risponde?» → Run workflow**. Chiede al ponte vero i bancomat in Duomo e il
-Colosseo, e risponde in italiano.
+Colosseo, controlla che `link-mappe` ci sia e rifiuti un indirizzo che non è
+di Google, e risponde in italiano.
+
+Per `link-mappe` a mano:
+
+```
+curl -s -X POST "https://<progetto>.supabase.co/functions/v1/link-mappe" \
+  -H "apikey: <chiave anon>" -H "Authorization: Bearer <chiave anon>" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://maps.app.goo.gl/<il codice del link>"}'
+```
+
+Risponde `{"url":"https://www.google.com/maps/..."}`; con un indirizzo che non
+è di Google Maps `{"errore":"non_ammesso"}`, se Google non risponde in otto
+secondi `{"errore":"tempo"}`, se arrivano troppe richieste `{"errore":"troppe"}`.
 
 ## Cosa NON fa
 

@@ -308,7 +308,8 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 
 | A chi parla | Cosa gli manda |
 |---|---|
-| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte) |
+| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte); il link corto di Google Maps da aprire (funzione `link-mappe`, che non lo conserva) |
+| Google (`maps.app.goo.gl`, `www.google.com`, `maps.google.com`), **dalla funzione `link-mappe`, mai dal telefono** | Il link corto di Google Maps che l'utente ha incollato o condiviso, per sapere dove porta. Niente IP del telefono, niente account |
 | `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, `worker/ponte-ai.js`, e da lì il modello Gemma su Cloudflare Workers AI) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni; le prime tre pagine di un PDF scansionato, come immagini. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
 | `api.tavily.com` (dal ponte, mai dal telefono) | Una riga di ricerca fatta di nomi di posti del viaggio, la destinazione, una data e l'argomento: niente persone, email o telefoni. Le condizioni di Tavily gli permettono di conservarla e di usarla per migliorare i suoi modelli |
 | `nominatim.openstreetmap.org` | Indirizzi cercati, coordinate |
@@ -325,6 +326,19 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 
 Google Maps, Google Calendar e i siti esterni si aprono **solo** quando è
 l'utente a toccare un tasto: non sono richieste che l'app fa da sola.
+
+**I link corti di Google Maps** (ottobre 2026, miglioria 12). Un link
+`maps.app.goo.gl/…` incollato o condiviso va alla funzione `link-mappe` su
+Supabase, che lo apre presso Google (`maps.app.goo.gl`, `www.google.com`,
+`maps.google.com`; dalla pagina dei consensi, `consent.google.com`, legge
+solo il parametro `continue` senza aprirla) e restituisce l'indirizzo
+finale. Al telefono arriva l'indirizzo, a Google il nostro server. Non si
+scrive niente: né il link, né l'indirizzo, né chi l'ha chiesto; l'IP serve
+solo al limite di richieste e resta nella memoria della funzione per dieci
+minuti. Per le schede degli store è un dato **trattato al momento e non
+conservato** (Apple: non «raccolto»; Google Play: «elaborato in modo
+temporaneo»): non cambia nessuna risposta qui sopra. I link lunghi si
+leggono sul telefono e non escono.
 
 > **Una nota su Google Fonts.** I caratteri arrivano dai server di Google, che
 > quindi vedono l'indirizzo IP di chiunque apra l'app. È dichiarato nella
