@@ -740,10 +740,8 @@ body.dark .avatar.me{color:var(--oro-su)}
 .vm-casa{background:#F4EDDE;border:2px solid #B85C38;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
 .vm-pop{min-width:180px;max-width:240px}
 .vm-pop-n{font-weight:800;font-size:.92rem;color:#1E1A12;line-height:1.3}
-/* La crocetta delle schede, su tutte le mappe (vedi leafletSistemato): 34 px
-   visibili e 44 al tocco. Un gradino piu' specifico del foglio di Leaflet,
-   che arriva dopo e a pari peso vincerebbe lui. Il testo della scheda le
-   lascia il posto. */
+/* La crocetta delle schede su tutte le mappe (leafletSistemato): 44 px al
+   tocco. Un gradino sopra il foglio di Leaflet, che arriva dopo. */
 .leaflet-container .leaflet-popup a.leaflet-popup-close-button{width:34px;height:34px;font-size:22px;line-height:34px;color:#5C5346}
 .leaflet-container .leaflet-popup a.leaflet-popup-close-button::after{content:'';position:absolute;inset:-5px}
 .leaflet-container .leaflet-popup .leaflet-popup-content{margin-right:34px}
@@ -765,21 +763,6 @@ body.dark .avatar.me{color:var(--oro-su)}
 .hh-map-giu .mappa-tutto{margin-left:auto}
 #dayMapWrap .mappa-tutto{position:absolute;top:.5rem;right:.5rem;z-index:500}
 .tt-tutto{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;min-height:44px;margin-bottom:.6rem;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:.84rem;cursor:pointer}
-
-/* ── Il PDF dell'itinerario e il calendario che si aggiorna (miglioria 13b) ── */
-.pdf-spiega,.cal-spiega{font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem}
-.pdf-opz{display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-soft)}
-.pdf-opz:last-of-type{border-bottom:none}
-.pdf-opz input{width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0}
-.pdf-opz small{display:block;font-size:.76rem;color:var(--ink-faint);font-weight:500}
-.pdf-stato,.cal-stato{font-size:.86rem;color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:.8rem 0 .7rem}
-.cal-avviso{font-size:.84rem;line-height:1.45;color:var(--ink);background:var(--sand-tint);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .75rem;margin-bottom:.4rem}
-#calAzioni .btn{margin-bottom:.5rem}
-#calAzioni a.btn{text-decoration:none;display:flex;align-items:center;justify-content:center}
-.cal-fila{display:flex;gap:0 .5rem;flex-wrap:wrap}
-.cal-fila .btn{flex:1 1 140px}
-.cal-ics{display:block;width:100%;min-height:44px;margin-top:.3rem;background:none;border:none;font-family:inherit;font-size:.84rem;font-weight:700;color:var(--ink-soft);text-decoration:underline;cursor:pointer}
-.cal-mano textarea{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--bordo-campo);border-radius:var(--r-md);padding:.5rem;background:var(--surface);color:var(--ink)}
 
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.7rem}
 .tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,8vw,2.4rem);line-height:.95;color:var(--ink);margin-top:.25rem}
@@ -3109,15 +3092,18 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div id="vmElenco" style="display:none"></div>
 </div></div>
 <!-- Il PDF dell'itinerario (miglioria 13b): le opzioni, poi il file pronto
-     da passare al foglio Condividi (vedi IL PDF DELL'ITINERARIO). -->
+     da passare al foglio Condividi (vedi IL PDF DELL'ITINERARIO). Gli stili
+     di questo foglio e di quello del calendario stanno sul posto, non nel CSS
+     in testa: quello arriva tutto prima della prima schermata, e con la rete
+     debole ogni riga in piu' la ritarda (prova-avvio, «la prima schermata»). -->
 <div class="modal" id="mPdfItin"><div class="sheet" style="max-width:460px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">📋 PDF dell'itinerario</div><button class="x x-close" onclick="closeSheet('mPdfItin')" title="Chiudi" aria-label="Chiudi">✕</button></div>
-  <p class="pdf-spiega">Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.</p>
-  <label class="pdf-opz"><input type="checkbox" id="pdfOpz_costi" onchange="pdfOpzioniCambiate()"><span>Includi i costi</span></label>
-  <label class="pdf-opz"><input type="checkbox" id="pdfOpz_note" onchange="pdfOpzioniCambiate()"><span>Includi le note</span></label>
-  <label class="pdf-opz"><input type="checkbox" id="pdfOpz_biglietti" onchange="pdfOpzioniCambiate()"><span>Includi l'elenco dei biglietti<small>Senza i codici: quelli restano nell'app.</small></span></label>
-  <div id="pdfStato" class="pdf-stato" role="status" aria-live="polite"></div>
+  <p class="pdf-spiega" style="font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem">Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.</p>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-soft)"><input type="checkbox" id="pdfOpz_costi" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi i costi</span></label>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-soft)"><input type="checkbox" id="pdfOpz_note" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi le note</span></label>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer"><input type="checkbox" id="pdfOpz_biglietti" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi l'elenco dei biglietti<small style="display:block;font-size:.76rem;color:var(--ink-faint);font-weight:500">Senza i codici: quelli restano nell'app.</small></span></label>
+  <div id="pdfStato" class="pdf-stato" role="status" aria-live="polite" style="font-size:.86rem;color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:.8rem 0 .7rem"></div>
   <div id="pdfAzioni"></div>
 </div></div>
 <!-- Il calendario che si aggiorna (miglioria 13b): il link, da aggiungere al
@@ -3125,11 +3111,11 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 <div class="modal" id="mCalendario"><div class="sheet" style="max-width:460px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">🗓️ Calendario che si aggiorna</div><button class="x x-close" onclick="closeSheet('mCalendario')" title="Chiudi" aria-label="Chiudi">✕</button></div>
-  <p class="cal-spiega">Aggiungi il viaggio al calendario del telefono: le tappe con l'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.</p>
-  <div class="cal-avviso" role="note">⚠️ Chi ha il link vede l'itinerario: dallo solo a chi vuoi tu.</div>
-  <div id="calStato" class="cal-stato" role="status" aria-live="polite"></div>
+  <p class="cal-spiega" style="font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem">Aggiungi il viaggio al calendario del telefono: le tappe con l'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.</p>
+  <div class="cal-avviso" role="note" style="font-size:.84rem;line-height:1.45;color:var(--ink);background:var(--sand-tint);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .75rem;margin-bottom:.4rem">⚠️ Chi ha il link vede l'itinerario: dallo solo a chi vuoi tu.</div>
+  <div id="calStato" class="cal-stato" role="status" aria-live="polite" style="font-size:.86rem;color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:.8rem 0 .7rem"></div>
   <div id="calAzioni"></div>
-  <button class="cal-ics" onclick="exportICS()">Oppure scarica un file .ics, una volta sola</button>
+  <button class="cal-ics" onclick="exportICS()" style="display:block;width:100%;min-height:44px;margin-top:.3rem;background:none;border:none;font-family:inherit;font-size:.84rem;font-weight:700;color:var(--ink-soft);text-decoration:underline;cursor:pointer">Oppure scarica un file .ics, una volta sola</button>
 </div></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
@@ -30666,7 +30652,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-20 17:43';
+const VERSIONE_APP='2026-10-20 19:15';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -32233,16 +32219,16 @@ function calMostra(stato,messaggio){
   if(stato==='carica'){s.textContent=tv('Un momento…');az.innerHTML='';return;}
   if(stato==='manca'||stato==='giu'){
     s.textContent=stato==='manca'?tv('Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.'):tv('Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.');
-    az.innerHTML=`<button class="btn btn-soft btn-block" onclick="apriCalendario()">${esc(tv('Riprova'))}</button>`;return;
+    az.innerHTML=`<button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="apriCalendario()">${esc(tv('Riprova'))}</button>`;return;
   }
   if(!calRiga){
     s.textContent=messaggio||tv('Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.');
-    az.innerHTML=`<button class="btn btn-grad btn-block" onclick="calCrea(false)">${esc(tv('Crea il link'))}</button>`;return;
+    az.innerHTML=`<button class="btn btn-grad btn-block" style="margin-bottom:.5rem" onclick="calCrea(false)">${esc(tv('Crea il link'))}</button>`;return;
   }
   s.textContent=messaggio||'';
-  az.innerHTML=`<a class="btn btn-grad btn-block" id="calAggiungi" href="${esc(calUrl(calRiga.codice,true))}">${esc(tv('Aggiungi al calendario'))}</a>
-    <button class="btn btn-soft btn-block" onclick="calCopia()">${esc(tv('Copia il link'))}</button>
-    <div class="cal-fila"><button class="btn btn-soft" onclick="calCrea(true)">${esc(tv('Crea un link nuovo'))}</button><button class="btn btn-soft" onclick="calSpegni()">${esc(tv('Disattiva il link'))}</button></div>`;
+  az.innerHTML=`<a class="btn btn-grad btn-block" id="calAggiungi" style="margin-bottom:.5rem;text-decoration:none;display:flex;align-items:center;justify-content:center" href="${esc(calUrl(calRiga.codice,true))}">${esc(tv('Aggiungi al calendario'))}</a>
+    <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="calCopia()">${esc(tv('Copia il link'))}</button>
+    <div class="cal-fila" style="display:flex;gap:0 .5rem;flex-wrap:wrap"><button class="btn btn-soft" style="margin-bottom:.5rem;flex:1 1 140px" onclick="calCrea(true)">${esc(tv('Crea un link nuovo'))}</button><button class="btn btn-soft" style="margin-bottom:.5rem;flex:1 1 140px" onclick="calSpegni()">${esc(tv('Disattiva il link'))}</button></div>`;
 }
 async function calCrea(nuovo){
   const t=T();if(!calendarioPossibile(t))return;
@@ -32264,7 +32250,7 @@ async function calCopia(){
   try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(u);toast('📋 Link copiato');return;}}catch(e){}
   if(copiaConComando(u)){toast('📋 Link copiato');return;}
   const s=document.getElementById('calStato');
-  s.innerHTML=`<div class="cal-mano">${esc(tv('Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».'))}<textarea readonly rows="3" aria-label="${esc(tv('Link del calendario'))}">${esc(u)}</textarea></div>`;
+  s.innerHTML=`<div class="cal-mano">${esc(tv('Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».'))}<textarea readonly rows="3" aria-label="${esc(tv('Link del calendario'))}" style="width:100%;font-size:16px;font-family:inherit;border:1px solid var(--bordo-campo);border-radius:var(--r-md);padding:.5rem;background:var(--surface);color:var(--ink)">${esc(u)}</textarea></div>`;
   const ta=s.querySelector('textarea');try{ta.focus();ta.select();ta.setSelectionRange(0,u.length);}catch(e){}
 }
 function calSpegni(){

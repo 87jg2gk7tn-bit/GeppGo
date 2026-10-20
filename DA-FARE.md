@@ -1088,6 +1088,13 @@ settimane.
   oltre le due settimane, prendono il fuso della destinazione: un giorno
   ancora in Italia sarebbe scritto all'ora di Tokyo finché il meteo di quel
   giorno non arriva.
+- **La prima schermata è al limite di `prova-avvio`** (vedi le lezioni in
+  fondo): ogni riga di CSS in testa la ritarda. Da decidere: in testa solo lo
+  stile della schermata d'apertura, e il `<style>` grande subito dopo di lei
+  nel `<body>`. La prima schermata arriverebbe in mezzo secondo anche con la
+  rete debole, qualunque sia il peso del CSS. Cambia come si carica tutto il
+  CSS dell'app: va fatto da solo, con le sue prove, anche su Safari, che
+  decide da sé quando disegnare la prima volta.
 
 ### Nessuna funzione nascosta: a che punto è
 
@@ -3141,12 +3148,20 @@ qualcuno che risponde".
   fanno `npm install` e lo prendono da lì; il `package-lock.json` già non
   aveva SheetJS); in locale il pacchetto si è preso con `npm pack` dal
   registro, che passa.
-- **`prova-avvio`, «la prima schermata»: su questa macchina sta al limite**
-  (20 ottobre). 1408 ms contro i 1403 ammessi, uguale col codice di prima e
-  con quello nuovo, misurati uno dopo l'altro: è la macchina, non la
-  modifica (a metà ottobre la stessa misura dava 1244). Se diventa rossa,
-  prima di cercare il colpevole si misura il codice di prima sulla stessa
-  macchina.
+- **`prova-avvio`, «la prima schermata»: sta al limite, ed è il CSS in
+  testa** (20 ottobre). Con la rete finta della prova (400 kbps) la prima
+  schermata arriva quando è arrivato tutto il `<style>` della testa, che è
+  passato da 33 KB compressi (7 ottobre, la misura di riferimento: 1220 ms)
+  a 46 KB, una miglioria dopo l'altra. Oggi fa 1400–1410 ms contro i 1403
+  ammessi, col codice di `main` come col nuovo, misurati alternandoli cinque
+  volte; su GitHub `main` passava di poco. La 13b è caduta lì finché i suoi
+  stili stavano in testa (0,3 KB compressi, circa 8 ms): adesso stanno sul
+  posto, nel markup dei due fogli, come già facevano Condividi e il menu
+  della tappa, e la testa pesa come prima. Quindi: gli stili di un foglio
+  che si apre dopo vanno sul posto, non in testa. Se la prova diventa rossa,
+  si misura il codice di prima sulla stessa macchina, alternando, e si
+  confronta il peso compresso della testa (tutto quello prima di `<body>`).
+  Il rimedio vero sta fra le cose da decidere della 13b.
 
 ---
 
