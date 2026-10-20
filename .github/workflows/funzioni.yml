@@ -1,5 +1,6 @@
-# Le funzioni su Supabase, pubblicate da sole: le due del ponte della mappa
-# e quella che apre i link corti di Google Maps.
+# Le funzioni su Supabase, pubblicate da sole: le due del ponte della mappa,
+# quella che apre i link corti di Google Maps e quella del calendario che si
+# aggiorna.
 #
 # PERCHE' NON A MANO. Pubblicarle dal terminale vuol dire avere un computer
 # davanti, ricordarsi il comando e ricordarsi di lanciarlo — e la volta che ci
@@ -59,6 +60,15 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase functions deploy link-mappe --project-ref cyolhqndurgwbivxcssf
+
+      # Il calendario del telefono non manda nessuna chiave: questa si
+      # pubblica senza il controllo del token (--no-verify-jwt), e la
+      # protezione e' il codice lungo dentro il link. Le regole stanno in
+      # supabase/functions/calendario/regole.mjs.
+      - name: Pubblica «calendario» — il calendario che si aggiorna
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy calendario --project-ref cyolhqndurgwbivxcssf --no-verify-jwt
 
       - name: Dì com'è andata
         run: |

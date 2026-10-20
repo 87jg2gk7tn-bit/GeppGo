@@ -205,7 +205,8 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const nellApp = [...new Set(HTML.match(/https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net|cdn\.sheetjs\.com)\/[^'"`\s)]+/g))];
     /* Solo le liste di librerie di sw.js: li' c'e' anche l'indirizzo dei
        caratteri, che non e' una libreria. LIBRERIE si scarica in sottofondo,
-       LIBRERIE_AL_MOMENTO (SheetJS) no: arriva quando serve e poi resta. */
+       LIBRERIE_AL_MOMENTO (SheetJS e, dalla miglioria 13b, jsPDF per il PDF
+       dell'itinerario) no: arriva quando serve e poi resta. */
     const lista = nome => [...((new RegExp('const ' + nome + ' = \\[([\\s\\S]*?)\\];').exec(SW) || [, ''])[1]).matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
     const sottofondo = lista('LIBRERIE'), alMomento = lista('LIBRERIE_AL_MOMENTO');
     const nelSw = sottofondo.concat(alMomento);
@@ -221,9 +222,9 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const daControllare = nellApp.concat(nelSw).filter(u => !/pdfjs-dist/.test(u));
     const mancanti = daControllare.filter(u => { const p = leggiIndirizzo(u); return !p || !filePacchetto(p.nome, p.versione, p.dentro); });
     ok('5. e punta a un file che esiste davvero nel pacchetto di quella versione', !mancanti.length, mancanti.join(' ') || daControllare.length + ' controllati');
-    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 8,
+    ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 9,
        lib.length + ' nell\'app, ' + nelSw.length + ' in sw.js');
-    ok('5. e quelle solo al momento (SheetJS) non si scaricano in sottofondo', alMomento.length === 1 && /sheetjs/.test(alMomento[0])
+    ok('5. e quelle solo al momento (SheetJS, jsPDF) non si scaricano in sottofondo', alMomento.length === 2 && alMomento.some(u => /sheetjs/.test(u)) && alMomento.some(u => /jspdf/.test(u))
        && JSON.stringify(alMomentoApp) === JSON.stringify(alMomento) && sottofondo.length === 7, JSON.stringify({ alMomento, alMomentoApp, sottofondo: sottofondo.length }));
   });
 

@@ -155,6 +155,7 @@ const FUNZIONI = [
   ['il ricordo, a viaggio in corso', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Il ricordo/)], 'mRicordo'],
   ['il diario in PDF', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Diario PDF/)], 'spia:openDiary'],
   ['esportare nel calendario', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Esporta nel calendario/)], 'spia:exportICS'],
+  ['il PDF dell\'itinerario, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /PDF dell'itinerario/)], 'mPdfItin'],
   ['i tetti di spesa, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tetti di spesa/)], 'mTetti'],
   ['la mappa di tutto il viaggio, dalla mappa della Home', 1, [VOCE('#homeMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
   ['la mappa di tutto il viaggio, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tutto il viaggio/)], 'mViaggioMappa'],
@@ -432,11 +433,11 @@ const MISURA = ([sels, mezzi]) => {
     const aperta = await foglioAperto(p, 'mTripZoom');
     const dentro = await p.evaluate(() => {
       const b = document.getElementById('tripZoomBody'), t = b.innerText;
-      return { nome: /Lisbona/.test(t), voci: ['Rinomina', 'Giorni', 'Concludi viaggio', 'Elimina viaggio', 'Consigli', 'Punti di ripristino', 'Il ricordo', 'Diario PDF', 'Esporta nel calendario']
+      return { nome: /Lisbona/.test(t), voci: ['Rinomina', 'Giorni', 'Concludi viaggio', 'Elimina viaggio', 'Consigli', 'Punti di ripristino', 'Il ricordo', 'Diario PDF', 'PDF dell\'itinerario', 'Esporta nel calendario']
         .filter(v => ![...b.querySelectorAll('button')].some(x => x.innerText.includes(v))) };
     });
     ok('4. «✈️ Viaggio» apre la scheda del viaggio', aperta && dentro.nome);
-    ok('4. … con rinomina, giorni, concludi, elimina, consigli, punti di ripristino, ricordo, diario e calendario', !dentro.voci.length, dentro.voci.length ? 'mancano: ' + dentro.voci.join(', ') : '9 voci');
+    ok('4. … con rinomina, giorni, concludi, elimina, consigli, punti di ripristino, ricordo, diario, PDF dell\'itinerario e calendario', !dentro.voci.length, dentro.voci.length ? 'mancano: ' + dentro.voci.join(', ') : '10 voci');
     await p.close();
   });
 
@@ -511,8 +512,8 @@ const MISURA = ([sels, mezzi]) => {
       ['la barra in basso senza scritte, il Profilo e il Meteo fuori dalla barra', /Sotto le icone non ci sono scritte/.test(m.barra) && /tondo con l'iniziale in alto a destra/.test(m.barra) && /"22° · Meteo ›"/.test(m.barra)],
       ['in Home «22° · Meteo ›», «✈️ Viaggio» nella fila, «+ Aggiungi» e «✦ Su misura» nei viaggi senza giorni',
         /"22° · Meteo ›"/.test(m.home) && /"✈️ Viaggio" \(apre la scheda del viaggio/.test(m.home) && /"\+ Aggiungi"/.test(m.home) && /"✦ Su misura"/.test(m.home)],
-      ['nella scheda del viaggio «📖 Il ricordo» anche in corso, «📄 Diario PDF» e «🗓️ Esporta nel calendario»',
-        /"📖 Il ricordo" \(anche a viaggio in corso\), "📄 Diario PDF" e "🗓️ Esporta nel calendario"/.test(m.home) && /anche a viaggio in corso/.test(m.ricordo)],
+      ['nella scheda del viaggio «📖 Il ricordo» anche in corso, «📄 Diario PDF», «📋 PDF dell\'itinerario» e il calendario (che si aggiorna, o «🗓️ Esporta nel calendario» senza account)',
+        /"📖 Il ricordo" \(anche a viaggio in corso\), "📄 Diario PDF", "📋 PDF dell'itinerario" e "🗓️ Calendario che si aggiorna" \(per i viaggi nel cloud; senza account al suo posto c'e' "🗓️ Esporta nel calendario"\)/.test(m.home) && /anche a viaggio in corso/.test(m.ricordo)],
       ['in Time Table «✦ Ordina il giro» e «🪄 Autopilota» come tasti, «＋ Aggiungi», «↩ Annulla», il mezzo che risponde intorno',
         /"✦ Ordina il giro"/.test(m.tt) && /"🪄 Autopilota"/.test(m.tt) && /"Costruisci la giornata" non c'e' piu'/.test(m.tt) && /"＋ Aggiungi"/.test(m.tt) && /"↩ Annulla"/.test(m.tt) && /risponde anche un po' intorno/.test(m.tt)],
       ['in Scopri «📎 PDF» e l\'interruttore «Consigli nei dintorni»; Su misura anche in Home e in «Nuovo viaggio»; la prenotazione anche in Biglietti',

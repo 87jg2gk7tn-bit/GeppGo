@@ -739,10 +739,12 @@ body.dark .avatar.me{color:var(--oro-su)}
 .vm-grappolo{width:34px;height:34px;border-radius:50%;border:2px solid #fff;background:#1E1A12;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;box-shadow:0 1px 5px rgba(0,0,0,.4)}
 .vm-casa{background:#F4EDDE;border:2px solid #B85C38;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
 .vm-pop{min-width:180px;max-width:240px}
-.vm-pop-n{font-weight:800;font-size:.92rem;color:#1E1A12;line-height:1.3;padding-right:14px}
-/* la crocetta della scheda: quella di Leaflet e' da 24 px, qui risponde su 44 */
-#vmMappa .leaflet-popup-close-button{width:34px;height:34px;font-size:22px;line-height:34px;color:#5C5346}
-#vmMappa .leaflet-popup-close-button::after{content:'';position:absolute;inset:-5px}
+.vm-pop-n{font-weight:800;font-size:.92rem;color:#1E1A12;line-height:1.3}
+/* La crocetta delle schede su tutte le mappe (leafletSistemato): 44 px al
+   tocco. Un gradino sopra il foglio di Leaflet, che arriva dopo. */
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button{width:34px;height:34px;font-size:22px;line-height:34px;color:#5C5346}
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button::after{content:'';position:absolute;inset:-5px}
+.leaflet-container .leaflet-popup .leaflet-popup-content{margin-right:34px}
 .vm-pop-q{font-size:.8rem;color:#5C5346;margin:.2rem 0 .55rem}
 .vm-pop .btn{width:100%;min-height:44px;font-size:.84rem}
 .vm-pop-lista{display:flex;flex-direction:column;gap:.4rem;max-height:220px;overflow-y:auto}
@@ -3089,6 +3091,32 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div id="vmVuota" class="vm-vuota" style="display:none"></div>
   <div id="vmElenco" style="display:none"></div>
 </div></div>
+<!-- Il PDF dell'itinerario (miglioria 13b): le opzioni, poi il file pronto
+     da passare al foglio Condividi (vedi IL PDF DELL'ITINERARIO). Gli stili
+     di questo foglio e di quello del calendario stanno sul posto, non nel CSS
+     in testa: quello arriva tutto prima della prima schermata, e con la rete
+     debole ogni riga in piu' la ritarda (prova-avvio, «la prima schermata»). -->
+<div class="modal" id="mPdfItin"><div class="sheet" style="max-width:460px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">📋 PDF dell'itinerario</div><button class="x x-close" onclick="closeSheet('mPdfItin')" title="Chiudi" aria-label="Chiudi">✕</button></div>
+  <p class="pdf-spiega" style="font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem">Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.</p>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-soft)"><input type="checkbox" id="pdfOpz_costi" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi i costi</span></label>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-soft)"><input type="checkbox" id="pdfOpz_note" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi le note</span></label>
+  <label class="pdf-opz" style="display:flex;align-items:center;gap:.7rem;min-height:44px;padding:.35rem .1rem;font-size:.92rem;color:var(--ink);cursor:pointer"><input type="checkbox" id="pdfOpz_biglietti" onchange="pdfOpzioniCambiate()" style="width:22px;height:22px;flex-shrink:0;accent-color:var(--green);margin:0"><span>Includi l'elenco dei biglietti<small style="display:block;font-size:.76rem;color:var(--ink-faint);font-weight:500">Senza i codici: quelli restano nell'app.</small></span></label>
+  <div id="pdfStato" class="pdf-stato" role="status" aria-live="polite" style="font-size:.86rem;color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:.8rem 0 .7rem"></div>
+  <div id="pdfAzioni"></div>
+</div></div>
+<!-- Il calendario che si aggiorna (miglioria 13b): il link, da aggiungere al
+     calendario del telefono, da copiare o da spegnere. -->
+<div class="modal" id="mCalendario"><div class="sheet" style="max-width:460px">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head"><div class="sheet-t">🗓️ Calendario che si aggiorna</div><button class="x x-close" onclick="closeSheet('mCalendario')" title="Chiudi" aria-label="Chiudi">✕</button></div>
+  <p class="cal-spiega" style="font-size:.88rem;color:var(--ink-soft);line-height:1.5;margin:0 0 .8rem">Aggiungi il viaggio al calendario del telefono: le tappe con l'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.</p>
+  <div class="cal-avviso" role="note" style="font-size:.84rem;line-height:1.45;color:var(--ink);background:var(--sand-tint);border:1px solid var(--line);border-radius:var(--r-md);padding:.6rem .75rem;margin-bottom:.4rem">⚠️ Chi ha il link vede l'itinerario: dallo solo a chi vuoi tu.</div>
+  <div id="calStato" class="cal-stato" role="status" aria-live="polite" style="font-size:.86rem;color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:.8rem 0 .7rem"></div>
+  <div id="calAzioni"></div>
+  <button class="cal-ics" onclick="exportICS()" style="display:block;width:100%;min-height:44px;margin-top:.3rem;background:none;border:none;font-family:inherit;font-size:.84rem;font-weight:700;color:var(--ink-soft);text-decoration:underline;cursor:pointer">Oppure scarica un file .ics, una volta sola</button>
+</div></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t" id="amName">Attività</div><button class="x x-close" onclick="closeSheet('mActMenu')">✕</button></div>
@@ -4046,7 +4074,7 @@ function persistLastPush(){try{localStorage.setItem('geppgo2_lastpush',JSON.stri
    La stessa lista sta in sw.js, che le tiene da parte per l'offline: una
    prova controlla che restino uguali. */
 const LIBRERIE={
-  leaflet:{js:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',css:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',pronta:()=>typeof L!=='undefined'},
+  leaflet:{js:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',css:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',pronta:()=>typeof L!=='undefined',sistema:()=>leafletSistemato()},
   supabase:{js:'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',pronta:()=>typeof supabase!=='undefined'&&!!supabase.createClient},
   jsqr:{js:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',pronta:()=>typeof jsQR!=='undefined'},
   zxing:{js:'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',pronta:()=>typeof ZXing!=='undefined'},
@@ -4061,17 +4089,28 @@ const LIBRERIE={
      e foto. Arriva solo quando si esporta o si ripristina; pesa una decina di
      KB compressa, e la service worker la tiene in sottofondo come le altre:
      un backup si fa anche senza rete. */
-  fflate:{js:'https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js',pronta:()=>typeof fflate!=='undefined'&&!!fflate.Zip&&!!fflate.Unzip}
+  fflate:{js:'https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js',pronta:()=>typeof fflate!=='undefined'&&!!fflate.Zip&&!!fflate.Unzip},
+  /* jsPDF, per il PDF dell'itinerario (vedi IL PDF DELL'ITINERARIO). Solo al
+     momento, come SheetJS: 420 KB che servono a chi il PDF lo chiede; dalla
+     prima volta resta nella cache e il PDF si fa anche senza rete. */
+  jspdf:{js:'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js',alMomento:true,pronta:()=>typeof jspdf!=='undefined'&&!!jspdf.jsPDF}
 };
 /* Oltre questo tempo una libreria si da' per persa, e lo si dice. E' largo
    apposta: i codici a barre sono 250 KB compressi, che col campo debole
    vogliono piu' di cinque secondi. Se poi arriva lo stesso, la volta dopo
    e' gia' pronta. */
 const LIBRERIE_ATTESA_MS=30000;
+/* Quello che una libreria vuole sistemato appena arriva (vedi leafletSistemato):
+   una volta sola, prima di chiunque la stia aspettando. */
+function libreriaSistemata(lib){
+  if(!lib.sistema||lib.sistemata)return;
+  lib.sistemata=true;
+  try{lib.sistema();}catch(e){console.log('Libreria arrivata, ma non sistemata:',e);}
+}
 function caricaLibreria(nome){
   const lib=LIBRERIE[nome];
   if(!lib)return Promise.reject(new Error('libreria sconosciuta: '+nome));
-  if(lib.pronta())return Promise.resolve();
+  if(lib.pronta()){libreriaSistemata(lib);return Promise.resolve();}
   if(lib.attesa)return lib.attesa;
   if(lib.css&&!lib.foglio){
     const l=document.createElement('link');l.rel='stylesheet';l.href=lib.css;
@@ -4095,7 +4134,7 @@ function caricaLibreria(nome){
   lib.attesa=new Promise((ok,no)=>{
     const fine=err=>{
       clearTimeout(tm);el.removeEventListener('load',va);el.removeEventListener('error',noVa);lib.attesa=null;
-      if(!err&&lib.pronta())return ok();
+      if(!err&&lib.pronta()){libreriaSistemata(lib);return ok();}
       if(!err)el.dataset.esito='errore';
       console.log('Libreria non arrivata:',nome,err||'caricata ma vuota');
       no(new Error(err||'vuota'));
@@ -13407,6 +13446,237 @@ const DIZIONARIO_TETTI={
   }
 };
 Object.keys(DIZIONARIO_TETTI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_TETTI[l]));
+/* Il PDF dell'itinerario, il calendario che si aggiorna e l'avviso unico
+   dei tetti (miglioria 13b). «Link» come nel resto dell'app: enlace, lien,
+   ligação; il calendario in francese e' «agenda», e i check-in sono quelli
+   delle tappe (Entrada, Arrivée). */
+const DIZIONARIO_ITINERARIO={
+  en:{
+    'Anche: {1}.':'Also: {1}.',
+    'il tetto del gruppo':'the group cap',
+    'il tuo tetto':'your cap',
+    'il tetto per {1}':'the {1} cap',
+    '📋 PDF dell\'itinerario':'📋 Itinerary PDF',
+    'Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.':'A PDF to send to the people travelling with you: the trip day by day, with times, addresses, journeys and hotels.',
+    'Includi i costi':'Include costs',
+    'Includi le note':'Include notes',
+    'Includi l\'elenco dei biglietti':'Include the list of tickets',
+    'Senza i codici: quelli restano nell\'app.':'Without the codes: those stay in the app.',
+    'Crea il PDF':'Create the PDF',
+    'Preparo il PDF…':'Preparing the PDF…',
+    'Per fare il PDF serve la rete, la prima volta: collegati e riprova.':'The first time, making the PDF needs a connection: connect and try again.',
+    'Il PDF non è riuscito: riprova.':'The PDF didn’t work: try again.',
+    'Il PDF è pronto: {1} ({2}).':'The PDF is ready: {1} ({2}).',
+    'Scarica il PDF':'Download the PDF',
+    'PDF pronto: {1}':'PDF ready: {1}',
+    'Itinerario':'Itinerary',
+    'Itinerario - {1}.pdf':'Itinerary - {1}.pdf',
+    'Compagni di viaggio: {1}':'Travel mates: {1}',
+    '{1} albergo':'{1} hotel',
+    '{1} alberghi':'{1} hotels',
+    'Fatto con GeppGo il {1}':'Made with GeppGo on {1}',
+    'Il viaggio non ha ancora giorni.':'The trip has no days yet.',
+    'Notte: {1}':'Night: {1}',
+    'Check-in dalle {1}':'Check-in from {1}',
+    'Apri in Google Maps':'Open in Google Maps',
+    '{1} min {2} · {3} km':'{1} min {2} · {3} km',
+    'Note: {1}':'Notes: {1}',
+    'Costo: {1}':'Cost: {1}',
+    'di {1}':'for {1}',
+    'Costi':'Costs',
+    'Totale: {1}':'Total: {1}',
+    'di cui previste: {1}':'of which {1} planned',
+    '🗓️ Calendario che si aggiorna':'🗓️ Self-updating calendar',
+    'Aggiungi il viaggio al calendario del telefono: le tappe con l\'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.':'Add the trip to your phone’s calendar: stops with a time, hotel check-ins and check-outs and ticketed journeys update by themselves when the trip changes.',
+    '⚠️ Chi ha il link vede l\'itinerario: dallo solo a chi vuoi tu.':'⚠️ Anyone with the link can see the itinerary: only give it to people you choose.',
+    'Oppure scarica un file .ics, una volta sola':'Or download an .ics file, just once',
+    'Un momento…':'Just a moment…',
+    'Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.':'The self-updating calendar isn’t available yet: meanwhile you can download the calendar file.',
+    'Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.':'The cloud isn’t responding: check your connection and try again. Meanwhile you can download the calendar file.',
+    'Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.':'There’s no link yet: create it, then add it to your phone’s calendar.',
+    'Crea il link':'Create the link',
+    'Aggiungi al calendario':'Add to calendar',
+    'Copia il link':'Copy the link',
+    'Crea un link nuovo':'Create a new link',
+    'Disattiva il link':'Turn off the link',
+    'Link nuovo pronto: quello di prima non funziona più.':'New link ready: the old one no longer works.',
+    'Disattivare il link del calendario?':'Turn off the calendar link?',
+    'Chi l\'ha aggiunto al calendario non vede più gli aggiornamenti. Puoi crearne uno nuovo quando vuoi.':'Anyone who added it to their calendar won’t see updates any more. You can create a new one whenever you like.',
+    'Disattiva':'Turn off',
+    'Link del calendario':'Calendar link',
+    'Link disattivato: il calendario non si aggiorna più.':'Link turned off: the calendar no longer updates.',
+    'Non sono riuscito a disattivare il link: controlla la rete e riprova.':'I couldn’t turn off the link: check your connection and try again.'
+  },
+  es:{
+    'Anche: {1}.':'También: {1}.',
+    'il tetto del gruppo':'el tope del grupo',
+    'il tuo tetto':'tu tope',
+    'il tetto per {1}':'el tope de {1}',
+    '📋 PDF dell\'itinerario':'📋 PDF del itinerario',
+    'Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.':'Un PDF para enviar a quien viaja contigo: el viaje día a día, con los horarios, las direcciones, los trayectos y los alojamientos.',
+    'Includi i costi':'Incluir los costes',
+    'Includi le note':'Incluir las notas',
+    'Includi l\'elenco dei biglietti':'Incluir la lista de billetes',
+    'Senza i codici: quelli restano nell\'app.':'Sin los códigos: esos se quedan en la app.',
+    'Crea il PDF':'Crear el PDF',
+    'Preparo il PDF…':'Preparando el PDF…',
+    'Per fare il PDF serve la rete, la prima volta: collegati e riprova.':'La primera vez, para hacer el PDF hace falta conexión: conéctate y vuelve a intentarlo.',
+    'Il PDF non è riuscito: riprova.':'El PDF no ha salido: vuelve a intentarlo.',
+    'Il PDF è pronto: {1} ({2}).':'El PDF está listo: {1} ({2}).',
+    'Scarica il PDF':'Descargar el PDF',
+    'PDF pronto: {1}':'PDF listo: {1}',
+    'Itinerario':'Itinerario',
+    'Itinerario - {1}.pdf':'Itinerario - {1}.pdf',
+    'Compagni di viaggio: {1}':'Compañeros de viaje: {1}',
+    '{1} albergo':'{1} alojamiento',
+    '{1} alberghi':'{1} alojamientos',
+    'Fatto con GeppGo il {1}':'Hecho con GeppGo el {1}',
+    'Il viaggio non ha ancora giorni.':'El viaje aún no tiene días.',
+    'Notte: {1}':'Noche: {1}',
+    'Check-in dalle {1}':'Entrada desde las {1}',
+    'Apri in Google Maps':'Abrir en Google Maps',
+    '{1} min {2} · {3} km':'{1} min {2} · {3} km',
+    'Note: {1}':'Notas: {1}',
+    'Costo: {1}':'Coste: {1}',
+    'di {1}':'de {1}',
+    'Costi':'Costes',
+    'Totale: {1}':'Total: {1}',
+    'di cui previste: {1}':'de los cuales {1} previstos',
+    '🗓️ Calendario che si aggiorna':'🗓️ Calendario que se actualiza',
+    'Aggiungi il viaggio al calendario del telefono: le tappe con l\'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.':'Añade el viaje al calendario del teléfono: las paradas con horario, las entradas y salidas de los alojamientos y los trayectos de los billetes se actualizan solos cuando el viaje cambia.',
+    '⚠️ Chi ha il link vede l\'itinerario: dallo solo a chi vuoi tu.':'⚠️ Quien tenga el enlace ve el itinerario: dáselo solo a quien tú quieras.',
+    'Oppure scarica un file .ics, una volta sola':'O descarga un archivo .ics, una sola vez',
+    'Un momento…':'Un momento…',
+    'Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.':'El calendario que se actualiza aún no está disponible: mientras tanto puedes descargar el archivo del calendario.',
+    'Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.':'La nube no responde: revisa la conexión y vuelve a intentarlo. Mientras tanto puedes descargar el archivo del calendario.',
+    'Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.':'Aún no hay enlace: créalo y luego añádelo al calendario del teléfono.',
+    'Crea il link':'Crear el enlace',
+    'Aggiungi al calendario':'Añadir al calendario',
+    'Copia il link':'Copiar el enlace',
+    'Crea un link nuovo':'Crear un enlace nuevo',
+    'Disattiva il link':'Desactivar el enlace',
+    'Link nuovo pronto: quello di prima non funziona più.':'Enlace nuevo listo: el anterior ya no funciona.',
+    'Disattivare il link del calendario?':'¿Desactivar el enlace del calendario?',
+    'Chi l\'ha aggiunto al calendario non vede più gli aggiornamenti. Puoi crearne uno nuovo quando vuoi.':'Quien lo haya añadido a su calendario dejará de ver las actualizaciones. Puedes crear uno nuevo cuando quieras.',
+    'Disattiva':'Desactivar',
+    'Link del calendario':'Enlace del calendario',
+    'Link disattivato: il calendario non si aggiorna più.':'Enlace desactivado: el calendario ya no se actualiza.',
+    'Non sono riuscito a disattivare il link: controlla la rete e riprova.':'No he podido desactivar el enlace: revisa la conexión y vuelve a intentarlo.'
+  },
+  fr:{
+    'Anche: {1}.':'Aussi : {1}.',
+    'il tetto del gruppo':'le plafond du groupe',
+    'il tuo tetto':'ton plafond',
+    'il tetto per {1}':'le plafond pour {1}',
+    '📋 PDF dell\'itinerario':'📋 PDF de l’itinéraire',
+    'Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.':'Un PDF à envoyer à ceux qui partent avec toi : le voyage jour par jour, avec les horaires, les adresses, les trajets et les hébergements.',
+    'Includi i costi':'Inclure les coûts',
+    'Includi le note':'Inclure les notes',
+    'Includi l\'elenco dei biglietti':'Inclure la liste des billets',
+    'Senza i codici: quelli restano nell\'app.':'Sans les codes : ils restent dans l’app.',
+    'Crea il PDF':'Créer le PDF',
+    'Preparo il PDF…':'Je prépare le PDF…',
+    'Per fare il PDF serve la rete, la prima volta: collegati e riprova.':'La première fois, il faut du réseau pour faire le PDF : connecte-toi et réessaie.',
+    'Il PDF non è riuscito: riprova.':'Le PDF n’a pas marché : réessaie.',
+    'Il PDF è pronto: {1} ({2}).':'Le PDF est prêt : {1} ({2}).',
+    'Scarica il PDF':'Télécharger le PDF',
+    'PDF pronto: {1}':'PDF prêt : {1}',
+    'Itinerario':'Itinéraire',
+    'Itinerario - {1}.pdf':'Itinéraire - {1}.pdf',
+    'Compagni di viaggio: {1}':'Compagnons de voyage : {1}',
+    '{1} albergo':'{1} hébergement',
+    '{1} alberghi':'{1} hébergements',
+    'Fatto con GeppGo il {1}':'Fait avec GeppGo le {1}',
+    'Il viaggio non ha ancora giorni.':'Le voyage n’a pas encore de jours.',
+    'Notte: {1}':'Nuit : {1}',
+    'Check-in dalle {1}':'Arrivée à partir de {1}',
+    'Apri in Google Maps':'Ouvrir dans Google Maps',
+    '{1} min {2} · {3} km':'{1} min {2} · {3} km',
+    'Note: {1}':'Notes : {1}',
+    'Costo: {1}':'Coût : {1}',
+    'di {1}':'de {1}',
+    'Costi':'Coûts',
+    'Totale: {1}':'Total : {1}',
+    'di cui previste: {1}':'dont {1} prévus',
+    '🗓️ Calendario che si aggiorna':'🗓️ Agenda qui se met à jour',
+    'Aggiungi il viaggio al calendario del telefono: le tappe con l\'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.':'Ajoute le voyage à l’agenda du téléphone : les étapes avec un horaire, les arrivées et départs des hébergements et les trajets des billets se mettent à jour tout seuls quand le voyage change.',
+    '⚠️ Chi ha il link vede l\'itinerario: dallo solo a chi vuoi tu.':'⚠️ Qui a le lien voit l’itinéraire : ne le donne qu’aux personnes de ton choix.',
+    'Oppure scarica un file .ics, una volta sola':'Ou télécharge un fichier .ics, une seule fois',
+    'Un momento…':'Un instant…',
+    'Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.':'L’agenda qui se met à jour n’est pas encore disponible : en attendant, tu peux télécharger le fichier de l’agenda.',
+    'Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.':'Le cloud ne répond pas : vérifie ta connexion et réessaie. En attendant, tu peux télécharger le fichier de l’agenda.',
+    'Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.':'Le lien n’existe pas encore : crée-le, puis ajoute-le à l’agenda du téléphone.',
+    'Crea il link':'Créer le lien',
+    'Aggiungi al calendario':'Ajouter à l’agenda',
+    'Copia il link':'Copier le lien',
+    'Crea un link nuovo':'Créer un nouveau lien',
+    'Disattiva il link':'Désactiver le lien',
+    'Link nuovo pronto: quello di prima non funziona più.':'Nouveau lien prêt : l’ancien ne fonctionne plus.',
+    'Disattivare il link del calendario?':'Désactiver le lien de l’agenda ?',
+    'Chi l\'ha aggiunto al calendario non vede più gli aggiornamenti. Puoi crearne uno nuovo quando vuoi.':'Ceux qui l’ont ajouté à leur agenda ne verront plus les mises à jour. Tu peux en créer un nouveau quand tu veux.',
+    'Disattiva':'Désactiver',
+    'Link del calendario':'Lien de l’agenda',
+    'Link disattivato: il calendario non si aggiorna più.':'Lien désactivé : l’agenda ne se met plus à jour.',
+    'Non sono riuscito a disattivare il link: controlla la rete e riprova.':'Je n’ai pas réussi à désactiver le lien : vérifie ta connexion et réessaie.'
+  },
+  pt:{
+    'Anche: {1}.':'Também: {1}.',
+    'il tetto del gruppo':'o teto do grupo',
+    'il tuo tetto':'o teu teto',
+    'il tetto per {1}':'o teto de {1}',
+    '📋 PDF dell\'itinerario':'📋 PDF do itinerário',
+    'Un PDF da mandare a chi parte con te: il viaggio giorno per giorno, con gli orari, gli indirizzi, gli spostamenti e gli alberghi.':'Um PDF para enviar a quem viaja contigo: a viagem dia a dia, com os horários, as moradas, as deslocações e os alojamentos.',
+    'Includi i costi':'Incluir os custos',
+    'Includi le note':'Incluir as notas',
+    'Includi l\'elenco dei biglietti':'Incluir a lista de bilhetes',
+    'Senza i codici: quelli restano nell\'app.':'Sem os códigos: esses ficam na app.',
+    'Crea il PDF':'Criar o PDF',
+    'Preparo il PDF…':'A preparar o PDF…',
+    'Per fare il PDF serve la rete, la prima volta: collegati e riprova.':'Da primeira vez, para fazer o PDF é preciso rede: liga-te e tenta de novo.',
+    'Il PDF non è riuscito: riprova.':'O PDF não correu bem: tenta de novo.',
+    'Il PDF è pronto: {1} ({2}).':'O PDF está pronto: {1} ({2}).',
+    'Scarica il PDF':'Descarregar o PDF',
+    'PDF pronto: {1}':'PDF pronto: {1}',
+    'Itinerario':'Itinerário',
+    'Itinerario - {1}.pdf':'Itinerário - {1}.pdf',
+    'Compagni di viaggio: {1}':'Companheiros de viagem: {1}',
+    '{1} albergo':'{1} alojamento',
+    '{1} alberghi':'{1} alojamentos',
+    'Fatto con GeppGo il {1}':'Feito com o GeppGo em {1}',
+    'Il viaggio non ha ancora giorni.':'A viagem ainda não tem dias.',
+    'Notte: {1}':'Noite: {1}',
+    'Check-in dalle {1}':'Entrada a partir das {1}',
+    'Apri in Google Maps':'Abrir no Google Maps',
+    '{1} min {2} · {3} km':'{1} min {2} · {3} km',
+    'Note: {1}':'Notas: {1}',
+    'Costo: {1}':'Custo: {1}',
+    'di {1}':'de {1}',
+    'Costi':'Custos',
+    'Totale: {1}':'Total: {1}',
+    'di cui previste: {1}':'das quais {1} previstas',
+    '🗓️ Calendario che si aggiorna':'🗓️ Calendário que se atualiza',
+    'Aggiungi il viaggio al calendario del telefono: le tappe con l\'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti si aggiornano da soli quando il viaggio cambia.':'Adiciona a viagem ao calendário do telemóvel: as paragens com horário, as entradas e saídas dos alojamentos e as viagens dos bilhetes atualizam-se sozinhas quando a viagem muda.',
+    '⚠️ Chi ha il link vede l\'itinerario: dallo solo a chi vuoi tu.':'⚠️ Quem tiver a ligação vê o itinerário: dá-a só a quem tu quiseres.',
+    'Oppure scarica un file .ics, una volta sola':'Ou descarrega um ficheiro .ics, uma única vez',
+    'Un momento…':'Um momento…',
+    'Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.':'O calendário que se atualiza ainda não está disponível: entretanto podes descarregar o ficheiro do calendário.',
+    'Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.':'A nuvem não responde: verifica a ligação e tenta de novo. Entretanto podes descarregar o ficheiro do calendário.',
+    'Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.':'A ligação ainda não existe: cria-a e depois adiciona-a ao calendário do telemóvel.',
+    'Crea il link':'Criar a ligação',
+    'Aggiungi al calendario':'Adicionar ao calendário',
+    'Copia il link':'Copiar a ligação',
+    'Crea un link nuovo':'Criar uma ligação nova',
+    'Disattiva il link':'Desativar a ligação',
+    'Link nuovo pronto: quello di prima non funziona più.':'Ligação nova pronta: a anterior já não funciona.',
+    'Disattivare il link del calendario?':'Desativar a ligação do calendário?',
+    'Chi l\'ha aggiunto al calendario non vede più gli aggiornamenti. Puoi crearne uno nuovo quando vuoi.':'Quem a adicionou ao calendário deixa de ver as atualizações. Podes criar uma nova quando quiseres.',
+    'Disattiva':'Desativar',
+    'Link del calendario':'Ligação do calendário',
+    'Link disattivato: il calendario non si aggiorna più.':'Ligação desativada: o calendário já não se atualiza.',
+    'Non sono riuscito a disattivare il link: controlla la rete e riprova.':'Não consegui desativar a ligação: verifica a rede e tenta de novo.'
+  }
+};
+Object.keys(DIZIONARIO_ITINERARIO).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_ITINERARIO[l]));
 
 /* Quante frasi ci sono da dire in tutto. Era un numero scritto a mano (981,
    poi 1334) e restava indietro a ogni frase nuova: chi aggiungeva una riga
@@ -13903,6 +14173,22 @@ function stratoMappa(opzioni){
    non ci sono tasti: la citazione deve leggersi senza coprire niente (vedi
    test/prova-installazione.js). */
 const DIRITTI_OSM='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+/* La crocetta delle schede di Leaflet e' da 24 px e, per VoiceOver, si chiama
+   «Close popup», in inglese per tutti. Su ogni mappa (miglioria 13b; prima
+   solo su quella del viaggio): risponde su 44 px (il foglio di stile, vedi
+   .leaflet-popup-close-button) e si chiama «Chiudi» nella lingua dell'app.
+   E la scheda si apre a 16 px dal bordo della mappa invece di 5: a filo del
+   bordo la crocetta restava mezza fuori, e col dito non la si prendeva. Si
+   fa una volta, quando arriva Leaflet, e vale per ogni mappa fatta dopo. */
+function leafletSistemato(){
+  L.Popup.prototype.options.autoPanPadding=L.point(16,16);
+  L.Map.addInitHook(function(){this.on('popupopen',crocettaTradotta);});
+}
+function crocettaTradotta(e){
+  const el=e&&e.popup&&e.popup.getElement&&e.popup.getElement();
+  const b=el&&el.querySelector('.leaflet-popup-close-button');
+  if(b){b.setAttribute('aria-label',tv('Chiudi'));b.title=tv('Chiudi');}
+}
 function dirittiMappa(m,angolo){
   try{
     if(!m.attributionControl)L.control.attribution({prefix:false,position:angolo}).addTo(m);
@@ -14214,7 +14500,8 @@ function renderTripZoomBody(){
     <button class="btn btn-soft" onclick="closeSheet('mTripZoom');apriMappaViaggio()">${esc(tv('🗺️ Tutto il viaggio'))}</button>
     <button class="btn btn-soft" onclick="closeSheet('mTripZoom');apriRicordo(${t.id})">${esc(tv('📖 Il ricordo'))}</button>
     <button class="btn btn-soft" onclick="openDiary()">${esc(tv('📄 Diario PDF'))}</button>
-    <button class="btn btn-soft" onclick="exportICS()">${esc(tv('🗓️ Esporta nel calendario'))}</button>
+    <button class="btn btn-soft" onclick="apriPdfItinerario()">${esc(tv('📋 PDF dell\'itinerario'))}</button>
+    <button class="btn btn-soft" onclick="apriCalendario()">${esc(tv(calendarioPossibile(t)?'🗓️ Calendario che si aggiorna':'🗓️ Esporta nel calendario'))}</button>
   </div>
   <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
     <button class="btn btn-soft" style="flex:1" onclick="toggleStatus()">🏁 Concludi viaggio</button>
@@ -16197,7 +16484,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "+ Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nella time-table, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sulla mappa della Home c'e' "Tutto il viaggio ›": apre la mappa di tutto il viaggio. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" (apre la lista bagagli), "👥 Compagni" (le persone del viaggio), "🔗 Condividi" (l'invito al viaggio, col link e il QR) e "✈️ Viaggio" (apre la scheda del viaggio: rinomina, giorni, concludi, elimina, consigli, punti di ripristino, il ricordo, il diario e il calendario). Sugli schermi stretti diventano due righe da due. I bagagli stanno li', in Home, e anche nella scheda del viaggio ("🎒 Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche nel quadrettino di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dalla Home col tasto "✈️ Viaggio", toccando il titolo in cima alla Time Table, oppure dal Profilo toccando il viaggio; in Home il titolo apre la Time Table, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "📖 Il ricordo" (anche a viaggio in corso), "📄 Diario PDF" e "🗓️ Esporta nel calendario". Accanto a "La giornata" c'e' "+ Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "✦ Su misura": l'assistente prepara l'itinerario.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sulla mappa della Home c'e' "Tutto il viaggio ›": apre la mappa di tutto il viaggio. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono la time-table su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. Accanto a "Cosa cerchi qui intorno?", sulla stessa riga, c'e' il tasto verde "A raccolta": chiama tutti gli altri del viaggio dove sei tu (compare nei viaggi con almeno un'altra persona; se manca qualcosa per usarlo - l'account, il viaggio condiviso, essere chi l'ha creato - toccandolo lo dice). C'e' anche nella scheda del viaggio. Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" (apre la lista bagagli), "👥 Compagni" (le persone del viaggio), "🔗 Condividi" (l'invito al viaggio, col link e il QR) e "✈️ Viaggio" (apre la scheda del viaggio: rinomina, giorni, concludi, elimina, consigli, punti di ripristino, il ricordo, il diario, il PDF dell'itinerario e il calendario). Sugli schermi stretti diventano due righe da due. I bagagli stanno li', in Home, e anche nella scheda del viaggio ("🎒 Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche nel quadrettino di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dalla Home col tasto "✈️ Viaggio", toccando il titolo in cima alla Time Table, oppure dal Profilo toccando il viaggio; in Home il titolo apre la Time Table, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "📖 Il ricordo" (anche a viaggio in corso), "📄 Diario PDF", "📋 PDF dell'itinerario" e "🗓️ Calendario che si aggiorna" (per i viaggi nel cloud; senza account al suo posto c'e' "🗓️ Esporta nel calendario"). Accanto a "La giornata" c'e' "+ Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "✦ Su misura": l'assistente prepara l'itinerario.
 - Time Table: la giornata ora per ora. In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sulla mappa della giornata c'e' "Tutto il viaggio ›", che apre la mappa di tutto il viaggio (nei giorni senza mappa, una riga al suo posto). Sopra la griglia ci sono QUATTRO tasti, due righe da due: le due cose che si fanno camminando, "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente" (una chat su quella giornata, dove "📎 PDF" allega un PDF), e sotto le due che si usano mentre il viaggio si costruisce, "✦ Ordina il giro" (rimette in fila con l'IA le tappe che ci sono gia') e "🪄 Autopilota" (gli incolli un elenco di posti e li mette lui in orario). "Costruisci la giornata" non c'e' piu'. Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto "＋ Aggiungi", in basso a destra, che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto "↩ Annulla" rimette gli orari com'erano: sta sempre in basso a sinistra, dalla parte opposta a "＋ Aggiungi", tenue quando non c'e' niente da annullare e nero pieno quando c'e'. Vale per l'ultima modifica fatta, e si azzera cambiando giorno. Fra una tappa e l'altra c'e' la striscia del tratto: tempo e distanza, e l'icona del mezzo da toccare per cambiarlo (e' piccola, ma risponde anche un po' intorno). I mezzi sono sei: a piedi, in bici, in macchina, in treno, in metro e in bus. A piedi, in bici e in macchina il tempo e' quello vero sulle strade, calcolato da un servizio di percorsi e tenuto nel telefono (si vede anche senza rete); finche' non arriva, e coi mezzi pubblici sempre, il tempo e' una stima e ha davanti il segno "≈". La stima dei mezzi pubblici conta anche i minuti per arrivare alla fermata, aspettare e uscire. Il navigatore di GeppGo dentro l'app non c'e' piu': ogni tasto per farsi portare apre Apple Maps o Google Maps col mezzo del tratto (in bici Apple Maps apre il percorso a piedi). Quale dei due si sceglie nel Profilo, sotto Impostazioni; chi aveva scelto il navigatore di GeppGo, al primo percorso sceglie fra i due.
 - Scopri: tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF col tasto "📎 PDF"), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario; c'e' anche in Home nei viaggi senza giorni e come spunta nel foglio "Nuovo viaggio") e "Prenotazione" (c'e' anche in Biglietti, "📩 Prenotazione dalla mail"). In "Cerca", sotto la ricerca, c'e' l'interruttore "Consigli nei dintorni": acceso, l'app propone posti in linea con quelli salvati e avvisa quando ci si passa vicino (e' lo stesso di "Consigli attivi/off" nella scheda del viaggio).
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -16212,7 +16499,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date, i numeri, le valute (dove va il simbolo, il separatore delle migliaia) e i plurali seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero. La privacy ("Come tratto i tuoi dati" in Profilo, e il link sotto "Crea account") si apre nella lingua dell'app: le versioni tradotte dicono in cima che, se c'e' un dubbio, vale il testo italiano, e hanno i link per passare alle altre lingue.
 - La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
 - L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. C'e' un limite di richieste al giorno, uguale per tutti: quando finisce, l'assistente dice a che ora (del telefono) torna disponibile. Il modello gira su Cloudflare (Workers AI). Per i fatti che cambiano (orari, prezzi, se serve prenotare) cerca sul web con Tavily, a cui vanno solo nomi di posti, la destinazione e le date, mai nomi di persone o recapiti; se la ricerca sul web non e' attiva o ha finito i crediti del mese, risponde lo stesso con quello che sa e lo dice in una riga piccola. Gli orari di apertura per "Ordina il giro con l'IA" e i posti di una lista incollata ("Aggiungi così come sono") li controlla la mappa di OpenStreetMap, non l'assistente: dove la mappa non li sa, restano vuoti. Un PDF scansionato (pagine fotografate, senza testo) si legge lo stesso: le prime tre pagine vanno all'assistente come immagini, e da un'immagine nomi e numeri non si possono togliere. Niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
-- Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Il lettore dei file di Excel arriva la prima volta che si apre l'importazione da Excel, e da li' resta anche lui. Lo stesso il pezzo che fa il file del backup: dopo la prima apertura con la rete c'e' anche senza. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
+- Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Il lettore dei file di Excel arriva la prima volta che si apre l'importazione da Excel, e da li' resta anche lui. Lo stesso il pezzo che fa il file del backup: dopo la prima apertura con la rete c'e' anche senza. E quello che fa il PDF dell'itinerario arriva la prima volta che si tocca "Crea il PDF", e da li' resta: i PDF dopo si fanno anche senza campo. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
 - Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
 - Eliminare il proprio account: Profilo, sotto i tasti dell'account, la scritta rossa "Elimina il mio account". Prima di procedere l'app dice cosa succede a ogni viaggio: quelli dove sei solo tu se ne vanno con te, quelli dove c'e' ancora qualcuno restano a loro (e se ne eri l'admin il ruolo passa a chi c'era). Le foto che hai messo spariscono anche ai compagni. I dati su questo telefono restano finche' non si fa un reset da Backup. Bisogna scrivere ELIMINA per confermare.
 - In Profilo, sotto "Versione", si legge di che giorno e' la versione che si sta usando, e c'e' il tasto "Cerca la versione più recente": l'app tiene da parte una copia di se' per funzionare senza campo, e quel tasto la butta via e riscarica. Serve quando si sa che c'e' una novita' e non la si vede. I dati dei viaggi non si toccano.
@@ -16223,6 +16510,8 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - I link di Google Maps: si incollano, anche quelli corti di "Condividi" (maps.app.goo.gl), nella ricerca di Scopri › "Cerca", nella ricerca degli hotel, nella "Posizione sulla mappa" del foglio dell'hotel, nella posizione a mano della mail dell'hotel e nell'indirizzo di una tappa: l'app legge il posto dal link (le coordinate, oppure il nome, che poi cerca). Su Android, condividendo un posto da Google Maps a GeppGo, si apre Scopri › "Cerca" con quel posto, da aprire e salvare nel viaggio. Se un link non si riesce a leggere l'app lo dice, e si incolla l'indirizzo.
 - I tetti di spesa: in Spese › Budget, la scheda "🎯 Tetti di spesa" (si apre anche dalla scheda del viaggio: "✈️ Viaggio" in Home › "🎯 Tetti di spesa"). Tre tipi di tetto, tutti facoltativi e nella valuta del viaggio: il tetto del gruppo, per tutto il viaggio; un tetto per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping), sempre del gruppo; e il tuo tetto, per la tua parte delle spese, che e' privato: lo vedi solo tu, i compagni no. I tetti del gruppo li vedono tutti, ma li impostano e li cambiano solo gli admin del viaggio. Per ogni tetto si legge quanto e' speso, quanto resta, la percentuale e "restano X per i prossimi N giorni, cioe' Y al giorno". Le spese previste (non ancora pagate) non contano nello speso: una riga dice "con le previste arriveresti a Z". Le spese in attesa di cambio restano fuori finche' il cambio non arriva, e una riga lo dice. All'80% e al 100% arriva un avviso, una volta sola per soglia, come gli altri avvisi (notifica se e' permessa, se no un banner nell'app); se un admin cambia il tetto, gli avvisi ripartono per quello nuovo. Quando un tetto passa l'80%, in Home compare una riga che porta al Budget.
 - La mappa di tutto il viaggio: tutte le tappe di tutti i giorni su una mappa, un colore per giorno, coi numeri nell'ordine della giornata, la linea che le unisce giorno per giorno e gli alberghi con la casetta. Si apre da "Tutto il viaggio ›" sulla mappa della Home e su quella della giornata in Time Table, e dalla scheda del viaggio ("✈️ Viaggio" in Home › "🗺️ Tutto il viaggio"). In cima si sceglie "Tutti i giorni" o un giorno solo ("Giorno 1", "Giorno 2"...); all'apertura la mappa inquadra tutto. Toccando un numero compare una scheda con nome, giorno e ora, e il tasto "Apri la tappa". Dove le tappe sono tante e vicine diventano un tondo scuro col numero delle tappe: toccandolo ci si avvicina. "Elenco" mostra le stesse tappe in fila, giorno per giorno (anche quelle senza posizione): e' anche il modo di usarla con VoiceOver. Senza rete si vedono le zone della mappa gia' viste.
+- Il PDF dell'itinerario: dalla scheda del viaggio ("✈️ Viaggio" in Home › "📋 PDF dell'itinerario", accanto a "📄 Diario PDF"). E' un PDF da mandare a chi parte con te prima di partire: la copertina (nome, date, destinazione, compagni), poi giorno per giorno le tappe con l'ora, il posto, l'indirizzo e il link "Apri in Google Maps", gli spostamenti fra una tappa e l'altra col mezzo e il tempo, e l'albergo di ogni notte con l'indirizzo e l'ora del check-in. Prima di crearlo si sceglie cosa metterci: "Includi i costi" (spento all'inizio), "Includi le note" e "Includi l'elenco dei biglietti" - i codici e i QR dei biglietti non ci vanno mai, restano nell'app. Si tocca "Crea il PDF", poi "Condividi o salva": si apre il foglio Condividi del telefono col file "Itinerario - nome del viaggio.pdf", da mandare in chat o salvare in File (dove il foglio Condividi non c'e', il tasto e' "Scarica il PDF"). E' scritto nella lingua dell'app, e i nomi dei posti si leggono in ogni alfabeto, anche giapponese e cinese. Il "Diario PDF" e' un'altra cosa: il racconto del viaggio con le foto, che passa dalla stampa del telefono.
+- Il calendario che si aggiorna: dalla scheda del viaggio ("✈️ Viaggio" in Home › "🗓️ Calendario che si aggiorna"), per i viaggi nel cloud (serve l'account). Si tocca "Crea il link" e poi "Aggiungi al calendario": il calendario del telefono chiede di iscriversi, e da li' le tappe con l'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti compaiono nel calendario e si aggiornano da soli quando il viaggio cambia (una tappa spostata si sposta, una cancellata sparisce; il calendario del telefono lo riguarda da solo, ogni tanto, quindi un cambio non compare nello stesso istante). Gli orari sono quelli del posto: a casa si vedono nell'ora di casa, in viaggio in quella di li'. "Copia il link" lo copia, per un altro calendario. Chi ha il link vede l'itinerario (non le note, non le spese, non i biglietti): "Disattiva il link" lo spegne, e "Crea un link nuovo" ne fa un altro e spegne quello di prima. Il link e' di una persona sola; chi esce dal viaggio, o ne viene tolto, lo perde. Senza account, o per un viaggio solo sul telefono, al suo posto c'e' "🗓️ Esporta nel calendario": un file .ics fatto una volta, che non si aggiorna (c'e' anche in fondo al foglio del calendario: "Oppure scarica un file .ics, una volta sola").
 - L'accessibilita': l'app si usa anche con VoiceOver e con una tastiera. Ogni tasto ha un nome che VoiceOver legge (la ✕ dice "Chiudi"); un foglio si chiude anche con Esc, e il fuoco torna al tasto che l'aveva aperto. I messaggi in basso restano da 2,6 a 8 secondi secondo quanto sono lunghi, VoiceOver li legge, e un tocco li chiude. Con "Riduci movimento" acceso sul telefono (su iPhone: Impostazioni › Accessibilità › Movimento) l'app non fa scivolare niente. Si puo' ingrandire con due dita. Le scritte non seguono la grandezza del testo scelta nelle impostazioni del telefono.
 
 Se ti chiedono dov'e' una cosa nell'app, rispondi con il percorso preciso e in una riga. Se una cosa nell'app non c'e', dillo invece di inventarla.`;
@@ -16267,6 +16556,8 @@ const MAPPA_CHIAVI=[
   ['I tetti di spesa',['tetto','tetti','tetto di spesa','limite di spesa','budget massimo','spending cap','spending limit','budget cap','tope de gasto','limite de gasto','plafond','limite de despesa','teto de gastos','teto']],
   ['La mappa di tutto il viaggio',['mappa del viaggio','tutto il viaggio','tutte le tappe','mappa di tutte','trip map','whole trip','all stops','mapa del viaje','todo el viaje','carte du voyage','tout le voyage','mapa da viagem','toda a viagem']],
   ['I link di Google Maps',['google maps','maps.app','goo.gl','link di google','link corto','link corti','short link','enlace de google','enlace corto','lien google','lien court','ligacao do google','ligacao curta']],
+  ['Il PDF dell\'itinerario',['pdf dell\'itinerario','itinerario in pdf','pdf','stampare','stampa','itinerary pdf','print','pdf del itinerario','imprimir','pdf de l\'itineraire','imprimer','pdf do itinerario']],
+  ['Il calendario che si aggiorna',['calendario','calendar','ics','webcal','agenda','iscriversi','abbonamento','subscribe','subscription','suscribir','suscripcion','abonner','abonnement','subscrever','subscricao','calendrier','calendario do telemovel']],
   ['L\'accessibilita',['accessibilita','accessibility','accesibilidad','accessibilite','acessibilidade','voiceover','lettore di schermo','screen reader','lector de pantalla','lecteur d ecran','leitor de ecra','tastiera','keyboard','teclado','clavier','riduci movimento','reduce motion','reducir movimiento','reduire les animations','reduzir movimento','zoom','ingrandire','enlarge','ampliar','agrandir']]
 ];
 const MAPPA_NORMALE=s=>' '+String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9'-]+/g,' ').trim()+' ';
@@ -18631,7 +18922,7 @@ function controllaTetti(){
   app.tettiAvvisi=app.tettiAvvisi||{};
   (app.trips||[]).forEach(viaggio=>{
     if(!viaggio||viaggio.status==='closed')return;
-    const gia=app.tettiAvvisi[viaggio.id]||{};
+    const gia=app.tettiAvvisi[viaggio.id]||{},nuove=[];
     statoTetti(viaggio).forEach(v=>{
       const soglia=v.pct>=100?100:(v.pct>=80?80:0);
       if(!soglia)return;
@@ -18639,22 +18930,39 @@ function controllaTetti(){
       if(g[soglia]===v.tetto)return;
       g[80]=v.tetto;if(soglia===100)g[100]=v.tetto;
       gia[v.chiave]=g;detto=true;
-      avvisaTetto(viaggio,v,soglia);
+      nuove.push({v,soglia});
     });
     app.tettiAvvisi[viaggio.id]=gia;
+    if(nuove.length)avvisaTetti(viaggio,nuove);
   });
   if(detto)save();
 }
-function avvisaTetto(viaggio,v,soglia){
+/* Le soglie passate insieme (una spesa sola che porta oltre il gruppo, la
+   propria parte e una categoria) fanno un avviso solo: prima ne arrivavano
+   tre di fila, uno sopra l'altro. Parte dalla piu' grave - il tetto
+   superato prima dell'80%, e fra due uguali chi e' andato piu' in la' -
+   detta per intero; le altre in una riga sotto, col loro punto. */
+function avvisaTetti(viaggio,nuove){
+  const ord=nuove.slice().sort((x,y)=>(y.soglia-x.soglia)||(y.v.pct-x.v.pct));
+  const prima=ord[0],altre=ord.slice(1);
+  let testo=fraseTetto(viaggio,prima.v,prima.soglia);
+  if(altre.length)testo+=' '+tv('Anche: {1}.',elenco(altre.map(x=>`${nomeBreveTetto(x.v)} (${fmtPct(x.v.pct)})`)));
+  avvisa({tipo:'budget',titolo:tv('🎯 Tetti di spesa · {1}',String(viaggio.name||'')),testo,
+    dove:{tipo:'budget',trip:viaggio.id},tag:'tetto-'+viaggio.id+'-'+prima.v.chiave+'-'+prima.soglia});
+}
+function fraseTetto(viaggio,v,soglia){
   const cur=viaggio.currency||'EUR',sp=fmtMoney(v.speso,cur),tt=fmtMoney(v.tetto,cur),resta=fmtMoney(Math.max(0,v.resta),cur);
   const cat=v.chiave.indexOf('cat:')===0?tv(v.chiave.slice(4)):'';
-  const testo=v.chiave==='gruppo'
+  return v.chiave==='gruppo'
     ?(soglia===100?tv('Il gruppo ha superato il tetto di spesa: {1} su {2}.',sp,tt):tv('Il gruppo ha passato l\'80% del tetto: restano {1}.',resta))
     :v.chiave==='mio'
     ?(soglia===100?tv('Hai superato il tuo tetto di spesa: {1} su {2}.',sp,tt):tv('Hai passato l\'80% del tuo tetto: restano {1}.',resta))
     :(soglia===100?tv('Per {1} il gruppo ha superato il tetto: {2} su {3}.',cat,sp,tt):tv('Per {1} il gruppo ha passato l\'80% del tetto: restano {2}.',cat,resta));
-  avvisa({tipo:'budget',titolo:tv('🎯 Tetti di spesa · {1}',String(viaggio.name||'')),testo,
-    dove:{tipo:'budget',trip:viaggio.id},tag:'tetto-'+viaggio.id+'-'+v.chiave+'-'+soglia});
+}
+function nomeBreveTetto(v){
+  if(v.chiave==='gruppo')return tv('il tetto del gruppo');
+  if(v.chiave==='mio')return tv('il tuo tetto');
+  return tv('il tetto per {1}',tv(v.chiave.slice(4)));
 }
 /* ===== METTERLA SUL TELEFONO =====
    GeppGo e' un sito che si comporta da app, e questo e' il suo punto debole
@@ -25465,7 +25773,7 @@ function buildDayMap(){
     stratoMappa().addTo(dayMapObj);
     pts.forEach((a,i2)=>{
       const ic=L.divIcon({html:`<div style="background:${a.type==='outdoor'?'#B85C38':'#B8863C'};color:#fff;width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.3)">${i2+1}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
-      L.marker([a.lat,a.lng],{icon:ic}).addTo(dayMapObj).bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>ore '+a.time:''}`);
+      L.marker([a.lat,a.lng],{icon:ic}).addTo(dayMapObj).bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>'+esc(tv('ore {1}',a.time)):''}`);
     });
     if(hh){
       const hi=L.divIcon({html:'<div style="background:#F4EDDE;border:2px solid #B85C38;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px">🏠</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});
@@ -25499,14 +25807,19 @@ function buildDayMap(){
    due giorni), si apre il loro elenco.
    Per chi la mappa non la vede c'e' «Elenco»: le stesse tappe, giorno per
    giorno, ognuna un tasto che apre la tappa.
-   I colori portano il numero bianco a piu' di 5:1, e il bordo bianco li
-   stacca dalla mappa. */
-const COLORI_GIORNI=['#B5452A','#1F6EA6','#2D7A4C','#7A49AD','#9A5E00','#B8336A','#22777A','#5A6A1E'];
+   I colori sono ventuno, tutti diversi fino a tre settimane: con otto, un
+   viaggio di due settimane aveva il giorno 9 uguale al giorno 1. Sono
+   scelti il piu' lontano possibile l'uno dall'altro (CIEDE2000 almeno 16,
+   e giorni vicini molto di piu'), lontani dal tondo scuro dei gruppi, e
+   tutti portano il numero bianco ad almeno 4,5:1; il bordo bianco li
+   stacca dalla mappa. Dal ventiduesimo giorno ricominciano. */
+const COLORI_GIORNI=['#C62C07','#4B4DCF','#166B02','#6E034F','#206F79','#836404','#3A385B','#7A4F5C','#3D4108','#740D16','#A637A8',
+  '#58330A','#4D0193','#C52350','#6C734B','#0C74B7','#6E698F','#8B654F','#128263','#01435E','#014933'];
 function coloreGiorno(i){return COLORI_GIORNI[i%COLORI_GIORNI.length];}
 let vmMappa=null,vmLinee=null,vmSegni=null,vmFiltro='tutti',vmVistaOra='mappa',vmPunti=[];
-/* Le schede si aprono a 16 px dal bordo della mappa (Leaflet ne lascia 5):
-   a filo del bordo, la crocetta in alto restava mezza fuori, e col dito non
-   la si prendeva. */
+/* Le schede della mappa del viaggio: a 16 px dal bordo come tutte (vedi
+   leafletSistemato), ma qui ripetuto, perche' qui la crocetta in alto e'
+   quella che si tocca di piu'. */
 const VM_SCHEDA={maxWidth:260,autoPanPadding:[16,16]};
 /* Le tappe del viaggio, giorno per giorno: n e' il numero dentro la giornata,
    loc la posizione (anche quella del posto o dell'albergo collegato). */
@@ -25547,9 +25860,6 @@ function vmCreaMappa(){
     dirittiMappa(vmMappa,'bottomleft');
     stratoMappa().addTo(vmMappa);
     vmMappa.on('zoomend',vmDisegnaSegni);
-    /* la crocetta delle schede Leaflet la chiama «Close popup», in inglese
-       per tutti: VoiceOver la leggerebbe cosi' */
-    vmMappa.on('popupopen',e=>{const b=e.popup.getElement()&&e.popup.getElement().querySelector('.leaflet-popup-close-button');if(b){b.setAttribute('aria-label',tv('Chiudi'));b.title=tv('Chiudi');}});
   }
   vmMappa.invalidateSize();
   vmDisegna(true);
@@ -30342,7 +30652,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-19 22:16';
+const VERSIONE_APP='2026-10-20 19:15';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -31596,6 +31906,378 @@ async function openDiary(){
   document.body.classList.add('printing');
   setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('printing'),600);},250);
 }
+/* ===== IL PDF DELL'ITINERARIO (miglioria 13b) =====
+   Un PDF da mandare prima di partire a chi parte con te: la copertina (nome,
+   date, destinazione, compagni), poi giorno per giorno le tappe con l'ora, il
+   posto, l'indirizzo e il link a Google Maps, gli spostamenti col mezzo e il
+   tempo, l'albergo della notte con l'indirizzo e il check-in. A scelta i
+   costi, le note e l'elenco dei biglietti; i codici dei biglietti mai: chi
+   riceve il PDF non deve poter usare il biglietto di un altro.
+   Il «Diario PDF» passa dalla stampa del sistema, che nell'app sulla Home di
+   iPhone non e' affidabile. Questo lo fa l'app (jsPDF, scaricato solo al
+   momento e poi tenuto: vedi LE LIBRERIE) e lo consegna col foglio
+   Condividi, come il backup: prima si prepara, poi un tocco lo consegna,
+   perche' iPhone il foglio Condividi lo apre solo dentro un tocco.
+   I CARATTERI. Quelli di base del PDF hanno le lettere dell'Europa
+   occidentale (WinAnsi): accenti, «€», «œ». Un nome in giapponese, in cinese,
+   in cirillico, con un'emoji no: quella riga la disegna il telefono coi suoi
+   caratteri, che le hanno tutte, e nel PDF entra come immagine. Cosi' non si
+   scarica nessun carattere (quelli giapponesi da soli sono megabyte) e i nomi
+   si leggono in ogni alfabeto; quelle righe pero' nel PDF non si selezionano
+   e non si cercano. */
+const PDF_A4={l:595.28,h:841.89},PDF_M={x:46,alto:58,basso:60},PDF_COL=74,PDF_COSTI=260;
+const PDF_INK=[30,26,18],PDF_TENUE=[92,83,70],PDF_ORO=[184,134,60],PDF_LINK=[128,86,20];
+const PDF_FONT='-apple-system,"Helvetica Neue",Helvetica,Arial,"Hiragino Sans","Hiragino Kaku Gothic ProN","PingFang SC","PingFang TC","Apple SD Gothic Neo","Noto Sans CJK JP","Noto Sans JP","Noto Sans","Yu Gothic","Microsoft YaHei",sans-serif';
+/* Le lettere di WinAnsi che non stanno in Latin-1: jsPDF le scrive solo se
+   gli si da' direttamente il loro byte (0x80 per «€»). */
+const PDF_WINANSI=new Map([['€',0x80],['‚',0x82],['ƒ',0x83],['„',0x84],['…',0x85],['†',0x86],['‡',0x87],['ˆ',0x88],['‰',0x89],['Š',0x8A],['‹',0x8B],['Œ',0x8C],['Ž',0x8E],
+  ['‘',0x91],['’',0x92],['“',0x93],['”',0x94],['•',0x95],['–',0x96],['—',0x97],['˜',0x98],['™',0x99],['š',0x9A],['›',0x9B],['œ',0x9C],['ž',0x9E],['Ÿ',0x9F]]);
+/* Il testo coi byte di WinAnsi, o null se una lettera li' non c'e'. Gli
+   spazi stretti di Intl (nei numeri francesi) diventano spazi normali. */
+function pdfLatino(s){
+  let out='';
+  for(const ch of String(s==null?'':s)){
+    const w=PDF_WINANSI.get(ch);
+    if(w){out+=String.fromCharCode(w);continue;}
+    const c=ch.codePointAt(0);
+    if(c===9||c===0x202F||c===0x2009||c===0x2007){out+=' ';continue;}
+    if((c>=32&&c<127)||(c>=160&&c<256)){out+=ch;continue;}
+    return null;
+  }
+  return out;
+}
+let pdfTela=null;
+function pdfPennello(pt,grassetto){
+  const c=pdfTela||(pdfTela=document.createElement('canvas')),g=c.getContext('2d');
+  g.font=`${grassetto?'700':'400'} ${pt*3}px ${PDF_FONT}`;
+  return g;
+}
+/* Una riga disegnata dal telefono: tre punti immagine per punto PDF, su
+   fondo bianco come la pagina. La linea di base sta a un'altezza del
+   carattere dal bordo di sopra, come per il testo. */
+function pdfImmagine(testo,pt,grassetto,colore){
+  const c=pdfTela||(pdfTela=document.createElement('canvas'));
+  let g=pdfPennello(pt,grassetto);
+  const px=pt*3,w=Math.max(1,Math.ceil(g.measureText(testo).width+px*0.1)),h=Math.ceil(px*1.32);
+  c.width=w;c.height=h;
+  g=pdfPennello(pt,grassetto);
+  g.fillStyle='#fff';g.fillRect(0,0,w,h);
+  g.fillStyle=`rgb(${colore.join(',')})`;g.textBaseline='alphabetic';
+  g.fillText(testo,0,Math.round(px));
+  return {data:c.toDataURL('image/jpeg',0.92),w:w/3,h:h/3,testo};
+}
+const PDF_IDEOGRAMMI=/[⺀-鿿가-힯豈-﫿＀-￯　-〿]/;
+/* Un paragrafo diviso in righe larghe al massimo `larghezza` punti: col
+   metro di jsPDF se e' tutto WinAnsi, se no col metro del telefono, parola
+   per parola e un ideogramma alla volta (fra quelli si va a capo dovunque). */
+function pdfRighe(doc,testo,larghezza,pt,grassetto){
+  const lat=pdfLatino(testo);
+  if(lat!==null){doc.setFont('helvetica',grassetto?'bold':'normal');doc.setFontSize(pt);return doc.splitTextToSize(lat,larghezza).map(r=>({lat:r}));}
+  const g=pdfPennello(pt,grassetto),misura=s=>g.measureText(s).width/3;
+  const pezzi=[];let parola='';
+  for(const ch of String(testo)){
+    if(/\s/.test(ch)){if(parola)pezzi.push(parola);parola='';pezzi.push(' ');}
+    else if(PDF_IDEOGRAMMI.test(ch)){if(parola)pezzi.push(parola);parola='';pezzi.push(ch);}
+    else parola+=ch;
+  }
+  if(parola)pezzi.push(parola);
+  const righe=[];let cur='';
+  for(const p of pezzi){
+    const prova=cur+p;
+    if(!cur.trim()||misura(prova.trimEnd())<=larghezza)cur=prova;
+    else{righe.push(cur.trimEnd());cur=p===' '?'':p;}
+  }
+  if(cur.trim())righe.push(cur.trimEnd());
+  /* una riga venuta tutta di lettere WinAnsi torna testo vero */
+  return righe.map(r=>{const l=pdfLatino(r);return l!==null?{lat:l}:{img:r};});
+}
+/* Un pezzo di testo pronto da mettere giu': le sue righe e quanto e' alto. */
+function pdfPezzo(st,p){
+  const pt=p.pt||10.5,x=p.x!=null?p.x:PDF_M.x,larg=p.larghezza||(PDF_A4.l-PDF_M.x-x);
+  const testo=String(p.testo==null?'':p.testo);
+  const righe=testo?pdfRighe(st.doc,testo,larg,pt,p.grassetto):[];
+  const passo=pt*(p.interlinea||1.35);
+  return {p,pt,x,righe,passo,h:(p.prima||0)+righe.length*passo};
+}
+function pdfMetti(st,pz){
+  const {p,pt,x,passo}=pz,doc=st.doc,colore=p.colore||PDF_INK;
+  st.y+=p.prima||0;
+  pz.righe.forEach((r,i)=>{
+    st.y+=passo;
+    if(i===0&&p.colonna){
+      doc.setFont('helvetica','bold');doc.setFontSize(pt);doc.setTextColor(...PDF_INK);
+      const cl=pdfLatino(p.colonna);if(cl!==null)doc.text(cl,PDF_M.x,st.y);
+    }
+    if(i===0&&p.destra){
+      const dl=pdfLatino(p.destra),xd=PDF_M.x+PDF_COSTI;
+      if(dl!==null){doc.setFont('helvetica','normal');doc.setFontSize(pt);doc.setTextColor(...colore);doc.text(dl,xd,st.y,{align:'right'});}
+      else{const im=pdfImmagine(p.destra,pt,false,colore);doc.addImage(im.data,'JPEG',xd-im.w,st.y-pt,im.w,im.h);}
+    }
+    if(r.lat!=null){
+      doc.setFont('helvetica',p.grassetto?'bold':'normal');doc.setFontSize(pt);doc.setTextColor(...colore);
+      if(p.link)doc.textWithLink(r.lat,x,st.y,{url:p.link});else doc.text(r.lat,x,st.y);
+    }else{
+      const im=pdfImmagine(r.img,pt,p.grassetto,colore);
+      doc.addImage(im.data,'JPEG',x,st.y-pt,im.w,im.h);
+      if(p.link)doc.link(x,st.y-pt,im.w,im.h,{url:p.link});
+    }
+  });
+}
+/* Pezzi che stanno insieme (una tappa con le sue righe): se in fondo alla
+   pagina non ci stanno tutti, vanno tutti alla pagina dopo. */
+function pdfBlocco(st,pezzi){
+  const pz=pezzi.filter(p=>p&&p.testo).map(p=>pdfPezzo(st,p));
+  st.serve(pz.reduce((n,z)=>n+z.h,0));
+  pz.forEach(z=>pdfMetti(st,z));
+}
+function pdfTestata(st){
+  const doc=st.doc;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...PDF_TENUE);
+  doc.text(['GeppGo',pdfLatino(st.t.name||'')].filter(Boolean).join(' · '),PDF_M.x,34);
+  doc.setDrawColor(...PDF_ORO);doc.setLineWidth(0.6);doc.line(PDF_M.x,40,PDF_A4.l-PDF_M.x,40);
+}
+function pdfNuovo(t){
+  const doc=new window.jspdf.jsPDF({unit:'pt',format:'a4',compress:true});
+  const st={doc,t,y:PDF_M.alto};
+  st.pagina=()=>{doc.addPage();st.y=PDF_M.alto;pdfTestata(st);};
+  st.serve=h=>{if(st.y+h>PDF_A4.h-PDF_M.basso&&st.y>PDF_M.alto+1)st.pagina();};
+  return st;
+}
+function pdfRgb(h){const n=parseInt(String(h).slice(1),16);return [n>>16,(n>>8)&255,n&255];}
+function pdfData(iso,opz){const d=new Date(iso+'T12:00:00');return isNaN(d.getTime())?'':d.toLocaleDateString(loc(),opz||{weekday:'long',day:'numeric',month:'long'});}
+/* L'albergo di quella notte, anche senza posizione sulla mappa. */
+function albergoDellaNotte(t,data){return (t.hotels||[]).find(h=>h&&h.checkIn&&h.checkOut&&data>=h.checkIn&&data<h.checkOut)||null;}
+function pdfMappa(lat,lng,cerca){
+  if(lat!=null&&lng!=null&&isFinite(+lat)&&isFinite(+lng))return `https://www.google.com/maps/search/?api=1&query=${+lat},${+lng}`;
+  return cerca?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cerca)}`:'';
+}
+/* Il tratto fino alla tappa: «~12 min a piedi · 0,9 km» (la tilde finche' e'
+   una stima, come il «≈» della time-table, che fra i caratteri del PDF non
+   c'e'). */
+function pdfTratto(est){return tv('{1} min {2} · {3} km',(est.vero?'':'~')+est.minutes,tv(modeNome(est.mode)),fmtNum(est.km,Number.isInteger(est.km)?0:1));}
+function pdfItinerario(t,o){
+  const st=pdfNuovo(t),doc=st.doc,cur=t.currency||'EUR',X2=PDF_M.x+PDF_COL;
+  o=o||{};
+  /* ── la copertina ── */
+  const nomi=(t.participants||[]).map(p=>p.name).filter(Boolean);
+  const tappe=(t.days||[]).reduce((n,d)=>n+(d.activities||[]).length,0);
+  const date=(t.start&&t.end)?`${pdfData(t.start,{day:'numeric',month:'long',year:'numeric'})} – ${pdfData(t.end,{day:'numeric',month:'long',year:'numeric'})}`:'';
+  st.y=170;
+  pdfBlocco(st,[{testo:'GeppGo',pt:13,grassetto:true,colore:PDF_ORO},
+    {testo:t.name||tv('Viaggio'),pt:28,grassetto:true,prima:8,interlinea:1.18},
+    {testo:date,pt:13,colore:PDF_TENUE,prima:10},
+    {testo:t.destination||'',pt:14,prima:22},
+    {testo:nomi.length>1?tv('Compagni di viaggio: {1}',elenco(nomi)):'',pt:12,prima:8},
+    {testo:[tp((t.days||[]).length,'{1} giorno','{1} giorni'),tp(tappe,'{1} tappa','{1} tappe'),tp((t.hotels||[]).length,'{1} albergo','{1} alberghi')].join(' · '),pt:11,colore:PDF_TENUE,prima:22}]);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...PDF_TENUE);
+  doc.text(pdfLatino(tv('Fatto con GeppGo il {1}',pdfData(todayISO(),{day:'numeric',month:'long',year:'numeric'})))||'GeppGo',PDF_M.x,PDF_A4.h-70);
+  st.pagina();
+  /* ── giorno per giorno ── */
+  if(!(t.days||[]).length)pdfBlocco(st,[{testo:tv('Il viaggio non ha ancora giorni.'),colore:PDF_TENUE,prima:10}]);
+  (t.days||[]).forEach((d,di)=>{
+    const tit=pdfPezzo(st,{testo:tv('Giorno {1} · {2}',di+1,pdfData(d.date))+(d.title?' · '+d.title:''),pt:14,grassetto:true,x:PDF_M.x+18,prima:di?20:6});
+    st.serve(tit.h+40);
+    pdfMetti(st,tit);
+    doc.setFillColor(...pdfRgb(coloreGiorno(di)));doc.roundedRect(PDF_M.x,st.y-10,11,11,2,2,'F');
+    const h=albergoDellaNotte(t,d.date);
+    if(h){
+      const u=pdfMappa(h.lat,h.lng,h.address||h.name);
+      pdfBlocco(st,[{testo:tv('Notte: {1}',h.name||''),pt:10,grassetto:true,x:PDF_M.x+18,prima:4},
+        {testo:h.address||'',pt:9.5,colore:PDF_TENUE,x:PDF_M.x+18},
+        {testo:d.date===h.checkIn?tv('Check-in dalle {1}',h.oraCheckIn||'15:00'):'',pt:9.5,x:PDF_M.x+18},
+        {testo:u?tv('Apri in Google Maps'):'',pt:9.5,colore:PDF_LINK,link:u,x:PDF_M.x+18}]);
+    }
+    const acts=homeActs(d);
+    if(!acts.length){pdfBlocco(st,[{testo:tv('Giornata libera'),colore:PDF_TENUE,x:X2,prima:8}]);return;}
+    let tratti=new Map();try{tratti=computeDayTravel(d,t).segs;}catch(e){}
+    acts.forEach(a=>{
+      const poi=a.poiId!=null?(t.pois||[]).find(p=>p.id===a.poiId):null;
+      const alb=a.hotelId!=null?(t.hotels||[]).find(x=>x.id===a.hotelId):null;
+      const pos=actLoc(t,a),indirizzo=a.address||(poi&&poi.address)||(alb&&alb.address)||'';
+      const u=pos?pdfMappa(pos.lat,pos.lng):pdfMappa(null,null,indirizzo);
+      const ora=a.time?(a.time+(a.timeEnd&&a.timeEnd>a.time?'–'+a.timeEnd:'')):'';
+      const note=String(a.notes||'').trim();
+      let costo=0;
+      if(o.costi)(t.expenses||[]).forEach(e=>{if(e.type!=='transfer'&&!inAttesa(e)&&spesaTappe(e).indexOf(a.id)>=0)costo+=Number(e.amount)||0;});
+      const tr=tratti.get(a.id);
+      pdfBlocco(st,[
+        tr?{testo:pdfTratto(tr),pt:9,colore:PDF_TENUE,x:X2,prima:10}:null,
+        {testo:a.name||tv('Attività'),pt:10.5,grassetto:true,x:X2,colonna:ora||'·',prima:tr?1:8},
+        {testo:poi&&poi.name&&poi.name!==a.name?poi.name:'',pt:9.5,x:X2},
+        {testo:indirizzo,pt:9.5,colore:PDF_TENUE,x:X2},
+        {testo:u?tv('Apri in Google Maps'):'',pt:9.5,colore:PDF_LINK,link:u,x:X2},
+        {testo:o.note&&note&&note!==indirizzo?tv('Note: {1}',note):'',pt:9.5,x:X2},
+        {testo:o.costi&&costo>0?tv('Costo: {1}',fmtMoney(costo,cur)):'',pt:9.5,x:X2}]);
+    });
+  });
+  /* ── i biglietti, senza i codici ── */
+  if(o.biglietti&&(t.tickets||[]).length){
+    pdfBlocco(st,[{testo:tv('Biglietti'),pt:14,grassetto:true,prima:24}]);
+    const tipi={flight:'Volo',attraction:'Attrazione',other:'Altro'};
+    t.tickets.forEach(k=>{
+      let quando='';
+      (t.days||[]).forEach((d,di)=>{const a=(d.activities||[]).find(x=>x.id===k.actId);if(a)quando=tv('Giorno {1} · {2}',di+1,pdfData(d.date,{day:'numeric',month:'long'}))+(a.time?' · '+a.time:'');});
+      const chi=k.personId!=null?((t.participants||[]).find(p=>p.id===k.personId)||{}).name:'';
+      pdfBlocco(st,[{testo:k.name||'',pt:10.5,grassetto:true,prima:8},
+        {testo:[tv(tipi[k.type]||'Altro'),chi?tv('di {1}',chi):'',quando].filter(Boolean).join(' · '),pt:9.5,colore:PDF_TENUE}]);
+    });
+  }
+  /* ── i costi ── */
+  if(o.costi){
+    const spese=(t.expenses||[]).filter(e=>e.type!=='transfer'&&!inAttesa(e));
+    const tot=spese.reduce((n,e)=>n+(Number(e.amount)||0),0),prev=spese.filter(e=>e.paid===false).reduce((n,e)=>n+(Number(e.amount)||0),0);
+    const righe=[{testo:tv('Costi'),pt:14,grassetto:true,prima:24}];
+    CATS.forEach(c=>{const s2=spese.filter(e=>e.category===c.k).reduce((n,e)=>n+(Number(e.amount)||0),0);if(s2>0)righe.push({testo:tv(c.k),pt:10.5,destra:fmtMoney(s2,cur),prima:4});});
+    righe.push({testo:tv('Totale: {1}',fmtMoney(tot,cur)),pt:11,grassetto:true,prima:10});
+    if(prev>0)righe.push({testo:tv('di cui previste: {1}',fmtMoney(prev,cur)),pt:9.5,colore:PDF_TENUE});
+    const n=(t.expenses||[]).filter(e=>inAttesa(e)&&e.type!=='transfer').length;
+    if(n)righe.push({testo:tp(n,'{1} spesa non ancora inclusa (cambio in attesa)','{1} spese non ancora incluse (cambio in attesa)'),pt:9.5,colore:PDF_TENUE,prima:4});
+    pdfBlocco(st,righe);
+  }
+  /* i numeri di pagina, dalla seconda */
+  const n=doc.internal.getNumberOfPages();
+  for(let p=2;p<=n;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...PDF_TENUE);doc.text(`${p} / ${n}`,PDF_A4.l-PDF_M.x,PDF_A4.h-30,{align:'right'});}
+  doc.setProperties({title:pdfLatino(t.name||'')||'GeppGo',subject:pdfLatino(tv('Itinerario'))||'',creator:'GeppGo'});
+  return doc.output('blob');
+}
+function nomeFilePdf(t){
+  const nome=String((t&&t.name)||tv('Viaggio')).replace(/[\\/:*?"<>|\u0000-\u001f]+/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'GeppGo';
+  return tv('Itinerario - {1}.pdf',nome);
+}
+let pdfPronto=null;
+function apriPdfItinerario(){
+  const t=T();if(!t){toast('Apri prima un viaggio');return;}
+  const o=Object.assign({costi:false,note:true,biglietti:true},app.pdfOpzioni||{});
+  ['costi','note','biglietti'].forEach(k=>{const c=document.getElementById('pdfOpz_'+k);if(c)c.checked=!!o[k];});
+  pdfPronto=null;pdfMostra('');
+  openSheet('mPdfItin');
+}
+/* Cambiata un'opzione, il PDF gia' fatto non vale piu': si rifa'. */
+function pdfOpzioniCambiate(){pdfPronto=null;pdfMostra('');}
+function pdfMostra(stato){
+  const s=document.getElementById('pdfStato'),az=document.getElementById('pdfAzioni');if(!s||!az)return;
+  s.textContent=stato==='prepara'?tv('Preparo il PDF…'):stato==='rete'?tv('Per fare il PDF serve la rete, la prima volta: collegati e riprova.')
+    :stato==='rotto'?tv('Il PDF non è riuscito: riprova.'):pdfPronto?tv('Il PDF è pronto: {1} ({2}).',pdfPronto.name,pesoLeggibile(pdfPronto.size)):'';
+  az.innerHTML=pdfPronto
+    ?`<button class="btn btn-grad btn-block" onclick="consegnaPdf()">${esc(tv(puoCondividereFile(pdfPronto)?'Condividi o salva':'Scarica il PDF'))}</button>`
+    :`<button class="btn btn-grad btn-block" id="pdfCrea" onclick="creaPdfItinerario()"${stato==='prepara'?' disabled':''}>${esc(tv('Crea il PDF'))}</button>`;
+}
+async function creaPdfItinerario(){
+  const t=T();if(!t)return;
+  const o={};['costi','note','biglietti'].forEach(k=>{const c=document.getElementById('pdfOpz_'+k);o[k]=!!(c&&c.checked);});
+  app.pdfOpzioni=o;save();
+  pdfPronto=null;pdfMostra('prepara');
+  try{await caricaLibreria('jspdf');}catch(e){pdfMostra('rete');return;}
+  try{pdfPronto=new File([pdfItinerario(t,o)],nomeFilePdf(t),{type:'application/pdf'});}
+  catch(e){console.log('PDF dell\'itinerario non riuscito:',e);pdfMostra('rotto');return;}
+  pdfMostra('');
+}
+async function consegnaPdf(){
+  const f=pdfPronto;if(!f)return;
+  if(puoCondividereFile(f)){
+    try{await navigator.share({files:[f],title:f.name});closeSheet('mPdfItin');return;}
+    catch(e){if(e&&e.name==='AbortError')return;console.log('Condivisione del PDF non riuscita:',e);}
+  }
+  const u=URL.createObjectURL(f),a=document.createElement('a');
+  a.href=u;a.download=f.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),60000);
+  closeSheet('mPdfItin');toast(tv('PDF pronto: {1}',f.name));
+}
+
+/* ===== IL CALENDARIO CHE SI AGGIORNA (miglioria 13b) =====
+   Per i viaggi nel cloud: un link al calendario in abbonamento. Il
+   calendario del telefono lo riscarica da solo, e le tappe cambiate cambiano
+   anche li'. Lo serve la funzione «calendario» (supabase/functions/
+   calendario, che dice anche cosa diventa un evento e il perche' del fuso);
+   il codice del link sta nella tabella calendari, uno per persona e per
+   viaggio, e lo sceglie il database. Chi ha il link vede l'itinerario: il
+   foglio lo dice, e il link si spegne e si rifa' da qui.
+   Senza account, o con un viaggio solo sul telefono, resta il file .ics di
+   sempre (exportICS): si fa una volta e non si aggiorna. */
+let calRiga=null;
+function calendarioPossibile(t){return !!(t&&t.cid&&sb&&session&&window.GEPPGO_SUPA_URL);}
+function calUrl(codice,webcal){
+  const u=String(window.GEPPGO_SUPA_URL||'').replace(/\/+$/,'')+'/functions/v1/calendario/'+codice+'.ics';
+  return webcal?u.replace(/^https?:\/\//,'webcal://'):u;
+}
+async function apriCalendario(){
+  const t=T();if(!t){toast('Apri prima un viaggio');return;}
+  if(!calendarioPossibile(t)){exportICS();return;}
+  calRiga=null;calMostra('carica');openSheet('mCalendario');
+  assicuraFuso(t);
+  try{
+    const{data,error}=await sb.from('calendari').select('codice,lingua').eq('trip_id',t.cid).maybeSingle();
+    if(error)throw error;
+    calRiga=data||null;
+    /* il calendario parla la lingua dell'app di chi ha fatto il link */
+    if(calRiga&&calRiga.lingua!==linguaScelta()){calRiga.lingua=linguaScelta();sb.from('calendari').update({lingua:linguaScelta()}).eq('trip_id',t.cid).then(()=>{},()=>{});}
+    calMostra('');
+  }catch(e){console.log('Calendario: il cloud non risponde',e);calMostra(tabellaAssente(e)?'manca':'giu');}
+}
+function calMostra(stato,messaggio){
+  const s=document.getElementById('calStato'),az=document.getElementById('calAzioni');if(!s||!az)return;
+  if(stato==='carica'){s.textContent=tv('Un momento…');az.innerHTML='';return;}
+  if(stato==='manca'||stato==='giu'){
+    s.textContent=stato==='manca'?tv('Il calendario che si aggiorna non è ancora disponibile: intanto puoi scaricare il file del calendario.'):tv('Il cloud non risponde: controlla la rete e riprova. Intanto puoi scaricare il file del calendario.');
+    az.innerHTML=`<button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="apriCalendario()">${esc(tv('Riprova'))}</button>`;return;
+  }
+  if(!calRiga){
+    s.textContent=messaggio||tv('Il link non c\'è ancora: crealo, poi aggiungilo al calendario del telefono.');
+    az.innerHTML=`<button class="btn btn-grad btn-block" style="margin-bottom:.5rem" onclick="calCrea(false)">${esc(tv('Crea il link'))}</button>`;return;
+  }
+  s.textContent=messaggio||'';
+  az.innerHTML=`<a class="btn btn-grad btn-block" id="calAggiungi" style="margin-bottom:.5rem;text-decoration:none;display:flex;align-items:center;justify-content:center" href="${esc(calUrl(calRiga.codice,true))}">${esc(tv('Aggiungi al calendario'))}</a>
+    <button class="btn btn-soft btn-block" style="margin-bottom:.5rem" onclick="calCopia()">${esc(tv('Copia il link'))}</button>
+    <div class="cal-fila" style="display:flex;gap:0 .5rem;flex-wrap:wrap"><button class="btn btn-soft" style="margin-bottom:.5rem;flex:1 1 140px" onclick="calCrea(true)">${esc(tv('Crea un link nuovo'))}</button><button class="btn btn-soft" style="margin-bottom:.5rem;flex:1 1 140px" onclick="calSpegni()">${esc(tv('Disattiva il link'))}</button></div>`;
+}
+async function calCrea(nuovo){
+  const t=T();if(!calendarioPossibile(t))return;
+  calMostra('carica');
+  try{
+    if(nuovo||calRiga){const{error:e1}=await sb.from('calendari').delete().eq('trip_id',t.cid).eq('user_id',myUid);if(e1)throw e1;}
+    calRiga=null;
+    const{data,error}=await sb.from('calendari').insert({trip_id:t.cid,lingua:linguaScelta()}).select('codice,lingua').single();
+    if(error)throw error;
+    calRiga=data;
+    calMostra('',nuovo?tv('Link nuovo pronto: quello di prima non funziona più.'):'');
+  }catch(e){console.log('Calendario: link non creato',e);calMostra(tabellaAssente(e)?'manca':'giu');}
+}
+/* Copiare: gli appunti, se no il vecchio comando; se no il link resta qui
+   sotto da copiare a mano (come per gli inviti, vedi copyShare). */
+async function calCopia(){
+  if(!calRiga)return;
+  const u=calUrl(calRiga.codice,false);
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(u);toast('📋 Link copiato');return;}}catch(e){}
+  if(copiaConComando(u)){toast('📋 Link copiato');return;}
+  const s=document.getElementById('calStato');
+  s.innerHTML=`<div class="cal-mano">${esc(tv('Non riesco a copiarlo da solo: tieni premuto sul testo qui sotto e scegli «Copia».'))}<textarea readonly rows="3" aria-label="${esc(tv('Link del calendario'))}" style="width:100%;font-size:16px;font-family:inherit;border:1px solid var(--bordo-campo);border-radius:var(--r-md);padding:.5rem;background:var(--surface);color:var(--ink)">${esc(u)}</textarea></div>`;
+  const ta=s.querySelector('textarea');try{ta.focus();ta.select();ta.setSelectionRange(0,u.length);}catch(e){}
+}
+function calSpegni(){
+  const t=T();if(!calendarioPossibile(t)||!calRiga)return;
+  confirmDo('Disattivare il link del calendario?','Chi l\'ha aggiunto al calendario non vede più gli aggiornamenti. Puoi crearne uno nuovo quando vuoi.',async()=>{
+    try{
+      const{error}=await sb.from('calendari').delete().eq('trip_id',t.cid).eq('user_id',myUid);if(error)throw error;
+      calRiga=null;calMostra('',tv('Link disattivato: il calendario non si aggiorna più.'));
+    }catch(e){console.log('Calendario: link non spento',e);toast(tv('Non sono riuscito a disattivare il link: controlla la rete e riprova.'));}
+  },'🗓️','Disattiva','btn-danger');
+}
+/* Il fuso della destinazione, per il calendario (vedi la funzione): c'e' gia'
+   nel meteo dei giorni scaricati; se il viaggio e' lontano e il meteo non
+   c'e' ancora, lo si chiede una volta a Open-Meteo, che lo da' per un punto
+   della mappa, e resta nel viaggio. */
+async function assicuraFuso(t){
+  if(!t||t.fuso)return;
+  const z=Object.values(t.weather||{}).map(w=>w&&w.fuso).find(Boolean);
+  if(z){t.fuso=z;save();return;}
+  const l=t.destLoc;if(!l||!isFinite(+l.lat)||!isFinite(+l.lng))return;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${+l.lat}&longitude=${+l.lng}&daily=weather_code&forecast_days=1&timezone=auto`);
+    const d=r.ok?await r.json():null;
+    if(d&&d.timezone&&!t.fuso){t.fuso=d.timezone;save();}
+  }catch(e){console.log('Fuso della destinazione non arrivato:',e&&e.name);}
+}
+
 /* — voti di gruppo — */
 function myPid(t){const pp=t.participants.find(x=>x.isMe);return pp?pp.id:null;}
 function voteTag(a){const v=a.votes||{};const u=Object.values(v).filter(x=>x==='up').length,dn=Object.values(v).filter(x=>x==='down').length;return (u||dn)?` · 👍${u}${dn?' 👎'+dn:''}`:'';}

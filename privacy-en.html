@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>GeppGo privacy policy</h1>
-<p class="data">In force since 1 September 2026 · updated on 12 October 2026</p>
+<p class="data">In force since 1 September 2026 · updated on 20 October 2026</p>
 <p class="lingue"><a href="privacy.html" lang="it">Italiano</a> · <strong>English</strong> · <a href="privacy-es.html" lang="es">Español</a> · <a href="privacy-fr.html" lang="fr">Français</a> · <a href="privacy-pt.html" lang="pt">Português</a></p>
 
 <div class="box" id="fa-fede">
@@ -135,6 +135,43 @@ caps for that trip; deleting the account removes everything.</p>
 as storage not to be thrown away when the phone fills up («persistent
 storage»). It’s a request that stays on the phone: it doesn’t send anything
 to anyone.</p>
+
+<h3>The self-updating calendar</h3>
+<p>For a trip in the cloud you can create a calendar link: once added to your
+phone’s calendar, stops with a time, hotel check-ins and check-outs and
+ticketed journeys appear there and update by themselves when the trip
+changes. For this the database keeps a row with the <strong>link
+code</strong> (long and random, chosen by the database), who created it, for
+which trip, in which language and when.</p>
+<ul>
+<li><strong>Anyone with the link can see the itinerary</strong>: the names of
+the stops, the times, the places with address and coordinates, the hotels and
+the ticketed journeys. Not the notes, not the expenses, not the ticket codes,
+not your travel mates’ names. The app says so before giving you the link:
+only give it to people you choose.</li>
+<li>The link is read by your <strong>phone’s calendar</strong>, by itself,
+every now and then. If your calendar is synced with an online account
+(iCloud, Google), that account’s servers may download it too: from there on
+their rules apply.</li>
+<li>The function that answers the link <strong>keeps no record</strong> of
+who asks for it or of the code; it sees the IP address, like any server, and
+doesn’t store it.</li>
+<li>You can <strong>turn the link off whenever you like</strong> (and make a
+new one): from that moment it no longer works. It also stops working if you
+leave the trip or are removed from it, and it goes away with the trip and
+with the account. To know what time the stops are in the local time zone, the
+app asks Open-Meteo once for the destination’s time zone, using its
+coordinates.</li>
+</ul>
+
+<h3>The itinerary PDF</h3>
+<p>The itinerary PDF is made <strong>on your phone</strong>: we don’t receive
+it, and it only goes where you send it with the Share sheet. It contains the
+trip day by day (stops, times, addresses, hotels) and, if you choose, the
+costs, the notes and the list of tickets — never the codes or QR codes.
+Whoever receives it sees what it contains. The piece that makes the PDF is
+downloaded the first time from jsDelivr (see the table below) and then stays
+on the phone.</p>
 
 <h3>Where you are</h3>
 <p>Your location is requested only when it’s needed — finding a toilet, a cash
@@ -260,7 +297,7 @@ searches stay on the phone for one day and don’t reach us.</li>
 <h2>On what grounds</h2>
 <ul>
 <li><strong>To provide the service</strong> (art. 6.1.b GDPR): account, trip
-content, photos, packing list and settings, syncing.</li>
+content, photos, packing list and settings, syncing, calendar links.</li>
 <li><strong>With your consent</strong> (art. 6.1.a): location and
 notifications, which the phone asks you for and which you can withdraw
 whenever you like from the settings.</li>
@@ -275,7 +312,7 @@ needs to do its part.</p>
 
 <table>
 <tr><th>Service</th><th>What it receives</th><th>What for</th></tr>
-<tr><td>Supabase</td><td>Email, trip content, photos, your packing list and your settings</td><td>Database and storage: it’s the app’s cloud</td></tr>
+<tr><td>Supabase</td><td>Email, trip content, photos, your packing list and your settings, calendar links</td><td>Database and storage: it’s the app’s cloud</td></tr>
 <tr><td>GeppGo’s AI bridge and <b>Cloudflare Workers AI</b>, where the Gemma model runs</td><td>What you ask the assistant, with the part of the trip needed to answer, the photos you ask it to recognise and the pages of scanned PDFs (see «What you ask the assistant»). The bridge also sees the IP address</td><td>Answering in the chat, suggesting and arranging stops, reading an itinerary or a hotel’s email, recognising a place from a photo</td></tr>
 <tr><td><b>Tavily</b>, through the AI bridge</td><td>Only a search line: place names, the destination, a date and the topic — <b>not</b> who you are or your IP address (see «Web searches»)</td><td>The assistant’s web searches: whether a place needs booking and, in the chat, facts that change</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordinates and names of places searched for</td><td>Finding places, what’s nearby, the stops’ opening hours, checking the places of a pasted list</td></tr>
@@ -284,11 +321,12 @@ needs to do its part.</p>
 <tr><td>The map bridge, on Supabase</td><td>What you are looking for (a toilet, a cash machine, an address, the name of a hotel) and, when needed, a point on a grid of about 200 metres — <b>not</b> exactly where you are. Nothing that says who you are.</td><td>Asking the map once for everyone, instead of from every phone</td></tr>
 <tr><td><b>Google</b>, through a function of ours on Supabase</td><td>Only the short Google Maps link you paste or share (<code>maps.app.goo.gl/…</code>) — <b>not</b> who you are or your IP address (see “Google Maps links”)</td><td>Finding out where the link leads, to put the place on the map</td></tr>
 <tr><td>Photon (Komoot)</td><td>Text searched and coordinates; for «what are you looking for around here» only the type of place and a point on a grid of about 200 metres</td><td>Address search when the other one isn’t enough, and places around here when the map doesn’t respond</td></tr>
-<tr><td>Open-Meteo</td><td>Coordinates</td><td>The weather for the trip’s days, and hour by hour for the day you are looking at</td></tr>
+<tr><td>Open-Meteo</td><td>Coordinates (for the time zone: those of the destination)</td><td>The weather for the trip’s days, and hour by hour for the day you are looking at; the destination’s time zone, for the calendar</td></tr>
+<tr><td>Your phone’s calendar, and its account’s servers if it is synced (iCloud, Google…)</td><td>The trip itinerary, when it downloads the calendar link you created (see «The self-updating calendar»)</td><td>Showing the stops in the calendar and keeping them up to date</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Name of the place</td><td>Description and photos of places</td></tr>
 <tr><td>MyMemory</td><td>The text searched</td><td>Translating a search when it finds nothing in Italian</td></tr>
 <tr><td>er-api</td><td>Only the currencies</td><td>Exchange rates</td></tr>
-<tr><td>jsDelivr, unpkg, SheetJS</td><td>IP address</td><td>Downloading the app’s libraries (SheetJS is used to read Excel files, fflate to make and read the backup file)</td></tr>
+<tr><td>jsDelivr, unpkg, SheetJS</td><td>IP address</td><td>Downloading the app’s libraries (SheetJS is used to read Excel files, fflate to make and read the backup file, jsPDF to make the itinerary PDF)</td></tr>
 <tr><td>Google Fonts</td><td>IP address</td><td>The app’s fonts (after the first time they stay on the phone)</td></tr>
 </table>
 
@@ -354,8 +392,8 @@ button: from then on their rules apply, not ours.</p>
 <div class="box">
 <p><strong>Where the data is.</strong> The Supabase servers GeppGo runs on are
 in <strong>Stockholm, Sweden</strong> (region <code>eu-north-1</code>): inside
-the European Economic Area. Your email, trips, photos, packing list and
-settings stay there, and are not transferred outside Europe to be
+the European Economic Area. Your email, trips, photos, packing list,
+settings and calendar links stay there, and are not transferred outside Europe to be
 stored.</p>
 <p>Requests to the assistant, on the other hand, are processed by Cloudflare,
 and web searches by Tavily: both also outside Europe, under the rules written
@@ -370,6 +408,8 @@ it; a photo until you remove it.</li>
 memberships, the photos you uploaded, your packing list and your settings.
 Trips that still have someone else in them stay with them: it isn’t fair to
 take away a trip that belongs to five people.</li>
+<li><strong>Calendar links</strong> stay until you turn them off, as long
+as you are in the trip and as long as the trip exists.</li>
 <li><strong>Reports remain</strong>, without the name of whoever made them,
 for the time needed to handle them and to show how they were handled.</li>
 <li><strong>On your phone</strong> the data stays until you do a reset from

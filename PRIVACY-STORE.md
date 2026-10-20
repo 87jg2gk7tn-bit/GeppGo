@@ -34,7 +34,7 @@ Ricavato leggendo il codice, non a ricordo.
 | Contact Info → **Email Address** | L'email dell'account | App Functionality |
 | Identifiers → **User ID** | L'id dell'utente su Supabase | App Functionality |
 | User Content → **Photos or Videos** | Le foto del diario, e di ognuna una copia piccola | App Functionality |
-| User Content → **Other User Content** | Viaggi, tappe, spese (coi tetti di spesa del gruppo), note, biglietti; la valigia di ogni viaggio, il proprio tetto di spesa e alcune impostazioni (navigatore, qualità delle foto, avvisi di prossimità, tema, il proprio nome), che legge solo l'utente stesso | App Functionality |
+| User Content → **Other User Content** | Viaggi, tappe, spese (coi tetti di spesa del gruppo), note, biglietti; la valigia di ogni viaggio, il proprio tetto di spesa e alcune impostazioni (navigatore, qualità delle foto, avvisi di prossimità, tema, il proprio nome), che legge solo l'utente stesso; il link del calendario che si aggiorna (un codice per persona e per viaggio, tabella `calendari`) | App Functionality |
 | User Content → **Customer Support** | Le segnalazioni sulle foto | App Functionality |
 
 Per ognuna: **Used for App Functionality**, non per pubblicità, non per
@@ -171,6 +171,13 @@ Stessa sostanza, nomi diversi:
   la regola del database (tabella `dati_personali`) non le apre nemmeno ai
   compagni di viaggio.
   Cancellabili: se ne vanno col viaggio o con l'account.
+- **Attività nell'app → Altri contenuti generati dall'utente**, anche: il
+  link del calendario che si aggiorna (tabella `calendari`: il codice, di chi
+  è, per quale viaggio, la lingua, quando). Lo vede solo chi l'ha fatto; si
+  spegne dall'app, smette di funzionare uscendo dal viaggio e se ne va col
+  viaggio o con l'account. Chi ha il link vede l'itinerario: è una
+  condivisione che fa l'utente, come mandare un file, non una condivisione
+  dell'app con terzi.
 
 Alla domanda *"i dati sono condivisi con terze parti?"*: sì, con i fornitori
 elencati nella privacy policy (Supabase, Cloudflare Workers AI attraverso il
@@ -309,7 +316,7 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 
 | A chi parla | Cosa gli manda |
 |---|---|
-| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia, il tetto di spesa personale e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte); il link corto di Google Maps da aprire (funzione `link-mappe`, che non lo conserva) |
+| `cyolhqndurgwbivxcssf.supabase.co` | Email, viaggi, foto, segnalazioni; la valigia, il tetto di spesa personale e le impostazioni personali (tabella `dati_personali`, che legge solo chi le ha scritte); il link corto di Google Maps da aprire (funzione `link-mappe`, che non lo conserva); i link del calendario (tabella `calendari`). Dalla funzione `calendario` il calendario del telefono scarica l'itinerario di un viaggio, senza chiave, col codice del link |
 | Google (`maps.app.goo.gl`, `www.google.com`, `maps.google.com`), **dalla funzione `link-mappe`, mai dal telefono** | Il link corto di Google Maps che l'utente ha incollato o condiviso, per sapere dove porta. Niente IP del telefono, niente account |
 | `geppgo-ai.merati-giacomo94.workers.dev` (il ponte su Cloudflare, `worker/ponte-ai.js`, e da lì il modello Gemma su Cloudflare Workers AI) | Quello che si chiede all'assistente, con il pezzo di viaggio che serve a rispondere (tappe con la posizione arrotondata a ~110 m; niente nomi dei compagni né spese); le foto da riconoscere, ridisegnate senza GPS; il testo dei file da leggere, tolti email, carte, IBAN e telefoni; le prime tre pagine di un PDF scansionato, come immagini. Il ponte vede l'indirizzo IP e non conserva niente. Tutte le chiamate passano da `chiediAI` in `Index 2.1.html` |
 | `api.tavily.com` (dal ponte, mai dal telefono) | Una riga di ricerca fatta di nomi di posti del viaggio, la destinazione, una data e l'argomento: niente persone, email o telefoni. Le condizioni di Tavily gli permettono di conservarla e di usarla per migliorare i suoi modelli |
@@ -318,11 +325,11 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `maps.mail.ru/osm/tools/overpass` (Russia) | Coordinate (su una griglia di ~200 m). **Non è di OpenStreetMap**: è una copia della mappa tenuta su da mail.ru, aggiunta perché è l'unica che risponda con dati aggiornati al giorno. Quando il ponte risponde, la richiesta parte dal nostro server; quando il ponte è giù parte dal telefono, e allora vede anche l'IP |
 | `photon.komoot.io` | Testo cercato, coordinate; per «qui intorno» solo il tipo di posto e un punto sulla griglia di ~200 m, e solo quando la mappa non risponde |
 | `routing.openstreetmap.de` (FOSSGIS) | Coordinate di due tappe del viaggio alla volta, non la posizione di chi usa l'app: serve il tempo a piedi, in bici e in auto fra le tappe. La risposta resta nel telefono |
-| `api.open-meteo.com` | Coordinate |
+| `api.open-meteo.com` | Coordinate (anche quelle della destinazione, una volta, per il fuso orario del calendario) |
 | `it.wikipedia.org`, `commons.wikimedia.org`, `www.wikidata.org` | Nomi di luoghi |
 | `api.mymemory.translated.net` | Il testo da tradurre |
 | `open.er-api.com` | Niente di personale (solo le valute) |
-| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare, fflate fa e legge il file del backup) |
+| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare, fflate fa e legge il file del backup, jsPDF fa il PDF dell'itinerario) |
 | `fonts.googleapis.com`, `fonts.gstatic.com` | Indirizzo IP (caratteri; dopo la prima volta restano sul telefono) |
 
 Google Maps, Google Calendar e i siti esterni si aprono **solo** quando è
@@ -340,6 +347,22 @@ minuti. Per le schede degli store è un dato **trattato al momento e non
 conservato** (Apple: non «raccolto»; Google Play: «elaborato in modo
 temporaneo»): non cambia nessuna risposta qui sopra. I link lunghi si
 leggono sul telefono e non escono.
+
+**Il calendario che si aggiorna e il PDF dell'itinerario** (ottobre 2026,
+miglioria 13b). Il link del calendario è una riga della tabella `calendari`
+(un codice di 64 caratteri a caso, di chi è, il viaggio, la lingua, quando):
+dichiarato sopra fra gli «Other User Content». La funzione `calendario` su
+Supabase risponde senza chiave a chi ha il link, perché il calendario di
+iPhone non ne manda: dà l'itinerario (tappe, orari, posti, alberghi, i
+viaggi dei biglietti), mai note, spese, codici dei biglietti o nomi dei
+compagni, e non scrive niente di chi chiede. A scaricarlo è il calendario
+dell'utente (o i server del suo account, iCloud o Google, se il calendario è
+sincronizzato): una condivisione che sceglie l'utente, e la privacy policy lo
+dice. Per sapere il fuso della destinazione l'app chiede una volta a
+Open-Meteo, con le coordinate della destinazione (già fra i fornitori). Il
+PDF dell'itinerario si fa sul telefono (jsPDF, da jsDelivr la prima volta) e
+va solo dove lo manda l'utente col foglio Condividi: niente di raccolto.
+Nessuna risposta delle schede cambia.
 
 > **Una nota su Google Fonts.** I caratteri arrivano dai server di Google, che
 > quindi vedono l'indirizzo IP di chiunque apra l'app. È dichiarato nella

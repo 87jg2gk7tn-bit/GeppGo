@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 19 ottobre 2026.
+Aggiornato: 20 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -29,18 +29,21 @@ fare altro su Supabase, il token va allargato.
 
 Restano queste cose, e non sono codice:
 
-- ⚠️ **Lanciare su Supabase la tabella personale e il guardiano dei tetti di
-  spesa** (12 e 19 ottobre 2026): SQL Editor → New query → incolla tutto
-  `supabase/migrazioni/2026-10-19-tetti-di-spesa.sql` → Run, deve dire
-  *Success. No rows returned*. Quel file contiene anche la tabella della
-  valigia e delle impostazioni del 12 ottobre, che non è mai stata lanciata:
-  basta lui, e quello del 12 non serve più. Va bene anche rilanciare tutto
-  `supabase-schema.sql`, che ha lo stesso testo (ed è la strada più sicura se
-  il file desse un errore). Finché non si fa, valigia, impostazioni e tetto
-  di spesa personale restano sul telefono e l'app non dice niente:
-  semplicemente non passano da un telefono all'altro. I tetti del gruppo
-  funzionano già (stanno nel viaggio) e l'app li fa cambiare solo agli admin;
-  il guardiano serve perché lo stesso valga anche per chi l'app la modifica.
+- ⚠️ **Lanciare su Supabase la migrazione del calendario che si aggiorna**
+  (`supabase/migrazioni/2026-10-20-calendario.sql`, 20 ottobre): SQL Editor
+  → New query → incolla tutto il file → Run, e deve finire con «Success. No
+  rows returned». Si può rilanciare. Finché non c'è, il foglio «🗓️
+  Calendario che si aggiorna» dice che non è ancora disponibile e offre il
+  file .ics. La funzione `calendario` la pubblica da sola «Funzioni» al push
+  su `main` (senza il controllo della chiave: è nel workflow); per vedere se
+  risponde, Actions → «Il ponte risponde?».
+- ~~**Lanciare su Supabase la tabella personale e il guardiano dei tetti di
+  spesa**~~ ✅ **fatto il 20 ottobre**: Giacomo dice che la migrazione della
+  valigia e delle impostazioni (12 ottobre) era già stata lanciata — qui
+  sopra la si credeva ancora da fare — e ha lanciato anche quella dei tetti
+  di spesa (`supabase/migrazioni/2026-10-19-tetti-di-spesa.sql`). Valigia,
+  impostazioni e tetto personale adesso passano da un telefono all'altro, e
+  i tetti del gruppo li custodisce anche il database.
 - ⚠️ **Pubblicare il nuovo ponte dell'assistente** (`worker/ponte-ai.js`,
   ottobre 2026), con il collegamento «AI» e il secret `TAVILY_KEY`: i passi,
   dal telefono, sono in `GUIDA-AI.md` §2. Finché su Cloudflare gira il ponte
@@ -978,10 +981,12 @@ Miglioria 13a, 19 ottobre 2026. `test/prova-budget-mappa.js` e
 - **Gli avvisi** all'80% e al 100%, una volta per soglia e per valore del
   tetto (un tetto nuovo riarma le soglie), passano da `avvisa()`: notifica
   col permesso, banner senza, e il tocco porta al Budget. Se le due soglie
-  passano insieme, l'avviso è uno, quello del 100%. In Home, solo sopra
+  passano insieme, l'avviso è uno, quello del 100%; e se una spesa fa
+  passare più tetti insieme l'avviso è uno solo, che parte dal più grave e
+  dice gli altri in una riga («Anche: …», miglioria 13b). In Home, solo sopra
   l'80%, una scheda col tetto messo peggio, che porta al Budget.
 - **La mappa di tutto il viaggio** («🗺️ Tutto il viaggio»): un colore per
-  giorno (otto, poi si ripetono), i numeri nell'ordine della giornata (gli
+  giorno (ventuno dalla 13b, poi si ripetono), i numeri nell'ordine della giornata (gli
   stessi della Home), una linea per giorno, la casetta degli alberghi nelle
   notti in cui ci si dorme; «Tutti i giorni» o un giorno solo; toccando un
   segnaposto la scheda con nome, giorno e ora, e «Apri la tappa». I
@@ -995,19 +1000,101 @@ Miglioria 13a, 19 ottobre 2026. `test/prova-budget-mappa.js` e
   tasto.
 
 **Quello che resta**
-- Lanciare la migrazione (vedi in cima).
-- Se una spesa fa passare una soglia a più tetti insieme (gruppo, proprio,
-  categoria) arrivano più avvisi, uno per tetto. Si potrebbe farne uno solo,
-  col più grave.
+- ~~Lanciare la migrazione~~ ✅ fatto il 20 ottobre.
+- ~~Più avvisi per una spesa sola~~ ✅ 13b: uno solo, dal più grave.
 - Da lontano la casetta di un albergo può finire sotto il tondo delle tappe
   (le tappe stanno sopra apposta); avvicinandosi esce.
-- Dopo l'ottavo giorno i colori si ripetono: in un viaggio lungo due giorni
-  hanno lo stesso colore, e li distinguono il filtro e il numero del giorno
-  nella scheda.
-- Le schede delle altre mappe (Home, giornata, hotel) hanno ancora la
-  crocetta di Leaflet: 24 px, e per VoiceOver «Close popup», in inglese.
-  Nella mappa del viaggio risponde su 44 px e si chiama «Chiudi»
-  (`VM_SCHEDA` e `popupopen` in `vmCreaMappa`): da portare anche lì.
+- ~~I colori dopo l'ottavo giorno~~ ✅ 13b: ventuno colori, tutti diversi
+  fino a tre settimane (CIEDE2000 almeno 16 fra due qualunque, numero bianco
+  ad almeno 4,5:1). Dal ventiduesimo giorno ricominciano.
+- ~~La crocetta delle altre mappe~~ ✅ 13b: su ogni mappa risponde su 44 px
+  e si chiama «Chiudi» nella lingua dell'app (`leafletSistemato`, che
+  `caricaLibreria` chiama una volta quando arriva Leaflet), e le schede si
+  aprono a 16 px dal bordo.
+
+### PDF dell'itinerario e calendario che si aggiorna: a che punto è
+
+Miglioria 13b, 20 ottobre 2026. `test/prova-pdf-calendario.js` e
+`test/supabase-prova-calendario.sql` lo controllano.
+
+**Com'era prima** (il passo 1 della miglioria). Il «Diario PDF» costruisce il
+diario nella pagina e chiama `window.print()`: il PDF lo fa il foglio di
+stampa del telefono, che nell'app aggiunta alla Home di iPhone non è
+affidabile. «Esporta nel calendario» faceva un file .ics una volta sola, con
+`<a download>` su un blob (dalla Home di iPhone i download di blob per anni
+non sono partiti: in Safari sì), le ore «fluttuanti» e un UID nuovo a ogni
+esportazione: reimportando, tutto doppio. Le ore delle tappe sono «del
+posto», senza fuso; il fuso della destinazione l'app lo conosce solo dal
+meteo (`weather[data].fuso`, da Open-Meteo), cioè nei giorni entro le due
+settimane.
+
+- **Il PDF dell'itinerario** («📋 PDF dell'itinerario», in ✈️ Viaggio accanto
+  al Diario): copertina (nome, date, destinazioni, compagni), giorno per
+  giorno le tappe con ora, posto, indirizzo e «Apri in Google Maps», gli
+  spostamenti col mezzo e il tempo, l'albergo della notte con l'indirizzo e
+  il check-in. A scelta i costi, le note e l'elenco dei biglietti, mai i
+  codici. Lo fa il telefono con jsPDF 4.2.1 (420 KB, scaricato solo la prima
+  volta e poi tenuto dalla service worker): i caratteri di base del PDF
+  hanno le lettere dell'Europa occidentale, e una riga in un altro alfabeto
+  la disegna il telefono e entra come immagine. Così i nomi giapponesi e
+  cinesi si leggono senza scaricare caratteri (quelli giapponesi da soli
+  sono megabyte); quelle righe però non si selezionano. Si consegna in due
+  tempi, come il backup («Crea il PDF», poi «Condividi o salva»): iPhone
+  apre il foglio Condividi solo dentro un tocco, e un file preparato prima
+  ci arriva in tempo. Il nome è «Itinerario - <viaggio>.pdf» nella lingua
+  dell'app.
+- **Il calendario che si aggiorna** («🗓️ Calendario che si aggiorna», per i
+  viaggi nel cloud): un link webcal:// a `…/functions/v1/calendario/<codice>.ics`.
+  Il codice (64 caratteri a caso) lo sceglie il database, uno per persona e
+  per viaggio (tabella `calendari`, con le regole: ognuno vede e cancella
+  solo il suo, e solo per un viaggio di cui fa parte); il link si copia, si
+  rifà e si spegne dal foglio, e uscendo dal viaggio smette di funzionare (la
+  funzione lo controlla ogni volta, e la riga se ne va). La funzione si
+  pubblica senza il controllo della chiave perché il calendario di iPhone
+  non ne manda. Eventi: le tappe con l'ora (dentro ci sono i check-in, i
+  check-out e i viaggi dei biglietti messi in un giorno), il viaggio di un
+  biglietto senza ora per tutto il giorno, il check-in e il check-out di un
+  albergo la cui tappa non c'è. L'UID è l'id della tappa (o dell'albergo):
+  una tappa spostata cambia ora, una cancellata sparisce. Niente note (ci si
+  scrivono codici di prenotazione), niente spese, niente nomi.
+- **Il fuso.** Le ore si scrivono in UTC, calcolate dal fuso del posto: a
+  casa, prima di partire, il calendario mostra l'ora di casa (la
+  descrizione dice anche quella del posto: «Ora del posto: 09:30 (Tokyo)»),
+  in viaggio quella di lì, e i promemoria suonano al momento giusto. Il fuso
+  di un giorno è quello del suo meteo; se no `t.fuso`, che il foglio chiede
+  una volta a Open-Meteo per la destinazione e mette nel viaggio di tutti;
+  se no l'ora resta fluttuante (alle 09:30 dovunque) e si corregge da sola
+  appena il fuso arriva. Il file si rifà a ogni richiesta, con la tabella
+  dei fusi di adesso: un cambio d'ora legale deciso dopo si prende da solo.
+- **Senza account** resta il file .ics di sempre: la voce si chiama «🗓️
+  Esporta nel calendario», e c'è anche in fondo al foglio del calendario.
+
+**Quello che resta**
+- Lanciare la migrazione (vedi in cima). Dopo il merge «Funzioni» pubblica
+  `calendario`; «Il ponte risponde?» dice se risponde senza chiave.
+- Provare su un iPhone vero: il foglio Condividi del PDF nell'app sulla
+  Home; l'iscrizione al calendario dal tasto webcal://; ogni quanto il
+  calendario si aggiorna (lo decide iPhone: Impostazioni › Calendario ›
+  Account › Scarica nuovi dati; Google Calendar ci mette ore).
+- L'.ics «una volta sola» (senza account, e nel Profilo alla scheda
+  «Calendario») si scarica ancora con `<a download>`: dall'app sulla Home di
+  iPhone può non partire. Si può passare al foglio Condividi come il PDF.
+  E la scheda «Calendario» del Profilo offre solo l'.ics: per i viaggi nel
+  cloud potrebbe portare al foglio nuovo.
+- Nel PDF le righe in un alfabeto non latino sono immagini: non si cercano e
+  non si copiano. Per averle testo bisognerebbe mettere nel PDF un pezzo di
+  carattere giapponese o cinese (megabyte da scaricare).
+- In un viaggio che cambia fuso (Italia → Giappone) i giorni senza meteo,
+  oltre le due settimane, prendono il fuso della destinazione: un giorno
+  ancora in Italia sarebbe scritto all'ora di Tokyo finché il meteo di quel
+  giorno non arriva.
+- **La prima schermata è al limite di `prova-avvio`** (vedi le lezioni in
+  fondo): ogni riga di CSS in testa la ritarda. Da decidere: in testa solo lo
+  stile della schermata d'apertura, e il `<style>` grande subito dopo di lei
+  nel `<body>`. La prima schermata arriverebbe in mezzo secondo anche con la
+  rete debole, qualunque sia il peso del CSS. Cambia come si carica tutto il
+  CSS dell'app: va fatto da solo, con le sue prove, anche su Safari, che
+  decide da sé quando disegnare la prima volta.
 
 ### Nessuna funzione nascosta: a che punto è
 
@@ -3039,6 +3126,42 @@ qualcuno che risponde".
   tondo delle tappe raccolte e il dito apriva l'albergo: Playwright si
   rifiutava di toccare il tondo, ed è così che si è visto. Quello che si
   deve poter toccare prende `zIndexOffset`.
+- **I caratteri di base di jsPDF non sono Unicode** (20 ottobre). Helvetica
+  dichiara WinAnsi: le lettere fuori (giapponese, cirillico, «ō», le
+  emoji) escono come spazzatura senza nessun errore, e quelle di WinAnsi che
+  non stanno in Latin-1 («€», «œ», le virgolette curve) jsPDF le scrive solo
+  se gli si dà il loro byte (0x80 per «€»). `pdfLatino` traduce, e una riga
+  che non ci sta la disegna il telefono (`pdfImmagine`).
+- **Un trigger che rimette `user_id = auth.uid()` nasconde le regole**
+  (calendari, 20 ottobre). Bruno che creava un link «a nome di Anna» non
+  veniva respinto: il trigger cambiava la riga in una sua, la regola la
+  lasciava passare, e la prova cadeva più avanti per un doppione che non
+  c'entrava. Il database sceglie quello che deve essere suo (il codice,
+  l'ora); la persona la controlla la regola, che respinge.
+- **Una regola nuova che usa `is_trip_member` va nella lista della
+  pulizia** (`supabase-schema.sql`, la tabella `calendari`): se no al
+  secondo lancio dello schema «cannot drop function is_trip_member», come
+  già con le foto. La prova `rilanciabile` lo trova.
+- **Qui `npm install` non parte**: vuole riscaricare SheetJS da
+  `cdn.sheetjs.com`, che il proxy di questa macchina rifiuta (403), e quello
+  non si aggira. jsPDF è entrato solo in `package.json` (le prove su GitHub
+  fanno `npm install` e lo prendono da lì; il `package-lock.json` già non
+  aveva SheetJS); in locale il pacchetto si è preso con `npm pack` dal
+  registro, che passa.
+- **`prova-avvio`, «la prima schermata»: sta al limite, ed è il CSS in
+  testa** (20 ottobre). Con la rete finta della prova (400 kbps) la prima
+  schermata arriva quando è arrivato tutto il `<style>` della testa, che è
+  passato da 33 KB compressi (7 ottobre, la misura di riferimento: 1220 ms)
+  a 46 KB, una miglioria dopo l'altra. Oggi fa 1400–1410 ms contro i 1403
+  ammessi, col codice di `main` come col nuovo, misurati alternandoli cinque
+  volte; su GitHub `main` passava di poco. La 13b è caduta lì finché i suoi
+  stili stavano in testa (0,3 KB compressi, circa 8 ms): adesso stanno sul
+  posto, nel markup dei due fogli, come già facevano Condividi e il menu
+  della tappa, e la testa pesa come prima. Quindi: gli stili di un foglio
+  che si apre dopo vanno sul posto, non in testa. Se la prova diventa rossa,
+  si misura il codice di prima sulla stessa macchina, alternando, e si
+  confronta il peso compresso della testa (tutto quello prima di `<body>`).
+  Il rimedio vero sta fra le cose da decidere della 13b.
 
 ---
 

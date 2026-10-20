@@ -1161,3 +1161,88 @@ dei due telefoni — i tetti del gruppo viaggiano sui campi del viaggio, che
 si univano già campo per campo, ed è voluto — e nessun errore in pagina. Il
 controllo «il telefono del compagno torna al tetto giusto» fallisce anche
 sul codice nuovo senza `tettiDalCloud`: il compagno resta col tetto suo.
+
+## PDF dell'itinerario e calendario che si aggiorna
+
+```sh
+node test/prova-pdf-calendario.js          # 64 controlli, in nove gruppi (5–7 vogliono Postgres)
+node test/prova-pdf-calendario.js 2 5      # solo il PDF e la funzione del calendario
+psql -f test/supabase-prova-calendario.sql # 20 controlli sul database (li lancia anche tutte.js)
+```
+
+La miglioria 13b. Il PDF si apre qui in Node, senza librerie: gli oggetti,
+i flussi compressi (zlib), il testo scritto coi caratteri di base (i byte di
+WinAnsi tradotti in lettere), i link (`/URI`) e le immagini. Il cloud
+dell'app è il cloud finto di `prova-budget-mappa`, con in più la tabella
+`calendari` e le sue regole; il database e la funzione invece sono veri: un
+database tutto suo (`geppgo_prova_calendario_<pid>`, che alla fine se ne va)
+con lo schema di prima e la migrazione lanciata due volte, e le regole della
+funzione (`supabase/functions/calendario/regole.mjs`) che leggono da lì con
+`calendario_per_codice`, come fa la funzione pubblicata. Le nove domande:
+
+1. **Dalla 13a**: una spesa che passa tre soglie insieme fa un avviso solo,
+   che parte dalla più grave e dice le altre («Anche: …»), anche in inglese;
+   i colori dei giorni tutti diversi fino al 21 sulla mappa del viaggio, e
+   distinguibili (CIEDE2000 almeno 15, numero bianco a 4,5:1); la crocetta
+   delle schede sulla mappa della Home e su quella della giornata risponde
+   su 44 px e si chiama «Close» in inglese.
+2. **Il PDF**: un PDF vero, con la copertina (nome, date, destinazione,
+   compagni), i giorni, le tappe con l'ora, l'albergo della notte col
+   check-in, gli spostamenti col mezzo e il tempo, i link a Google Maps
+   toccabili; le opzioni (costi, note, biglietti) rispettate; i codici dei
+   biglietti in nessun punto del file, nemmeno nei flussi compressi; le sole
+   immagini sono righe di testo (un QR sarebbe un quadrato).
+3. **Accenti e giapponese**: «Caffè Crème brûlée», «Œuvre d’art – 50 €» sono
+   testo vero; il nome e l'indirizzo giapponesi sono nel PDF proprio come li
+   disegna il telefono (lo stesso JPEG, byte per byte), e gli ideogrammi
+   disegnati uno per volta sono pieni e diversi fra loro (un carattere che
+   manca diventa un quadratino, uguale per tutti); il PDF pesa decine di KB.
+4. **Il foglio Condividi**: «Condividi o salva» lo apre col file dentro il
+   tocco (`navigator.userActivation`), il file è «Itinerario -
+   Giappone.pdf», «Itinerary - …» in inglese, «Itinéraire - …» in francese;
+   un nome con «/», «:» o virgolette diventa un nome di file valido; senza
+   foglio Condividi si scarica col nome giusto.
+5. **Il calendario**: dalla Home in due tocchi; «Crea il link» (il codice
+   lo sceglie il database), «Aggiungi al calendario» è il webcal:// della
+   funzione, «Copia il link» copia l'https, «Crea un link nuovo» spegne il
+   vecchio, «Disattiva il link» dopo la conferma; il fuso della destinazione
+   chiesto una volta e messo nel viaggio; la lingua del calendario che segue
+   l'app; senza la tabella nel cloud il foglio lo dice piano e offre l'.ics.
+   Poi la funzione col database: 200 e `text/calendar`, il file scritto come
+   vuole iCalendar (CRLF, righe di 75 byte, eventi chiusi, UID e DTSTAMP,
+   nessun UID doppio), gli eventi giusti, le 09:30 di Tokyo alle 00:30 UTC
+   con «Local time» nella descrizione, posto, coordinate, link e
+   promemoria, il volo senza ora e il check-in tutto il giorno, niente note e
+   niente codici; senza fuso l'ora fluttuante, e il cambio dell'ora legale
+   contato giusto; codice sbagliato, storto, spento, di chi è uscito: 404; il
+   database giù: 503.
+6. **Le modifiche**: la tappa spostata è lo stesso evento alla nuova ora,
+   quella tolta sparisce, quella nuova compare una volta, il check-in
+   diventato una tappa non resta anche come evento dell'albergo.
+7. **Il database**: `supabase-prova-calendario.sql` sopra la migrazione
+   lanciata due volte (nessuno legge, crea o cambia i codici di un altro, e
+   da fuori la funzione non si chiama), e la migrazione è lo stesso testo
+   che sta in fondo allo schema.
+8. **Senza account** la voce resta «🗓️ Esporta nel calendario» e scarica
+   subito il file .ics di sempre.
+9. **Lingue e schermi**: le frasi nuove nelle quattro lingue; nove
+   schermate (la scheda del viaggio, i fogli del PDF e del calendario nei
+   loro stati) in cinque lingue a 320, 390 e 430 px, nei due temi: niente
+   italiano rimasto, niente fuori schermo o tagliato, i tasti nuovi da 44
+   px, axe senza violazioni gravi.
+
+`supabase-prova-calendario.sql` tiene vere le promesse del database: il
+codice lo sceglie il database, ognuno vede e crea solo i suoi link e solo
+per un viaggio di cui fa parte, uno per persona e per viaggio, della riga si
+cambia solo la lingua; `calendario_per_codice` risponde solo a un codice
+giusto, acceso, di chi è ancora nel viaggio (anche se la riga fosse rimasta),
+e con la chiave pubblica non si chiama.
+
+Sul codice di prima (475e8f7) la prova passa 1 controllo su 17 (molti gruppi
+si fermano al primo che manca): resta vero solo «nessun errore nelle
+pagine». Gli altri cadono per il motivo giusto: tre avvisi per una spesa
+sola invece di uno, otto colori (il giorno 9 uguale al giorno 1, CIEDE2000
+0), la crocetta «Close popup» che non risponde su 44 px e, nella mappa della
+giornata, «ore 09:30» anche in inglese; nessun PDF, nessun foglio del
+calendario, nessuna funzione e nessuna migrazione; e nella scheda del
+viaggio la voce del calendario che non passa da `apriCalendario`.
