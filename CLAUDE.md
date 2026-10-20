@@ -35,7 +35,7 @@ quel file è la memoria.
   con `npm run icone`, cioè `test/fai-le-icone.js`), le funzioni Supabase
   in `supabase/functions/`, le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
   jsQR, ZXing, bwip-js, SheetJS per i file di Excel, fflate per il file del
-  backup; pdf.js per i PDF),
+  backup, jsPDF per il PDF dell'itinerario; pdf.js per i PDF),
   **mai bloccanti**: stanno in
   `LIBRERIE` dentro l'HTML, ognuna con la versione esatta e un file che esiste
   davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
@@ -44,15 +44,20 @@ quel file è la memoria.
   SheetJS, che pesa più di tutte le altre insieme, non si scarica in
   sottofondo: ha `alMomento:true` nell'app e sta in `LIBRERIE_AL_MOMENTO` di
   `sw.js`; arriva la prima volta che si apre l'importazione, e da lì resta.
+  Lo stesso jsPDF (420 KB): arriva la prima volta che si crea il PDF
+  dell'itinerario.
   SheetJS viene da `cdn.sheetjs.com` (il pacchetto «xlsx» su npm è fermo
   alla 0.18.5, con falle note): anche le prove lo installano da lì, quindi
   l'ambiente di lavoro deve poter raggiungere quel dominio.
   I caratteri di Google arrivano con un `<link>` che non ferma la pagina
   (mai un `@import`), e la service worker li tiene da parte.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
-  funzioni `vicini` e `geo` (il ponte della mappa) e `link-mappe` (apre i
-  link corti di Google Maps), «A raccolta», la valigia, il tetto di spesa
-  personale e le impostazioni.
+  funzioni `vicini` e `geo` (il ponte della mappa), `link-mappe` (apre i
+  link corti di Google Maps) e `calendario` (il calendario che si aggiorna:
+  si pubblica senza il controllo della chiave, perché il calendario del
+  telefono non ne manda, e la protezione è il codice lungo nel link, uno per
+  persona e per viaggio, tabella `calendari`), «A raccolta», la valigia, il
+  tetto di spesa personale e le impostazioni.
   Le funzioni si pubblicano da sole con `.github/workflows/funzioni.yml` a
   ogni push su `main` che le tocca: una funzione nuova va aggiunta lì. Senza
   account i dati restano solo sul telefono. `supabase-schema.sql` è la verità
@@ -210,6 +215,20 @@ quel file è la memoria.
   coordinate ma col nome, il posto lo cerca la ricerca di sempre. Ogni mappa
   porta «© OpenStreetMap» col link ai diritti (`dirittiMappa`), in un angolo
   senza tasti.
+- **PDF dell'itinerario e calendario** (miglioria 13b, dalla scheda del
+  viaggio): il PDF lo fa il telefono con jsPDF. I caratteri di base del PDF
+  hanno solo le lettere dell'Europa occidentale: una riga in un altro
+  alfabeto (giapponese, cirillico, un'emoji) la disegna il telefono coi suoi
+  caratteri e nel PDF entra come immagine, così non si scarica nessun
+  carattere. Si consegna in due tempi, come il backup: «Crea il PDF», poi
+  «Condividi o salva», perché iPhone apre il foglio Condividi solo dentro un
+  tocco. I codici dei biglietti nel PDF non vanno mai. Il calendario che si
+  aggiorna (regole in `supabase/functions/calendario/regole.mjs`): ogni
+  evento ha l'UID fatto dall'id della tappa o dell'albergo, le ore si
+  scrivono in UTC dal fuso del posto (quello del meteo di quel giorno, se no
+  `t.fuso`, chiesto a Open-Meteo aprendo il foglio), e restano «fluttuanti»
+  finché il fuso non si sa; le note non ci vanno. Senza account, o per un
+  viaggio solo sul telefono, resta il file .ics (`exportICS`).
 
 ## Due regole che non si toccano
 

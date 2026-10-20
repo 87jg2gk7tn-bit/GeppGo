@@ -12,7 +12,7 @@
    tenevano, e senza rete lo scanner, i codici a barre e la mappa non
    c'erano proprio, anche con le mattonelle della mappa gia' viste in
    memoria. */
-const CACHE_NAME = 'geppgo-shell-v52';
+const CACHE_NAME = 'geppgo-shell-v53';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -35,7 +35,10 @@ const LIBRERIE = [
    di portarla nella cache della versione nuova, come le altre, invece di
    buttarla a ogni aggiornamento. */
 const LIBRERIE_AL_MOMENTO = [
-  'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'
+  'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+  /* jsPDF, per il PDF dell'itinerario: 420 KB, e lo fa chi lo chiede, quando
+     lo chiede. Stessa regola di SheetJS. */
+  'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js'
 ];
 /* Quanto si aspetta la rete prima di aprire la copia. Col campo debole
    l'HTML intero vuole parecchi secondi, e prima si aspettava tutto il

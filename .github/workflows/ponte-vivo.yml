@@ -152,6 +152,33 @@ jobs:
           else:
               print('  risponde in un modo che non va:', guaio or json.dumps(d)[:200]); guai += 1
 
+          # ── il calendario che si aggiorna ────────────────────────────
+          # Come lo chiede il calendario di iPhone: senza nessuna
+          # intestazione, e qui con un codice che non esiste. Deve dire «non
+          # c'e'» (404 col suo testo). Un 401 vuol dire che e' stata
+          # pubblicata col controllo della chiave, e il calendario del
+          # telefono non la leggerebbe mai; un 503, che non legge il database.
+          print()
+          print('— il calendario che si aggiorna (un codice che non esiste, senza chiave)')
+          via = time.time()
+          try:
+              with urllib.request.urlopen(base + '/functions/v1/calendario/' + '0' * 64 + '.ics', timeout=30) as r:
+                  print('  risponde %d a un codice che non esiste: non va' % r.status); guai += 1
+          except urllib.error.HTTPError as e:
+              corpo = e.read().decode()[:160]
+              if e.code == 404 and 'Calendario non trovato' in corpo:
+                  print('  c\'e\', risponde senza chiave e dice che quel codice non c\'e\' (%.1fs)' % (time.time() - via))
+              elif e.code == 401:
+                  print('  CHIEDE LA CHIAVE: va pubblicata con --no-verify-jwt (Actions → Funzioni → Run workflow)'); guai += 1
+              elif e.code == 404:
+                  print('  NON C\'E\': la funzione non e\' stata pubblicata (Actions → Funzioni → Run workflow)'); guai += 1
+              elif e.code == 503:
+                  print('  c\'e\', ma non legge il database: e\' stata lanciata la migrazione del calendario?'); guai += 1
+              else:
+                  print('  risponde in un modo che non va:', e.code, corpo.strip()); guai += 1
+          except Exception as e:
+              print('  non risponde:', str(e)[:80]); guai += 1
+
           # ── e i server della mappa, uno per uno ──────────────────────
           # SERVE PERCHE' UNO PUO' MENTIRE BENE. Un server con il database
           # vuoto risponde 200, senza nessun errore, con la lista vuota:

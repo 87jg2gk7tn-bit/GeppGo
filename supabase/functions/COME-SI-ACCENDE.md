@@ -57,6 +57,7 @@ GitHub: non entra nel codice e non lo vede chi legge il repo.
 supabase functions deploy vicini
 supabase functions deploy geo
 supabase functions deploy link-mappe
+supabase functions deploy calendario --no-verify-jwt
 ```
 
 Le prime **due** funzioni condividono la stessa tabella: `vicini` per le
@@ -74,6 +75,21 @@ un limite di richieste; dalla pagina dei consensi europei
 stanno in `link-mappe/regole.mjs` e le prova `test/prova-installazione.js`.
 Finché non è pubblicata, l'app dice che quel link non si riesce ad aprire e
 chiede di incollare l'indirizzo: non si rompe niente.
+
+La quarta, `calendario` (ottobre 2026, miglioria 13b), serve il calendario
+che si aggiorna: il calendario del telefono chiede
+`…/functions/v1/calendario/<codice>.ics` e riceve il viaggio di quel codice
+in formato iCalendar. Il calendario di iPhone **non manda nessuna chiave**:
+per questo si pubblica con `--no-verify-jwt` (il workflow lo fa già), e la
+protezione è il codice dentro il link, 64 caratteri a caso scelti dal
+database. Legge la tabella `calendari` attraverso `calendario_per_codice`,
+che c'è dopo aver lanciato `supabase/migrazioni/2026-10-20-calendario.sql`
+(o lo schema intero). Le regole (cosa diventa un evento, il fuso, come si
+scrive il file) stanno in `calendario/regole.mjs` e le prova
+`test/prova-pdf-calendario.js`. Senza la migrazione l'app dice che il
+calendario che si aggiorna non c'è ancora e offre il file .ics; senza la
+funzione il link c'è ma il calendario del telefono non riesce a
+iscriversi.
 
 `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **ci sono già** dentro le Edge
 Functions: non vanno messe a mano da nessuna parte, e soprattutto **non vanno
@@ -115,6 +131,21 @@ curl -s -X POST "https://<progetto>.supabase.co/functions/v1/link-mappe" \
 Risponde `{"url":"https://www.google.com/maps/..."}`; con un indirizzo che non
 è di Google Maps `{"errore":"non_ammesso"}`, se Google non risponde in otto
 secondi `{"errore":"tempo"}`, se arrivano troppe richieste `{"errore":"troppe"}`.
+
+Per `calendario`, apposta **senza nessuna intestazione** (come il calendario
+di iPhone), con un codice che non esiste:
+
+```
+curl -s -i "https://<progetto>.supabase.co/functions/v1/calendario/0000000000000000000000000000000000000000000000000000000000000000.ics" | head -n 12
+```
+
+Deve rispondere `404` con `Calendario non trovato`. Un `401` vuol dire che è
+stata pubblicata col controllo della chiave (manca `--no-verify-jwt`); un
+`503` che non legge il database (la migrazione non è stata lanciata). Col
+codice di un link vero (dal foglio «🗓️ Calendario che si aggiorna»,
+«Copia il link») risponde `200` e un file che comincia con
+`BEGIN:VCALENDAR`. Lo stesso controllo, senza codice vero, lo fa anche
+**Actions → «Il ponte risponde?»**.
 
 ## Cosa NON fa
 

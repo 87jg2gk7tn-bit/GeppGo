@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>Privacidad de GeppGo</h1>
-<p class="data">En vigor desde el 1 de septiembre de 2026 · actualizada el 12 de octubre de 2026</p>
+<p class="data">En vigor desde el 1 de septiembre de 2026 · actualizada el 20 de octubre de 2026</p>
 <p class="lingue"><a href="privacy.html" lang="it">Italiano</a> · <a href="privacy-en.html" lang="en">English</a> · <strong>Español</strong> · <a href="privacy-fr.html" lang="fr">Français</a> · <a href="privacy-pt.html" lang="pt">Português</a></p>
 
 <div class="box" id="fa-fede">
@@ -136,6 +136,43 @@ de ese viaje; borrar la cuenta lo elimina todo.</p>
 como una memoria que no hay que tirar cuando el teléfono se llena
 («almacenamiento persistente»). Es una petición que se queda en el teléfono: no
 envía nada a nadie.</p>
+
+<h3>El calendario que se actualiza</h3>
+<p>Para un viaje en la nube puedes crear un enlace al calendario: una vez
+añadido al calendario del teléfono, las paradas con horario, las entradas y
+salidas de los alojamientos y los trayectos de los billetes aparecen allí y
+se actualizan solos cuando el viaje cambia. Para ello la base de datos guarda
+una fila con el <strong>código del enlace</strong> (largo y aleatorio, lo
+elige la base de datos), quién lo creó, para qué viaje, en qué idioma y
+cuándo.</p>
+<ul>
+<li><strong>Quien tenga el enlace ve el itinerario</strong>: los nombres de
+las paradas, los horarios, los lugares con dirección y coordenadas, los
+alojamientos y los trayectos de los billetes. No las notas, no los gastos, no
+los códigos de los billetes, no los nombres de tus compañeros. La app lo dice
+antes de darte el enlace: dáselo solo a quien tú quieras.</li>
+<li>El enlace lo lee el <strong>calendario del teléfono</strong>, por su
+cuenta, de vez en cuando. Si tu calendario está sincronizado con una cuenta
+en línea (iCloud, Google), también pueden descargarlo los servidores de esa
+cuenta: a partir de ahí valen sus reglas.</li>
+<li>La función que responde al enlace <strong>no guarda un registro</strong>
+de quién lo pide ni del código; ve la dirección IP, como cualquier servidor,
+y no la guarda.</li>
+<li>El enlace <strong>se desactiva cuando quieras</strong> (y se puede crear
+uno nuevo): desde ese momento ya no funciona. También deja de funcionar si
+sales del viaje o te quitan de él, y se va con el viaje y con la cuenta. Para
+saber a qué hora son las paradas en la zona horaria del lugar, la app pide una
+vez a Open-Meteo la zona horaria del destino, con sus coordenadas.</li>
+</ul>
+
+<h3>El PDF del itinerario</h3>
+<p>El PDF del itinerario se hace <strong>en tu teléfono</strong>: no lo
+recibimos, y solo va adonde tú lo mandes con la hoja Compartir. Dentro está el
+viaje día a día (paradas, horarios, direcciones, alojamientos) y, si lo
+eliges, los costes, las notas y la lista de billetes — nunca los códigos ni
+los QR. Quien lo recibe ve lo que contiene. La pieza que hace el PDF se
+descarga la primera vez de jsDelivr (mira la tabla de abajo) y luego se queda
+en el teléfono.</p>
 
 <h3>Dónde estás</h3>
 <p>Tu ubicación solo se pide cuando hace falta — encontrar un baño, un cajero,
@@ -260,7 +297,7 @@ búsquedas se quedan un día en el teléfono y no nos llegan.</li>
 <h2>Con qué base</h2>
 <ul>
 <li><strong>Para prestar el servicio</strong> (art. 6.1.b RGPD): cuenta,
-contenido de los viajes, fotos, maleta y ajustes, sincronización.</li>
+contenido de los viajes, fotos, maleta y ajustes, sincronización, enlaces del calendario.</li>
 <li><strong>Con tu consentimiento</strong> (art. 6.1.a): ubicación y
 notificaciones, que el teléfono te pide y que puedes retirar cuando quieras
 desde los ajustes.</li>
@@ -275,7 +312,7 @@ necesita para hacer su parte.</p>
 
 <table>
 <tr><th>Servicio</th><th>Qué recibe</th><th>Para qué</th></tr>
-<tr><td>Supabase</td><td>Correo, contenido de los viajes, fotos, tu maleta y tus ajustes</td><td>Base de datos y almacenamiento: es la nube de la app</td></tr>
+<tr><td>Supabase</td><td>Correo, contenido de los viajes, fotos, tu maleta y tus ajustes, los enlaces del calendario</td><td>Base de datos y almacenamiento: es la nube de la app</td></tr>
 <tr><td>El puente IA de GeppGo y <b>Cloudflare Workers AI</b>, donde funciona el modelo Gemma</td><td>Lo que preguntas al asistente, con la parte del viaje que hace falta para responder, las fotos que le pides reconocer y las páginas de los PDF escaneados (mira «Lo que preguntas al asistente»). El puente ve también la dirección IP</td><td>Responder en el chat, sugerir y ordenar las paradas, leer un itinerario o el correo de un hotel, reconocer un lugar en una foto</td></tr>
 <tr><td><b>Tavily</b>, a través del puente IA</td><td>Solo una línea de búsqueda: nombres de lugares, el destino, una fecha y el tema — <b>no</b> quién eres ni tu dirección IP (mira «Búsquedas en la web»)</td><td>Las búsquedas en la web del asistente: si un lugar hay que reservarlo y, en el chat, los datos que cambian</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordenadas y nombres de los lugares buscados</td><td>Encontrar lugares, qué hay cerca, los horarios de las paradas, comprobar los lugares de una lista pegada</td></tr>
@@ -284,11 +321,12 @@ necesita para hacer su parte.</p>
 <tr><td>El puente de los mapas, en Supabase</td><td>Lo que buscas (un baño, un cajero, una dirección, el nombre de un hotel) y, cuando hace falta, un punto en una cuadrícula de unos 200 metros — <b>no</b> dónde estás exactamente. Nada que diga quién eres.</td><td>Preguntar al mapa una vez para todos, en lugar de desde cada teléfono</td></tr>
 <tr><td><b>Google</b>, a través de una función nuestra en Supabase</td><td>Solo el enlace corto de Google Maps que pegas o compartes (<code>maps.app.goo.gl/…</code>) — <b>no</b> quién eres ni tu dirección IP (ver «Los enlaces de Google Maps»)</td><td>Saber adónde lleva el enlace, para poner el lugar en el mapa</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texto buscado y coordenadas; para «qué buscas por aquí» solo el tipo de lugar y un punto en una cuadrícula de unos 200 metros</td><td>Búsqueda de direcciones cuando la otra no basta, y lugares por aquí cuando el mapa no responde</td></tr>
-<tr><td>Open-Meteo</td><td>Coordenadas</td><td>El tiempo de los días del viaje, y hora por hora del día que estás mirando</td></tr>
+<tr><td>Open-Meteo</td><td>Coordenadas (para la zona horaria: las del destino)</td><td>El tiempo de los días del viaje, y hora por hora del día que estás mirando; la zona horaria del destino, para el calendario</td></tr>
+<tr><td>El calendario de tu teléfono, y los servidores de su cuenta si está sincronizado (iCloud, Google…)</td><td>El itinerario del viaje, cuando descarga el enlace del calendario que creaste (mira «El calendario que se actualiza»)</td><td>Mostrar las paradas en el calendario y mantenerlas al día</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nombre del lugar</td><td>Descripción y fotos de los lugares</td></tr>
 <tr><td>MyMemory</td><td>El texto buscado</td><td>Traducir una búsqueda cuando en italiano no encuentra nada</td></tr>
 <tr><td>er-api</td><td>Solo las monedas</td><td>Tipos de cambio</td></tr>
-<tr><td>jsDelivr, unpkg, SheetJS</td><td>Dirección IP</td><td>Descargar las librerías de la app (SheetJS sirve para leer los archivos de Excel, fflate para hacer y leer el archivo de la copia de seguridad)</td></tr>
+<tr><td>jsDelivr, unpkg, SheetJS</td><td>Dirección IP</td><td>Descargar las librerías de la app (SheetJS sirve para leer los archivos de Excel, fflate para hacer y leer el archivo de la copia de seguridad, jsPDF para hacer el PDF del itinerario)</td></tr>
 <tr><td>Google Fonts</td><td>Dirección IP</td><td>Las fuentes de la app (después de la primera vez se quedan en el teléfono)</td></tr>
 </table>
 
@@ -353,7 +391,7 @@ tocas un botón: a partir de ahí valen sus reglas, no las nuestras.</p>
 <p><strong>Dónde están los datos.</strong> Los servidores de Supabase en los
 que funciona GeppGo están en <strong>Estocolmo, Suecia</strong> (región
 <code>eu-north-1</code>): dentro del Espacio Económico Europeo. Tu correo, los
-viajes, las fotos, la maleta y los ajustes se quedan allí, y no se transfieren
+viajes, las fotos, la maleta, los ajustes y los enlaces del calendario se quedan allí, y no se transfieren
 fuera de Europa para guardarlos.</p>
 <p>Las peticiones al asistente, en cambio, las procesa Cloudflare, y las
 búsquedas en la web Tavily: las dos también fuera de Europa, con las reglas
@@ -368,6 +406,8 @@ borras; una foto hasta que la quitas.</li>
 en los viajes, las fotos que has subido, tu maleta y tus ajustes. Los viajes
 en los que queda alguien más se quedan con ellos: no es justo quitar un viaje
 que es de cinco personas.</li>
+<li><strong>Los enlaces del calendario</strong> se quedan hasta que los
+desactivas, mientras estés en el viaje y mientras el viaje exista.</li>
 <li><strong>Las denuncias se quedan</strong>, sin el nombre de quien las hizo,
 el tiempo necesario para gestionarlas y para demostrar cómo se gestionaron.</li>
 <li><strong>En tu teléfono</strong> los datos se quedan hasta que haces un

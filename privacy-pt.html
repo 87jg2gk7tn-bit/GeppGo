@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>Privacidade do GeppGo</h1>
-<p class="data">Em vigor desde 1 de setembro de 2026 · atualizada a 12 de outubro de 2026</p>
+<p class="data">Em vigor desde 1 de setembro de 2026 · atualizada a 20 de outubro de 2026</p>
 <p class="lingue"><a href="privacy.html" lang="it">Italiano</a> · <a href="privacy-en.html" lang="en">English</a> · <a href="privacy-es.html" lang="es">Español</a> · <a href="privacy-fr.html" lang="fr">Français</a> · <strong>Português</strong></p>
 
 <div class="box" id="fa-fede">
@@ -137,6 +137,44 @@ tetos dessa viagem; ao eliminar a conta, tudo.</p>
 dados como memória a não deitar fora quando o telemóvel fica cheio
 («armazenamento persistente»). É um pedido que fica no telemóvel: não envia
 nada a ninguém.</p>
+
+<h3>O calendário que se atualiza</h3>
+<p>Para uma viagem na nuvem podes criar uma ligação para o calendário: depois
+de adicionada ao calendário do telemóvel, as paragens com horário, as
+entradas e saídas dos alojamentos e as viagens dos bilhetes aparecem lá e
+atualizam-se sozinhas quando a viagem muda. Para isso a base de dados guarda
+uma linha com o <strong>código da ligação</strong> (longo e aleatório,
+escolhido pela base de dados), quem a criou, para que viagem, em que língua e
+quando.</p>
+<ul>
+<li><strong>Quem tiver a ligação vê o itinerário</strong>: os nomes das
+paragens, os horários, os sítios com morada e coordenadas, os alojamentos e
+as viagens dos bilhetes. Não as notas, não as despesas, não os códigos dos
+bilhetes, não os nomes dos teus companheiros. A app di-lo antes de te dar a
+ligação: dá-a só a quem tu quiseres.</li>
+<li>A ligação é lida pelo <strong>calendário do telemóvel</strong>, sozinho,
+de vez em quando. Se o teu calendário estiver sincronizado com uma conta
+online (iCloud, Google), também os servidores dessa conta a podem
+descarregar: a partir daí valem as regras deles.</li>
+<li>A função que responde à ligação <strong>não guarda nenhum registo</strong>
+de quem a pede nem do código; vê o endereço IP, como qualquer servidor, e não
+o guarda.</li>
+<li>A ligação <strong>desativa-se quando quiseres</strong> (e podes criar uma
+nova): a partir desse momento deixa de funcionar. Deixa também de funcionar se
+saíres da viagem ou fores retirado dela, e desaparece com a viagem e com a
+conta. Para saber a que horas são as paragens no fuso horário do sítio, a app
+pede uma vez ao Open-Meteo o fuso horário do destino, com as suas
+coordenadas.</li>
+</ul>
+
+<h3>O PDF do itinerário</h3>
+<p>O PDF do itinerário faz-se <strong>no teu telemóvel</strong>: não o
+recebemos, e só vai para onde o mandares com a folha Partilhar. Lá dentro está
+a viagem dia a dia (paragens, horários, moradas, alojamentos) e, se
+escolheres, os custos, as notas e a lista de bilhetes — nunca os códigos nem
+os QR. Quem o recebe vê o que contém. A peça que faz o PDF descarrega-se da
+primeira vez a partir do jsDelivr (vê a tabela abaixo) e depois fica no
+telemóvel.</p>
 
 <h3>Onde estás</h3>
 <p>A localização só é pedida quando é precisa — procurar uma casa de banho,
@@ -267,7 +305,7 @@ pesquisas ficam no telemóvel durante um dia e não chegam a nós.</li>
 <h2>Com que fundamento</h2>
 <ul>
 <li><strong>Para te prestar o serviço</strong> (art. 6.1.b RGPD): conta,
-conteúdo das viagens, fotos, mala e definições, sincronização.</li>
+conteúdo das viagens, fotos, mala e definições, sincronização, ligações do calendário.</li>
 <li><strong>Com o teu consentimento</strong> (art. 6.1.a): a localização e
 as notificações, que o telemóvel te pede e que podes retirar quando quiseres
 nas definições.</li>
@@ -282,7 +320,7 @@ precisa para fazer a sua parte.</p>
 
 <table>
 <tr><th>Serviço</th><th>O que recebe</th><th>Para quê</th></tr>
-<tr><td>Supabase</td><td>E-mail, conteúdo das viagens, fotos, a tua mala e as tuas definições</td><td>Base de dados e arquivo: é a nuvem da app</td></tr>
+<tr><td>Supabase</td><td>E-mail, conteúdo das viagens, fotos, a tua mala e as tuas definições, as ligações do calendário</td><td>Base de dados e arquivo: é a nuvem da app</td></tr>
 <tr><td>A ponte IA do GeppGo e o <b>Cloudflare Workers AI</b>, onde funciona o modelo Gemma</td><td>O que perguntas ao assistente, com a parte da viagem que é precisa para responder, as fotos que lhe pedes para reconhecer e as páginas dos PDF digitalizados (vê «O que perguntas ao assistente»). A ponte vê também o endereço IP</td><td>Responder no chat, propor e organizar paragens, ler um itinerário ou o e-mail de um hotel, reconhecer um sítio numa foto</td></tr>
 <tr><td>O <b>Tavily</b>, através da ponte IA</td><td>Só uma linha de pesquisa: nomes de sítios, o destino, uma data e o assunto — <b>não</b> quem és nem o teu endereço IP (vê «As pesquisas na web»)</td><td>As pesquisas na web do assistente: se um sítio tem de ser reservado e, no chat, os factos que mudam</td></tr>
 <tr><td>OpenStreetMap: Nominatim, Overpass</td><td>Coordenadas e nomes dos locais procurados</td><td>Encontrar sítios, o que há por perto, os horários de abertura das paragens, a verificação dos sítios de uma lista colada</td></tr>
@@ -291,11 +329,12 @@ precisa para fazer a sua parte.</p>
 <tr><td>A ponte do mapa, no Supabase</td><td>O que estás a procurar (uma casa de banho, um multibanco, uma morada, o nome de um hotel) e, quando é preciso, um ponto de uma grelha de cerca de 200 metros — <b>não</b> onde estás exatamente. Nada que diga quem és.</td><td>Perguntar ao mapa uma só vez para todos, em vez de a partir de cada telemóvel</td></tr>
 <tr><td><b>Google</b>, através de uma função nossa no Supabase</td><td>Só a ligação curta do Google Maps que colas ou partilhas (<code>maps.app.goo.gl/…</code>) — <b>não</b> quem és nem o teu endereço IP (ver «As ligações do Google Maps»)</td><td>Saber para onde leva a ligação, para pôr o sítio no mapa</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texto procurado e coordenadas; para «o que procuras aqui à volta» só o tipo de sítio e um ponto de uma grelha de cerca de 200 metros</td><td>Pesquisa de moradas quando a outra não chega, e os sítios aqui à volta quando o mapa não responde</td></tr>
-<tr><td>Open-Meteo</td><td>Coordenadas</td><td>O tempo dos dias da viagem, e hora a hora o do dia que estás a ver</td></tr>
+<tr><td>Open-Meteo</td><td>Coordenadas (para o fuso horário: as do destino)</td><td>O tempo dos dias da viagem, e hora a hora o do dia que estás a ver; o fuso horário do destino, para o calendário</td></tr>
+<tr><td>O calendário do teu telemóvel, e os servidores da conta dele se estiver sincronizado (iCloud, Google…)</td><td>O itinerário da viagem, quando descarrega a ligação do calendário que criaste (vê «O calendário que se atualiza»)</td><td>Mostrar as paragens no calendário e mantê-las atualizadas</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nome do local</td><td>Descrição e fotos dos sítios</td></tr>
 <tr><td>MyMemory</td><td>O texto procurado</td><td>Traduzir uma pesquisa quando em italiano não encontra nada</td></tr>
 <tr><td>er-api</td><td>Só as moedas</td><td>As taxas de câmbio</td></tr>
-<tr><td>jsDelivr, unpkg, SheetJS</td><td>Endereço IP</td><td>Descarregar as bibliotecas da app (o SheetJS serve para ler os ficheiros do Excel, o fflate para fazer e ler o ficheiro da cópia de segurança)</td></tr>
+<tr><td>jsDelivr, unpkg, SheetJS</td><td>Endereço IP</td><td>Descarregar as bibliotecas da app (o SheetJS serve para ler os ficheiros do Excel, o fflate para fazer e ler o ficheiro da cópia de segurança, o jsPDF para fazer o PDF do itinerário)</td></tr>
 <tr><td>Google Fonts</td><td>Endereço IP</td><td>Os tipos de letra da app (depois da primeira vez ficam no telemóvel)</td></tr>
 </table>
 
@@ -362,7 +401,7 @@ nossas.</p>
 <p><strong>Onde estão os dados.</strong> Os servidores do Supabase onde
 funciona o GeppGo ficam em <strong>Estocolmo, na Suécia</strong> (região
 <code>eu-north-1</code>): dentro do Espaço Económico Europeu. O teu e-mail, as
-viagens, as fotos, a mala e as definições ficam lá, e não são transferidos
+viagens, as fotos, a mala, as definições e as ligações do calendário ficam lá, e não são transferidos
 para fora da Europa para serem guardados.</p>
 <p>Os pedidos ao assistente, pelo contrário, são processados pela Cloudflare,
 e as pesquisas na web pelo Tavily: ambos também fora da Europa, com as regras
@@ -377,6 +416,8 @@ uma foto até a tirares.</li>
 nas viagens, as fotos que carregaste, a tua mala e as tuas definições. As
 viagens em que ainda há outra pessoa ficam com ela: não é justo levar a
 viagem de cinco pessoas.</li>
+<li><strong>As ligações do calendário</strong> ficam até as desativares,
+enquanto estiveres na viagem e enquanto a viagem existir.</li>
 <li><strong>As denúncias ficam</strong>, sem o nome de quem as fez, durante
 o tempo necessário para as tratar e para demonstrar como foram tratadas.</li>
 <li><strong>No teu telemóvel</strong> os dados ficam até fazeres uma

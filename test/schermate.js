@@ -62,6 +62,9 @@ const SCRITTI = ['Kinkakuji', 'Hachiko 17:00', 'Zeta-1', 'Zeta-2', 'Zeta-3', 'Is
    «non toccare Premium e pubblicità» riguardava come funzionano, non le
    parole che usano. */
 const SU = "document.getElementById('authGate').style.display='flex';", GIU = "document.getElementById('authGate').style.display='none'";
+/* Un viaggio nel cloud, quanto basta per disegnarlo: un account e il codice
+   del viaggio. */
+const NEL_CLOUD = "sb=sb||{};session={user:{id:'io',email:'q@x.it'}};T().cid='c1';", FUORI_CLOUD = 'session=null;delete T().cid';
 /* Il tempo del primo giorno, e il giorno dalle 0 alle 24 se si vuole il cielo di giorno. */
 const cielo = (codice, giorno) => "(()=>{const w=T().weather[T().days[0].date];w._prima=w._prima||{code:w.code,sunrise:w.sunrise,sunset:w.sunset};w.code=" + codice + ';' +
   (giorno ? "w.sunrise=w.sunrise.slice(0,11)+'00:00';w.sunset=w.sunset.slice(0,11)+'23:59';" : '') + "renderAll();go('plan')})()";
@@ -85,6 +88,16 @@ const PASSI = [
   ['home senza viaggio', "app.currentTripId=999;renderAll();go('plan')", "app.currentTripId=1;renderAll()"],
   ['cassetto', 'apriViaggi()'], ['cosa cerchi', 'apriCerca()'], ['meteo', 'apriMeteo()'],
   ['scheda del viaggio', 'openTripZoom(1)'], ['bagagli', 'openPacking()'], ['compagni', 'openPeople()'],
+  /* Il PDF dell'itinerario e il calendario che si aggiorna (miglioria 13b):
+     il foglio delle opzioni e quello col PDF pronto; il calendario di un
+     viaggio nel cloud senza link, col link, e quando nel cloud non c'e'
+     ancora. */
+  ['pdf dell\'itinerario', 'apriPdfItinerario()'],
+  ['pdf pronto', "apriPdfItinerario();pdfPronto=new File(['%PDF-1.3'],nomeFilePdf(T()),{type:'application/pdf'});pdfMostra('')", 'pdfPronto=null'],
+  ['scheda del viaggio nel cloud', NEL_CLOUD + 'openTripZoom(1)', FUORI_CLOUD],
+  ['calendario senza link', NEL_CLOUD + "openSheet('mCalendario');calRiga=null;calMostra('')", FUORI_CLOUD],
+  ['calendario col link', NEL_CLOUD + "openSheet('mCalendario');calRiga={codice:'" + 'a'.repeat(64) + "',lingua:'it'};calMostra('')", FUORI_CLOUD + ';calRiga=null'],
+  ['calendario non ancora disponibile', NEL_CLOUD + "openSheet('mCalendario');calMostra('manca')", FUORI_CLOUD],
   ['condividi', 'openShare()'], ['condividi senza account', 'openShareLocal()'],
   ['condividi con account', "sb=sb||{};session={user:{id:'io',email:'q@x.it'}};T().cid='c1';T()._invite='x';window.GEPPGO_PUBLIC_URL='https://esempio.it/';openShare()", "session=null;delete T().cid;delete T()._invite;delete window.GEPPGO_PUBLIC_URL"],
   ['invito da link', "handleJoin(btoa(encodeURIComponent(JSON.stringify({n:'Islanda',s:'" + D[0] + "',e:'" + D[3] + "',d:'Reykjavik',p:['Wanda','Vito']}))))"],

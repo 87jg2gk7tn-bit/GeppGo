@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>Confidentialité de GeppGo</h1>
-<p class="data">En vigueur depuis le 1er septembre 2026 · mise à jour le 12 octobre 2026</p>
+<p class="data">En vigueur depuis le 1er septembre 2026 · mise à jour le 20 octobre 2026</p>
 <p class="lingue"><a href="privacy.html" lang="it">Italiano</a> · <a href="privacy-en.html" lang="en">English</a> · <a href="privacy-es.html" lang="es">Español</a> · <strong>Français</strong> · <a href="privacy-pt.html" lang="pt">Português</a></p>
 
 <div class="box" id="fa-fede">
@@ -142,6 +142,44 @@ tout.</p>
 ses données comme une mémoire à ne pas jeter quand le téléphone est plein
 (« stockage persistant »). C’est une demande qui reste dans le téléphone : elle
 n’envoie rien à personne.</p>
+
+<h3>L’agenda qui se met à jour</h3>
+<p>Pour un voyage dans le cloud, tu peux créer un lien d’agenda : une fois
+ajouté à l’agenda du téléphone, les étapes avec un horaire, les arrivées et
+départs des hébergements et les trajets des billets y apparaissent et se
+mettent à jour tout seuls quand le voyage change. Pour cela, la base de
+données garde une ligne avec le <strong>code du lien</strong> (long et
+aléatoire, choisi par la base de données), qui l’a créé, pour quel voyage,
+dans quelle langue et quand.</p>
+<ul>
+<li><strong>Qui a le lien voit l’itinéraire</strong> : les noms des étapes,
+les horaires, les lieux avec adresse et coordonnées, les hébergements et les
+trajets des billets. Pas les notes, pas les dépenses, pas les codes des
+billets, pas les noms de tes compagnons. L’appli le dit avant de te donner le
+lien : ne le donne qu’aux personnes de ton choix.</li>
+<li>Le lien est lu par l’<strong>agenda du téléphone</strong>, tout seul, de
+temps en temps. Si ton agenda est synchronisé avec un compte en ligne
+(iCloud, Google), les serveurs de ce compte peuvent aussi le télécharger : à
+partir de là, ce sont leurs règles qui s’appliquent.</li>
+<li>La fonction qui répond au lien <strong>ne tient aucun registre</strong> de
+qui le demande ni du code ; elle voit l’adresse IP, comme tout serveur, et ne
+la conserve pas.</li>
+<li>Le lien <strong>se désactive quand tu veux</strong> (et on peut en créer
+un nouveau) : à partir de ce moment il ne fonctionne plus. Il cesse aussi de
+fonctionner si tu quittes le voyage ou si tu en es retiré, et il disparaît
+avec le voyage et avec le compte. Pour savoir à quelle heure sont les étapes
+dans le fuseau horaire du lieu, l’appli demande une fois à Open-Meteo le
+fuseau horaire de la destination, avec ses coordonnées.</li>
+</ul>
+
+<h3>Le PDF de l’itinéraire</h3>
+<p>Le PDF de l’itinéraire se fait <strong>sur ton téléphone</strong> : nous ne
+le recevons pas, et il ne va que là où tu l’envoies avec la feuille Partager.
+Il contient le voyage jour par jour (étapes, horaires, adresses,
+hébergements) et, si tu le choisis, les coûts, les notes et la liste des
+billets — jamais les codes ni les QR. Qui le reçoit voit ce qu’il contient.
+Le morceau qui fait le PDF se télécharge la première fois depuis jsDelivr
+(voir le tableau ci-dessous), puis reste sur le téléphone.</p>
 
 <h3>Où tu es</h3>
 <p>Ta position n’est demandée que quand elle sert — trouver des toilettes, un
@@ -281,7 +319,7 @@ pas.</li>
 <h2>Sur quelles bases</h2>
 <ul>
 <li><strong>Pour te fournir le service</strong> (art. 6.1.b RGPD) : compte,
-contenu des voyages, photos, valise et réglages, synchronisation.</li>
+contenu des voyages, photos, valise et réglages, synchronisation, liens d’agenda.</li>
 <li><strong>Avec ton consentement</strong> (art. 6.1.a) : la position et les
 notifications, que le téléphone te demande et que tu peux retirer quand tu
 veux depuis les réglages.</li>
@@ -296,7 +334,7 @@ lui sert pour faire sa part.</p>
 
 <table>
 <tr><th>Service</th><th>Ce qu’il reçoit</th><th>À quoi ça sert</th></tr>
-<tr><td>Supabase</td><td>E-mail, contenu des voyages, photos, ta valise et tes réglages</td><td>Base de données et stockage : c’est le cloud de l’appli</td></tr>
+<tr><td>Supabase</td><td>E-mail, contenu des voyages, photos, ta valise et tes réglages, les liens d’agenda</td><td>Base de données et stockage : c’est le cloud de l’appli</td></tr>
 <tr><td>Le pont IA de GeppGo et <b>Cloudflare Workers AI</b>, où tourne le modèle Gemma</td><td>Ce que tu demandes à l’assistant, avec la partie du voyage qui sert à répondre, les photos que tu lui fais reconnaître et les pages des PDF scannés (vois « Ce que tu demandes à l’assistant »). Le pont voit aussi l’adresse IP</td><td>Répondre dans le chat, proposer et arranger les étapes, lire un itinéraire ou l’e-mail d’un hôtel, reconnaître un lieu sur une photo</td></tr>
 <tr><td><b>Tavily</b>, à travers le pont IA</td><td>Seulement une ligne de recherche : noms de lieux, la destination, une date et le sujet — <b>pas</b> qui tu es ni ton adresse IP (vois « Les recherches sur le web »)</td><td>Les recherches sur le web de l’assistant : s’il faut réserver un lieu et, dans le chat, les informations qui changent</td></tr>
 <tr><td>OpenStreetMap : Nominatim, Overpass</td><td>Coordonnées et noms des lieux cherchés</td><td>Trouver des lieux, ce qu’il y a autour, les horaires d’ouverture des étapes, la vérification des lieux d’une liste collée</td></tr>
@@ -305,11 +343,12 @@ lui sert pour faire sa part.</p>
 <tr><td>Le pont de la carte, sur Supabase</td><td>Ce que tu cherches (des toilettes, un distributeur, une adresse, le nom d’un hôtel) et, quand il le faut, un point d’une grille d’environ 200 mètres — <b>pas</b> l’endroit exact où tu es. Rien qui dise qui tu es.</td><td>Interroger la carte une seule fois pour tout le monde, au lieu de le faire depuis chaque téléphone</td></tr>
 <tr><td><b>Google</b>, par une fonction à nous sur Supabase</td><td>Seulement le lien court Google Maps que tu colles ou que tu partages (<code>maps.app.goo.gl/…</code>) — <b>pas</b> qui tu es ni ton adresse IP (voir « Les liens Google Maps »)</td><td>Savoir où mène le lien, pour mettre le lieu sur la carte</td></tr>
 <tr><td>Photon (Komoot)</td><td>Texte cherché et coordonnées ; pour « que cherches-tu par ici » seulement le type de lieu et un point d’une grille d’environ 200 mètres</td><td>Recherche d’adresses quand l’autre ne suffit pas, et lieux aux alentours quand la carte ne répond pas</td></tr>
-<tr><td>Open-Meteo</td><td>Coordonnées</td><td>La météo des jours du voyage, et heure par heure celle du jour que tu regardes</td></tr>
+<tr><td>Open-Meteo</td><td>Coordonnées (pour le fuseau horaire : celles de la destination)</td><td>La météo des jours du voyage, et heure par heure celle du jour que tu regardes ; le fuseau horaire de la destination, pour l’agenda</td></tr>
+<tr><td>L’agenda de ton téléphone, et les serveurs de son compte s’il est synchronisé (iCloud, Google…)</td><td>L’itinéraire du voyage, quand il télécharge le lien d’agenda que tu as créé (voir « L’agenda qui se met à jour »)</td><td>Afficher les étapes dans l’agenda et les tenir à jour</td></tr>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nom du lieu</td><td>Description et photos des lieux</td></tr>
 <tr><td>MyMemory</td><td>Le texte cherché</td><td>Traduire une recherche quand elle ne trouve rien en italien</td></tr>
 <tr><td>er-api</td><td>Seulement les devises</td><td>Les taux de change</td></tr>
-<tr><td>jsDelivr, unpkg, SheetJS</td><td>Adresse IP</td><td>Télécharger les bibliothèques de l’appli (SheetJS sert à lire les fichiers Excel, fflate à faire et lire le fichier de sauvegarde)</td></tr>
+<tr><td>jsDelivr, unpkg, SheetJS</td><td>Adresse IP</td><td>Télécharger les bibliothèques de l’appli (SheetJS sert à lire les fichiers Excel, fflate à faire et lire le fichier de sauvegarde, jsPDF à faire le PDF de l’itinéraire)</td></tr>
 <tr><td>Google Fonts</td><td>Adresse IP</td><td>Les polices de l’appli (après la première fois elles restent sur le téléphone)</td></tr>
 </table>
 
@@ -378,7 +417,7 @@ qui s’appliquent, pas les nôtres.</p>
 <p><strong>Où sont les données.</strong> Les serveurs de Supabase sur lesquels
 tourne GeppGo se trouvent à <strong>Stockholm, en Suède</strong> (région
 <code>eu-north-1</code>) : dans l’Espace économique européen. Ton e-mail, les
-voyages, les photos, la valise et les réglages restent là-bas, et ne sont pas
+voyages, les photos, la valise, les réglages et les liens d’agenda restent là-bas, et ne sont pas
 transférés hors d’Europe pour y être conservés.</p>
 <p>Les demandes à l’assistant, en revanche, sont traitées par Cloudflare, et
 les recherches sur le web par Tavily : tous deux aussi hors d’Europe, selon
@@ -394,6 +433,8 @@ tu le supprimes ; une photo jusqu’à ce que tu l’enlèves.</li>
 aux voyages, les photos que tu as envoyées, ta valise et tes réglages. Les
 voyages où il reste quelqu’un d’autre restent à ces personnes : il n’est pas
 juste d’emporter le voyage de cinq personnes.</li>
+<li><strong>Les liens d’agenda</strong> restent jusqu’à ce que tu les
+désactives, tant que tu es dans le voyage et tant que le voyage existe.</li>
 <li><strong>Les signalements restent</strong>, sans le nom de la personne qui
 les a faits, le temps nécessaire pour les traiter et pour montrer comment ils
 ont été traités.</li>
