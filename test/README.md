@@ -1238,3 +1238,11 @@ cambia solo la lingua; `calendario_per_codice` risponde solo a un codice
 giusto, acceso, di chi è ancora nel viaggio (anche se la riga fosse rimasta),
 e con la chiave pubblica non si chiama.
 
+Sul codice di prima (475e8f7) la prova passa 1 controllo su 17 (molti gruppi
+si fermano al primo che manca): resta vero solo «nessun errore nelle
+pagine». Gli altri cadono per il motivo giusto: tre avvisi per una spesa
+sola invece di uno, otto colori (il giorno 9 uguale al giorno 1, CIEDE2000
+0), la crocetta «Close popup» che non risponde su 44 px e, nella mappa della
+giornata, «ore 09:30» anche in inglese; nessun PDF, nessun foglio del
+calendario, nessuna funzione e nessuna migrazione; e nella scheda del
+viaggio la voce del calendario che non passa da `apriCalendario`.
