@@ -3141,6 +3141,12 @@ qualcuno che risponde".
   fanno `npm install` e lo prendono da lì; il `package-lock.json` già non
   aveva SheetJS); in locale il pacchetto si è preso con `npm pack` dal
   registro, che passa.
+- **`prova-avvio`, «la prima schermata»: su questa macchina sta al limite**
+  (20 ottobre). 1408 ms contro i 1403 ammessi, uguale col codice di prima e
+  con quello nuovo, misurati uno dopo l'altro: è la macchina, non la
+  modifica (a metà ottobre la stessa misura dava 1244). Se diventa rossa,
+  prima di cercare il colpevole si misura il codice di prima sulla stessa
+  macchina.
 
 ---
 
