@@ -1233,7 +1233,14 @@ foglio di stile e negli `style=""`; prima è `main` ae98355):
   d'aria, 8 col nome del viaggio lungo. In Home il giorno scelto torna in
   vista sulle strisce lunghe (il centraggio cercava ancora la classe di
   prima). «Info», nel menu della tappa, restava in italiano in tutte le
-  lingue (vedi le lezioni in fondo).
+  lingue (vedi le lezioni in fondo). Tre campi da scrivere stavano sotto i
+  16 px, e iPhone ingrandiva la pagina a ogni tocco: la ricerca di Scopri
+  (15,2 px già in `main`), il codice d'invito e la chiave di mCloud (12):
+  adesso 17 come gli altri, col bordo dei campi, e `prova-stile` lo
+  controlla. La ricerca ha la lente a linea e un esempio più corto
+  («Museo, stazione, hotel…»), che ci sta intero anche a 320 px. Le
+  tendine piccole (la valuta) restano a 13: il tocco lo prende il foglio di
+  scelta dell'app, e iPhone non ingrandisce.
 
 **Da decidere, o da fare dopo**
 - Le parole sotto le icone della barra in basso (vedi «Nessuna funzione

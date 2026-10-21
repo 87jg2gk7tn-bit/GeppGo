@@ -2,7 +2,8 @@
 
    1. le grandezze del testo sono solo quelle della scala (12, 13, 15, 17,
       22 e 32 px) più il nome della città nel cielo della Home; niente sotto
-      i 12 px — a schermo, schermata per schermata, e nel foglio di stile;
+      i 12 px — a schermo, schermata per schermata, e nel foglio di stile; i
+      campi da scrivere almeno a 16 px, se no iPhone ingrandisce la pagina;
    2. colori, spazi, raggi e ombre scritti a mano solo dove c'è un motivo
       (il cielo e la sua città, le maschere delle strisce che scorrono, il
       logo e la schermata d'apertura, le illustrazioni, la stampa); e
@@ -117,8 +118,18 @@ const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tra
     const giuste = ['--fs-xs', '--fs-s', '--fs-m', '--fs-l', '--fs-xl', '--fs-xxl'].map(k => px(vars[k] || '0'));
     ok('1. la scala è 12, 13, 15, 17, 22, 32 px', JSON.stringify(giuste) === JSON.stringify([12, 13, 15, 17, 22, 32]), giuste.join(', '));
     const g = await giro(browser, { larghezza: 390, guarda: async page => page.evaluate(([STRATO, visibile]) => {
-      const vis = eval(visibile), SCALA = [12, 13, 15, 17, 22, 32], out = [];
+      const vis = eval(visibile), SCALA = [12, 13, 15, 17, 22, 32], out = [], campi = [];
+      let visti = 0;
       for (const rad of eval(STRATO)) {
+        /* I campi da scrivere: sotto i 16 px iPhone ingrandisce la pagina a
+           ogni tocco. Le tendine no: il tocco lo prende il velo che apre il
+           foglio di scelta dell'app (wireBottomSheetSelect). */
+        rad.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),textarea').forEach(c => {
+          if (!vis(c)) return;
+          visti++;
+          const fs = parseFloat(getComputedStyle(c).fontSize);
+          if (fs < 16) campi.push(`${c.id ? '#' + c.id : c.tagName.toLowerCase()} ${fs}px`);
+        });
         const w = document.createTreeWalker(rad, NodeFilter.SHOW_TEXT, { acceptNode: t => /\S/.test(t.data) ? 1 : 2 });
         let t;
         while ((t = w.nextNode())) {
@@ -129,12 +140,15 @@ const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tra
           if (!SCALA.some(s => Math.abs(s - fs) < 0.3)) out.push(`${Math.round(fs * 10) / 10}px «${t.data.trim().slice(0, 18)}»`);
         }
       }
-      return [...new Set(out)];
+      return { testi: [...new Set(out)], campi: [...new Set(campi)], visti };
     }, [STRATO, visibile]) });
-    const male = Object.entries(g.esiti).flatMap(([n, l]) => (l || []).map(x => `${n}: ${x}`));
+    const male = Object.entries(g.esiti).flatMap(([n, l]) => ((l && l.testi) || []).map(x => `${n}: ${x}`));
+    const campiPiccoli = Object.entries(g.esiti).flatMap(([n, l]) => ((l && l.campi) || []).map(x => `${n}: ${x}`));
+    const campiVisti = Object.values(g.esiti).reduce((a, l) => a + ((l && l.visti) || 0), 0);
     const sotto = male.filter(x => /^[^:]+: (\d+(\.\d+)?)px/.test(x) && parseFloat(x.split(': ')[1]) < 12);
     ok(`1. a schermo, su ${Object.keys(g.esiti).length} schermate e finestre, solo grandezze della scala (e il nome della città nel cielo)`, !male.length, primi(male));
     ok('1. e niente sotto i 12 px', !sotto.length, primi(sotto) || 'nessuna');
+    ok('1. i campi da scrivere stanno a 16 px o più (sotto, iPhone ingrandisce la pagina a ogni tocco)', campiVisti > 20 && !campiPiccoli.length, primi(campiPiccoli) || `${campiVisti} campi guardati`);
     errori.push(...g.err.map(e => 'giro 1: ' + e));
   });
 

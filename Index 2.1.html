@@ -219,9 +219,11 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .ths-n{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600;line-height:1}
 .ths-l{font-size:var(--fs-xs);opacity:.9;margin-top:var(--sp-1);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .search-wrap{position:relative;margin-bottom:var(--sp-3)}
-.search-in{width:100%;padding:var(--sp-4) var(--sp-4) var(--sp-4) calc(var(--sp-1) * 11);border:1px solid var(--line);border-radius:var(--r-ctl);font-family:inherit;font-size:var(--fs-m);background:var(--surface);transition:var(--ease);color:var(--ink)}
-.search-in:focus{outline:none;border-color:var(--green);box-shadow:var(--anello)}
-.search-ic{position:absolute;left:.95rem;top:50%;transform:translateY(-50%);color:var(--ink-faint)}
+/* Come ogni campo da scrivere: 17 px, perche' sotto i 16 iPhone ingrandisce
+   la pagina a ogni tocco, e il bordo dei campi, che sul panna si vede (3:1). */
+.search-in{width:100%;padding:var(--sp-4) var(--sp-4) var(--sp-4) calc(var(--sp-1) * 11);border:1px solid var(--bordo-campo);border-radius:var(--r-ctl);font-family:inherit;font-size:var(--fs-l);background:var(--surface);transition:var(--ease);color:var(--ink)}
+.search-in:focus{outline:none;border-color:var(--green-deep);box-shadow:var(--anello)}
+.search-ic{position:absolute;left:var(--sp-4);top:50%;transform:translateY(-50%);display:flex;color:var(--ink-faint)}
 .seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-ctl);padding:var(--sp-1);margin-bottom:var(--sp-4);gap:var(--sp-1)}
 .seg-btn{flex:1;min-height:34px;padding:var(--sp-2);border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:700;font-size:var(--fs-s);color:var(--ink-soft);border-radius:calc(var(--r-ctl) - 4px);transition:var(--ease)}
 /* Era l'unico tasto dell'app che non diceva niente quando lo si toccava: su
@@ -2477,7 +2479,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
         <button class="seg-btn" id="segImp" onclick="setDiscover('imp')">Importa</button>
       </div>
       <div id="searchMode">
-        <div class="search-wrap"><span class="search-ic">🔍</span><input class="search-in" id="poiSearch" placeholder="Monumento, museo, stazione, hotel..." oninput="onSearch()"></div>
+        <div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-cerca"/></svg></span><input class="search-in" id="poiSearch" placeholder="Museo, stazione, hotel…" oninput="onSearch()"></div>
         <div id="searchResults"></div>
         <!-- I consigli nei dintorni si accendevano solo dalla scheda del
              viaggio («Consigli attivi/off»): qui stanno accanto ai posti che
@@ -3483,7 +3485,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">Configura cloud</div><button class="x x-close" onclick="closeSheet('mCloud')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <p style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.6;margin-bottom:var(--sp-4)">Se il progetto Supabase è tuo, i due valori sono in <strong>Project Settings > API</strong>. Servono una volta sola su questo telefono.</p>
   <div class="fg"><label>Project URL</label><input id="cfgUrl" placeholder="https://xxxxx.supabase.co" autocapitalize="off" autocorrect="off"></div>
-  <div class="fg"><label>Chiave anon public</label><textarea id="cfgKey" style="min-height:80px;font-size:var(--fs-xs)" placeholder="Incolla qui la chiave lunga" autocapitalize="off" autocorrect="off"></textarea></div>
+  <div class="fg"><label>Chiave anon public</label><textarea id="cfgKey" style="min-height:80px" placeholder="Incolla qui la chiave lunga" autocapitalize="off" autocorrect="off"></textarea></div>
   <div id="cfgMsg" style="font-size:var(--fs-s);color:var(--red);min-height:1.1rem;margin-bottom:var(--sp-2);line-height:1.4"></div>
   <button class="btn btn-primario btn-block" onclick="saveCloudCfg()">Salva e riavvia l'app</button>
   <button class="btn btn-secondario btn-block" style="margin-top:var(--sp-2)" onclick="clearCloudCfg()">Rimuovi configurazione</button>
@@ -3501,7 +3503,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="card" style="background:var(--green-tint);border-color:var(--green-soft);margin-top:var(--sp-4)">
     <div style="font-weight:700;font-size:var(--fs-m);margin-bottom:var(--sp-1)">Ti hanno mandato un link?</div>
     <p style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.55;margin-bottom:var(--sp-2)">Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.</p>
-    <textarea id="cfgInvito" style="min-height:64px;font-size:var(--fs-xs)" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
+    <textarea id="cfgInvito" style="min-height:64px" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
     <div id="cfgInvMsg" style="font-size:var(--fs-s);color:var(--red);min-height:1.1rem;margin:var(--sp-1) 0;line-height:1.4"></div>
     <button class="btn btn-secondario btn-block" onclick="usaInvito()">Usa questo link</button>
   </div>
@@ -5406,7 +5408,7 @@ const DIZIONARIO_FRASI={
     'Ho un codice o un link di recupero ›':'I have a code or a recovery link ›',
     '🪄 Autopilota — mettili in orario tu':'🪄 Autopilot — you set the times',
     'Quale attività usa questo biglietto?':'Which activity uses this ticket?',
-    'Monumento, museo, stazione, hotel...':'Monument, museum, station, hotel…',
+    'Museo, stazione, hotel…':'Museum, station, hotel…',
     '📩 Ho la mail di conferma: leggila tu':'📩 I have the confirmation email — read it for me',
     'Leggere un codice qui non lo consuma.':'Reading a code here doesn’t use it up.',
     'Nome, indirizzo o link di Google Maps':'Name, address or Google Maps link',
@@ -5464,7 +5466,7 @@ const DIZIONARIO_FRASI={
     'Ho un codice o un link di recupero ›':'Tengo un código o un enlace de recuperación ›',
     '🪄 Autopilota — mettili in orario tu':'🪄 Piloto automático — las horas las pones tú',
     'Quale attività usa questo biglietto?':'¿Qué actividad usa este billete?',
-    'Monumento, museo, stazione, hotel...':'Monumento, museo, estación, hotel…',
+    'Museo, stazione, hotel…':'Museo, estación, hotel…',
     '📩 Ho la mail di conferma: leggila tu':'📩 Tengo el correo de confirmación: léelo tú',
     'Leggere un codice qui non lo consuma.':'Leer un código aquí no lo gasta.',
     'Nome, indirizzo o link di Google Maps':'Nombre, dirección o enlace de Google Maps',
@@ -5522,7 +5524,7 @@ const DIZIONARIO_FRASI={
     'Ho un codice o un link di recupero ›':'J’ai un code ou un lien de récupération ›',
     '🪄 Autopilota — mettili in orario tu':'🪄 Pilote automatique — les horaires, c’est toi',
     'Quale attività usa questo biglietto?':'Quelle activité utilise ce billet ?',
-    'Monumento, museo, stazione, hotel...':'Monument, musée, gare, hôtel…',
+    'Museo, stazione, hotel…':'Musée, gare, hôtel…',
     '📩 Ho la mail di conferma: leggila tu':'📩 J’ai l’e-mail de confirmation : lis-le pour moi',
     'Leggere un codice qui non lo consuma.':'Lire un code ici ne le consomme pas.',
     'Nome, indirizzo o link di Google Maps':'Nom, adresse ou lien Google Maps',
@@ -5580,7 +5582,7 @@ const DIZIONARIO_FRASI={
     'Ho un codice o un link di recupero ›':'Tenho um código ou uma ligação de recuperação ›',
     '🪄 Autopilota — mettili in orario tu':'🪄 Piloto automático — as horas pões tu',
     'Quale attività usa questo biglietto?':'Que atividade usa este bilhete?',
-    'Monumento, museo, stazione, hotel...':'Monumento, museu, estação, hotel…',
+    'Museo, stazione, hotel…':'Museu, estação, hotel…',
     '📩 Ho la mail di conferma: leggila tu':'📩 Tenho o e-mail de confirmação: lê-o tu',
     'Leggere un codice qui non lo consuma.':'Ler um código aqui não o gasta.',
     'Nome, indirizzo o link di Google Maps':'Nome, morada ou ligação do Google Maps',
@@ -30862,7 +30864,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 15:28';
+const VERSIONE_APP='2026-10-21 15:45';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

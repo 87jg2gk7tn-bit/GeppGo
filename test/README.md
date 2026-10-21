@@ -1264,7 +1264,10 @@ prima schermata, ed è così che si fa la controprova. Le dieci domande:
 1. **Le grandezze del testo**: nel foglio di stile e negli `style=""` ogni
    `font-size` è una variabile della scala; la scala è 12, 13, 15, 17, 22 e
    32 px; a schermo, schermata per schermata, solo quelle (più il nome della
-   città nel cielo), e niente sotto i 12 px.
+   città nel cielo), e niente sotto i 12 px. I campi da scrivere (input e
+   textarea) almeno a 16 px, se no iPhone ingrandisce la pagina a ogni
+   tocco; le tendine no, perché il tocco lo prende il foglio di scelta
+   dell'app.
 2. **Colori, spazi, raggi e ombre** scritti a mano solo dove c'è un motivo
    (il cielo, il logo e la schermata d'apertura, le illustrazioni, le
    maschere, la stampa); nessun doppione fra le variabili, e quelle tolte
@@ -1302,13 +1305,13 @@ prima schermata, ed è così che si fa la controprova. Le dieci domande:
     esportazione (`tappa-<id>@<viaggio>.geppgo`), così reimportato non
     raddoppia; e senza le note.
 
-Sul codice di prima (`main` ae98355) la prova passa 7 controlli su 35, e
+Sul codice di prima (`main` ae98355) la prova passa 7 controlli su 36, e
 quelli che passano sono quelli che devono passare: le misure della 8, che
 vengono dalla miglioria 11 (axe, contrasti, 44 px, testi interi), il
 suggerimento che non resta fuori dalla Time Table (non compariva proprio) e
 nessun errore in pagina. Gli altri cadono per il motivo giusto: 607
 grandezze del testo scritte a mano e 1897 testi fuori scala a schermo, 383
-sotto i 12 px; colori, spazi, raggi e ombre scritti a mano e otto doppioni
+sotto i 12 px, la ricerca di Scopri a 15,2 px e il campo del codice a 12; colori, spazi, raggi e ombre scritti a mano e otto doppioni
 fra le variabili (`--green` uguale a `--blue`…); 715 tasti di famiglie
 vecchie, emoji in 268 comandi, i tondini di sola emoji nel menu della tappa;
 nessun selettore dei giorni comune; i fogli senza il piede fisso; la

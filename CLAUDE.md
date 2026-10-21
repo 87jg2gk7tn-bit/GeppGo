@@ -262,7 +262,8 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
 - caratteri: solo `--fs-xs` 12, `--fs-s` 13, `--fs-m` 15, `--fs-l` 17,
   `--fs-xl` 22 e `--fs-xxl` 32 px; l'unica eccezione è `--fs-cielo`, il nome
   della città nel cielo della Home. Niente sotto i 12 px. I campi da riempire
-  stanno a 17, perché sotto i 16 iPhone ingrandisce da solo. Pesi 500, 600 e
+  stanno a 17, perché sotto i 16 iPhone ingrandisce da solo (le tendine no:
+  il tocco lo prende il foglio di scelta dell'app). Pesi 500, 600 e
   700; 800 solo per i numeri grandi;
 - spazi: `--sp-1` … `--sp-6` (4, 8, 12, 16, 24, 32 px); 1 e 2 px solo per i
   ritocchi fini. Raggi: `--r-ctl` (controlli), `--r-card` (schede e fogli),
