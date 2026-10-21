@@ -3281,7 +3281,9 @@ qualcuno che risponde".
   portoghese («09:30–11:00 · 2 pers. · por reservar») qui ci stava e su
   GitHub no: lì Plus Jakarta Sans arriva davvero, qui il proxy la ferma e si
   misura col ripiego (DejaVu Sans). Rimedio: peso 600 e niente spazio fra le
-  lettere. E adesso le prove possono usare i caratteri veri anche qui
+  lettere. Lo stesso per la striscia dell'auto fra due tappe («≈ 10 min ·
+  6,4 km · ~0,80 €»), 3 px fuori: lo spazio fra mezzo, tempo e «non
+  necessario» da 8 a 4 px. E adesso le prove possono usare i caratteri veri anche qui
   (`CARATTERI_GOOGLE`, vedi test/README.md): prima di dire che una misura
   regge a 320 px, la si guarda così.
 - **Non si tocca l'HTML mentre le prove girano.** Riscrivendo il file con

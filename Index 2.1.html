@@ -1066,7 +1066,11 @@ body.dark .imp-entra b{color:var(--green)}
 .tt-child{position:absolute;left:6px;right:6px;background:var(--clay-tint);border:1px solid var(--clay-bordo);border-radius:var(--r-ctl);padding:var(--sp-1) var(--sp-2);font-size:var(--fs-xs);font-weight:700;color:var(--clay-deep);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2}
 .tt-child:active{transform:scale(.98)}
 .tt-travel{position:absolute;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;color:var(--ink-soft);background:var(--paper);border:none;box-shadow:var(--sh-1);border-radius:var(--r-ctl);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 var(--sp-1);z-index:1}
-.tt-travel-shown{gap:var(--sp-2);justify-content:space-between;padding:0 var(--sp-2)}
+/* Fra mezzo, tempo e «non necessario» 4 px (erano 6,4): col mezzo a icone
+   (30 px, l'emoji ne prendeva 23) «≈ 10 min · 6,4 km · ~0,80 €» a 320 px
+   coi caratteri veri usciva di 3 px, e i puntini nascondono proprio i
+   minuti. Lo spazio che avanza lo distribuisce space-between. */
+.tt-travel-shown{gap:var(--sp-1);justify-content:space-between;padding:0 var(--sp-2)}
 /* La tendina della valuta sta di fianco alla cifra grossa, e da li' comanda
    tutti i numeri della pagina. */
 .mh-tot-row{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
@@ -30867,7 +30871,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 17:18';
+const VERSIONE_APP='2026-10-21 17:33';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
