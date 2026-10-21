@@ -1380,3 +1380,17 @@ Le domande, una per prova:
    da 320 a 430 px in cinque lingue e due temi, barra in alto compresa; lo
    stile in testa sotto i 4 KB.
 
+Sul codice di prima (`main` 37f0583, la Layout 1) le prove da 1 a 6 passano
+3 controlli su 20, quelli che devono passare: la barra in basso
+d'inchiostro, nessuna emoji nei comandi (lo era già dalla Layout 1) e
+nessun errore in pagina. Gli altri cadono per il motivo giusto: il tondo
+del tema non c'è; il Programma si apre scorso di 695 px su 1187 senza
+testata, e col fuso di Roma all'1:30 apre il giorno vecchio e alle 10:30
+non mette la riga di adesso; il giorno scelto e la scheda scelta sono
+d'inchiostro; i secondari bianchi e le schede del totale e del Budget
+bianche; nessuna icona ha il tratto d'oro (0 pixel d'oro nella foto); fra
+«Fra poco» e i giorni 16 px, fra la valigia e «Fra poco» 12. La 7 sul
+codice di prima non è stata rifatta: misura quello che la Layout 1 già
+garantiva (è la prova 8 di `prova-stile`, verde su `main`) e lo stile in
+testa, che era già 3,6 KB.
+
