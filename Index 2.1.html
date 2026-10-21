@@ -273,7 +273,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
    «Salva spesa» non si cerca piu' sotto dieci campi. Si allarga fino ai bordi
    del foglio e ne copre il margine di sotto (i margini negativi), cosi'
    quando il foglio e' corto sta dov'era, e quando e' lungo resta li'. */
-.sheet-piede{position:sticky;bottom:0;z-index:3;margin:var(--sp-4) calc(var(--sp-5) * -1) calc((var(--sp-5) + env(safe-area-inset-bottom)) * -1);padding:var(--sp-3) var(--sp-5) calc(var(--sp-4) + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line-soft)}
+.sheet-piede{position:sticky;bottom:calc((var(--sp-5) + env(safe-area-inset-bottom)) * -1);z-index:3;margin:var(--sp-4) calc(var(--sp-5) * -1) calc((var(--sp-5) + env(safe-area-inset-bottom)) * -1);padding:var(--sp-3) var(--sp-5) calc(var(--sp-4) + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line-soft)}
 .sheet-piede .btn+.btn{margin-top:var(--sp-2)}
 .day{background:var(--surface);border-radius:var(--r-card);padding:var(--sp-4);margin-bottom:var(--sp-3);box-shadow:var(--sh-1);border:1px solid var(--line-soft)}
 .day-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-4)}
@@ -334,11 +334,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .person{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-1) var(--sp-2);padding:var(--sp-3);background:var(--paper);border-radius:var(--r-ctl);margin-bottom:var(--sp-2)}
 .person-l{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
 .person-az{display:flex;align-items:center;gap:var(--sp-1);margin-left:auto}
-.avatar{width:38px;height:38px;border-radius:var(--r-pill);background:var(--grad);color:var(--oro-su);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-m);flex-shrink:0}
+.avatar{width:38px;height:38px;border-radius:var(--r-pill);background:var(--green-tint);color:var(--green-deep);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-m);flex-shrink:0}
 /* Il tondo di chi usa l'app e' color mattone: li' la scritta bianca regge
    (4,5:1), quella scura no. Nel tema scuro il mattone e' chiaro, e torna lo
    scuro. */
-.avatar.me{background:linear-gradient(135deg,var(--clay),var(--clay-deep));color:var(--su-colore)}
+.avatar.me{background:var(--scelto);color:var(--su-scelto)}
 body.dark .avatar.me{color:var(--oro-su)}
 .person-n{font-weight:700;font-size:var(--fs-m)}
 .person-tag{font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600}
@@ -357,8 +357,10 @@ body.dark .avatar.me{color:var(--oro-su)}
 .pchip{display:inline-flex;align-items:center;gap:var(--sp-2);background:var(--green-tint);color:var(--green-deep);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-s);font-weight:700}
 .pchip button{background:none;border:none;color:var(--green-deep);cursor:pointer;font-size:var(--fs-m);padding:0;line-height:1}
 .add-row{display:flex;gap:var(--sp-2);margin-top:var(--sp-2)}
-.add-row input{flex:1}
-.add-row button{flex-shrink:0;width:46px;padding:0;font-size:var(--fs-l)}
+.add-row input{flex:1;min-width:0}
+/* «+ Aggiungi» e non il «+» da solo (Layout 1): il tasto prende la larghezza
+   della parola, il campo si stringe. */
+.add-row button{flex-shrink:0;padding:0 var(--sp-3);font-size:var(--fs-s)}
 /* Le altre righe di questo tipo hanno un tasto largo quanto un "+": qui c'è
    scritto "Cerca" e va lasciato respirare, altrimenti esce dal bordo. */
 #adAddrWrap .add-row button{width:auto;padding:0 var(--sp-4);font-size:var(--fs-s)}
@@ -528,7 +530,9 @@ body.dark .avatar.me{color:var(--oro-su)}
 .id-canvas-wrap{position:relative;background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-card);overflow:hidden;margin-bottom:var(--sp-3);min-height:120px;display:flex;align-items:center;justify-content:center}
 #idCanvas{max-width:100%;display:block;touch-action:none;cursor:crosshair}
 .id-hint{padding:var(--sp-6) var(--sp-4);text-align:center;color:var(--ink-faint);font-size:var(--fs-s);line-height:1.5}
-.file-btn{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);border-radius:var(--r-ctl);font-weight:700;font-size:var(--fs-m);cursor:pointer;background:var(--grad);color:var(--oro-su);box-shadow:var(--sh-1);transition:var(--ease);width:100%}
+/* Il tasto che apre la scelta di un file: l'aspetto e' quello dei tasti
+   (.btn-primario o .btn-secondario), qui resta solo la misura. */
+.file-btn{display:flex;width:100%}
 .file-btn:active{transform:scale(.96)}
 .prem-hero{background:var(--grad-warm);border-radius:var(--r-card);padding:var(--sp-4);margin-bottom:var(--sp-4)}
 .prem-t{font-family:'Fraunces',serif;font-size:var(--fs-l);font-weight:600;margin-bottom:var(--sp-1)}
@@ -835,6 +839,9 @@ body.dark .avatar.me{color:var(--oro-su)}
 .tt-ora{position:absolute;left:46px;right:0;height:0;border-top:2px solid var(--clay);z-index:6;pointer-events:none}
 .tt-ora::before{content:'';position:absolute;left:-3px;top:-4px;width:8px;height:8px;border-radius:var(--r-pill);background:var(--clay)}
 .tt-ora b{position:absolute;left:-46px;top:-8px;width:38px;text-align:right;font-size:var(--fs-xs);font-weight:700;letter-spacing:.02em;color:var(--clay-deep)}
+.tt-line.fa-posto span{visibility:hidden}
+/* Il suggerimento per scorrere: una riga sotto i giorni, la prima volta. */
+.tt-scorri{font-size:var(--fs-xs);color:var(--ink-soft);text-align:center;margin:calc(var(--sp-1) * -1) 0 var(--sp-2)}
 /* Le tappe: schede bianche con l'ombra morbida come tutte le altre schede
    dell'app, e il nome nel serif con cui l'app scrive i nomi. Erano
    rettangoli color sabbia con un bordo di un pixel: l'unico posto
@@ -1297,15 +1304,15 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 /* Un trascinamento o un allungamento sbagliato si annulla da qui: sta
    dall'altra parte rispetto al "+", cosi' non si tocca per sbaglio quello
    mentre si cerca questo.
-   Sta sempre al suo posto, anche quando non c'e' niente da annullare: prima
-   compariva solo dopo aver mosso qualcosa, e chi la cercava non la trovava -
-   un tasto che si materializza dal nulla proprio nel momento in cui serve non
-   lo si impara mai. Da spenta e' tenue e non fa rumore; quando c'e' qualcosa
-   da rimettere a posto diventa piena e scura, che si vede a colpo d'occhio. */
+   Compare solo dopo una modifica, per qualche secondo (Layout 1): sempre al
+   suo posto, anche spento, era un tasto in piu' sopra la giornata che per
+   quasi tutto il tempo non faceva niente. Quando c'e' e' pieno e scuro, e si
+   vede a colpo d'occhio. */
 .tt-undo{position:fixed;left:1.1rem;bottom:calc(5.5rem + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:var(--r-pill);cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:var(--fs-l);line-height:1;display:grid;place-items:center;box-shadow:var(--sh-2);z-index:50;opacity:.55;transition:var(--ease)}
 /* «↩ Annulla»: la pillola tiene la scritta, alta come il tondo di prima. */
 .tt-undo{width:auto;padding:0 var(--sp-4) 0 var(--sp-3);border-radius:var(--r-pill);display:flex;align-items:center;gap:var(--sp-1);font-family:inherit;font-size:var(--fs-s);font-weight:700}
-.tt-undo.on{opacity:1;background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:var(--sh-2)}  /* --paper e non bianco: nel tema scuro --ink e' panna */
+.tt-undo{display:none}
+.tt-undo.on{display:flex;opacity:1;background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:var(--sh-2)}  /* --paper e non bianco: nel tema scuro --ink e' panna */
 .tt-undo:active{transform:scale(.92)}
 
 /* ── 5 · RESPIRO ────────────────────────────────────────────────── */
@@ -1328,23 +1335,11 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 
 :root{--cielo-a:#AEB9C6;--cielo-b:#F6EEDD}
 body.dark{--cielo-a:#1B2333;--cielo-b:#0E0C09}
-/* Il cielo su tutte le schermate, non solo in home. La sfumatura in alto è
-   quello che dà all'app la sua faccia: cambiare pagina non deve sembrare
-   entrare in un'altra app. Sta dietro al contenuto, quindi nessuna pagina va
-   toccata per averlo.
-   La home è esclusa perché ce l'ha già dentro la sua intestazione (.hh), che
-   esce dai margini e si porta dietro anche il cerchio chiaro: due sfumature
-   una sopra l'altra farebbero uno scalino proprio dove finisce la prima.
-   L'altezza è fissa e non in percentuale: dev'essere la stessa ovunque, mentre
-   le pagine sono lunghe una diversa dall'altra - a percentuale, una pagina
-   corta avrebbe un cielo schiacciato e una lunga un cielo lunghissimo.
-   I numeri non sono a occhio: 440px e' quanto misura l'intestazione della home,
-   e l'82% e' il suo stesso punto di chiusura, cosi' il cielo finisce sul beige
-   alla stessa altezza in tutte e due. */
-.page:not(#plan){
-  background:linear-gradient(180deg,var(--cielo-a) 0%,var(--cielo-b) 82%) no-repeat;
-  background-size:100% 440px;
-}
+/* Il cielo sta solo in Home (Layout 1). Prima la sua sfumatura c'era in
+   cima a tutte le schermate, per dare all'app una faccia sola; ma ripetuto
+   ovunque il cielo smetteva di essere quello della Home e diventava un
+   grigio sopra Spese, Hotel e Biglietti. La faccia comune adesso la fanno
+   la carta panna, l'inchiostro e l'oro; il cielo resta la firma della Home. */
 
 /* ── intestazione del giorno ───────────────────────────────────── */
 .hh{
@@ -1487,7 +1482,7 @@ button.giorno:active{transform:scale(.95)}
 .hh-card-s{font-size:var(--fs-s);color:var(--ink-faint);margin-top:var(--sp-1);line-height:1.4}
 .hh-avs{display:flex;margin-top:auto;padding-top:var(--sp-4)}
 .hh-av{
-  width:26px;height:26px;border-radius:var(--r-pill);background:var(--grad);color:var(--oro-su);
+  width:26px;height:26px;border-radius:var(--r-pill);background:var(--green-tint);color:var(--green-deep);
   display:grid;place-items:center;font-size:var(--fs-xs);font-weight:700;
   border:2px solid var(--surface);margin-right:-7px;
 }
@@ -2129,12 +2124,12 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
    A riposo si vedono le cinque del mock (mappa, lente, +, €, persona);
    le altre cinque restano raggiungibili scorrendo la pillola. */
 .nav{align-items:center;gap:0}
-/* Sei pixel in meno ai fianchi, e su un telefono da 390 le sette voci ci
-   stanno tutte: prima sbordavano di quattro, cioe' la sfumatura restava
-   accesa e la pillola scorreva per il nulla, promettendo roba che non
-   c'era. Il tasto scende da 49 a 47 di larghezza - sopra i 44 che servono a
-   un dito, che e' il numero da non toccare; l'altezza non cambia. */
-.nav-item{display:grid;place-items:center;padding:var(--sp-2) var(--sp-3);color:var(--ink-faint)}
+/* Su un telefono da 390 (e da 360) le sette voci ci stanno tutte: quando
+   sbordano la sfumatura resta accesa e la pillola scorre per il nulla,
+   promettendo roba che non c'e'. Coi passi della scala (Layout 1) il tasto
+   e' largo 43 a vederlo; l'area da toccare arriva a 45 col ::after, che
+   entra di un pixel per parte nei due di spazio fra le voci. */
+.nav-item{display:grid;place-items:center;padding:var(--sp-2);color:var(--ink-faint)}
 /* Da 23 a 27: a 23 px, in mezzo a una strada e con una mano sola, l'icona si
    guarda due volte prima di riconoscerla. */
 .nav-item svg{width:27px;height:27px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -2230,7 +2225,7 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 .hh-trip-add::after,.hh-add::after,.seg-btn::after,
 .gps-pill::after,.tb-profilo::after,.ad-x::after,.hh-grado::after{content:'';position:absolute}
 
-.nav-item::after   {inset:-3px 0}      /* 41 → 47 di altezza */
+.nav-item::after   {inset:-3px -1px}   /* 43×41 → 45×47 */
 .hh-act::after     {inset:-9px -2px}   /* 27 → 45 */
 .hh-trip::after    {inset:-9px -2px}   /* 27 → 45 */
 .hh-trip-add::after{inset:-4px}        /* 36 → 44 */
@@ -2275,6 +2270,11 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
    davvero (i due tasti si toccano, un'area che sborda finirebbe sull'altro).
    Il foglio di Leaflet arriva dopo questo: la regola deve pesare di piu'. */
 .leaflet-container .leaflet-bar.leaflet-control-zoom a{width:44px;height:44px;line-height:44px}
+/* E nel tema scuro seguono il tema (Layout 1): Leaflet li fa bianchi, e
+   sulla mappa scurita erano due quadrati accesi. */
+body.dark .leaflet-container .leaflet-bar{border-color:var(--line)}
+body.dark .leaflet-container .leaflet-bar a,body.dark .leaflet-container .leaflet-bar a:hover{background:var(--surface);color:var(--ink);border-bottom-color:var(--line)}
+body.dark .leaflet-container .leaflet-bar a.leaflet-disabled{background:var(--surface);color:var(--ink-faint)}
 button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 .tt-travel-x::after,.tt-travel-skip::after,.tt-travel-toggle::after{inset:-16px -18px}
 /* Nella striscia dall'albergo il mezzo sta a destra, accanto alla ✕: un po'
@@ -2326,6 +2326,15 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 /* Lo stesso in Home senza viaggio: «Importa da Excel o CSV» finiva appoggiato
    a «Rimuovi con Premium». */
 #plan>.ad-slot{margin-top:var(--sp-4)}
+
+/* UNA PILLOLA SOLA (Layout 1). Le etichette che non si toccano (lo stato di
+   una spesa, la priorita', il tempo, le notti dell'albergo, la valuta, il
+   conto della valigia) hanno la forma della pillola che si tocca, solo piu'
+   bassa: stessa scritta, stesso tondo. Prima c'erano quelle squadrate, quelle
+   in maiuscolo e quelle con la scritta piu' grande. Sta in fondo apposta:
+   vince sulle regole delle singole famiglie, che restano per i colori. */
+.tag,.wchip,.pri-badge,.ht-tag,.cur-badge,.tag-cambio,.pack-cat i,.mh-me{border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:700;padding:var(--sp-1) var(--sp-2);line-height:1.3;letter-spacing:0;text-transform:none}
+.chip,.pchip,.gps-pill,.mappa-tutto,.hh-add{border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:700}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{
@@ -2394,7 +2403,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
         </svg>
         <div class="brand-name" translate="no">Gepp<span class="brand-go">Go</span></div>
       </div>
-      <button class="gps-pill" id="gpsPill" onclick="toggleGPS()" title="GPS" aria-label="Attiva o disattiva il GPS"><svg class="gps-ic" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></svg><span class="gps-tx">GPS</span><span class="gps-dot"></span></button>
+      <button class="chip gps-pill" id="gpsPill" onclick="toggleGPS()" title="GPS" aria-label="Attiva o disattiva il GPS"><svg class="gps-ic" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></svg><span class="gps-tx">GPS</span><span class="gps-dot"></span></button>
       <!-- Il tema non sta piu' qui (Layout 1): si sceglie nel Profilo, e la
            testata tiene solo quello che serve ogni giorno. -->
       <button class="tb-profilo" id="tbProfilo" onclick="apriProfilo()" title="Profilo" aria-label="Profilo"></button>
@@ -2482,7 +2491,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
         <div id="impPlacesSub">
           <div class="card" style="margin-bottom:var(--sp-3)"><div class="card-h" style="margin-bottom:var(--sp-1)">Importa da un reel o post</div><div class="card-sub">Incolla la didascalia del reel (o carica uno screenshot dove si leggono i nomi): estraggo i posti e te li metto sulla mappa.</div></div>
           <div class="fg"><label>Didascalia / testo del post</label><textarea id="impText" placeholder="Incolla qui il testo del reel con i posti consigliati..."></textarea></div>
-          <label class="file-btn btn-secondario" style="background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:none;margin-bottom:var(--sp-3)">🖼️ Aggiungi screenshot (opzionale)<input type="file" accept="image/*" style="display:none" onchange="onImpImage(event)"></label>
+          <label class="btn btn-secondario btn-block file-btn" style="margin-bottom:var(--sp-3)"><svg class="ico" aria-hidden="true"><use href="#i-immagine"/></svg>Aggiungi screenshot (opzionale)<input type="file" accept="image/*" style="display:none" onchange="onImpImage(event)"></label>
           <div id="impPrev"></div>
           <button class="btn btn-primario btn-block" onclick="extractPlaces()"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Trova i posti</button>
           <div id="impResult" style="margin-top:var(--sp-3)"></div>
@@ -2557,7 +2566,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     </div>
     <div class="page" id="identify">
       <div class="card" style="margin-bottom:var(--sp-3)"><div class="card-h" style="margin-bottom:var(--sp-1)">Che cos'è?</div><div class="card-sub">Fotografa un monumento o edificio che non conosci: ti racconto cos'è, un po' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.</div></div>
-      <label class="file-btn" style="margin-bottom:var(--sp-3)">📷 Scatta o scegli una foto<input type="file" accept="image/*" style="display:none" onchange="onIdImage(event)"></label>
+      <label class="btn btn-primario btn-block file-btn" style="margin-bottom:var(--sp-3)"><svg class="ico" aria-hidden="true"><use href="#i-fotocamera"/></svg>Scatta o scegli una foto<input type="file" accept="image/*" style="display:none" onchange="onIdImage(event)"></label>
       <div class="id-canvas-wrap"><canvas id="idCanvas" style="display:none" onmousedown="idDown(event)" onmousemove="idMove(event)" onmouseup="idUp()" ontouchstart="idDown(event)" ontouchmove="idMove(event)" ontouchend="idUp()"></canvas><div class="id-hint" id="idHint">Nessuna foto ancora</div></div>
       <div id="idActions" style="display:none;margin-bottom:var(--sp-3)"><div style="display:flex;gap:var(--sp-2)"><button class="btn btn-primario" style="flex:1" onclick="identifyPlace()"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Identifica</button><button class="btn btn-secondario" onclick="idSel=null;drawIdCanvas()"><svg class="ico" aria-hidden="true"><use href="#i-aggiorna"/></svg>Cerchio</button></div></div>
       <div id="idResult"></div>
@@ -2659,10 +2668,10 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="tt-daynav">
     <div class="giorni" id="dayChips" style="flex:1"></div>
   </div>
-  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:var(--r-ctl);margin-bottom:var(--sp-3);overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><button class="mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:var(--r-ctl);margin-bottom:var(--sp-3);overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><button class="chip mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div>
   <!-- La mappa di tutto il viaggio anche nei giorni senza la mappa del giorno
        (nessuna tappa con una posizione): al suo posto, una riga. -->
-  <button class="tt-tutto" id="ttTutto" style="display:none" onclick="apriMappaViaggio()"><svg class="ico" aria-hidden="true"><use href="#i-mappa"/></svg>Tutto il viaggio ›</button>
+  <button class="btn btn-secondario tt-tutto" id="ttTutto" style="display:none" onclick="apriMappaViaggio()"><svg class="ico" aria-hidden="true"><use href="#i-mappa"/></svg>Tutto il viaggio ›</button>
   <div id="dayWx" style="display:none;font-size:var(--fs-s);font-weight:700;color:var(--ink-soft);margin-bottom:var(--sp-2)"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
@@ -2672,16 +2681,16 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
        da fermi mentre il viaggio si costruisce, e stanno dietro una porta
        che dice cosa c'e' dentro. -->
   <div class="tt-azioni">
-    <button class="tt-az" onclick="navigaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-bussola"/></svg>Naviga la giornata</button>
-    <button class="tt-az" onclick="openAssistenteGiorno()"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg>Chiedi all'assistente</button>
+    <button class="btn btn-secondario tt-az" onclick="navigaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-bussola"/></svg>Naviga la giornata</button>
+    <button class="btn btn-secondario tt-az" onclick="openAssistenteGiorno()"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg>Chiedi all'assistente</button>
   </div>
   <!-- «Ordina il giro» e «Autopilota» stavano dietro la porta «Costruisci la
        giornata»: tre tocchi, e dal nome della porta non si capiva cosa ci
        fosse dietro (vedi «Nessuna funzione nascosta» in CLAUDE.md). Adesso
        sono due tasti, dove stava la porta. -->
   <div class="tt-azioni">
-    <button class="tt-az" onclick="sistemaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Ordina il giro</button>
-    <button class="tt-az" onclick="openGenForDay()"><svg class="ico" aria-hidden="true"><use href="#i-bacchetta"/></svg>Autopilota</button>
+    <button class="btn btn-secondario tt-az" onclick="sistemaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Ordina il giro</button>
+    <button class="btn btn-secondario tt-az" onclick="openGenForDay()"><svg class="ico" aria-hidden="true"><use href="#i-bacchetta"/></svg>Autopilota</button>
   </div>
   <div id="dayPhotos" style="display:flex;gap:var(--sp-2);overflow-x:auto;margin-bottom:var(--sp-2)"></div>
   <input type="file" id="phInput" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
@@ -2690,15 +2699,15 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 </div>
 <!-- Le scritte accanto ai segni: «↩» e «＋» da soli non dicevano cosa
      facevano (vedi «Nessuna funzione nascosta» in CLAUDE.md). -->
-<button class="tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare" aria-disabled="true"><svg class="ico" aria-hidden="true"><use href="#i-annulla"/></svg>Annulla</button>
-<button class="fab fab-tx" id="ttFab"><svg class="ico" aria-hidden="true"><use href="#i-piu"/></svg>Aggiungi</button></div>
+<button class="btn btn-secondario tt-undo" id="ttUndo" onclick="undoDrag()" title="Niente da annullare" aria-label="Niente da annullare" aria-disabled="true"><svg class="ico" aria-hidden="true"><use href="#i-annulla"/></svg>Annulla</button>
+<button class="btn btn-primario fab fab-tx" id="ttFab"><svg class="ico" aria-hidden="true"><use href="#i-piu"/></svg>Aggiungi</button></div>
   </main>
 </div>
 <!-- La presentazione: tre schermate al primissimo avvio, prima
      dell'accesso (vedi LA PRESENTAZIONE). Si scorrono col dito o con
      «Avanti», e «Salta» c'e' sempre. -->
 <div id="intro" aria-hidden="true">
-  <button class="intro-salta" onclick="introFine()">Salta</button>
+  <button class="btn btn-terziario intro-salta" onclick="introFine()">Salta</button>
   <div class="intro-pista" id="introPista">
     <section class="intro-pag">
       <div class="intro-ill" aria-hidden="true"><svg viewBox="0 0 200 150">
@@ -2777,16 +2786,16 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <button class="btn btn-primario btn-block" id="auBtnIn" onclick="authIn()">Accedi</button>
   <button class="btn btn-primario btn-block" id="auBtnUp" style="display:none" onclick="authUp()">Crea account</button>
   <div id="auSoloAccesso">
-    <button class="auth-link" style="margin-top:var(--sp-3)" onclick="authForgot()">Password dimenticata?</button>
-    <button class="auth-link" style="margin-top:var(--sp-1)" onclick="authMagic()">Entra con un link via email (senza password)</button>
-    <button class="auth-link" style="margin-top:var(--sp-1)" onclick="openRecPanel(false)">Ho un codice o un link di recupero ›</button>
-    <button class="auth-link" style="margin-top:var(--sp-1)" onclick="auVai('su')">Non hai un account? Creane uno</button>
+    <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-3)" onclick="authForgot()">Password dimenticata?</button>
+    <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-1)" onclick="authMagic()">Entra con un link via email (senza password)</button>
+    <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-1)" onclick="openRecPanel(false)">Ho un codice o un link di recupero ›</button>
+    <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-1)" onclick="auVai('su')">Non hai un account? Creane uno</button>
   </div>
   <div id="auSoloNuovo" style="display:none">
-    <button class="auth-link" style="margin-top:var(--sp-3)" onclick="auVai('in')">Hai già un account? Accedi</button>
+    <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-3)" onclick="auVai('in')">Hai già un account? Accedi</button>
     <p class="au-privacy">Creando un account accetti la <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--clay);font-weight:700">privacy di GeppGo</a>.</p>
   </div>
-  <button class="auth-link" style="margin-top:var(--sp-4)" onclick="auMostra('auScelta')"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Indietro</button>
+  <button class="btn btn-terziario auth-link" style="margin-top:var(--sp-4)" onclick="auMostra('auScelta')"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Indietro</button>
   </div>
   <!-- Con la conferma via email attiva, la registrazione non fa entrare:
        senza dirlo, chi si era appena registrato restava davanti allo stesso
@@ -2796,14 +2805,14 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <p class="au-mail-t">Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui.</p>
     <p class="au-mail-a" id="auMailA"></p>
     <button class="btn btn-primario btn-block" onclick="auVai('in')">Ho confermato: accedi</button>
-    <button class="auth-link" onclick="auMostra('auScelta')"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Indietro</button>
+    <button class="btn btn-terziario auth-link" onclick="auMostra('auScelta')"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Indietro</button>
   </div>
   <div id="auRec" style="display:none">
     <p style="font-size:var(--fs-m);color:var(--ink-soft);line-height:1.6;margin-bottom:var(--sp-4)">Nella mail (<b id="recMail">—</b>): <b>tieni premuto</b> sul link della mail → <b>Copia collegamento</b> → incollalo qui sotto, <b>senza aprirlo</b>. Se la mail mostra un codice a 6 cifre, va bene anche quello.</p>
     <div class="fg"><label>Codice o link della mail</label><input id="auCode" autocapitalize="off" autocorrect="off" autocomplete="one-time-code" placeholder="Incolla il link, o il codice a 6 cifre"></div>
     <div id="recMsg" style="font-size:var(--fs-s);color:var(--red);min-height:1.1rem;margin-bottom:var(--sp-2);line-height:1.4"></div>
     <button class="btn btn-primario btn-block" onclick="authVerifyCode()">Verifica e continua</button>
-    <button class="auth-link" onclick="recBack()"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Torna all'accesso</button>
+    <button class="btn btn-terziario auth-link" onclick="recBack()"><svg class="ico" aria-hidden="true"><use href="#i-indietro"/></svg>Torna all'accesso</button>
   </div>
 </div></div>
 <div class="modal modal-top" id="mMeteo"><div class="sheet sheet-top">
@@ -2842,15 +2851,15 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <!-- «Su misura» stava solo in Scopri, dentro Importa: qui, mentre il viaggio
        nasce, e' dove lo si cerca. Lavora su un viaggio che c'e' gia', quindi
        si apre appena il viaggio e' creato. -->
-  <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="ntSuMisura"><span>✦ Su misura: appena creato, preparami l'itinerario</span></label></div>
-  <button class="btn btn-primario btn-block" onclick="createTrip()">Crea viaggio</button>
+  <div class="fg"><label class="split-item" style="margin:0"><input type="checkbox" id="ntSuMisura"><span><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg> Su misura: appena creato, preparami l'itinerario</span></label></div>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="createTrip()">Crea viaggio</button></div>
 </div></div>
 <div class="modal" id="mFamousPlaces"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Posti famosi <span id="fpCityName" style="font-weight:500;color:var(--ink-faint);font-size:var(--fs-s)"></span></div><button class="x x-close" onclick="closeSheet('mFamousPlaces')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <p style="font-size:var(--fs-s);color:var(--ink-faint);margin-bottom:var(--sp-3);line-height:1.5">Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell'anteprima del viaggio.</p>
   <div id="fpList"></div>
-  <button class="btn btn-primario btn-block" style="margin-top:var(--sp-2)" onclick="addFamousPlaces()">Aggiungi selezionati</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="addFamousPlaces()">Aggiungi selezionati</button></div>
 </div></div>
 <div class="modal" id="mSavePOI"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -2864,7 +2873,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="fg"><label>Quale giorno? <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><select id="savePOIDay"><option value="">Non assegnare</option></select></div>
   <div class="fg" id="savePOIHourWrap" style="display:none"><label>A che ora? <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><input type="time" id="savePOIHour"></div>
   <div id="wxPreview"></div>
-  <button class="btn btn-primario btn-block" onclick="confirmSavePOI()"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>Salva</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="confirmSavePOI()"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>Salva</button></div>
 </div></div>
 <!-- I viaggi aperti, e il tasto per farne uno. Si apre dalle tre righine
      in alto a sinistra: e' l'unico posto da cui si cambia viaggio, e sta
@@ -2963,29 +2972,29 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">Durata del viaggio</div><button class="x x-close" onclick="closeSheet('mTripDates')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <div style="display:flex;gap:var(--sp-2)"><div class="fg" style="flex:1"><label>Inizio</label><input type="date" id="tdStart"></div><div class="fg" style="flex:1"><label>Fine</label><input type="date" id="tdEnd"></div></div>
   <p style="font-size:var(--fs-s);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-3)">Creo i giorni che mancano nell'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.</p>
-  <button class="btn btn-primario btn-block" onclick="saveTripDates()">Aggiorna i giorni</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="saveTripDates()">Aggiorna i giorni</button></div>
 </div></div>
 <div class="modal" id="mAddDay"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Aggiungi giorno</div><button class="x x-close" onclick="closeSheet('mAddDay')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <div class="fg"><label>Data</label><input type="date" id="dayDate"></div>
   <div class="fg"><label>Titolo <span style="font-weight:500;color:var(--ink-faint)">(opzionale)</span></label><input id="dayTitle" placeholder="es. Zona o tema della giornata"></div>
-  <button class="btn btn-primario btn-block" onclick="addDay()">Aggiungi</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="addDay()">Aggiungi</button></div>
 </div></div>
 <div class="modal" id="mImportDay"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Importa lista del giorno</div><button class="x x-close" onclick="closeSheet('mImportDay')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <p style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-2)">Incolla un elenco di posti, uno per riga (anche generato da un'AI): li aggiungo a questa giornata, senza toccare quelle già presenti. Se gli orari non ci sono, <strong>Autopilota</strong> li mette lui: cerca gli indirizzi, capisce quali righe sono pasti e li mette all'ora giusta, e lascia il tempo per spostarsi da un posto all'altro.</p>
   <div class="fg"><textarea id="dayImportText" placeholder="Colosseo&#10;Foro Romano&#10;Pranzo in trattoria&#10;Pantheon&#10;Cena a Trastevere" style="min-height:140px"></textarea></div>
-  <button class="btn btn-primario btn-block" id="dayAutoBtn" onclick="autopilotDay()"><svg class="ico" aria-hidden="true"><use href="#i-bacchetta"/></svg>Autopilota — mettili in orario tu</button>
-  <button class="btn btn-secondario btn-block" id="dayImportBtn" style="margin-top:var(--sp-2)" onclick="importDayText()">Aggiungi così come sono</button>
-  <div id="dayImportStatus" style="font-size:var(--fs-xs);color:var(--ink-soft);margin-top:var(--sp-2);line-height:1.5"></div>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" id="dayAutoBtn" onclick="autopilotDay()"><svg class="ico" aria-hidden="true"><use href="#i-bacchetta"/></svg>Autopilota — mettili in orario tu</button>
+  <button class="btn btn-secondario btn-block" id="dayImportBtn" onclick="importDayText()">Aggiungi così come sono</button>
+  <div id="dayImportStatus" style="font-size:var(--fs-xs);color:var(--ink-soft);margin-top:var(--sp-2);line-height:1.5"></div></div>
 </div></div>
 <div class="modal" id="mPerson"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Aggiungi persona</div><button class="x x-close" onclick="closeSheet('mPerson')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <div class="fg"><label>Nome</label><input id="personName" placeholder="Marco"></div>
-  <button class="btn btn-primario btn-block" onclick="addPerson()">Aggiungi</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="addPerson()">Aggiungi</button></div>
 </div></div>
 <div class="modal" id="mPareggia"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3025,8 +3034,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="fg"><label class="split-item on" style="margin:0"><input type="checkbox" id="expPaid" checked onchange="document.getElementById('expPaidHint').style.display=this.checked?'none':'block'"><span>Spesa già pagata (togli la spunta se è una previsione)</span></label></div>
   <p id="expPaidHint" style="display:none;font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.45;margin:calc(var(--sp-2) * -1) 0 var(--sp-4)">La previsione non pesa su chi la pagherà: nei budget conta già <b>divisa</b> tra i selezionati. Entrerà nei saldi solo quando la segnerai pagata.</p>
   <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2)"><label style="margin:0">Diviso tra</label><div style="display:flex;gap:var(--sp-2)"><button class="chip" onclick="splitAll(true)">Tutti</button><button class="chip" onclick="splitAll(false)">Nessuno</button></div></div><div class="split-list" id="expSplit"></div><div id="expShare" class="split-share"></div></div>
-  <button class="btn btn-primario btn-block" onclick="addExpense()"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>Salva spesa</button>
-  <button class="btn btn-elimina btn-block" id="expDel" style="display:none;margin-top:var(--sp-2)" onclick="delExpense(expEditId)"><svg class="ico" aria-hidden="true"><use href="#i-cestino"/></svg>Elimina spesa</button>
+  <div class="zona-elimina" id="expDel" style="display:none"><button class="btn btn-elimina btn-block" onclick="delExpense(expEditId)"><svg class="ico" aria-hidden="true"><use href="#i-cestino"/></svg>Elimina spesa</button></div>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="addExpense()"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>Salva spesa</button></div>
 </div></div>
 <div class="modal" id="mCambiVerifica"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3042,8 +3051,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div style="display:flex;gap:var(--sp-2)"><div class="fg" style="flex:1"><label>Tipo</label><select id="tkType"><option value="attraction">Attrazione</option><option value="flight">Volo</option><option value="other">Altro</option></select></div><div class="fg" style="flex:1"><label>Di chi è</label><select id="tkChi"></select></div></div>
   <div style="display:flex;gap:var(--sp-2)"><div class="fg" style="flex:1.4"><label>Giorno <span style="font-weight:500;color:var(--ink-faint)">(lo metto in time-table)</span></label><select id="tkDay"><option value="">Nessuno</option></select></div><div class="fg" style="flex:1"><label>Ora</label><input type="time" id="tkTime"></div></div>
   <div style="display:flex;gap:var(--sp-2)"><div class="fg" style="flex:1.2"><label>Costo (opz.)</label><input id="tkCost" type="number" inputmode="decimal" placeholder="0"></div><div class="fg" style="flex:.8"><label>Valuta</label><select id="tkCur"></select></div><div class="fg" style="flex:1"><label>Spesa</label><select id="tkPaid"><option value="paid">Già pagata</option><option value="plan">Prevista</option><option value="no">Non aggiungere</option></select></div></div>
-  <button class="btn btn-primario btn-block" onclick="addTicketManual()">Aggiungi</button>
-  <button class="btn btn-secondario btn-block" style="margin-top:var(--sp-2)" onclick="addTicketManual(true)">Aggiungi e continua con un altro</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="addTicketManual()">Aggiungi</button>
+  <button class="btn btn-secondario btn-block" onclick="addTicketManual(true)">Aggiungi e continua con un altro</button></div>
 </div></div>
 <div class="modal" id="mScanner"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3114,7 +3123,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="cal-avviso" role="note" style="font-size:var(--fs-s);line-height:1.45;color:var(--ink);background:var(--sand-tint);border:1px solid var(--line);border-radius:var(--r-ctl);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2)">⚠️ Chi ha il link vede l'itinerario: dallo solo a chi vuoi tu.</div>
   <div id="calStato" class="cal-stato" role="status" aria-live="polite" style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.5;min-height:1.3em;margin:var(--sp-3) 0 var(--sp-3)"></div>
   <div id="calAzioni"></div>
-  <button class="cal-ics" onclick="exportICS()" style="display:block;width:100%;min-height:44px;margin-top:var(--sp-1);background:none;border:none;font-family:inherit;font-size:var(--fs-s);font-weight:700;color:var(--ink-soft);text-decoration:underline;cursor:pointer">Oppure scarica un file .ics, una volta sola</button>
+  <button class="btn btn-terziario cal-ics" onclick="exportICS()" style="display:block;width:100%;min-height:44px;margin-top:var(--sp-1);background:none;border:none;font-family:inherit;font-size:var(--fs-s);font-weight:700;color:var(--ink-soft);text-decoration:underline;cursor:pointer">Oppure scarica un file .ics, una volta sola</button>
 </div></div>
 <div class="modal" id="mActMenu"><div class="sheet" style="max-width:380px">
   <div class="sheet-grip"></div>
@@ -3147,7 +3156,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <div id="adNameSug"></div>
     <div id="adAddrWrap" style="display:none;margin-top:var(--sp-2)">
       <div style="font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600">Non appare nei suggeriti? Incolla qui l'indirizzo</div>
-      <div class="add-row"><input id="adAddr" placeholder="Indirizzo, coordinate o link della mappa" autocomplete="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter'){event.preventDefault();adAddrFind();}"><button class="btn btn-primario" onclick="adAddrFind()">Cerca</button></div>
+      <div class="add-row"><input id="adAddr" placeholder="Indirizzo, coordinate o link della mappa" autocomplete="off" autocapitalize="sentences" onkeydown="if(event.key==='Enter'){event.preventDefault();adAddrFind();}"><button class="btn btn-secondario" onclick="adAddrFind()">Cerca</button></div>
       <div id="adAddrHint" style="font-size:var(--fs-xs);color:var(--ink-faint);margin-top:var(--sp-1)"></div>
     </div>
   </div>
@@ -3204,11 +3213,9 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <div style="display:flex;gap:var(--sp-2)"><select id="adExpPick" aria-labelledby="adExpLbl" style="flex:1"><option value="">Nessuna spesa da collegare</option></select><button class="chip" style="white-space:nowrap" onclick="linkAdExpense()">Collega</button></div>
   </div>
   <div class="fg"><label>Note</label><textarea id="adNotes"></textarea></div>
-  <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap">
-    <button class="btn btn-primario" style="flex:2" onclick="saveActDetail()">Salva</button>
-    <a class="btn btn-secondario" id="adGcal" style="flex:1;display:none" target="_blank">Calendario</a>
-    <button class="btn btn-elimina" id="adDel" onclick="delActDetail()">Elimina</button>
-  </div>
+  <a class="btn btn-secondario btn-block" id="adGcal" style="display:none" target="_blank"><svg class="ico" aria-hidden="true"><use href="#i-calendario"/></svg>Calendario</a>
+  <div class="zona-elimina" id="adDel"><button class="btn btn-elimina btn-block" onclick="delActDetail()"><svg class="ico" aria-hidden="true"><use href="#i-cestino"/></svg>Elimina attività</button></div>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="saveActDetail()">Salva</button></div>
 </div></div>
 <div class="modal" id="mPeople"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3232,7 +3239,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <button class="btn btn-secondario btn-block" style="margin-bottom:var(--sp-4)" onclick="permVaiHome()">Come aggiungerla alla Home</button>
   </div>
   <p class="pos-dopo" id="permDopo">Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.</p>
-  <div style="display:flex;gap:var(--sp-2)"><button class="btn btn-primario" style="flex:1" id="permSi" onclick="consentYes()">Attiva le notifiche</button><button class="btn btn-secondario" style="flex:1" id="permNo" onclick="consentNo()">Non ora</button></div>
+  <div class="sheet-piede"><div style="display:flex;gap:var(--sp-2)"><button class="btn btn-primario" style="flex:1" id="permSi" onclick="consentYes()">Attiva le notifiche</button><button class="btn btn-secondario" style="flex:1" id="permNo" onclick="consentNo()">Non ora</button></div></div>
 </div></div>
 <div class="modal" id="mNav"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3247,13 +3254,13 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
        ogni colonna, e il riepilogo con la ricerca dei luoghi. -->
   <div id="impScegli">
     <p class="imp-intro">Hai il viaggio in un foglio di Excel, Numbers o Fogli Google? Portalo qui: una riga per ogni attività, con la data e, se c'è, l'ora.</p>
-    <label class="file-btn imp-file">📄 Scegli un file<input type="file" id="impFile" accept=".xlsx,.xlsm,.xls,.numbers,.ods,.csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="impDaFile(event)"></label>
+    <label class="btn btn-primario btn-block file-btn imp-file"><svg class="ico" aria-hidden="true"><use href="#i-documento"/></svg>Scegli un file<input type="file" id="impFile" accept=".xlsx,.xlsm,.xls,.numbers,.ods,.csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="impDaFile(event)"></label>
     <p class="imp-nota">Excel, Numbers, CSV o testo · fino a 5 MB e 1.000 righe</p>
     <div class="fg imp-incolla"><label for="impTripText">Incolla le celle</label><textarea id="impTripText" placeholder="Seleziona le celle in Excel, Numbers o Fogli Google, copiale e incollale qui"></textarea></div>
     <button class="btn btn-secondario btn-block" onclick="impDaIncolla()">Leggi le celle</button>
     <div id="impMsg" role="status"></div>
     <div id="impTripResult"></div>
-    <button class="imp-modello" onclick="impModello()"><svg class="ico" aria-hidden="true"><use href="#i-scarica"/></svg>Scarica un modello da compilare</button>
+    <button class="btn btn-terziario imp-modello" onclick="impModello()"><svg class="ico" aria-hidden="true"><use href="#i-scarica"/></svg>Scarica un modello da compilare</button>
   </div>
   <div id="impControlla" style="display:none"></div>
   <div id="impFatto" style="display:none"></div>
@@ -3264,7 +3271,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <label class="split-item on"><input type="checkbox" id="sgOn"><span>Consigli attivi, con avvisi nei dintorni</span></label>
   <div class="fg" style="margin-top:var(--sp-3)"><label>Interessi del gruppo</label><textarea id="sgInt" placeholder="es. arte, cibo di strada, natura, fotografia"></textarea></div>
   <p style="font-size:var(--fs-s);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-4)">I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.</p>
-  <button class="btn btn-primario btn-block" onclick="saveSuggestPrefs()">Salva</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="saveSuggestPrefs()">Salva</button></div>
 </div></div>
 <div class="modal" id="mNewPass"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3277,8 +3284,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <p class="np-obbligo" style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.55;margin-bottom:var(--sp-4)">Sei entrato per recuperare la password: prima di continuare scegline una nuova. Se non l'hai chiesto tu, tocca «Annulla».</p>
   <div class="fg"><label>Nuova password</label><input id="npPass" type="password" autocomplete="new-password" placeholder="Minimo 6 caratteri"></div>
   <div id="npMsg" style="font-size:var(--fs-s);color:var(--red);min-height:1.1rem;margin-bottom:var(--sp-2);line-height:1.4"></div>
-  <button class="btn btn-primario btn-block" onclick="saveNewPass()">Salva nuova password</button>
-  <button class="btn btn-secondario btn-block np-obbligo" style="margin-top:var(--sp-2)" onclick="annullaRecupero()">Annulla</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="saveNewPass()">Salva nuova password</button>
+  <button class="btn btn-secondario btn-block np-obbligo" onclick="annullaRecupero()">Annulla</button></div>
 </div></div>
 <div class="modal" id="mGen"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3288,14 +3295,14 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="fg"><label>Oppure scegli uno stile</label><select id="genStyle"><option value="mix">Un po' di tutto</option><option value="arte">Arte e storia</option><option value="cibo">Cibo e mercati</option><option value="natura">Natura e panorami</option></select></div>
   <div class="fg"><label>Ritmo</label><select id="genPace"><option value="3">Rilassato · 3 tappe</option><option value="4" selected>Normale · 4 tappe</option><option value="5">Pieno · 5 tappe</option></select></div>
   <div id="genStatus" style="font-size:var(--fs-s);color:var(--ink-soft);min-height:1.1rem;margin-bottom:var(--sp-3)"></div>
-  <button class="btn btn-primario btn-block" onclick="runGen()">Pianifica questo giorno</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="runGen()">Pianifica questo giorno</button></div>
 </div></div>
 <div class="modal" id="mTkLink"><div class="sheet">
   <div class="sheet-grip"></div>
   <div class="sheet-head"><div class="sheet-t">Collega ad attività</div><button class="x x-close" onclick="closeSheet('mTkLink')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <div id="mTkLinkHint" style="font-size:var(--fs-s);color:var(--ink-faint);margin:calc(var(--sp-1) * -1) 0 var(--sp-3)"></div>
   <div class="fg"><label>Quale attività usa questo biglietto?</label><select id="tlAct"></select></div>
-  <button class="btn btn-primario btn-block" onclick="saveTkLink()">Collega</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="saveTkLink()">Collega</button></div>
 </div></div>
 <div class="modal" id="mTicketBig"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3312,8 +3319,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <p style="font-size:var(--fs-m);color:var(--ink-soft);line-height:1.6;margin-bottom:var(--sp-4)">Ai compagni di viaggio arriva un avviso con <strong>il punto dove sei adesso</strong> e la strada per raggiungerti. La posizione si prende in questo momento, una volta sola: nessuno viene seguito.</p>
   <div class="fg"><label>Due parole, se servono</label><input id="raccNota" maxlength="60" placeholder="Si parte"></div>
   <div class="chips" id="raccVeloci" style="margin:var(--sp-1) 0 var(--sp-4)"></div>
-  <button class="btn btn-primario btn-block" onclick="mandaRaccolta()"><svg class="ico" aria-hidden="true"><use href="#i-megafono"/></svg>Chiama tutti qui</button>
-  <div id="raccMsg" style="font-size:var(--fs-s);color:var(--ink-faint);line-height:1.5;margin-top:var(--sp-3);text-align:center"></div>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="mandaRaccolta()"><svg class="ico" aria-hidden="true"><use href="#i-megafono"/></svg>Chiama tutti qui</button>
+  <div id="raccMsg" style="font-size:var(--fs-s);color:var(--ink-faint);line-height:1.5;margin-top:var(--sp-2);text-align:center"></div></div>
 </div></div>
 <div class="modal" id="mRaccoltaIn"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3325,14 +3332,14 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">Foto</div><button class="x x-close" onclick="closeSheet('mPhoto')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <img id="phBig" style="width:100%;border-radius:var(--r-ctl);margin-bottom:var(--sp-3)" alt="">
   <div id="phChi" style="font-size:var(--fs-s);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-3)"></div>
-  <button class="btn btn-primario btn-block" style="margin-bottom:var(--sp-2)" onclick="salvaFoto()">⤓ Salva sul telefono</button>
+  <button class="btn btn-primario btn-block" style="margin-bottom:var(--sp-2)" onclick="salvaFoto()"><svg class="ico" aria-hidden="true"><use href="#i-scarica"/></svg>Salva sul telefono</button>
   <button class="btn btn-secondario btn-block" id="phRiprova" style="display:none;margin-bottom:var(--sp-2)" onclick="riprovaFoto()"><svg class="ico" aria-hidden="true"><use href="#i-nuvola"/></svg>Riprova a salvarla nel cloud</button>
-  <button class="btn btn-elimina btn-block" onclick="delPhoto()">Elimina questa foto</button>
   <!-- Il canale con cui veniamo a sapere. Chi ospita contenuti altrui non
        risponde di quello che non sa, ma risponde di quello che sa e lascia
        li': averlo, e tenerlo funzionante, e' meta' della tutela. Lo chiede
        il DSA (art. 16) e lo pretende l'App Store (linea guida 1.2). -->
   <button class="btn btn-secondario btn-block" style="margin-top:var(--sp-2)" onclick="apriSegnala()"><svg class="ico" aria-hidden="true"><use href="#i-bandiera"/></svg>Segnala questa foto</button>
+  <div class="zona-elimina"><button class="btn btn-elimina btn-block" onclick="delPhoto()"><svg class="ico" aria-hidden="true"><use href="#i-cestino"/></svg>Elimina questa foto</button></div>
 </div></div>
 <div class="modal" id="mElimAcc"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3454,7 +3461,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <p style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.55;margin-bottom:var(--sp-2)">Incollalo qui: ci trovo dentro tutto quello che serve, senza che tu debba cercare niente.</p>
     <textarea id="cfgInvito" style="min-height:64px;font-size:var(--fs-xs)" placeholder="https://... oppure il codice" autocapitalize="off" autocorrect="off"></textarea>
     <div id="cfgInvMsg" style="font-size:var(--fs-s);color:var(--red);min-height:1.1rem;margin:var(--sp-1) 0;line-height:1.4"></div>
-    <button class="btn btn-primario btn-block" onclick="usaInvito()">Usa questo link</button>
+    <button class="btn btn-secondario btn-block" onclick="usaInvito()">Usa questo link</button>
   </div>
 </div></div>
 <div class="modal" id="mPremium"><div class="sheet">
@@ -3479,10 +3486,10 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t" id="msTitle">Proposte</div><button class="x x-close" onclick="closeSheet('mMosse')"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></div>
   <div id="msComment" style="font-size:var(--fs-s);color:var(--ink-soft);line-height:1.5;margin-bottom:var(--sp-3)"></div>
   <div id="msList"></div>
-  <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-4)">
+  <div class="sheet-piede"><div style="display:flex;gap:var(--sp-2)">
     <button class="btn btn-secondario" style="flex:1" onclick="closeSheet('mMosse')">Lascia com'è</button>
     <button class="btn btn-primario" style="flex:1" onclick="applicaMosse()">Applica</button>
-  </div>
+  </div></div>
 </div></div>
 <!-- Come si va da una tappa all'altra: i sei mezzi (vedi apriMezzi). -->
 <div class="modal" id="mMezzo"><div class="sheet">
@@ -3530,7 +3537,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">La tua posizione</div></div>
   <p class="pos-perche" id="posPerche"></p>
   <p class="pos-dopo">Subito dopo il telefono ti chiederà il permesso. Puoi cambiare idea quando vuoi dalle impostazioni.</p>
-  <div style="display:flex;gap:var(--sp-2)"><button class="btn btn-primario" style="flex:1" onclick="posContinua()">Continua</button><button class="btn btn-secondario" style="flex:1" onclick="posNonOra()">Non ora</button></div>
+  <div class="sheet-piede"><div style="display:flex;gap:var(--sp-2)"><button class="btn btn-primario" style="flex:1" onclick="posContinua()">Continua</button><button class="btn btn-secondario" style="flex:1" onclick="posNonOra()">Non ora</button></div></div>
 </div></div>
 <!-- I fogli dei dati al sicuro (vedi I DATI AL SICURO). I tasti stanno uno
      sotto l'altro: a 320 px, e in francese, due affiancati non ci stanno. -->
@@ -3539,8 +3546,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">I tuoi viaggi sono solo su questo telefono</div></div>
   <p class="pos-perche">Se cambi telefono, lo perdi o si cancellano i dati del browser, i viaggi se ne vanno con lui.</p>
   <p class="pos-dopo">Con un account restano al sicuro nel cloud, e ci finiscono anche i viaggi che hai già qui.</p>
-  <button class="btn btn-primario btn-block" style="margin-bottom:var(--sp-2)" onclick="soloQuiCrea()">Crea un account</button>
-  <button class="btn btn-secondario btn-block" onclick="closeSheet('mSoloQui')">Più tardi</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="soloQuiCrea()">Crea un account</button>
+  <button class="btn btn-secondario btn-block" onclick="closeSheet('mSoloQui')">Più tardi</button></div>
 </div></div>
 <div class="modal" id="mHome"><div class="sheet">
   <div class="sheet-grip"></div>
@@ -3552,7 +3559,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
     <li>Da lì in poi apri GeppGo dalla sua icona.</li>
   </ol>
   <p class="pos-dopo">L'app sulla Home ha una memoria sua, separata da Safari: prima crea un account, oppure fai un backup dal Profilo, così lì ritrovi i tuoi viaggi.</p>
-  <button class="btn btn-primario btn-block" onclick="closeSheet('mHome')">Ho capito</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="closeSheet('mHome')">Ho capito</button></div>
 </div></div>
 <!-- Sta sopra la schermata di accesso: chi apre l'app installata vuota ha
      davanti quella, e «Accedi» e' proprio una delle risposte. -->
@@ -3561,9 +3568,9 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="sheet-head"><div class="sheet-t">Avevi già dei viaggi in Safari?</div></div>
   <p class="pos-perche">L'app sulla schermata Home ha una memoria sua: i viaggi fatti in Safari non arrivano da soli.</p>
   <p class="pos-dopo">Se avevi un account, accedi e li ritrovi. Se avevi fatto un backup, ripristinalo da qui.</p>
-  <button class="btn btn-primario btn-block" style="margin-bottom:var(--sp-2)" onclick="daSafariAccedi()">Accedi</button>
-  <label class="btn btn-secondario btn-block" style="cursor:pointer">Ripristina da un backup<input type="file" accept=".zip,.json,application/zip,application/json" style="display:none" onchange="closeSheet('mDaSafari');importData(event)"></label>
-  <button class="dati-link" onclick="closeSheet('mDaSafari')">No, comincio adesso</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" onclick="daSafariAccedi()">Accedi</button>
+  <label class="btn btn-secondario btn-block" style="cursor:pointer;margin-top:var(--sp-2)">Ripristina da un backup<input type="file" accept=".zip,.json,application/zip,application/json" style="display:none" onchange="closeSheet('mDaSafari');importData(event)"></label>
+  <button class="btn btn-terziario dati-link" onclick="closeSheet('mDaSafari')">No, comincio adesso</button></div>
 </div></div>
 <!-- Anche questo sopra l'accesso: un ripristino partito da «Avevi gia' dei
      viaggi in Safari?» deve farsi vedere. -->
@@ -3580,8 +3587,8 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="esci-quante" id="esciQuante"></div>
   <p class="pos-dopo">Se esci adesso restano solo su questo telefono, finché non rientri con questo account.</p>
   <p class="esci-stato" id="esciStato" role="status" aria-live="polite"></p>
-  <button class="btn btn-primario btn-block" style="margin-bottom:var(--sp-2)" id="esciAspetta" onclick="esciAspetta()">Aspetta e sincronizza</button>
-  <button class="btn btn-secondario btn-block" onclick="esciLoStesso()">Esci lo stesso</button>
+  <div class="sheet-piede"><button class="btn btn-primario btn-block" id="esciAspetta" onclick="esciAspetta()">Aspetta e sincronizza</button>
+  <button class="btn btn-secondario btn-block" onclick="esciLoStesso()">Esci lo stesso</button></div>
 </div></div>
 <script>
 /* qrcode@1.5.3 (soldair/node-qrcode) incluso qui: il CDN ufficiale (build/qrcode.min.js) non esiste nel pacchetto pubblicato e dava sempre 404, lasciando il QR sempre vuoto. */
@@ -13711,6 +13718,7 @@ const DIZIONARIO_STILE={
     'Elimina voce':'Delete item',
     'Elimina luogo':'Delete place',
     'Elimina alloggio':'Delete accommodation',
+    'Elimina attività':'Delete activity',
     'necessario':'needed',
     'Aggiungi tutti alla mappa':'Add them all to the map',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Rough location: tap Edit and paste the Google Maps link'
@@ -13722,6 +13730,7 @@ const DIZIONARIO_STILE={
     'Elimina voce':'Eliminar elemento',
     'Elimina luogo':'Eliminar lugar',
     'Elimina alloggio':'Eliminar alojamiento',
+    'Elimina attività':'Eliminar actividad',
     'necessario':'necesario',
     'Aggiungi tutti alla mappa':'Añadir todos al mapa',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Ubicación aproximada: toca Editar y pega el enlace de Google Maps'
@@ -13733,6 +13742,7 @@ const DIZIONARIO_STILE={
     'Elimina voce':'Supprimer l’élément',
     'Elimina luogo':'Supprimer le lieu',
     'Elimina alloggio':'Supprimer l’hébergement',
+    'Elimina attività':'Supprimer l’activité',
     'necessario':'nécessaire',
     'Aggiungi tutti alla mappa':'Tout ajouter à la carte',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Position approximative : touche Modifier et colle le lien Google Maps'
@@ -13744,6 +13754,7 @@ const DIZIONARIO_STILE={
     'Elimina voce':'Eliminar item',
     'Elimina luogo':'Eliminar local',
     'Elimina alloggio':'Eliminar alojamento',
+    'Elimina attività':'Eliminar atividade',
     'necessario':'necessário',
     'Aggiungi tutti alla mappa':'Adicionar todos ao mapa',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Localização aproximada: toca em Editar e cola o link do Google Maps'
@@ -14555,7 +14566,7 @@ function toggleStatus(){
 }
 function renderTripAddRow(){
   const box=document.getElementById('tripAddRow');if(!box)return;
-  box.innerHTML=`<div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-1)"><button class="btn btn-primario" style="flex:1" onclick="openNewTrip()">${ico('piu')}${esc(tv('Aggiungi viaggio'))}</button><button class="btn btn-secondario" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:var(--sp-2)"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:var(--fs-xs);font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
+  box.innerHTML=`<div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-1)"><button class="btn btn-secondario" style="flex:1" onclick="openNewTrip()">${ico('piu')}${esc(tv('Aggiungi viaggio'))}</button><button class="btn btn-secondario" style="flex:1" onclick="openSheet('mCode')">Ho un codice</button></div>`+(app.trips.some(t=>t.status==='closed')?`<div style="text-align:center;margin-top:var(--sp-2)"><button onclick="go('trips')" style="background:none;border:none;font-family:inherit;font-size:var(--fs-xs);font-weight:700;color:var(--ink-faint);cursor:pointer">Viaggi conclusi ›</button></div>`:'');
 }
 function openTripZoom(id){
   app.currentTripId=id;const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
@@ -14727,7 +14738,6 @@ function aggiornaTestata(){
     p.classList.toggle('parola',!ini);
   }
 }
-function cambiaTema(){toggleDark(!app.settings.dark);}
 /* Le tre righine sono un interruttore: se il cassetto e' gia' fuori,
    ritoccarle lo rimanda dentro. Un tasto che apre e basta costringe a
    cercare la X per una cosa che si e' aperta per sbaglio. */
@@ -15524,7 +15534,7 @@ function renderHomeHero(){
      e toccandolo si dice cosa manca: sparire senza spiegazioni e' il motivo
      per cui non si trovava. */
   const raccoltaHome=(t.participants||[]).length>1
-    ?`<button class="hh-raccolta" onclick="raccoltaDallaHome()">${ico('megafono')}${esc(tv('A raccolta'))}</button>`:'';
+    ?`<button class="btn btn-secondario hh-raccolta" onclick="raccoltaDallaHome()">${ico('megafono')}${esc(tv('A raccolta'))}</button>`:'';
   /* I BAGAGLI, I COMPAGNI E L'INVITO, A PORTATA (vedi «Nessuna funzione
      nascosta» in CLAUDE.md). Stavano solo dentro la scheda del viaggio, e i
      bagagli li si e' trovati chiedendolo all'assistente. Sono nella fila delle
@@ -15536,7 +15546,7 @@ function renderHomeHero(){
      toccando un titolo. L'icona sta sopra la parola, cosi' quattro ci
      stanno in una riga; dove non ci stanno lo stesso (320 px, le lingue
      lunghe) diventano due righe da due, misurando (vedi adattaRapidi). */
-  const rapido=(fn,icona,frase)=>`<button class="hh-rapido" onclick="${fn}">${ico(icona)}<span class="hr-tx">${esc(tv(frase))}</span></button>`;
+  const rapido=(fn,icona,frase)=>`<button class="btn btn-secondario hh-rapido" onclick="${fn}">${ico(icona)}<span class="hr-tx">${esc(tv(frase))}</span></button>`;
   const rapidi=`<div class="hh-rapidi">
     ${rapido('openPacking()','valigia','Bagagli')}
     ${rapido('openPeople()','persone','Compagni')}
@@ -15610,10 +15620,10 @@ function renderHomeHero(){
   </div>`;})()}
   <div class="giorni hh-days">${caselleGiorni(t.days.map(d=>({date:d.date,titolo:'Un tocco per vedere la giornata, un altro sullo stesso giorno per aprire la time-table'})),{scelto:i,tocca:j=>`selHomeDay(${j})`})}</div>
   <div class="hh-sec">
-    <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="hh-add" onclick="homeAdd()" title="Aggiungi tappa" aria-label="Aggiungi tappa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(tv('Aggiungi'))}</span></button></div>
+    <div class="hh-sec-l"><div class="hh-sec-t">La giornata</div><button class="chip hh-add" onclick="homeAdd()" aria-label="${esc(tv('Aggiungi tappa'))}">${ico('piu')}<span>${esc(tv('Aggiungi'))}</span></button></div>
     <div class="hh-sec-c">${tp(acts.length,'{1} TAPPA','{1} TAPPE')}</div>
   </div>
-  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><div class="hh-map-giu"><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div><button class="mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div></div>
+  ${acts.length?`<div class="hh-map-wrap" id="homeMapWrap"><div id="homeMap"></div><button class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><div class="hh-map-giu"><div id="homeMapNote" class="hh-map-note" style="display:none">Questa tappa non ha una posizione — aprila e incolla l'indirizzo</div><button class="chip mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div></div>
   <div class="hh-cards">${acts.map(a=>{
     const av=avOf(a);
     // La foto del luogo collegato: si riconosce la tappa senza leggerne il nome.
@@ -18251,8 +18261,8 @@ function renderTricount(){
       }).join('');
     }
   } else {
-    body=`<div class="section-label">Saldi</div>${notaNonIncluse(t)}<div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;const inPari=Math.abs(b)<0.01;const quanti=txns.filter(x=>x.from===p.id||x.to===p.id).length;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.isMe?tv('{1} (tu)',p.name):(p._g?tv('{1} (ospite)',p.name):p.name))}</div><div class="person-tag">${esc(tagSaldo(b,quanti))}</div></div></div><div class="bal-col"><div class="bal ${b>=0?'pos':'neg'}">${inPari?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div>${inPari?'<span class="tic-ic on">✓</span>':`<button class="tic-ic tic-tx" title="Segna chi ha pareggiato" onclick="event.stopPropagation();openPareggia(${p.id})"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>${esc(tv('Pagato'))}</button>`}</div></div>`;}).join('')}<button class="btn btn-secondario btn-block" style="margin-top:var(--sp-2)" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
-      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:var(--fs-xs)">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><div class="bal-col" style="margin-left:auto"><span style="font-weight:700;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span><button class="tic-ic tic-tx" title="Segna come pagato" onclick="event.stopPropagation();markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>${esc(tv('Pagato'))}</button></div></div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:var(--fs-m);padding:var(--sp-3)">Tutti in pari 🎉</div></div>'}`;
+    body=`<div class="section-label">Saldi</div>${notaNonIncluse(t)}<div class="card">${t.participants.concat((t.guests||[]).filter(g=>Math.abs(bal[g.id]||0)>=0.01).map(g=>({...g,_g:1}))).map(p=>{const b=bal[p.id]||0;const inPari=Math.abs(b)<0.01;const quanti=txns.filter(x=>x.from===p.id||x.to===p.id).length;return `<div class="person"><div class="person-l"><div class="avatar ${p.isMe?'me':''}">${esc(p.name.charAt(0).toUpperCase())}</div><div><div class="person-n">${esc(p.isMe?tv('{1} (tu)',p.name):(p._g?tv('{1} (ospite)',p.name):p.name))}</div><div class="person-tag">${esc(tagSaldo(b,quanti))}</div></div></div><div class="bal-col"><div class="bal ${b>=0?'pos':'neg'}">${inPari?'—':(b>0?'+':'−')+fmtVista(Math.abs(b),cur)}</div>${inPari?'<span class="tic-ic on">✓</span>':`<button class="chip tic-ic tic-tx" title="Segna chi ha pareggiato" onclick="event.stopPropagation();openPareggia(${p.id})"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>${esc(tv('Pagato'))}</button>`}</div></div>`;}).join('')}<button class="btn btn-secondario btn-block" style="margin-top:var(--sp-2)" onclick="openSheet('mPerson')">+ Aggiungi persona</button></div>
+      ${txns.length?`<div class="section-label">Come pareggiare</div><div class="card">${txns.map(x=>{const f=(t.participants.find(p=>p.id===x.from)||(t.guests||[]).find(p=>p.id===x.from)),to=(t.participants.find(p=>p.id===x.to)||(t.guests||[]).find(p=>p.id===x.to));return `<div class="settle"><div class="avatar" style="width:30px;height:30px;font-size:var(--fs-xs)">${esc(f.name.charAt(0).toUpperCase())}</div><span><strong>${esc(f.name)}</strong> <span class="arrow">→</span> <strong>${esc(to.name)}</strong></span><div class="bal-col" style="margin-left:auto"><span style="font-weight:700;color:var(--green-deep)">${fmtVista(x.amount,cur)}</span><button class="chip tic-ic tic-tx" title="Segna come pagato" onclick="event.stopPropagation();markPaid(${x.from},${x.to},${Math.round(x.amount*100)/100})"><svg class="ico" aria-hidden="true"><use href="#i-spunta"/></svg>${esc(tv('Pagato'))}</button></div></div>`;}).join('')}</div>`:'<div class="section-label">Come pareggiare</div><div class="card"><div style="text-align:center;color:var(--ink-faint);font-size:var(--fs-m);padding:var(--sp-3)">Tutti in pari 🎉</div></div>'}`;
   }
   const act2=app.trips.filter(x=>x.status!=='closed');
   const tripSel=act2.length>1?`<select class="trip-pick" aria-label="${esc(tv('Viaggio'))}" style="margin-bottom:var(--sp-3)" onchange="app.currentTripId=parseInt(this.value);save();renderAll()">${act2.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
@@ -18620,7 +18630,7 @@ function renderExpAct(){
   const liberi=tappe.filter(x=>!expActSel.includes(x.id));
   document.getElementById('expActChips').innerHTML=expActSel.map(id=>{
     const x=tappe.find(y=>y.id===id);
-    return `<span class="tap-chip">🕒 ${esc(x?x.a.name:'tappa')}<button onclick="expActTogli(${id})" aria-label="Togli"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></span>`;
+    return `<span class="tap-chip">${ico('orologio')}${esc(x?x.a.name:'tappa')}<button onclick="expActTogli(${id})" aria-label="Togli"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button></span>`;
   }).join('');
   el.innerHTML=`<option value="">${expActSel.length?'+ Aggiungi un\'altra tappa':'Nessuna tappa'}</option>`+
     liberi.map(x=>`<option value="${x.id}">${esc(x.etichetta)}</option>`).join('');
@@ -24270,6 +24280,11 @@ function renderAds(){
   b.style.background=app.premium?'var(--clay)':'var(--ink-faint)';
   s.textContent=app.premium?'Viaggi illimitati · niente pubblicità':tv('{1}/2 viaggi tuoi in corso · con pubblicità',n);
   btn.textContent=app.premium?'Gestisci piano':'Scopri Premium';
+  /* Un oro solo per schermata (Layout 1): senza account l'oro va ad
+     «Accedi o crea account», che mette al sicuro i viaggi; con l'account
+     torna qui, com'era. */
+  const conAccount=!!(session&&session.user);
+  btn.classList.toggle('btn-primario',conAccount);btn.classList.toggle('btn-secondario',!conAccount);
 }
 
 /* ===== PRENOTAZIONI ===== */
@@ -25338,6 +25353,7 @@ function ttApriDoveServe(d){
   });
 }
 function ttNav(dir){
+  togliScorri();
   const t=T();if(!t)return;
   let n=ttDay+dir;if(n<0)n=0;if(n>t.days.length-1)n=t.days.length-1;
   if(n===ttDay)return;
@@ -25452,7 +25468,7 @@ function buildTTDayInner(t,di){
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:var(--sp-1)">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':tv('da prenotare')):((a.senzaPosizione&&a.lat==null)?tv('senza posizione'):'')}</span></div>`).join('');
   html+=`<div class="ttgrid" style="height:${18*H}px">`;
-  for(let h=6;h<24;h++)html+=`<div class="tt-line" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
+  for(let h=6;h<24;h++)html+=`<div class="tt-line" data-h="${h}" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   /* La riga di adesso, e solo se la giornata e' oggi. Su un giorno che non
      e' oggi non vuol dire niente, e una riga che non vuol dire niente uno
      la legge lo stesso. */
@@ -25577,7 +25593,7 @@ function buildTTDayInner(t,di){
     html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="tapAct(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">${esc(tv('continua da ieri · {1}',lbl))}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
-  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla</div><div style="text-align:center;padding:2px 0 var(--sp-2)"><button onclick="askDelDayTT()" style="background:none;border:none;font-family:inherit;font-size:var(--fs-xs);font-weight:600;color:var(--ink-faint);cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 var(--sp-3)">Elimina questo giorno</button></div>';
+  if(di===ttDay)html+='<div class="tt-empty">Tieni premuto una tappa e trascinala su/giù per spostare l\'orario · tocca per aprirla</div><div style="text-align:center;padding:2px 0 var(--sp-2)"><button class="btn btn-elimina btn-compatto" onclick="askDelDayTT()">Elimina questo giorno</button></div>';
   return {html,tops,d};
 }
 function buildTT(){
@@ -25598,6 +25614,7 @@ function buildTT(){
     return `<div class="tt-col ${isAct?'tt-col-active':'tt-peek'}"><div class="tt-col-h" ${isAct?'':`onclick="openDay(${di})"`}>${tv('G{1}',di+1)} · ${esc(lbl)}</div>${r.html}</div>`;
   }).join('');
   document.getElementById('ttBody').innerHTML=cols>1?`<div class="tt-multi">${colsHtml}</div>`:colsHtml;
+  oraFaPosto();
   if(activeTops){
     activeTops.forEach(it=>{const el=document.querySelector(`.tt-block[data-id="${it.a.id}"]`);if(el)bindBlockDrag(el,it.a,t,activeD);});
     document.querySelectorAll('.tt-child[data-id]').forEach(el=>{const idc=parseInt(el.dataset.id);const ac=(activeD.activities||[]).find(x=>x.id===idc);if(ac)bindChildDrag(el,ac,t,activeD);});
@@ -25627,7 +25644,7 @@ window.addEventListener('resize',()=>{
    e' quella che si vuole annullare subito dopo averla sbagliata.
    Il tipo serve solo a dire la cosa giusta dopo: quello che si rimette a posto
    e' lo stesso in tutti e due i casi. */
-let lastDrag=null;
+let lastDrag=null,lastDragT=null;
 function markDrag(a,prev,tipo){
   lastDrag={di:ttDay,id:a.id,time:prev.time,timeEnd:prev.timeEnd,parentId:prev.parentId,tipo:tipo||'sposta'};
   const b=document.getElementById('ttUndo');
@@ -25636,14 +25653,11 @@ function markDrag(a,prev,tipo){
     const q=lastDrag.tipo==='durata'?tv('Annulla l\'allungamento'):tv('Annulla lo spostamento');
     b.title=q;b.setAttribute('aria-label',q);
   }
+  clearTimeout(lastDragT);lastDragT=setTimeout(clearDragUndo,8000);
 }
-/* Spegne il tasto, non lo toglie: il posto resta quello anche a mani vuote. */
 function clearDragUndo(){
-  lastDrag=null;
+  lastDrag=null;clearTimeout(lastDragT);
   const b=document.getElementById('ttUndo');
-  /* Spento e' «niente da annullare»: per chi usa VoiceOver un tasto spento
-     (aria-disabled), e come tale puo' restare tenue. Toccato risponde lo
-     stesso, con un messaggio (vedi undoDrag). */
   if(b){b.classList.remove('on');b.setAttribute('aria-disabled','true');const n=tv('Niente da annullare');b.title=n;b.setAttribute('aria-label',n);}
 }
 function undoDrag(){
@@ -29396,6 +29410,19 @@ function adessoCammina(){
   el.style.top=((ora-6)*TT_H)+'px';
   const b=el.querySelector('b');
   if(b)b.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  oraFaPosto();
+}
+/* «12:05» sta nella colonna delle ore, alla sua altezza: vicino a un'ora
+   piena finiva sopra il «12» della griglia, e si leggeva «12:0⊘» (Layout 1).
+   Il numero dell'ora che toccherebbe si fa da parte finche' l'adesso e' li':
+   l'ora esatta la dice gia' l'etichetta rossa. */
+function oraFaPosto(){
+  const el=document.getElementById('ttAdesso');
+  document.querySelectorAll('.tt-line.fa-posto').forEach(x=>x.classList.remove('fa-posto'));
+  if(!el||el.style.display==='none')return;
+  const n=new Date(),ora=n.getHours()+n.getMinutes()/60,h=Math.round(ora);
+  if(Math.abs(ora-h)*TT_H>=16)return;
+  const r=document.querySelector('.tt-line[data-h="'+h+'"]');if(r)r.classList.add('fa-posto');
 }
 setInterval(adessoCammina,60000);
 
@@ -29435,7 +29462,7 @@ function renderRainTip(){
     <div style="font-weight:700;font-size:var(--fs-m);color:var(--clay-deep)">${tv('⛈️ {1}, {2} mm di pioggia',wxDesc(w.code),w.precipitation)}</div>
     <div style="font-size:var(--fs-s);color:var(--ink-soft);margin:var(--sp-1) 0 var(--sp-3);line-height:1.5"><span>${tv('{1} in questa giornata: {2}{3}.',quante,esc(outs.slice(0,3).map(a=>a.name).join(', ')),outs.length>3?tv(' e altre {1}',outs.length-3):'')}</span>${asciutto?` <b>${bd}</b><span> ${bw<1?tv('è previsto asciutto.'):tv('è previsto quasi asciutto.')}</span>`:''}</div>
     <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap">
-      <button class="btn btn-primario" style="flex:1;min-width:150px;padding:var(--sp-2)" onclick="alternativeMeteo(${ttDay})"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Alternative al coperto</button>
+      <button class="btn btn-secondario" style="flex:1;min-width:150px;padding:var(--sp-2)" onclick="alternativeMeteo(${ttDay})"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Alternative al coperto</button>
       ${asciutto?`<button class="btn btn-secondario" style="flex:1;min-width:130px;padding:var(--sp-2)" onclick="moveOutdoor(${ttDay},${best})"><svg class="ico" aria-hidden="true"><use href="#i-sposta"/></svg>${esc(tv('Sposta a {1}',giornoAsciutto))}</button>`:''}
       <button class="btn btn-secondario" style="padding:var(--sp-2)" onclick="rainHide['${d.date}']=1;renderRainTip()">Ignora</button>
     </div>
@@ -30700,7 +30727,7 @@ function renderRestoreList(){const box=document.getElementById('restoreBody');if
 function renderProfile(){
   const box=document.getElementById('profileCard');if(!box)return;
   const em=(session&&session.user)?session.user.email:null;
-  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:var(--sp-3);min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:var(--fs-l);flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:var(--fs-xs);color:var(--ink-faint);margin-top:var(--sp-1)">GeppGo · ${esc(VERSIONE_APP)}</div>${em?`<div class="stato-cloud${ultimoStatoCloud.attesa?' in-attesa':''}" id="statoCloud" role="status">${esc(ultimoStatoCloud.t)}</div>`:''}</div></div></div>${em?`<div style="display:flex;gap:var(--sp-2)"><button class="btn btn-secondario" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-secondario" style="flex:1" onclick="authOut()">Esci</button></div><div style="text-align:center;margin-top:var(--sp-3)"><button onclick="apriEliminaAccount()" style="background:none;border:none;font-family:inherit;font-size:var(--fs-xs);color:var(--red);cursor:pointer;text-decoration:underline;min-height:44px;padding:0 var(--sp-3)">Elimina il mio account</button></div>`:`<button class="btn btn-primario btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:var(--sp-3)"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-secondario btn-block" style="margin-top:var(--sp-3)" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button></div>
+  box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:var(--sp-3);min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:var(--fs-l);flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:var(--fs-xs);color:var(--ink-faint);margin-top:var(--sp-1)">GeppGo · ${esc(VERSIONE_APP)}</div>${em?`<div class="stato-cloud${ultimoStatoCloud.attesa?' in-attesa':''}" id="statoCloud" role="status">${esc(ultimoStatoCloud.t)}</div>`:''}</div></div></div>${em?`<div style="display:flex;gap:var(--sp-2)"><button class="btn btn-secondario" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-secondario" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-primario btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:var(--sp-3)"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-secondario btn-block" style="margin-top:var(--sp-3)" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button>${em?`<div class="zona-elimina"><button class="btn btn-elimina btn-block" onclick="apriEliminaAccount()">${ico('cestino')}${esc(tv('Elimina il mio account'))}</button></div>`:''}</div>
   <div class="card"><div class="card-h" style="margin-bottom:var(--sp-1)">Punti di ripristino</div><p style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-2)">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
   tessereMostraStato();
   versioneMostra();
@@ -32403,10 +32430,23 @@ function initDaySwipe(){
     if(t0.closest&&t0.closest('#dayMap,#dayPhotos,#dayChips,.tgrip,.tszr,input,select,textarea'))return;
     ttNav(dx<0?1:-1);
   },{passive:true});
-  /* Il suggerimento riguarda solo la time-table: se nel frattempo l'utente è già
-     tornato alla home (o altrove) prima che scatti, non ha senso mostrarlo lì. */
-  if(!window._swHint){window._swHint=1;setTimeout(()=>{if(document.getElementById('mDay').classList.contains('active'))toast('Scorri con un dito ← → per cambiare giorno');},600);}
+  /* Il suggerimento si vede una volta sola, la prima volta che si apre la
+     Time Table, e sta dentro la Time Table sotto i giorni (Layout 1). Era un
+     messaggio in basso a ogni apertura dell'app: copriva il titolo e restava
+     acceso anche tornando alla Home o in Spese. Va via da solo, al primo
+     giorno cambiato o chiudendo la Time Table. */
+  let visto=false;try{visto=!!localStorage.getItem('geppgo2_scorri_visto');}catch(e){}
+  const nav=sh.querySelector('.tt-daynav');
+  if(!visto&&nav&&!document.getElementById('ttScorri')){
+    try{localStorage.setItem('geppgo2_scorri_visto','1');}catch(e){}
+    const el=document.createElement('div');
+    el.id='ttScorri';el.className='tt-scorri';el.setAttribute('role','note');
+    el.textContent=t('Scorri con un dito ← → per cambiare giorno');
+    nav.after(el);
+    setTimeout(togliScorri,8000);
+  }
 }
+function togliScorri(){const el=document.getElementById('ttScorri');if(el)el.remove();}
 function looksFlight(str){return /aeroport|airport|flughafen|a[ée]roport|\bvolo\b|\bflight\b/i.test(str||'');}
 function flyDetect(extra){
   const ty=document.getElementById('adType');if(!ty)return;
