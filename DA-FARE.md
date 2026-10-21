@@ -1274,8 +1274,11 @@ le controlla (7 prove).
 **Cosa è cambiato**
 - Il tondo del tema (luna/sole) è tornato nella barra in alto, fra il GPS e
   il Profilo (`cambiaTema`); c'è ancora «Tema scuro» nel Profilo, e i due
-  vanno d'accordo. A 320 px il nome del viaggio si accorcia coi puntini
-  («Giap…»), come prima della Layout 1; da 375 ci sta.
+  vanno d'accordo. Col tondo in più, sotto i 360 px la pillola del viaggio
+  e quella del GPS si stringono di qualche pixel: così a 320 px un nome
+  corto come «Lisbona» ci sta ancora intero (`prova-a-portata` lo
+  pretende), mentre uno più lungo («Giappone», «Parigi 26») si accorcia coi
+  puntini, come prima della Layout 1; da 375 ci stanno.
 - Il Programma (la Time Table):
   - non si apre mai in fondo. Cambiando pagina si riparte dalla cima (le
     pagine scorrono tutte nello stesso contenitore, e una pagina si apriva
