@@ -71,8 +71,8 @@ const POSTI = JSON.stringify({ posti: [
   { nome: 'Pastéis de Belém', query: 'Pastéis de Belém, Lisbona', perche: 'I pastéis originali, appena sfornati.' },
   { nome: 'LX Factory', query: 'LX Factory, Lisbona', perche: 'Negozi e caffè in una vecchia fabbrica.' }] });
 const REEL = 'Lisbona in 2 giorni: Pastéis de Belém per colazione, poi LX Factory.';
-const TASTO_REEL = '#impPlacesSub button.btn-grad';
-const TASTO_CHAT = '#aiMode .chat-in-row button.btn-grad';
+const TASTO_REEL = '#impPlacesSub button.btn-primario';
+const TASTO_CHAT = '#aiMode .chat-in-row button.btn-primario';
 
 /* Il ponte finto. Ogni richiesta prende il prossimo passo della fila
    (l'ultimo resta per tutte quelle dopo):
@@ -166,7 +166,7 @@ const aMano = (p, o) => p.evaluate(o => {
 }, o);
 const esitoReel = p => p.evaluate(() => ({
   testo: document.getElementById('impResult').textContent.replace(/\s+/g, ' ').trim(),
-  acceso: !document.querySelector('#impPlacesSub button.btn-grad').disabled,
+  acceso: !document.querySelector('#impPlacesSub button.btn-primario').disabled,
   pillola: !!document.querySelector('#aiAttesa.on')
 }));
 async function allaChat(p) {

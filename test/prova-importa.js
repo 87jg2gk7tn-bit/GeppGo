@@ -91,7 +91,7 @@ async function daIncolla(p, testo) {
   await p.evaluate(() => openImport());
   await p.waitForTimeout(300);
   await p.fill('#impTripText', testo);
-  await p.click('#impScegli button.btn-soft');
+  await p.click('#impScegli button.btn-secondario');
   await p.waitForTimeout(300);
 }
 async function importa(p) {
@@ -476,9 +476,9 @@ async function finteMappe(p, noti) {
       p = await apri(vuoto(), { lingua: l });
       await p.evaluate(() => openImport());
       await p.waitForTimeout(400);
-      const t = await p.evaluate(() => ({ leggi: document.querySelector('#impScegli button.btn-soft').textContent.trim(), scegli: document.querySelector('#impScegli .imp-file').textContent.trim() }));
+      const t = await p.evaluate(() => ({ leggi: document.querySelector('#impScegli button.btn-secondario').textContent.trim(), scegli: document.querySelector('#impScegli .imp-file').textContent.trim() }));
       await p.fill('#impTripText', 'Date\tTime\tActivity\n01/12/2026\t10:00\tX\n');
-      await p.click('#impScegli button.btn-soft');
+      await p.click('#impScegli button.btn-secondario');
       await p.waitForTimeout(400);
       const ctrl = await p.evaluate(() => document.querySelector('#impControlla .imp-sez').textContent);
       viste.push(`${l}: ${t.leggi} / ${t.scegli} / ${ctrl}` + (t.leggi !== leggi || t.scegli !== scegli || /Cosa c/.test(ctrl) ? '  ← non tradotto' : ''));
@@ -513,7 +513,7 @@ async function finteMappe(p, noti) {
       await p.waitForTimeout(400);
       const a = await misura(p, `${larghezza}${scuro ? ' scuro' : ''} scegli`);
       await p.fill('#impTripText', 'Data\tOra\tAttività\tLuogo\tCittà\tCosto\tTipo\tNote\n03/11/2026\t09:00\tUna visita guidata con un nome davvero molto lungo\tMuseo Nazionale\tRoma\t18 €\t\tbiglietti già presi\n03/11/2026\t15:00\tCheck-in\tHotel Artemide\tRoma\t240\tHotel\t\n31/02/2026\t12:00\tPranzo\tTrattoria\tRoma\t\t\t\n');
-      await p.click('#impScegli button.btn-soft');
+      await p.click('#impScegli button.btn-secondario');
       await p.waitForTimeout(400);
       const b = await misura(p, `${larghezza}${scuro ? ' scuro' : ''} controllo`);
       await p.evaluate(() => { document.querySelector('#mImport .sheet').scrollTop = 1e6; });

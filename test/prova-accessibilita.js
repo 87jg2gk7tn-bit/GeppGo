@@ -467,7 +467,7 @@ if (require.main === module) (async () => {
        «eliminare è del Premium» - e si legge quello che si vede. */
     const PREMIUM = ['Sei Premium ✨', 'Hai raggiunto 2 viaggi tuoi attivi', 'Viaggi illimitati, niente pubblicità e avvisi GPS su tutti i viaggi in corso.',
       'Il piano gratuito include 2 viaggi creati da te alla volta - quelli in cui ti hanno invitato non contano e sono senza limite. Concludi un viaggio da "I tuoi viaggi" oppure passa a Premium.',
-      '↩︎ Torna al piano Gratis (demo)', '✨ Premium attivo', 'Piano Gratis', 'Viaggi illimitati · niente pubblicità', 'Gestisci piano', 'Eliminare è del Premium',
+      'Torna al piano Gratis (demo)', '✨ Premium attivo', 'Piano Gratis', 'Viaggi illimitati · niente pubblicità', 'Gestisci piano', 'Eliminare è del Premium',
       'Nel piano gratuito i viaggi si concludono invece di eliminarli: restano tra i viaggi conclusi e liberano il posto. Vuoi concluderlo adesso?'];
     const male = [], soldi = [];
     for (const l of LINGUE) {
@@ -572,7 +572,7 @@ if (require.main === module) (async () => {
     const p = await apriPagina(browser, { errori });
     const leggi = () => p.evaluate(() => {
       const cs = getComputedStyle(document.body), v = n => cs.getPropertyValue(n).trim();
-      const b = document.createElement('button'); b.className = 'btn btn-grad'; b.textContent = 'Salva'; document.body.appendChild(b);
+      const b = document.createElement('button'); b.className = 'btn btn-primario'; b.textContent = 'Salva'; document.body.appendChild(b);
       const bc = getComputedStyle(b); const testo = bc.color, sfumatura = bc.backgroundImage; b.remove();
       const rgb = s => '#' + (s.match(/\d+/g) || []).slice(0, 3).map(x => (+x).toString(16).padStart(2, '0')).join('');
       return { faint: v('--ink-faint'), paper: v('--paper'), surface: v('--surface'), testo: rgb(testo), stop: (sfumatura.match(/rgb\([^)]+\)/g) || []).map(rgb) };

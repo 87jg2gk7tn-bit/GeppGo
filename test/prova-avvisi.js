@@ -324,7 +324,7 @@ function swFinto() {
       });
       if (nome === 'negato') {
         /* «Apri» porta nel punto giusto anche dal banner. */
-        await p.click('.prox.avv button.btn-grad');
+        await p.click('.prox.avv button.btn-primario');
         esiti.apri = await aspetta(p, () => document.getElementById('mActMenu').classList.contains('active') && document.getElementById('amName').textContent === 'Torre di Belém', null, 3000);
         esiti.via = await p.evaluate(() => !document.querySelector('.prox.avv'));
       }

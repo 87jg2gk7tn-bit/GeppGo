@@ -162,7 +162,7 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
      /Cerca un hotel/i.test(vuoto.tasto || '')
        && await page.evaluate(() => {
          const b = document.querySelector('#hotelNotti button');
-         return !!b && b.classList.contains('btn-grad');
+         return !!b && b.classList.contains('btn-primario');
        }),
      vuoto.tasto);
   await page.close();

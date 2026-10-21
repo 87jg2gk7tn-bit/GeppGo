@@ -277,7 +277,7 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     });
     ok('7. senza account compare la schermata, con l\'avviso, «Riprova» e «Prova senza account»',
        senza.gate === 'flex' && senza.avviso === 'Il cloud non risponde' && senza.tasti.join('|') === 'Riprova|Prova senza account', JSON.stringify(senza));
-    await p.click('#auCloudGiu .btn-filo');
+    await p.click('#auCloudGiu .btn-secondario');
     await p.waitForTimeout(400);
     const dentro = await p.evaluate(() => ({ gate: getComputedStyle(document.getElementById('authGate')).display, skip: app.skipAuth }));
     ok('7. «Prova senza account» fa entrare', dentro.gate === 'none' && dentro.skip === true, JSON.stringify(dentro));

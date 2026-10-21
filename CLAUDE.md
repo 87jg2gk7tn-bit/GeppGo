@@ -257,7 +257,8 @@ valgono per ogni schermata nuova e per ogni schermata che si tocca.
   schermata e per i numeri grandi, il sottotitolo in corsivo oro, le
   etichette in maiuscolo spaziato, panna, inchiostro e oro.
 
-Come si fa (le variabili stanno in cima al CSS, `:root` e `body.dark`):
+Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
+`body.dark`):
 - caratteri: solo `--fs-xs` 12, `--fs-s` 13, `--fs-m` 15, `--fs-l` 17,
   `--fs-xl` 22 e `--fs-xxl` 32 px; l'unica eccezione è `--fs-cielo`, il nome
   della città nel cielo della Home. Niente sotto i 12 px. I campi da riempire
@@ -271,10 +272,27 @@ Come si fa (le variabili stanno in cima al CSS, `:root` e `body.dark`):
   (`--scelto` con la scritta `--su-scelto`), come nella barra in basso;
 - componenti: tasti `.btn` con `.btn-primario` (oro), `.btn-secondario`
   (chiaro col bordo), `.btn-terziario` (solo testo) e `.btn-elimina` (testo
-  rosso); una scheda (`.card`), un controllo a schede (`.seg`), una pillola
-  (`.chip`), un selettore dei giorni (`selettoreGiorni`), una riga di elenco
-  (`.riga`); i fogli con titolo e crocetta in alto e l'azione principale
-  fissa in fondo (`.sheet-piede`);
+  rosso), più `.btn-compatto` dove serve basso (36 a vederlo, 44 al tocco);
+  una scheda (`.card`), un controllo a schede (`.seg`), una pillola
+  (`.chip`, accesa con `.on`; le etichette che non si toccano hanno la sua
+  stessa forma), un selettore dei giorni (`caselleGiorni`, con `.giorni` e
+  `.giorno`), una riga di elenco (`.riga`: icona, `.riga-txt` col titolo e
+  la riga sotto, a destra un valore o la freccia `.riga-freccia`); i fogli con
+  titolo e crocetta in alto e l'azione principale fissa in fondo
+  (`.sheet-piede`); l'eliminazione in fondo, staccata (`.zona-elimina`). Una
+  famiglia vecchia (`.tt-az`, `.hh-rapido`, `.auth-link`…) resta per la
+  disposizione, ma il tasto porta anche la classe del suo tipo;
+- le icone: `ico('nome')` nel JavaScript, `<svg class="ico">…<use
+  href="#i-nome"/></svg>` nell'HTML; un'icona nuova va nel blocco
+  `<svg class="icone">` in cima al body, a linea, viewBox 24, senza fill;
+- la Time Table: «Annulla» compare solo dopo una modifica, per otto secondi;
+  «Scorri con un dito» una volta sola (`geppgo2_scorri_visto`), dentro la
+  Time Table;
+- in testa all'HTML c'è solo lo stile della schermata d'apertura: il resto
+  del foglio di stile sta nel body, subito dopo `#bootSplash`. Così la prima
+  schermata si disegna senza aspettare 170 KB di CSS (con la rete lenta da
+  1,4 s a mezzo secondo), e sotto la schermata d'apertura niente si vede
+  senza stile. Una regola nuova va nel foglio del body, mai in testa;
 - `test/prova-stile.js` controlla queste regole su tutte le schermate.
 
 ## Due regole che non si toccano

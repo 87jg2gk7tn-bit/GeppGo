@@ -732,7 +732,7 @@ const allineata = p => aspetta(p, () => typeof modificheInAttesa === 'function' 
             ['mSoloQui', () => openSheet('mSoloQui')],
             ['mHome', () => openSheet('mHome')],
             ['mDaSafari', () => openSheet('mDaSafari')],
-            ['mBackup', () => { bkApri(tv('Backup')); bkStato(tv('Il backup sarebbe di {1}: troppo per farlo in una volta su questo telefono. Puoi esportare i dati senza le foto.', '1,2 GB'), null); bkAzioni(`<button class="btn btn-grad btn-block" style="margin-bottom:.5rem">${esc(tv('Esporta senza le foto'))}</button>` + bkChiudiHtml()); }],
+            ['mBackup', () => { bkApri(tv('Backup')); bkStato(tv('Il backup sarebbe di {1}: troppo per farlo in una volta su questo telefono. Puoi esportare i dati senza le foto.', '1,2 GB'), null); bkAzioni(`<button class="btn btn-primario btn-block" style="margin-bottom:.5rem">${esc(tv('Esporta senza le foto'))}</button>` + bkChiudiHtml()); }],
             ['mEsci', () => { esciMostra(12, 340); document.getElementById('esciStato').textContent = tv('Non sono riuscito a salvare tutto: controlla la rete e riprova.'); openSheet('mEsci'); }]
           ];
           for (const [id, apri] of scena) {

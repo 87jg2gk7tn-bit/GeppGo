@@ -250,7 +250,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
       const p = await apri(browser, { giusto: { token_hash: 'h-' + tipoLink, type: tipoGiusto } });
       await p.evaluate(() => { auVai('in'); openRecPanel(false); });
       await p.fill('#auCode', `${DI_SERIE}/auth/v1/verify?token=h-${tipoLink}&type=${tipoLink}&redirect_to=${encodeURIComponent(LOCALE + '/Index%202.1.html')}`);
-      await p.click('#auRec .btn-grad');
+      await p.click('#auRec .btn-primario');
       await p.waitForTimeout(900);
       const s = await stato(p);
       const v = await chiamate(p, 'verifyOtp');
@@ -274,7 +274,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
       giusto: { token: '123456', type: 'email', email: EMAIL } });
     await p.evaluate(() => { auVai('in'); openRecPanel(false); });
     await p.fill('#auCode', '123456');
-    await p.click('#auRec .btn-grad');
+    await p.click('#auRec .btn-primario');
     await p.waitForTimeout(900);
     let v = await chiamate(p, 'verifyOtp'), s = await stato(p);
     ok('8. con l\'ultima richiesta salvata il codice si prova una volta sola, col suo tipo',
@@ -283,7 +283,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
     p = await apri(browser, { giusto: { token: '654321', type: 'signup', email: EMAIL } });
     await p.evaluate(e => { auVai('in'); document.getElementById('auEmail').value = e; openRecPanel(false); }, EMAIL);
     await p.fill('#auCode', '654321');
-    await p.click('#auRec .btn-grad');
+    await p.click('#auRec .btn-primario');
     await p.waitForTimeout(1200);
     v = await chiamate(p, 'verifyOtp'); s = await stato(p);
     ok('8. senza richiesta salvata prova recovery, email, signup, in quest\'ordine',
@@ -292,7 +292,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
     p = await apri(browser, { giusto: { token: '111111', type: 'recovery', email: EMAIL } });
     await p.evaluate(e => { auVai('in'); document.getElementById('auEmail').value = e; openRecPanel(false); }, EMAIL);
     await p.fill('#auCode', '999999');
-    await p.click('#auRec .btn-grad');
+    await p.click('#auRec .btn-primario');
     await p.waitForTimeout(1200);
     const msg = await p.evaluate(() => document.getElementById('recMsg').textContent);
     ok('8. un codice sbagliato lo dice chiaro', /Il codice non è giusto o è scaduto/.test(msg), msg);
@@ -403,7 +403,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
     f = await foglioPw(p);
     ok('R3. ricaricata prima di salvare: il foglio obbligatorio ricompare', f.attivo && f.obbligatorio && !f.croce && f.segno && f.copre, JSON.stringify(f));
     await p.fill('#npPass', 'nuova-segreta');
-    await p.click('#mNewPass .btn-grad');
+    await p.click('#mNewPass .btn-primario');
     await p.waitForTimeout(800);
     s = await p.evaluate(() => ({ aggiornata: window.__supa.chiamate.filter(c => c[0] === 'updateUser').map(c => c[1].password),
       uscite: window.__supa.chiamate.filter(c => c[0] === 'signOut').map(c => c[1]), segno: !!localStorage.getItem('geppgo2_recupero'),
@@ -419,7 +419,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
       giusto: { token: '123456', type: 'recovery', email: EMAIL } });
     await p.evaluate(() => { auVai('in'); openRecPanel(false); });
     await p.fill('#auCode', '123456');
-    await p.click('#auRec .btn-grad');
+    await p.click('#auRec .btn-primario');
     await p.waitForTimeout(900);
     const f = await foglioPw(p);
     await p.mouse.click(8, 8);
@@ -461,7 +461,7 @@ const SCADUTO = '#error=access_denied&error_code=otp_expired&error_description=E
     for (const [l, salva, annulla] of [['en', 'Save new password', 'Cancel'], ['es', 'Guardar nueva contraseña', 'Cancelar'], ['fr', 'Enregistrer le nouveau mot de passe', 'Annuler'], ['pt', 'Guardar nova palavra-passe', 'Cancelar']]) {
       p = await apri(browser, { hash: linkMail('recovery'), lingua: l });
       await p.waitForTimeout(600);
-      const t = await p.evaluate(() => ({ testo: document.querySelector('#mNewPass p.np-obbligo').textContent, salva: document.querySelector('#mNewPass .btn-grad').textContent, annulla: document.querySelector('#mNewPass button.np-obbligo').textContent }));
+      const t = await p.evaluate(() => ({ testo: document.querySelector('#mNewPass p.np-obbligo').textContent, salva: document.querySelector('#mNewPass .btn-primario').textContent, annulla: document.querySelector('#mNewPass button.np-obbligo').textContent }));
       viste.push(`${l}: ${t.salva} / ${t.annulla}` + (t.salva !== salva || t.annulla !== annulla || /Sei entrato/.test(t.testo) ? '  ← non tradotto' : ''));
       await p.close();
     }
