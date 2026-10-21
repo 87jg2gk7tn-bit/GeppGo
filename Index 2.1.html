@@ -905,7 +905,10 @@ body.dark .avatar.me{color:var(--oro-su)}
   background:var(--grad);
 }
 .tt-block .tname{font-family:'Fraunces',serif;font-size:var(--fs-m);font-weight:600;letter-spacing:-.01em;line-height:1.18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
-.tt-block .tsub{font-size:var(--fs-xs);color:var(--ink-faint);font-weight:700;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* A 12 px (era 10,9, sotto la scala) «09:30–11:00 · 2 pers. · por reservar»
+   a 320 px non ci stava piu' coi caratteri veri: peso 600 e niente spazio
+   in piu' fra le lettere la riportano dentro, senza scendere sotto i 12. */
+.tt-block .tsub{font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* La distanza scritta di fianco all'orario, per le tappe attaccate dove fra i
    due riquadri non c'e' spazio per la targhetta: piu' chiara dell'orario, cosi'
    si distingue a colpo d'occhio che e' un'altra cosa. */
@@ -30864,7 +30867,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 15:45';
+const VERSIONE_APP='2026-10-21 17:18';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

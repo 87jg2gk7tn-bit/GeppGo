@@ -36,6 +36,21 @@ esattamente il momento in cui servivano.
 Le prove sul database ripartono sempre da un database vuoto: una prova che
 eredita lo stato di quella prima non dice niente di affidabile.
 
+**I caratteri veri, come su GitHub.** Lì i caratteri di Google arrivano
+davvero (il recinto di `browser.js` li lascia passare); su una macchina che
+non li raggiunge si misura col carattere di ripiego, che ha altre larghezze,
+e una scritta che qui ci sta lì esce. Per vedere quello che vede GitHub si
+scaricano una volta in una cartella, e le prove li prendono da lì:
+
+```sh
+D=/una/cartella && mkdir -p "$D" && cd "$D"
+curl -sA 'Mozilla/5.0 Chrome/141.0' 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap' -o google.css
+for u in $(grep -o 'https://fonts.gstatic.com/[^)]*' google.css | sort -u); do curl -s "$u" -o "$(echo "$u" | sed 's#https://fonts.gstatic.com/##; s#/#_#g')"; done
+CARATTERI_GOOGLE="$D" node test/prova-accessibilita.js 9
+```
+
+Senza `CARATTERI_GOOGLE` non cambia niente.
+
 ## Due trappole, imparate a caro prezzo
 
 **Nessun percorso si scrive a mano.** Sei prove avevano dentro

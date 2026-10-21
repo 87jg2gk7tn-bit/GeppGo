@@ -108,6 +108,24 @@ const FUORI_AMMESSI = new Set([
   'unpkg.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'fonts.googleapis.com', 'fonts.gstatic.com'
 ]);
 
+/* I CARATTERI DI GOOGLE COME SUL SERVER DELLE PROVE. Li' arrivano davvero
+ * (sono nel recinto), qui il proxy li ferma e si misura col carattere di
+ * ripiego, che ha altre larghezze: una scritta che qui ci sta, li' esce.
+ * E' successo con la Layout 1: la riga sotto le tappe della Time Table, a
+ * 320 px in spagnolo e portoghese, era verde qui e rossa su GitHub.
+ * Con CARATTERI_GOOGLE=<cartella> le prove li prendono da una copia
+ * locale: nella cartella il foglio di Google (google.css) e i file dei
+ * caratteri, col percorso di fonts.gstatic.com e i «/» diventati «_». Come
+ * prepararla e' in test/README.md. Senza la variabile non cambia niente. */
+const CARATTERI = process.env.CARATTERI_GOOGLE || '';
+function carattereLocale(route, url) {
+  const fs = require('fs'), path = require('path');
+  const file = url.hostname === 'fonts.googleapis.com' ? 'google.css' : url.pathname.slice(1).replace(/\//g, '_');
+  const dove = path.join(CARATTERI, file);
+  if (!fs.existsSync(dove)) return route.abort('blockedbyclient');
+  return route.fulfill({ status: 200, contentType: file.endsWith('.css') ? 'text/css' : 'font/woff2', body: fs.readFileSync(dove) });
+}
+
 async function recinta(page) {
   const fermate = [];
   page.__fuori = fermate;
@@ -120,6 +138,7 @@ async function recinta(page) {
     try { url = new URL(u); } catch (e) { return route.continue(); }
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return route.continue();
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return route.continue();
+    if (CARATTERI && /^fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) return carattereLocale(route, url);
     if (FUORI_AMMESSI.has(url.hostname)) return route.continue();
     fermate.push(u);
     return route.abort('blockedbyclient');

@@ -1241,6 +1241,10 @@ foglio di stile e negli `style=""`; prima è `main` ae98355):
   («Museo, stazione, hotel…»), che ci sta intero anche a 320 px. Le
   tendine piccole (la valuta) restano a 13: il tocco lo prende il foglio di
   scelta dell'app, e iPhone non ingrandisce.
+- Trovato per strada, non toccato: nella Time Table, in inglese, sotto una
+  tappa per una persona sola c'è «1 people» (`tv(' · {1} pers.')`, che in
+  italiano è un'abbreviazione uguale per tutti e due i numeri). Va passato a
+  `tp()` con le due forme inglesi separate da «|».
 
 **Da decidere, o da fare dopo**
 - Le parole sotto le icone della barra in basso (vedi «Nessuna funzione
@@ -3272,6 +3276,14 @@ qualcuno che risponde".
   «quello che non è una lettera»: «ℹ️ Info» non dava mai «Info», e «Info»
   restava in italiano in tutte le lingue. Adesso conta come simbolo anche
   quello che è un'emoji (`\p{Extended_Pictographic}`).
+- **Su GitHub i caratteri sono quelli veri** (Layout 1). La riga sotto le
+  tappe della Time Table, portata da 10,9 a 12 px, a 320 px in spagnolo e
+  portoghese («09:30–11:00 · 2 pers. · por reservar») qui ci stava e su
+  GitHub no: lì Plus Jakarta Sans arriva davvero, qui il proxy la ferma e si
+  misura col ripiego (DejaVu Sans). Rimedio: peso 600 e niente spazio fra le
+  lettere. E adesso le prove possono usare i caratteri veri anche qui
+  (`CARATTERI_GOOGLE`, vedi test/README.md): prima di dire che una misura
+  regge a 320 px, la si guarda così.
 - **Non si tocca l'HTML mentre le prove girano.** Riscrivendo il file con
   una prova in corso, una pagina l'ha letto a metà: «Unexpected token ';'»,
   l'app non partiva, e sembrava un guasto vero in una lingua sola. Rilanciata
