@@ -1310,9 +1310,10 @@ le controlla (7 prove).
   corsivo oro, i numeri della scheda del viaggio, i tondi delle persone, le
   notti con l'albergo.
 - Il respiro: 24–32 px fra le sezioni di Home, Programma, Spese e Budget,
-  4–12 dentro i gruppi. In Home la riga sotto il nome della città si è
-  stretta di 4 px (stesso gruppo) e la mappa resta tutta sopra la barra
-  (`prova-piega`: 12 px d'aria a 390×844).
+  4–12 dentro i gruppi. In Home la riga sotto la frase in corsivo è scesa
+  da 16 a 8 px (fa parte del titolo): gli 8 px in più fra «Fra poco» e i
+  giorni li paga lei, e la mappa resta tutta sopra la barra (`prova-piega`
+  a 390×844: 11 px d'aria, 3 col nome del viaggio su due righe).
 - L'avviso della pioggia nella Time Table è compatto e chiudibile: la
   crocetta fa quello che faceva «Ignora», e la spiegazione sta dietro
   «Come funziona» (da 250 a 184 px).
@@ -1324,6 +1325,13 @@ le controlla (7 prove).
   alle 2 di notte apriva il giorno vecchio. Le prove non se ne accorgevano
   perché girano in UTC: `prova-carattere` adesso prova anche col fuso di
   Roma.
+- Sulla mappa della giornata, scesa a 130 px, Leaflet porta una scheda
+  aperta fino al bordo alto, e lì la pillola «Tutto il viaggio ›» copriva
+  mezza crocetta: un tocco sulla × apriva la mappa del viaggio. La pillola
+  sta sopra tutto il pannello della mappa, schede comprese (le schede
+  vivono dentro la mappa, e lei deve stare sopra le tessere), quindi non
+  basta uno z-index: finché una scheda è aperta la pillola si fa da parte
+  (`con-scheda`, in `buildDayMap`). L'ha trovato `prova-pdf-calendario`.
 
 **Da decidere, o da guardare**
 - Sul cielo scuro della Home (di notte, o nel tema scuro) i tasti restano di
