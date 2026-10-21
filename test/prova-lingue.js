@@ -292,7 +292,8 @@ async function apri(browser, lingua, linguaTelefono) {
     'GeppGo', 'Leaflet', '© OSM', 'A JavaScript library for interactive maps',
     'Google Maps', 'Apple', 'Google', 'Android', 'Supabase', 'ChatGPT', 'Excel',
     'iPhone', 'Instagram', 'OpenStreetMap', 'GeppGo Premium', 'Premium', 'GPS',
-    'Home', 'Email', 'Password', 'Shopping', 'Budget', 'Hotel', 'ℹ️ Info', '🗺️ Maps',
+    // dalla Layout 1 la 🗺️ davanti a «Maps» (Google Maps detto corto) è un'icona
+    'Home', 'Email', 'Password', 'Shopping', 'Budget', 'Hotel', 'ℹ️ Info', '🗺️ Maps', 'Maps',
     'Check-in', 'Check-out', '💾 Backup', '1 km', 'PDF', 'QR', 'Go', 'ok', 'OK',
     'Italiano', 'English', 'Español', 'Français', 'Português',
     'Project URL', 'Project Settings > API', 'https://...', 'tu@esempio.it',

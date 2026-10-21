@@ -1301,3 +1301,18 @@ prima schermata, ed è così che si fa la controprova. Le dieci domande:
     dal tasto della scheda del viaggio; gli UID sono gli stessi a ogni
     esportazione (`tappa-<id>@<viaggio>.geppgo`), così reimportato non
     raddoppia; e senza le note.
+
+Sul codice di prima (`main` ae98355) la prova passa 7 controlli su 35, e
+quelli che passano sono quelli che devono passare: le misure della 8, che
+vengono dalla miglioria 11 (axe, contrasti, 44 px, testi interi), il
+suggerimento che non resta fuori dalla Time Table (non compariva proprio) e
+nessun errore in pagina. Gli altri cadono per il motivo giusto: 607
+grandezze del testo scritte a mano e 1897 testi fuori scala a schermo, 383
+sotto i 12 px; colori, spazi, raggi e ombre scritti a mano e otto doppioni
+fra le variabili (`--green` uguale a `--blue`…); 715 tasti di famiglie
+vecchie, emoji in 268 comandi, i tondini di sola emoji nel menu della tappa;
+nessun selettore dei giorni comune; i fogli senza il piede fisso; la
+sfumatura del cielo in sette schermate e il tasto del tema in alto;
+«Scorri con un dito» che non compare e «Annulla» sempre lì; 163,6 KB di
+stile in testa e la prima schermata a 1400 ms; l'.ics senza il foglio
+Condividi.

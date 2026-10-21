@@ -21,7 +21,7 @@
    6. cambiando o togliendo una tappa il calendario cambia senza doppioni;
    7. il database: nessuno legge o crea i codici di un altro (la prova SQL,
       sopra la migrazione lanciata due volte sullo schema di prima);
-   8. senza account, «🗓️ Esporta nel calendario» fa il file .ics di sempre;
+   8. senza account, «Esporta nel calendario» fa il file .ics di sempre;
    9. i testi nuovi in cinque lingue; niente fuori schermo da 320 a 430 px nei
       due temi; tasti da 44 px; nessuna violazione grave di axe.
 
@@ -125,7 +125,7 @@ async function apriPdf(browser, { lingua = 'it', larghezza = 390, viaggio, condi
   await page.evaluate(SPIA_CONDIVIDI, condividi);
   return page;
 }
-/* Dalla Home come un dito: «✈️ Viaggio», «📋 PDF dell'itinerario», le
+/* Dalla Home come un dito: «Viaggio», «PDF dell'itinerario», le
    spunte, «Crea il PDF». */
 async function foglioPdf(page, opz = {}) {
   await page.evaluate(() => { document.querySelectorAll('.modal.active').forEach(m => closeSheet(m.id)); go('plan'); });
@@ -664,11 +664,14 @@ function leggiIcs(testo) {
     await page.click('#homeHero .hh-rapido[onclick^="openTripZoom"]');
     await page.waitForSelector('#mTripZoom.active', { timeout: 4000 });
     const voce = page.locator('#tripZoomBody button[onclick="apriCalendario()"]');
+    /* Dalla Layout 1 il 🗓️ davanti è l'icona a linea del calendario: nel
+       testo resta la frase sola, e l'icona si guarda a parte. */
     const scritta = (await voce.innerText()).trim();
+    const icona = await voce.locator('use[href="#i-calendario"]').count();
     await voce.click();
     const aperto = await aspetta(page, () => document.getElementById('mCalendario').classList.contains('active') && /Crea il link/.test(document.getElementById('calAzioni').textContent), null, 5000);
     const foglio = await page.evaluate(() => document.querySelector('#mCalendario .sheet').innerText.replace(/\s+/g, ' '));
-    ok('5. dalla Home in due tocchi: «✈️ Viaggio», «🗓️ Calendario che si aggiorna», col foglio che spiega e avvisa', scritta === '🗓️ Calendario che si aggiorna' && aperto
+    ok('5. dalla Home in due tocchi: «Viaggio», «Calendario che si aggiorna» (con l\'icona del calendario), col foglio che spiega e avvisa', scritta === 'Calendario che si aggiorna' && icona === 1 && aperto
       && /Chi ha il link vede l'itinerario/.test(foglio) && /si aggiornano da soli/.test(foglio), scritta + ' · ' + foglio.slice(0, 90));
     await page.click('#calAzioni button');
     await aspetta(page, () => !!document.getElementById('calAggiungi'), null, 5000);
@@ -810,7 +813,7 @@ function leggiIcs(testo) {
     const testo = fs.readFileSync(await dl.path(), 'utf8');
     const foglio = await page.evaluate(() => document.getElementById('mCalendario').classList.contains('active'));
     await page.close();
-    ok('8. senza account la voce resta «🗓️ Esporta nel calendario»', voci.includes('🗓️ Esporta nel calendario') && !voci.includes('🗓️ Calendario che si aggiorna'), voci.filter(x => /🗓️/.test(x)).join(' | '));
+    ok('8. senza account la voce resta «Esporta nel calendario»', voci.includes('Esporta nel calendario') && !voci.includes('Calendario che si aggiorna'), voci.filter(x => /calendario/i.test(x)).join(' | '));
     ok('8. e fa il file .ics di sempre, subito, senza il foglio del link', dl.suggestedFilename() === 'geppgo-giappone.ics' && /^BEGIN:VCALENDAR/.test(testo) && (testo.match(/BEGIN:VEVENT/g) || []).length >= 5 && !foglio,
       `${dl.suggestedFilename()} · ${(testo.match(/BEGIN:VEVENT/g) || []).length} eventi`);
   });

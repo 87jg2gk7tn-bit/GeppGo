@@ -1487,10 +1487,15 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
    negli Hotel (prima erano pillole, tondi e quadrati). Una casella per
    giorno, il giorno della settimana sopra e il numero sotto; il giorno
    scelto e' d'inchiostro come ogni cosa scelta; una notte senza letto e'
-   tratteggiata. Lo scrive caselleGiorni(). */
-.giorni{display:flex;gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:var(--sp-2) 2px}
+   tratteggiata. Lo scrive caselleGiorni(). La casella e' alta 44, quanto
+   serve a un dito e non di piu': in Home sotto la fila c'e' la mappa della
+   giornata, che si deve vedere tutta appena si apre (test/prova-piega.js),
+   e a 52 finiva sotto la barra. Sopra la fila restano 8 px per il meteo,
+   che sporge dall'angolo della casella: una striscia che scorre di lato
+   taglia anche in alto. */
+.giorni{display:flex;gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:var(--sp-2) 2px var(--sp-1)}
 .giorni::-webkit-scrollbar{display:none}
-.giorno{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:48px;min-height:52px;padding:var(--sp-1) var(--sp-2);border-radius:var(--r-ctl);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-size:var(--fs-m);line-height:1;cursor:pointer;transition:var(--ease)}
+.giorno{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:48px;min-height:44px;padding:var(--sp-1) var(--sp-2);border-radius:var(--r-ctl);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-size:var(--fs-m);line-height:1;cursor:pointer;transition:var(--ease)}
 span.giorno{cursor:default}
 .giorno-s{font-size:var(--fs-xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
 .giorno-n{font-family:'Fraunces',serif;font-size:var(--fs-l);font-weight:600}
@@ -1502,10 +1507,10 @@ span.giorno{cursor:default}
 .giorno-piu{flex-direction:row;gap:var(--sp-1);padding:0 var(--sp-3);font-size:var(--fs-s);font-weight:700}
 .giorno-piu .ico{width:18px;height:18px}
 button.giorno:active{transform:scale(.95)}
-.hh-days{margin:var(--sp-3) calc(var(--sp-4) * -1) 0;padding-left:var(--sp-4);padding-right:var(--sp-4)}
+.hh-days{margin:var(--sp-2) calc(var(--sp-4) * -1) 0;padding-left:var(--sp-4);padding-right:var(--sp-4)}
 
 /* ── titolo di sezione ─────────────────────────────────────────── */
-.hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:var(--sp-2) 2px var(--sp-2)}
+.hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:var(--sp-1) 2px var(--sp-1)}
 .hh-sec-t{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600;color:var(--ink)}
 .hh-sec-c{font-size:var(--fs-xs);font-weight:700;letter-spacing:.14em;color:var(--ink-faint)}
 
@@ -2179,8 +2184,10 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
    sbordano la sfumatura resta accesa e la pillola scorre per il nulla,
    promettendo roba che non c'e'. Coi passi della scala (Layout 1) il tasto
    e' largo 43 a vederlo; l'area da toccare arriva a 45 col ::after, che
-   entra di un pixel per parte nei due di spazio fra le voci. */
-.nav-item{display:grid;place-items:center;padding:var(--sp-2);color:var(--ink-faint)}
+   entra di un pixel per parte nei due di spazio fra le voci. L'altezza
+   invece deve essere sua, 44: la pillola scorre di lato, e una striscia che
+   scorre taglia anche sopra e sotto quello che sborda. */
+.nav-item{display:grid;place-items:center;padding:var(--sp-2);min-height:44px;color:var(--ink-faint)}
 /* Da 23 a 27: a 23 px, in mezzo a una strada e con una mano sola, l'icona si
    guarda due volte prima di riconoscerla. */
 .nav-item svg{width:27px;height:27px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -2199,8 +2206,9 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
   transition:var(--ease);
 }
 /* «+ Aggiungi» e non il solo «+»: un segno da solo non dice cosa aggiunge.
-   La pillola resta bassa (30 px) e l'area da toccare arriva a 44 col
-   ::after, come prima: «La giornata» non si alza e la mappa non scende. */
+   Dalla Layout 1 e' una pillola come le altre, 36 px a vedersi e 44 al
+   tocco: i 6 px in piu' di «La giornata» li rendono i margini piu' stretti
+   del titolo, cosi' la mappa non scende. */
 .hh-add{width:auto!important;padding:0 var(--sp-3) 0 var(--sp-2);border-radius:var(--r-pill);display:flex;align-items:center;gap:var(--sp-1);font-size:var(--fs-s);font-weight:700;white-space:nowrap}
 /* Se titolo, tasto e conto non ci stanno in una riga (320 px), il conto va
    sotto, a destra, invece di schiacciare il tasto. */
@@ -2276,7 +2284,7 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 .hh-trip-add::after,.hh-add::after,.seg-btn::after,
 .gps-pill::after,.tb-profilo::after,.ad-x::after,.hh-grado::after{content:'';position:absolute}
 
-.nav-item::after   {inset:-3px -1px}   /* 43×41 → 45×47 */
+.nav-item::after   {inset:-3px -1px}   /* 43 → 45 di larghezza (l'altezza, 44, e' del tasto) */
 .hh-act::after     {inset:-9px -2px}   /* 27 → 45 */
 .hh-trip::after    {inset:-9px -2px}   /* 27 → 45 */
 .hh-trip-add::after{inset:-4px}        /* 36 → 44 */
@@ -8031,7 +8039,7 @@ const DIZIONARIO_TEMPI={
     '🚌 Bus':'🚌 Bus',
     'Il mezzo di ogni tratta si cambia dalla time-table: si tocca la tappa e lo si sceglie sotto "Spostamento verso".':'You change each leg’s transport in the timetable: tap the stop and pick it in its menu.',
     'non necessario':'not needed',
-    'necessario ↺':'needed ↺'
+    'necessario':'needed'
   },
   es:{
     'a piedi':'a pie',
@@ -8054,7 +8062,7 @@ const DIZIONARIO_TEMPI={
     '🚌 Bus':'🚌 Autobús',
     'Il mezzo di ogni tratta si cambia dalla time-table: si tocca la tappa e lo si sceglie sotto "Spostamento verso".':'El medio de cada tramo se cambia desde el horario: toca la parada y elígelo en su menú.',
     'non necessario':'no necesario',
-    'necessario ↺':'necesario ↺'
+    'necessario':'necesario'
   },
   fr:{
     'a piedi':'à pied',
@@ -8077,7 +8085,7 @@ const DIZIONARIO_TEMPI={
     '🚌 Bus':'🚌 Bus',
     'Il mezzo di ogni tratta si cambia dalla time-table: si tocca la tappa e lo si sceglie sotto "Spostamento verso".':'Le moyen de chaque trajet se change dans le programme : touche l’étape et choisis-le dans son menu.',
     'non necessario':'pas nécessaire',
-    'necessario ↺':'nécessaire ↺'
+    'necessario':'nécessaire'
   },
   pt:{
     'a piedi':'a pé',
@@ -8100,7 +8108,7 @@ const DIZIONARIO_TEMPI={
     '🚌 Bus':'🚌 Autocarro',
     'Il mezzo di ogni tratta si cambia dalla time-table: si tocca la tappa e lo si sceglie sotto "Spostamento verso".':'O meio de cada troço muda-se no roteiro: toca na paragem e escolhe-o no seu menu.',
     'non necessario':'não necessário',
-    'necessario ↺':'necessário ↺'
+    'necessario':'necessário'
   }
 };
 Object.keys(DIZIONARIO_TEMPI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_TEMPI[l]));
@@ -13754,7 +13762,6 @@ const DIZIONARIO_STILE={
     'Elimina alloggio':'Delete accommodation',
     'Elimina attività':'Delete activity',
     'Prenotare: {1}':'Book: {1}',
-    'necessario':'needed',
     'Aggiungi tutti alla mappa':'Add them all to the map',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Rough location: tap Edit and paste the Google Maps link'
   },
@@ -13767,7 +13774,6 @@ const DIZIONARIO_STILE={
     'Elimina alloggio':'Eliminar alojamiento',
     'Elimina attività':'Eliminar actividad',
     'Prenotare: {1}':'Reservar: {1}',
-    'necessario':'necesario',
     'Aggiungi tutti alla mappa':'Añadir todos al mapa',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Ubicación aproximada: toca Editar y pega el enlace de Google Maps'
   },
@@ -13780,7 +13786,6 @@ const DIZIONARIO_STILE={
     'Elimina alloggio':'Supprimer l’hébergement',
     'Elimina attività':'Supprimer l’activité',
     'Prenotare: {1}':'Réserver : {1}',
-    'necessario':'nécessaire',
     'Aggiungi tutti alla mappa':'Tout ajouter à la carte',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Position approximative : touche Modifier et colle le lien Google Maps'
   },
@@ -13793,7 +13798,6 @@ const DIZIONARIO_STILE={
     'Elimina alloggio':'Eliminar alojamento',
     'Elimina attività':'Eliminar atividade',
     'Prenotare: {1}':'Reservar: {1}',
-    'necessario':'necessário',
     'Aggiungi tutti alla mappa':'Adicionar todos ao mapa',
     'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Localização aproximada: toca em Editar e cola o link do Google Maps'
   }
@@ -13806,9 +13810,11 @@ Object.keys(DIZIONARIO_STILE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_
    viaggio». La frase dopo il simbolo era gia' tradotta, insieme al simbolo:
    qui la si rende cercabile anche da sola, in tutte le lingue, invece di
    riscrivere il dizionario a mano in quattro copie. Una frase che c'e' gia'
-   da sola non si tocca. */
+   da sola non si tocca. Un'emoji conta come simbolo anche quando Unicode la
+   dice lettera: «ℹ️ Info» comincia con ℹ, che per lui e' una «i» minuscola,
+   e senza questo «Info» restava in italiano in tutte le lingue. */
 Object.keys(DIZIONARIO).forEach(l=>{
-  const d=DIZIONARIO[l],dav=/^([^\p{L}\p{N}«"(]+)(\p{L}[\s\S]*)$/u;
+  const d=DIZIONARIO[l],dav=/^((?:\p{Extended_Pictographic}|[^\p{L}\p{N}«"(])+)(\p{L}[\s\S]*)$/u;
   Object.keys(d).forEach(k=>{
     const m=dav.exec(k);if(!m||d[m[2]])return;
     const v=dav.exec(String(d[k]||''));
@@ -15523,7 +15529,7 @@ function renderHomeHero(){
     destroyHomeMap();
     box.innerHTML=html;
     const place=()=>{
-      center(box.querySelector('.hh-days'),'.hh-day.on',keepD);
+      center(box.querySelector('.hh-days'),'.giorno.on',keepD);
       center(box.querySelector('.hh-trips'),'.hh-trip.on',keepT);
       viaggiAscolta();
       adattaCerca(box);
@@ -30856,7 +30862,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-20 19:15';
+const VERSIONE_APP='2026-10-21 15:28';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

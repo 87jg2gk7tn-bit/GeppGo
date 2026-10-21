@@ -1224,7 +1224,16 @@ foglio di stile e negli `style=""`; prima è `main` ae98355):
   per la scritta e il marchio vince la scritta (`testataStretta`): a 320 px
   in tutte le lingue, a 375 in portoghese. Con il fondo panna pulito si
   sono visti due menu a tendina col bordo troppo chiaro (la valuta e il
-  viaggio): ora hanno `--bordo-campo`.
+  viaggio): ora hanno `--bordo-campo`. Le voci della barra in basso erano
+  scese a 43 px di altezza (44 con l'area invisibile, che la barra che
+  scorre però taglia): adesso 44 di loro. La casella del selettore dei
+  giorni da 52 a 44 px, e un po' meno margine sopra e sotto la fila e
+  intorno a «La giornata»: con la casella alta la mappa della Home finiva
+  9 px sotto la barra a 390×844 (`prova-piega`); adesso ci sono 14 px
+  d'aria, 8 col nome del viaggio lungo. In Home il giorno scelto torna in
+  vista sulle strisce lunghe (il centraggio cercava ancora la classe di
+  prima). «Info», nel menu della tappa, restava in italiano in tutte le
+  lingue (vedi le lezioni in fondo).
 
 **Da decidere, o da fare dopo**
 - Le parole sotto le icone della barra in basso (vedi «Nessuna funzione
@@ -3251,6 +3260,16 @@ qualcuno che risponde".
   il bianco sul grigio della pioggia (3,4:1) non bastava più: le serviva
   4,5. Chi sceglie il colore del testo sul cielo (`CIELO_SCRITTE`) la
   trattava ancora da grande.
+- **Per Unicode «ℹ» è una lettera** (Layout 1). Le chiavi del dizionario
+  col simbolo davanti valgono anche senza, e il simbolo si riconosceva come
+  «quello che non è una lettera»: «ℹ️ Info» non dava mai «Info», e «Info»
+  restava in italiano in tutte le lingue. Adesso conta come simbolo anche
+  quello che è un'emoji (`\p{Extended_Pictographic}`).
+- **Non si tocca l'HTML mentre le prove girano.** Riscrivendo il file con
+  una prova in corso, una pagina l'ha letto a metà: «Unexpected token ';'»,
+  l'app non partiva, e sembrava un guasto vero in una lingua sola. Rilanciata
+  a file fermo, la prova era verde. Le modifiche si fanno prima, le prove
+  dopo.
 
 ---
 

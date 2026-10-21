@@ -472,7 +472,9 @@ async function finteMappe(p, noti) {
        d.buchi.slice(0, 3).join(' | ') || d.campi.join(', ') || d.n + ' frasi');
     await p.close();
     const viste = [];
-    for (const [l, leggi, scegli] of [['en', 'Read the cells', '📄 Choose a file'], ['es', 'Leer las celdas', '📄 Elegir un archivo'], ['fr', 'Lire les cellules', '📄 Choisir un fichier'], ['pt', 'Ler as células', '📄 Escolher um ficheiro']]) {
+    /* Dalla Layout 1 il 📄 davanti a «Scegli un file» è un'icona a linea:
+       nel testo del tasto resta la parola sola. */
+    for (const [l, leggi, scegli] of [['en', 'Read the cells', 'Choose a file'], ['es', 'Leer las celdas', 'Elegir un archivo'], ['fr', 'Lire les cellules', 'Choisir un fichier'], ['pt', 'Ler as células', 'Escolher um ficheiro']]) {
       p = await apri(vuoto(), { lingua: l });
       await p.evaluate(() => openImport());
       await p.waitForTimeout(400);
