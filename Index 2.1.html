@@ -885,6 +885,12 @@ body.dark .avatar.me{color:var(--oro-su)}
 .hh-map-giu .hh-map-note{position:static;flex:1;min-width:0}
 .hh-map-giu .mappa-tutto{margin-left:auto}
 #dayMapWrap .mappa-tutto{position:absolute;top:.5rem;right:.5rem;z-index:500}
+/* La pillola sta sopra tutto il pannello della mappa, schede comprese: le
+   schede vivono dentro la mappa, e la pillola deve stare sopra le tessere.
+   Con la mappa bassa una scheda sale fino al suo angolo, e un tocco sulla
+   crocetta apriva l'altra mappa. Finche' una scheda e' aperta si fa da parte
+   (buildDayMap). */
+#dayMapWrap.con-scheda .mappa-tutto{visibility:hidden}
 .tt-tutto{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);width:100%;min-height:44px;margin-bottom:var(--sp-2);border:1px solid var(--tasto-bordo);border-radius:var(--r-ctl);background:var(--tasto-fondo);color:var(--ink);font-family:inherit;font-weight:700;font-size:var(--fs-s);cursor:pointer}
 
 .tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2);margin-bottom:var(--sp-1)}
@@ -1516,8 +1522,11 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   font-size:var(--fs-xxl);line-height:1.05;color:var(--green);
   margin-top:2px;
 }
+/* La riga sotto la frase fa parte del titolo: 8 px, come dentro un gruppo.
+   I pixel tolti qui tengono la mappa intera sopra la barra su un telefono da
+   844 anche quando il nome del viaggio va su due righe (test/prova-piega.js). */
 .hh-meta{
-  position:relative;font-size:var(--fs-m);color:var(--ink-soft);margin-top:var(--sp-3);
+  position:relative;font-size:var(--fs-m);color:var(--ink-soft);margin-top:var(--sp-2);
 }
 
 /* ── card "fra poco" ───────────────────────────────────────────── */
@@ -1605,8 +1614,10 @@ button.giorno:active{transform:scale(.95)}
 .hh-card-n{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600;line-height:1.12;margin-top:var(--sp-2);color:var(--ink)}
 .hh-card-s{font-size:var(--fs-s);color:var(--ink-faint);margin-top:var(--sp-1);line-height:1.4}
 .hh-avs{display:flex;margin-top:auto;padding-top:var(--sp-4)}
+/* I tondi delle persone sono d'oro dappertutto, come nei Compagni: fanno
+   parte della firma. L'iniziale d'inchiostro sull'oro sta a 4,6:1. */
 .hh-av{
-  width:26px;height:26px;border-radius:var(--r-pill);background:var(--green-tint);color:var(--green-deep);
+  width:26px;height:26px;border-radius:var(--r-pill);background:var(--grad);color:var(--oro-su);
   display:grid;place-items:center;font-size:var(--fs-xs);font-weight:700;
   border:2px solid var(--surface);margin-right:calc(var(--sp-2) * -1);
 }
@@ -2246,6 +2257,16 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 .gps-tx{font-size:var(--fs-xs);font-weight:700;letter-spacing:.04em;line-height:1}
 .gps-pill .gps-dot{position:absolute;right:4px;top:4px;width:7px;height:7px;border:1.5px solid var(--surface)}
 .gps-pill.on{background:var(--scelto);color:var(--su-scelto)}
+/* Col tondo del tema in più, a 320 px il nome del viaggio restava stretto e
+   anche un nome corto come «Lisbona» perdeva le ultime lettere. Pochi pixel
+   tolti dentro le due pillole (fra le righine e il nome, ai lati del GPS)
+   bastano ai nomi corti; quelli lunghi si accorciano coi puntini, come prima.
+   Il tocco resta da 44 (min-width e l'area invisibile). I selettori sono
+   cosi' pesanti per vincere su .menu-btn.con-nome e sulle regole di .chip. */
+@media (max-width:360px){
+  #menuViaggi.menu-btn.con-nome{gap:var(--sp-1);padding:0 var(--sp-1)}
+  .topbar .gps-pill.gps-pill{padding:0 var(--sp-2)}
+}
 
 /* Il tema, un tondo come il Profilo: e' l'unico tasto della testata fatto
    solo di un segno (eccezione dichiarata in CLAUDE.md), e il nome lo dice a
@@ -26114,6 +26135,7 @@ function buildDayMap(){
   const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&d.date>=h.checkIn&&d.date<h.checkOut);
   clearTimeout(_dayMapAttesa);_dayMapAttesa=null;
   if(dayMapObj){fermaMappa(dayMapObj);try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
+  wrap.classList.remove('con-scheda');
   dayMeMarker=null;dayMeHalo=null;
   /* Senza la mappa del giorno, «Tutto il viaggio» resta: una riga al suo
      posto, se nel viaggio c'e' almeno una tappa con una posizione. */
@@ -26130,6 +26152,9 @@ function buildDayMap(){
     /* a sinistra, come nella mappa del viaggio (vedi initMap): a destra c'e' il 🧭 */
     dirittiMappa(dayMapObj,'bottomleft');
     stratoMappa().addTo(dayMapObj);
+    // «Tutto il viaggio» si fa da parte finche' una scheda e' aperta (vedi .con-scheda)
+    dayMapObj.on('popupopen',()=>wrap.classList.add('con-scheda'));
+    dayMapObj.on('popupclose',()=>wrap.classList.remove('con-scheda'));
     pts.forEach((a,i2)=>{
       const ic=L.divIcon({html:`<div class="pin${a.type==='outdoor'?' fuori':''}" style="width:24px;height:24px">${i2+1}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
       L.marker([a.lat,a.lng],{icon:ic}).addTo(dayMapObj).bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>'+esc(tv('ore {1}',a.time)):''}`);
@@ -31044,7 +31069,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 22:52';
+const VERSIONE_APP='2026-10-21 23:53';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

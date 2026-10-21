@@ -223,7 +223,7 @@ rossa a caso»).
 ## Come si muove l'app
 
 ```sh
-node test/prova-movimento.js   # 16 controlli su animazioni e movimento ridotto
+node test/prova-movimento.js   # 19 controlli su animazioni, movimento ridotto e apertura della giornata
 ```
 
 Questa prova nasce da una scoperta scomoda: **la salita dei fogli era scritta
@@ -241,6 +241,14 @@ Controlla anche che, mentre scende, il foglio **non si mangi i tocchi** — rest
 grande quanto lo schermo per un terzo di secondo — e che con «riduci il
 movimento» acceso le animazioni diventino **istantanee e non sparite**:
 togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
+
+In fondo guarda **dove si apre la giornata**: la prima tappa intera sopra la
+barra in basso, con un po' di griglia sopra, e la pagina in cima con la
+testata del giorno a vista. Fino alla Layout 1 la griglia partiva dalle
+06:00 e la pagina scorreva fin sopra la prima tappa, facendo sparire la
+testata; dalla Layout 1b è la griglia a partire dall'ora piena prima della
+prima tappa. Sul codice della Layout 1 cade il terzo controllo, per il motivo
+giusto: pagina scorsa di 475 px, testata mancante.
 
 ## Quanto è grande quello che si tocca
 
