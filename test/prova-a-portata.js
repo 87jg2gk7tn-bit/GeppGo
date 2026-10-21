@@ -224,7 +224,7 @@ async function percorri(p, passi) {
      invisibile intorno, e conta se sopra c'è altro);
    - invisibili: testo dello stesso colore del fondo. */
 const SCHERMI = [
-  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#thTema', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
+  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
   { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca', '#homeHero .hh-rapido'] },
   { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
   { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .status-pill', '#tripZoomBody .pill-ghost', '#tripZoomBody .btn'] },

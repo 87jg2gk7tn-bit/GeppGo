@@ -19,9 +19,9 @@ const { apriBrowser, APP } = require('./browser');
 
 /* Le classi che si toccano più spesso in tutta l'app. Non è un elenco
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
-const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'hh-day', 'hh-add', 'hh-grado',
+const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'giorno', 'hh-add', 'hh-grado',
   'tt-az', 'tb-profilo', 'hh-rapido',
-                'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'th-btn', 'ad-x'];
+                'ibtn', 'edit-ic', 'seg-btn', 'gps-pill', 'ad-x'];
 
 const stato = { trips: [
   { id: 1, name: 'Giappone', destination: 'Tokyo', currency: 'JPY', status: 'open',
