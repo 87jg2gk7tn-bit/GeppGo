@@ -396,19 +396,23 @@ const MISURA = ([sels, mezzi]) => {
     const p = await apri(browser);
     const tasto = await p.evaluate(() => {
       const b = document.getElementById('menuViaggi');
-      return b ? b.innerText.replace(/\s+/g, ' ').trim() : '';
+      if (!b) return { testo: '', freccina: false };
+      /* Dalla Layout 1 la freccina è un'icona del blocco SVG (#i-giu), non
+         più il carattere «▾»: si guarda che ci sia e che si veda. */
+      const g = b.querySelector('use[href="#i-giu"]');
+      return { testo: b.innerText.replace(/\s+/g, ' ').trim(), freccina: !!g && g.closest('svg').getBoundingClientRect().width > 0 };
     });
-    ok('3. accanto alle righine c\'è il nome del viaggio con la freccina', /^Lisbona ▾$/.test(tasto), tasto);
+    ok('3. accanto alle righine c\'è il nome del viaggio con la freccina', tasto.testo === 'Lisbona' && tasto.freccina, tasto.testo + (tasto.freccina ? ' ▾' : ' (senza freccina)'));
     await p.locator('#menuViaggi').click();
     const aperto = await foglioAperto(p, 'mViaggi');
     const voci = await p.evaluate(() => {
       const m = document.getElementById('mViaggi');
       const vedo = re => [...m.querySelectorAll('button')].some(b => re.test(b.innerText) && b.getClientRects().length && b.getBoundingClientRect().bottom <= innerHeight);
-      return { aggiungi: vedo(/\+ Aggiungi viaggio/), excel: vedo(/Importa da Excel/), codice: vedo(/Ho un codice/),
+      return { aggiungi: vedo(/Aggiungi viaggio/), excel: vedo(/Importa da Excel/), codice: vedo(/Ho un codice/),
         viaggi: [...m.querySelectorAll('.vg-voce b')].map(b => b.textContent) };
     });
     ok('3. un tocco su «Lisbona ▾» apre l\'elenco dei viaggi', aperto && voci.viaggi.includes('Lisbona') && voci.viaggi.includes('Porto'), voci.viaggi.join(', '));
-    ok('3. … con «+ Aggiungi viaggio», «Importa da Excel» e «Ho un codice», a schermo', voci.aggiungi && voci.excel && voci.codice, JSON.stringify(voci));
+    ok('3. … con «Aggiungi viaggio», «Importa da Excel» e «Ho un codice», a schermo', voci.aggiungi && voci.excel && voci.codice, JSON.stringify(voci));
     await p.locator('#cassChiudi').click();
     const chiuso = await aspetta(p, () => !document.getElementById('mViaggi').classList.contains('active'));
     ok('3. ritoccando il nome il cassetto si richiude', chiuso);

@@ -3,7 +3,7 @@
 ## Cos'è
 
 PWA per organizzare viaggi di gruppo, in un unico file HTML: **`Index 2.1.html`**
-(~19.700 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
+(~32.600 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
 framework, niente build step. Interfaccia scritta in italiano; l'app si traduce
 da sola in inglese, spagnolo, francese e portoghese seguendo la lingua del
 telefono (i dizionari stanno dentro l'HTML). Sviluppatore singolo che lavora da

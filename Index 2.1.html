@@ -157,7 +157,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .gps-pill.on .gps-dot{background:var(--green);animation:blink 1.8s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 .tripbar{display:flex;gap:var(--sp-2);margin-top:var(--sp-3)}
-.trip-pick{flex:1;appearance:none;cursor:pointer;background:var(--paper);border:1px solid var(--line);padding:var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-4);border-radius:var(--r-ctl);font-family:inherit;font-weight:700;font-size:var(--fs-m);color:var(--ink);transition:var(--ease);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.5L7 9l3.5-3.5' stroke='%235E6E78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center}
+.trip-pick{flex:1;appearance:none;cursor:pointer;background:var(--paper);border:1px solid var(--bordo-campo);padding:var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-4);border-radius:var(--r-ctl);font-family:inherit;font-weight:700;font-size:var(--fs-m);color:var(--ink);transition:var(--ease);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.5L7 9l3.5-3.5' stroke='%235E6E78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center}
 .trip-pick:focus{outline:none;border-color:var(--green)}
 .trip-add{background:var(--grad);color:var(--oro-su);border:none;cursor:pointer;width:44px;border-radius:var(--r-ctl);font-size:var(--fs-xl);font-weight:400;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-1);transition:var(--ease)}
 .trip-add:active{transform:scale(.92)}
@@ -730,7 +730,11 @@ body.dark .avatar.me{color:var(--oro-su)}
 .spunta{display:grid;place-items:center;width:44px;height:44px;margin:calc(var(--sp-3) * -1) calc(var(--sp-2) * -1) calc(var(--sp-3) * -1) calc(var(--sp-2) * -1);flex-shrink:0;cursor:pointer}
 
 .trip-hero::after{pointer-events:none}
-.chiprow-x{display:flex;gap:var(--sp-2);overflow-x:auto;padding:2px 2px var(--sp-3);scrollbar-width:none}
+/* Sopra, lo spazio per l'area da toccare delle pillole (36 px a vista, 44
+   col margine invisibile): una fila che scorre di lato taglia anche in
+   verticale, e con 2 px il dito che toccava appena sopra la pillola non
+   la prendeva. */
+.chiprow-x{display:flex;gap:var(--sp-2);overflow-x:auto;padding:var(--sp-1) 2px var(--sp-3);scrollbar-width:none}
 .chiprow-x::-webkit-scrollbar{display:none}
 
 /* ── Time Table: testata come l'occhiello di home, non più "Giorno" ──── */
@@ -752,6 +756,11 @@ body.dark .avatar.me{color:var(--oro-su)}
    capo come capita (a 320 px due sopra e uno sotto), tasti veri da 44 px. */
 .tz-azioni{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-2)}
 .tz-azioni .btn{flex:1 1 auto;min-height:44px;padding:var(--sp-2) var(--sp-3);font-size:var(--fs-s)}
+/* Sotto «Elimina viaggio» c'è la pubblicità: lo spazio li stacca. Se no
+   l'area da toccare di «Rimuovi con Premium», 44 px e più alta della sua
+   scritta, finisce sopra il bordo del tasto rosso (con le parole lunghe
+   dello spagnolo e del portoghese, a 320 px, proprio sotto il suo centro). */
+#tripZoomBody{margin-bottom:var(--sp-4)}
 
 /* ── I tetti di spesa (miglioria 13a) ──────────────────────────────────
    Una voce per tetto: il nome, la percentuale, la barra e due righe di
@@ -1057,7 +1066,7 @@ body.dark .imp-entra b{color:var(--green)}
    tutti i numeri della pagina. */
 .mh-tot-row{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 .bh-amt{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
-.cur-vis{width:auto;min-width:0;flex:0 0 auto;padding:var(--sp-1) var(--sp-5) var(--sp-1) var(--sp-2);font-size:var(--fs-s);font-weight:700;height:auto;min-height:0;background-position:right .4rem center;background-color:var(--paper);border-color:var(--line);color:inherit}
+.cur-vis{width:auto;min-width:0;flex:0 0 auto;padding:var(--sp-1) var(--sp-5) var(--sp-1) var(--sp-2);font-size:var(--fs-s);font-weight:700;height:auto;min-height:0;background-position:right .4rem center;background-color:var(--paper);border-color:var(--bordo-campo);color:inherit}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 /* Sui telefoni stretti "🚆 16 min · 5.4 km 🚶🚆🚗 non necessario ✕" non ci sta,
    e a essere tagliate contro il bordo erano proprio le iconcine del mezzo, che
@@ -1253,7 +1262,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
 .tripbar{margin-top:var(--sp-2)}
 .trip-pick{
   background:var(--surface);
-  border-color:var(--line-soft);
+  border-color:var(--bordo-campo);
   box-shadow:var(--sh-1);
 }
 
@@ -1862,9 +1871,12 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 /* La temperatura non ha una scatola intorno: sta sul cielo come ci sta
    il titolo. Era il numero dentro un riquadro, e il riquadro era la
    cosa di troppo. */
+/* In grassetto perché a 22 px una scritta conta come grande (3:1, ed è così
+   che la tratta CIELO_SCRITTE) solo se è in grassetto: a 600 il bianco sul
+   grigio della pioggia (3,4:1) non bastava. */
 .hh-grado{
   flex:0 0 auto;background:none;border:none;padding:0;cursor:pointer;
-  position:relative;font-family:'Fraunces',serif;font-weight:600;
+  position:relative;font-family:'Fraunces',serif;font-weight:700;
   font-size:var(--fs-xl);line-height:1;letter-spacing:-.03em;color:var(--ink);
   transition:var(--ease);
 }
@@ -2121,14 +2133,15 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 .hh-riga1 .hh-eyebrow.hh-tap{display:block}
 .hh-riga1 .hh-eyebrow .hh-chev{line-height:0}
 
-/* ── testata: il viaggio, il GPS, il tema, il Profilo ──────────────
+/* ── testata: il viaggio, il GPS, il Profilo ───────────────────────
    Da sinistra: le righine col nome del viaggio («Lisbona ▾»), che prendono
-   lo spazio che resta; a destra il GPS con la scritta, il tema e il
-   Profilo, a un tocco. Il marchio sta qui solo quando non c'e' un viaggio
-   aperto: con un viaggio, quel posto serve al nome, e a 320 px non ci stanno
-   tutti e due (il marchio resta nella schermata d'avvio). Fra un tasto e
-   l'altro 6 px, perche' le aree da 44 non si pestino (vedi I TASTI DA UN
-   DITO). */
+   lo spazio che resta; a destra il GPS con la scritta e il Profilo, a un
+   tocco (il tema dalla Layout 1 si sceglie nel Profilo). Il marchio sta qui
+   solo quando non c'e' un viaggio aperto: con un viaggio, quel posto serve
+   al nome, e a 320 px non ci stanno tutti e due (il marchio resta nella
+   schermata d'avvio). Senza viaggio lo stesso con «I tuoi viaggi», quando
+   non c'e' posto per tutti e due (testataStretta). Fra un tasto e l'altro
+   6 px, perche' le aree da 44 non si pestino (vedi I TASTI DA UN DITO). */
 .topbar-row{justify-content:flex-start;gap:var(--sp-2)}
 #menuViaggi{flex:0 1 auto;margin-right:0}
 .menu-btn.con-nome{display:flex;align-items:center;gap:var(--sp-2);width:auto;min-width:44px;max-width:100%;padding:0 var(--sp-2) 0 var(--sp-2)}
@@ -2136,7 +2149,7 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 .mv-nome{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Fraunces',serif;font-size:var(--fs-l);font-weight:600;letter-spacing:-.01em;color:var(--ink)}
 .mv-giu{flex-shrink:0;width:16px;height:16px;color:var(--ink-soft)}
 .menu-btn:not(.con-nome) .mv-nome,.menu-btn:not(.con-nome) .mv-giu{display:none}
-.topbar-row.con-viaggio .brand{display:none}
+.topbar-row.con-viaggio .brand,.topbar-row.senza-marchio .brand{display:none}
 /* Senza un viaggio aperto il GPS non ha niente da seguire. */
 .topbar-row:not(.con-viaggio) .gps-pill{display:none}
 .gps-pill{
@@ -14740,8 +14753,8 @@ function homeSwitchTrip(id){
 /* I viaggi dietro le tre righine. Si disegna all'apertura e non una volta
    per tutte: i viaggi si aggiungono, si concludono e si rinominano, e una
    tendina che racconta quelli di ieri e' peggio che non averla. */
-/* LA TESTATA: il nome del viaggio accanto alle righine, l'iniziale sul tasto
-   del Profilo, l'icona del tema. Si rifa' a ogni renderAll: il viaggio cambia,
+/* LA TESTATA: il nome del viaggio accanto alle righine e l'iniziale sul
+   tasto del Profilo. Si rifa' a ogni renderAll: il viaggio cambia,
    si rinomina, e il nome di chi usa l'app puo' arrivare dopo (dall'account,
    o creando il primo viaggio). Senza un nome, sul Profilo c'e' la parola:
    un tondo vuoto non direbbe cosa apre. */
@@ -14762,6 +14775,29 @@ function aggiornaTestata(){
     p.textContent=ini||t('Profilo');
     p.classList.toggle('parola',!ini);
   }
+  testataStretta();
+}
+/* Senza un viaggio aperto nella riga ci sono «I tuoi viaggi» e il marchio,
+   e a 320 px (in portoghese anche a 375) non ci stanno tutti e due. Vince la
+   scritta, che dice cosa apre il tasto: il marchio c'e' anche subito sotto,
+   nel cielo della Home («GEPPGO»), e nella schermata d'apertura. Si misura
+   invece di fissare una larghezza, perche' lo spazio dipende dalla lingua e
+   dai caratteri, che arrivano dopo; si guarda la riga, che col marchio che
+   va e viene non cambia misura, cosi' l'osservatore non si rincorre. */
+let _testataOsserva=null;
+function testataStretta(){
+  const riga=document.querySelector('.topbar-row'),nome=document.getElementById('mvNome');
+  if(!riga||!nome)return;
+  if(!_testataOsserva&&typeof ResizeObserver!=='undefined'){
+    _testataOsserva=new ResizeObserver(()=>requestAnimationFrame(testataStretta));
+    _testataOsserva.observe(riga);
+    if(document.fonts&&document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',testataStretta);
+  }
+  riga.classList.remove('senza-marchio');
+  /* Con un viaggio il marchio non c'e' comunque: niente da misurare, e
+     renderAll non paga un ricalcolo della pagina in piu'. */
+  if(riga.classList.contains('con-viaggio'))return;
+  if(nome.scrollWidth>nome.clientWidth+1)riga.classList.add('senza-marchio');
 }
 /* Le tre righine sono un interruttore: se il cassetto e' gia' fuori,
    ritoccarle lo rimanda dentro. Un tasto che apre e basta costringe a

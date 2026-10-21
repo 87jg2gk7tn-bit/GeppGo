@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 20 ottobre 2026.
+Aggiornato: 21 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -1076,11 +1076,13 @@ settimane.
   Home; l'iscrizione al calendario dal tasto webcal://; ogni quanto il
   calendario si aggiorna (lo decide iPhone: Impostazioni › Calendario ›
   Account › Scarica nuovi dati; Google Calendar ci mette ore).
-- L'.ics «una volta sola» (senza account, e nel Profilo alla scheda
+- ~~L'.ics «una volta sola» (senza account, e nel Profilo alla scheda
   «Calendario») si scarica ancora con `<a download>`: dall'app sulla Home di
-  iPhone può non partire. Si può passare al foglio Condividi come il PDF.
-  E la scheda «Calendario» del Profilo offre solo l'.ics: per i viaggi nel
-  cloud potrebbe portare al foglio nuovo.
+  iPhone può non partire. Si può passare al foglio Condividi come il PDF.~~
+  ✅ fatto il 21 ottobre (Layout 1, passo 6): passa dal foglio Condividi,
+  con gli UID fissi e senza le note; dove il foglio non c'è si scarica come
+  prima. Resta: la scheda «Calendario» del Profilo offre solo l'.ics, e per
+  i viaggi nel cloud potrebbe portare al foglio nuovo.
 - Nel PDF le righe in un alfabeto non latino sono immagini: non si cercano e
   non si copiano. Per averle testo bisognerebbe mettere nel PDF un pezzo di
   carattere giapponese o cinese (megabyte da scaricare).
@@ -1088,13 +1090,12 @@ settimane.
   oltre le due settimane, prendono il fuso della destinazione: un giorno
   ancora in Italia sarebbe scritto all'ora di Tokyo finché il meteo di quel
   giorno non arriva.
-- **La prima schermata è al limite di `prova-avvio`** (vedi le lezioni in
-  fondo): ogni riga di CSS in testa la ritarda. Da decidere: in testa solo lo
-  stile della schermata d'apertura, e il `<style>` grande subito dopo di lei
-  nel `<body>`. La prima schermata arriverebbe in mezzo secondo anche con la
-  rete debole, qualunque sia il peso del CSS. Cambia come si carica tutto il
-  CSS dell'app: va fatto da solo, con le sue prove, anche su Safari, che
-  decide da sé quando disegnare la prima volta.
+- ~~**La prima schermata è al limite di `prova-avvio`** (vedi le lezioni in
+  fondo): ogni riga di CSS in testa la ritarda.~~ ✅ fatto il 21 ottobre
+  (Layout 1, passo 5): in testa solo lo stile della schermata d'apertura, e
+  il `<style>` grande subito dopo di lei nel `<body>`. Con la rete finta la
+  prima schermata è passata da 1400 a circa 490 ms. Resta da guardare su un
+  iPhone vero: Safari decide da sé quando disegnare la prima volta.
 
 ### Nessuna funzione nascosta: a che punto è
 
@@ -1173,6 +1174,74 @@ scritte); la Time Table dalla Home passa per l'occhiello «LISBONA · GIORNO
 - Le righe con la spunta nei fogli della spesa («fra chi si divide») e
   dell'attività sono alte circa 39 px, sotto i 44. Quelle del «Nuovo
   viaggio» sono state portate a 44.
+
+### Layout 1, fondamenta di stile: a che punto è
+
+21 ottobre 2026. Le regole stanno in `CLAUDE.md`, alla sezione «Stile», e
+`test/prova-stile.js` le controlla su tutte le schermate (10 prove). Non è
+il ridisegno delle schermate: è il sistema su cui si ridisegnano, applicato
+a tutto il file senza togliere funzioni.
+
+**Prima e dopo**, contati allo stesso modo (valori diversi scritti nel
+foglio di stile e negli `style=""`; prima è `main` ae98355):
+
+| | prima | dopo |
+|---|---|---|
+| grandezze del testo | 58 | 8: le sei della scala, il nome della città nel cielo, i 2rem della schermata d'apertura |
+| pesi | 6 | 4: 500, 600, 700, e 400 per i «+» grandi |
+| colori scritti a mano | 69 | 30, tutti nel cielo, nel logo, nelle illustrazioni, nelle maschere e nella stampa |
+| spazi | 74 | 7, quasi tutti 1 e 2 px di ritocco |
+| raggi | 24 | 10: i tre della scala, più i tondi (50%) e gli angoli di un lato solo |
+| ombre | 20 | 10: le due della scala e l'anello, più quelle del cielo e dei segnaposto |
+| famiglie di tasti | 58 | 36, ognuna di uno dei 9 tipi o di un'eccezione dichiarata |
+| tasti con un'emoji | 200 | 0 (restano, come contenuto, le categorie delle spese e il meteo) |
+| stile in testa | 163,6 KB (44,5 compressi) | 3,6 KB (1,8) |
+| prima schermata, rete finta | 1412 ms | circa 490 ms |
+
+**Cosa è cambiato**
+- Le variabili: caratteri (`--fs-xs` … `--fs-xxl`, più `--fs-cielo`), spazi
+  (`--sp-1` … `--sp-6`), tre raggi, due ombre, i colori senza doppioni (via
+  `--blue*` e `--brown*`); «scelto» è sempre l'inchiostro (`--scelto`).
+- I componenti: `.btn` coi suoi quattro tipi, una pillola (`.chip`), un
+  controllo a schede (`.seg`), una riga d'elenco (`.riga`), il selettore dei
+  giorni (`caselleGiorni`, lo stesso in Home, Time Table e Hotel), i fogli
+  col titolo, la crocetta e l'azione principale fissa in fondo
+  (`.sheet-piede`), l'eliminare in fondo e staccato (`.zona-elimina`).
+- Le icone: un blocco SVG solo con i simboli a linea, `ico(nome)` in
+  JavaScript; ☾ ✎ ✕ e le emoji dei comandi sono diventate icone. Le frasi
+  col simbolo davanti nel dizionario valgono anche senza (le aggiunge l'app).
+- Le correzioni: il cielo solo in Home; il tema solo nel Profilo; «Scorri
+  con un dito» solo la prima volta, dentro la Time Table; «Annulla» solo
+  dopo uno spostamento, per 8 secondi; l'etichetta dell'ora attuale non
+  copre più i numeri delle ore; +/− della mappa scuri nel tema scuro; la
+  voce della valigia si cambia in un foglio (era un `prompt`); «Elimina» in
+  fondo al foglio dell'albergo; nel Profilo il tasto del piano è oro solo
+  con l'account (senza, l'oro va ad «Accedi o crea account»).
+- Lo stile in testa (passo 5) e l'.ics col foglio Condividi (passo 6): vedi
+  la 13b, qui sopra.
+- Trovato con le prove, sistemato: senza un viaggio aperto le righine dicono
+  «I tuoi viaggi» (erano un tasto di solo segno), e quando non c'è posto
+  per la scritta e il marchio vince la scritta (`testataStretta`): a 320 px
+  in tutte le lingue, a 375 in portoghese. Con il fondo panna pulito si
+  sono visti due menu a tendina col bordo troppo chiaro (la valuta e il
+  viaggio): ora hanno `--bordo-campo`.
+
+**Da decidere, o da fare dopo**
+- Le parole sotto le icone della barra in basso (vedi «Nessuna funzione
+  nascosta», qui sopra): resta un'eccezione dichiarata, coi controlli della
+  mappa (+/− e posizione) e i segnaposto.
+- In alto le righine col nome, il GPS e il Profilo con l'iniziale sono
+  un'eccezione anche loro: hanno una scritta, ma non sono `.btn`.
+- Nella striscia dello spostamento della Time Table l'icona del mezzo resta
+  senza scritta (deciso il 15 ottobre, 44×44 da toccare).
+- «Elimina viaggio» nella scheda del viaggio è provvisorio (lo dice il
+  commento nel codice): col Premium resterà solo «Concludi».
+- Le schermate sono quelle di prima con lo stile nuovo: ridisegnarle una per
+  una (cosa si vede all'apertura, cosa va a un tocco) è il lavoro delle
+  prossime Layout.
+- Da guardare su un iPhone vero: la prima schermata col `<style>` grande
+  nel `<body>` (Safari decide da sé quando disegnare) e il foglio Condividi
+  dell'.ics dall'app sulla Home.
 
 ---
 
@@ -3161,7 +3230,27 @@ qualcuno che risponde".
   che si apre dopo vanno sul posto, non in testa. Se la prova diventa rossa,
   si misura il codice di prima sulla stessa macchina, alternando, e si
   confronta il peso compresso della testa (tutto quello prima di `<body>`).
-  Il rimedio vero sta fra le cose da decidere della 13b.
+  Il rimedio vero è arrivato con la Layout 1 (21 ottobre): in testa solo lo
+  stile della schermata d'apertura (3,6 KB), il resto in un `<style>` nel
+  `<body>`, subito dopo di lei. Un `<style>` nel `<body>` non ferma il
+  disegno di quello che gli sta prima: la schermata d'apertura arriva in
+  circa 490 ms, e il peso del CSS dell'app non conta più per la prova.
+- **Con il fondo pulito le prove vedono di più** (Layout 1). La prova dei
+  contrasti salta i campi su un fondo che non sa leggere (una sfumatura):
+  tolta la sfumatura dalle schermate che non sono la Home, due menu a
+  tendina col bordo chiaro, che c'erano da sempre, sono diventati rossi.
+  Non era la Layout ad averli rotti: si vedevano solo adesso.
+- **Una fila che scorre di lato taglia anche sopra e sotto.** Con
+  `overflow-x:auto` anche `overflow-y` smette di essere `visible`: l'area
+  invisibile da 44 px delle pillole (`::after`) usciva di 4 px dalla fila e
+  veniva tagliata, e il dito appena sopra la pillola non la prendeva. La
+  fila deve avere dentro, sopra e sotto, lo spazio che l'area sporge.
+- **A 22 px una scritta conta come «grande» solo in grassetto** (WCAG: 24
+  px, o 18,66 in grassetto, cioè da 700). Arrotondando i caratteri alla
+  scala la temperatura nel cielo è passata da 25,6 a 22 px, e a peso 600
+  il bianco sul grigio della pioggia (3,4:1) non bastava più: le serviva
+  4,5. Chi sceglie il colore del testo sul cielo (`CIELO_SCRITTE`) la
+  trattava ancora da grande.
 
 ---
 
@@ -3169,7 +3258,7 @@ qualcuno che risponde".
 
 - **Tutto va su `main`**, senza chiedere: ramo `claude/geppgo-ripresa-*` → PR →
   squash merge → il ramo si riparte da `origin/main`.
-- L'app è **un solo file**, `Index 2.1.html` (~12.000 righe).
+- L'app è **un solo file**, `Index 2.1.html` (~32.600 righe).
 - I commenti sono in **italiano** e spiegano *perché*, non *cosa*.
 - Le prove stanno in **`test/`** e ci restano: prima vivevano in una cartella
   temporanea che spariva a fine sessione.

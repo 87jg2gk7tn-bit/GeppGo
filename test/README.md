@@ -1246,3 +1246,58 @@ sola invece di uno, otto colori (il giorno 9 uguale al giorno 1, CIEDE2000
 giornata, «ore 09:30» anche in inglese; nessun PDF, nessun foglio del
 calendario, nessuna funzione e nessuna migrazione; e nella scheda del
 viaggio la voce del calendario che non passa da `apriCalendario`.
+
+## Lo stile (Layout 1)
+
+```sh
+node test/prova-stile.js          # le 10 prove (8 e 9 da sole fanno metà del tempo)
+node test/prova-stile.js 3 7      # solo le prove 3 e 7
+APP_URL=file:///percorso/di/un-altra-copia.html node test/prova-stile.js
+```
+
+Le regole della sezione «Stile» di `CLAUDE.md`, guardate sull'app vera. Le
+schermate sono quelle del giro di `schermate.js` (tutte quelle di
+`MAPPA_APP`, con le finestre); con `APP_URL` la prova guarda un'altra copia
+dell'app, anche nelle domande sul foglio di stile e nella misura della
+prima schermata, ed è così che si fa la controprova. Le dieci domande:
+
+1. **Le grandezze del testo**: nel foglio di stile e negli `style=""` ogni
+   `font-size` è una variabile della scala; la scala è 12, 13, 15, 17, 22 e
+   32 px; a schermo, schermata per schermata, solo quelle (più il nome della
+   città nel cielo), e niente sotto i 12 px.
+2. **Colori, spazi, raggi e ombre** scritti a mano solo dove c'è un motivo
+   (il cielo, il logo e la schermata d'apertura, le illustrazioni, le
+   maschere, la stampa); nessun doppione fra le variabili, e quelle tolte
+   (`--blue`, `--brown`, le vecchie ombre e i vecchi raggi) non tornano.
+3. **I tasti**: ognuno è di un tipo della Layout 1 (principale, secondario,
+   terziario, eliminazione, pillola, controllo a schede, giorno, riga di
+   elenco, crocetta) o di un'eccezione dichiarata (la barra in basso e
+   quella in alto, la mappa, il cielo della Home, le schede che si toccano,
+   la pubblicità…); nessun comando fatto di sola icona, di sola emoji o di
+   un carattere solo, tranne la crocetta, la barra in basso e la mappa;
+   un'emoji in un comando solo se è contenuto (le categorie delle spese, il
+   meteo); le classi dei tasti di prima non ci sono più.
+4. **Il selettore dei giorni** è lo stesso in Home, Time Table e Hotel, con
+   le stesse misure, e quelli di prima (`hh-day`, `day-chip`) non ci sono
+   più.
+5. **I fogli**: in sedici fogli l'azione principale sta in fondo e si vede
+   senza scorrere, a 320×568 e a 390×844.
+6. **Il cielo solo in Home** (le altre schermate hanno il fondo panna
+   pulito), e nella barra in alto niente tasto del tema: sta nel Profilo.
+7. **La Time Table**: «Scorri con un dito» la prima volta, dentro la Time
+   Table sotto i giorni, senza coprire i titoli; chiusa la Time Table non
+   resta; riaprendo l'app non torna. «Annulla» non c'è finché non si sposta
+   qualcosa, poi compare senza coprire altri tasti e dopo qualche secondo se
+   ne va.
+8. **Accessibilità e misure**: axe senza violazioni gravi, i contrasti e i
+   tasti da 44 px (le misure di `prova-accessibilita`) sulle schermate
+   principali nei due temi; niente testi tagliati, sovrapposti o fuori
+   dallo schermo da 320 a 430 px, in cinque lingue e due temi.
+9. **La testa leggera**: in testa solo lo stile della schermata d'apertura,
+   il resto subito dopo di lei e prima dell'app; con la rete finta di
+   `rete-finta.js` (400 kbps, 400 ms) la prima schermata arriva in meno del
+   70% del tempo di prima (1400 ms, mediana di tre avvii).
+10. **L'.ics**: passa dal foglio Condividi (un file `text/calendar`), anche
+    dal tasto della scheda del viaggio; gli UID sono gli stessi a ogni
+    esportazione (`tappa-<id>@<viaggio>.geppgo`), così reimportato non
+    raddoppia; e senza le note.
