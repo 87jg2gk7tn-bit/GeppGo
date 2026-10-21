@@ -88,7 +88,8 @@ const IDENTICHE = new Set([
   'Project URL', 'https://...', 'es. MXP', 'es. NRT', 'A JavaScript library for interactive maps', 'Tavily',
   'Overpass', 'Nominatim', 'Photon', 'Wi-Fi', 'Bluetooth', 'Safari', 'Chrome', 'Home', 'Booking', 'Airbnb',
   'Every Door', 'Data Matrix', 'Aztec', 'PDF417', 'Louvre Musée d\'Orsay Sainte-Chapelle', 'Project Settings > API', 'https://xxxxx.supabase.co', 'Marco',
-  'GEPPGO', '🗺️ Maps'
+  // «Maps» è Google Maps detto corto: dalla Layout 1 la 🗺️ davanti è un'icona
+  'GEPPGO', '🗺️ Maps', 'Maps'
 ]);
 /* I nomi coperti da un segnaposto, i numeri pure (quanti puntini ci mette
    una lingua dipende dalla versione del browser, vedi prova-lingue). */

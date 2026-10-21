@@ -398,7 +398,11 @@ const prova = async (nome, fn) => {
     /* La chiave e' la frase italiana: se nel codice c'e' scritta un'altra
        frase, la traduzione non arriva mai. Ogni chiave deve comparire anche
        fuori dal dizionario, dove la si usa. */
-    const nonUsate = chiavi.filter(k => html.split(k.replace(/'/g, "\\'")).length - 1 < 5 && html.split(k).length - 1 < 5);
+    /* Dalla Layout 1 il simbolo davanti alla frase («‹ Indietro») è
+       un'icona: nel codice resta la frase senza, e l'app la aggiunge al
+       dizionario da sola. */
+    const senzaSimbolo = k => k.replace(/^[^\p{L}\p{N}{]+\s/u, '');
+    const nonUsate = chiavi.filter(k => [k, senzaSimbolo(k)].every(c => html.split(c.replace(/'/g, "\\'")).length - 1 < 5 && html.split(c).length - 1 < 5));
     ok('9. e ognuna è la frase scritta davvero nel codice (l\'italiano)', !nonUsate.length, nonUsate.slice(0, 3).join(' | '));
 
     /* E a schermo: un viaggio con una spesa in attesa e una vecchia da
@@ -425,7 +429,7 @@ const prova = async (nome, fn) => {
         [visto.foglio, tr('Cambi da verificare')], [visto.foglio, tr('Ricalcola col cambio attuale')],
         [visto.foglio, tr('Inserisco io il cambio')], [visto.foglio, tr('Va bene così')],
         [visto.foglio, sub(tr('1 spesa in un\'altra valuta è stata salvata con cambio 1: la sua cifra è contata come se fosse in {1}.'), 'EUR')],
-        [visto.mano, tr('Salva i cambi')], [visto.mano, tr('‹ Indietro')],
+        [visto.mano, tr('Salva i cambi')], [visto.mano, senzaSimbolo(tr('‹ Indietro'))],
         [visto.soldi, tr('cambio in attesa')], [visto.soldi, tr('non ancora nei conti')],
         [visto.soldi, sub(tr('{1} spesa non ancora inclusa (cambio in attesa)'), 1)],
         [a.testo, tr('Cambio non ancora disponibile: lo calcolo appena torna la rete, oppure scrivilo tu qui sotto.')],

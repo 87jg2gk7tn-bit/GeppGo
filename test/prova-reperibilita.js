@@ -147,15 +147,18 @@ const scheda = p => p.evaluate(() => {
       if (!f) return null;
       const rf = f.getBoundingClientRect();
       const st = getComputedStyle(f);
-      return { testi: [...f.querySelectorAll('.hh-rapido')].map(b => b.textContent.trim()), visibile: rf.height > 0 && st.display !== 'none' && st.visibility !== 'hidden',
+      /* Dalla Layout 1 l'emoji davanti è un'icona a linea: nel testo resta la
+         parola, e l'icona si guarda a parte. */
+      return { testi: [...f.querySelectorAll('.hh-rapido')].map(b => b.textContent.trim()), icone: [...f.querySelectorAll('.hh-rapido')].every(b => !!b.querySelector('svg.ico')),
+        visibile: rf.height > 0 && st.display !== 'none' && st.visibility !== 'hidden',
         sopraLaPiega: rf.top >= 0 && rf.bottom <= innerHeight,
         sottoCerca: (() => { const c = document.querySelector('#homeHero .hh-cerca'); return !!c && c.getBoundingClientRect().bottom <= rf.top + 1; })() };
     });
-    ok('1. in Home c\'è la fila di accessi rapidi, con icona e testo', !!fila && JSON.stringify(fila.testi) === JSON.stringify(['🧳 Bagagli', '👥 Compagni', '🔗 Condividi', '✈️ Viaggio']), fila ? fila.testi.join(' | ') : 'nessuna fila');
+    ok('1. in Home c\'è la fila di accessi rapidi, con icona e testo', !!fila && fila.icone && JSON.stringify(fila.testi) === JSON.stringify(['Bagagli', 'Compagni', 'Condividi', 'Viaggio']), fila ? fila.testi.join(' | ') + (fila.icone ? '' : ' (senza icone)') : 'nessuna fila');
     ok('1. la fila si vede subito, senza scorrere, sotto «Cosa cerchi qui intorno?»', !!fila && fila.visibile && fila.sopraLaPiega && fila.sottoCerca, JSON.stringify(fila));
     /* «✈️ Viaggio», la quarta, viene dalla miglioria 9c: la scheda del
        viaggio si apriva solo toccando un titolo. */
-    const casi = [['🧳 Bagagli', 'mPacking'], ['👥 Compagni', 'mPeople'], ['🔗 Condividi', 'mShare'], ['✈️ Viaggio', 'mTripZoom']];
+    const casi = [['Bagagli', 'mPacking'], ['Compagni', 'mPeople'], ['Condividi', 'mShare'], ['Viaggio', 'mTripZoom']];
     for (const [testo, foglio] of casi) {
       await p.locator('#homeHero .hh-rapido', { hasText: testo }).click();
       const aperto = await foglioAperto(p, foglio);
@@ -172,7 +175,7 @@ const scheda = p => p.evaluate(() => {
     // anche in un viaggio che non ha ancora i giorni la fila c'e'
     const p2 = await apri(browser, { viaggioExtra: { days: [], start: '', end: '' } });
     const senzaGiorni = await p2.evaluate(() => [...document.querySelectorAll('#homeHero .hh-rapido')].map(b => b.textContent.trim()).join(' | '));
-    ok('1. la fila c\'è anche in un viaggio senza giorni', senzaGiorni === '🧳 Bagagli | 👥 Compagni | 🔗 Condividi | ✈️ Viaggio', senzaGiorni || 'nessuna');
+    ok('1. la fila c\'è anche in un viaggio senza giorni', senzaGiorni === 'Bagagli | Compagni | Condividi | Viaggio', senzaGiorni || 'nessuna');
     await p.close(); await p2.close();
   });
 
@@ -216,7 +219,7 @@ const scheda = p => p.evaluate(() => {
     for (const [fra, atteso, nome] of casi) {
       const p = await apri(browser, { fra });
       const s = await scheda(p);
-      const giusto = atteso ? !!s && s.titolo === '🧳 Prepara la valigia' && atteso.test(s.quando) && s.conto === '12 su 30 pronte' && s.barra === '40%' : s === null;
+      const giusto = atteso ? !!s && s.titolo === 'Prepara la valigia' && atteso.test(s.quando) && s.conto === '12 su 30 pronte' && s.barra === '40%' : s === null;
       esiti.push([nome, giusto, s ? `${s.quando} · ${s.conto} · ${s.barra}` : 'nessuna scheda', !!atteso]);
       await p.close();
     }
@@ -281,14 +284,14 @@ const scheda = p => p.evaluate(() => {
     await p.locator('#tripZoomBody button', { hasText: 'Bagagli' }).click();
     const lista = await foglioAperto(p, 'mPacking');
     const voci = await p.evaluate(() => (document.getElementById('mPacking').textContent.match(/Voce \d+/g) || []).length);
-    ok('5. dalla scheda del viaggio «🎒 Bagagli» apre ancora la lista', scheda && lista && voci === 30, `scheda ${scheda ? 'aperta' : 'chiusa'}, lista ${lista ? 'aperta' : 'chiusa'}, ${voci} voci`);
+    ok('5. dalla scheda del viaggio «Bagagli» apre ancora la lista', scheda && lista && voci === 30, `scheda ${scheda ? 'aperta' : 'chiusa'}, lista ${lista ? 'aperta' : 'chiusa'}, ${voci} voci`);
     // e dal Profilo, toccando il viaggio (l'aereo)
     await chiudiFogli(p);
     await p.evaluate(() => { go('trips'); });
     await p.waitForTimeout(250);
     await p.locator('.hist-card', { hasText: 'Lisbona' }).first().click();
     const dalProfilo = await foglioAperto(p, 'mTripZoom');
-    ok('5. la scheda del viaggio si apre ancora dal Profilo, e ha «🎒 Bagagli»', dalProfilo && await p.locator('#tripZoomBody button', { hasText: 'Bagagli' }).count() === 1);
+    ok('5. la scheda del viaggio si apre ancora dal Profilo, e ha «Bagagli»', dalProfilo && await p.locator('#tripZoomBody button', { hasText: 'Bagagli' }).count() === 1);
     await p.close();
   });
 
@@ -299,10 +302,10 @@ const scheda = p => p.evaluate(() => {
       const home = (MAPPA_APP.split('\n').find(l => l.startsWith('- Home:')) || '');
       const domande = ['Dove trovo la lista bagagli?', 'Where is the packing list in the app?', '¿Dónde está la lista de equipaje?', 'Où est la liste de bagages ?', 'Onde está a lista de bagagem?'];
       return { home, vecchia: /I bagagli stanno nella scheda del viaggio, dov'erano gia'/.test(MAPPA_APP),
-        risposte: domande.map(d => /"🧳 Bagagli"/.test(mappaPerDomanda(d))) };
+        risposte: domande.map(d => /"Bagagli"/.test(mappaPerDomanda(d))) };
     });
-    ok('6. MAPPA_APP dice che in Home c\'è «🧳 Bagagli», sotto «Cosa cerchi qui intorno?»', /Subito sotto, una fila di quattro tasti con la scritta: "🧳 Bagagli" \(apre la lista bagagli\), "👥 Compagni" .*, "🔗 Condividi" .* e "✈️ Viaggio"/.test(m.home), m.home.slice(0, 80));
-    ok('6. … e che la lista resta anche nella scheda del viaggio, e c\'è la scheda «Prepara la valigia»', /anche nella scheda del viaggio \("🎒 Bagagli"\)/.test(m.home) && /"Prepara la valigia"/.test(m.home) && /si chiude con la X e torna il giorno dopo/.test(m.home));
+    ok('6. MAPPA_APP dice che in Home c\'è «Bagagli», sotto «Cosa cerchi qui intorno?»', /Subito sotto, una fila di quattro tasti con la scritta: "Bagagli" \(apre la lista bagagli\), "Compagni" .*, "Condividi" .* e "Viaggio"/.test(m.home), m.home.slice(0, 80));
+    ok('6. … e che la lista resta anche nella scheda del viaggio, e c\'è la scheda «Prepara la valigia»', /anche nella scheda del viaggio \("Bagagli"\)/.test(m.home) && /"Prepara la valigia"/.test(m.home) && /si chiude con la X e torna il giorno dopo/.test(m.home));
     ok('6. il vecchio percorso («stanno nella scheda del viaggio») non c\'è più', !m.vecchia);
     ok('6. l\'assistente riceve il percorso nuovo chiedendo dei bagagli, in tutte e cinque le lingue', m.risposte.every(Boolean), m.risposte.map(x => x ? 'sì' : 'no').join(' '));
     await p.close();
@@ -333,10 +336,12 @@ const scheda = p => p.evaluate(() => {
         scheda: (document.getElementById('valScheda') || {}).innerText || ''
       }));
       const d = diz[lingua].reduce((o, x) => (o[x.f] = x.v, o), {});
-      const atteso = [d['🧳 Bagagli'], d['👥 Compagni'], d['🔗 Condividi'], d['✈️ Viaggio']];
+      // a schermo il simbolo davanti è un'icona: si confronta la frase che resta
+      const senza = x => String(x).replace(/^(?:\p{Extended_Pictographic}|[^\p{L}\p{N}«"(])+/u, '');
+      const atteso = [d['🧳 Bagagli'], d['👥 Compagni'], d['🔗 Condividi'], d['✈️ Viaggio']].map(senza);
       const conto = d['{1} su {2} pronte'].replace('{1}', '12').replace('{2}', '30');
       const quando = d['Si parte fra {1} giorni'].replace('{1}', '5');
-      const giusto = JSON.stringify(v.fila) === JSON.stringify(atteso) && v.scheda.includes(d['🧳 Prepara la valigia']) && v.scheda.includes(conto)
+      const giusto = JSON.stringify(v.fila) === JSON.stringify(atteso) && v.scheda.includes(senza(d['🧳 Prepara la valigia'])) && v.scheda.includes(conto)
         && v.scheda.includes(quando) && v.scheda.includes(d['Apri la lista']) && !/Prepara la valigia|pronte|Si parte|Apri la lista/.test(v.scheda);
       viste.push([lingua, giusto, v.fila.join(' | ') + ' · ' + v.scheda.replace(/\s+/g, ' ').slice(0, 90)]);
       await q.close();

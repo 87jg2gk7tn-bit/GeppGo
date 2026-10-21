@@ -324,7 +324,7 @@ function swFinto() {
       });
       if (nome === 'negato') {
         /* «Apri» porta nel punto giusto anche dal banner. */
-        await p.click('.prox.avv button.btn-grad');
+        await p.click('.prox.avv button.btn-primario');
         esiti.apri = await aspetta(p, () => document.getElementById('mActMenu').classList.contains('active') && document.getElementById('amName').textContent === 'Torre di Belém', null, 3000);
         esiti.via = await p.evaluate(() => !document.querySelector('.prox.avv'));
       }
@@ -451,7 +451,8 @@ function swFinto() {
       await q.waitForTimeout(500);
       const x = await leggi(q);
       const voci = await q.evaluate(lingua => ({ testo: DIZIONARIO[lingua]['Promemoria, ora di partire, tappe vicine e A raccolta arrivano solo mentre GeppGo è aperta: è lei a guardare l\'ora e dove sei. Con l\'app chiusa, o lasciata a lungo in secondo piano, non arrivano ancora.'],
-        titolo: DIZIONARIO[lingua]['🔔 Avvisi e notifiche'] }), l);
+        // dalla Layout 1 il titolo della scheda è senza la campanella: la chiave senza simbolo la aggiunge l'app
+        titolo: DIZIONARIO[lingua]['Avvisi e notifiche'] }), l);
       tradotti[l] = !!x && !!voci.testo && x.testo === voci.testo && x.titolo === voci.titolo && !/arrivano|Notifiche spente/.test(x.testo + x.stato) ? '' : JSON.stringify(x).slice(0, 120);
       await q.close();
     }

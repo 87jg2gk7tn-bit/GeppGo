@@ -81,7 +81,7 @@ const NUOVE = [
   const TASTO_CODICE = '#shareBody details button';
   const avviso = p => p.evaluate(() => {
     const m = document.getElementById('mConfirm');
-    const annulla = document.querySelector('#mConfirm .confirm-a .btn-soft');
+    const annulla = document.querySelector('#mConfirm .confirm-a .btn-secondario');
     return { aperto: m.classList.contains('active'), titolo: document.getElementById('cfTitle').textContent,
       testo: document.getElementById('cfMsg').textContent, tasto: document.getElementById('cfOk').textContent,
       annulla: annulla ? getComputedStyle(annulla).display : '' };

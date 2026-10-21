@@ -3,7 +3,7 @@
 ## Cos'è
 
 PWA per organizzare viaggi di gruppo, in un unico file HTML: **`Index 2.1.html`**
-(~19.700 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
+(~32.600 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
 framework, niente build step. Interfaccia scritta in italiano; l'app si traduce
 da sola in inglese, spagnolo, francese e portoghese seguendo la lingua del
 telefono (i dizionari stanno dentro l'HTML). Sviluppatore singolo che lavora da
@@ -199,8 +199,10 @@ quel file è la memoria.
   rimaste indietro. (La variabile `--green` si chiama così per storia: vale
   `#B8863C`, un ocra.)
 - **Temi**: chiaro color panna (`--paper:#F6EEDD`) come predefinito, «Tema
-  scuro» come dark mode. «Cielo» non è un tema: è la veste della home, con la
-  foto del cielo in cima. La barra di stato del telefono (`theme-color`)
+  scuro» come dark mode; si sceglie nel Profilo (dalla Layout 1 non c'è più un
+  tasto nella barra in alto). «Cielo» non è un tema: è la veste della home,
+  con la foto del cielo in cima, e la sua sfumatura sta solo lì: le altre
+  schermate hanno il fondo panna pulito. La barra di stato del telefono (`theme-color`)
   prende il colore della testata del tema scelto (`coloreBarra`); finché c'è
   la schermata d'apertura resta `#14110B`, come `background_color` e
   `theme_color` del manifest. Su iPhone `apple-mobile-web-app-status-bar-style`
@@ -229,6 +231,70 @@ quel file è la memoria.
   `t.fuso`, chiesto a Open-Meteo aprendo il foglio), e restano «fluttuanti»
   finché il fuso non si sa; le note non ci vanno. Senza account, o per un
   viaggio solo sul telefono, resta il file .ics (`exportICS`).
+
+## Stile
+
+Dalla Layout 1 (ottobre 2026) l'app ha un sistema di stile solo. Le regole
+valgono per ogni schermata nuova e per ogni schermata che si tocca.
+
+- **Evoluzione, non rivoluzione**: riconoscibile e con stile, mai generica o
+  da modello standard.
+- **Pagine pulite senza perdere funzioni**: all'apertura solo quello che
+  serve in quel momento, il resto a un tocco con voci scritte (vale la regola
+  «Nessuna funzione nascosta»).
+- **Una sola azione principale in oro per schermata.** L'oro pieno è solo
+  suo; terracotta e rosso solo per avvisi ed eliminazioni.
+- **Icone a linea per i comandi**, tutte dal blocco SVG unico (`ico()`); le
+  emoji restano solo come contenuto (le categorie delle spese, il meteo).
+- **Niente tasti fatti di sola icona**: icona più parola. Fa eccezione la
+  crocetta di chiusura, con l'etichetta per VoiceOver. Eccezioni dichiarate,
+  per ora: la barra in basso (le parole sotto le icone sono ancora da
+  decidere, vedi `DA-FARE.md`) e i controlli della mappa (+/− e posizione).
+- **Eliminare**: sempre testo rosso, in fondo e staccato dal resto.
+- **Le spiegazioni lunghe** diventano una riga più il link «Come funziona».
+- **Avvisi** compatti e chiudibili, mai più di uno in evidenza alla volta.
+- **La firma visiva**: il cielo della Home, Fraunces per il titolo della
+  schermata e per i numeri grandi, il sottotitolo in corsivo oro, le
+  etichette in maiuscolo spaziato, panna, inchiostro e oro.
+
+Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
+`body.dark`):
+- caratteri: solo `--fs-xs` 12, `--fs-s` 13, `--fs-m` 15, `--fs-l` 17,
+  `--fs-xl` 22 e `--fs-xxl` 32 px; l'unica eccezione è `--fs-cielo`, il nome
+  della città nel cielo della Home. Niente sotto i 12 px. I campi da riempire
+  stanno a 17, perché sotto i 16 iPhone ingrandisce da solo (le tendine no:
+  il tocco lo prende il foglio di scelta dell'app). Pesi 500, 600 e
+  700; 800 solo per i numeri grandi;
+- spazi: `--sp-1` … `--sp-6` (4, 8, 12, 16, 24, 32 px); 1 e 2 px solo per i
+  ritocchi fini. Raggi: `--r-ctl` (controlli), `--r-card` (schede e fogli),
+  `--r-pill` (pillole e tondi). Ombre: `--sh-1` (appoggiata) e `--sh-2`
+  (galleggiante);
+- colori solo dalle variabili; lo stato «scelto» è sempre l'inchiostro
+  (`--scelto` con la scritta `--su-scelto`), come nella barra in basso;
+- componenti: tasti `.btn` con `.btn-primario` (oro), `.btn-secondario`
+  (chiaro col bordo), `.btn-terziario` (solo testo) e `.btn-elimina` (testo
+  rosso), più `.btn-compatto` dove serve basso (36 a vederlo, 44 al tocco);
+  una scheda (`.card`), un controllo a schede (`.seg`), una pillola
+  (`.chip`, accesa con `.on`; le etichette che non si toccano hanno la sua
+  stessa forma), un selettore dei giorni (`caselleGiorni`, con `.giorni` e
+  `.giorno`), una riga di elenco (`.riga`: icona, `.riga-txt` col titolo e
+  la riga sotto, a destra un valore o la freccia `.riga-freccia`); i fogli con
+  titolo e crocetta in alto e l'azione principale fissa in fondo
+  (`.sheet-piede`); l'eliminazione in fondo, staccata (`.zona-elimina`). Una
+  famiglia vecchia (`.tt-az`, `.hh-rapido`, `.auth-link`…) resta per la
+  disposizione, ma il tasto porta anche la classe del suo tipo;
+- le icone: `ico('nome')` nel JavaScript, `<svg class="ico">…<use
+  href="#i-nome"/></svg>` nell'HTML; un'icona nuova va nel blocco
+  `<svg class="icone">` in cima al body, a linea, viewBox 24, senza fill;
+- la Time Table: «Annulla» compare solo dopo una modifica, per otto secondi;
+  «Scorri con un dito» una volta sola (`geppgo2_scorri_visto`), dentro la
+  Time Table;
+- in testa all'HTML c'è solo lo stile della schermata d'apertura: il resto
+  del foglio di stile sta nel body, subito dopo `#bootSplash`. Così la prima
+  schermata si disegna senza aspettare 170 KB di CSS (con la rete lenta da
+  1,4 s a mezzo secondo), e sotto la schermata d'apertura niente si vede
+  senza stile. Una regola nuova va nel foglio del body, mai in testa;
+- `test/prova-stile.js` controlla queste regole su tutte le schermate.
 
 ## Due regole che non si toccano
 

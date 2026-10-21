@@ -229,7 +229,7 @@ async function compilaTetti(p, campi) {
   await p.evaluate(() => apriTetti());
   await p.waitForSelector('#mTetti.active', { timeout: 4000 });
   for (const [id, v] of Object.entries(campi)) await p.fill('#' + id, String(v));
-  await p.click('#mTetti .btn-grad');
+  await p.click('#mTetti .btn-primario');
   await p.waitForTimeout(300);
 }
 
@@ -521,7 +521,7 @@ const SPIA_AVVISI = permesso => {
       pins.map(x => `${x.testo} ${x.titolo} ${x.colore}`).join(' | '));
     const linea = await page.evaluate(() => vmLinee.getLayers().filter(l => l instanceof L.Polyline).map(l => ({ c: l.options.color, n: l.getLatLngs().length })));
     ok('7. e la linea che le unisce, nel colore del giorno', linea.length === 1 && linea[0].c === colori[0] && linea[0].n === 3, JSON.stringify(linea));
-    const giorni = await page.evaluate(() => [...document.querySelectorAll('#vmGiorni .tchip')].map(b => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')));
+    const giorni = await page.evaluate(() => [...document.querySelectorAll('#vmGiorni .chip')].map(b => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')));
     ok('7. il filtro: «Tutti i giorni» e un tasto per giorno, quello scelto acceso', giorni.length === 6 && giorni[0].startsWith('Tutti i giorni') && giorni[1] === 'Giorno 1*', giorni.join(' · '));
     await page.evaluate(() => vmScegli(1));
     await page.waitForTimeout(500);

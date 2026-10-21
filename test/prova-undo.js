@@ -86,18 +86,20 @@ const err = [];
 
   check('stato di partenza 10:00–11:00', JSON.stringify(await leggi(1)) === '{"time":"10:00","timeEnd":"11:00"}');
 
-  // ── 0. la freccina si vede APPENA APERTA, prima di toccare niente ─────
+  // ── 0. «Annulla» non c'è finché non si sposta niente ─────────────────
+  /* Fino alla Layout 1 la freccina si vedeva sempre, spenta, e premuta da
+     spenta diceva «non c'è niente da annullare». Adesso un tasto che non può
+     fare niente non si mostra: compare dopo uno spostamento, per otto
+     secondi (lo guarda anche prova-stile, alla prova 7). */
   const v0 = await undoVisibile();
-  check('la freccina ↩ SI VEDE appena aperta la time-table', v0.siVede, `opacita ${v0.opacita}`);
-  check('ma parte spenta, non c\'e\' niente da annullare', !v0.on);
-  check('e lo dice', /niente da annullare/i.test(v0.title), v0.title);
+  check('appena aperta la time-table «Annulla» non c\'è', !v0.siVede && !v0.on, `si vede: ${v0.siVede}`);
+  check('e dice che non c\'è niente da annullare', /niente da annullare/i.test(v0.title), v0.title);
   check('e per VoiceOver è un tasto spento (aria-disabled)', v0.spenta);
-  /* premerla da spenta non deve rompere niente. force: da spenta è
-     aria-disabled (miglioria 11), e Playwright i tasti spenti non li tocca;
-     un dito sì, e la risposta è un messaggio */
-  await page.click('#ttUndo', { force: true });
+  /* chiamato lo stesso, da un'altra strada, non deve rompere niente: la
+     risposta è un messaggio */
+  await page.evaluate(() => undoDrag());
   await page.waitForTimeout(250);
-  check('premuta da spenta non cambia gli orari', JSON.stringify(await leggi(1)) === '{"time":"10:00","timeEnd":"11:00"}');
+  check('chiamato a vuoto non cambia gli orari', JSON.stringify(await leggi(1)) === '{"time":"10:00","timeEnd":"11:00"}');
   // il messaggio va aspettato, non fotografato al volo: appare e poi svanisce
   const avviso = await page.evaluate(async () => {
     for (let i = 0; i < 40; i++) {
@@ -116,7 +118,7 @@ const err = [];
   check('in Home la freccina non c\'e\'', !(await undoVisibile()).siVede);
   await page.evaluate(() => openDay(0));
   await page.waitForTimeout(400);
-  check('e tornando in time-table e\' di nuovo li\'', (await undoVisibile()).siVede);
+  check('e tornando in time-table, senza aver spostato niente, non c\'è ancora', !(await undoVisibile()).siVede);
 
   // ── 1. allungo tirando la maniglia ───────────────────────────────────
   const TT_H = await page.evaluate(() => TT_H);   // px per ora
@@ -140,7 +142,7 @@ const err = [];
   check('l\'ora d\'inizio non si e\' mossa', ripristino.time === '10:00', ripristino.time);
   const spento = await undoVisibile();
   check('il tasto ↩ si spegne dopo l\'uso', !spento.on);
-  check('ma resta al suo posto, non sparisce', spento.siVede);
+  check('e se ne va: non c\'è più niente da annullare', !spento.siVede);
   const salvato = await page.evaluate(() => JSON.parse(localStorage.getItem('geppgo2')).trips[0].days[0].activities[0].timeEnd);
   check('e il ripristino e\' anche salvato su disco', salvato === '11:00', salvato);
 

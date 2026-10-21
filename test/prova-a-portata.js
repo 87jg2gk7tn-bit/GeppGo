@@ -224,10 +224,10 @@ async function percorri(p, passi) {
      invisibile intorno, e conta se sopra c'è altro);
    - invisibili: testo dello stesso colore del fondo. */
 const SCHERMI = [
-  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#thTema', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
+  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
   { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca', '#homeHero .hh-rapido'] },
   { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
-  { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .status-pill', '#tripZoomBody .pill-ghost', '#tripZoomBody .btn'] },
+  { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .chip', '#tripZoomBody .btn'] },
   { nome: 'Time Table', prepara: 'giornata', sel: ['#mDay .tt-az', '#ttFab', '#ttUndo', '#dayMapWrap .mappa-tutto'], mezzi: true },
   { nome: 'Scopri', prepara: 'scopri', sel: ['#segSearch', '#segAI', '#segImp', '#sgRiga'] },
   { nome: 'Scopri › Assistente', prepara: 'assistente', sel: ['#aiMode .clip'] },
@@ -396,19 +396,23 @@ const MISURA = ([sels, mezzi]) => {
     const p = await apri(browser);
     const tasto = await p.evaluate(() => {
       const b = document.getElementById('menuViaggi');
-      return b ? b.innerText.replace(/\s+/g, ' ').trim() : '';
+      if (!b) return { testo: '', freccina: false };
+      /* Dalla Layout 1 la freccina è un'icona del blocco SVG (#i-giu), non
+         più il carattere «▾»: si guarda che ci sia e che si veda. */
+      const g = b.querySelector('use[href="#i-giu"]');
+      return { testo: b.innerText.replace(/\s+/g, ' ').trim(), freccina: !!g && g.closest('svg').getBoundingClientRect().width > 0 };
     });
-    ok('3. accanto alle righine c\'è il nome del viaggio con la freccina', /^Lisbona ▾$/.test(tasto), tasto);
+    ok('3. accanto alle righine c\'è il nome del viaggio con la freccina', tasto.testo === 'Lisbona' && tasto.freccina, tasto.testo + (tasto.freccina ? ' ▾' : ' (senza freccina)'));
     await p.locator('#menuViaggi').click();
     const aperto = await foglioAperto(p, 'mViaggi');
     const voci = await p.evaluate(() => {
       const m = document.getElementById('mViaggi');
       const vedo = re => [...m.querySelectorAll('button')].some(b => re.test(b.innerText) && b.getClientRects().length && b.getBoundingClientRect().bottom <= innerHeight);
-      return { aggiungi: vedo(/\+ Aggiungi viaggio/), excel: vedo(/Importa da Excel/), codice: vedo(/Ho un codice/),
+      return { aggiungi: vedo(/Aggiungi viaggio/), excel: vedo(/Importa da Excel/), codice: vedo(/Ho un codice/),
         viaggi: [...m.querySelectorAll('.vg-voce b')].map(b => b.textContent) };
     });
     ok('3. un tocco su «Lisbona ▾» apre l\'elenco dei viaggi', aperto && voci.viaggi.includes('Lisbona') && voci.viaggi.includes('Porto'), voci.viaggi.join(', '));
-    ok('3. … con «+ Aggiungi viaggio», «Importa da Excel» e «Ho un codice», a schermo', voci.aggiungi && voci.excel && voci.codice, JSON.stringify(voci));
+    ok('3. … con «Aggiungi viaggio», «Importa da Excel» e «Ho un codice», a schermo', voci.aggiungi && voci.excel && voci.codice, JSON.stringify(voci));
     await p.locator('#cassChiudi').click();
     const chiuso = await aspetta(p, () => !document.getElementById('mViaggi').classList.contains('active'));
     ok('3. ritoccando il nome il cassetto si richiude', chiuso);
@@ -494,10 +498,10 @@ const MISURA = ([sels, mezzi]) => {
       const riga = inizio => MAPPA_APP.split('\n').find(l => l.startsWith('- ' + inizio)) || '';
       const domande = [
         ['Come cambio viaggio?', /"Lisbona ▾"/], ['How do I switch trip?', /"Lisbona ▾"/], ['¿Dónde está el perfil?', /tondo con l'iniziale/],
-        ['Dove trovo il ricordo del viaggio?', /"📖 Il ricordo"/], ['Où est le souvenir du voyage ?', /"📖 Il ricordo"/],
-        ['Dove trovo Autopilota?', /"🪄 Autopilota"/], ['Onde está o piloto automático?', /"🪄 Autopilota"/],
-        ['Come si annulla uno spostamento?', /"↩ Annulla"/], ['Where are the restore points?', /"Punti di ripristino"/],
-        ['Dove si spengono i consigli?', /"Consigli nei dintorni"/], ['Dove allego un PDF in chat?', /"📎 PDF"/]
+        ['Dove trovo il ricordo del viaggio?', /"Il ricordo"/], ['Où est le souvenir du voyage ?', /"Il ricordo"/],
+        ['Dove trovo Autopilota?', /"Autopilota"/], ['Onde está o piloto automático?', /"Autopilota"/],
+        ['Come si annulla uno spostamento?', /"Annulla"/], ['Where are the restore points?', /"Punti di ripristino"/],
+        ['Dove si spengono i consigli?', /"Consigli nei dintorni"/], ['Dove allego un PDF in chat?', /"PDF"/]
       ];
       return {
         barra: riga('La barra in basso'), righine: riga('Le TRE RIGHINE'), home: riga('Home'), tt: riga('Time Table'), scopri: riga('Scopri'),
@@ -508,18 +512,18 @@ const MISURA = ([sels, mezzi]) => {
     });
     const casi = [
       ['in alto «Lisbona ▾», col cassetto (Aggiungi viaggio, Importa da Excel, Ho un codice), la pillola «GPS» e il Profilo a un tocco',
-        /"Lisbona ▾"/.test(m.righine) && /"\+ Aggiungi viaggio", "📊 Importa da Excel", "🔑 Ho un codice"/.test(m.righine) && /pillola "GPS"/.test(m.righine) && /tondo con l'iniziale, che apre il Profilo con un tocco/.test(m.righine)],
+        /"Lisbona ▾"/.test(m.righine) && /"Aggiungi viaggio", "Importa da Excel", "Ho un codice"/.test(m.righine) && /pillola "GPS"/.test(m.righine) && /tondo con l'iniziale, che apre il Profilo con un tocco/.test(m.righine)],
       ['la barra in basso senza scritte, il Profilo e il Meteo fuori dalla barra', /Sotto le icone non ci sono scritte/.test(m.barra) && /tondo con l'iniziale in alto a destra/.test(m.barra) && /"22° · Meteo ›"/.test(m.barra)],
       ['in Home «22° · Meteo ›», «✈️ Viaggio» nella fila, «+ Aggiungi» e «✦ Su misura» nei viaggi senza giorni',
-        /"22° · Meteo ›"/.test(m.home) && /"✈️ Viaggio" \(apre la scheda del viaggio/.test(m.home) && /"\+ Aggiungi"/.test(m.home) && /"✦ Su misura"/.test(m.home)],
+        /"22° · Meteo ›"/.test(m.home) && /"Viaggio" \(apre la scheda del viaggio/.test(m.home) && /"Aggiungi"/.test(m.home) && /"Su misura"/.test(m.home)],
       ['nella scheda del viaggio «📖 Il ricordo» anche in corso, «📄 Diario PDF», «📋 PDF dell\'itinerario» e il calendario (che si aggiorna, o «🗓️ Esporta nel calendario» senza account)',
-        /"📖 Il ricordo" \(anche a viaggio in corso\), "📄 Diario PDF", "📋 PDF dell'itinerario" e "🗓️ Calendario che si aggiorna" \(per i viaggi nel cloud; senza account al suo posto c'e' "🗓️ Esporta nel calendario"\)/.test(m.home) && /anche a viaggio in corso/.test(m.ricordo)],
+        /"Il ricordo" \(anche a viaggio in corso\), "Diario PDF", "PDF dell'itinerario" e "Calendario che si aggiorna" \(per i viaggi nel cloud; senza account al suo posto c'e' "Esporta nel calendario"\)/.test(m.home) && /anche a viaggio in corso/.test(m.ricordo)],
       ['in Time Table «✦ Ordina il giro» e «🪄 Autopilota» come tasti, «＋ Aggiungi», «↩ Annulla», il mezzo che risponde intorno',
-        /"✦ Ordina il giro"/.test(m.tt) && /"🪄 Autopilota"/.test(m.tt) && /"Costruisci la giornata" non c'e' piu'/.test(m.tt) && /"＋ Aggiungi"/.test(m.tt) && /"↩ Annulla"/.test(m.tt) && /risponde anche un po' intorno/.test(m.tt)],
+        /"Ordina il giro"/.test(m.tt) && /"Autopilota"/.test(m.tt) && /"Costruisci la giornata" non c'e' piu'/.test(m.tt) && /"Aggiungi"/.test(m.tt) && /"Annulla"/.test(m.tt) && /risponde anche un po' intorno/.test(m.tt)],
       ['in Scopri «📎 PDF» e l\'interruttore «Consigli nei dintorni»; Su misura anche in Home e in «Nuovo viaggio»; la prenotazione anche in Biglietti',
-        /"📎 PDF"/.test(m.scopri) && /"Consigli nei dintorni"/.test(m.scopri) && /foglio "Nuovo viaggio"/.test(m.scopri) && /"📩 Prenotazione dalla mail"/.test(m.scopri)],
+        /"PDF"/.test(m.scopri) && /"Consigli nei dintorni"/.test(m.scopri) && /foglio "Nuovo viaggio"/.test(m.scopri) && /"Prenotazione dalla mail"/.test(m.scopri)],
       ['in Spese «+ Spesa» e «✓ Pagato»; il Meteo da «22° · Meteo ›»; nel Profilo «Punti di ripristino»',
-        /"\+ Spesa"/.test(m.spese) && /"✓ Pagato"/.test(m.spese) && /"22° · Meteo ›"/.test(m.meteo) && /"Punti di ripristino"/.test(m.profilo) && /tondo con l'iniziale in alto a destra/.test(m.profilo)]
+        /"Spesa"/.test(m.spese) && /"Pagato"/.test(m.spese) && /"22° · Meteo ›"/.test(m.meteo) && /"Punti di ripristino"/.test(m.profilo) && /tondo con l'iniziale in alto a destra/.test(m.profilo)]
     ];
     casi.forEach(([n, c]) => ok('7. MAPPA_APP: ' + n, c));
     ok('7. i percorsi vecchi non ci sono più', !m.vecchie.length, m.vecchie.join(' '));

@@ -54,7 +54,8 @@ const stato = {
   const tasto = await page.evaluate(() => {
     renderProfile();
     const b = [...document.querySelectorAll('#profileCard button')].find(x => /Elimina il mio account/.test(x.textContent));
-    return b ? { c: true, rosso: /red/.test(b.getAttribute('style') || '') } : { c: false };
+    // dalla Layout 1 il rosso viene dalla classe dei tasti che eliminano, non da uno style
+    return b ? { c: true, rosso: b.classList.contains('btn-elimina') || /red/.test(b.getAttribute('style') || '') } : { c: false };
   });
   ok('c\'è il tasto per eliminare l\'account', tasto.c === true);
   ok('ed è segnato come cosa seria', tasto.rosso === true);

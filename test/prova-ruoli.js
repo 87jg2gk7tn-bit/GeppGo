@@ -160,8 +160,10 @@ const stato = {
     openDetail(102); const altrui = document.getElementById('detailBody').innerHTML;
     return { mio, altrui };
   });
-  ok('sul viaggio mio il tasto è il cestino', /🗑️<\/button>/.test(bt.mio));
-  ok('su quello altrui diventa "esci"', /🚪<\/button>/.test(bt.altrui) && /Esci dal viaggio/.test(bt.altrui));
+  /* Dalla Layout 1 il tasto e' scritto, rosso e in fondo: «Elimina viaggio»
+     col cestino, o «Esci dal viaggio» con la porta. */
+  ok('sul viaggio mio il tasto è «Elimina viaggio», col cestino', /#i-cestino"(\/>|><\/use>)<\/svg>Elimina viaggio<\/button>/.test(bt.mio) && !/Esci dal viaggio/.test(bt.mio));
+  ok('su quello altrui diventa "esci"', /#i-esci"(\/>|><\/use>)<\/svg>Esci dal viaggio<\/button>/.test(bt.altrui) && !/Elimina viaggio/.test(bt.altrui));
 
   // ── il piano gratuito: si conclude, non si elimina ────────────────────────
   const gr = await page.evaluate(async () => {

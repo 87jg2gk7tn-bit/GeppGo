@@ -102,14 +102,20 @@ const prova = async (nome, fn) => {
 };
 /* I tratti a schermo, per tappa d'arrivo: il testo della striscia (o della
    riga dell'orario, quando le tappe sono attaccate). */
-const tratti = p => p.evaluate(() => {
+/* Dalla Layout 1 il mezzo nella striscia è un'icona a linea (modeIco), non
+   più l'emoji: dall'icona si torna all'emoji, così i controlli qui sotto
+   restano quelli di sempre («🚶 25 min · 2,1 km»). */
+const EMOJI_DEL_MEZZO = { piedi: '🚶', bici: '🚲', auto: '🚗', treno: '🚆', metro: '🚇', bus: '🚌' };
+const tratti = p => p.evaluate(EMO => {
   const out = {};
   document.querySelectorAll('#ttBody .tt-travel-shown').forEach(el => {
     const m = el.querySelector('.tt-travel-mezzo'), q = el.querySelector('.tt-travel-quanto');
-    out[(m ? m.textContent.replace('▾', '').trim() : '') + ' ' + (q ? q.textContent.trim() : el.textContent.trim())] = true;
+    const u = m && [...m.querySelectorAll('use')].map(x => (x.getAttribute('href') || '').replace('#i-', '')).find(n => EMO[n]);
+    const mezzo = u ? EMO[u] : (m ? m.textContent.replace('▾', '').trim() : '');
+    out[mezzo + ' ' + (q ? q.textContent.trim() : el.textContent.trim())] = true;
   });
   return Object.keys(out);
-});
+}, EMOJI_DEL_MEZZO);
 const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
 
 (async () => {

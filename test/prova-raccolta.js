@@ -96,7 +96,10 @@ const stato = {
   const tasto = await page.evaluate(() => {
     const c = () => {
       openTripZoom(T().id);
-      const v = !!document.querySelector('#mTripZoom .pill-forte');
+      /* Dalla Layout 1 è una pillola come le altre della scheda (il
+         terracotta resta per avvisi ed eliminazioni): si cerca per quello che
+         fa, non per il colore. */
+      const v = !!document.querySelector('#mTripZoom button[onclick*="apriRaccolta"]');
       closeSheet('mTripZoom');
       return v;
     };
@@ -114,7 +117,7 @@ const stato = {
     t.cid = cid;
     fatti.tornato = c();
     openTripZoom(t.id);
-    fatti.testo = (document.querySelector('#mTripZoom .pill-forte') || {}).textContent || '';
+    fatti.testo = (document.querySelector('#mTripZoom button[onclick*="apriRaccolta"]') || {}).textContent || '';
     closeSheet('mTripZoom');
     return fatti;
   });

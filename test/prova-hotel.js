@@ -85,12 +85,14 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
   // ══ e adesso lo dice, invece di lasciartelo contare ══════════════════
   const visto = await page.evaluate(() => {
     const cop = document.getElementById('hotelNotti');
-    const celle = [...document.querySelectorAll('#hotelNotti .ht-n')];
+    /* Dalla Layout 1 le notti sono il selettore dei giorni di tutta l'app
+       (.giorno), e quella senza letto è segnata con .manca. */
+    const celle = [...document.querySelectorAll('#hotelNotti .giorno')];
     return {
       cè: !!(cop && cop.innerHTML.trim()),
       quante: celle.length,
-      piene: celle.filter(x => x.classList.contains('ok')).length,
-      vuote: celle.filter(x => !x.classList.contains('ok')).length,
+      piene: celle.filter(x => !x.classList.contains('manca')).length,
+      vuote: celle.filter(x => x.classList.contains('manca')).length,
       testo: (cop ? cop.innerText : '').replace(/\s+/g, ' ').trim(),
       /* Non basta dire che manca: da qui si deve poter rimediare. */
       tasto: !!document.querySelector('#hotelNotti button')
@@ -162,7 +164,7 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
      /Cerca un hotel/i.test(vuoto.tasto || '')
        && await page.evaluate(() => {
          const b = document.querySelector('#hotelNotti button');
-         return !!b && b.classList.contains('btn-grad');
+         return !!b && b.classList.contains('btn-primario');
        }),
      vuoto.tasto);
   await page.close();
@@ -201,17 +203,25 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
   await page.close();
 
   // ══ i due tondini senza nome ═════════════════════════════════════════
+  /* Erano ✎ e 🗑, due tondi senza parola. Dalla Layout 1 nella scheda c'è
+     «Modifica», con la parola, ed «Elimina alloggio» sta in fondo al foglio
+     dell'albergo, rosso e staccato dal resto. */
   page = await apri(stato([JOSEF]));
-  const tondini = await page.evaluate(() => {
+  const tondini = await page.evaluate(async () => {
     const b = [...document.querySelectorAll('#hotelList .card-head button')];
+    const mod = b.find(x => /Modifica/.test(x.textContent));
+    if (mod) mod.click();
+    await new Promise(x => setTimeout(x, 350));
+    const del = document.getElementById('haDel');
     return { quanti: b.length,
-             conNome: b.filter(x => (x.getAttribute('aria-label') || '').trim().length > 2).length,
-             stessaMisura: b.length === 2 &&
-               Math.abs(b[0].getBoundingClientRect().width - b[1].getBoundingClientRect().width) < 1.5 };
+             conParola: b.filter(x => /\p{L}{3,}/u.test(x.textContent)).length,
+             elimina: !!del && getComputedStyle(del).display !== 'none' && !!del.querySelector('.btn-elimina')
+               // dopo c'è solo il piede fisso con «Salva»
+               && (!del.nextElementSibling || del.nextElementSibling.classList.contains('sheet-piede')) };
   });
-  ok('i due tondini della scheda hanno un nome, per chi non vede le icone',
-     tondini.conNome === 2, tondini.conNome + ' su ' + tondini.quanti);
-  ok('e sono della stessa misura', tondini.stessaMisura === true);
+  ok('i tasti della scheda dicono cosa fanno, con la parola («Modifica»)',
+     tondini.quanti >= 1 && tondini.conParola === tondini.quanti, tondini.conParola + ' su ' + tondini.quanti);
+  ok('ed «Elimina alloggio» sta in fondo al foglio dell\'albergo', tondini.elimina === true);
   await page.close();
 
   // ══ e la mappa che l'assistente legge dice la stessa cosa ════════════
