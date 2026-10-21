@@ -21,9 +21,11 @@ const { apriBrowser, APP } = require('./browser');
    esaustivo: è l'elenco delle cose che si usano in mezzo alla strada. */
 /* Dalla Layout 1 i tondini di sola icona (ibtn, edit-ic) non ci sono più:
    al loro posto le pillole (chip) e i tasti bassi con la parola
-   (btn-compatto), che hanno la stessa area invisibile da controllare. */
+   (btn-compatto), che hanno la stessa area invisibile da controllare. Dalla
+   Layout 1b nella barra in alto c'e' di nuovo il tondo del tema (th-btn),
+   fra il GPS e il Profilo. */
 const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'giorno', 'hh-add', 'hh-grado',
-  'tt-az', 'tb-profilo', 'hh-rapido',
+  'tt-az', 'tb-profilo', 'th-btn', 'hh-rapido',
                 'chip', 'btn-compatto', 'seg-btn', 'gps-pill', 'ad-x'];
 
 const stato = { trips: [

@@ -1301,7 +1301,8 @@ prima schermata, ed è così che si fa la controprova. Le dieci domande:
 5. **I fogli**: in sedici fogli l'azione principale sta in fondo e si vede
    senza scorrere, a 320×568 e a 390×844.
 6. **Il cielo solo in Home** (le altre schermate hanno il fondo panna
-   pulito), e nella barra in alto niente tasto del tema: sta nel Profilo.
+   pulito), e nella barra in alto un tasto del tema solo (dalla Layout 1b;
+   nella Layout 1 non c'era), con «Tema scuro» anche nel Profilo.
 7. **La Time Table**: «Scorri con un dito» la prima volta, dentro la Time
    Table sotto i giorni, senza coprire i titoli; chiusa la Time Table non
    resta; riaprendo l'app non torna. «Annulla» non c'è finché non si sposta
@@ -1334,3 +1335,48 @@ sfumatura del cielo in sette schermate e il tasto del tema in alto;
 «Scorri con un dito» che non compare e «Annulla» sempre lì; 163,6 KB di
 stile in testa e la prima schermata a 1400 ms; l'.ics senza il foglio
 Condividi.
+
+## Il carattere (Layout 1b)
+
+```sh
+node test/prova-carattere.js        # le 7 prove (la 7 da sola fa metà del tempo)
+node test/prova-carattere.js 2 6    # solo le prove 2 e 6
+APP_URL=file:///percorso/di/un-altra-copia.html node test/prova-carattere.js
+```
+
+Le domande, una per prova:
+
+1. **Il tema in alto**: il tondo luna/sole sta nella barra in alto, fra il
+   GPS e il Profilo, e si tocca su 44×44; toccato, passa al tema scuro e se
+   lo ricorda, e diventa il sole; ritoccato torna; «Tema scuro» c'è ancora
+   nel Profilo, e accendendolo lì anche il tondo cambia; c'è anche senza un
+   viaggio, col nome nelle cinque lingue.
+2. **Dove si apre il Programma**: viaggio passato e futuro alle 21:40, dopo
+   una Home scorsa fino in fondo: in cima, con la testata e la prima tappa a
+   vista; «Mostra le ore prima» rimette le 06:00; oggi alle 14:30 sulla
+   prossima tappa e alle 10:30 su quella in corso, appena sotto la testata
+   ferma in alto; oggi a giornata finita in cima; un altro giorno scelto (con
+   l'avviso della pioggia sopra) il più in alto possibile, con la prima
+   tappa intera; col fuso di Roma «oggi» è oggi (all'1:30 il giorno nuovo,
+   alle 10:30 la riga di adesso sul giorno giusto).
+3. **Lo scelto d'oro**: il giorno scelto in Home e nel Programma è d'oro
+   con la scritta d'inchiostro; nei controlli a schede (Spese, Budget,
+   Saldi) la scheda scelta è bianca con la scritta oro; contrasti a norma;
+   la barra in basso resta d'inchiostro. Nei due temi.
+4. **Beige e oro**: ogni tasto secondario visibile in nove schermate è
+   beige col bordo leggero, con la scritta a norma (sul cielo scuro della
+   Home i tasti di vetro non contano); le schede del totale e del Budget
+   sono d'oro, e ogni scritta che ci sta dentro arriva a 4,5:1 (3:1 le
+   grandi) sul suo fondo vero. Nei due temi.
+5. **Le icone a due toni**: ogni icona dentro un comando, in nove
+   schermate e due temi, ha il suo tratto d'oro (tranne i segni puri e
+   quelle d'avviso o d'eliminazione, e dove il fondo è già d'oro); anche la
+   barra in basso; nessuna emoji nei comandi; e l'icona di «Naviga la
+   giornata», fotografata, ha davvero pixel d'oro e d'inchiostro.
+6. **Il respiro**: 24–32 px fra le sezioni di Home, Programma, Spese e
+   Budget, 0–12 fra le cose dello stesso gruppo, misurati dal vero.
+7. **Accessibilità e misure**: axe e contrasti sulle dieci schermate
+   toccate nei due temi; niente fuori dallo schermo, tagliato o sovrapposto
+   da 320 a 430 px in cinque lingue e due temi, barra in alto compresa; lo
+   stile in testa sotto i 4 KB.
+
