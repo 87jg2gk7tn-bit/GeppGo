@@ -338,10 +338,14 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
       /* La time-table si apre sull'ora di adesso: a meta' giornata la tappa
          delle 10 sta sopra la vista, e un dito non la puo' prendere. La
          prova passava la mattina e cadeva il pomeriggio. Si porta in vista
-         prima, come farebbe chi la vuole spostare. */
+         prima, come farebbe chi la vuole spostare: al centro, perche' dalla
+         Layout 1b la testata del giorno resta ferma in alto e copre le tappe
+         che le scorrono sotto. «Se serve» non bastava: per il browser una
+         tappa sotto la testata e' gia' a vista, e il dito prendeva la testata
+         (su GitHub, a mezzogiorno, la tappa delle 10 non si spostava). */
       const blocco = p.locator(`#ttBody .tt-block[data-id="${id}"]`);
-      await blocco.scrollIntoViewIfNeeded();
-      await p.waitForTimeout(200);
+      await blocco.evaluate(el => el.scrollIntoView({ block: 'center' }));
+      await p.waitForTimeout(250);
       const b = await blocco.boundingBox();
       const x = b.x + b.width / 2, y = b.y + 12;
       await p.mouse.move(x, y);

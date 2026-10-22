@@ -1352,6 +1352,13 @@ le controlla (7 prove).
   giorni della settimana fanno cadere un sabato o un lunedì nella fila. Una
   prova verde un giorno può essere rossa un altro: quando una misura dipende
   dal nome del giorno, va guardata coi sette.
+- **La testata ferma copre le tappe che le scorrono sotto**, e le prove che
+  trascinano una tappa la devono portare al centro (`prova-undo`,
+  `prova-tempi`): `scrollIntoViewIfNeeded` non basta, perché per il browser
+  una tappa sotto la testata è già a vista, e il dito prende la testata.
+  `prova-tempi` cadeva solo a mezzogiorno, quando il viaggio di prova è di
+  oggi e la Time Table si apre sulla tappa delle 12, con quella delle 10
+  sotto la testata.
 - **Le prove su GitHub avevano un tetto di 55 minuti** e la batteria ormai
   ne chiede circa 60 (la Layout 1 era già a 52, la 1b ha aggiunto
   `prova-carattere`): le esecuzioni venivano fermate a cinque prove dalla
