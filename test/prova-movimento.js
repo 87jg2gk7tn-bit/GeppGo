@@ -9,7 +9,8 @@
  * Leggendo il codice non si vedeva. Misurandolo sì. Per questo qui non si
  * controlla che *esista* un'animazione: si guarda dove sta il foglio,
  * fotogramma per fotogramma, e si pretende che si muova davvero. */
-const { apriBrowser, APP } = require('./browser');
+const { apriBrowser, APP, leafletJs, leafletCss } = require('./browser');
+const fs = require('fs');
 
 const stato = {
   trips: [{ id: 1, name: 'Giappone', destination: 'Tokyo', currency: 'JPY', status: 'open',
@@ -190,6 +191,15 @@ const SEGUI = `(async (id, quanti) => {
      allo schermo e alla barra in basso, non se esiste una riga di codice. */
   const conTappe = await browser.newPage({ viewport: { width: 390, height: 844 } });
   conTappe.on('pageerror', e => err.push('PAGEERROR(giornata): ' + e.message));
+  /* Leaflet dal pacchetto, come sul server delle prove, dove arriva dalla
+     CDN. Senza, qui la mappa del giorno non c'era e al suo posto stava la
+     riga «Tutto il viaggio», 86 px piu' bassa: la prova guardava un'altra
+     schermata, e su GitHub, con la mappa, la tappa finiva a filo della barra. */
+  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({
+    status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
+  await conTappe.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await conTappe.addInitScript(s => {
     const st = JSON.parse(JSON.stringify(s));
     st.trips[0].days[0].activities = [
@@ -229,8 +239,15 @@ const SEGUI = `(async (id, quanti) => {
      che è una linea del tempo e non un elenco. */
   ok('e con un po\' di griglia sopra, per capire che è una linea del tempo',
      giornata.sopra >= 16, `${giornata.sopra}px di griglia sopra`);
-  ok('la pagina resta in cima, con la testata del giorno a vista',
-     giornata.scorso === 0 && giornata.testata !== null && giornata.testata >= 0 &&
+  /* In cima. Se la barra taglierebbe la prima tappa (un telefono basso, un
+     carattere con altre misure) la pagina scende, ma solo quanto basta: la
+     tappa finisce allora poco sopra la barra. Scendere di piu' e' un errore,
+     anche di pochi pixel: su GitHub la giornata scendeva di 8 px perche'
+     misurava la pagina mentre entrava salendo, e la tappa ci stava gia'. */
+  const quantoBasta = giornata.scorso > 0 && giornata.fondo <= giornata.barra &&
+    giornata.fondo >= giornata.barra - 12;
+  ok('la pagina resta in cima (o scende solo quanto basta), con la testata del giorno a vista',
+     (giornata.scorso === 0 || quantoBasta) && giornata.testata !== null && giornata.testata >= 0 &&
        giornata.testataFondo <= giornata.cima,
      `scorsa di ${giornata.scorso}px, ` + (giornata.testata === null ? 'testata mancante'
        : `testata da ${giornata.testata} a ${giornata.testataFondo}px`));

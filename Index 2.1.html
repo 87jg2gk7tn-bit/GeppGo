@@ -25570,12 +25570,18 @@ function openDay(i){
      poco prima della prima tappa (ttInizio), quindi la prima tappa si vede
      gia' da li'. Su un telefono basso, dove la testata da sola riempie lo
      schermo, si scende solo quanto basta a vederla intera.
-   Mai in fondo alla pagina. */
+   Mai in fondo alla pagina.
+   Le misure si prendono mentre la pagina entra salendo di dieci pixel
+   (l'animazione fade di .page): senza togliere quel tratto, la tappa
+   sembrava piu' in basso di dove si ferma, e la giornata scendeva per
+   niente. */
 function ttApriDoveServe(d){
   requestAnimationFrame(()=>{
     const scorre=document.querySelector('.scroll'),corpo=document.getElementById('ttBody');
     if(!scorre||!corpo)return;
     scorre.scrollTop=0;
+    let entra=0;
+    try{const tr=getComputedStyle(document.getElementById('mDay')).transform;if(tr&&tr!=='none')entra=new DOMMatrixReadOnly(tr).m42||0;}catch(e){}
     /* in orizzontale, coi giorni affiancati, conta la colonna del giorno scelto */
     const zona=corpo.querySelector('.tt-col-active')||corpo;
     const riquadri=[...zona.querySelectorAll('.ttgrid > .tt-block[data-id]')];
@@ -25594,16 +25600,17 @@ function ttApriDoveServe(d){
     if(mira){
       const testa=document.getElementById('ttTestata');
       const sotto=testa?testa.getBoundingClientRect().height:0;
-      vai(mira.getBoundingClientRect().top-alto-sotto-TT_H/2);
+      vai(mira.getBoundingClientRect().top-entra-alto-sotto-TT_H/2);
       return;
     }
-    /* In cima. Se la prima tappa non sta tutta a schermo sopra la barra in
-       basso, si scende di quel tanto e non di piu'. «Aggiungi», che galleggia
-       a destra, non conta: copre un angolo, il nome e l'orario restano. */
-    const prima=riquadri[0].getBoundingClientRect();
+    /* In cima. Se la barra in basso taglia la prima tappa, si scende di quel
+       tanto, piu' otto pixel d'aria, e non di piu'; se ci sta intera, anche a
+       filo della barra, si resta in cima. «Aggiungi», che galleggia a
+       destra, non conta: copre un angolo, il nome e l'orario restano. */
+    const fondo=riquadri[0].getBoundingClientRect().bottom-entra;
     const barra=document.querySelector('.nav'),rb=barra&&barra.getBoundingClientRect();
-    const fine=Math.min(scorre.getBoundingClientRect().bottom,rb&&rb.height?rb.top:innerHeight)-8;
-    if(prima.bottom>fine)vai(prima.bottom-fine);
+    const fine=Math.min(scorre.getBoundingClientRect().bottom,rb&&rb.height?rb.top:innerHeight);
+    if(fondo>fine+1)vai(fondo-fine+8);
   });
 }
 /* Le ore prima della prima tappa, per chi vuole spostarne una piu' presto:
@@ -31069,7 +31076,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 23:53';
+const VERSIONE_APP='2026-10-22 13:06';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

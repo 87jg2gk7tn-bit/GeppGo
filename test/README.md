@@ -244,11 +244,15 @@ togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
 
 In fondo guarda **dove si apre la giornata**: la prima tappa intera sopra la
 barra in basso, con un po' di griglia sopra, e la pagina in cima con la
-testata del giorno a vista. Fino alla Layout 1 la griglia partiva dalle
-06:00 e la pagina scorreva fin sopra la prima tappa, facendo sparire la
-testata; dalla Layout 1b è la griglia a partire dall'ora piena prima della
-prima tappa. Sul codice della Layout 1 cade il terzo controllo, per il motivo
-giusto: pagina scorsa di 475 px, testata mancante.
+testata del giorno a vista (o scesa solo quanto basta, se la barra taglierebbe
+la tappa). Fino alla Layout 1 la griglia partiva dalle 06:00 e la pagina
+scorreva fin sopra la prima tappa, facendo sparire la testata; dalla Layout
+1b è la griglia a partire dall'ora piena prima della prima tappa. Leaflet si
+serve dal pacchetto, come sul server delle prove: senza, la mappa del giorno
+non c'era e la prova guardava un'altra schermata. Sul codice della Layout 1
+cade il terzo controllo, per il motivo giusto: pagina scorsa di 475 px,
+testata mancante. Sul primo codice della 1b cade anche lui: la giornata
+scendeva di 8 px perché misurava la pagina mentre entrava salendo.
 
 ## Quanto è grande quello che si tocca
 

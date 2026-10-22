@@ -1332,6 +1332,24 @@ le controlla (7 prove).
   vivono dentro la mappa, e lei deve stare sopra le tessere), quindi non
   basta uno z-index: finché una scheda è aperta la pillola si fa da parte
   (`con-scheda`, in `buildDayMap`). L'ha trovato `prova-pdf-calendario`.
+- **Ogni pagina entra salendo di 10 px** (`.page{animation:fade}`), e chi
+  misura appena aperta una pagina misura a metà salita. `ttApriDoveServe`
+  vedeva la prima tappa 10 px più in basso di dove si ferma: su GitHub,
+  dove Leaflet arriva e la mappa del giorno c'è, la tappa sembrava a filo
+  della barra e la giornata scendeva di 8 px per niente. Qui non si vedeva
+  perché `prova-movimento` non serviva Leaflet: al posto della mappa c'era
+  la riga «Tutto il viaggio», 86 px più bassa. Adesso il conto toglie lo
+  spostamento dell'animazione, si scende solo se la barra taglia davvero la
+  prima tappa, e la prova serve Leaflet come le altre. Vale per qualunque
+  conto fatto all'apertura di una pagina: si toglie l'entrata, o si aspetta
+  che finisca.
+- **Le prove su GitHub avevano un tetto di 55 minuti** e la batteria ormai
+  ne chiede circa 60 (la Layout 1 era già a 52, la 1b ha aggiunto
+  `prova-carattere`): le esecuzioni venivano fermate a cinque prove dalla
+  fine, tutte verdi fin lì, e risultavano «cancellate», né verdi né rosse.
+  Il tetto ora è 80 (`.github/workflows/prove.yml`). Se la batteria continua
+  a crescere, la strada è dividerla in due macchine, non alzare il tetto
+  all'infinito.
 
 **Da decidere, o da guardare**
 - Sul cielo scuro della Home (di notte, o nel tema scuro) i tasti restano di

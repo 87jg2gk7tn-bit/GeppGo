@@ -317,8 +317,11 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
   corso, se oggi è un giorno del viaggio; in ogni altro caso in cima, con la
   prima tappa già a schermo: la griglia parte dall'ora piena prima della
   prima tappa (`ttInizio`, i conti passano tutti da `ttDa`), e «Mostra le ore
-  prima» rimette le 06:00. Mai in fondo alla pagina; cambiando pagina si
-  riparte dalla cima;
+  prima» rimette le 06:00. Si scende solo se la barra in basso taglia la
+  prima tappa, e solo quanto basta. Mai in fondo alla pagina; cambiando
+  pagina si riparte dalla cima. Ogni pagina entra salendo di 10 px
+  (`.page`, animazione `fade`): un conto fatto all'apertura toglie quello
+  spostamento, o aspetta che finisca;
 - in testa all'HTML c'è solo lo stile della schermata d'apertura: il resto
   del foglio di stile sta nel body, subito dopo `#bootSplash`. Così la prima
   schermata si disegna senza aspettare 170 KB di CSS (con la rete lenta da
