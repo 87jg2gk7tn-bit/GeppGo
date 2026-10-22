@@ -223,7 +223,7 @@ rossa a caso»).
 ## Come si muove l'app
 
 ```sh
-node test/prova-movimento.js   # 16 controlli su animazioni e movimento ridotto
+node test/prova-movimento.js   # 19 controlli su animazioni, movimento ridotto e apertura della giornata
 ```
 
 Questa prova nasce da una scoperta scomoda: **la salita dei fogli era scritta
@@ -241,6 +241,18 @@ Controlla anche che, mentre scende, il foglio **non si mangi i tocchi** — rest
 grande quanto lo schermo per un terzo di secondo — e che con «riduci il
 movimento» acceso le animazioni diventino **istantanee e non sparite**:
 togliendole del tutto, le cose resterebbero dove si trovavano a metà strada.
+
+In fondo guarda **dove si apre la giornata**: la prima tappa intera sopra la
+barra in basso, con un po' di griglia sopra, e la pagina in cima con la
+testata del giorno a vista (o scesa solo quanto basta, se la barra taglierebbe
+la tappa). Fino alla Layout 1 la griglia partiva dalle 06:00 e la pagina
+scorreva fin sopra la prima tappa, facendo sparire la testata; dalla Layout
+1b è la griglia a partire dall'ora piena prima della prima tappa. Leaflet si
+serve dal pacchetto, come sul server delle prove: senza, la mappa del giorno
+non c'era e la prova guardava un'altra schermata. Sul codice della Layout 1
+cade il terzo controllo, per il motivo giusto: pagina scorsa di 475 px,
+testata mancante. Sul primo codice della 1b cade anche lui: la giornata
+scendeva di 8 px perché misurava la pagina mentre entrava salendo.
 
 ## Quanto è grande quello che si tocca
 
@@ -1301,7 +1313,8 @@ prima schermata, ed è così che si fa la controprova. Le dieci domande:
 5. **I fogli**: in sedici fogli l'azione principale sta in fondo e si vede
    senza scorrere, a 320×568 e a 390×844.
 6. **Il cielo solo in Home** (le altre schermate hanno il fondo panna
-   pulito), e nella barra in alto niente tasto del tema: sta nel Profilo.
+   pulito), e nella barra in alto un tasto del tema solo (dalla Layout 1b;
+   nella Layout 1 non c'era), con «Tema scuro» anche nel Profilo.
 7. **La Time Table**: «Scorri con un dito» la prima volta, dentro la Time
    Table sotto i giorni, senza coprire i titoli; chiusa la Time Table non
    resta; riaprendo l'app non torna. «Annulla» non c'è finché non si sposta
@@ -1334,3 +1347,62 @@ sfumatura del cielo in sette schermate e il tasto del tema in alto;
 «Scorri con un dito» che non compare e «Annulla» sempre lì; 163,6 KB di
 stile in testa e la prima schermata a 1400 ms; l'.ics senza il foglio
 Condividi.
+
+## Il carattere (Layout 1b)
+
+```sh
+node test/prova-carattere.js        # le 7 prove (la 7 da sola fa metà del tempo)
+node test/prova-carattere.js 2 6    # solo le prove 2 e 6
+APP_URL=file:///percorso/di/un-altra-copia.html node test/prova-carattere.js
+```
+
+Le domande, una per prova:
+
+1. **Il tema in alto**: il tondo luna/sole sta nella barra in alto, fra il
+   GPS e il Profilo, e si tocca su 44×44; toccato, passa al tema scuro e se
+   lo ricorda, e diventa il sole; ritoccato torna; «Tema scuro» c'è ancora
+   nel Profilo, e accendendolo lì anche il tondo cambia; c'è anche senza un
+   viaggio, col nome nelle cinque lingue.
+2. **Dove si apre il Programma**: viaggio passato e futuro alle 21:40, dopo
+   una Home scorsa fino in fondo: in cima, con la testata e la prima tappa a
+   vista; «Mostra le ore prima» rimette le 06:00; oggi alle 14:30 sulla
+   prossima tappa e alle 10:30 su quella in corso, appena sotto la testata
+   ferma in alto; oggi a giornata finita in cima; un altro giorno scelto (con
+   l'avviso della pioggia sopra) il più in alto possibile, con la prima
+   tappa intera; col fuso di Roma «oggi» è oggi (all'1:30 il giorno nuovo,
+   alle 10:30 la riga di adesso sul giorno giusto).
+3. **Lo scelto d'oro**: il giorno scelto in Home e nel Programma è d'oro
+   con la scritta d'inchiostro; nei controlli a schede (Spese, Budget,
+   Saldi) la scheda scelta è bianca con la scritta oro; contrasti a norma;
+   la barra in basso resta d'inchiostro. Nei due temi.
+4. **Beige e oro**: ogni tasto secondario visibile in nove schermate è
+   beige col bordo leggero, con la scritta a norma (sul cielo scuro della
+   Home i tasti di vetro non contano); le schede del totale e del Budget
+   sono d'oro, e ogni scritta che ci sta dentro arriva a 4,5:1 (3:1 le
+   grandi) sul suo fondo vero. Nei due temi.
+5. **Le icone a due toni**: ogni icona dentro un comando, in nove
+   schermate e due temi, ha il suo tratto d'oro (tranne i segni puri e
+   quelle d'avviso o d'eliminazione, e dove il fondo è già d'oro); anche la
+   barra in basso; nessuna emoji nei comandi; e l'icona di «Naviga la
+   giornata», fotografata, ha davvero pixel d'oro e d'inchiostro.
+6. **Il respiro**: 24–32 px fra le sezioni di Home, Programma, Spese e
+   Budget, 0–12 fra le cose dello stesso gruppo, misurati dal vero.
+7. **Accessibilità e misure**: axe e contrasti sulle dieci schermate
+   toccate nei due temi; niente fuori dallo schermo, tagliato o sovrapposto
+   da 320 a 430 px in cinque lingue e due temi, barra in alto compresa; lo
+   stile in testa sotto i 4 KB.
+
+Sul codice di prima (`main` 37f0583, la Layout 1) le prove da 1 a 6 passano
+3 controlli su 20, quelli che devono passare: la barra in basso
+d'inchiostro, nessuna emoji nei comandi (lo era già dalla Layout 1) e
+nessun errore in pagina. Gli altri cadono per il motivo giusto: il tondo
+del tema non c'è; il Programma si apre scorso di 695 px su 1187 senza
+testata, e col fuso di Roma all'1:30 apre il giorno vecchio e alle 10:30
+non mette la riga di adesso; il giorno scelto e la scheda scelta sono
+d'inchiostro; i secondari bianchi e le schede del totale e del Budget
+bianche; nessuna icona ha il tratto d'oro (0 pixel d'oro nella foto); fra
+«Fra poco» e i giorni 16 px, fra la valigia e «Fra poco» 12. La 7 sul
+codice di prima non è stata rifatta: misura quello che la Layout 1 già
+garantiva (è la prova 8 di `prova-stile`, verde su `main`) e lo stile in
+testa, che era già 3,6 KB.
+

@@ -1263,6 +1263,118 @@ foglio di stile e negli `style=""`; prima è `main` ae98355):
   nel `<body>` (Safari decide da sé quando disegnare) e il foglio Condividi
   dell'.ics dall'app sulla Home.
 
+### Layout 1b, carattere e correzioni: a che punto è
+
+21 ottobre 2026. La Layout 1 aveva lasciato l'app tutta bianca e
+inchiostro, ammassata e di un colore solo. La 1b tiene le variabili, i
+componenti e la velocità (lo stile in testa resta 3,6 KB), e ridà calore.
+Le regole stanno in `CLAUDE.md` («Temi» e «Stile»); `test/prova-carattere.js`
+le controlla (7 prove).
+
+**Cosa è cambiato**
+- Il tondo del tema (luna/sole) è tornato nella barra in alto, fra il GPS e
+  il Profilo (`cambiaTema`); c'è ancora «Tema scuro» nel Profilo, e i due
+  vanno d'accordo. Col tondo in più, sotto i 360 px la pillola del viaggio
+  e quella del GPS si stringono di qualche pixel: così a 320 px un nome
+  corto come «Lisbona» ci sta ancora intero (`prova-a-portata` lo
+  pretende), mentre uno più lungo («Giappone», «Parigi 26») si accorcia coi
+  puntini, come prima della Layout 1; da 375 ci stanno.
+- Il Programma (la Time Table):
+  - non si apre mai in fondo. Cambiando pagina si riparte dalla cima (le
+    pagine scorrono tutte nello stesso contenitore, e una pagina si apriva
+    all'altezza a cui si era lasciata l'altra: dopo una Home lunga, la
+    Time Table o le Spese comparivano in fondo);
+  - la testata del giorno (la data, in corsivo oro, e i giorni) resta ferma
+    in alto mentre la giornata scorre;
+  - oggi, se è un giorno del viaggio, si apre sulla tappa in corso o sulla
+    prossima, appena sotto la testata; in ogni altro caso in cima;
+  - perché in cima la prima tappa si veda, la griglia non disegna più le ore
+    vuote prima della prima tappa: parte dall'ora piena prima (`ttInizio`;
+    tutti i conti di posizione e di trascinamento passano da `ttDa`).
+    «Mostra le ore prima» rimette le 06:00, per spostare una tappa più
+    presto. La mappa del giorno è scesa da 180 a 130 px e i quattro tasti a
+    44; su un telefono basso, o con l'avviso della pioggia, si scende solo
+    quanto basta a vedere la prima tappa intera.
+- Il colore: lo stato scelto è d'oro (il giorno è un tondo d'oro come nella
+  vecchia Time Table, la pillola accesa d'oro, nel controllo a schede la
+  scheda bianca con la scritta oro); la barra in basso resta col tondo
+  d'inchiostro. I tasti secondari sono beige caldo col bordo leggero
+  (`--tasto-fondo`, `--tasto-bordo`), anche le pillole e i giorni. Le schede
+  del totale in Spese e del Budget sono di nuovo d'oro, con tutto
+  d'inchiostro dentro e «+ Spesa» d'inchiostro col panna. Le icone sono a
+  due toni: ogni icona ha un tratto d'oro (`--ico-d`, l'unica cosa che passa
+  dentro un `<use>`), anche quelle della barra in basso; restano di un
+  colore solo i segni puri (crocetta, più, meno, frecce, spunta, pausa) e
+  quelli d'avviso e d'eliminazione. L'oro come firma: le etichette in
+  maiuscolo, le date nella scheda del viaggio e nella testata del giorno in
+  corsivo oro, i numeri della scheda del viaggio, i tondi delle persone, le
+  notti con l'albergo.
+- Il respiro: 24–32 px fra le sezioni di Home, Programma, Spese e Budget,
+  4–12 dentro i gruppi. In Home la riga sotto la frase in corsivo è scesa
+  da 16 a 8 px (fa parte del titolo): gli 8 px in più fra «Fra poco» e i
+  giorni li paga lei, e la mappa resta tutta sopra la barra (`prova-piega`
+  a 390×844: 11 px d'aria, 3 col nome del viaggio su due righe).
+- L'avviso della pioggia nella Time Table è compatto e chiudibile: la
+  crocetta fa quello che faceva «Ignora», e la spiegazione sta dietro
+  «Come funziona» (da 250 a 184 px).
+
+**Trovato per strada, sistemato**
+- «Oggi» in Italia era ieri: `oggiISO` passava da `toISOString`, cioè l'ora
+  di Greenwich, e la mezzanotte di oggi in Italia a Greenwich è ancora ieri.
+  La riga rossa di adesso compariva sul giorno prima, e la Time Table fino
+  alle 2 di notte apriva il giorno vecchio. Le prove non se ne accorgevano
+  perché girano in UTC: `prova-carattere` adesso prova anche col fuso di
+  Roma.
+- Sulla mappa della giornata, scesa a 130 px, Leaflet porta una scheda
+  aperta fino al bordo alto, e lì la pillola «Tutto il viaggio ›» copriva
+  mezza crocetta: un tocco sulla × apriva la mappa del viaggio. La pillola
+  sta sopra tutto il pannello della mappa, schede comprese (le schede
+  vivono dentro la mappa, e lei deve stare sopra le tessere), quindi non
+  basta uno z-index: finché una scheda è aperta la pillola si fa da parte
+  (`con-scheda`, in `buildDayMap`). L'ha trovato `prova-pdf-calendario`.
+- **Ogni pagina entra salendo di 10 px** (`.page{animation:fade}`), e chi
+  misura appena aperta una pagina misura a metà salita. `ttApriDoveServe`
+  vedeva la prima tappa 10 px più in basso di dove si ferma: su GitHub,
+  dove Leaflet arriva e la mappa del giorno c'è, la tappa sembrava a filo
+  della barra e la giornata scendeva di 8 px per niente. Qui non si vedeva
+  perché `prova-movimento` non serviva Leaflet: al posto della mappa c'era
+  la riga «Tutto il viaggio», 86 px più bassa. Adesso il conto toglie lo
+  spostamento dell'animazione, si scende solo se la barra taglia davvero la
+  prima tappa, e la prova serve Leaflet come le altre. Vale per qualunque
+  conto fatto all'apertura di una pagina: si toglie l'entrata, o si aspetta
+  che finisca.
+- **In portoghese il giorno abbreviato è il nome intero**: Intl, per
+  `pt-PT` e `weekday:'short'`, dà «segunda», «sábado», «domingo», che dal
+  tondo da 46 px uscivano (prima della 1b la casella si allargava). Ora
+  `caselleGiorni` tiene tre lettere (seg, sáb, dom: le abbreviazioni di
+  sempre; nelle altre lingue il nome corto ne ha già tre). Si è visto solo
+  di giovedì: le prove mettono i viaggi a partire da oggi, e solo certi
+  giorni della settimana fanno cadere un sabato o un lunedì nella fila. Una
+  prova verde un giorno può essere rossa un altro: quando una misura dipende
+  dal nome del giorno, va guardata coi sette.
+- **La testata ferma copre le tappe che le scorrono sotto**, e le prove che
+  trascinano una tappa la devono portare al centro (`prova-undo`,
+  `prova-tempi`): `scrollIntoViewIfNeeded` non basta, perché per il browser
+  una tappa sotto la testata è già a vista, e il dito prende la testata.
+  `prova-tempi` cadeva solo a mezzogiorno, quando il viaggio di prova è di
+  oggi e la Time Table si apre sulla tappa delle 12, con quella delle 10
+  sotto la testata.
+- **Le prove su GitHub avevano un tetto di 55 minuti** e la batteria ormai
+  ne chiede circa 60 (la Layout 1 era già a 52, la 1b ha aggiunto
+  `prova-carattere`): le esecuzioni venivano fermate a cinque prove dalla
+  fine, tutte verdi fin lì, e risultavano «cancellate», né verdi né rosse.
+  Il tetto ora è 80 (`.github/workflows/prove.yml`). Se la batteria continua
+  a crescere, la strada è dividerla in due macchine, non alzare il tetto
+  all'infinito.
+
+**Da decidere, o da guardare**
+- Sul cielo scuro della Home (di notte, o nel tema scuro) i tasti restano di
+  vetro con la scritta bianca, come prima della Layout 1: fanno parte del
+  cielo. Se li si vuole beige anche lì, è una riga.
+- Sull'iPhone vero, nell'app sulla Home, la barra in alto e quella in basso
+  sono più alte (le zone sicure): la prima tappa in cima ci starà solo se il
+  telefono è alto; se no si scende quel tanto, con la testata ferma in alto.
+
 ---
 
 ## Le foto: perché sono fatte così

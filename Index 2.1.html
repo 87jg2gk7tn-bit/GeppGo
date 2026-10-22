@@ -106,6 +106,15 @@ html,body{margin:0}
   /* La scritta e il bordo bianchi sopra un colore che non cambia col tema:
      i segnaposto dei giorni sulla mappa. */
   --su-colore:#FFFFFF;
+  /* Il panna del logo, uguale nei due temi: la scritta su un tasto
+     d'inchiostro, dentro le schede d'oro. */
+  --panna:#F6EEDD;
+  /* I tasti secondari (Layout 1b): beige caldo col bordo leggero, come in
+     Biglietti e Hotel prima della Layout 1. Un filo piu' scuro del panna,
+     cosi' si vedono anche appoggiati sul fondo della pagina. */
+  --tasto-fondo:#F1E6CE; --tasto-bordo:#E2D3B5;
+  /* La luce sulle schede d'oro (Spese, Budget). */
+  --oro-luce:radial-gradient(circle,rgba(255,250,235,.22),transparent 70%);
   /* Il velo dietro ai fogli. */
   --velo:rgba(27,35,30,.45);
   /* Le schede del meteo hanno i colori del tempo che fa, in tutti e due i temi. */
@@ -137,8 +146,11 @@ html,body{margin:0}
 }
 /* Quelle che dipendono dal tema si calcolano sul body: definite su :root
    resterebbero coi colori chiari anche nel tema scuro. Lo stato «scelto» e'
-   sempre l'inchiostro, come la voce accesa della barra in basso. */
-body{--scelto:var(--ink);--su-scelto:var(--paper);--anello:0 0 0 4px var(--green-tint)}
+   l'oro, con la scritta d'inchiostro (Layout 1b: nella Layout 1 era
+   l'inchiostro, e l'app era diventata tutta bianca e nera); la barra in
+   basso resta col tondo d'inchiostro. --ico-d e' il dettaglio oro delle
+   icone a due toni. */
+body{--scelto:var(--green);--su-scelto:var(--oro-su);--ico-d:var(--green);--anello:0 0 0 4px var(--green-tint)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* via il doppio tocco che ingrandisce per sbaglio; le due dita restano */
 html{touch-action:manipulation}
@@ -175,7 +187,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-4)}
 .card-h{font-family:'Fraunces',serif;font-size:var(--fs-l);font-weight:600;letter-spacing:-.01em}
 .card-sub{font-size:var(--fs-s);color:var(--ink-faint);font-weight:500;margin-top:2px}
-.section-label{font-size:var(--fs-xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:var(--sp-5) var(--sp-1) var(--sp-2)}
+.section-label{font-size:var(--fs-xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green-deep);margin:var(--sp-5) var(--sp-1) var(--sp-2)}
 .section-label:first-child{margin-top:var(--sp-1)}
 /* Le categorie della lista bagagli erano scritte in grigio chiaro a 10px:
    c'erano, ma non si vedevano, e la lista sembrava un blocco unico. */
@@ -224,12 +236,13 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .search-in{width:100%;padding:var(--sp-4) var(--sp-4) var(--sp-4) calc(var(--sp-1) * 11);border:1px solid var(--bordo-campo);border-radius:var(--r-ctl);font-family:inherit;font-size:var(--fs-l);background:var(--surface);transition:var(--ease);color:var(--ink)}
 .search-in:focus{outline:none;border-color:var(--green-deep);box-shadow:var(--anello)}
 .search-ic{position:absolute;left:var(--sp-4);top:50%;transform:translateY(-50%);display:flex;color:var(--ink-faint)}
-.seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-ctl);padding:var(--sp-1);margin-bottom:var(--sp-4);gap:var(--sp-1)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-ctl);padding:var(--sp-1);margin-bottom:var(--sp-5);gap:var(--sp-1)}
 .seg-btn{flex:1;min-height:34px;padding:var(--sp-2);border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:700;font-size:var(--fs-s);color:var(--ink-soft);border-radius:calc(var(--r-ctl) - 4px);transition:var(--ease)}
 /* Era l'unico tasto dell'app che non diceva niente quando lo si toccava: su
    una connessione lenta uno lo tocca due volte perche' non sa se ha preso. */
 .seg-btn:active{transform:scale(.96)}
-.seg-btn.active{background:var(--scelto);color:var(--su-scelto);box-shadow:var(--sh-1)}
+/* La scheda scelta e' bianca con la scritta oro, come prima della Layout 1 */
+.seg-btn.active{background:var(--surface);color:var(--green-deep);box-shadow:var(--sh-1)}
 .results{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-card);overflow:hidden;box-shadow:var(--sh-1)}
 .res{padding:var(--sp-4);border-bottom:1px solid var(--line-soft)}
 .res:last-child{border-bottom:none}
@@ -243,12 +256,12 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .tag.top{background:var(--clay-tint);color:var(--clay-deep)}
 .tag.b{background:var(--green-tint);color:var(--green-deep)}
 .chips{display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-3)}
-.chip{display:inline-flex;align-items:center;gap:var(--sp-1);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);transition:var(--ease)}
+.chip{display:inline-flex;align-items:center;gap:var(--sp-1);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit;background:var(--tasto-fondo);color:var(--ink-soft);border:1px solid var(--tasto-bordo);transition:var(--ease)}
 .chip:active{transform:scale(.94)}
 /* Una pillola sola in tutta l'app (Layout 1): prima c'erano anche quella
    d'oro, quella color terracotta, quelle trasparenti per la vecchia testata
-   d'oro, le categorie e i filtri, ognuna coi suoi numeri. La scelta e'
-   l'inchiostro, come nella barra in basso. */
+   d'oro, le categorie e i filtri, ognuna coi suoi numeri. Accesa e' d'oro,
+   come ogni cosa scelta (Layout 1b). */
 .chip.on{background:var(--scelto);border-color:var(--scelto);color:var(--su-scelto)}
 /* Alta 36 come il tasto compatto: due file di pillole a otto pixel l'una
    dall'altra lasciano a ognuna i suoi 44 al tocco, senza pestarsi. */
@@ -290,7 +303,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .btn:active{transform:scale(.96)}
 .btn:disabled{opacity:.5;cursor:default;transform:none}
 .btn-primario{background:var(--grad);color:var(--oro-su);box-shadow:var(--sh-1)}
-.btn-secondario{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn-secondario{background:var(--tasto-fondo);color:var(--ink);border-color:var(--tasto-bordo)}
 .btn-terziario{background:none;color:var(--ink);padding-left:var(--sp-2);padding-right:var(--sp-2)}
 .btn-elimina{background:none;color:var(--red)}
 .btn-block{width:100%}
@@ -299,8 +312,13 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .btn-compatto{position:relative;min-height:36px;padding:var(--sp-1) var(--sp-3);font-size:var(--fs-s)}
 .btn-compatto::after{content:'';position:absolute;inset:-5px 0}
 /* LE ICONE: un solo set a linea (il blocco in cima al body), col tratto
-   della barra in basso. Prendono il colore della scritta accanto. */
+   della barra in basso. Prendono il colore della scritta accanto, e un
+   tratto per icona e' d'oro (Layout 1b: a due toni, cosi' portano colore
+   senza tornare alle emoji). Il tratto d'oro prende --ico-d, l'unica cosa
+   che passa dentro un <use>; dove il fondo e' gia' d'oro, o la scritta e'
+   rossa, l'icona torna di un colore solo. */
 .icone{position:absolute;width:0;height:0;overflow:hidden}
+.btn-primario,.btn-elimina,.chip.on,.giorno.on,.hh-act.on,.locate-fab.on,.picker-opt.sel,.fab{--ico-d:currentColor}
 .ico{width:1.25em;height:1.25em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.25em}
 .btn .ico{width:20px;height:20px}
 .btn-compatto .ico{width:17px;height:17px}
@@ -356,12 +374,18 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .wc-d{font-family:'Fraunces',serif;font-style:italic;font-size:var(--fs-s);margin-top:2px}
 .wc-temp{font-family:'Fraunces',serif;font-size:var(--fs-xxl);font-weight:600;line-height:1;text-align:right}
 .wc-min{font-size:var(--fs-xs);margin-top:var(--sp-1);text-align:right;white-space:nowrap}
-.budget-hero{background:var(--surface);color:var(--ink);border:1px solid var(--line-soft);padding:var(--sp-5);border-radius:var(--r-card);margin-bottom:var(--sp-4);box-shadow:var(--sh-1);position:relative}
+/* La scheda del budget torna d'oro (Layout 1b), con la scritta d'inchiostro
+   del logo: 4,6:1 sull'oro piu' scuro della sfumatura, nei due temi. */
+.budget-hero{background:var(--grad);color:var(--oro-su);padding:var(--sp-5);border-radius:var(--r-card);margin-bottom:var(--sp-5);box-shadow:var(--sh-1);position:relative;overflow:hidden;isolation:isolate}
+.budget-hero::after{content:'';position:absolute;right:-25px;bottom:-35px;width:150px;height:150px;background:var(--oro-luce);pointer-events:none;z-index:-1}
 .bh-amt{font-family:'Fraunces',serif;font-size:var(--fs-xxl);font-weight:600;letter-spacing:-.01em;line-height:1;position:relative}
 .bh-l{font-size:var(--fs-s);margin-top:var(--sp-1);font-weight:600;position:relative}
 .bh-split{display:flex;gap:var(--sp-5);margin-top:var(--sp-4);position:relative}
-.bh-s{font-size:var(--fs-xs);color:var(--ink-soft)}
+.bh-s{font-size:var(--fs-xs);color:var(--oro-su)}
 .bh-s b{display:block;font-size:var(--fs-l);margin-top:2px;font-family:'Fraunces',serif;font-weight:600}
+/* Nel Budget i tetti e le categorie sono due sezioni, non una lista: 24 fra
+   l'una e l'altra (Layout 1b, «Respiro»). */
+#moneyBudget>.card{margin-bottom:var(--sp-5)}
 .cat{display:flex;justify-content:space-between;align-items:center;padding:var(--sp-3);background:var(--paper);border-radius:var(--r-ctl);margin-bottom:var(--sp-2)}
 .cat-l{display:flex;align-items:center;gap:var(--sp-3)}
 .cat-ic{width:38px;height:38px;background:var(--surface);border-radius:var(--r-ctl);display:flex;align-items:center;justify-content:center;font-size:var(--fs-l);box-shadow:var(--sh-1)}
@@ -372,11 +396,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .person{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-1) var(--sp-2);padding:var(--sp-3);background:var(--paper);border-radius:var(--r-ctl);margin-bottom:var(--sp-2)}
 .person-l{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
 .person-az{display:flex;align-items:center;gap:var(--sp-1);margin-left:auto}
-.avatar{width:38px;height:38px;border-radius:var(--r-pill);background:var(--green-tint);color:var(--green-deep);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-m);flex-shrink:0}
+.avatar{width:38px;height:38px;border-radius:var(--r-pill);background:var(--grad);color:var(--oro-su);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-m);flex-shrink:0}
 /* Il tondo di chi usa l'app e' color mattone: li' la scritta bianca regge
    (4,5:1), quella scura no. Nel tema scuro il mattone e' chiaro, e torna lo
    scuro. */
-.avatar.me{background:var(--scelto);color:var(--su-scelto)}
+.avatar.me{background:var(--grad);color:var(--oro-su)}
 body.dark .avatar.me{color:var(--oro-su)}
 .person-n{font-weight:700;font-size:var(--fs-m)}
 .person-tag{font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600}
@@ -563,7 +587,7 @@ body.dark .avatar.me{color:var(--oro-su)}
 .detail-day{background:var(--paper);border-radius:var(--r-ctl);padding:var(--sp-3);margin-bottom:var(--sp-2)}
 .detail-day-t{font-weight:700;font-size:var(--fs-m);margin-bottom:var(--sp-1)}
 .detail-act{font-size:var(--fs-s);color:var(--ink-soft);padding:var(--sp-1) 0;display:flex;gap:var(--sp-2)}
-.ad-slot{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);background:var(--line-soft);border:1px dashed var(--line);border-radius:var(--r-ctl);padding:var(--sp-3) var(--sp-3);margin-bottom:var(--sp-3);font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600}
+.ad-slot{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);background:var(--line-soft);border:1px dashed var(--line);border-radius:var(--r-ctl);padding:var(--sp-3) var(--sp-3);margin-bottom:var(--sp-5);font-size:var(--fs-xs);color:var(--ink-faint);font-weight:600}
 .ad-x{background:none;border:none;color:var(--green-deep);font-family:inherit;font-weight:700;font-size:var(--fs-xs);cursor:pointer;white-space:nowrap}
 .id-canvas-wrap{position:relative;background:var(--paper);border:1px dashed var(--line);border-radius:var(--r-card);overflow:hidden;margin-bottom:var(--sp-3);min-height:120px;display:flex;align-items:center;justify-content:center}
 #idCanvas{max-width:100%;display:block;touch-action:none;cursor:crosshair}
@@ -583,7 +607,16 @@ body.dark .avatar.me{color:var(--oro-su)}
 /* --- SPESE STILE TRICOUNT --- */
 /* La testata delle spese era un blocco d'oro pieno: l'oro adesso e' solo
    dell'azione principale (Layout 1), e la testata e' una scheda. */
-.money-hero{background:var(--surface);color:var(--ink);border:1px solid var(--line-soft);border-radius:var(--r-card);padding:var(--sp-5);margin-bottom:var(--sp-4);box-shadow:var(--sh-1);position:relative}
+/* La scheda del totale torna d'oro (Layout 1b), come il budget. Dentro,
+   tutto d'inchiostro; «+ Spesa», l'azione principale, e' d'inchiostro col
+   panna sopra, perche' un tasto d'oro sull'oro non si vedrebbe; gli altri
+   tasti restano beige. */
+/* La luce sta sotto le scritte e i tasti (z-index -1 dentro la scheda, che
+   fa da strato a se'): alzare i pezzi della scheda uno per uno faceva
+   coprire alla riga sotto il tocco sulla valuta, che sporge di 11 px. */
+.money-hero{background:var(--grad);color:var(--oro-su);border-radius:var(--r-card);padding:var(--sp-5);margin-bottom:var(--sp-5);box-shadow:var(--sh-1);position:relative;overflow:hidden;isolation:isolate}
+.money-hero::after{content:'';position:absolute;right:-30px;top:-40px;width:170px;height:170px;background:var(--oro-luce);pointer-events:none;z-index:-1}
+.money-hero .btn-primario{background:var(--oro-su);color:var(--panna);--ico-d:var(--green)}
 .mh-azioni{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
 .mh-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;margin-bottom:var(--sp-4);gap:var(--sp-2)}
 /* Con «+ Spesa» i tasti sono piu' larghi: se col nome non ci stanno (320 px)
@@ -743,10 +776,14 @@ body.dark .avatar.me{color:var(--oro-su)}
 /* Le due cose che si fanno camminando. Sono uguali fra loro e larghe uguale:
    un invito solo, in due modi. */
 .tt-azioni{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+/* Il gruppo dei quattro tasti: 24 px sopra e sotto, 8 fra le due file. Alti
+   44 (erano 52): la prima tappa deve vedersi aprendo in cima (Layout 1b). */
+.tt-strumenti{margin:var(--sp-5) 0}
+.tt-strumenti .tt-azioni:last-child{margin-bottom:0}
+#dayPhotos:empty{display:none}
 .tt-az{
   flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;
-  gap:var(--sp-2);padding:var(--sp-4) var(--sp-2);border-radius:var(--r-ctl);cursor:pointer;
-  border:none;background:var(--surface);box-shadow:var(--sh-1);
+  gap:var(--sp-2);padding:var(--sp-2);border-radius:var(--r-ctl);cursor:pointer;
   font-family:inherit;font-weight:700;font-size:var(--fs-s);color:var(--ink);
   transition:var(--ease);line-height:1.2;text-align:center;
 }
@@ -794,7 +831,7 @@ body.dark .avatar.me{color:var(--oro-su)}
    addosso. */
 .bud-scheda{display:flex;align-items:center;gap:var(--sp-2);width:calc(100% - .2rem);text-align:left;font-family:inherit;color:var(--ink);cursor:pointer;border:1px solid var(--line);padding:var(--sp-3) var(--sp-4);min-height:44px;position:relative;z-index:2;margin:calc(var(--sp-5) * -1) 2px 0;border-radius:var(--r-card);box-shadow:var(--sh-2)}
 .val-scheda+.bud-scheda{margin-top:var(--sp-3)}
-.bud-scheda+.hh-soon{margin-top:var(--sp-3)}
+.bud-scheda+.hh-soon{margin-top:var(--sp-5)}
 .bud-scheda .bs-ic{font-size:var(--fs-l);flex-shrink:0}
 .bud-scheda .bs-t{flex:1;min-width:0}
 .bud-scheda .bs-n{display:block;font-weight:700;font-size:var(--fs-s);line-height:1.3}
@@ -848,15 +885,29 @@ body.dark .avatar.me{color:var(--oro-su)}
 .hh-map-giu .hh-map-note{position:static;flex:1;min-width:0}
 .hh-map-giu .mappa-tutto{margin-left:auto}
 #dayMapWrap .mappa-tutto{position:absolute;top:.5rem;right:.5rem;z-index:500}
-.tt-tutto{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);width:100%;min-height:44px;margin-bottom:var(--sp-2);border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:var(--fs-s);cursor:pointer}
+/* La pillola sta sopra tutto il pannello della mappa, schede comprese: le
+   schede vivono dentro la mappa, e la pillola deve stare sopra le tessere.
+   Con la mappa bassa una scheda sale fino al suo angolo, e un tocco sulla
+   crocetta apriva l'altra mappa. Finche' una scheda e' aperta si fa da parte
+   (buildDayMap). */
+#dayMapWrap.con-scheda .mappa-tutto{visibility:hidden}
+.tt-tutto{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);width:100%;min-height:44px;margin-bottom:var(--sp-2);border:1px solid var(--tasto-bordo);border-radius:var(--r-ctl);background:var(--tasto-fondo);color:var(--ink);font-family:inherit;font-weight:700;font-size:var(--fs-s);cursor:pointer}
 
-.tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.tt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2);margin-bottom:var(--sp-1)}
 .tt-title{font-family:'Fraunces',serif;font-weight:600;font-size:var(--fs-xxl);line-height:.95;color:var(--ink);margin-top:var(--sp-1)}
 .tt-sub{font-size:var(--fs-s);color:var(--ink-soft);margin-top:var(--sp-1)}
 /* La testata della Time Table sta sul cielo della pagina (in cima #AEB9C6):
    l'inchiostro tenue li' arrivava a 3,9:1, quello pieno a 8,7. */
-#mDay #ttEyebrow,#mDay #dayTt{color:var(--ink)}
+#mDay #ttEyebrow{color:var(--ink)}
 #mDay #ttEyebrow .hh-chev{opacity:1}
+/* La testata del giorno (Layout 1b): la data e i giorni restano fermi in
+   alto mentre la giornata scorre sotto. Il fondo e' quello della pagina, da
+   bordo a bordo, perche' le tappe ci passino sotto senza vedersi; la riga
+   sotto dice dove finisce. La data e' il sottotitolo in corsivo oro, la
+   firma dell'app (5:1 sul panna). */
+.tt-testata{position:sticky;top:0;z-index:20;background:var(--paper);margin:0 calc(var(--sp-4) * -1) var(--sp-5);padding:var(--sp-1) var(--sp-4);border-bottom:1px solid var(--line-soft)}
+.tt-testata .tt-daynav{margin-bottom:0}
+.tt-testata .tt-sub{margin:0;font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:var(--fs-l);color:var(--green-deep)}
 .tt-daynav{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-1)}
 /* ── pillole dei giorni della time-table: come quelle di home, in cerchio ── */
 .tt-hour{display:flex;gap:var(--sp-2);border-top:1px dashed var(--line);padding:2px 0}
@@ -870,7 +921,12 @@ body.dark .avatar.me{color:var(--oro-su)}
 .tt-act .tmeta{margin-left:auto;font-size:var(--fs-xs);color:var(--green-deep);font-weight:700;white-space:nowrap}
 .day-head{cursor:pointer}
 
-.ttgrid{position:relative;margin-top:var(--sp-2)}
+.ttgrid{position:relative;margin-top:var(--sp-1)}
+/* La riga sopra la giornata: quanto si cammina, e «Mostra le ore prima»
+   a destra (vedi ttInizio). A 320 px il tasto va a capo. */
+.tt-riga-ore{display:flex;align-items:center;flex-wrap:wrap;gap:0 var(--sp-2);min-height:36px;margin-bottom:var(--sp-1)}
+.tt-totale{font-size:var(--fs-xs);font-weight:700;color:var(--ink-soft)}
+.tt-prima{margin-left:auto;margin-right:calc(var(--sp-2) * -1)}
 /* La riga dell'ora parte DOPO la colonna delle ore, invece di attraversarla:
    cosi' il numero non ha piu' bisogno di un rettangolo bianco dietro per
    tagliare la riga, ed era quel rettangolo a far sembrare la griglia una
@@ -1076,6 +1132,7 @@ body.dark .imp-entra b{color:var(--green)}
 .mh-tot-row{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 .bh-amt{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 .cur-vis{width:auto;min-width:0;flex:0 0 auto;padding:var(--sp-1) var(--sp-5) var(--sp-1) var(--sp-2);font-size:var(--fs-s);font-weight:700;height:auto;min-height:0;background-position:right .4rem center;background-color:var(--paper);border-color:var(--bordo-campo);color:inherit}
+.money-hero .cur-vis,.budget-hero .cur-vis{background-color:var(--panna);border-color:var(--oro-su);color:var(--oro-su)}
 .tt-travel-x{cursor:pointer;text-decoration:underline;text-underline-offset:2px;flex-shrink:0;white-space:nowrap}
 /* Sui telefoni stretti "🚆 16 min · 5.4 km 🚶🚆🚗 non necessario ✕" non ci sta,
    e a essere tagliate contro il bordo erano proprio le iconcine del mezzo, che
@@ -1178,6 +1235,7 @@ body.dark{
   --velo:rgba(0,0,0,.6);
   --grad-warm:linear-gradient(135deg,#231D12,#2B2415);
   --sh-1:0 1px 3px rgba(0,0,0,.5);--sh-2:0 6px 18px rgba(0,0,0,.55);
+  --tasto-fondo:#2A2217;--tasto-bordo:#43372A;
 }
 body.dark .ad-slot{background:var(--surface)}
 body.dark img.leaflet-tile{filter:brightness(.92) contrast(1.02)}
@@ -1200,6 +1258,7 @@ body.dark img.leaflet-tile{filter:brightness(.92) contrast(1.02)}
   .modal{align-items:center}
   .sheet{max-width:min(94vw,920px);border-radius:var(--r-card)}
   .page{padding-left:var(--sp-5);padding-right:var(--sp-5)}
+  .tt-testata{margin-left:calc(var(--sp-5) * -1);margin-right:calc(var(--sp-5) * -1);padding-left:var(--sp-5);padding-right:var(--sp-5)}
 }
 .tszr{position:absolute;left:0;right:0;bottom:0;height:16px;z-index:12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:var(--sp-1);cursor:ns-resize}
 .tszr::after{content:'';width:32px;height:4px;border-radius:var(--r-pill);background:var(--bordo-campo)}
@@ -1241,8 +1300,10 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
   margin-bottom:var(--sp-1);
 }
 .trip-hero-dates{
-  font-size:var(--fs-m);
-  color:var(--ink-soft);
+  /* il sottotitolo in corsivo oro, la firma dell'app (Layout 1b) */
+  font-family:'Fraunces',serif;font-style:italic;
+  font-size:var(--fs-l);
+  color:var(--green-deep);
   opacity:1;
   margin-top:var(--sp-2);
 }
@@ -1262,7 +1323,7 @@ body.dark{--vetro-barra:rgba(16,22,35,.82)}
   padding-top:var(--sp-4);
   border-top:1px solid var(--line);
 }
-.ths-n{font-size:var(--fs-xxl)!important;line-height:1}
+.ths-n{font-size:var(--fs-xxl)!important;line-height:1;color:var(--green-deep)}
 .ths-l{opacity:1;color:var(--ink-faint);margin-top:var(--sp-1);letter-spacing:.1em;font-size:var(--fs-xs)}
 
 /* ── 2 · TESTATA PIÙ LEGGERA ────────────────────────────────────── */
@@ -1461,8 +1522,11 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
   font-size:var(--fs-xxl);line-height:1.05;color:var(--green);
   margin-top:2px;
 }
+/* La riga sotto la frase fa parte del titolo: 8 px, come dentro un gruppo.
+   I pixel tolti qui tengono la mappa intera sopra la barra su un telefono da
+   844 anche quando il nome del viaggio va su due righe (test/prova-piega.js). */
 .hh-meta{
-  position:relative;font-size:var(--fs-m);color:var(--ink-soft);margin-top:var(--sp-4);
+  position:relative;font-size:var(--fs-m);color:var(--ink-soft);margin-top:var(--sp-2);
 }
 
 /* ── card "fra poco" ───────────────────────────────────────────── */
@@ -1494,29 +1558,37 @@ body.dark .hh::after{background:rgba(255,255,255,.05)}
 /* ── pillole dei giorni ────────────────────────────────────────── */
 /* IL SELETTORE DEI GIORNI (Layout 1): uno solo, in Home, nella Time Table e
    negli Hotel (prima erano pillole, tondi e quadrati). Una casella per
-   giorno, il giorno della settimana sopra e il numero sotto; il giorno
-   scelto e' d'inchiostro come ogni cosa scelta; una notte senza letto e'
-   tratteggiata. Lo scrive caselleGiorni(). La casella e' alta 44, quanto
-   serve a un dito e non di piu': in Home sotto la fila c'e' la mappa della
-   giornata, che si deve vedere tutta appena si apre (test/prova-piega.js),
-   e a 52 finiva sotto la barra. Sopra la fila restano 8 px per il meteo,
-   che sporge dall'angolo della casella: una striscia che scorre di lato
-   taglia anche in alto. */
+   giorno, il giorno della settimana sopra e il numero sotto. Sono tondi, e
+   lo scelto e' d'oro, come nella vecchia Time Table (Layout 1b: nella
+   Layout 1 erano caselle bianche con lo scelto d'inchiostro); una notte con
+   il letto e' oro chiaro, una senza e' tratteggiata. Lo scrive
+   caselleGiorni(). Il tondo e' alto 46, quanto serve a un dito e non di
+   piu': in Home sotto la fila c'e' la mappa della giornata, che si deve
+   vedere tutta appena si apre (test/prova-piega.js), e a 52 finiva sotto la
+   barra. Sopra la fila restano 8 px per il meteo, che sporge dall'angolo
+   del tondo: una striscia che scorre di lato taglia anche in alto. */
 .giorni{display:flex;gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:var(--sp-2) 2px var(--sp-1)}
 .giorni::-webkit-scrollbar{display:none}
-.giorno{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:48px;min-height:44px;padding:var(--sp-1) var(--sp-2);border-radius:var(--r-ctl);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-size:var(--fs-m);line-height:1;cursor:pointer;transition:var(--ease)}
+.giorno{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:46px;height:46px;padding:0;border-radius:var(--r-pill);border:1px solid var(--tasto-bordo);background:var(--tasto-fondo);color:var(--ink);font-family:inherit;font-size:var(--fs-m);line-height:1;cursor:pointer;transition:var(--ease)}
 span.giorno{cursor:default}
 .giorno-s{font-size:var(--fs-xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
 .giorno-n{font-family:'Fraunces',serif;font-size:var(--fs-l);font-weight:600}
 .giorno-m{position:absolute;top:-6px;right:-4px;font-size:var(--fs-xs);line-height:1}
 .giorno.on{background:var(--scelto);border-color:var(--scelto);color:var(--su-scelto)}
 .giorno.on .giorno-s{color:var(--su-scelto)}
+.giorno.coperta{background:var(--green-tint);border-color:var(--green-soft);color:var(--green-deep)}
+.giorno.coperta .giorno-s{color:var(--green-deep)}
 .giorno.manca{border-style:dashed;border-color:var(--clay);background:none;color:var(--clay-deep)}
 .giorno.manca .giorno-s{color:var(--clay-deep)}
-.giorno-piu{flex-direction:row;gap:var(--sp-1);padding:0 var(--sp-3);font-size:var(--fs-s);font-weight:700}
+.giorno-piu{flex-direction:row;gap:var(--sp-1);width:auto;padding:0 var(--sp-3);font-size:var(--fs-s);font-weight:700}
 .giorno-piu .ico{width:18px;height:18px}
 button.giorno:active{transform:scale(.95)}
-.hh-days{margin:var(--sp-2) calc(var(--sp-4) * -1) 0;padding-left:var(--sp-4);padding-right:var(--sp-4)}
+/* Respiro (Layout 1b): fra «Fra poco» e la giornata 24 px a vederli (16 di
+   margine e gli 8 tenuti per il meteo), dentro la giornata 4. I pixel in
+   piu' qui sopra la mappa li rende la riga sotto il nome della citta' (16 →
+   12, un gruppo solo): la mappa resta tutta sopra la barra
+   (test/prova-piega.js). */
+.hh-days{margin:var(--sp-4) calc(var(--sp-4) * -1) 0;padding-left:var(--sp-4);padding-right:var(--sp-4);padding-bottom:0}
 
 /* ── titolo di sezione ─────────────────────────────────────────── */
 .hh-sec{display:flex;align-items:baseline;justify-content:space-between;margin:var(--sp-1) 2px var(--sp-1)}
@@ -1542,8 +1614,10 @@ button.giorno:active{transform:scale(.95)}
 .hh-card-n{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600;line-height:1.12;margin-top:var(--sp-2);color:var(--ink)}
 .hh-card-s{font-size:var(--fs-s);color:var(--ink-faint);margin-top:var(--sp-1);line-height:1.4}
 .hh-avs{display:flex;margin-top:auto;padding-top:var(--sp-4)}
+/* I tondi delle persone sono d'oro dappertutto, come nei Compagni: fanno
+   parte della firma. L'iniziale d'inchiostro sull'oro sta a 4,6:1. */
 .hh-av{
-  width:26px;height:26px;border-radius:var(--r-pill);background:var(--green-tint);color:var(--green-deep);
+  width:26px;height:26px;border-radius:var(--r-pill);background:var(--grad);color:var(--oro-su);
   display:grid;place-items:center;font-size:var(--fs-xs);font-weight:700;
   border:2px solid var(--surface);margin-right:calc(var(--sp-2) * -1);
 }
@@ -1610,6 +1684,14 @@ button.giorno:active{transform:scale(.95)}
 
 /* Una spiegazione che serve una volta sola non deve stare aperta per
    sempre: si legge, e poi si richiude da sé la volta dopo. */
+/* L'avviso della pioggia nella Time Table: compatto e chiudibile (Layout 1b) */
+.pioggia{background:var(--clay-tint);border:1px solid var(--clay-bordo);border-radius:var(--r-ctl);padding:var(--sp-2) var(--sp-3) var(--sp-3);margin-top:var(--sp-2)}
+.pioggia-t{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);font-weight:700;font-size:var(--fs-m);color:var(--clay-deep)}
+.pioggia-x{flex-shrink:0;margin:calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0}
+.pioggia-d{font-size:var(--fs-s);color:var(--ink-soft);margin:2px 0 var(--sp-2);line-height:1.45}
+.pioggia-azioni{display:flex;gap:var(--sp-2)}
+.pioggia-azioni .btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;line-height:1.2}
+.pioggia .spiega>summary{color:var(--clay-deep)}
 .spiega{margin-top:var(--sp-2)}
 .spiega>summary{
   list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:var(--sp-1);
@@ -2019,8 +2101,8 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
    principale della schermata (vedi «Stile» in CLAUDE.md). */
 .hh-raccolta{
   flex:none;display:flex;align-items:center;gap:var(--sp-2);min-height:44px;
-  padding:var(--sp-3) var(--sp-4);border-radius:var(--r-ctl);border:1px solid var(--line);
-  background:var(--surface);color:var(--ink);font-family:inherit;font-size:var(--fs-m);
+  padding:var(--sp-3) var(--sp-4);border-radius:var(--r-ctl);border:1px solid var(--tasto-bordo);
+  background:var(--tasto-fondo);color:var(--ink);font-family:inherit;font-size:var(--fs-m);
   font-weight:700;white-space:nowrap;cursor:pointer;
   transition:var(--ease);
 }
@@ -2041,7 +2123,7 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 .hh-rapidi{display:grid;grid-template-columns:repeat(4,minmax(min-content,1fr));gap:var(--sp-2);margin-top:var(--sp-2)}
 .hh-rapido{
   min-height:44px;padding:var(--sp-1) var(--sp-1);border-radius:var(--r-ctl);
-  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border:1px solid var(--tasto-bordo);background:var(--tasto-fondo);color:var(--ink);
   font-family:inherit;font-size:var(--fs-s);font-weight:600;line-height:1.2;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   text-align:center;cursor:pointer;transition:var(--ease);
@@ -2058,7 +2140,7 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
    sull'intestazione, le finiva addosso. Il conto sta sulla riga di quando si
    parte, a destra: una riga in meno, e la mappa scende di meno. */
 .val-scheda{position:relative;z-index:2;margin:calc(var(--sp-5) * -1) 2px 0;padding:var(--sp-4) var(--sp-4);border-radius:var(--r-card);box-shadow:var(--sh-2)}
-.val-scheda+.hh-soon{margin-top:var(--sp-3)}
+.val-scheda+.hh-soon{margin-top:var(--sp-5)}
 .val-testa{display:flex;align-items:center;gap:var(--sp-2)}
 .val-t{flex:1;min-width:0;font-weight:700;font-size:var(--fs-m);color:var(--ink)}
 .val-x{flex:none;width:44px;height:44px;margin:calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0;border:none;background:none;color:var(--ink-faint);font-size:var(--fs-l);border-radius:var(--r-pill);cursor:pointer}
@@ -2147,10 +2229,10 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
 .hh-riga1 .hh-eyebrow.hh-tap{display:block}
 .hh-riga1 .hh-eyebrow .hh-chev{line-height:0}
 
-/* ── testata: il viaggio, il GPS, il Profilo ───────────────────────
+/* ── testata: il viaggio, il GPS, il tema, il Profilo ──────────────
    Da sinistra: le righine col nome del viaggio («Lisbona ▾»), che prendono
-   lo spazio che resta; a destra il GPS con la scritta e il Profilo, a un
-   tocco (il tema dalla Layout 1 si sceglie nel Profilo). Il marchio sta qui
+   lo spazio che resta; a destra il GPS con la scritta, la luna o il sole del
+   tema e il Profilo, a un tocco (il tema anche nel Profilo). Il marchio sta qui
    solo quando non c'e' un viaggio aperto: con un viaggio, quel posto serve
    al nome, e a 320 px non ci stanno tutti e due (il marchio resta nella
    schermata d'avvio). Senza viaggio lo stesso con «I tuoi viaggi», quando
@@ -2170,12 +2252,32 @@ body.dark .cl-neb{background:linear-gradient(transparent 0,rgba(255,255,255,.22)
   position:relative;height:38px;padding:0 var(--sp-3) 0 var(--sp-2);border-radius:var(--r-pill);
   justify-content:center;gap:var(--sp-1);background:var(--surface);flex-shrink:0;margin-left:auto;
 }
-.topbar-row:not(.con-viaggio) .tb-profilo{margin-left:auto}
+.topbar-row:not(.con-viaggio) .th-btn{margin-left:auto}
 .gps-ic{width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .gps-tx{font-size:var(--fs-xs);font-weight:700;letter-spacing:.04em;line-height:1}
 .gps-pill .gps-dot{position:absolute;right:4px;top:4px;width:7px;height:7px;border:1.5px solid var(--surface)}
 .gps-pill.on{background:var(--scelto);color:var(--su-scelto)}
+/* Col tondo del tema in più, a 320 px il nome del viaggio restava stretto e
+   anche un nome corto come «Lisbona» perdeva le ultime lettere. Pochi pixel
+   tolti dentro le due pillole (fra le righine e il nome, ai lati del GPS)
+   bastano ai nomi corti; quelli lunghi si accorciano coi puntini, come prima.
+   Il tocco resta da 44 (min-width e l'area invisibile). I selettori sono
+   cosi' pesanti per vincere su .menu-btn.con-nome e sulle regole di .chip. */
+@media (max-width:360px){
+  #menuViaggi.menu-btn.con-nome{gap:var(--sp-1);padding:0 var(--sp-1)}
+  .topbar .gps-pill.gps-pill{padding:0 var(--sp-2)}
+}
 
+/* Il tema, un tondo come il Profilo: e' l'unico tasto della testata fatto
+   solo di un segno (eccezione dichiarata in CLAUDE.md), e il nome lo dice a
+   VoiceOver. La luna ha il dettaglio oro come le altre icone. */
+.th-btn{
+  position:relative;width:38px;height:38px;border-radius:var(--r-pill);flex-shrink:0;cursor:pointer;
+  display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+  transition:var(--ease);
+}
+.th-btn .ico{width:19px;height:19px}
+.th-btn:active{transform:scale(.92)}
 /* Il Profilo: l'iniziale di chi usa l'app, o la parola se il nome non c'e'. */
 .tb-profilo{
   position:relative;width:38px;height:38px;border-radius:var(--r-pill);flex-shrink:0;cursor:pointer;
@@ -2227,7 +2329,7 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 
 /* ── mappa della giornata: segue la card più a sinistra nella striscia ── */
 .hh-map-wrap{
-  margin:var(--sp-1) calc(var(--sp-4) * -1) var(--sp-4);border-radius:var(--r-card);overflow:hidden;
+  margin:var(--sp-1) calc(var(--sp-4) * -1) var(--sp-2);border-radius:var(--r-card);overflow:hidden;
   border:1px solid var(--line-soft);box-shadow:var(--sh-1);
 }
 /* Scorrendo si puo' arrivare a una tappa senza posizione: la mappa non ha
@@ -2288,10 +2390,10 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
      a 42 px: la prova li credeva da 44 perche' sommava i numeri del foglio
      di stile invece di toccare (vedi test/prova-a-portata.js). */
 .nav-item,.hh-act,.hh-trip,.hh-trip-add,.hh-add,
-.seg-btn,.gps-pill,.tb-profilo,.ad-x{position:relative}
+.seg-btn,.gps-pill,.th-btn,.tb-profilo,.ad-x{position:relative}
 .nav-item::after,.hh-act::after,.hh-trip::after,
 .hh-trip-add::after,.hh-add::after,.seg-btn::after,
-.gps-pill::after,.tb-profilo::after,.ad-x::after,.hh-grado::after{content:'';position:absolute}
+.gps-pill::after,.th-btn::after,.tb-profilo::after,.ad-x::after,.hh-grado::after{content:'';position:absolute}
 
 .nav-item::after   {inset:-3px -1px}   /* 43 → 45 di larghezza (l'altezza, 44, e' del tasto) */
 .hh-act::after     {inset:-9px -2px}   /* 27 → 45 */
@@ -2300,7 +2402,7 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 .hh-grado::after   {inset:-12px -12px} /* 22 → 46 */
 .hh-add::after     {inset:-8px}        /* 30 → 44, bordo compreso */
 .seg-btn::after    {inset:-5px 0}      /* 34 → 44 */
-.gps-pill::after,.tb-profilo::after{inset:-4px}   /* 38 → 44, bordo compreso */
+.gps-pill::after,.th-btn::after,.tb-profilo::after{inset:-4px}   /* 38 → 44, bordo compreso */
 .ad-x::after       {inset:-15px -8px}  /* 14 → 44 */
 
 /* I due tondi con il "+" crescono di qualche pixel anche a vedersi: da 26 e
@@ -2416,7 +2518,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 </style>
 <!-- Le icone a linea dei comandi (Layout 1): un blocco solo, ogni tasto le
      riprende con <use> (vedi ico). Stesso tratto della barra in basso. -->
-<svg class="icone" width="0" height="0" aria-hidden="true" focusable="false"><symbol id="i-chiudi" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol><symbol id="i-piu" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-meno" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-modifica" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="m14 7 3 3"/></symbol><symbol id="i-cestino" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5h6V7"/></symbol><symbol id="i-condividi" viewBox="0 0 24 24"><path d="M12 15V3.5M8 7.5l4-4 4 4"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v6A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H16"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3.2-3.2a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3.2 3.2a4 4 0 0 0 5.7 5.7l1.2-1.2"/></symbol><symbol id="i-persone" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.3 2.8-5.3 5.5-5.3s4.9 2 5.5 5.3"/><circle cx="16.8" cy="9.3" r="2.6"/><path d="M16 14.2c2.3.2 4 1.9 4.6 5.3"/></symbol><symbol id="i-utente" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></symbol><symbol id="i-valigia" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2.5"/><path d="M9 7V5.2A1.2 1.2 0 0 1 10.2 4h3.6A1.2 1.2 0 0 1 15 5.2V7M9 11v5M15 11v5"/></symbol><symbol id="i-aereo" viewBox="0 0 24 24"><path d="M12 2.5c.9 0 1.5 1 1.5 2.5v4.2l7 4.3v2l-7-2.2v4.2l2.2 1.7v1.6L12 20l-3.7.8v-1.6l2.2-1.7v-4.2l-7 2.2v-2l7-4.3V5c0-1.5.6-2.5 1.5-2.5z"/></symbol><symbol id="i-mappa" viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></symbol><symbol id="i-bussola" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol><symbol id="i-posizione" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></symbol><symbol id="i-calendario" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol><symbol id="i-orologio" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></symbol><symbol id="i-documento" viewBox="0 0 24 24"><path d="M14 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3.5V8h4.5M9 13h6M9 16.5h6"/></symbol><symbol id="i-libro" viewBox="0 0 24 24"><path d="M12 6.5C10 5 7 4.6 4 5v13.5c3-.4 6 0 8 1.5 2-1.5 5-1.9 8-1.5V5c-3-.4-6 0-8 1.5z"/><path d="M12 6.5V20"/></symbol><symbol id="i-bandiera" viewBox="0 0 24 24"><path d="M5.5 21V4M5.5 4.5h11l-2 4 2 4h-11"/></symbol><symbol id="i-spunta" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol><symbol id="i-stella" viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.1 5.6.8-4 3.9 1 5.6-5.1-2.6-5 2.6 1-5.6-4.1-3.9 5.6-.8z"/></symbol><symbol id="i-cerca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></symbol><symbol id="i-fotocamera" viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></symbol><symbol id="i-immagine" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="m20.5 15.5-4.5-4.5-8.5 8.5"/></symbol><symbol id="i-penna" viewBox="0 0 24 24"><path d="M4 20.5h16"/><path d="M6.5 16.5 15 8l2.5 2.5L9 19H6.5z"/></symbol><symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></symbol><symbol id="i-megafono" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4.5v-15L7 9H5a1 1 0 0 0-1 1z"/><path d="M17.5 9a4 4 0 0 1 0 6"/></symbol><symbol id="i-campanella" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol><symbol id="i-globo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3.2 2.8 14.8 0 18M12 3c-2.8 3.2-2.8 14.8 0 18"/></symbol><symbol id="i-scarica" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></symbol><symbol id="i-copia" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5v-3A1.5 1.5 0 0 0 14 4H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 4v-4h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/></symbol><symbol id="i-bacchetta" viewBox="0 0 24 24"><path d="m4.5 19.5 11-11"/><path d="M17.5 3.5v3M16 5h3M20 9v2M19 10h2M12 3.5v1.5M11.2 4.2h1.6"/></symbol><symbol id="i-scintille" viewBox="0 0 24 24"><path d="M11 3.5 12.8 9l5.7 1.8-5.7 1.7L11 18l-1.8-5.5-5.7-1.7L9.2 9z"/><path d="M18.5 15.5v5M16 18h5"/></symbol><symbol id="i-ordina" viewBox="0 0 24 24"><path d="M7.5 4v16M4.5 7l3-3 3 3M16.5 20V4M13.5 17l3 3 3-3"/></symbol><symbol id="i-letto" viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></symbol><symbol id="i-biglietto" viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></symbol><symbol id="i-soldi" viewBox="0 0 24 24"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8"/></symbol><symbol id="i-tabella" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10"/></symbol><symbol id="i-chiave" viewBox="0 0 24 24"><circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M14 9l2 2"/></symbol><symbol id="i-annulla" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-avanti" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol><symbol id="i-indietro" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol><symbol id="i-giu" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-su" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.2"/></symbol><symbol id="i-nota" viewBox="0 0 24 24"><path d="M14 3.5H6.5A1.5 1.5 0 0 0 5 5v14a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V8.5z"/><path d="M8.5 12h7M8.5 15.5h4.5"/></symbol><symbol id="i-ripristino" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2"/><path d="M3.5 4.5V9H8M12 8v4.2l3 1.8"/></symbol><symbol id="i-bersaglio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.2"/></symbol><symbol id="i-salva" viewBox="0 0 24 24"><path d="M5 4.5h11.5l3 3V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5a.5.5 0 0 1 .5-.5z"/><path d="M8 4.5V9h7V4.5M8 20.5v-6h8v6"/></symbol><symbol id="i-aggiorna" viewBox="0 0 24 24"><path d="M20 11.5A8 8 0 0 0 5.6 7M4 4v3.5h3.5M4 12.5A8 8 0 0 0 18.4 17M20 20v-3.5h-3.5"/></symbol><symbol id="i-graffetta" viewBox="0 0 24 24"><path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.4 8.4a1.8 1.8 0 0 1-2.6-2.6l7.6-7.6"/></symbol><symbol id="i-domanda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.7M12 16.8v.2"/></symbol><symbol id="i-telefono" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.2a10 10 0 0 0 6.3 6.3l1.2-2 4 1.5v3a2 2 0 0 1-2 2A15.5 15.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></symbol><symbol id="i-cellulare" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-esterno" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7.5A1.5 1.5 0 0 1 5 6h5"/></symbol><symbol id="i-esci" viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M10 16.5 14.5 12 10 7.5M14.5 12H4"/></symbol><symbol id="i-corona" viewBox="0 0 24 24"><path d="M4 19h16M5 16 3.5 7l5 3.5L12 5l3.5 5.5 5-3.5L19 16z"/></symbol><symbol id="i-nuvola" viewBox="0 0 24 24"><path d="M7.5 18.5h10a4 4 0 0 0 .5-8A6 6 0 0 0 6.5 9a4.8 4.8 0 0 0 1 9.5z"/></symbol><symbol id="i-invia" viewBox="0 0 24 24"><path d="M20.5 3.5 10 14M20.5 3.5 14 20.5l-4-6.5-6.5-4z"/></symbol><symbol id="i-scambia" viewBox="0 0 24 24"><path d="M7 7.5h12.5M16 4l3.5 3.5L16 11M17 16.5H4.5M8 13l-3.5 3.5L8 20"/></symbol><symbol id="i-sposta" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-piedi" viewBox="0 0 24 24"><circle cx="13.5" cy="4.5" r="1.8"/><path d="M9.5 21l2.2-6.2 2.8 2.7V21M10.2 11.5l1.8-4 3 1.2 1.8 3.3M12 7.5 9 9.4l-1.2 3"/></symbol><symbol id="i-bici" viewBox="0 0 24 24"><circle cx="6" cy="16.5" r="3.5"/><circle cx="18" cy="16.5" r="3.5"/><path d="m6 16.5 4-7h5.5l2.5 7M9 9.5h3M12.5 16.5l3-7"/></symbol><symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 16.5v-4.3L6.2 7h11.6l2.2 5.2v4.3"/><path d="M4 12.5h16M4 16.5h2M18 16.5h2M9 16.5h6"/><circle cx="7.5" cy="16.5" r="1.7"/><circle cx="16.5" cy="16.5" r="1.7"/></symbol><symbol id="i-treno" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="13" rx="3"/><path d="M6 10.5h12M9 20.5l1.5-4M15 20.5l-1.5-4M9.5 13.5v.1M14.5 13.5v.1"/></symbol><symbol id="i-metro" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 15.5v-7l4 4.5 4-4.5v7"/></symbol><symbol id="i-bus" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="14" rx="2.5"/><path d="M5 11h14M8 20.5v-3M16 20.5v-3M8.5 14.5v.1M15.5 14.5v.1"/></symbol><symbol id="i-bagno" viewBox="0 0 24 24"><circle cx="8" cy="5" r="1.6"/><circle cx="16.5" cy="5" r="1.6"/><path d="M6.5 21v-5.5H5L6.5 9h3l1.5 6.5H9.5V21M15 21v-7h-1V9.5h5V14h-1v7"/></symbol><symbol id="i-fumo" viewBox="0 0 24 24"><path d="M3.5 14.5h12v3.5h-12zM18 14.5V18M20.5 14.5V18M18 11.5c0-2 2.5-2 2.5-4.5"/></symbol><symbol id="i-bancomat" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M7 14.5h3"/></symbol><symbol id="i-carrello" viewBox="0 0 24 24"><path d="M3.5 4.5h2l2.2 10.5h10l2-7.5H6.6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></symbol><symbol id="i-farmacia" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8v8M8 12h8"/></symbol><symbol id="i-posate" viewBox="0 0 24 24"><path d="M7 3.5v17M5 3.5V8a2 2 0 0 0 4 0V3.5M16.5 20.5v-17c-2 1-3 3.5-3 6.5 0 1.5 1 2.5 3 2.5"/></symbol><symbol id="i-bicchiere" viewBox="0 0 24 24"><path d="M5 4.5h14l-7 8V20M8.5 20h7M7.5 7.5h9"/></symbol><symbol id="i-sole" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.5 12h-2M21.5 12h-2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol><symbol id="i-luna" viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5 8 8 0 1 0 19.5 14.5z"/></symbol><symbol id="i-attenzione" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.2"/></symbol><symbol id="i-cuore" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.5 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-pausa" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol><symbol id="i-mirino" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol><symbol id="i-casa" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol></svg>
+<svg class="icone" width="0" height="0" aria-hidden="true" focusable="false"><symbol id="i-chiudi" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol><symbol id="i-piu" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-meno" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-modifica" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="m14 7 3 3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-cestino" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5h6V7"/></symbol><symbol id="i-condividi" viewBox="0 0 24 24"><path d="M12 15V3.5M8 7.5l4-4 4 4" style="stroke:var(--ico-d,currentColor)"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v6A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H16"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3.2-3.2a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3.2 3.2a4 4 0 0 0 5.7 5.7l1.2-1.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-persone" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.3 2.8-5.3 5.5-5.3s4.9 2 5.5 5.3"/><circle cx="16.8" cy="9.3" r="2.6" style="stroke:var(--ico-d,currentColor)"/><path d="M16 14.2c2.3.2 4 1.9 4.6 5.3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-utente" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8" style="stroke:var(--ico-d,currentColor)"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></symbol><symbol id="i-valigia" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2.5"/><path d="M9 7V5.2A1.2 1.2 0 0 1 10.2 4h3.6A1.2 1.2 0 0 1 15 5.2V7M9 11v5M15 11v5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-aereo" viewBox="0 0 24 24"><path d="M12 2.5c.9 0 1.5 1 1.5 2.5v4.2l7 4.3v2l-7-2.2v4.2l2.2 1.7v1.6L12 20l-3.7.8v-1.6l2.2-1.7v-4.2l-7 2.2v-2l7-4.3V5c0-1.5.6-2.5 1.5-2.5z"/><path d="M12 6.2v1.6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-mappa" viewBox="0 0 24 24"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bussola" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-posizione" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-calendario" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-orologio" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2" style="stroke:var(--ico-d,currentColor)"/><path d="M9.2 2.6h5.6"/></symbol><symbol id="i-documento" viewBox="0 0 24 24"><path d="M14 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3.5V8h4.5M9 13h6M9 16.5h6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-libro" viewBox="0 0 24 24"><path d="M12 6.5C10 5 7 4.6 4 5v13.5c3-.4 6 0 8 1.5 2-1.5 5-1.9 8-1.5V5c-3-.4-6 0-8 1.5z"/><path d="M12 6.5V20" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bandiera" viewBox="0 0 24 24"><path d="M5.5 21V4"/><path d="M5.5 4.5h11l-2 4 2 4h-11" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-spunta" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol><symbol id="i-stella" viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.1 5.6.8-4 3.9 1 5.6-5.1-2.6-5 2.6 1-5.6-4.1-3.9 5.6-.8z"/><path d="M12 10.8v2.4" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-cerca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-fotocamera" viewBox="0 0 24 24"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-immagine" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7" style="stroke:var(--ico-d,currentColor)"/><path d="m20.5 15.5-4.5-4.5-8.5 8.5"/></symbol><symbol id="i-penna" viewBox="0 0 24 24"><path d="M4 20.5h16" style="stroke:var(--ico-d,currentColor)"/><path d="M6.5 16.5 15 8l2.5 2.5L9 19H6.5z"/></symbol><symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4 7 8 6 8-6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-megafono" viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l7 4.5v-15L7 9H5a1 1 0 0 0-1 1z"/><path d="M17.5 9a4 4 0 0 1 0 6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-campanella" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-globo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3.2 2.8 14.8 0 18M12 3c-2.8 3.2-2.8 14.8 0 18" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-scarica" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 20h14" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-copia" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5v-3A1.5 1.5 0 0 0 14 4H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 4v-4h-1a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/><path d="M8.5 11h7" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bacchetta" viewBox="0 0 24 24"><path d="m4.5 19.5 11-11"/><path d="M17.5 3.5v3M16 5h3M20 9v2M19 10h2M12 3.5v1.5M11.2 4.2h1.6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-scintille" viewBox="0 0 24 24"><path d="M11 3.5 12.8 9l5.7 1.8-5.7 1.7L11 18l-1.8-5.5-5.7-1.7L9.2 9z"/><path d="M18.5 15.5v5M16 18h5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-ordina" viewBox="0 0 24 24"><path d="M7.5 4v16M4.5 7l3-3 3 3"/><path d="M16.5 20V4M13.5 17l3 3 3-3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-letto" viewBox="0 0 24 24"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9" style="stroke:var(--ico-d,currentColor)"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></symbol><symbol id="i-biglietto" viewBox="0 0 24 24"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-soldi" viewBox="0 0 24 24"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4" style="stroke:var(--ico-d,currentColor)"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-tabella" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-chiave" viewBox="0 0 24 24"><circle cx="8" cy="15.5" r="4" style="stroke:var(--ico-d,currentColor)"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M14 9l2 2"/></symbol><symbol id="i-annulla" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5" style="stroke:var(--ico-d,currentColor)"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-avanti" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol><symbol id="i-indietro" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol><symbol id="i-giu" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-su" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-nota" viewBox="0 0 24 24"><path d="M14 3.5H6.5A1.5 1.5 0 0 0 5 5v14a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V8.5z"/><path d="M8.5 12h7M8.5 15.5h4.5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-ripristino" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2"/><path d="M3.5 4.5V9H8M12 8v4.2l3 1.8" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bersaglio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-salva" viewBox="0 0 24 24"><path d="M5 4.5h11.5l3 3V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5a.5.5 0 0 1 .5-.5z"/><path d="M8 4.5V9h7V4.5M8 20.5v-6h8v6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-aggiorna" viewBox="0 0 24 24"><path d="M20 11.5A8 8 0 0 0 5.6 7M4 4v3.5h3.5"/><path d="M4 12.5A8 8 0 0 0 18.4 17M20 20v-3.5h-3.5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-graffetta" viewBox="0 0 24 24"><path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8"/><path d="M18 8.9l-8.4 8.4a1.8 1.8 0 0 1-2.6-2.6l7.6-7.6" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-domanda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.5v.7M12 16.8v.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-telefono" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.2a10 10 0 0 0 6.3 6.3l1.2-2 4 1.5v3a2 2 0 0 1-2 2A15.5 15.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/><path d="M14.5 3.8a5.8 5.8 0 0 1 5.7 5.7" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-cellulare" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-esterno" viewBox="0 0 24 24"><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7.5A1.5 1.5 0 0 1 5 6h5"/><path d="M14 4h6v6M20 4l-9 9" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-esci" viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16.5 14.5 12 10 7.5M14.5 12H4" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-corona" viewBox="0 0 24 24"><path d="M5 16 3.5 7l5 3.5L12 5l3.5 5.5 5-3.5L19 16z"/><path d="M4 19h16" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-nuvola" viewBox="0 0 24 24"><path d="M7.5 18.5h10a4 4 0 0 0 .5-8A6 6 0 0 0 6.5 9a4.8 4.8 0 0 0 1 9.5z"/><path d="M9.5 12.2a3 3 0 0 1 3-2.2" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-invia" viewBox="0 0 24 24"><path d="M20.5 3.5 14 20.5l-4-6.5-6.5-4z"/><path d="M20.5 3.5 10 14" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-scambia" viewBox="0 0 24 24"><path d="M7 7.5h12.5M16 4l3.5 3.5L16 11"/><path d="M17 16.5H4.5M8 13l-3.5 3.5L8 20" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-sposta" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5" style="stroke:var(--ico-d,currentColor)"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-piedi" viewBox="0 0 24 24"><circle cx="13.5" cy="4.5" r="1.8" style="stroke:var(--ico-d,currentColor)"/><path d="M9.5 21l2.2-6.2 2.8 2.7V21M10.2 11.5l1.8-4 3 1.2 1.8 3.3M12 7.5 9 9.4l-1.2 3"/></symbol><symbol id="i-bici" viewBox="0 0 24 24"><circle cx="6" cy="16.5" r="3.5"/><circle cx="18" cy="16.5" r="3.5"/><path d="m6 16.5 4-7h5.5l2.5 7M9 9.5h3M12.5 16.5l3-7" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 16.5v-4.3L6.2 7h11.6l2.2 5.2v4.3"/><path d="M4 12.5h16M4 16.5h2M18 16.5h2M9 16.5h6"/><circle cx="7.5" cy="16.5" r="1.7" style="stroke:var(--ico-d,currentColor)"/><circle cx="16.5" cy="16.5" r="1.7" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-treno" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="13" rx="3"/><path d="M6 10.5h12M9 20.5l1.5-4M15 20.5l-1.5-4M9.5 13.5v.1M14.5 13.5v.1" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-metro" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 15.5v-7l4 4.5 4-4.5v7" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bus" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="14" rx="2.5"/><path d="M5 11h14M8 20.5v-3M16 20.5v-3M8.5 14.5v.1M15.5 14.5v.1" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bagno" viewBox="0 0 24 24"><circle cx="8" cy="5" r="1.6" style="stroke:var(--ico-d,currentColor)"/><circle cx="16.5" cy="5" r="1.6" style="stroke:var(--ico-d,currentColor)"/><path d="M6.5 21v-5.5H5L6.5 9h3l1.5 6.5H9.5V21M15 21v-7h-1V9.5h5V14h-1v7"/></symbol><symbol id="i-fumo" viewBox="0 0 24 24"><path d="M3.5 14.5h12v3.5h-12z"/><path d="M18 14.5V18M20.5 14.5V18M18 11.5c0-2 2.5-2 2.5-4.5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bancomat" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M7 14.5h3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-carrello" viewBox="0 0 24 24"><path d="M3.5 4.5h2l2.2 10.5h10l2-7.5H6.6"/><circle cx="9" cy="19" r="1.4" style="stroke:var(--ico-d,currentColor)"/><circle cx="17" cy="19" r="1.4" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-farmacia" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8v8M8 12h8" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-posate" viewBox="0 0 24 24"><path d="M7 3.5v17M5 3.5V8a2 2 0 0 0 4 0V3.5"/><path d="M16.5 20.5v-17c-2 1-3 3.5-3 6.5 0 1.5 1 2.5 3 2.5" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-bicchiere" viewBox="0 0 24 24"><path d="M5 4.5h14l-7 8V20M8.5 20h7"/><path d="M7.5 7.5h9" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-sole" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.5 12h-2M21.5 12h-2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-luna" viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5 8 8 0 1 0 19.5 14.5z"/><path d="M17.5 3.5v3M16 5h3" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-attenzione" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.2"/></symbol><symbol id="i-cuore" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.5 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M7.5 10.2a2 2 0 0 1 1.6-1.8" style="stroke:var(--ico-d,currentColor)"/></symbol><symbol id="i-pausa" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol><symbol id="i-mirino" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" style="stroke:var(--ico-d,currentColor)"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol><symbol id="i-casa" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5" style="stroke:var(--ico-d,currentColor)"/></symbol></svg>
 <!-- Dove VoiceOver legge i messaggi in basso (vedi annuncia) -->
 <div id="annunci" class="solo-lettore" role="status" aria-live="polite"></div>
 <div class="app">
@@ -2453,19 +2555,22 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
         <div class="brand-name" translate="no">Gepp<span class="brand-go">Go</span></div>
       </div>
       <button class="chip gps-pill" id="gpsPill" onclick="toggleGPS()" title="GPS" aria-label="Attiva o disattiva il GPS"><svg class="gps-ic" viewBox="0 0 24 24"><path d="M12 21s6.8-6 6.8-10.8a6.8 6.8 0 1 0-13.6 0C5.2 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></svg><span class="gps-tx">GPS</span><span class="gps-dot"></span></button>
-      <!-- Il tema non sta piu' qui (Layout 1): si sceglie nel Profilo, e la
-           testata tiene solo quello che serve ogni giorno. -->
+      <!-- Il tema torna qui (Layout 1b), un tasto solo che mostra quello in
+           cui si passa: la luna porta al tema scuro, il sole al chiaro. Nella
+           Layout 1 era solo nel Profilo, e la sera per spegnere la luce
+           bisognava andarlo a cercare; nel Profilo c'e' ancora. -->
+      <button class="th-btn" id="thTema" onclick="cambiaTema()" title="Tema scuro" aria-label="Tema scuro"><svg class="ico" aria-hidden="true"><use href="#i-luna"/></svg></button>
       <button class="tb-profilo" id="tbProfilo" onclick="apriProfilo()" title="Profilo" aria-label="Profilo"></button>
     </div>
   </div>
   <nav class="nav"><div class="nav-track">
-    <button type="button" class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13"/></svg></button>
-    <button type="button" class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2"/><path d="M9.2 2.6h5.6"/></svg></button>
-    <button type="button" class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6"/></svg></button>
-    <button type="button" class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8"/></svg></button>
-    <button type="button" class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></button>
-    <button type="button" class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2"/></svg></button>
-    <button type="button" class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2"/></svg></button>
+    <button type="button" class="nav-item active" data-p="plan" onclick="go('plan')" title="Home" aria-label="Home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z"/><path d="M9 4v13M15 6.5v13" style="stroke:var(--ico-d,currentColor)"/></svg></button>
+    <button type="button" class="nav-item" data-p="mDay" onclick="openTimetable()" title="Time Table" aria-label="Time Table"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.6"/><path d="M12 9.3V13l2.6 2" style="stroke:var(--ico-d,currentColor)"/><path d="M9.2 2.6h5.6"/></svg></button>
+    <button type="button" class="nav-item" data-p="discover" onclick="go('discover')" title="Scopri" aria-label="Scopri"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.6 4.6" style="stroke:var(--ico-d,currentColor)"/></svg></button>
+    <button type="button" class="nav-item" data-p="money" onclick="go('money')" title="Spese" aria-label="Spese"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.1 3.3h5.8l-1.5 2.8h-2.8z"/><path d="M10.6 6.1C7.4 7.5 5.2 10.3 5.2 13.6c0 4 3.1 7.1 6.8 7.1s6.8-3.1 6.8-7.1c0-3.3-2.2-6.1-5.4-7.5"/><path d="M12 9.9v7.4" style="stroke:var(--ico-d,currentColor)"/><path d="M13.9 11.6c-.4-.5-1.1-.8-1.9-.8-1.1 0-1.9.6-1.9 1.4 0 2 3.8 1.1 3.8 3.1 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.8" style="stroke:var(--ico-d,currentColor)"/></svg></button>
+    <button type="button" class="nav-item" data-p="hotels" onclick="go('hotels')" title="Hotel" aria-label="Hotel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 19.5v-9M3.2 14.2h17.6v5.3"/><circle cx="7.6" cy="11.4" r="1.9" style="stroke:var(--ico-d,currentColor)"/><path d="M11.4 14.2v-3.4h6.1a3.3 3.3 0 0 1 3.3 3.4"/></svg></button>
+    <button type="button" class="nav-item" data-p="tickets" onclick="go('tickets')" title="Biglietti" aria-label="Biglietti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 9.2V7.4a1 1 0 0 1 1-1h14.8a1 1 0 0 1 1 1v1.8a2.8 2.8 0 0 0 0 5.6v1.8a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1v-1.8a2.8 2.8 0 0 0 0-5.6Z"/><path d="M14.2 6.4v11.2" style="stroke:var(--ico-d,currentColor)"/></svg></button>
+    <button type="button" class="nav-item" data-p="identify" onclick="go('identify')" title="Identifica" aria-label="Identifica"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 8.9h3.3l1.4-2.1h7.8l1.4 2.1h3.3a.9.9 0 0 1 .9.9v7.9a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9V9.8a.9.9 0 0 1 .9-.9Z"/><circle cx="12" cy="13.7" r="3.2" style="stroke:var(--ico-d,currentColor)"/></svg></button>
     <!-- Il Profilo non sta piu' qui: sta in fondo al cassetto delle tre
          righine. La barra in basso e' per i posti dove si va camminando, e
          nel Profilo non ci si va camminando: ci si va una volta ogni tanto,
@@ -2707,28 +2812,37 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
            da solo non dice in che parte dell'app sei finito. -->
       <div class="hh-eyebrow hh-tap" id="ttEyebrow" onclick="openTripZoom(T().id)">Viaggio · Giorno <svg class="ico hh-chev" aria-hidden="true"><use href="#i-avanti"/></svg></div>
       <div class="tt-title">Time Table</div>
-      <div class="tt-sub" id="dayTt">Giorno</div>
     </div>
     <button class="x x-close" onclick="go('plan')" title="Torna alla home" aria-label="Torna alla home"><svg class="ico" aria-hidden="true"><use href="#i-chiudi"/></svg></button>
   </div>
-  <!-- Le frecce ‹ › non ci sono piu' (Layout 1): erano tasti fatti di un
+  <!-- La testata del giorno: la data e i giorni restano fermi in alto mentre
+       la giornata scorre (Layout 1b). Aprendo sulla prossima tappa, o
+       scorrendo fino alla sera, si sa sempre che giorno si sta guardando, e
+       si cambia senza tornare su.
+       Le frecce ‹ › non ci sono piu' (Layout 1): erano tasti fatti di un
        carattere solo. Il giorno si cambia toccandolo qui o scorrendo col dito
        sulla giornata (ttNav). -->
-  <div class="tt-daynav">
-    <div class="giorni" id="dayChips" style="flex:1"></div>
+  <div class="tt-testata" id="ttTestata">
+    <div class="tt-sub" id="dayTt">Giorno</div>
+    <div class="tt-daynav">
+      <div class="giorni" id="dayChips" style="flex:1"></div>
+    </div>
   </div>
-  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:180px;border-radius:var(--r-ctl);margin-bottom:var(--sp-3);overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><button class="chip mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div>
+  <div id="dayMapWrap" class="map-wrap" style="display:none"><div id="dayMap" style="height:130px;border-radius:var(--r-ctl);margin-bottom:var(--sp-2);overflow:hidden"></div><button class="locate-fab" id="locateFabDay" onclick="locateFabDay()" title="La mia posizione" aria-label="La mia posizione"><svg class="ico" aria-hidden="true"><use href="#i-mirino"/></svg></button><button class="chip mappa-tutto" onclick="apriMappaViaggio()">Tutto il viaggio ›</button></div>
   <!-- La mappa di tutto il viaggio anche nei giorni senza la mappa del giorno
        (nessuna tappa con una posizione): al suo posto, una riga. -->
   <button class="btn btn-secondario tt-tutto" id="ttTutto" style="display:none" onclick="apriMappaViaggio()"><svg class="ico" aria-hidden="true"><use href="#i-mappa"/></svg>Tutto il viaggio ›</button>
-  <div id="dayWx" style="display:none;font-size:var(--fs-s);font-weight:700;color:var(--ink-soft);margin-bottom:var(--sp-2)"></div>
+  <div id="dayWx" style="display:none;font-size:var(--fs-s);font-weight:700;color:var(--ink-soft)"></div>
   <div id="dayRainTip"></div>
   <div id="dayRainSwaps"></div>
   <!-- Erano quattro inviti in tre stili diversi, uno accanto all'altro, e
        spingevano la giornata sotto la piega. Qui restano i due che si usano
        CAMMINANDO: portami in giro, e chiedi una cosa. Gli altri due si usano
        da fermi mentre il viaggio si costruisce, e stanno dietro una porta
-       che dice cosa c'e' dentro. -->
+       che dice cosa c'e' dentro.
+       Tutti e quattro stanno in un gruppo, staccato dalla mappa sopra e dalla
+       giornata sotto (Layout 1b, «Respiro»). -->
+  <div class="tt-strumenti">
   <div class="tt-azioni">
     <button class="btn btn-secondario tt-az" onclick="navigaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-bussola"/></svg>Naviga la giornata</button>
     <button class="btn btn-secondario tt-az" onclick="openAssistenteGiorno()"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg>Chiedi all'assistente</button>
@@ -2740,6 +2854,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
   <div class="tt-azioni">
     <button class="btn btn-secondario tt-az" onclick="sistemaGiornata()"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Ordina il giro</button>
     <button class="btn btn-secondario tt-az" onclick="openGenForDay()"><svg class="ico" aria-hidden="true"><use href="#i-bacchetta"/></svg>Autopilota</button>
+  </div>
   </div>
   <div id="dayPhotos" style="display:flex;gap:var(--sp-2);overflow-x:auto;margin-bottom:var(--sp-2)"></div>
   <input type="file" id="phInput" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
@@ -4651,9 +4766,14 @@ function ico(nome){return `<svg class="ico" aria-hidden="true"><use href="#i-${n
 function caselleGiorni(giorni,{scelto=-1,tocca=null}={}){
   return giorni.map((g,j)=>{
     const dt=new Date(g.date),ok=!isNaN(dt.getTime());
-    const sett=ok?dt.toLocaleDateString(loc(),{weekday:'short'}).replace(/\.$/,''):tv('G{1}',j+1);
+    /* Tre lettere al massimo: il giorno sta in un tondo da 46 px. Il
+       portoghese del Portogallo abbrevia scrivendo il nome intero
+       («segunda», «sábado», «domingo»), che dal tondo usciva; le sue prime
+       tre lettere sono le abbreviazioni di sempre (seg, sáb, dom), e nelle
+       altre lingue il nome corto ne ha gia' tre. */
+    const sett=ok?dt.toLocaleDateString(loc(),{weekday:'short'}).replace(/\.$/,'').slice(0,3):tv('G{1}',j+1);
     const num=ok?dt.getDate():'?';
-    const cls='giorno'+(j===scelto?' on':'')+(g.manca?' manca':'');
+    const cls='giorno'+(j===scelto?' on':'')+(g.manca?' manca':'')+(g.coperta?' coperta':'');
     const dentro=`<span class="giorno-s">${esc(sett)}</span><span class="giorno-n">${num}</span>${g.meteo?`<span class="giorno-m" aria-hidden="true">${g.meteo}</span>`:''}`;
     return tocca?`<button class="${cls}" onclick="${tocca(j)}" aria-pressed="${j===scelto}"${g.titolo?` title="${esc(g.titolo)}"`:''}>${dentro}</button>`:`<span class="${cls}">${dentro}</span>`;
   }).join('');
@@ -13772,7 +13892,9 @@ const DIZIONARIO_STILE={
     'Elimina attività':'Delete activity',
     'Prenotare: {1}':'Book: {1}',
     'Aggiungi tutti alla mappa':'Add them all to the map',
-    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Rough location: tap Edit and paste the Google Maps link'
+    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Rough location: tap Edit and paste the Google Maps link',
+    'Mostra le ore prima':'Show earlier hours',
+    'Come funziona':'How it works'
   },
   es:{
     'Aggiorna':'Actualizar',
@@ -13784,7 +13906,9 @@ const DIZIONARIO_STILE={
     'Elimina attività':'Eliminar actividad',
     'Prenotare: {1}':'Reservar: {1}',
     'Aggiungi tutti alla mappa':'Añadir todos al mapa',
-    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Ubicación aproximada: toca Editar y pega el enlace de Google Maps'
+    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Ubicación aproximada: toca Editar y pega el enlace de Google Maps',
+    'Mostra le ore prima':'Mostrar las horas anteriores',
+    'Come funziona':'Cómo funciona'
   },
   fr:{
     'Aggiorna':'Actualiser',
@@ -13796,7 +13920,9 @@ const DIZIONARIO_STILE={
     'Elimina attività':'Supprimer l’activité',
     'Prenotare: {1}':'Réserver : {1}',
     'Aggiungi tutti alla mappa':'Tout ajouter à la carte',
-    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Position approximative : touche Modifier et colle le lien Google Maps'
+    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Position approximative : touche Modifier et colle le lien Google Maps',
+    'Mostra le ore prima':'Afficher les heures précédentes',
+    'Come funziona':'Comment ça marche'
   },
   pt:{
     'Aggiorna':'Atualizar',
@@ -13808,7 +13934,9 @@ const DIZIONARIO_STILE={
     'Elimina attività':'Eliminar atividade',
     'Prenotare: {1}':'Reservar: {1}',
     'Aggiungi tutti alla mappa':'Adicionar todos ao mapa',
-    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Localização aproximada: toca em Editar e cola o link do Google Maps'
+    'Posizione approssimativa: tocca Modifica e incolla il link di Google Maps':'Localização aproximada: toca em Editar e cola o link do Google Maps',
+    'Mostra le ore prima':'Mostrar as horas anteriores',
+    'Come funziona':'Como funciona'
   }
 };
 Object.keys(DIZIONARIO_STILE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_STILE[l]));
@@ -14491,6 +14619,12 @@ function go(p){
   /* aria-current: VoiceOver dice «pagina corrente» sulla voce accesa, che a
      vederla si riconosce solo dal colore */
   document.querySelectorAll('.nav-item').forEach(n=>{n.classList.remove('active');n.removeAttribute('aria-current');});
+  /* Le pagine scorrono tutte nello stesso contenitore: senza rimetterlo in
+     cima, una pagina si apriva all'altezza a cui si era lasciata l'altra, e
+     dopo una Home lunga la Time Table o le Spese comparivano in fondo
+     (Layout 1b). Chi deve aprirsi in un punto preciso ci va da se', dopo. */
+  const prima=document.querySelector('.page.active');
+  if(!prima||prima.id!==p){const sc=document.querySelector('.scroll');if(sc)sc.scrollTop=0;}
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   /* Non tutte le pagine hanno una voce nella barra: il Profilo si apre dal
      cassetto e nella barra non c'e' piu'. Prima questa riga dava per
@@ -14790,8 +14924,14 @@ function aggiornaTestata(){
     p.textContent=ini||t('Profilo');
     p.classList.toggle('parola',!ini);
   }
+  const th=document.getElementById('thTema');
+  if(th){
+    const scuro=!!app.settings.dark,dice=t(scuro?'Tema chiaro':'Tema scuro');
+    th.innerHTML=ico(scuro?'sole':'luna');th.title=dice;th.setAttribute('aria-label',dice);
+  }
   testataStretta();
 }
+function cambiaTema(){toggleDark(!app.settings.dark);}
 /* Senza un viaggio aperto nella riga ci sono «I tuoi viaggi» e il marchio,
    e a 320 px (in portoghese anche a 375) non ci stanno tutti e due. Vince la
    scritta, che dice cosa apre il tasto: il marchio c'e' anche subito sotto,
@@ -16656,7 +16796,7 @@ function sembraUnComando(s){
    viaggia in ogni richiesta. Se si sposta qualcosa nell'app, va aggiornata. */
 const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - La barra in basso, da sinistra: Home, Time Table, Scopri, Spese (l'icona e' un sacchetto di soldi), Hotel, Biglietti, Identifica. Sono sette e sono tutte. Sotto le icone non ci sono scritte (a 320 px non ci stanno). Il Profilo NON e' una voce della barra: si apre col tondo con l'iniziale in alto a destra (senza un nome c'e' la scritta "Profilo"), e c'e' anche in fondo al cassetto delle tre righine. Il Meteo NON e' una voce della barra: si apre da "22° · Meteo ›" in cima alla Home. Il Budget non e' piu' una voce a se': sta dentro Spese, si passa dall'una all'altra con l'interruttore in cima alla pagina. La sezione Impostazioni non esiste piu' come voce a se': il suo contenuto sta dentro il Profilo.
-- Le TRE RIGHINE in alto a sinistra, col nome del viaggio aperto accanto e la freccina ("Lisbona ▾"): un tocco apre un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "Aggiungi viaggio", "Importa da Excel", "Ho un codice" (per entrare in un viaggio a cui si e' stati invitati), e in fondo al cassetto il PROFILO. E' l'unico modo di cambiare viaggio. Il cassetto si richiude ritoccando il nome del viaggio o toccando fuori. In alto a destra ci sono la pillola "GPS" (accende e spegne la posizione) e il tondo con l'iniziale, che apre il Profilo con un tocco. Il tasto del tema in alto non c'e' piu': il tema scuro si accende nel Profilo ("Tema scuro"). Senza un viaggio aperto, accanto alle tre righine c'e' la scritta "I tuoi viaggi" e la pillola GPS non c'e'. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
+- Le TRE RIGHINE in alto a sinistra, col nome del viaggio aperto accanto e la freccina ("Lisbona ▾"): un tocco apre un cassetto che esce da sinistra. Dentro, in quest'ordine: i viaggi in corso (si tocca quello che si vuole e ci si va), "Aggiungi viaggio", "Importa da Excel", "Ho un codice" (per entrare in un viaggio a cui si e' stati invitati), e in fondo al cassetto il PROFILO. E' l'unico modo di cambiare viaggio. Il cassetto si richiude ritoccando il nome del viaggio o toccando fuori. In alto a destra ci sono la pillola "GPS" (accende e spegne la posizione), il tondo del tema (la luna passa al tema scuro, il sole torna al chiaro) e il tondo con l'iniziale, che apre il Profilo con un tocco. Il tema si cambia anche nel Profilo ("Tema scuro"). Senza un viaggio aperto, accanto alle tre righine c'e' la scritta "I tuoi viaggi" e la pillola GPS non c'e'. In cima alla home i nomi dei viaggi NON ci sono piu': c'era una fila di pillole e adesso non c'e'.
 - Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nella time-table, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
@@ -17224,6 +17364,30 @@ const DISTANT_GAP_MIN=180;
    Usata sia per disegnare i blocchi sia (deve restare la stessa!) per la
    matematica di trascinamento/ridimensionamento più sotto. */
 const TT_H=64;
+/* Da che minuto parte la griglia (Layout 1b). Le ore si contano sempre dalle
+   06:00 in su, ma le ore vuote prima della prima tappa non si disegnano:
+   erano due o tre ore di righe vuote che spingevano la giornata sotto lo
+   schermo, e aprendo in cima non si vedeva nessuna tappa. Si parte dall'ora
+   piena prima della prima tappa (almeno un quarto d'ora di margine), oggi
+   anche da adesso se viene prima; «Mostra le ore prima» rimette le 06:00 per
+   chi vuole spostare una tappa piu' presto. Tutti i conti di posizione e di
+   trascinamento passano da ttDa, mai da un'ora scritta a mano. */
+let ttDa=360,ttTutteLeOre=false;
+function ttInizio(t,idxs){
+  if(ttTutteLeOre)return 360;
+  let primo=null;
+  const presto=m=>{if(m!=null&&(primo===null||m<primo))primo=m;};
+  idxs.forEach(di=>{
+    const d=t.days[di];if(!d)return;
+    (d.activities||[]).forEach(a=>{const r=actRange(a);if(r)presto(r[0]);});
+    /* la tappa che continua da ieri si disegna dall'inizio della griglia */
+    const pd=t.days[di-1];
+    if(pd&&(pd.activities||[]).some(a=>a.nextDay&&a.time))presto(360);
+    if(d.date===oggiISO()){const n=new Date();presto(n.getHours()*60+n.getMinutes());}
+  });
+  if(primo===null)return 360;
+  return Math.max(360,Math.min(1380,Math.floor((primo-15)/60)*60));
+}
 function travelParams(day,modeOverride){
   const mode=modeOverride||(day&&day.travelMode)||'walk';
   return {mode,speed:TRAVEL_SPEED_KMH[mode]||4.5,fuelL100:app.settings.fuelConsumptionL100km||7,fuelPrice:app.settings.fuelPricePerL||1.8};
@@ -25379,8 +25543,10 @@ let ttDay=0,ttWinStart=0,ttSorts=[],dayMapObj=null,adRef=null,fromDayFlag=false,
 function openTimetable(){
   const t=T();if(!t){toast('Crea prima un viaggio');return;}
   if(!t.days.length){fromDayFlag=true;openAddDay();return;}
-  const todayStr=new Date().toISOString().split('T')[0];
-  const idx=t.days.findIndex(x=>x.date===todayStr);
+  /* Ogni volta che si entra, la giornata riparte dalle ore che servono: le
+     ore prima della prima tappa si erano aperte per una volta sola. */
+  ttTutteLeOre=false;
+  const idx=t.days.findIndex(x=>x.date===oggiISO());
   openDay(idx>=0?idx:0);
 }
 function openDay(i){
@@ -25398,37 +25564,64 @@ function openDay(i){
   go('mDay');initTTFab();
   ttApriDoveServe(d);
 }
-/* La griglia parte dalle 06:00 perche' li' comincia il sistema di
-   coordinate, ma quasi nessuno ha una tappa alle sei: aprendo la giornata si
-   vedevano due ore e mezza di righe vuote prima del primo impegno. La
-   griglia non si tocca - le posizioni dei riquadri e il trascinamento
-   contano tutti da quell'ora - si sposta lo sguardo.
-   Se e' oggi e siamo in mezzo alla giornata si va su adesso, che e' quello
-   che uno sta cercando; altrimenti sul primo impegno, con un'ora di griglia
-   sopra per capire che e' una linea del tempo e non un elenco. */
+/* Dove si apre la giornata (Layout 1b). Prima andava sempre sul primo
+   impegno con un'ora di griglia sopra, saltando la testata: non si vedeva
+   che giorno fosse, e con le tappe di sera o una pagina scorsa altrove si
+   finiva in fondo. Adesso:
+   - se e' oggi e c'e' una tappa in corso o ancora da fare, si va su quella,
+     appena sotto la testata del giorno, che resta ferma in alto;
+   - in tutti gli altri casi (giorno passato, futuro, un altro giorno
+     scelto, oggi a giornata finita) si resta in cima: la griglia comincia
+     poco prima della prima tappa (ttInizio), quindi la prima tappa si vede
+     gia' da li'. Su un telefono basso, dove la testata da sola riempie lo
+     schermo, si scende solo quanto basta a vederla intera.
+   Mai in fondo alla pagina.
+   Le misure si prendono mentre la pagina entra salendo di dieci pixel
+   (l'animazione fade di .page): senza togliere quel tratto, la tappa
+   sembrava piu' in basso di dove si ferma, e la giornata scendeva per
+   niente. */
 function ttApriDoveServe(d){
   requestAnimationFrame(()=>{
     const scorre=document.querySelector('.scroll'),corpo=document.getElementById('ttBody');
     if(!scorre||!corpo)return;
-    const riquadri=[...corpo.querySelectorAll('.tt-block')];
+    scorre.scrollTop=0;
+    let entra=0;
+    try{const tr=getComputedStyle(document.getElementById('mDay')).transform;if(tr&&tr!=='none')entra=new DOMMatrixReadOnly(tr).m42||0;}catch(e){}
+    /* in orizzontale, coi giorni affiancati, conta la colonna del giorno scelto */
+    const zona=corpo.querySelector('.tt-col-active')||corpo;
+    const riquadri=[...zona.querySelectorAll('.ttgrid > .tt-block[data-id]')];
     if(!riquadri.length)return;   /* giornata vuota: si resta in cima */
-    let mira=riquadri[0];
-    const oggi=new Date();
-    if(d&&String(d.date)===oggi.toISOString().slice(0,10)){
-      const ora=oggi.getHours()*60+oggi.getMinutes();
-      const dopo=riquadri.find(el=>{
+    const alto=scorre.getBoundingClientRect().top,giu=Math.max(0,scorre.scrollHeight-scorre.clientHeight-1);
+    const vai=y=>{y=Math.max(0,Math.min(giu,Math.round(y)));try{scorre.scrollTo({top:y,behavior:'auto'});}catch(e){scorre.scrollTop=y;}};
+    let mira=null;
+    if(d&&String(d.date)===oggiISO()){
+      const n=new Date(),ora=n.getHours()*60+n.getMinutes();
+      mira=riquadri.find(el=>{
         const a=(d.activities||[]).find(x=>String(x.id)===el.dataset.id);
         const r=a&&actRange(a);
-        return r&&r[1]>=ora;
-      });
-      if(dopo)mira=dopo;
+        return r&&r[1]>ora;
+      })||null;
     }
-    const alto=scorre.getBoundingClientRect().top;
-    const dove=scorre.scrollTop+(mira.getBoundingClientRect().top-alto)-TT_H-24;
-    try{scorre.scrollTo({top:Math.max(0,dove),behavior:'auto'});}
-    catch(e){scorre.scrollTop=Math.max(0,dove);}
+    if(mira){
+      const testa=document.getElementById('ttTestata');
+      const sotto=testa?testa.getBoundingClientRect().height:0;
+      vai(mira.getBoundingClientRect().top-entra-alto-sotto-TT_H/2);
+      return;
+    }
+    /* In cima. Se la barra in basso taglia la prima tappa, si scende di quel
+       tanto, piu' otto pixel d'aria, e non di piu'; se ci sta intera, anche a
+       filo della barra, si resta in cima. «Aggiungi», che galleggia a
+       destra, non conta: copre un angolo, il nome e l'orario restano. */
+    const fondo=riquadri[0].getBoundingClientRect().bottom-entra;
+    const barra=document.querySelector('.nav'),rb=barra&&barra.getBoundingClientRect();
+    const fine=Math.min(scorre.getBoundingClientRect().bottom,rb&&rb.height?rb.top:innerHeight);
+    if(fondo>fine+1)vai(fondo-fine+8);
   });
 }
+/* Le ore prima della prima tappa, per chi vuole spostarne una piu' presto:
+   compaiono dove stava il tasto, e restano finche' non si esce dalla Time
+   Table. */
+function ttMostraPrima(){ttTutteLeOre=true;buildTT();}
 function ttNav(dir){
   togliScorri();
   const t=T();if(!t)return;
@@ -25523,9 +25716,12 @@ function buildTTDayInner(t,di){
   clusters.forEach(cl=>{const ends=[];cl.forEach(it=>{let ci=ends.findIndex(e=>e<=it.r[0]);if(ci<0){ci=ends.length;ends.push(0);}ends[ci]=it.r[1];it.col=ci;});cl.forEach(it=>it.cols=ends.length);});
   let html='';
   const trav=computeDayTravel(d,t);
-  if(trav.totalMin){
-    html+=`<div class="tt-totale" style="font-size:var(--fs-xs);font-weight:700;color:var(--ink-soft);margin-bottom:var(--sp-2)">${modeEmo(trav.mode)} ${trav.stima?'≈ ':''}${fmtMinutes(trav.totalMin)}${tv(' {1} stimati oggi',trav.totalCost!=null?'· '+costoBenzina(trav.totalCost,t.currency):'')}</div>`;
-  }
+  /* Quanto si cammina oggi e, a destra, «Mostra le ore prima» quando le ore
+     prima della prima tappa sono nascoste (vedi ttInizio): una riga sola,
+     perche' la prima tappa si veda gia' aprendo in cima. */
+  const totale=trav.totalMin?`<div class="tt-totale">${modeEmo(trav.mode)} ${trav.stima?'≈ ':''}${fmtMinutes(trav.totalMin)}${tv(' {1} stimati oggi',trav.totalCost!=null?'· '+costoBenzina(trav.totalCost,t.currency):'')}</div>`:'';
+  const prima=(ttDa>360&&di===ttDay)?`<button class="btn btn-terziario btn-compatto tt-prima" onclick="ttMostraPrima()">${ico('su')}${esc(tv('Mostra le ore prima'))}</button>`:'';
+  if(totale||prima)html+=`<div class="tt-riga-ore">${totale}${prima}</div>`;
   /* Quando il gruppo si divide - quattro a Fujiyoshida, due a Disneysea - dall'
      hotel si parte in due direzioni, ma il tratto veniva contato solo per la
      prima: dell'altra non si sapeva ne' quanto ci volesse ne' quanto distasse.
@@ -25544,8 +25740,9 @@ function buildTTDayInner(t,di){
     });
   }
   if(untimed.length)html+='<div class="section-label" style="margin-top:var(--sp-1)">Senza orario · tocca per dare un orario</div>'+untimed.map(a=>`<div class="tt-act ${a.completed?'done':''}" onclick="tapAct(${di},${a.id})"><span class="tname">${wpre(a)}${esc(a.name)}</span><span class="tmeta">${(a.booking&&a.booking.needed)?(a.booking.done?'ok':tv('da prenotare')):((a.senzaPosizione&&a.lat==null)?tv('senza posizione'):'')}</span></div>`).join('');
-  html+=`<div class="ttgrid" style="height:${18*H}px">`;
-  for(let h=6;h<24;h++)html+=`<div class="tt-line" data-h="${h}" style="top:${(h-6)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
+  const daOra=ttDa/60;
+  html+=`<div class="ttgrid" style="height:${(24-daOra)*H}px">`;
+  for(let h=daOra;h<24;h++)html+=`<div class="tt-line" data-h="${h}" style="top:${(h-daOra)*H}px;height:${H}px"><span>${String(h).padStart(2,'0')}</span></div>`;
   /* La riga di adesso, e solo se la giornata e' oggi. Su un giorno che non
      e' oggi non vuol dire niente, e una riga che non vuol dire niente uno
      la legge lo stesso. */
@@ -25558,7 +25755,7 @@ function buildTTDayInner(t,di){
   tops.forEach(it=>{
     const durMin=it.r[1]-it.r[0];
     it.compact=durMin<60;
-    it.top=(it.r[0]-360)/60*H;
+    it.top=(it.r[0]-ttDa)/60*H;
     it.hei=it.compact?Math.max(22,durMin/60*H-2):Math.max(30,durMin/60*H-4);
   });
   /* Chi porta a chi, e quanto spazio c'è in mezzo. Si guarda lo spazio vero -
@@ -25666,7 +25863,7 @@ function buildTTDayInner(t,di){
     if(!a.nextDay||!a.time)return;
     const en=tMin(a.timeEnd);
     let hh2=40,lbl=a.timeEnd?tv('fino alle {1}',a.timeEnd):tv('in mattinata');
-    if(en!=null&&en>360)hh2=Math.max(34,(en-360)/60*H-4);
+    if(en!=null&&en>ttDa)hh2=Math.max(34,(en-ttDa)/60*H-4);
     html+=`<div class="tt-block tt-cont" style="top:2px;height:${hh2}px;left:52px;width:calc(100% - 58px)" onclick="tapAct(${di-1},${a.id})"><span class="tname">↩︎ ${esc(a.name)}</span><span class="tsub">${esc(tv('continua da ieri · {1}',lbl))}${flyTag(a)}</span></div>`;
   });
   html+='</div>';
@@ -25681,6 +25878,9 @@ function buildTT(){
   else if(ttDay>ttWinStart+cols-1)ttWinStart=ttDay-cols+1;
   ttWinStart=Math.max(0,Math.min(ttWinStart,nDays-cols));
   const idxs=[];for(let i=0;i<cols;i++)idxs.push(ttWinStart+i);
+  /* coi giorni affiancati la griglia parte alla stessa ora in tutti, se no
+     le ore non stanno in riga */
+  ttDa=ttInizio(t,idxs);
   let activeTops=null,activeD=null;
   const colsHtml=idxs.map(di=>{
     const r=buildTTDayInner(t,di);
@@ -25802,8 +26002,8 @@ function bindBlockDrag(el,act,t,d){
     }
     if(!on)return;
     const dy=e.clientY-sy;ns=orig+Math.round(dy/TT_H*60/15)*15;
-    ns=Math.max(360,Math.min(1440-dur,ns));
-    el.style.top=((ns-360)/60*TT_H)+'px';
+    ns=Math.max(ttDa,Math.min(1440-dur,ns));
+    el.style.top=((ns-ttDa)/60*TT_H)+'px';
   });
   // agganciato, il dito muove il riquadro e non la pagina
   el.addEventListener('touchmove',e=>{if(on)e.preventDefault();},{passive:false});
@@ -25892,7 +26092,7 @@ function bindChildDrag(el,act,t,d){
     if(!moved)return;
     e.preventDefault();
     const dmin=Math.round(dy/TT_H*60/15)*15;
-    ns=Math.max(360,Math.min(1440-dur,r0+dmin));
+    ns=Math.max(ttDa,Math.min(1440-dur,r0+dmin));
     el.style.top=(top0+(ns-r0)/60*TT_H)+'px';el.style.zIndex=9;
   });
   const fin=e=>{
@@ -25947,6 +26147,7 @@ function buildDayMap(){
   const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&d.date>=h.checkIn&&d.date<h.checkOut);
   clearTimeout(_dayMapAttesa);_dayMapAttesa=null;
   if(dayMapObj){fermaMappa(dayMapObj);try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
+  wrap.classList.remove('con-scheda');
   dayMeMarker=null;dayMeHalo=null;
   /* Senza la mappa del giorno, «Tutto il viaggio» resta: una riga al suo
      posto, se nel viaggio c'e' almeno una tappa con una posizione. */
@@ -25963,6 +26164,9 @@ function buildDayMap(){
     /* a sinistra, come nella mappa del viaggio (vedi initMap): a destra c'e' il 🧭 */
     dirittiMappa(dayMapObj,'bottomleft');
     stratoMappa().addTo(dayMapObj);
+    // «Tutto il viaggio» si fa da parte finche' una scheda e' aperta (vedi .con-scheda)
+    dayMapObj.on('popupopen',()=>wrap.classList.add('con-scheda'));
+    dayMapObj.on('popupclose',()=>wrap.classList.remove('con-scheda'));
     pts.forEach((a,i2)=>{
       const ic=L.divIcon({html:`<div class="pin${a.type==='outdoor'?' fuori':''}" style="width:24px;height:24px">${i2+1}</div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
       L.marker([a.lat,a.lng],{icon:ic}).addTo(dayMapObj).bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>'+esc(tv('ore {1}',a.time)):''}`);
@@ -29491,13 +29695,16 @@ function meteoSeguiLeTappe(t,day){
 /* Dove sei adesso dentro la giornata. Senza, per capire a che punto sei devi
    guardare l'orologio e poi cercare quell'ora nella colonna: due gesti per una
    cosa che una riga dice da sola. */
-function oggiISO(){const x=new Date();x.setHours(0,0,0,0);return x.toISOString().slice(0,10);}
+/* Oggi nel calendario di chi guarda. Prima passava da toISOString, che e'
+   l'ora di Greenwich: in Italia la mezzanotte di oggi e' ancora ieri a
+   Greenwich, e la riga di adesso compariva sul giorno prima (Layout 1b). */
+function oggiISO(){const x=new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');}
 function rigaAdesso(d,H){
   if(!d||d.date!==oggiISO())return '';
   const n=new Date(),ora=n.getHours()+n.getMinutes()/60;
-  if(ora<6||ora>=24)return '';
+  if(ora<ttDa/60||ora>=24)return '';
   const hh=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  return `<div class="tt-ora" id="ttAdesso" style="top:${(ora-6)*H}px"><b>${hh}</b></div>`;
+  return `<div class="tt-ora" id="ttAdesso" style="top:${(ora-ttDa/60)*H}px"><b>${hh}</b></div>`;
 }
 /* E poi si muove da sola. Ridisegnare tutta la time-table ogni minuto
    costerebbe caro e farebbe saltare un trascinamento a meta': qui si sposta
@@ -29507,9 +29714,9 @@ function adessoCammina(){
   const pag=document.getElementById('mDay');
   if(!pag||!pag.classList.contains('active'))return;
   const n=new Date(),ora=n.getHours()+n.getMinutes()/60;
-  if(ora<6||ora>=24){el.style.display='none';return;}
+  if(ora<ttDa/60||ora>=24){el.style.display='none';return;}
   el.style.display='';
-  el.style.top=((ora-6)*TT_H)+'px';
+  el.style.top=((ora-ttDa/60)*TT_H)+'px';
   const b=el.querySelector('b');
   if(b)b.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
   oraFaPosto();
@@ -29560,15 +29767,18 @@ function renderRainTip(){
   /* il giorno da solo, per il tasto: tagliato da bd, in inglese restava la virgola («Saturday,») */
   const giornoAsciutto=asciutto?new Date(t.days[best].date).toLocaleDateString(loc(),{weekday:'long'}):'';
   const quante=tp(outs.length,"{1} tappa all'aperto","{1} tappe all'aperto");
-  box.innerHTML=`<div style="background:var(--clay-tint);border:1px solid var(--clay-bordo);border-radius:var(--r-ctl);padding:var(--sp-3);margin-bottom:var(--sp-3)">
-    <div style="font-weight:700;font-size:var(--fs-m);color:var(--clay-deep)">${tv('⛈️ {1}, {2} mm di pioggia',wxDesc(w.code),w.precipitation)}</div>
-    <div style="font-size:var(--fs-s);color:var(--ink-soft);margin:var(--sp-1) 0 var(--sp-3);line-height:1.5"><span>${tv('{1} in questa giornata: {2}{3}.',quante,esc(outs.slice(0,3).map(a=>a.name).join(', ')),outs.length>3?tv(' e altre {1}',outs.length-3):'')}</span>${asciutto?` <b>${bd}</b><span> ${bw<1?tv('è previsto asciutto.'):tv('è previsto quasi asciutto.')}</span>`:''}</div>
-    <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap">
-      <button class="btn btn-secondario" style="flex:1;min-width:150px;padding:var(--sp-2)" onclick="alternativeMeteo(${ttDay})"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Alternative al coperto</button>
-      ${asciutto?`<button class="btn btn-secondario" style="flex:1;min-width:130px;padding:var(--sp-2)" onclick="moveOutdoor(${ttDay},${best})"><svg class="ico" aria-hidden="true"><use href="#i-sposta"/></svg>${esc(tv('Sposta a {1}',giornoAsciutto))}</button>`:''}
-      <button class="btn btn-secondario" style="padding:var(--sp-2)" onclick="rainHide['${d.date}']=1;renderRainTip()">Ignora</button>
+  /* Compatto e chiudibile, come ogni avviso (Layout 1b): era alto quanto
+     mezzo telefono, con «Ignora» in una riga da solo e la spiegazione
+     sotto, e spingeva la giornata fuori dallo schermo. La crocetta fa
+     quello che faceva «Ignora»; la spiegazione sta dietro «Come funziona». */
+  box.innerHTML=`<div class="pioggia">
+    <div class="pioggia-t"><span>${tv('⛈️ {1}, {2} mm di pioggia',wxDesc(w.code),w.precipitation)}</span><button class="x pioggia-x" onclick="rainHide['${d.date}']=1;renderRainTip()" title="${esc(tv('Ignora'))}" aria-label="${esc(tv('Ignora'))}">${ico('chiudi')}</button></div>
+    <div class="pioggia-d"><span>${tv('{1} in questa giornata: {2}{3}.',quante,esc(outs.slice(0,3).map(a=>a.name).join(', ')),outs.length>3?tv(' e altre {1}',outs.length-3):'')}</span>${asciutto?` <b>${bd}</b><span> ${bw<1?tv('è previsto asciutto.'):tv('è previsto quasi asciutto.')}</span>`:''}</div>
+    <div class="pioggia-azioni">
+      <button class="btn btn-secondario btn-compatto" onclick="alternativeMeteo(${ttDay})"><svg class="ico" aria-hidden="true"><use href="#i-scintille"/></svg>Alternative al coperto</button>
+      ${asciutto?`<button class="btn btn-secondario btn-compatto" onclick="moveOutdoor(${ttDay},${best})"><svg class="ico" aria-hidden="true"><use href="#i-sposta"/></svg>${esc(tv('Sposta a {1}',giornoAsciutto))}</button>`:''}
     </div>
-    <div style="font-size:var(--fs-xs);color:var(--ink-faint);margin-top:var(--sp-2);line-height:1.45">Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.</div>
+    <details class="spiega"><summary>Come funziona</summary><p>Niente viene cambiato da solo: qualunque proposta te la faccio vedere prima, una per una.</p></details>
   </div>`;
   renderRainSwaps();
 }
@@ -29777,7 +29987,7 @@ function renderNotti(t){
   const co=copertura(t);
   if(!co.length){c.innerHTML='';return;}
   const vuote=co.filter(x=>!x.hotel);
-  const celle=caselleGiorni(co.map(x=>({date:x.notte,manca:!x.hotel})));
+  const celle=caselleGiorni(co.map(x=>({date:x.notte,manca:!x.hotel,coperta:!!x.hotel})));
   /* Una notte sola la si nomina, due o tre si elencano: piu' in la' il
      nome di ognuna diventa un elenco che non si legge, e il numero dice
      di piu'. */
@@ -30871,7 +31081,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-21 17:33';
+const VERSIONE_APP='2026-10-22 13:12';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

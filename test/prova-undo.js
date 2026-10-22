@@ -183,14 +183,20 @@ const err = [];
     const a = app.trips[0].days[0].activities.find(x => x.id === 1);
     a.time = '10:00'; a.timeEnd = '11:00'; save(); buildTT();
   });
-  const bb = await page.evaluate(() => {
+  const bb = await page.evaluate(async () => {
     /* Un messaggio in basso si chiude con un tocco, quindi i tocchi li prende
        (miglioria 11); in Time Table, dove in basso ci sono «＋ Aggiungi» e
        «↩ Annulla», sta sotto la testata, e «↩ Durata di prima» copriva proprio
        la tappa da premere. Un dito lo chiuderebbe col primo tocco: qui lo si
        chiude prima, perché la prova è sullo spostamento. */
     document.querySelectorAll('.toast').forEach(x => x.remove());
-    const r = document.querySelector('.tt-block[data-id="1"]').getBoundingClientRect();
+    /* Dalla Layout 1b la testata del giorno resta ferma in alto e copre
+       quello che le scorre sotto: la tappa si porta in vista, come farebbe
+       chi la vuole spostare. */
+    const el = document.querySelector('.tt-block[data-id="1"]');
+    el.scrollIntoView({ block: 'center' });
+    await new Promise(r => setTimeout(r, 250));
+    const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + 6 };
   });
   await page.mouse.move(bb.x, bb.y);

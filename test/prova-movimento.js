@@ -9,7 +9,8 @@
  * Leggendo il codice non si vedeva. Misurandolo sì. Per questo qui non si
  * controlla che *esista* un'animazione: si guarda dove sta il foglio,
  * fotogramma per fotogramma, e si pretende che si muova davvero. */
-const { apriBrowser, APP } = require('./browser');
+const { apriBrowser, APP, leafletJs, leafletCss } = require('./browser');
+const fs = require('fs');
 
 const stato = {
   trips: [{ id: 1, name: 'Giappone', destination: 'Tokyo', currency: 'JPY', status: 'open',
@@ -179,14 +180,26 @@ const SEGUI = `(async (id, quanti) => {
   await calmo.close();
 
   // ── la giornata si apre dov'è la giornata ────────────────────────────────
-  /* La griglia parte dalle 06:00 perché lì comincia il sistema di coordinate,
-     ma nessuno ha una tappa alle sei: aprendo il giorno si vedevano due ore e
-     mezza di righe vuote e la prima tappa restava sotto la piega. La griglia
-     non si tocca — riquadri e trascinamento contano tutti da quell'ora — si
-     sposta lo sguardo. Si misura in pixel dove finisce il primo riquadro
-     rispetto allo schermo, non se esiste una riga di codice che scorre. */
+  /* La griglia partiva sempre dalle 06:00, ma nessuno ha una tappa alle sei:
+     aprendo il giorno si vedevano due ore e mezza di righe vuote e la prima
+     tappa restava sotto la piega. All'inizio si spostava lo sguardo,
+     scorrendo la pagina fin sopra la prima tappa: la tappa si vedeva, ma la
+     testata del giorno (la data, i giorni) spariva in alto, e chi apriva il
+     Programma si trovava a metà pagina. Dalla Layout 1b la pagina resta in
+     cima e la griglia parte dall'ora piena prima della prima tappa
+     (`ttInizio`). Si misura in pixel dove sta il primo riquadro rispetto
+     allo schermo e alla barra in basso, non se esiste una riga di codice. */
   const conTappe = await browser.newPage({ viewport: { width: 390, height: 844 } });
   conTappe.on('pageerror', e => err.push('PAGEERROR(giornata): ' + e.message));
+  /* Leaflet dal pacchetto, come sul server delle prove, dove arriva dalla
+     CDN. Senza, qui la mappa del giorno non c'era e al suo posto stava la
+     riga «Tutto il viaggio», 86 px piu' bassa: la prova guardava un'altra
+     schermata, e su GitHub, con la mappa, la tappa finiva a filo della barra. */
+  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
+    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
+  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({
+    status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
+  await conTappe.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await conTappe.addInitScript(s => {
     const st = JSON.parse(JSON.stringify(s));
     st.trips[0].days[0].activities = [
@@ -205,21 +218,39 @@ const SEGUI = `(async (id, quanti) => {
     const primo = document.querySelector('.tt-block');
     if (!primo) return { errore: 'nessun riquadro' };
     const b = primo.getBoundingClientRect();
-    return { cima: Math.round(b.top), fondo: Math.round(b.bottom), alto: innerHeight,
+    const tt = document.getElementById('ttTestata');
+    const testata = tt ? tt.getBoundingClientRect() : null;
+    return { cima: Math.round(b.top), fondo: Math.round(b.bottom),
+             sopra: Math.round(b.top - primo.closest('.ttgrid').getBoundingClientRect().top),
+             barra: Math.round(document.querySelector('.nav').getBoundingClientRect().top),
+             testata: testata ? Math.round(testata.top) : null,
+             testataFondo: testata ? Math.round(testata.bottom) : null,
              scorso: Math.round(document.querySelector('.scroll').scrollTop) };
   });
-  /* Nel terzo superiore, non "da qualche parte a schermo": con la soglia
-     larga il controllo passava anche sul codice rotto, e un controllo che
-     non distingue le due versioni non prova niente. */
-  ok('aprendo la giornata la prima tappa è in cima, non sotto la piega',
-     giornata.cima > 0 && giornata.cima < giornata.alto / 3,
-     `cima a ${giornata.cima}px su uno schermo di ${giornata.alto}`);
-  /* E non incollata al bordo: sopra resta un'ora di griglia, altrimenti non
-     si capisce che è una linea del tempo e non un elenco. */
+  /* Intera e sopra la barra in basso, non «da qualche parte a schermo»: con
+     la griglia dalle 06:00 e la pagina in cima il riquadro finiva mezzo
+     sotto la barra, e un controllo che non distingue le due versioni non
+     prova niente. */
+  ok('aprendo la giornata la prima tappa si vede intera, sopra la barra in basso',
+     giornata.cima > 0 && giornata.fondo <= giornata.barra,
+     `da ${giornata.cima} a ${giornata.fondo}px, la barra a ${giornata.barra}`);
+  /* E non incollata all'inizio della griglia: sopra resta almeno un quarto
+     d'ora con la riga della sua ora (64 px l'ora), altrimenti non si capisce
+     che è una linea del tempo e non un elenco. */
   ok('e con un po\' di griglia sopra, per capire che è una linea del tempo',
-     giornata.cima > 60, `${giornata.cima}px dal bordo`);
-  ok('la pagina si è davvero spostata, non è rimasta in cima',
-     giornata.scorso > 100, giornata.scorso + 'px');
+     giornata.sopra >= 16, `${giornata.sopra}px di griglia sopra`);
+  /* In cima. Se la barra taglierebbe la prima tappa (un telefono basso, un
+     carattere con altre misure) la pagina scende, ma solo quanto basta: la
+     tappa finisce allora poco sopra la barra. Scendere di piu' e' un errore,
+     anche di pochi pixel: su GitHub la giornata scendeva di 8 px perche'
+     misurava la pagina mentre entrava salendo, e la tappa ci stava gia'. */
+  const quantoBasta = giornata.scorso > 0 && giornata.fondo <= giornata.barra &&
+    giornata.fondo >= giornata.barra - 12;
+  ok('la pagina resta in cima (o scende solo quanto basta), con la testata del giorno a vista',
+     (giornata.scorso === 0 || quantoBasta) && giornata.testata !== null && giornata.testata >= 0 &&
+       giornata.testataFondo <= giornata.cima,
+     `scorsa di ${giornata.scorso}px, ` + (giornata.testata === null ? 'testata mancante'
+       : `testata da ${giornata.testata} a ${giornata.testataFondo}px`));
   await conTappe.close();
 
   console.log('\n' + r.join('\n'));

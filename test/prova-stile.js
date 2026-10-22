@@ -16,8 +16,8 @@
    4. il selettore dei giorni è lo stesso in Home, Time Table e Hotel;
    5. nei fogli con un'azione principale il tasto sta in fondo e si vede
       senza scorrere, anche sul telefono più piccolo;
-   6. la sfumatura del cielo sta solo in Home; nella barra in alto non c'è
-      il tasto del tema, che sta nel Profilo;
+   6. la sfumatura del cielo sta solo in Home; nella barra in alto c'è un
+      tasto del tema solo (Layout 1b), e il tema si sceglie anche nel Profilo;
    7. «Scorri con un dito» compare solo la prima volta, dentro la Time Table,
       senza coprire i titoli, e non resta altrove; «Annulla» compare solo
       dopo una modifica, per qualche secondo, e non copre altri tasti;
@@ -80,7 +80,7 @@ const TIPI = {
   'pillola': '.chip', 'controllo a schede': '.seg-btn', 'giorno': '.giorno', 'riga di elenco': '.riga',
   'crocetta': '.x,.x-close,.val-x,.ub-x,.pchip button,.tap-chip button',
   'barra in basso': '.nav-item', 'mappa': '.locate-fab,.leaflet-control a', 'segnaposto della mappa': '.leaflet-marker-icon',
-  'barra in alto': '.menu-btn,.tb-profilo', 'cielo della Home': '.hh-cerca,.hh-grado,.hh-eyebrow,.hh-city',
+  'barra in alto': '.menu-btn,.th-btn,.tb-profilo', 'cielo della Home': '.hh-cerca,.hh-grado,.hh-eyebrow,.hh-city',
   'scheda': '.card,.hh-card,.hh-soon,.hh-empty,.hist-card,.exp-row,.person,.wcard,.cat,.tt-block,.tt-act,.res,.rcard,.ms-row,.split-item',
   'nome nella scheda': '.come-testo,.trip-hero-name,.hist-n,.ticket-n', 'link nel testo': 'a[href]:not(.btn):not(.chip)',
   'tragitto in Time Table': '.tt-travel-mezzo,.tt-travel-x,.tt-travel-skip,.tt-travel-toggle', 'link da copiare': '.share-link',
@@ -92,7 +92,8 @@ const TIPI = {
 const CON_PAROLE = ['principale', 'secondario', 'terziario', 'eliminazione', 'pillola', 'controllo a schede', 'giorno', 'riga di elenco', 'nome nella scheda', 'cielo della Home'];
 /* I comandi che possono essere fatti di un segno solo, col nome per
    VoiceOver: la crocetta, la barra in basso, i controlli della mappa,
-   l'iniziale del Profilo, il mezzo e la crocetta del tragitto. */
+   l'iniziale del Profilo e il tondo del tema, il mezzo e la crocetta del
+   tragitto. */
 const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tragitto in Time Table'];
 
 (async () => {
@@ -293,7 +294,10 @@ const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tra
       await page.evaluate(p => go(p), p); await page.waitForTimeout(250);
       fondi[p] = await page.evaluate(() => {
         const pag = document.querySelector('.page.active');
+        /* Le schede d'oro del totale e del Budget (Layout 1b) sono schede, non
+           il fondo della pagina: la loro sfumatura e' l'oro dei tasti. */
         const sfumati = [pag, ...pag.querySelectorAll('*'), document.body, document.querySelector('.app'), document.querySelector('main.scroll')].filter(Boolean)
+          .filter(x => !x.matches('.money-hero,.budget-hero'))
           .filter(x => /gradient/.test(getComputedStyle(x).backgroundImage) && x.getBoundingClientRect().width > innerWidth * 0.8 && x.getBoundingClientRect().height > 150)
           .map(x => x.className && typeof x.className === 'string' ? '.' + x.className.split(' ')[0] : x.tagName.toLowerCase());
         return { sfumati, fondo: getComputedStyle(document.body).backgroundColor, carta: getComputedStyle(document.body).getPropertyValue('--paper').trim() };
@@ -309,7 +313,9 @@ const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tra
       return { tema: [...b.querySelectorAll('button,[role="button"],[onclick]')].filter(x => /tema|dark|☾|☀/i.test((x.getAttribute('onclick') || '') + x.innerText + (x.getAttribute('aria-label') || '') + (x.title || ''))).map(x => x.outerHTML.slice(0, 60)),
         nelProfilo: (go('trips'), !!document.querySelector('#trips input[onchange*="toggleDark"]')) };
     });
-    ok('6. nella barra in alto non c\'è il tasto del tema; il tema si sceglie nel Profilo', !barra.tema.length && barra.nelProfilo, barra.tema.join(' | ') || 'Profilo: «Tema scuro»');
+    /* Layout 1b: il tondo del tema torna nella barra in alto (uno solo, luna o
+       sole), e resta anche nel Profilo. */
+    ok('6. nella barra in alto c\'è un tasto del tema solo, e il tema si sceglie anche nel Profilo', barra.tema.length === 1 && /thTema/.test(barra.tema[0]) && barra.nelProfilo, barra.tema.join(' | ') || 'nella barra non c\'è');
     await page.close();
   });
 

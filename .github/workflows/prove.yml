@@ -19,11 +19,12 @@ on:
 jobs:
   prove:
     runs-on: ubuntu-latest
-    # La batteria intera ci mette circa 35 minuti su questa macchina (ottobre
-    # 2026, con il giro delle schermate in cinque lingue di prova-traduzioni):
-    # 40 era diventato un tetto a filo, e una macchina un po' più lenta del
-    # solito avrebbe fermato le prove a metà.
-    timeout-minutes: 55
+    # La batteria intera ci mette circa un'ora su questa macchina (ottobre
+    # 2026: la Layout 1 era già a 52 minuti, e la 1b ha aggiunto
+    # prova-carattere, che gira le schermate in cinque lingue e due temi).
+    # Con 55 le prove venivano fermate a cinque dalla fine, più quelle sul
+    # database, e una batteria fermata non dice niente: né verde né rossa.
+    timeout-minutes: 80
 
     # Un Postgres vero per le prove sui permessi: quelle non si possono
     # simulare, perché è proprio il database a decidere chi vede cosa.

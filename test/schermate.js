@@ -290,7 +290,10 @@ const MISURA = nomi => {
   /* Un tasto che galleggia sopra la pagina (in Time Table «↩ Annulla» e
      «＋ Aggiungi», fissi in basso) copre quello che ci scorre sotto, come la
      barra in basso: non gli si sovrappone. Lo si toglie scorrendo. */
-  const fisso = el => { for (let x = el; x && x !== document.body; x = x.parentElement) if (getComputedStyle(x).position === 'fixed') return x; return null; };
+  /* La testata del giorno della Time Table (Layout 1b) resta ferma in alto
+     mentre la giornata le scorre sotto: copre, come i tasti fissi, e non si
+     sovrappone. */
+  const fisso = el => { for (let x = el; x && x !== document.body; x = x.parentElement) if (/^(fixed|sticky)$/.test(getComputedStyle(x).position)) return x; return null; };
   const scorre2 = el => { for (let x = el.parentElement; x && x !== document.documentElement; x = x.parentElement) { const c = getComputedStyle(x); if (/(auto|scroll)/.test(c.overflowY) && x.scrollHeight > x.clientHeight + 1) return true; } return false; };
   const galleggia = (x, y) => { const fx = fisso(x.p), fy = fisso(y.p); return fx !== fy && ((fx && !fx.contains(y.p) && scorre2(y.p)) || (fy && !fy.contains(x.p) && scorre2(x.p))); };
   for (let i = 0; i < righe.length; i++) for (let j = i + 1; j < righe.length; j++) {

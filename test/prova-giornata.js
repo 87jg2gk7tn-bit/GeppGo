@@ -208,10 +208,13 @@ const stato = (titoloGiorno) => ({
     const el = document.getElementById('ttAdesso');
     if (!el) return { cè: false };
     const n = new Date(), ora = n.getHours() + n.getMinutes() / 60;
+    /* Dalla Layout 1b la griglia parte dall'ora piena prima della prima
+       tappa (ttDa, in minuti), non sempre dalle 06:00. */
+    const da = (typeof ttDa === 'number' ? ttDa : 360) / 60;
     return {
       cè: true,
       top: parseFloat(el.style.top),
-      atteso: (ora - 6) * TT_H,
+      atteso: (ora - da) * TT_H,
       scritta: (el.querySelector('b') || {}).textContent,
       oraVera: String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'),
       nonRubaIlTocco: getComputedStyle(el).pointerEvents === 'none'
@@ -247,7 +250,8 @@ const stato = (titoloGiorno) => ({
       el.style.top = '3px';
       adessoCammina();
       const n = new Date(), ora = n.getHours() + n.getMinutes() / 60;
-      return { dopo: parseFloat(el.style.top), atteso: (ora - 6) * TT_H };
+      const da = (typeof ttDa === 'number' ? ttDa : 360) / 60;
+      return { dopo: parseFloat(el.style.top), atteso: (ora - da) * TT_H };
     });
     ok('e si rimette al posto giusto da sola, senza ridisegnare la giornata',
        Math.abs(cammina.dopo - cammina.atteso) < 2,
