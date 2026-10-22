@@ -4766,7 +4766,12 @@ function ico(nome){return `<svg class="ico" aria-hidden="true"><use href="#i-${n
 function caselleGiorni(giorni,{scelto=-1,tocca=null}={}){
   return giorni.map((g,j)=>{
     const dt=new Date(g.date),ok=!isNaN(dt.getTime());
-    const sett=ok?dt.toLocaleDateString(loc(),{weekday:'short'}).replace(/\.$/,''):tv('G{1}',j+1);
+    /* Tre lettere al massimo: il giorno sta in un tondo da 46 px. Il
+       portoghese del Portogallo abbrevia scrivendo il nome intero
+       («segunda», «sábado», «domingo»), che dal tondo usciva; le sue prime
+       tre lettere sono le abbreviazioni di sempre (seg, sáb, dom), e nelle
+       altre lingue il nome corto ne ha gia' tre. */
+    const sett=ok?dt.toLocaleDateString(loc(),{weekday:'short'}).replace(/\.$/,'').slice(0,3):tv('G{1}',j+1);
     const num=ok?dt.getDate():'?';
     const cls='giorno'+(j===scelto?' on':'')+(g.manca?' manca':'')+(g.coperta?' coperta':'');
     const dentro=`<span class="giorno-s">${esc(sett)}</span><span class="giorno-n">${num}</span>${g.meteo?`<span class="giorno-m" aria-hidden="true">${g.meteo}</span>`:''}`;
@@ -31076,7 +31081,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-22 13:06';
+const VERSIONE_APP='2026-10-22 13:12';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

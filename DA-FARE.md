@@ -1343,6 +1343,15 @@ le controlla (7 prove).
   prima tappa, e la prova serve Leaflet come le altre. Vale per qualunque
   conto fatto all'apertura di una pagina: si toglie l'entrata, o si aspetta
   che finisca.
+- **In portoghese il giorno abbreviato è il nome intero**: Intl, per
+  `pt-PT` e `weekday:'short'`, dà «segunda», «sábado», «domingo», che dal
+  tondo da 46 px uscivano (prima della 1b la casella si allargava). Ora
+  `caselleGiorni` tiene tre lettere (seg, sáb, dom: le abbreviazioni di
+  sempre; nelle altre lingue il nome corto ne ha già tre). Si è visto solo
+  di giovedì: le prove mettono i viaggi a partire da oggi, e solo certi
+  giorni della settimana fanno cadere un sabato o un lunedì nella fila. Una
+  prova verde un giorno può essere rossa un altro: quando una misura dipende
+  dal nome del giorno, va guardata coi sette.
 - **Le prove su GitHub avevano un tetto di 55 minuti** e la batteria ormai
   ne chiede circa 60 (la Layout 1 era già a 52, la 1b ha aggiunto
   `prova-carattere`): le esecuzioni venivano fermate a cinque prove dalla
