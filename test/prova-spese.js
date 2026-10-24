@@ -24,7 +24,8 @@ const stato = {trips:[{id:1730000000001,name:'Esempio',destination:'Osaka',curre
     const n=document.querySelector('.nav-item[data-p="money"]');
     return { svg: !!n.querySelector('svg'), testo: n.textContent.trim(), paths: n.querySelectorAll('path').length };
   });
-  ok('le Spese hanno un\'icona disegnata, non il simbolo €', ic.svg && ic.testo==='', `testo:"${ic.testo}" paths:${ic.paths}`);
+  /* dalla Layout 2 sotto l'icona c'è la parola: «Spese», mai il simbolo € */
+  ok('le Spese hanno un\'icona disegnata, non il simbolo €', ic.svg && ic.testo==='Spese', `testo:"${ic.testo}" paths:${ic.paths}`);
   ok('e il disegno è un sacchetto (più tratti)', ic.paths>=4, ic.paths+' tratti');
 
   await p.evaluate(()=>{go('money');scrollTo(0,0);});

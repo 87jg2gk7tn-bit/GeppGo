@@ -277,7 +277,7 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
     }
 
     const diz = await (async () => { const q = await apri(browser, { stato: viaggio() }); const d = await q.evaluate(() => DIZIONARIO); await q.close(); return d; })();
-    const frasi = ['Il viaggio, giorno per giorno', 'Tappe, orari e mappa in un\'unica time table.', 'Tutto il gruppo in un\'app',
+    const frasi = ['Il viaggio, giorno per giorno', 'Tappe, orari e mappa in un unico programma.', 'Tutto il gruppo in un\'app',
       'Biglietti con QR e hotel assegnati a ognuno.', 'Conti chiari in ogni valuta', 'Le spese si dividono da sole, anche in yen o dollari.', 'Salta'];
     for (const [l, loc] of [['it', 'it-IT'], ['en', 'en-US'], ['es', 'es-ES'], ['fr', 'fr-FR'], ['pt', 'pt-PT']]) {
       p = await apri(browser, { intro: true, locale: loc });

@@ -978,9 +978,10 @@ const oreFinte = (data) => {
   }));
   ok('il meteo non è più una voce della barra in basso',
      !barra.voci.includes('weather'), barra.voci.join(' '));
-  /* Sette, non più otto: anche il Profilo se n'è andato dalla barra, in
-     fondo al cassetto delle tre righine. */
-  ok('e la barra è scesa a sette voci', barra.voci.length === 7, barra.voci.length + ' voci');
+  /* Cinque: anche il Profilo se n'è andato dalla barra, in fondo al
+     cassetto delle tre righine, e dalla Layout 2 Hotel e Biglietti sono le
+     due schede di Prenotazioni e Identifica sta in cima a Scopri. */
+  ok('e la barra è scesa a cinque voci', barra.voci.length === 5, barra.voci.length + ' voci');
   ok('la vecchia pagina del meteo non c\'è più', barra.paginaMeteo === false);
   ok('ma il meteo c\'è, nella tendina', barra.tendina === true);
   /* Il pezzo che tiene in piedi il resto: la barra in basso non ha più una

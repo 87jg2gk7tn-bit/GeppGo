@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 21 ottobre 2026.
+Aggiornato: 22 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -29,14 +29,13 @@ fare altro su Supabase, il token va allargato.
 
 Restano queste cose, e non sono codice:
 
-- ⚠️ **Lanciare su Supabase la migrazione del calendario che si aggiorna**
-  (`supabase/migrazioni/2026-10-20-calendario.sql`, 20 ottobre): SQL Editor
-  → New query → incolla tutto il file → Run, e deve finire con «Success. No
-  rows returned». Si può rilanciare. Finché non c'è, il foglio «🗓️
-  Calendario che si aggiorna» dice che non è ancora disponibile e offre il
-  file .ics. La funzione `calendario` la pubblica da sola «Funzioni» al push
-  su `main` (senza il controllo della chiave: è nel workflow); per vedere se
-  risponde, Actions → «Il ponte risponde?».
+- ~~**Lanciare su Supabase la migrazione del calendario che si aggiorna**~~
+  ✅ **fatto**: Giacomo dice (22 ottobre, con la richiesta della Layout 2)
+  che `supabase/migrazioni/2026-10-20-calendario.sql` è già stata lanciata.
+  Il foglio «🗓️ Calendario che si aggiorna» crea il link; la funzione
+  `calendario` la pubblica da sola «Funzioni» al push su `main` (senza il
+  controllo della chiave: è nel workflow), e per vedere se risponde c'è
+  Actions → «Il ponte risponde?».
 - ~~**Lanciare su Supabase la tabella personale e il guardiano dei tetti di
   spesa**~~ ✅ **fatto il 20 ottobre**: Giacomo dice che la migrazione della
   valigia e delle impostazioni (12 ottobre) era già stata lanciata — qui
@@ -1136,22 +1135,35 @@ altro) e misura le schermate da 320 a 430 px in 5 lingue, chiaro e scuro.
   que procuras?»), e «Toca a reunir» va a capo; «ADESSO», «ora», «IN
   PROGRAMMA» e le altre scritte del riquadro «Fra poco» sono tradotte.
 
-**Da decidere: le parole sotto le icone della barra in basso.** Misurate coi
-caratteri veri, a 10 px (`600 10px Plus Jakarta Sans`, ogni voce larga la sua
-parola più 8 px, e almeno 44): a 320 px dentro la pillola ci sono 281 px, e
-le sette parole ne chiedono 311 in italiano, 330 in inglese, 346 in
-spagnolo, 361 in portoghese, 389 in francese. Non ci stanno in nessuna
-lingua (in francese nemmeno a 430 px), e non è stato applicato niente. Le
-alternative, misurate allo stesso modo a 320 px:
-- **cinque voci**: Home · Time Table · Scopri · Spese · **Prenotazioni**
-  (Hotel e Biglietti nella stessa pagina, con due schede), e Identifica
-  dentro Scopri. Ci stanno: italiano 260 px su 281, inglese 261, spagnolo
-  239, portoghese 252; il francese solo con «Planning» al posto di
-  «Programme» (278 su 281, al pelo; con «Programme» 294);
-- sei voci (Hotel e Biglietti insieme, Identifica resta): da 297 a 346 px,
-  non ci stanno;
-- la parola solo sotto l'icona accesa: sei voci da 44 px più «Hébergement»
-  fanno 332 px, non ci sta nemmeno questa.
+**Le parole sotto le icone della barra in basso: decise e fatte (Layout 2,
+22 ottobre).** Giacomo ha scelto le cinque voci: **Oggi · Programma · Scopri ·
+Spese · Prenotazioni** (Hotel e Biglietti sono le due schede di Prenotazioni,
+Identifica è una riga in cima a Scopri). Le parole sono a 12 px
+(`600 12px Plus Jakarta Sans`, ogni voce larga la sua parola più 4 px, e
+almeno 44): se nella pillola non ci stanno la barra prende tutta la
+larghezza (`navAdatta`), e così ci stanno da 320 a 430 px in italiano,
+inglese, spagnolo e portoghese. **Resta da decidere il francese a 320 px**:
+anche a tutta larghezza servono 345 px e ce ne sono 310 (da 360 px la
+barra è a tutta larghezza e ci sta), e lì la barra scorre come prima, con le
+parole intere. Le parole francesi più corte da scegliere (misurate a 12 px
+coi caratteri veri, ogni voce è la parola più 4 px e almeno 44, e a 320 px
+la pista è larga 310): «Aujourd'hui» (66 px) → «Accueil» (43) e
+«Programme» (69) → «Agenda» (45): 298 px su 310, 12 d'aria — la proposta;
+«Accueil» e «Planning» (50): 302; «Réservations» (75) → «Résas» (34) da
+solo arriva a 309,8 su 310, due decimi di pixel: troppo poco per fidarsi di
+un altro telefono. Una parola sola fra «Accueil», «Agenda» e «Planning» non
+basta (321–326). `test/prova-navigazione.js` (prova 4) lo dice a ogni giro.
+
+**Restano a 3 tocchi dalla Home, dalla Layout 2:** le voci dentro la scheda del
+viaggio, che si apre dal menu dei viaggi (le righine › «Viaggio» › la voce):
+«Rinomina», «Giorni», «Elimina viaggio», «Il ricordo», «PDF dell'itinerario»
+e «Calendario che si aggiorna». Prima la scheda si apriva dalla fila in
+Home, a un tocco. Altre strade a 2 ci sono per «Concludi» (Spese, nella
+scheda d'oro), i consigli (Scopri), i punti di ripristino e il diario
+(Profilo), la mappa del viaggio (Home) e i tetti (Spese › Budget). Da
+decidere se va bene così o se la scheda del viaggio deve tornare a un
+tocco (per esempio toccando il nome del viaggio sopra il gruppo nel menu,
+o l'occhiello in cima alla Home).
 
 **Restano a 3 tocchi dalla Home** (per questi la richiesta era la scritta):
 «📎 PDF» (barra › Scopri › «Assistente» › «📎 PDF») e «✓ Pagato» (barra ›
@@ -1163,8 +1175,8 @@ comparire anche in cima a Spese quando c'è qualcosa da pareggiare.
 **Va bene così, deciso:** l'icona del mezzo senza scritta (44×44 da
 toccare); spostare e allungare le tappe col dito (gli orari si cambiano
 anche da «✎ Modifica attività»); il menu della tappa (3 tocchi, con le
-scritte); la Time Table dalla Home passa per l'occhiello «LISBONA · GIORNO
-1 DI 4 ›» o per la barra; mCloud nascosto apposta.
+scritte); il Programma (allora Time Table) dalla Home passa per l'occhiello
+«LISBONA · GIORNO 1 DI 4 ›» o per la barra; mCloud nascosto apposta.
 
 **Trovato per strada, non toccato:**
 - ~~In Spese › Saldi restano in italiano in tutte le lingue «deve ricevere»,
@@ -1374,6 +1386,104 @@ le controlla (7 prove).
 - Sull'iPhone vero, nell'app sulla Home, la barra in alto e quella in basso
   sono più alte (le zone sicure): la prima tappa in cima ci starà solo se il
   telefono è alto; se no si scende quel tanto, con la testata ferma in alto.
+
+### Layout 2, navigazione, menu dei viaggi e cielo: a che punto è
+
+22–24 ottobre 2026. Le regole stanno in `CLAUDE.md` («Temi», «Nessuna funzione
+nascosta», «Stile»); `test/prova-navigazione.js` le controlla (9 prove).
+Nessuna funzione tolta; Premium e pubblicità come prima (una pubblicità per
+schermata: in Prenotazioni c'è quella della scheda che si vede).
+
+**Cosa è cambiato**
+- **Il cielo in cima a tutte le schermate**, come prima della Layout 1, ma
+  adesso è quello della Home: le classi della scena (`cielo c-sereno notte`…)
+  passano dal riquadro della Home al contenitore delle pagine
+  (`cieloSullePagine`), e la sfumatura (`.page:not(#plan)`, 440 px, panna
+  all'82%) segue il tempo, l'ora e il tema. Una volta al minuto
+  `cieloSeguiOra` guarda se la scena è cambiata (il tramonto) e ridisegna.
+  Il cielo grande con la città resta solo in Home. Le scritte che ci stanno
+  sopra senza un fondo loro le colora `tingiPagina`, come `tingiCielo` in
+  Home; dove il cielo passa dallo scuro al chiaro proprio dietro una scritta
+  (la pioggia e la sera, nel tema chiaro) né il nero né il bianco reggono su
+  tutta la sua altezza, e lì la scritta prende un fondo suo, del colore del
+  cielo dove sta, sfumato ai bordi. La testata del Programma è trasparente
+  finché sta al suo posto e torna panna quando resta ferma in alto.
+- **Il menu dei viaggi** (le righine, o «Giappone 26 ▾»): sotto l'elenco dei
+  viaggi, col nome del viaggio aperto come titolo, «A raccolta» (nei viaggi
+  con almeno un'altra persona), «Bagagli», «Compagni», «Condividi» e
+  «Viaggio», beige, con l'icona a due toni sopra la parola. Senza un viaggio
+  aperto il gruppo non c'è. In Home «Cosa cerchi qui intorno?» resta da
+  solo, largo quanto la riga; la scheda «Prepara la valigia» è quella di
+  prima.
+- **La barra in basso**: cinque voci con la parola sotto l'icona, Oggi ·
+  Programma · Scopri · Spese · Prenotazioni, 12 px; la scelta col tondo
+  d'inchiostro dietro l'icona, `aria-current`, la zona `nav` col suo nome.
+  Quando le parole non ci stanno nella pillola, la barra prende tutta la
+  larghezza (`navAdatta`, misura coi caratteri veri).
+- **«Time Table» si chiama «Programma»** ovunque: titolo, barra, testi (21
+  frasi, cinque lingue), `MAPPA_APP`. In inglese «Schedule», in spagnolo
+  «Programa», in francese «Programme», in portoghese «Roteiro» (era già la
+  sua traduzione).
+- **Prenotazioni**: una schermata col controllo a schede «Biglietti | Hotel»;
+  le schede sono le schermate di prima, tali e quali (gli id `tickets` e
+  `hotels` restano). Si apre su Biglietti se c'è un biglietto oggi o nelle
+  prossime 24 ore (il giorno e l'ora della tappa a cui è attaccato), se no
+  sull'ultima scheda scelta (`geppgo2_pren_scheda`), la prima volta su
+  Biglietti. `go('hotels')` e `go('tickets')` portano alla scheda giusta.
+- **Identifica in Scopri**: una riga in cima a Scopri, «Identifica — Fotografa
+  un monumento: ti dico cos'è», che apre la sua schermata (con «Scopri» per
+  tornare; la barra accende Scopri). Una quarta scheda accanto a Cerca,
+  Assistente e Importa a 320 px non ci sta intera in italiano, spagnolo,
+  francese e portoghese (`prova-navigazione` la misura a ogni giro).
+- **I vecchi indirizzi interni**: `#hotel`, `#biglietti`, `#identifica`,
+  `#programma`, `#spese`, `#budget`… (e i nomi inglesi) portano al posto
+  nuovo, all'avvio e con l'app aperta (`vaiAlPosto`), e l'indirizzo torna
+  pulito. Le notifiche portano dove portavano: la tappa nel Programma, il
+  tetto in Spese › Budget.
+- **I plurali**: «1 people» nel Programma in inglese («1 person»), e altre
+  dieci frasi che con «1» davano il plurale («IN 1 DAYS», «Import 1 rows»,
+  «…e altre 1 righe», «1 days» nel Profilo…) passano da `tp()`.
+
+**Trovato per strada, sistemato**
+- Mentre la pagina entra salendo di 10 px, la testata del Programma sembrava
+  non ancora ferma anche quando lo era: restava trasparente sopra la
+  giornata già scorsa (la foto della prova di contrasto l'ha vista). Il
+  conto toglie lo spostamento dell'entrata, e a entrata finita le scritte
+  si ricolorano.
+- Il tasto «Salva in Hotel e time-table» della mail dell'albergo non si
+  traduceva mai: nel dizionario la chiave aveva un «✓» davanti che il tasto
+  non ha.
+- Rinominando le frasi della Time Table, «Apri la time-table» (il tasto
+  della Home quando la giornata è vuota) era cambiata nel dizionario ma non
+  nella chiamata, e restava italiana in tutte le lingue: l'ha vista
+  `prova-traduzioni`. Adesso anche `prova-navigazione` (prova 5) guarda le
+  frasi nel codice, non solo quelle a schermo.
+- Le icone della barra erano scese a 24 px per far posto alla parola:
+  `prova-tocchi` ricorda che erano state portate a 27 apposta, perché
+  camminando si riconoscessero al primo sguardo. Sono tornate a 26, dentro
+  lo stesso tondo da 32, e la voce resta alta 52.
+- **L'avvio col campo debole era al limite.** La prova 10 di `prova-avvio`
+  vuole l'app usabile in meno del 75% dei 21,1 s di prima della miglioria 5,
+  cioè sotto 15,85 s, a 400 kbps: su `main` passava per 10 ms (15 840). A
+  quella velocità ogni KB compresso dell'HTML costa 20 ms, e i 5 KB della
+  Layout 2 l'hanno fatta cadere (15 925). La schermata d'apertura restava
+  sempre altri 320 ms dopo la fine dell'avvio: adesso quell'attimo si conta
+  da quando la schermata si vede (`hideBootSplash`), quindi ad avvio veloce
+  resta 320 ms come prima e col campo debole sparisce appena l'app è pronta
+  (15 622 ms, 230 di margine).
+
+**Da decidere**
+- Il francese a 320 px nella barra (vedi «Nessuna funzione nascosta»): le
+  proposte di parole più corte sono lì.
+- Le voci dentro la scheda del viaggio sono a 3 tocchi dalla Home (vedi
+  «Nessuna funzione nascosta»).
+- Il tetto dell'avvio col campo debole: restano 230 ms, cioè una dozzina di
+  KB compressi, poi la prova 10 di `prova-avvio` ricadrà. I commenti sono
+  200 dei 734 KB compressi dell'HTML, i dizionari delle altre quattro
+  lingue buona parte del resto: toglierli dallo scaricamento (un passaggio
+  che li sfila prima di pubblicare, o i dizionari caricati solo da chi non
+  usa l'italiano) cambierebbe due regole fisse di `CLAUDE.md`, e lo decide
+  Giacomo.
 
 ---
 

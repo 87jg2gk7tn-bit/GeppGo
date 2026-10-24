@@ -228,8 +228,9 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
   page = await apri(stato([JOSEF, LILIE]));
   const mappa = await page.evaluate(() => {
     const m = typeof MAPPA_APP === 'string' ? MAPPA_APP : '';
-    const h = (m.split(/\n- Hotel:/)[1] || '').split(/\n/)[0];
-    return { cè: !!h, diceNotti: /notti/i.test(h) };
+    /* dalla Layout 2 gli alberghi sono la scheda «Hotel» di Prenotazioni */
+    const h = (m.split(/\n- Prenotazioni\b/)[1] || '').split(/\n/)[0];
+    return { cè: /Hotel: gli alloggi/.test(h), diceNotti: /notti/i.test(h) };
   });
   ok('la mappa dell\'assistente racconta anche le notti coperte',
      mappa.cè === true && mappa.diceNotti === true);

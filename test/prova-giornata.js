@@ -1,4 +1,4 @@
-/* La Time Table: i tasti sopra la griglia, e come è fatta la griglia.
+/* Il Programma (si chiamava Time Table): i tasti sopra la griglia, e come è fatta la griglia.
 
    Due cose separate, chieste insieme.
 
@@ -138,7 +138,9 @@ const stato = (titoloGiorno) => ({
      in grande, come la home fa col nome della città, ed era stato bocciato:
      alla time-table ci si arriva anche da un link o dopo aver messo giù il
      telefono, e una data da sola non dice in che parte dell'app sei. */
-  ok('il titolo dice in che schermata sei', testata.titolo === 'Time Table', testata.titolo);
+  /* Dalla Layout 2 la schermata si chiama «Programma», come la sua voce
+     nella barra in basso. */
+  ok('il titolo dice in che schermata sei', testata.titolo === 'Programma', testata.titolo);
   ok('ed è scritto col serif dell\'app', testata.serif === true);
   ok('l\'occhiello dice di che viaggio e di che giorno si tratta',
      /PRAGA/.test(testata.occhiello) && /1/.test(testata.occhiello), testata.occhiello);

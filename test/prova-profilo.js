@@ -37,7 +37,9 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Osaka',c
      ogni tanto, e si portava via un ottavo di una barra che già scorreva.
      Adesso sta in fondo al cassetto delle tre righine. */
   ok('il Profilo non è più una voce della barra in basso', !barra.includes('trips'), barra.join(' · '));
-  ok('e la barra è scesa a sette voci', barra.length===7, barra.length+' voci');
+  /* dalla Layout 2 le voci sono cinque: Hotel e Biglietti stanno in
+     Prenotazioni, Identifica in cima a Scopri */
+  ok('e la barra è scesa a cinque voci', barra.length===5, barra.length+' voci');
 
   // ── e ci si arriva, dal cassetto, con un dito vero ───────────────────
   /* Togliere una voce dalla barra è mezzo lavoro: l'altra metà è che al

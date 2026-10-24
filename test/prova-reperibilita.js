@@ -18,7 +18,13 @@
    5. la lista bagagli si apre ancora anche dalla scheda del viaggio;
    6. MAPPA_APP dice il percorso nuovo (e l'assistente lo legge, in ogni
       lingua);
-   7. i testi nuovi sono tradotti in cinque lingue. */
+   7. i testi nuovi sono tradotti in cinque lingue.
+
+   LAYOUT 2: la fila non sta piu' in Home. A raccolta, Bagagli, Compagni,
+   Condividi e Viaggio sono nel menu dei viaggi (le tre righine, o il nome del
+   viaggio in alto), sotto il nome del viaggio aperto: due tocchi, con la
+   parola scritta. Le prove 1, 2 e 7 guardano li'; la scheda «Prepara la
+   valigia» resta in Home, e le prove 3 e 4 sono quelle di prima. */
 const fs = require('fs');
 const path = require('path');
 const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
@@ -90,14 +96,18 @@ const chiudiFogli = p => p.evaluate(() => document.querySelectorAll('.modal.acti
    - coperti: tasti con sopra un'altra cosa (al centro del tasto il dito
      tocca altro);
    - addosso: la scheda che copre la fila o finisce sotto «Fra poco». */
-const MISURA = () => {
+/* dove = 'casa' (la scheda della valigia in Home) o 'cassetto' (il gruppo
+   del viaggio nel menu dei viaggi, da aprire prima). */
+const MISURA = dove => {
   const out = { tema: document.body.classList.contains('dark') ? 'scuro' : 'chiaro', fuori: [], piccoli: [], spezzate: [], coperti: [], addosso: [], tasti: 0 };
   if (document.documentElement.scrollWidth > innerWidth + 1) out.fuori.push('la pagina scorre di lato');
-  const fila = document.querySelector('#homeHero .hh-rapidi'), vs = document.querySelector('#homeHero #valScheda'), so = document.querySelector('#homeHero .hh-soon');
-  const tasti = [...document.querySelectorAll('#homeHero .hh-rapido, #homeHero #valScheda .val-x, #homeHero #valScheda .val-apri')];
+  const cassetto = dove === 'cassetto';
+  const fila = cassetto ? document.querySelector('#vgAzioni .vg-az-griglia') : document.querySelector('#homeHero .hh-cerca');
+  const vs = cassetto ? null : document.querySelector('#homeHero #valScheda'), so = cassetto ? null : document.querySelector('#homeHero .hh-soon');
+  const tasti = [...document.querySelectorAll(cassetto ? '#vgAzioni .vg-az' : '#homeHero #valScheda .val-x, #homeHero #valScheda .val-apri')];
   out.tasti = tasti.length;
   const nome = el => (el.className || el.id || '').toString().split(' ')[0] + ' «' + el.textContent.trim().slice(0, 18) + '»';
-  [fila, vs].concat(tasti).forEach(el => {
+  [fila].concat(cassetto ? [] : [vs], tasti).forEach(el => {
     if (!el) { out.fuori.push('manca un pezzo'); return; }
     const q = el.getBoundingClientRect();
     if (q.left < -0.5 || q.right > innerWidth + 0.5) out.fuori.push(nome(el) + ` ${Math.round(q.left)}..${Math.round(q.right)}`);
@@ -121,12 +131,15 @@ const MISURA = () => {
       }
     }
   });
-  if (vs && fila && vs.getBoundingClientRect().top < fila.getBoundingClientRect().bottom - 0.5) out.addosso.push('la scheda copre la fila');
+  if (vs && fila && vs.getBoundingClientRect().top < fila.getBoundingClientRect().bottom - 0.5) out.addosso.push('la scheda copre «Cosa cerchi»');
   if (vs && so && vs.getBoundingClientRect().bottom > so.getBoundingClientRect().top + 0.5) out.addosso.push('«Fra poco» finisce sopra la scheda');
-  const b = document.querySelector('#homeHero .hh-rapido');
+  const b = document.querySelector(cassetto ? '#vgAzioni .vg-az' : '#homeHero #valScheda .val-apri');
   if (b) { const cs = getComputedStyle(b); if (cs.color === cs.backgroundColor) out.fuori.push('testo invisibile ' + cs.color); }
   return out;
 };
+/* Il menu dei viaggi aperto, fermo (la tendina entra scivolando). */
+const apriCassetto = async p => { await p.evaluate(() => { const m = document.getElementById('mViaggi'); if (!m.classList.contains('active')) apriViaggi(); });
+  await p.waitForTimeout(450); await p.evaluate(() => document.getAnimations().forEach(x => { try { x.finish(); } catch (e) {} })); };
 /* Cosa dice la scheda della valigia in Home (null se non c'e'). */
 const scheda = p => p.evaluate(() => {
   const el = document.querySelector('#homeHero #valScheda');
@@ -139,28 +152,26 @@ const scheda = p => p.evaluate(() => {
 (async () => {
   const browser = await apriBrowser();
 
-  /* ── 1. la fila in Home: si vede e apre le tre cose ────────────────────── */
+  /* ── 1. le azioni del viaggio nel menu dei viaggi (Layout 2) ──────────── */
   await prova('1', async () => {
     const p = await apri(browser, { fra: 20 });
+    /* Come farebbe una persona: il nome del viaggio in alto, poi il tasto. */
+    await p.locator('#menuViaggi').click();
+    await apriCassetto(p);
     const fila = await p.evaluate(() => {
-      const f = document.querySelector('#homeHero .hh-rapidi');
-      if (!f) return null;
-      const rf = f.getBoundingClientRect();
-      const st = getComputedStyle(f);
-      /* Dalla Layout 1 l'emoji davanti è un'icona a linea: nel testo resta la
-         parola, e l'icona si guarda a parte. */
-      return { testi: [...f.querySelectorAll('.hh-rapido')].map(b => b.textContent.trim()), icone: [...f.querySelectorAll('.hh-rapido')].every(b => !!b.querySelector('svg.ico')),
-        visibile: rf.height > 0 && st.display !== 'none' && st.visibility !== 'hidden',
-        sopraLaPiega: rf.top >= 0 && rf.bottom <= innerHeight,
-        sottoCerca: (() => { const c = document.querySelector('#homeHero .hh-cerca'); return !!c && c.getBoundingClientRect().bottom <= rf.top + 1; })() };
+      const f = document.querySelector('#vgAzioni');
+      if (!f || f.hidden) return null;
+      const rf = f.getBoundingClientRect(), st = getComputedStyle(f);
+      return { titolo: (f.querySelector('.vg-az-t') || {}).textContent, testi: [...f.querySelectorAll('.vg-az')].map(b => b.textContent.trim()), icone: [...f.querySelectorAll('.vg-az')].every(b => !!b.querySelector('svg.ico')),
+        visibile: rf.height > 0 && st.display !== 'none' && st.visibility !== 'hidden', sopraLaPiega: rf.top >= 0 && rf.bottom <= innerHeight,
+        inHome: [...document.querySelectorAll('#homeHero button')].some(b => /^(Bagagli|Compagni|Condividi|Viaggio|A raccolta)$/.test(b.textContent.trim())) };
     });
-    ok('1. in Home c\'è la fila di accessi rapidi, con icona e testo', !!fila && fila.icone && JSON.stringify(fila.testi) === JSON.stringify(['Bagagli', 'Compagni', 'Condividi', 'Viaggio']), fila ? fila.testi.join(' | ') + (fila.icone ? '' : ' (senza icone)') : 'nessuna fila');
-    ok('1. la fila si vede subito, senza scorrere, sotto «Cosa cerchi qui intorno?»', !!fila && fila.visibile && fila.sopraLaPiega && fila.sottoCerca, JSON.stringify(fila));
-    /* «✈️ Viaggio», la quarta, viene dalla miglioria 9c: la scheda del
-       viaggio si apriva solo toccando un titolo. */
+    ok('1. nel menu dei viaggi c\'è il gruppo del viaggio, col suo nome, con icona e testo', !!fila && fila.titolo === 'Lisbona' && fila.icone && JSON.stringify(fila.testi) === JSON.stringify(['A raccolta', 'Bagagli', 'Compagni', 'Condividi', 'Viaggio']), fila ? fila.titolo + ': ' + fila.testi.join(' | ') + (fila.icone ? '' : ' (senza icone)') : 'nessun gruppo');
+    ok('1. il gruppo si vede subito, senza scorrere il menu, e in Home quei tasti non ci sono più', !!fila && fila.visibile && fila.sopraLaPiega && !fila.inHome, JSON.stringify(fila));
     const casi = [['Bagagli', 'mPacking'], ['Compagni', 'mPeople'], ['Condividi', 'mShare'], ['Viaggio', 'mTripZoom']];
     for (const [testo, foglio] of casi) {
-      await p.locator('#homeHero .hh-rapido', { hasText: testo }).click();
+      await apriCassetto(p);
+      await p.locator('#vgAzioni .vg-az', { hasText: testo }).click();
       const aperto = await foglioAperto(p, foglio);
       const dentro = await p.evaluate(f => {
         const m = document.getElementById(f);
@@ -172,10 +183,11 @@ const scheda = p => p.evaluate(() => {
       await chiudiFogli(p);
       await p.waitForTimeout(250);
     }
-    // anche in un viaggio che non ha ancora i giorni la fila c'e'
+    // anche in un viaggio che non ha ancora i giorni il gruppo c'e'
     const p2 = await apri(browser, { viaggioExtra: { days: [], start: '', end: '' } });
-    const senzaGiorni = await p2.evaluate(() => [...document.querySelectorAll('#homeHero .hh-rapido')].map(b => b.textContent.trim()).join(' | '));
-    ok('1. la fila c\'è anche in un viaggio senza giorni', senzaGiorni === 'Bagagli | Compagni | Condividi | Viaggio', senzaGiorni || 'nessuna');
+    await apriCassetto(p2);
+    const senzaGiorni = await p2.evaluate(() => [...document.querySelectorAll('#vgAzioni .vg-az')].map(b => b.textContent.trim()).join(' | '));
+    ok('1. il gruppo c\'è anche in un viaggio senza giorni', senzaGiorni === 'A raccolta | Bagagli | Compagni | Condividi | Viaggio', senzaGiorni || 'nessuno');
     await p.close(); await p2.close();
   });
 
@@ -186,22 +198,26 @@ const scheda = p => p.evaluate(() => {
     for (const scuro of [false, true]) {
       for (const larghezza of [320, 360, 375, 390, 414, 430]) {
         const p = await apri(browser, { fra: 3, larghezza, scuro });
-        const m = await p.evaluate(MISURA);
+        const casa = await p.evaluate(MISURA, 'casa');
+        await apriCassetto(p);
+        const cass = await p.evaluate(MISURA, 'cassetto');
         misurati++;
-        const tag = `${larghezza}px ${m.tema}`;
-        if (m.tema !== (scuro ? 'scuro' : 'chiaro')) fuori.push(tag + ': tema sbagliato');
-        if (m.tasti !== 6) fuori.push(tag + `: ${m.tasti} tasti invece di 6`);
-        m.fuori.forEach(x => fuori.push(tag + ': ' + x));
-        m.piccoli.forEach(x => piccoli.push(tag + ': ' + x));
-        m.spezzate.forEach(x => spezzate.push(tag + ': ' + x));
-        m.coperti.concat(m.addosso).forEach(x => coperti.push(tag + ': ' + x));
+        const tag = `${larghezza}px ${casa.tema}`;
+        if (casa.tema !== (scuro ? 'scuro' : 'chiaro')) fuori.push(tag + ': tema sbagliato');
+        if (casa.tasti !== 2 || cass.tasti !== 5) fuori.push(tag + `: ${casa.tasti} tasti nella scheda e ${cass.tasti} nel menu, invece di 2 e 5`);
+        [casa, cass].forEach(m => {
+          m.fuori.forEach(x => fuori.push(tag + ': ' + x));
+          m.piccoli.forEach(x => piccoli.push(tag + ': ' + x));
+          m.spezzate.forEach(x => spezzate.push(tag + ': ' + x));
+          m.coperti.concat(m.addosso).forEach(x => coperti.push(tag + ': ' + x));
+        });
         await p.close();
       }
     }
-    ok('2. fila e scheda stanno nello schermo da 320 a 430 px, in tema chiaro e scuro', fuori.length === 0 && misurati === 12, fuori.slice(0, 4).join('; ') || `${misurati} misure`);
-    ok('2. tutti i tasti di fila e scheda sono di almeno 44×44 px', piccoli.length === 0, piccoli.slice(0, 4).join('; '));
+    ok('2. il gruppo nel menu dei viaggi e la scheda in Home stanno nello schermo da 320 a 430 px, in tema chiaro e scuro', fuori.length === 0 && misurati === 12, fuori.slice(0, 4).join('; ') || `${misurati} misure`);
+    ok('2. tutti i tasti del gruppo e della scheda sono di almeno 44×44 px', piccoli.length === 0, piccoli.slice(0, 4).join('; '));
     ok('2. nessuna parola spezzata a metà', spezzate.length === 0, spezzate.slice(0, 4).join('; '));
-    ok('2. niente copre i tasti, e la scheda non sta addosso alla fila né a «Fra poco»', coperti.length === 0, coperti.slice(0, 4).join('; '));
+    ok('2. niente copre i tasti, e la scheda non sta addosso a «Cosa cerchi» né a «Fra poco»', coperti.length === 0, coperti.slice(0, 4).join('; '));
   });
 
   /* ── 3. quando compare la scheda, e il conto ───────────────────────────── */
@@ -300,11 +316,12 @@ const scheda = p => p.evaluate(() => {
     const p = await apri(browser, { fra: 20 });
     const m = await p.evaluate(() => {
       const home = (MAPPA_APP.split('\n').find(l => l.startsWith('- Home:')) || '');
+      const menu = (MAPPA_APP.split('\n').find(l => l.startsWith('- Le TRE RIGHINE')) || '');
       const domande = ['Dove trovo la lista bagagli?', 'Where is the packing list in the app?', '¿Dónde está la lista de equipaje?', 'Où est la liste de bagages ?', 'Onde está a lista de bagagem?'];
-      return { home, vecchia: /I bagagli stanno nella scheda del viaggio, dov'erano gia'/.test(MAPPA_APP),
+      return { home, menu, vecchia: /I bagagli stanno nella scheda del viaggio, dov'erano gia'/.test(MAPPA_APP),
         risposte: domande.map(d => /"Bagagli"/.test(mappaPerDomanda(d))) };
     });
-    ok('6. MAPPA_APP dice che in Home c\'è «Bagagli», sotto «Cosa cerchi qui intorno?»', /Subito sotto, una fila di quattro tasti con la scritta: "Bagagli" \(apre la lista bagagli\), "Compagni" .*, "Condividi" .* e "Viaggio"/.test(m.home), m.home.slice(0, 80));
+    ok('6. MAPPA_APP dice che «Bagagli» sta nel menu dei viaggi, sotto il nome del viaggio aperto (Layout 2)', /le sue azioni: "A raccolta" .*"Bagagli" \(la lista bagagli\), "Compagni" .*"Condividi" .*"Viaggio"/.test(m.menu) && /NON sono piu' in Home/.test(m.home), m.menu.slice(0, 80));
     ok('6. … e che la lista resta anche nella scheda del viaggio, e c\'è la scheda «Prepara la valigia»', /anche nella scheda del viaggio \("Bagagli"\)/.test(m.home) && /"Prepara la valigia"/.test(m.home) && /si chiude con la X e torna il giorno dopo/.test(m.home));
     ok('6. il vecchio percorso («stanno nella scheda del viaggio») non c\'è più', !m.vecchia);
     ok('6. l\'assistente riceve il percorso nuovo chiedendo dei bagagli, in tutte e cinque le lingue', m.risposte.every(Boolean), m.risposte.map(x => x ? 'sì' : 'no').join(' '));
@@ -331,10 +348,10 @@ const scheda = p => p.evaluate(() => {
     const viste = [];
     for (const lingua of ['en', 'es', 'fr', 'pt']) {
       const q = await apri(browser, { fra: 5, lingua });
-      const v = await q.evaluate(() => ({
-        fila: [...document.querySelectorAll('#homeHero .hh-rapido')].map(b => b.textContent.trim()),
+      const v = await q.evaluate(() => { apriViaggi(); return {
+        fila: [...document.querySelectorAll('#vgAzioni .vg-az:not(.largo)')].map(b => b.textContent.trim()),
         scheda: (document.getElementById('valScheda') || {}).innerText || ''
-      }));
+      }; });
       const d = diz[lingua].reduce((o, x) => (o[x.f] = x.v, o), {});
       // a schermo il simbolo davanti è un'icona: si confronta la frase che resta
       const senza = x => String(x).replace(/^(?:\p{Extended_Pictographic}|[^\p{L}\p{N}«"(])+/u, '');
@@ -346,15 +363,17 @@ const scheda = p => p.evaluate(() => {
       viste.push([lingua, giusto, v.fila.join(' | ') + ' · ' + v.scheda.replace(/\s+/g, ' ').slice(0, 90)]);
       await q.close();
     }
-    viste.forEach(([l, g, d]) => ok(`7. in ${l} fila e scheda sono tradotte`, g, d));
+    viste.forEach(([l, g, d]) => ok(`7. in ${l} il gruppo del menu e la scheda sono tradotti`, g, d));
     // tradotte le parole si allungano («Companheiros»): da 320 a 430 px tutto
     // resta dentro, intero e toccabile
     const lunghe = [];
     for (const lingua of ['en', 'es', 'fr', 'pt']) {
       for (const larghezza of [320, 430]) {
         const q = await apri(browser, { fra: 5, lingua, larghezza });
-        const m = await q.evaluate(MISURA);
-        m.fuori.concat(m.piccoli, m.spezzate.map(x => 'parola spezzata: ' + x), m.coperti, m.addosso).forEach(x => lunghe.push(`${lingua} ${larghezza}px: ${x}`));
+        const casa = await q.evaluate(MISURA, 'casa');
+        await apriCassetto(q);
+        const cass = await q.evaluate(MISURA, 'cassetto');
+        [casa, cass].forEach(m => m.fuori.concat(m.piccoli, m.spezzate.map(x => 'parola spezzata: ' + x), m.coperti, m.addosso).forEach(x => lunghe.push(`${lingua} ${larghezza}px: ${x}`)));
         await q.close();
       }
     }

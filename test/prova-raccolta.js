@@ -128,20 +128,29 @@ const stato = {
   ok('e nemmeno in uno che non è nel cloud', tasto.senzaCloud === false);
   ok('quando le condizioni tornano, torna anche il tasto', tasto.tornato === true);
 
-  // ── e il tasto IN HOME ─────────────────────────────────────────────────
+  // ── e il tasto nel MENU DEI VIAGGI ─────────────────────────────────────
   /* «La funzione a raccolta la voglio in home, ora non la trovo.» Era
      stata spostata nella scheda del viaggio pensando che si usasse una volta
-     per viaggio; si usa in strada, col gruppo sparpagliato. Adesso sta in
-     home accanto a «Cosa cerchi». E quando non si puo' ancora usare il tasto
-     c'e' lo stesso e dice cosa manca: sparire senza spiegazioni era il
-     motivo per cui non si trovava. */
+     per viaggio; si usa in strada, col gruppo sparpagliato. Era tornata in
+     home accanto a «Cosa cerchi»; dalla Layout 2 sta nel menu dei viaggi,
+     prima delle azioni del viaggio aperto: a due tocchi da ogni schermata,
+     con la sua scritta. E quando non si puo' ancora usare il tasto c'e' lo
+     stesso e dice cosa manca: sparire senza spiegazioni era il motivo per
+     cui non si trovava. */
   const inHome = await page.evaluate(async () => {
     const f = {};
     renderAll();
-    const b = () => document.querySelector('#homeHero .hh-raccolta');
+    /* il menu si riempie aprendolo: ogni volta lo si riapre da capo */
+    const b = () => {
+      if (document.getElementById('mViaggi').classList.contains('active')) closeSheet('mViaggi');
+      apriViaggi();
+      return document.querySelector('#vgAzioni .vg-az[onclick*="raccoltaDalMenu"]');
+    };
     f.cePer = !!b();
     f.testo = (b() || {}).textContent || '';
-    f.accantoACerca = !!(b() && b().parentElement && b().parentElement.querySelector('.hh-cerca'));
+    f.primo = !!(b() && b() === document.querySelector('#vgAzioni .vg-az'));
+    f.titolo = (document.getElementById('vgAzT') || {}).textContent || '';
+    f.nonInHome = !document.querySelector('#plan [onclick*="apriRaccolta"], #plan [onclick*="raccoltaDalMenu"]');
     if (b()) b().click();
     f.apre = document.getElementById('mRaccolta').classList.contains('active');
     closeSheet('mRaccolta');
@@ -159,13 +168,14 @@ const stato = {
     t.participants = tutti; renderAll();
     return f;
   });
-  ok('in home c\'è «A raccolta»', inHome.cePer && /A raccolta/.test(inHome.testo), inHome.testo);
-  ok('sulla stessa riga di «Cosa cerchi qui intorno?»', inHome.accantoACerca);
+  ok('nel menu dei viaggi c\'è «A raccolta»', inHome.cePer && /A raccolta/.test(inHome.testo), inHome.testo);
+  ok('per primo fra le azioni del viaggio, sotto il suo nome', inHome.primo && inHome.titolo.trim().length > 0, inHome.titolo);
+  ok('e in Home non c\'è più', inHome.nonInHome);
   ok('e toccandolo si apre la chiamata', inHome.apre);
   ok('chi non può lanciarlo lo vede lo stesso', inHome.ceDaCompagno);
   ok('e toccandolo gli si dice perché, invece di non fare niente',
      /creato il viaggio/.test(inHome.spiega) && inHome.nonApre, inHome.spiega);
-  ok('in un viaggio da soli in home non c\'è: non c\'è nessuno da chiamare', inHome.daSolo === false);
+  ok('in un viaggio da soli non c\'è: non c\'è nessuno da chiamare', inHome.daSolo === false);
 
   // ── chiamare ────────────────────────────────────────────────────────────
   const chiama = await page.evaluate(async () => {

@@ -143,7 +143,8 @@ const viaggio = (activities, travelMode) => ({
      pezzi.estremi.join(' | ') === 'Senso-ji→Ueno | Ueno→Shibuya | Shibuya→Izakaya', pezzi.estremi.join(' | '));
   ok('il pannello si apre', pezzi.pannelloAperto);
   ok('e spiega perché è diviso', /mezzo solo per percorso/.test(pezzi.testo));
-  ok('e dice dove si cambia il mezzo di una tratta', /time-table/.test(pezzi.testo));
+  /* dalla Layout 2 la time-table si chiama Programma */
+  ok('e dice dove si cambia il mezzo di una tratta', /Programma/.test(pezzi.testo), pezzi.testo.replace(/\s+/g, ' ').slice(0, 160));
 
   // aprendo un pezzo parte il navigatore con IL SUO mezzo
   const p2 = await page.evaluate(() => { window.__url = null; navGiroApri(1); return window.__url; });
