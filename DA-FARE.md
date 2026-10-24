@@ -1434,7 +1434,11 @@ schermata: in Prenotazioni c'è quella della scheda che si vede).
   un monumento: ti dico cos'è», che apre la sua schermata (con «Scopri» per
   tornare; la barra accende Scopri). Una quarta scheda accanto a Cerca,
   Assistente e Importa a 320 px non ci sta intera in italiano, spagnolo,
-  francese e portoghese (`prova-navigazione` la misura a ogni giro).
+  francese e portoghese: il controllo a schede ha 278 px, e con le quattro
+  parole ne servono 292 in italiano, 301 in spagnolo, 321 in francese, 318
+  in portoghese (272 in inglese). `prova-navigazione` lo misura a ogni giro,
+  sull'insieme: una scheda non si stringe sotto la sua parola, quindi presa
+  da sola sembra sempre a filo.
 - **I vecchi indirizzi interni**: `#hotel`, `#biglietti`, `#identifica`,
   `#programma`, `#spese`, `#budget`… (e i nomi inglesi) portano al posto
   nuovo, all'avvio e con l'app aperta (`vaiAlPosto`), e l'indirizzo torna

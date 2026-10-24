@@ -498,7 +498,13 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
     await p.close();
     /* La quarta scheda: a 320 px, nelle cinque lingue, «Identifica» starebbe
        intera accanto alle altre tre? Si prova davvero, con una copia del
-       controllo a schede. */
+       controllo a schede. Si guarda l'insieme, non la scheda: una scheda non
+       si stringe sotto la sua parola, quindi quando il posto non basta e'
+       il controllo intero a sbordare, e la scheda presa da sola sembra
+       sempre a filo (la prima versione di questa misura confrontava proprio
+       quello, e il verdetto dipendeva dagli arrotondamenti). Servono le
+       parole, piu' i margini dentro le schede e lo spazio fra l'una e
+       l'altra. */
     const misure = [];
     for (const lingua of LINGUE) {
       const q = await apri(browser, { lingua, larghezza: 320 });
@@ -508,18 +514,20 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
         const b = c.querySelector('.seg-btn').cloneNode(true); b.textContent = t('Identifica'); b.removeAttribute('id'); c.appendChild(b);
         c.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
         seg.after(c);
+        const cs = getComputedStyle(c), gap = parseFloat(cs.columnGap) || 0;
         const voci = [...c.querySelectorAll('.seg-btn')].map(x => { const rg = document.createRange(); rg.selectNodeContents(x); const st = getComputedStyle(x);
-          return { testo: x.textContent.trim(), serve: Math.ceil(rg.getBoundingClientRect().width), posto: Math.floor(x.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight)) }; });
+          return { testo: x.textContent.trim(), parola: rg.getBoundingClientRect().width, margini: parseFloat(st.paddingLeft) + parseFloat(st.paddingRight) }; });
+        const posto = c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const serve = voci.reduce((n, v) => n + v.parola + v.margini, 0) + gap * (voci.length - 1);
         c.remove();
-        return voci;
+        return { serve: Math.round(serve), posto: Math.round(posto), id: voci[voci.length - 1].testo };
       });
       await q.close();
-      const id = m[m.length - 1], troppo = m.filter(x => x.serve > x.posto);
-      misure.push({ lingua, id, troppo });
+      misure.push(Object.assign({ lingua }, m));
     }
-    const nonCi = misure.filter(x => x.troppo.length);
+    const nonCi = misure.filter(x => x.serve > x.posto);
     ok('7. la quarta scheda «Identifica» a 320 px non ci starebbe intera in tutte e cinque le lingue: per questo è una riga in cima', nonCi.length > 0,
-      misure.map(x => `${x.lingua} «${x.id.testo}» ${x.id.serve}/${x.id.posto} px` + (x.troppo.length ? ' (non ci sta: ' + x.troppo.map(y => y.testo).join(', ') + ')' : '')).join('; '));
+      misure.map(x => `${x.lingua} «${x.id}»: servono ${x.serve} px su ${x.posto}` + (x.serve > x.posto ? ' (non ci sta)' : '')).join('; '));
   });
 
   /* ── 8. vecchi indirizzi e notifiche ──────────────────────────────────── */
