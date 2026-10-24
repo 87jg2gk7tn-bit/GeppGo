@@ -67,8 +67,9 @@ const stato = {
   ok('e non è solo un cartello: da lì si cerca un posto',
      !!due.salvati && due.salvati.tasto.length > 2, due.salvati ? due.salvati.tasto : '');
   ok('il riquadro del programma c\'è', !!due.programma, due.programma ? due.programma.testo : 'manca');
-  ok('e da lì si apre la time-table, che è dove si rimedia',
-     !!due.programma && /time-table/i.test(due.programma.tasto), due.programma ? due.programma.tasto : '');
+  /* dalla Layout 2 la time-table si chiama Programma */
+  ok('e da lì si apre il Programma, che è dove si rimedia',
+     !!due.programma && /Programma/.test(due.programma.tasto), due.programma ? due.programma.tasto : '');
 
   /* Un tasto che non porta da nessuna parte è peggio di nessun tasto:
      promette e non mantiene. */
@@ -80,7 +81,7 @@ const stato = {
        await new Promise(x => setTimeout(x, 600));
        return document.activeElement === document.getElementById('poiSearch');
      }) === true);
-  ok('e quello del programma apre davvero la time-table',
+  ok('e quello del programma apre davvero il Programma',
      await page.evaluate(async () => {
        const b = document.querySelector('#progPOIs .empty button');
        if (!b) return false;
