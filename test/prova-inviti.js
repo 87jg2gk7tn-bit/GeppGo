@@ -86,7 +86,14 @@ const NUOVE = [
       testo: document.getElementById('cfMsg').textContent, tasto: document.getElementById('cfOk').textContent,
       annulla: annulla ? getComputedStyle(annulla).display : '' };
   });
-  const aspettaAvviso = p => p.waitForFunction(() => document.getElementById('mConfirm').classList.contains('active'), { timeout: 4000 }).catch(() => {});
+  /* Aperto, e finito di salire: a meta' strada il tasto sta ancora sotto il
+     bordo dello schermo, e «chi c'e' sopra?» non risponde niente. L'avviso
+     parte 800 ms dopo l'avvio, e da quando la schermata d'apertura se ne va
+     prima la prova lo trova spesso ancora in viaggio. */
+  const aspettaAvviso = p => p.waitForFunction(() => {
+    const m = document.getElementById('mConfirm');
+    return m.classList.contains('active') && !m.getAnimations({ subtree: true }).some(a => a.playState === 'running');
+  }, { timeout: 4000 }).catch(() => {});
   /* La finestra Condividi come la vede chi ha un account e il viaggio nel
      cloud. Il cloud vero qui non c'è (la rete è chiusa): basta che l'app
      creda di esserci, perché per costruire il link non lo interroga. */

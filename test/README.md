@@ -837,6 +837,13 @@ giorni prima della partenza e il primo giorno la scheda «Prepara la
 valigia» col conto delle voci pronte. La regola che ne e' uscita
 («Nessuna funzione nascosta») sta in `CLAUDE.md`.
 
+Dalla Layout 2 la fila non sta piu' in Home: «A raccolta», «Bagagli»,
+«Compagni», «Condividi» e «Viaggio» sono nel menu dei viaggi (le righine o
+il nome del viaggio in alto), sotto il nome del viaggio aperto, a due tocchi
+da ogni schermata. Le prove 1, 2 e 7 le cercano e le misurano li', col menu
+aperto; la scheda «Prepara la valigia» resta in Home, e le prove 3 e 4 sono
+quelle di prima. Quello che segue racconta la versione della miglioria 9b.
+
 I gruppi: la fila si vede subito, sotto «Cosa cerchi qui intorno?», e i
 tasti aprono i loro fogli (anche in un viaggio senza giorni; dal 15 ottobre
 sono quattro, con «✈️ Viaggio» che apre la scheda del viaggio); fila e scheda
@@ -870,7 +877,7 @@ alta — vedi DA-FARE, «Cose scoperte a caro prezzo».
 ## Tutto a portata
 
 ```sh
-node test/prova-a-portata.js   # 62 controlli, in otto gruppi (circa 4 minuti)
+node test/prova-a-portata.js   # 74 controlli, in otto gruppi (circa 4 minuti)
 ```
 
 La regola «Nessuna funzione nascosta» (`CLAUDE.md`) provata come la vive chi
@@ -884,11 +891,14 @@ portata (l'elenco in DA-FARE, «Nessuna funzione nascosta»).
    sta la voce e si rifiuta se lì sopra c'è altro, come farebbe un dito; ogni
    voce deve avere una scritta (l'iniziale del Profilo conta). Quello che
    partirebbe per la sua strada (il PDF, il calendario, la posizione,
-   l'assistente) è sostituito da una spia: si guarda che il tocco arrivi. La
-   barra in basso conta come un tocco su un'icona: le parole sotto le icone a
-   320 px non ci stanno, e come ridurre le voci lo decide Giacomo. «📎 PDF» e
-   «✓ Pagato» stanno dietro una scheda della loro pagina, e la prova lo dice:
-   2 tocchi da lì, 3 dalla Home.
+   l'assistente) è sostituito da una spia: si guarda che il tocco arrivi.
+   Dalla Layout 2 la barra in basso ha la parola sotto l'icona, e la voce si
+   cerca per la sua parola; le azioni del viaggio stanno nel menu dei viaggi
+   (il nome in alto, poi la voce), Hotel è la seconda scheda di Prenotazioni
+   e Identifica la riga in cima a Scopri. «📎 PDF» e «✓ Pagato» stanno
+   dietro una scheda della loro pagina, e le voci della scheda del viaggio
+   dietro «Viaggio» nel menu dei viaggi: la prova lo dice, 2 tocchi da lì,
+   3 dalla Home.
 2. **Le misure**: 12 schermate × 3 larghezze (320, 375, 430) × 5 lingue ×
    chiaro e scuro, 360 in tutto. Niente fuori dallo schermo, niente testo
    troncato (coi puntini o tagliato) o sovrapposto, nessuna parola spezzata
@@ -903,10 +913,12 @@ portata (l'elenco in DA-FARE, «Nessuna funzione nascosta»).
 3. «Lisbona ▾» apre i viaggi con le tre voci a schermo e si richiude
    ritoccandolo; il Profilo si apre con un tocco, e senza un nome il tondo
    dice «Profilo», intero.
-4. «✈️ Viaggio» apre la scheda del viaggio, con le nove voci.
+4. «Viaggio», nel menu dei viaggi, apre la scheda del viaggio, con le nove
+   voci.
 5. «📖 Il ricordo» si apre a viaggio in corso, e aprirlo non lo conclude.
-6. In portoghese a 320 px «Cosa cerchi» passa alla forma corta, intera, e
-   «Toca a reunir» resta dentro il suo tasto; «ADESSO» e «ora» del riquadro
+6. In portoghese a 320 px «Cosa cerchi», da solo nella sua riga dalla
+   Layout 2, si legge tradotto e intero (la frase lunga, o la corta se non
+   ci sta); «ADESSO» e «ora» del riquadro
    «Fra poco» sono nella lingua dell'app. L'orologio della pagina sta a
    mezzogiorno (`page.clock`): la tappa delle 11:30 è in corso a qualunque
    ora girino le prove.
@@ -1406,3 +1418,78 @@ codice di prima non è stata rifatta: misura quello che la Layout 1 già
 garantiva (è la prova 8 di `prova-stile`, verde su `main`) e lo stile in
 testa, che era già 3,6 KB.
 
+
+## La navigazione (Layout 2)
+
+```sh
+node test/prova-navigazione.js        # le 9 prove
+node test/prova-navigazione.js 4 6    # solo le prove 4 e 6
+APP_URL=file:///percorso/di/un-altra-copia.html node test/prova-navigazione.js
+```
+
+La prova 4 pretende i caratteri veri: in locale serve `CARATTERI_GOOGLE`
+(vedi «I caratteri veri, come su GitHub»), se no dice che non sono caricati
+e fallisce. Le domande, una per prova:
+
+1. **I plurali**: in inglese, nel Programma, una tappa per una persona
+   dice «1 person» e due «2 people»; le frasi col numero sistemate (giorni,
+   righe, luoghi, persone) sono giuste con 0, 1, 2 e 5 nelle cinque lingue,
+   lo zero francese al singolare; nel codice passano da `tp()`, non più da
+   `tv()`; il Profilo dice «1 day».
+2. **Il cielo in cima a tutte le schermate**: undici scene (sole, nuvole,
+   pioggia, neve, temporale, nebbia, notte...) nei due temi; il cielo
+   grande con la città solo in Home; sulle altre schermate la sfumatura
+   segue tempo, ora e tema e finisce nel panna; ogni scritta che ci sta
+   sopra senza un fondo suo arriva a 4,5:1 (3:1 se grande), misurata due
+   volte: col conto della sfumatura e coi pixel della foto. La testata del
+   Programma è trasparente al suo posto e panna quando resta ferma in alto.
+3. **Il menu dei viaggi**: il gruppo del viaggio aperto, col suo nome come
+   titolo, fra l'elenco e «Aggiungi viaggio»; le cinque azioni (A raccolta,
+   Bagagli, Compagni, Condividi, Viaggio) con icona a due toni e parola,
+   beige, almeno 44×44, e ognuna apre la sua finestra col cassetto chiuso;
+   in Home non ci sono più, «Cosa cerchi qui intorno?» è largo quanto la
+   riga, la scheda «Prepara la valigia» c'è nei giorni giusti; senza un
+   viaggio aperto il gruppo non c'è.
+4. **La barra in basso**: cinque voci con la parola sotto, intere da 320 a
+   430 px (sei larghezze) in cinque lingue, almeno a 12 px, coi caratteri
+   veri; dove nella pillola non ci stanno la barra prende tutta la
+   larghezza, e dove non ci stanno nemmeno così la prova lo dice (il
+   francese a 320 px: le parole da accorciare sono in DA-FARE) e guarda che
+   la pista scorra; ogni voce apre la sua schermata, la scelta ha
+   `aria-current` e il tondo d'inchiostro, i tasti sono da 44×44.
+5. **«Programma» ovunque**: titolo e voce della barra uguali nelle cinque
+   lingue (Programma, Schedule, Programa, Programme, Roteiro); nessun testo a
+   schermo, nessuna frase del codice (`tv`, `tp`, `toast`), nessuna voce del
+   dizionario e di `MAPPA_APP` che dica ancora «Time Table».
+6. **Prenotazioni**: le schede Biglietti e Hotel; si apre su Biglietti se
+   c'è un biglietto oggi o nelle prossime 24 ore (anche domani sera), se no
+   sull'ultima scheda scelta; i vecchi percorsi (`go('hotels')`, la mail
+   dell'hotel, «Prenotazione dalla mail», il nuovo biglietto) aprono la
+   scheda giusta, e «Portami qui» dentro Hotel funziona.
+7. **Identifica**: due tocchi con una voce scritta (Scopri › «Identifica»),
+   e da lì si torna con «Scopri»; la prova misura anche la quarta scheda in
+   Scopri, da 320 px in cinque lingue, e dice che non ci starebbe.
+8. **I vecchi indirizzi e le notifiche**: `#hotel`, `#biglietti`,
+   `#identifica`, `#timetable` e gli altri, all'avvio e cambiando
+   l'indirizzo con l'app aperta, portano al posto nuovo; il tocco su una
+   notifica (miglioria 9) apre la schermata nuova.
+9. **Il resto**: `MAPPA_APP` dice i percorsi nuovi e non più quelli vecchi,
+   e l'assistente riceve la voce giusta chiedendo in cinque lingue; axe senza
+   violazioni gravi sulle schermate nuove nei due temi; niente fuori dallo
+   schermo da 320 a 430 px.
+
+Sul codice di prima (`main` fc93dba, la Layout 1b) passano 7 controlli su 45
+(le prove che si fermano prima ne contano meno dei 64 di adesso), quelli che
+devono: «2 people» e le abbreviazioni delle altre lingue, che erano già
+giuste; il cielo grande solo in Home; la scheda «Prepara la valigia»; le
+notifiche, che portano dove portavano (la tappa nel Programma, il tetto in
+Spese › Budget); nessun errore in pagina. Gli altri cadono per il motivo
+giusto: «1 people», «IN 1 DAYS», «1 days»; nessuna sfumatura sulle pagine; il
+gruppo nel menu dei viaggi non c'è e in Home ci sono ancora i tasti; la barra
+senza parole; «Time Table» nel titolo, a schermo e nel dizionario;
+Prenotazioni e la riga «Identifica» non ci sono; i vecchi indirizzi restano
+in Home; `MAPPA_APP` racconta i percorsi di prima. I controlli che dipendono
+da una misura (le scritte sul cielo, lo stesso cielo dappertutto, il gruppo
+che sparisce senza viaggio) pretendono di aver avuto qualcosa da misurare:
+la prima controprova ne dava cinque per buoni sul codice di prima, solo
+perché lì il cielo e il gruppo non c'erano.

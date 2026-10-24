@@ -244,7 +244,8 @@ const RADICI = `(() => { const a = [...document.querySelectorAll('.modal.active'
       male.push(...(await guarda("go('money');moneyVista('spese')", '#moneySeg .seg-btn.active', scheda)).map(x => `${tema} Spese ${x}`));
       male.push(...(await guarda("go('money');moneyVista('budget')", '#moneySeg .seg-btn.active', scheda)).map(x => `${tema} Budget ${x}`));
       male.push(...(await guarda("go('money');moneyVista('spese');setMoney('list')", '#tricountBody .seg .seg-btn.active', scheda)).map(x => `${tema} Spese/Saldi ${x}`));
-      male.push(...(await guarda("go('plan')", '.nav-item.active', { fondo: '--ink', scritta: '--paper' })).map(x => `${tema} barra in basso ${x}`));
+      /* dalla Layout 2 il tondo sta dietro l'icona, con la parola sotto */
+      male.push(...(await guarda("go('plan')", '.nav-item.active .ni-ic', { fondo: '--ink', scritta: '--paper' })).map(x => `${tema} barra in basso ${x}`));
       await page.close();
     }
     ok('3. il giorno scelto è un tondo d\'oro (Home e Programma), la scheda scelta è bianca con la scritta oro (Spese, Budget, Saldi), con contrasti a norma, nei due temi', !male.filter(x => !/barra in basso/.test(x)).length, primi(male.filter(x => !/barra in basso/.test(x))));

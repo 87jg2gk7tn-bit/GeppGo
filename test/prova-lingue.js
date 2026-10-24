@@ -74,8 +74,9 @@ async function apri(browser, lingua, linguaTelefono) {
   // ── in italiano, niente cambia ───────────────────────────────────────────
   const it = await apri(browser, 'it');
   it.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
+  /* dalla Layout 2 la voce della barra dice la sua parola sotto l'icona */
   const barraIt = await it.evaluate(() =>
-    [...document.querySelectorAll('.nav-item')].map(n => n.getAttribute('title')));
+    [...document.querySelectorAll('.nav-item')].map(n => (n.querySelector('.ni-tx') || n).textContent.trim()));
   ok('in italiano la barra è quella di sempre',
      barraIt.includes('Spese') && barraIt.includes('Scopri'), barraIt.join(' · '));
   ok('e t() restituisce la frase così com\'è',
@@ -101,20 +102,23 @@ async function apri(browser, lingua, linguaTelefono) {
   const en = await apri(browser, 'en');
   en.on('pageerror', e => err.push('PAGEERROR(en): ' + e.message));
   const barraEn = await en.evaluate(() =>
-    [...document.querySelectorAll('.nav-item')].map(n => n.getAttribute('title')));
+    [...document.querySelectorAll('.nav-item')].map(n => (n.querySelector('.ni-tx') || n).textContent.trim()));
   /* "Weather" non è più fra le voci: il meteo si apre dal riquadro del
      cielo in cima alla home. Che sia tradotto anche lì lo controlla il
      confronto fra le due lingue più sotto, che guarda dentro la tendina. */
   ok('in inglese la barra è tradotta',
-     barraEn.includes('Expenses') && barraEn.includes('Discover') && barraEn.includes('Timetable'),
+     barraEn.includes('Expenses') && barraEn.includes('Discover') && barraEn.includes('Schedule'),
      barraEn.join(' · '));
   ok('e il meteo non è più una voce della barra',
      !barraEn.includes('Weather') && !barraEn.includes('Meteo'), barraEn.join(' · '));
   ok('ma la porta del meteo in cima lo dice nella lingua giusta',
      await en.evaluate(() => (document.querySelector('.hh-grado') || {}).title) === 'Weather for the trip',
      await en.evaluate(() => (document.querySelector('.hh-grado') || {}).title || 'non c\'è'));
-  ok('e anche le etichette per chi non vede', await en.evaluate(() =>
-     document.querySelector('.nav-item[data-p="money"]').getAttribute('aria-label')) === 'Expenses');
+  /* VoiceOver legge la parola che si vede (l'icona è nascosta): niente
+     etichetta a parte che possa restare in italiano */
+  ok('e anche le etichette per chi non vede', await en.evaluate(() => {
+     const n = document.querySelector('.nav-item[data-p="money"]');
+     return (n.getAttribute('aria-label') || n.textContent).trim(); }) === 'Expenses');
   ok('la pagina dichiara la lingua che sta usando',
      await en.evaluate(() => document.documentElement.lang) === 'en');
 
@@ -131,7 +135,7 @@ async function apri(browser, lingua, linguaTelefono) {
   for (const [l, atteso, dove] of [['es', 'Gastos', 'money'], ['fr', 'Dépenses', 'money'], ['pt', 'Despesas', 'money']]) {
     const p = await apri(browser, l);
     p.on('pageerror', e => err.push(`PAGEERROR(${l}): ` + e.message));
-    const v = await p.evaluate(d => document.querySelector(`.nav-item[data-p="${d}"]`).getAttribute('title'), dove);
+    const v = await p.evaluate(d => document.querySelector(`.nav-item[data-p="${d}"] .ni-tx`).textContent.trim(), dove);
     ok(`in ${LINGUA_NOME[l]} la barra è tradotta`, v === atteso, v);
     await p.close();
   }
@@ -143,7 +147,7 @@ async function apri(browser, lingua, linguaTelefono) {
      al guado, e questa riga è il momento in cui è successo. */
   const auto = await apri(browser, null, 'es-ES');
   const barraAuto = await auto.evaluate(() => ({
-    titolo: document.querySelector('.nav-item[data-p="money"]').getAttribute('title'),
+    titolo: document.querySelector('.nav-item[data-p="money"] .ni-tx').textContent.trim(),
     pronta: linguaPronta('es'),
     quante: Object.keys(DIZIONARIO.es).length
   }));
@@ -166,7 +170,7 @@ async function apri(browser, lingua, linguaTelefono) {
   // ── ma sceglierla a mano vale sempre ─────────────────────────────────────
   const aMano = await apri(browser, 'es', 'it-IT');
   const barraMano = await aMano.evaluate(() =>
-    document.querySelector('.nav-item[data-p="money"]').getAttribute('title'));
+    document.querySelector('.nav-item[data-p="money"] .ni-tx').textContent.trim());
   ok('sceglierla a mano vale anche se non è ancora pronta', barraMano === 'Gastos', barraMano);
   await aMano.close();
 
@@ -174,7 +178,7 @@ async function apri(browser, lingua, linguaTelefono) {
      in italiano, che è meglio di un'interfaccia sfondata. */
   const ignota = await apri(browser, null, 'de-DE');
   const barraIgnota = await ignota.evaluate(() =>
-    document.querySelector('.nav-item[data-p="money"]').getAttribute('title'));
+    document.querySelector('.nav-item[data-p="money"] .ni-tx').textContent.trim());
   ok('una lingua che non sappiamo dire torna all\'italiano', barraIgnota === 'Spese', barraIgnota);
   await ignota.close();
 
@@ -211,7 +215,7 @@ async function apri(browser, lingua, linguaTelefono) {
     p.on('pageerror', e => err.push('PAGEERROR(rid): ' + e.message));
     const v = await p.evaluate(() => {
       renderAll();
-      return document.querySelector('.nav-item[data-p="money"]').getAttribute('title');
+      return document.querySelector('.nav-item[data-p="money"] .ni-tx').textContent.trim();
     });
     await p.close();
     return v;
@@ -407,7 +411,7 @@ async function apri(browser, lingua, linguaTelefono) {
        che erano tradotte benissimo. Si aspetta un segnale certo, non un
        tempo. */
     if (lingua !== 'it') await p.waitForFunction(
-      () => document.querySelector('.nav-item[data-p="money"]').getAttribute('title') !== 'Spese',
+      () => document.querySelector('.nav-item[data-p="money"] .ni-tx').textContent.trim() !== 'Spese',
       { timeout: 20000 });
     const visti = await p.evaluate(([leggi, pg]) => eval(leggi)(pg), [LEGGI, PAGINE]);
     /* I valori del dizionario si chiedono a questa pagina, che è già aperta:

@@ -7,16 +7,18 @@
    quattro tocchi. Qui si prova che adesso la rispettano.
 
    1. ogni funzione dell'elenco si raggiunge in al massimo 2 tocchi dalla
-      Home, toccando voci con la scritta. La barra in basso resta di sole
-      icone: le parole sotto le icone a 320 px non ci stanno, e come ridurre
-      le voci lo decide Giacomo (vedi DA-FARE);
+      Home, toccando voci con la scritta. Dalla Layout 2 anche la barra in
+      basso ha le parole (Oggi · Programma · Scopri · Spese · Prenotazioni),
+      e A raccolta, Bagagli, Compagni, Condividi e Viaggio stanno nel menu
+      dei viaggi: le voci dentro la scheda del viaggio sono a 2 tocchi dal
+      menu, 3 dalla Home, e la prova lo conta e lo dice;
    2. da 320 a 430 px, in 5 lingue, in tema chiaro e scuro: niente esce
       dallo schermo, niente è troncato o sovrapposto, e intorno al centro di
       ogni tasto ci sono 44×44 px che rispondono a lui (compresa l'icona del
       mezzo fra due tappe, che resta senza scritta);
    3. «Lisbona ▾» apre l'elenco dei viaggi con le tre voci, e il Profilo si
       apre con un tocco;
-   4. «✈️ Viaggio» apre la scheda del viaggio;
+   4. «Viaggio», nel menu dei viaggi, apre la scheda del viaggio;
    5. «Il ricordo» si apre anche per un viaggio in corso;
    6. in portoghese a 320 px «Cosa cerchi» passa alla forma corta, intera;
       «ADESSO» e «ora» sono tradotti;
@@ -107,6 +109,9 @@ const aCasa = async (p, corrente = 1) => {
   await p.evaluate(c => {
     document.querySelectorAll('.modal.active').forEach(m => closeSheet(m.id));
     window.__spie = [];
+    /* Prenotazioni si apre sull'ultima scheda scelta: ogni percorso parte
+       come la prima volta, su Biglietti */
+    try { localStorage.removeItem('geppgo2_pren_scheda'); } catch (e) {}
     if (app.currentTripId !== c) { app.currentTripId = c; save(); }
     if (typeof setDiscover === 'function') setDiscover('search');
     if (typeof setMoney === 'function') setMoney('list');
@@ -117,19 +122,22 @@ const aCasa = async (p, corrente = 1) => {
 /* Le funzioni che, toccate davvero, partirebbero per la loro strada (il
    prompt per rinominare, il PDF, il file del calendario, l'assistente, la
    posizione): qui si guarda solo che il tocco ci arrivi. */
-const SPIE = ['toggleGPS', 'renameTrip', 'toggleStatus', 'openDiary', 'exportICS', 'sistemaGiornata', 'openGenForDay', 'undoDrag', 'toggleSuggest'];
+const SPIE = ['toggleGPS', 'renameTrip', 'toggleStatus', 'openDiary', 'exportICS', 'sistemaGiornata', 'openGenForDay', 'undoDrag', 'toggleSuggest', 'raccoltaDalMenu'];
 const spia = p => p.evaluate(n => { window.__spie = []; n.forEach(k => { window[k] = function () { window.__spie.push(k); }; }); }, SPIE);
 
 /* ── 1. i percorsi ─────────────────────────────────────────────────────────
-   Ogni passo è una voce con la sua scritta, tranne BARRA: un'icona della
-   barra in basso, che le parole non le ha (vedi sopra). */
+   Ogni passo è una voce con la sua scritta; BARRA è una voce della barra in
+   basso, che dalla Layout 2 ha la parola sotto l'icona. */
 const BARRA = p => ({ barra: p });
 /* prima: quello che c'e' da fare perche' la voce si accenda (non e' un tocco
    e non si conta): «↩ Annulla» con niente da annullare e' spento
    (aria-disabled, miglioria 11), e un dito vero non lo cerca. */
 const VOCE = (sel, re, prima) => ({ sel, re, prima });
 const NOME = VOCE('#menuViaggi', /Lisbona/);
-const VIAGGIO = VOCE('#homeHero .hh-rapido', /Viaggio/);
+const MENU = VOCE('#vgAzioni .vg-az', /Viaggio/);
+/* la scheda del viaggio: il nome in alto, poi «Viaggio» nel menu dei viaggi */
+const VIAGGIO = [NOME, MENU];
+const SCHEDA = 'dietro la scheda del viaggio: 2 dal menu dei viaggi';
 const GIORNATA = VOCE('#homeHero .hh-eyebrow', /GIORNO 1 DI 4/);
 const PROFILO = VOCE('#tbProfilo', /^\s*A\s*$/);
 /* [funzione, partenza, passi, cosa deve succedere]. «dietro una scheda»:
@@ -145,33 +153,41 @@ const FUNZIONI = [
   ['il GPS', 1, [VOCE('#gpsPill', /GPS/)], 'spia:toggleGPS'],
   ['il meteo', 1, [VOCE('#homeHero .hh-grado', /Meteo/)], 'mMeteo'],
   ['aggiungere una tappa dalla Home', 1, [VOCE('#plan .hh-add', /Aggiungi/)], 'mActDetail'],
-  ['la scheda del viaggio', 1, [VIAGGIO], 'mTripZoom'],
-  ['rinominare il viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Rinomina/)], 'spia:renameTrip'],
-  ['i giorni del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Giorni/)], 'mTripDates'],
-  ['concludere il viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Concludi viaggio/)], 'spia:toggleStatus'],
-  ['eliminare il viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Elimina viaggio/)], 'mConfirm'],
-  ['i consigli, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Consigli/)], 'mSuggest'],
-  ['i punti di ripristino, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Punti di ripristino/)], 'mRestore'],
-  ['il ricordo, a viaggio in corso', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Il ricordo/)], 'mRicordo'],
-  ['il diario in PDF', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Diario PDF/)], 'spia:openDiary'],
-  ['esportare nel calendario', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Esporta nel calendario/)], 'spia:exportICS'],
-  ['il PDF dell\'itinerario, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /PDF dell'itinerario/)], 'mPdfItin'],
-  ['i tetti di spesa, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tetti di spesa/)], 'mTetti'],
+  ['la scheda del viaggio', 1, VIAGGIO, 'mTripZoom'],
+  /* le azioni del viaggio, nel menu dei viaggi (Layout 2) */
+  ['A raccolta', 1, [NOME, VOCE('#vgAzioni .vg-az', /A raccolta/)], 'spia:raccoltaDalMenu'],
+  ['i bagagli', 1, [NOME, VOCE('#vgAzioni .vg-az', /Bagagli/)], 'mPacking'],
+  ['i compagni', 1, [NOME, VOCE('#vgAzioni .vg-az', /Compagni/)], 'mPeople'],
+  ['condividere il viaggio', 1, [NOME, VOCE('#vgAzioni .vg-az', /Condividi/)], 'mShare'],
+  ['rinominare il viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Rinomina/)], 'spia:renameTrip', SCHEDA],
+  ['i giorni del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Giorni/)], 'mTripDates', SCHEDA],
+  ['concludere il viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Concludi viaggio/)], 'spia:toggleStatus', SCHEDA],
+  ['concludere il viaggio, da Spese', 1, [BARRA('money'), VOCE('#money .mh-azioni button, #money .money-hero button', /Concludi/)], 'spia:toggleStatus'],
+  ['eliminare il viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Elimina viaggio/)], 'mConfirm', SCHEDA],
+  ['i consigli, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Consigli/)], 'mSuggest', SCHEDA],
+  ['i punti di ripristino, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Punti di ripristino/)], 'mRestore', SCHEDA],
+  ['il ricordo, a viaggio in corso', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Il ricordo/)], 'mRicordo', SCHEDA],
+  ['il diario in PDF', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Diario PDF/)], 'spia:openDiary', SCHEDA],
+  ['esportare nel calendario', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Esporta nel calendario/)], 'spia:exportICS', SCHEDA],
+  ['il PDF dell\'itinerario, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /PDF dell'itinerario/)], 'mPdfItin', SCHEDA],
+  ['i tetti di spesa, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Tetti di spesa/)], 'mTetti', SCHEDA],
   ['la mappa di tutto il viaggio, dalla mappa della Home', 1, [VOCE('#homeMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
-  ['la mappa di tutto il viaggio, dalla scheda del viaggio', 1, [VIAGGIO, VOCE('#tripZoomBody button', /Tutto il viaggio/)], 'mViaggioMappa'],
-  ['la mappa di tutto il viaggio, dalla Time Table', 1, [GIORNATA, VOCE('#dayMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
+  ['la mappa di tutto il viaggio, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Tutto il viaggio/)], 'mViaggioMappa', SCHEDA],
+  ['la mappa di tutto il viaggio, dal Programma', 1, [GIORNATA, VOCE('#dayMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
+  ['Identifica, da Scopri', 1, [BARRA('discover'), VOCE('#discover .sc-identifica', /Identifica/)], 'pagina:identify'],
+  ['gli alberghi, in Prenotazioni', 1, [BARRA('prenotazioni'), VOCE('#prenSeg .seg-btn', /Hotel/)], 'prenotazioni:hotel'],
   ['Su misura, in un viaggio senza giorni', 2, [VOCE('#homeHero .hh-sumisura', /Su misura/)], 'importa:itin'],
   ['ordinare il giro', 1, [GIORNATA, VOCE('#mDay .tt-az', /Ordina il giro/)], 'spia:sistemaGiornata'],
   ['l\'Autopilota', 1, [GIORNATA, VOCE('#mDay .tt-az', /Autopilota/)], 'spia:openGenForDay'],
-  ['aggiungere in Time Table', 1, [GIORNATA, VOCE('#ttFab', /Aggiungi/)], 'mAddScelta'],
+  ['aggiungere nel Programma', 1, [GIORNATA, VOCE('#ttFab', /Aggiungi/)], 'mAddScelta'],
   ['annullare uno spostamento', 1, [GIORNATA, VOCE('#ttUndo', /Annulla/, "markDrag(T().days[ttDay].activities[0],{time:'09:00',timeEnd:'10:30'})")], 'spia:undoDrag'],
   ['i consigli, da Scopri', 1, [BARRA('discover'), VOCE('#sgRiga', /Consigli nei dintorni/)], 'spia:toggleSuggest'],
   ['Su misura, nel «Nuovo viaggio»', 1, [NOME, VOCE('#mViaggi .vg-nuovo', /Aggiungi viaggio/)], 'nuovo:suMisura'],
-  ['la prenotazione dalla mail, da Biglietti', 1, [BARRA('tickets'), VOCE('#tickets .tk-mail', /Prenotazione dalla mail/)], 'importa:booking'],
+  ['la prenotazione dalla mail, da Prenotazioni › Biglietti', 1, [BARRA('prenotazioni'), VOCE('#tickets .tk-mail', /Prenotazione dalla mail/)], 'importa:booking'],
   ['aggiungere una spesa', 1, [BARRA('money'), VOCE('#money .mh-spesa', /Spesa/)], 'mExpense'],
   ['i punti di ripristino, dal Profilo', 1, [PROFILO], 'profilo:ripristino'],
-  ['segnare un rimborso', 1, [BARRA('money'), VOCE('#money .seg-btn', /Saldi/), VOCE('#money .tic-tx', /Pagato/)], 'mPareggia', 'dietro una scheda'],
-  ['allegare un PDF in chat', 1, [BARRA('discover'), VOCE('#segAI', /Assistente/), VOCE('#aiMode .clip', /PDF/)], 'file', 'dietro una scheda']
+  ['segnare un rimborso', 1, [BARRA('money'), VOCE('#money .seg-btn', /Saldi/), VOCE('#money .tic-tx', /Pagato/)], 'mPareggia', 'dietro una scheda: 2 dalla pagina della barra'],
+  ['allegare un PDF in chat', 1, [BARRA('discover'), VOCE('#segAI', /Assistente/), VOCE('#aiMode .clip', /PDF/)], 'file', 'dietro una scheda: 2 dalla pagina della barra']
 ];
 const ESITO = e => {
   const attivo = id => { const m = document.getElementById(id); return !!m && m.classList.contains('active'); };
@@ -187,6 +203,7 @@ const ESITO = e => {
     const c = document.getElementById('ntSuMisura'), l = c && c.closest('label');
     return attivo('mNewTrip') && !!l && visibile(l) && /Su misura/.test(l.textContent);
   }
+  if (e === 'prenotazioni:hotel') return attivo('prenotazioni') && visibile(document.getElementById('hotels')) && !visibile(document.getElementById('tickets'));
   if (e === 'profilo:ripristino') return attivo('trips') && [...document.querySelectorAll('#profileCard .card-h')].some(h => /Punti di ripristino/.test(h.textContent));
   return attivo(e);
 };
@@ -196,8 +213,10 @@ async function percorri(p, passi) {
   const visti = [];
   for (const s of passi) {
     if (s.barra) {
-      await p.locator(`.nav-item[data-p="${s.barra}"]`).click({ timeout: 3000 });
-      visti.push({ testo: 'barra: ' + s.barra, barra: true });
+      const v = p.locator(`.nav-item[data-p="${s.barra}"]`);
+      const parola = (await v.innerText()).replace(/\s+/g, ' ').trim();
+      await v.click({ timeout: 3000 });
+      visti.push({ testo: parola, barra: true });
     } else {
       if (s.prima) await p.evaluate(js => eval(js), s.prima);
       const el = p.locator(s.sel).filter({ hasText: s.re }).first();
@@ -224,16 +243,16 @@ async function percorri(p, passi) {
      invisibile intorno, e conta se sopra c'è altro);
    - invisibili: testo dello stesso colore del fondo. */
 const SCHERMI = [
-  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#homeHero .hh-raccolta', '#homeHero .hh-rapido', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
-  { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca', '#homeHero .hh-rapido'] },
-  { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
+  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
+  { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca'] },
+  { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#vgAzioni .vg-az', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
   { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .chip', '#tripZoomBody .btn'] },
-  { nome: 'Time Table', prepara: 'giornata', sel: ['#mDay .tt-az', '#ttFab', '#ttUndo', '#dayMapWrap .mappa-tutto'], mezzi: true },
-  { nome: 'Scopri', prepara: 'scopri', sel: ['#segSearch', '#segAI', '#segImp', '#sgRiga'] },
+  { nome: 'Programma', prepara: 'giornata', sel: ['#mDay .tt-az', '#ttFab', '#ttUndo', '#dayMapWrap .mappa-tutto'], mezzi: true },
+  { nome: 'Scopri', prepara: 'scopri', sel: ['#discover .sc-identifica', '#segSearch', '#segAI', '#segImp', '#sgRiga'] },
   { nome: 'Scopri › Assistente', prepara: 'assistente', sel: ['#aiMode .clip'] },
   { nome: 'Spese', prepara: 'spese', sel: ['#money .mh-spesa', '#money .seg-btn'] },
   { nome: 'Spese › Saldi', prepara: 'saldi', sel: ['#money .tic-tx'] },
-  { nome: 'Biglietti', prepara: 'biglietti', sel: ['#tickets .tk-modo', '#tickets .tk-mail'] },
+  { nome: 'Prenotazioni › Biglietti', prepara: 'biglietti', sel: ['#prenSeg .seg-btn', '#tickets .tk-modo', '#tickets .tk-mail'] },
   { nome: 'Nuovo viaggio', prepara: 'nuovo', sel: ['#mNewTrip label.split-item'] },
   { nome: 'Profilo', prepara: 'profilo', sel: ['#profileCard .card-h'] }
 ];
@@ -344,10 +363,10 @@ const MISURA = ([sels, mezzi]) => {
         const visti = await percorri(p, passi);
         await p.waitForTimeout(150);
         const arrivato = atteso === 'file' ? scelto === true : await p.evaluate(ESITO, atteso);
-        const senzaScritta = visti.filter(v => !v.barra && !/\p{L}/u.test(v.testo));
+        const senzaScritta = visti.filter(v => !/\p{L}/u.test(v.testo));
         const tocchi = visti.length, daContare = nota ? tocchi - 1 : tocchi;
         const strada = visti.map(v => v.barra ? '[' + v.testo + ']' : '«' + v.testo.slice(0, 32) + '»').join(' › ');
-        ok(`1. ${nome}: ${tocchi} ${tocchi === 1 ? 'tocco' : 'tocchi'}${nota ? ` (${nota}: ${daContare} dalla pagina della barra)` : ''}, con la scritta`,
+        ok(`1. ${nome}: ${tocchi} ${tocchi === 1 ? 'tocco' : 'tocchi'}${nota ? ` (${nota})` : ''}, con la scritta`,
           arrivato && daContare <= 2 && !senzaScritta.length, strada + (arrivato ? '' : ' — non si apre: ' + atteso));
       } catch (e) {
         ok(`1. ${nome}`, false, 'si è fermata: ' + e.message.split('\n')[0]);
@@ -430,17 +449,19 @@ const MISURA = ([sels, mezzi]) => {
     await q.close();
   });
 
-  /* ── 4. «✈️ Viaggio» apre la scheda del viaggio ────────────────────────── */
+  /* ── 4. «Viaggio», nel menu dei viaggi, apre la scheda del viaggio ─────── */
   await prova('4', async () => {
     const p = await apri(browser);
-    await p.locator('#homeHero .hh-rapido', { hasText: 'Viaggio' }).click();
+    await p.locator('#menuViaggi').click();
+    await p.waitForTimeout(450);
+    await p.locator('#vgAzioni .vg-az', { hasText: 'Viaggio' }).click();
     const aperta = await foglioAperto(p, 'mTripZoom');
     const dentro = await p.evaluate(() => {
       const b = document.getElementById('tripZoomBody'), t = b.innerText;
       return { nome: /Lisbona/.test(t), voci: ['Rinomina', 'Giorni', 'Concludi viaggio', 'Elimina viaggio', 'Consigli', 'Punti di ripristino', 'Il ricordo', 'Diario PDF', 'PDF dell\'itinerario', 'Esporta nel calendario']
         .filter(v => ![...b.querySelectorAll('button')].some(x => x.innerText.includes(v))) };
     });
-    ok('4. «✈️ Viaggio» apre la scheda del viaggio', aperta && dentro.nome);
+    ok('4. «Viaggio», nel menu dei viaggi, apre la scheda del viaggio', aperta && dentro.nome);
     ok('4. … con rinomina, giorni, concludi, elimina, consigli, punti di ripristino, ricordo, diario, PDF dell\'itinerario e calendario', !dentro.voci.length, dentro.voci.length ? 'mancano: ' + dentro.voci.join(', ') : '10 voci');
     await p.close();
   });
@@ -449,7 +470,9 @@ const MISURA = ([sels, mezzi]) => {
   await prova('5', async () => {
     const p = await apri(browser);
     const inCorso = await p.evaluate(() => T().status === 'open' && T().start <= new Date().toISOString().slice(0, 10));
-    await p.locator('#homeHero .hh-rapido', { hasText: 'Viaggio' }).click();
+    await p.locator('#menuViaggi').click();
+    await p.waitForTimeout(450);
+    await p.locator('#vgAzioni .vg-az', { hasText: 'Viaggio' }).click();
     await foglioAperto(p, 'mTripZoom');
     await p.locator('#tripZoomBody button', { hasText: 'Il ricordo' }).click();
     const aperto = await foglioAperto(p, 'mRicordo');
@@ -465,18 +488,18 @@ const MISURA = ([sels, mezzi]) => {
     const p = await apri(browser, { lingua: 'pt', larghezza: 320 });
     const c = await p.evaluate(intero => {
       const INTERO = eval(intero);
-      const b = document.querySelector('#homeHero .hh-cerca'), l = b.querySelector('.hh-cerca-l'), s = b.querySelector('.hh-cerca-c'), rc = document.querySelector('#homeHero .hh-raccolta');
+      /* Dalla Layout 2 «Cosa cerchi» sta da solo, largo quanto la riga: a
+         320 px in portoghese ci sta la frase intera; se non ci stesse,
+         passerebbe alla corta. Quella che si vede dev'essere intera e
+         tradotta. */
+      const b = document.querySelector('#homeHero .hh-cerca'), l = b.querySelector('.hh-cerca-l'), s = b.querySelector('.hh-cerca-c');
       const vis = x => !!x && x.getClientRects().length > 0;
-      const q = b.getBoundingClientRect(), qr = rc ? rc.getBoundingClientRect() : null;
-      /* «A raccolta» a 320 px va a capo fra le parole, apposta: lì basta che
-         stia dentro il suo tasto. */
-      const dentroIlTasto = el => { const rg = document.createRange(); rg.selectNodeContents(el); const a = rg.getBoundingClientRect(), z = el.getBoundingClientRect(); return a.left >= z.left - 0.5 && a.right <= z.right + 0.5 && a.top >= z.top - 0.5 && a.bottom <= z.bottom + 0.5; };
-      return { corto: b.classList.contains('corto'), lungo: vis(l), visibile: vis(s), testo: s ? s.textContent.trim() : '', atteso: tv('Cosa cerchi?'), lungoTradotto: tv('Cosa cerchi qui intorno?'),
-        intero: !!s && INTERO(s) && q.right <= innerWidth, dentro: !qr || qr.right <= innerWidth,
-        raccolta: rc ? rc.innerText.replace(/\s+/g, ' ').trim() : '', raccoltaIntera: !!rc && dentroIlTasto(rc) };
+      const q = b.getBoundingClientRect(), su = vis(l) ? l : s;
+      return { corto: b.classList.contains('corto'), lungo: vis(l), visibile: vis(su), testo: su ? su.textContent.trim() : '', lunga: tv('Cosa cerchi qui intorno?'), corta: tv('Cosa cerchi?'),
+        intero: !!su && INTERO(su) && q.right <= innerWidth, soloSuo: !document.querySelector('#homeHero .hh-raccolta') };
     }, INTERO.toString());
-    ok('6. in portoghese a 320 px «Cosa cerchi» passa alla forma corta', c.corto && !c.lungo && c.visibile && c.testo === c.atteso && c.atteso !== 'Cosa cerchi?' && c.testo !== c.lungoTradotto, `«${c.testo}» invece di «${c.lungoTradotto}»`);
-    ok('6. … intera, senza puntini, e accanto «A raccolta» resta intero anche lui', c.intero && c.dentro && c.raccoltaIntera && !/…/.test(c.testo), `«${c.testo}» · «${c.raccolta}»`);
+    ok('6. in portoghese a 320 px «Cosa cerchi», da solo nella sua riga, si legge tradotto (la frase intera, o la corta se non ci sta)', c.visibile && c.soloSuo && (c.testo === c.lunga || c.testo === c.corta) && c.lunga !== 'Cosa cerchi qui intorno?', `«${c.testo}»${c.corto ? ' (corta)' : ''}`);
+    ok('6. … intera, senza puntini', c.intero && !/…/.test(c.testo), `«${c.testo}»`);
     await p.close();
     const viste = [];
     for (const lingua of ['it', 'en', 'es', 'fr', 'pt']) {
@@ -504,7 +527,7 @@ const MISURA = ([sels, mezzi]) => {
         ['Dove si spengono i consigli?', /"Consigli nei dintorni"/], ['Dove allego un PDF in chat?', /"PDF"/]
       ];
       return {
-        barra: riga('La barra in basso'), righine: riga('Le TRE RIGHINE'), home: riga('Home'), tt: riga('Time Table'), scopri: riga('Scopri'),
+        barra: riga('La barra in basso'), righine: riga('Le TRE RIGHINE'), home: riga('Home'), tt: riga('Programma'), scopri: riga('Scopri'),
         spese: riga('Spese'), meteo: riga('Meteo'), ricordo: riga('Il ricordo del viaggio'), profilo: riga('Profilo'),
         vecchie: [/"Costruisci la giornata"[^.]*dietro/, /si tocca la temperatura \("22°"\)/, /un tondo con la scritta "Recupero"/].filter(re => re.test(MAPPA_APP)).map(String),
         risposte: domande.map(([d, re]) => [d, re.test(mappaPerDomanda(d))])
@@ -513,14 +536,14 @@ const MISURA = ([sels, mezzi]) => {
     const casi = [
       ['in alto «Lisbona ▾», col cassetto (Aggiungi viaggio, Importa da Excel, Ho un codice), la pillola «GPS» e il Profilo a un tocco',
         /"Lisbona ▾"/.test(m.righine) && /"Aggiungi viaggio", "Importa da Excel", "Ho un codice"/.test(m.righine) && /pillola "GPS"/.test(m.righine) && /tondo con l'iniziale, che apre il Profilo con un tocco/.test(m.righine)],
-      ['la barra in basso senza scritte, il Profilo e il Meteo fuori dalla barra', /Sotto le icone non ci sono scritte/.test(m.barra) && /tondo con l'iniziale in alto a destra/.test(m.barra) && /"22° · Meteo ›"/.test(m.barra)],
-      ['in Home «22° · Meteo ›», «✈️ Viaggio» nella fila, «+ Aggiungi» e «✦ Su misura» nei viaggi senza giorni',
-        /"22° · Meteo ›"/.test(m.home) && /"Viaggio" \(apre la scheda del viaggio/.test(m.home) && /"Aggiungi"/.test(m.home) && /"Su misura"/.test(m.home)],
+      ['la barra in basso con la parola sotto ogni icona (Layout 2), il Profilo e il Meteo fuori dalla barra', /cinque voci con l'icona e la parola sotto/.test(m.barra) && /tondo con l'iniziale in alto a destra/.test(m.barra) && /"22° · Meteo ›"/.test(m.barra)],
+      ['in Home «22° · Meteo ›», «+ Aggiungi» e «✦ Su misura» nei viaggi senza giorni; «Viaggio» nel menu dei viaggi',
+        /"22° · Meteo ›"/.test(m.home) && /"Viaggio" \(la scheda del viaggio/.test(m.righine) && /"Aggiungi"/.test(m.home) && /"Su misura"/.test(m.home)],
       ['nella scheda del viaggio «📖 Il ricordo» anche in corso, «📄 Diario PDF», «📋 PDF dell\'itinerario» e il calendario (che si aggiorna, o «🗓️ Esporta nel calendario» senza account)',
         /"Il ricordo" \(anche a viaggio in corso\), "Diario PDF", "PDF dell'itinerario" e "Calendario che si aggiorna" \(per i viaggi nel cloud; senza account al suo posto c'e' "Esporta nel calendario"\)/.test(m.home) && /anche a viaggio in corso/.test(m.ricordo)],
-      ['in Time Table «✦ Ordina il giro» e «🪄 Autopilota» come tasti, «＋ Aggiungi», «↩ Annulla», il mezzo che risponde intorno',
+      ['nel Programma «✦ Ordina il giro» e «🪄 Autopilota» come tasti, «＋ Aggiungi», «↩ Annulla», il mezzo che risponde intorno',
         /"Ordina il giro"/.test(m.tt) && /"Autopilota"/.test(m.tt) && /"Costruisci la giornata" non c'e' piu'/.test(m.tt) && /"Aggiungi"/.test(m.tt) && /"Annulla"/.test(m.tt) && /risponde anche un po' intorno/.test(m.tt)],
-      ['in Scopri «📎 PDF» e l\'interruttore «Consigli nei dintorni»; Su misura anche in Home e in «Nuovo viaggio»; la prenotazione anche in Biglietti',
+      ['in Scopri «📎 PDF» e l\'interruttore «Consigli nei dintorni»; Su misura anche in Home e in «Nuovo viaggio»; la prenotazione anche in Prenotazioni › Biglietti',
         /"PDF"/.test(m.scopri) && /"Consigli nei dintorni"/.test(m.scopri) && /foglio "Nuovo viaggio"/.test(m.scopri) && /"Prenotazione dalla mail"/.test(m.scopri)],
       ['in Spese «+ Spesa» e «✓ Pagato»; il Meteo da «22° · Meteo ›»; nel Profilo «Punti di ripristino»',
         /"Spesa"/.test(m.spese) && /"Pagato"/.test(m.spese) && /"22° · Meteo ›"/.test(m.meteo) && /"Punti di ripristino"/.test(m.profilo) && /tondo con l'iniziale in alto a destra/.test(m.profilo)]

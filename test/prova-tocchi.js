@@ -23,9 +23,11 @@ const { apriBrowser, APP } = require('./browser');
    al loro posto le pillole (chip) e i tasti bassi con la parola
    (btn-compatto), che hanno la stessa area invisibile da controllare. Dalla
    Layout 1b nella barra in alto c'e' di nuovo il tondo del tema (th-btn),
-   fra il GPS e il Profilo. */
-const CLASSI = ['nav-item', 'hh-cerca', 'hh-raccolta', 'menu-btn', 'giorno', 'hh-add', 'hh-grado',
-  'tt-az', 'tb-profilo', 'th-btn', 'hh-rapido',
+   fra il GPS e il Profilo. Dalla Layout 2 «A raccolta» e le scorciatoie
+   del viaggio (hh-raccolta, hh-rapido) non sono piu' in Home: stanno nel
+   menu dei viaggi (vg-az). */
+const CLASSI = ['nav-item', 'hh-cerca', 'menu-btn', 'giorno', 'hh-add', 'hh-grado',
+  'tt-az', 'tb-profilo', 'th-btn', 'vg-az',
                 'chip', 'btn-compatto', 'seg-btn', 'gps-pill', 'ad-x'];
 
 const stato = { trips: [
@@ -228,13 +230,18 @@ const stato = { trips: [
   await page.evaluate(() => { openPacking(); });
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 600)));
   const bagagli = await guarda(null);
-  await page.evaluate(() => { closeSheet('mPacking'); openTimetable(); });
+  /* Il menu dei viaggi, aperto: dalla Layout 2 ci stanno le azioni del
+     viaggio (A raccolta, Bagagli, Compagni, Condividi, Viaggio). */
+  await page.evaluate(() => { closeSheet('mPacking'); apriViaggi(); });
+  await page.evaluate(() => new Promise(r2 => setTimeout(r2, 600)));
+  const menu = await guarda(null);
+  await page.evaluate(() => { closeSheet('mViaggi'); openTimetable(); });
   await page.evaluate(() => new Promise(r2 => setTimeout(r2, 700)));
   /* La time-table non si apre con go(): ci si arriva da openTimetable(), e
      per questo il giro qui sopra non la vedeva. È una schermata intera coi
      suoi tasti, e i suoi tasti sono nuovi. */
   const timetable = await guarda(null);
-  for (const m of [lista, bagagli, timetable]) {
+  for (const m of [lista, bagagli, menu, timetable]) {
     tutti.piccoli.push(...m.piccoli); tutti.rubati.push(...m.rubati);
     tutti.bloccati.push(...m.bloccati); tutti.visti.push(...m.visti);
   }
@@ -350,16 +357,21 @@ const stato = { trips: [
      che dica la verità. C'è dell'altro di là? Allora si sfuma di là. Non
      c'è? Bordo netto. Prima questa prova diceva «all'avvio l'ombra dice che
      a destra c'è dell'altro» e basta, e su uno schermo dove ci sta tutto
-     sarebbe diventata rossa pur essendo l'app a comportarsi bene. */
+     sarebbe diventata rossa pur essendo l'app a comportarsi bene.
+     Dalla Layout 2 le voci sono cinque, con la parola sotto: in italiano ci
+     stanno sempre (al bisogno la barra prende tutta la larghezza), in
+     francese a 320 px no, e la pista scorre come prima. Per questo il giro
+     si fa anche in francese, a 320. */
   /* Se un giorno la barra ci stesse su tutti gli schermi, i controlli qui
      sotto passerebbero senza guardare niente: la sfumatura non si
      pretenderebbe da nessuna parte. Si tiene il conto, e alla fine si
      pretende che almeno uno schermo l'abbia messa alla prova. */
   let haStrabordato = false;
-  for (const largo of [320, 390, 430]) {
+  for (const [largo, lingua] of [[320, null], [390, null], [430, null], [320, 'fr']]) {
     const p2 = await browser.newPage({ viewport: { width: largo, height: 844 } });
     p2.on('pageerror', e => err.push(`PAGEERROR(barra ${largo}): ` + e.message));
-    await p2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
+    const qui = `${largo}px${lingua ? ' in francese' : ''}`;
+    await p2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), lingua ? { ...stato, settings: { ...(stato.settings || {}), lingua } } : stato);
     await p2.goto(APP, { waitUntil: 'domcontentloaded' });
     await p2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await p2.waitForTimeout(700);
@@ -382,10 +394,9 @@ const stato = { trips: [
                  dx: parseFloat(st.getPropertyValue('--dx')) || 0,
                  maschera: (st.maskImage || st.webkitMaskImage || '') };
       };
-      /* L'ultima voce della barra: il Profilo se n'e' andato nel cassetto
-         delle tre righine, e adesso in fondo c'e' Identifica. Quello che si
-         controlla qui non e' QUALE sia, e' che quella in fondo si riesca a
-         vederla. */
+      /* L'ultima voce della barra: dalla Layout 2 e' Prenotazioni. Quello
+         che si controlla qui non e' QUALE sia, e' che quella in fondo si
+         riesca a vederla. */
       /* Il fatto da cui dipende tutto il resto: la fila ci sta o no. */
       const straborda = pista.scrollWidth - pista.clientWidth > 1;
       /* Quanto vuoto resta ai due capi della fila, dentro la pillola.
@@ -397,8 +408,14 @@ const stato = { trips: [
         const pad = parseFloat(getComputedStyle(barra).paddingLeft) || 0;
         const a1 = voci[0].getBoundingClientRect();
         const z1 = voci[voci.length - 1].getBoundingClientRect();
+        /* e dalle parole: le voci si dividono la pista, e il vuoto che si
+           vede e' fra il vetro e la prima e l'ultima parola */
+        const p1 = (voci[0].querySelector('.ni-tx') || voci[0]).getBoundingClientRect();
+        const pz = (voci[voci.length - 1].querySelector('.ni-tx') || voci[voci.length - 1]).getBoundingClientRect();
         return { sx: Math.round(a1.left - rb.left - pad),
-                 dx: Math.round(rb.right - pad - z1.right) };
+                 dx: Math.round(rb.right - pad - z1.right),
+                 parolaSx: Math.round(p1.left - rb.left - pad),
+                 parolaDx: Math.round(rb.right - pad - pz.right) };
       };
       /* E la prova che il centro non si sia mangiato l'inizio: con la fila
          riportata a zero, la prima voce dev'essere TUTTA dentro. Centrando
@@ -412,7 +429,7 @@ const stato = { trips: [
         return v.left >= rp.left - 0.5;
       })();
       const allAvvio = {
-        ultimaSiVede: dentro('[data-p="identify"]'),
+        ultimaSiVede: dentro('[data-p="prenotazioni"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
         ombraSinistra: barra.classList.contains('altro-a-sinistra'),
         sfuma: sfuma(),
@@ -420,10 +437,10 @@ const stato = { trips: [
         pillolaNonScorre: getComputedStyle(barra).overflowX,
         bordi: bordi()
       };
-      go('identify');
+      go('prenotazioni');
       await attendi(700);
       const inFondo = {
-        ultimaSiVede: dentro('[data-p="identify"]'),
+        ultimaSiVede: dentro('[data-p="prenotazioni"]'),
         ombraDestra: barra.classList.contains('altro-a-destra'),
         ombraSinistra: barra.classList.contains('altro-a-sinistra'),
         sfuma: sfuma()
@@ -434,48 +451,52 @@ const stato = { trips: [
     });
 
     /* Il punto: se vai sull'ultima voce, quella voce la devi vedere. */
-    ok(`a ${largo}px, andando sull'ultima voce la pillola la porta in vista`,
+    ok(`a ${qui}, andando sull'ultima voce la pillola la porta in vista`,
        d.inFondo.ultimaSiVede === true);
-    ok(`a ${largo}px, e tornando in Home riporta la Home`,
+    ok(`a ${qui}, e tornando in Home riporta la Home`,
        d.homeSiVede === true);
     /* E l'ombra dice da che parte c'è dell'altro, invece di lasciare
        un'icona tagliata a metà che sembra un difetto. Dove ci sta tutto
        non c'è niente da dire, e l'ombra deve stare zitta: un bordo sfumato
        su una fila intera è una promessa di roba che non esiste. */
-    ok(`a ${largo}px, all'avvio l'ombra dice la verità${d.straborda ? '' : ' (ci sta tutto)'}`,
+    ok(`a ${qui}, all'avvio l'ombra dice la verità${d.straborda ? '' : ' (ci sta tutto)'}`,
        d.allAvvio.ombraDestra === d.straborda && d.allAvvio.ombraSinistra === false,
        `destra ${d.allAvvio.ombraDestra}, sinistra ${d.allAvvio.ombraSinistra}`);
-    ok(`a ${largo}px, arrivati in fondo l'ombra si ribalta${d.straborda ? '' : ' (ci sta tutto)'}`,
+    ok(`a ${qui}, arrivati in fondo l'ombra si ribalta${d.straborda ? '' : ' (ci sta tutto)'}`,
        d.inFondo.ombraSinistra === d.straborda && d.inFondo.ombraDestra === false,
        `destra ${d.inFondo.ombraDestra}, sinistra ${d.inFondo.ombraSinistra}`);
     /* Il vetro non si dissolve insieme alle voci: a scorrere e' la pista
        dentro la pillola, non la pillola. Se un giorno qualcuno rimettesse
        l'overflow sulla pillola, la maschera si mangerebbe anche la cornice. */
-    ok(`a ${largo}px, a scorrere è la pista, non il vetro`,
+    ok(`a ${qui}, a scorrere è la pista, non il vetro`,
        d.allAvvio.pistaScorre === 'auto' && d.allAvvio.pillolaNonScorre === 'visible',
        `pista ${d.allAvvio.pistaScorre}, pillola ${d.allAvvio.pillolaNonScorre}`);
     /* E la dissolvenza sta dalla parte dove c'e' davvero dell'altro: all'inizio
        a destra, arrivati in fondo a sinistra. E' l'unico modo che ha una
        persona per sapere che di la' la fila continua — e per sapere quando e'
        finita. */
-    ok(`a ${largo}px, all'avvio le voci svaniscono dalla parte giusta`,
+    ok(`a ${qui}, all'avvio le voci svaniscono dalla parte giusta`,
        (d.straborda ? d.allAvvio.sfuma.dx > 8 : d.allAvvio.sfuma.dx === 0) && d.allAvvio.sfuma.sx === 0,
        `sinistra ${d.allAvvio.sfuma.sx}px, destra ${d.allAvvio.sfuma.dx}px`);
-    ok(`a ${largo}px, in fondo si ribalta`,
+    ok(`a ${qui}, in fondo si ribalta`,
        (d.straborda ? d.inFondo.sfuma.sx > 8 : d.inFondo.sfuma.sx === 0) && d.inFondo.sfuma.dx === 0,
        `sinistra ${d.inFondo.sfuma.sx}px, destra ${d.inFondo.sfuma.dx}px`);
-    ok(`a ${largo}px, ed è una sfumatura, non un taglio netto`,
+    ok(`a ${qui}, ed è una sfumatura, non un taglio netto`,
        /gradient/.test(d.allAvvio.sfuma.maschera), d.allAvvio.sfuma.maschera.slice(0, 60));
     /* ── le voci stanno in mezzo alla pillola ────────────────────────────
        Da quando sono sette ci stanno tutte, e la pista si stringeva sul suo
        contenuto appoggiandosi a sinistra: restava un vuoto storto in fondo
        a destra, dentro un vetro simmetrico. Si pretende il pareggio, non
-       un numero: la pillola cambia larghezza con lo schermo. */
+       un numero: la pillola cambia larghezza con lo schermo. Dalla Layout 2
+       le voci si dividono la pista da un capo all'altro: il pareggio si
+       guarda sulle voci, e le parole ai due capi non toccano il vetro (una
+       parola corta in una voce da 44 ha piu' aria di una lunga, come in
+       ogni barra a schede). */
     if (!d.straborda) {
       const scarto = Math.abs(d.allAvvio.bordi.sx - d.allAvvio.bordi.dx);
-      ok(`a ${largo}px, dove ci stanno tutte le voci stanno in mezzo`,
-         scarto <= 2 && d.allAvvio.bordi.sx > 2,
-         `vuoto a sinistra ${d.allAvvio.bordi.sx}px, a destra ${d.allAvvio.bordi.dx}px`);
+      ok(`a ${qui}, dove ci stanno tutte le voci stanno in mezzo`,
+         scarto <= 2 && d.allAvvio.bordi.parolaSx >= 2 && d.allAvvio.bordi.parolaDx >= 2,
+         `vuoto dalle voci ${d.allAvvio.bordi.sx}/${d.allAvvio.bordi.dx}px, dalle parole ${d.allAvvio.bordi.parolaSx}/${d.allAvvio.bordi.parolaDx}px`);
     } else {
       /* Dove strabordano il centro NON si vuole: centrare una fila piu'
          lunga del suo contenitore la taglia dai due capi, e il capo di
@@ -485,12 +506,12 @@ const stato = { trips: [
          che la fila comincia PRIMA del bordo, cioe' esattamente il difetto
          che questa riga dovrebbe cogliere. Scritta come «<= 2» la riga
          diceva OK con -36, che e' il caso peggiore di tutti. */
-      ok(`a ${largo}px, dove non ci stanno restano attaccate a sinistra`,
+      ok(`a ${qui}, dove non ci stanno restano attaccate a sinistra`,
          Math.abs(d.allAvvio.bordi.sx) <= 2, `vuoto a sinistra ${d.allAvvio.bordi.sx}px`);
     }
     /* Vale in tutti e due i casi, ed è il controllo che protegge dal modo
        sbagliato di centrare: la prima voce si deve poter raggiungere. */
-    ok(`a ${largo}px, e la prima voce si raggiunge tornando indietro`,
+    ok(`a ${qui}, e la prima voce si raggiunge tornando indietro`,
        d.primaIntera === true);
     haStrabordato = haStrabordato || d.straborda;
     await p2.close();

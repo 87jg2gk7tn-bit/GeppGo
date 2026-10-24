@@ -148,11 +148,18 @@ quel file è la memoria.
   o spostare una funzione, verifica dove l'utente la cercherebbe. L'unica
   eccezione voluta è mCloud, nascosto di proposito dietro la pressione lunga
   sulla versione nel Profilo. (I bagagli stavano solo dentro la scheda del
-  viaggio, e per trovarli bisognava chiederlo all'assistente: adesso sono in
-  Home. A che punto è la regola, e quello che resta da decidere — le parole
-  sotto le icone della barra in basso, che a 320 px non ci stanno — sta in
-  `DA-FARE.md`, alla voce «Nessuna funzione nascosta». `test/prova-a-portata.js`
-  tocca i percorsi come farebbe un dito.) Un tasto è da 44×44 quando lo è
+  viaggio, e per trovarli bisognava chiederlo all'assistente. Dalla Layout 2
+  stanno, con «A raccolta», «Compagni», «Condividi» e «Viaggio» (la scheda
+  del viaggio), nel menu dei viaggi, sotto il nome del viaggio aperto: le
+  righine o il nome in alto, poi la voce. La barra in basso ha cinque voci
+  con la parola sotto l'icona: Oggi · Programma · Scopri · Spese ·
+  Prenotazioni; Hotel e Biglietti sono le due schede di Prenotazioni,
+  Identifica è una riga in cima a Scopri. A che punto è la regola, e quello
+  che resta da decidere — il francese a 320 px nella barra, le voci dentro
+  la scheda del viaggio a 3 tocchi dalla Home — sta in `DA-FARE.md`, alla
+  voce «Nessuna funzione nascosta». `test/prova-a-portata.js` tocca i
+  percorsi come farebbe un dito, `test/prova-navigazione.js` la barra, il
+  menu dei viaggi e i vecchi indirizzi.) Un tasto è da 44×44 quando lo è
   toccandolo, non sommando i numeri del foglio di stile: l'area invisibile
   (`::after`) parte dall'interno del bordo.
 - **Accessibilità** (miglioria 11, `test/prova-accessibilita.js`, axe-core
@@ -202,8 +209,16 @@ quel file è la memoria.
   scuro» come dark mode; si sceglie col tondo luna/sole nella barra in alto,
   fra il GPS e il Profilo (`cambiaTema`; la Layout 1 l'aveva tolto, la 1b
   l'ha rimesso), e anche nel Profilo. «Cielo» non è un tema: è la veste della home,
-  con la foto del cielo in cima, e la sua sfumatura sta solo lì: le altre
-  schermate hanno il fondo panna pulito. La barra di stato del telefono (`theme-color`)
+  col cielo grande e la città in cima, e il cielo grande sta solo lì. La sua
+  sfumatura invece sta in cima a tutte le schermate (Layout 2, come prima
+  della Layout 1): è la scena della Home (`cieloSullePagine` passa le sue
+  classi al contenitore delle pagine), quindi segue il tempo, l'ora e il
+  tema, e sfuma nel panna all'82% di 440 px. Le scritte che ci stanno sopra
+  senza un fondo loro le colora `tingiPagina` perché restino a norma (dove
+  né il nero né il bianco reggono, la scritta prende un fondo del colore del
+  cielo, sfumato); la testata del Programma è trasparente al suo posto e
+  panna quando resta ferma. I tasti di vetro sul cielo scuro restano solo
+  in Home. La barra di stato del telefono (`theme-color`)
   prende il colore della testata del tema scelto (`coloreBarra`); finché c'è
   la schermata d'apertura resta `#14110B`, come `background_color` e
   `theme_color` del manifest. Su iPhone `apple-mobile-web-app-status-bar-style`
@@ -255,9 +270,9 @@ inchiostro, ammassato e di un colore solo.
   contenuto (le categorie delle spese, il meteo, i tipi di tappa).
 - **Niente tasti fatti di sola icona**: icona più parola. Fa eccezione la
   crocetta di chiusura, con l'etichetta per VoiceOver. Eccezioni dichiarate,
-  per ora: la barra in basso (le parole sotto le icone sono ancora da
-  decidere, vedi `DA-FARE.md`), i controlli della mappa (+/− e posizione) e
-  il tondo del tema nella barra in alto (luna/sole, col nome per VoiceOver).
+  per ora: i controlli della mappa (+/− e posizione) e il tondo del tema
+  nella barra in alto (luna/sole, col nome per VoiceOver). La barra in basso,
+  dalla Layout 2, ha la parola sotto ogni icona.
 - **Eliminare**: sempre testo rosso, in fondo e staccato dal resto.
 - **Le spiegazioni lunghe** diventano una riga più il link «Come funziona».
 - **Avvisi** compatti e chiudibili, mai più di uno in evidenza alla volta.
@@ -284,7 +299,10 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
 - colori solo dalle variabili; lo stato «scelto» è l'oro (`--scelto`, con
   la scritta d'inchiostro `--su-scelto`): il giorno scelto è un tondo d'oro,
   la pillola accesa è d'oro, nel controllo a schede la scheda scelta è
-  bianca con la scritta oro. La barra in basso resta col tondo d'inchiostro;
+  bianca con la scritta oro. La barra in basso resta col tondo d'inchiostro
+  dietro l'icona della voce scelta, con la parola sotto (12 px, mai
+  tagliata: se nella pillola non ci sta, la barra prende tutta la larghezza,
+  `navAdatta`, e se nemmeno così la pista scorre, come in francese a 320 px);
 - componenti: tasti `.btn` con `.btn-primario` (oro), `.btn-secondario`
   (beige caldo col bordo leggero, `--tasto-fondo` e `--tasto-bordo`: mai
   bianco; sul cielo scuro della Home diventa di vetro, con la scritta
@@ -310,10 +328,10 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
   il suo tratto di dettaglio porta `style="stroke:var(--ico-d,currentColor)"`
   (il tratto d'oro: `--ico-d` è l'unica cosa che passa dentro un `<use>`).
   Sui fondi d'oro e sui tasti rossi l'icona torna di un colore solo;
-- la Time Table: «Annulla» compare solo dopo una modifica, per otto secondi;
-  «Scorri con un dito» una volta sola (`geppgo2_scorri_visto`), dentro la
-  Time Table. La testata del giorno (la data e i giorni) resta ferma in alto
-  mentre la giornata scorre. Si apre sulla prossima tappa, o su quella in
+- il Programma (fino alla Layout 2 si chiamava Time Table): «Annulla»
+  compare solo dopo una modifica, per otto secondi; «Scorri con un dito» una
+  volta sola (`geppgo2_scorri_visto`), dentro il Programma. La testata del
+  giorno (la data e i giorni) resta ferma in alto mentre la giornata scorre. Si apre sulla prossima tappa, o su quella in
   corso, se oggi è un giorno del viaggio; in ogni altro caso in cima, con la
   prima tappa già a schermo: la griglia parte dall'ora piena prima della
   prima tappa (`ttInizio`, i conti passano tutti da `ttDa`), e «Mostra le ore
@@ -327,9 +345,12 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
   schermata si disegna senza aspettare 170 KB di CSS (con la rete lenta da
   1,4 s a mezzo secondo), e sotto la schermata d'apertura niente si vede
   senza stile. Una regola nuova va nel foglio del body, mai in testa;
-- `test/prova-stile.js` controlla queste regole su tutte le schermate, e
+- `test/prova-stile.js` controlla queste regole su tutte le schermate,
   `test/prova-carattere.js` quelle della Layout 1b (tema in alto, apertura
-  della Time Table, oro, beige, icone a due toni, respiro).
+  del Programma, oro, beige, icone a due toni, respiro) e
+  `test/prova-navigazione.js` quelle della Layout 2 (il cielo in cima a
+  tutte le schermate, la barra con le parole, il menu dei viaggi,
+  Prenotazioni, Identifica in Scopri, i vecchi indirizzi).
 
 ## Due regole che non si toccano
 

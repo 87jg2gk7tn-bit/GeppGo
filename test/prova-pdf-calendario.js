@@ -13,7 +13,7 @@
    4. il PDF arriva al foglio Condividi, dentro il tocco, come file
       «Itinerario - Giappone.pdf» nella lingua dell'app; dove il foglio
       Condividi non c'e', si scarica con lo stesso nome;
-   5. il calendario che si aggiorna: dall'app (dalla Home in due tocchi) si
+   5. il calendario che si aggiorna: dall'app (dal menu dei viaggi in due tocchi) si
       crea il link, si aggiunge al calendario (webcal://), si copia, si rifa'
       e si spegne; la funzione, col codice giusto, da' un calendario valido
       con gli eventi giusti, alle ore giuste del posto; col codice sbagliato,
@@ -125,13 +125,20 @@ async function apriPdf(browser, { lingua = 'it', larghezza = 390, viaggio, condi
   await page.evaluate(SPIA_CONDIVIDI, condividi);
   return page;
 }
-/* Dalla Home come un dito: «Viaggio», «PDF dell'itinerario», le
+/* La scheda del viaggio come un dito: dalla Layout 2 si apre dal menu dei
+   viaggi (il nome in alto), col tasto «Viaggio» sotto il nome del viaggio. */
+async function schedaViaggio(page) {
+  await page.click('#menuViaggi');
+  await page.waitForSelector('#mViaggi.active', { timeout: 4000 });
+  await page.click('#vgAzioni .vg-az[onclick*="openTripZoom"]');
+  await page.waitForSelector('#mTripZoom.active', { timeout: 4000 });
+}
+/* Come un dito: il menu dei viaggi, «Viaggio», «PDF dell'itinerario», le
    spunte, «Crea il PDF». */
 async function foglioPdf(page, opz = {}) {
   await page.evaluate(() => { document.querySelectorAll('.modal.active').forEach(m => closeSheet(m.id)); go('plan'); });
   await page.waitForTimeout(350);
-  await page.click('#homeHero .hh-rapido[onclick^="openTripZoom"]');
-  await page.waitForSelector('#mTripZoom.active', { timeout: 4000 });
+  await schedaViaggio(page);
   await page.click('#tripZoomBody button[onclick="apriPdfItinerario()"]');
   await page.waitForSelector('#mPdfItin.active', { timeout: 4000 });
   await page.waitForTimeout(250);
@@ -656,13 +663,12 @@ function leggiIcs(testo) {
   };
 
   if (fai(5)) await prova('5. calendario', async () => {
-    // dall'app: due tocchi dalla Home, poi il link
+    // dall'app: due tocchi dal menu dei viaggi, poi il link
     semina();
     const page = await apriCloud(browser, ANNA);
     await pronto(page); await scegliLisbona(page);
     await page.waitForTimeout(300);
-    await page.click('#homeHero .hh-rapido[onclick^="openTripZoom"]');
-    await page.waitForSelector('#mTripZoom.active', { timeout: 4000 });
+    await schedaViaggio(page);
     const voce = page.locator('#tripZoomBody button[onclick="apriCalendario()"]');
     /* Dalla Layout 1 il 🗓️ davanti è l'icona a linea del calendario: nel
        testo resta la frase sola, e l'icona si guarda a parte. */
@@ -671,7 +677,7 @@ function leggiIcs(testo) {
     await voce.click();
     const aperto = await aspetta(page, () => document.getElementById('mCalendario').classList.contains('active') && /Crea il link/.test(document.getElementById('calAzioni').textContent), null, 5000);
     const foglio = await page.evaluate(() => document.querySelector('#mCalendario .sheet').innerText.replace(/\s+/g, ' '));
-    ok('5. dalla Home in due tocchi: «Viaggio», «Calendario che si aggiorna» (con l\'icona del calendario), col foglio che spiega e avvisa', scritta === 'Calendario che si aggiorna' && icona === 1 && aperto
+    ok('5. dal menu dei viaggi in due tocchi: «Viaggio», «Calendario che si aggiorna» (con l\'icona del calendario), col foglio che spiega e avvisa', scritta === 'Calendario che si aggiorna' && icona === 1 && aperto
       && /Chi ha il link vede l'itinerario/.test(foglio) && /si aggiornano da soli/.test(foglio), scritta + ' · ' + foglio.slice(0, 90));
     await page.click('#calAzioni button');
     await aspetta(page, () => !!document.getElementById('calAggiungi'), null, 5000);
@@ -806,8 +812,7 @@ function leggiIcs(testo) {
   // ── 8. senza account ───────────────────────────────────────────────────────
   if (fai(8)) await prova('8. senza account', async () => {
     const page = await apriPagina(browser, { errori, chiave: 'ics-' + Math.random(), viaggi: [viaggioPdf(), PORTO] });
-    await page.click('#homeHero .hh-rapido[onclick^="openTripZoom"]');
-    await page.waitForSelector('#mTripZoom.active', { timeout: 4000 });
+    await schedaViaggio(page);
     const voci = await page.$$eval('#tripZoomBody button', bs => bs.map(b => b.innerText.trim()));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.click('#tripZoomBody button[onclick="apriCalendario()"]')]);
     const testo = fs.readFileSync(await dl.path(), 'utf8');

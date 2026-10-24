@@ -16,9 +16,11 @@
    4. il selettore dei giorni è lo stesso in Home, Time Table e Hotel;
    5. nei fogli con un'azione principale il tasto sta in fondo e si vede
       senza scorrere, anche sul telefono più piccolo;
-   6. la sfumatura del cielo sta solo in Home; nella barra in alto c'è un
-      tasto del tema solo (Layout 1b), e il tema si sceglie anche nel Profilo;
-   7. «Scorri con un dito» compare solo la prima volta, dentro la Time Table,
+   6. il cielo grande con la città sta solo in Home, e le altre schermate
+      hanno in cima la sola sfumatura del cielo, che finisce nel panna
+      (Layout 2); nella barra in alto c'è un tasto del tema solo (Layout 1b),
+      e il tema si sceglie anche nel Profilo;
+   7. «Scorri con un dito» compare solo la prima volta, dentro il Programma,
       senza coprire i titoli, e non resta altrove; «Annulla» compare solo
       dopo una modifica, per qualche secondo, e non copre altri tasti;
    8. axe senza violazioni gravi, contrasti e tasti da 44 px come nella
@@ -70,11 +72,11 @@ const visibile = `el => { const q = el.getBoundingClientRect(); if (q.width < 1 
 
 /* I tipi di tasto della Layout 1. Le famiglie di prima (.tt-az, .hh-rapido,
    .auth-link…) restano per la disposizione, ma ognuna porta la classe del
-   suo tipo. In fondo le eccezioni dichiarate in CLAUDE.md: la barra in
-   basso, i controlli e i segnaposto delle mappe; e quello che tasto non è
+   suo tipo. In fondo le eccezioni dichiarate in CLAUDE.md: i controlli e
+   i segnaposto delle mappe; e quello che tasto non è
    ma si tocca (una scheda intera, il nome dentro una scheda, un link nel
    testo, il cielo della Home, la barra in alto, la striscia del tragitto
-   nella Time Table, la casella del link da copiare). */
+   nel Programma, la casella del link da copiare). */
 const TIPI = {
   'principale': '.btn-primario', 'secondario': '.btn-secondario', 'terziario': '.btn-terziario', 'eliminazione': '.btn-elimina',
   'pillola': '.chip', 'controllo a schede': '.seg-btn', 'giorno': '.giorno', 'riga di elenco': '.riga',
@@ -89,12 +91,12 @@ const TIPI = {
 /* I comandi dove una scritta ci deve essere: tutto, tranne le schede (che
    portano il loro contenuto: una spesa col suo «🍜», una tappa col tempo),
    i segnaposto delle mappe e la pubblicità. */
-const CON_PAROLE = ['principale', 'secondario', 'terziario', 'eliminazione', 'pillola', 'controllo a schede', 'giorno', 'riga di elenco', 'nome nella scheda', 'cielo della Home'];
+/* Dalla Layout 2 anche la barra in basso: la parola sotto ogni icona. */
+const CON_PAROLE = ['principale', 'secondario', 'terziario', 'eliminazione', 'pillola', 'controllo a schede', 'giorno', 'riga di elenco', 'nome nella scheda', 'cielo della Home', 'barra in basso'];
 /* I comandi che possono essere fatti di un segno solo, col nome per
-   VoiceOver: la crocetta, la barra in basso, i controlli della mappa,
-   l'iniziale del Profilo e il tondo del tema, il mezzo e la crocetta del
-   tragitto. */
-const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tragitto in Time Table'];
+   VoiceOver: la crocetta, i controlli della mappa, l'iniziale del Profilo
+   e il tondo del tema, il mezzo e la crocetta del tragitto. */
+const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Table'];
 
 (async () => {
   const browser = await apriBrowser();
@@ -288,26 +290,42 @@ const SOLO_SEGNO = ['crocetta', 'barra in basso', 'mappa', 'barra in alto', 'tra
   /* ── 6: il cielo e il tasto del tema ────────────────────────────────── */
   if (fare(6)) await prova('6', async () => {
     const page = await apriPagina(browser, { errori });
-    const PAGINE = ['plan', 'discover', 'money', 'hotels', 'tickets', 'identify', 'trips'];
+    /* Dalla Layout 2 (come prima della Layout 1) la sfumatura del cielo sta in
+       cima a tutte le schermate; il cielo grande con la città resta solo in
+       Home. Altrove la sfumatura e' il fondo della pagina stessa, alta 440
+       px, e finisce nel panna: sotto, il fondo e' pulito, e dentro la pagina
+       nessun altro pezzo largo si porta un cielo suo. Che segua tempo, ora e
+       tema, coi contrasti a norma, lo guarda prova-navigazione. */
+    const PAGINE = ['plan', 'discover', 'money', 'prenotazioni', 'identify', 'trips', 'mDay'];
     const fondi = {};
     for (const p of PAGINE) {
-      await page.evaluate(p => go(p), p); await page.waitForTimeout(250);
+      await page.evaluate(p => { if (p === 'mDay') openDay(0); else if (p === 'prenotazioni' && typeof apriPrenotazioni !== 'function') go('hotels'); else go(p); }, p);
+      await page.waitForTimeout(350);
       fondi[p] = await page.evaluate(() => {
-        const pag = document.querySelector('.page.active');
+        const pag = document.querySelector('.page.active'), cs = getComputedStyle(pag);
         /* Le schede d'oro del totale e del Budget (Layout 1b) sono schede, non
            il fondo della pagina: la loro sfumatura e' l'oro dei tasti. */
-        const sfumati = [pag, ...pag.querySelectorAll('*'), document.body, document.querySelector('.app'), document.querySelector('main.scroll')].filter(Boolean)
+        const sfumati = [...pag.querySelectorAll('*'), document.body, document.querySelector('.app'), document.querySelector('main.scroll')].filter(Boolean)
           .filter(x => !x.matches('.money-hero,.budget-hero'))
           .filter(x => /gradient/.test(getComputedStyle(x).backgroundImage) && x.getBoundingClientRect().width > innerWidth * 0.8 && x.getBoundingClientRect().height > 150)
           .map(x => x.className && typeof x.className === 'string' ? '.' + x.className.split(' ')[0] : x.tagName.toLowerCase());
-        return { sfumati, fondo: getComputedStyle(document.body).backgroundColor, carta: getComputedStyle(document.body).getPropertyValue('--paper').trim() };
+        const carta = getComputedStyle(document.body).getPropertyValue('--paper').trim();
+        const prova = document.createElement('i'); prova.style.color = carta; document.body.appendChild(prova);
+        const cartaRgb = getComputedStyle(prova).color; prova.remove();
+        const colori = (cs.backgroundImage.match(/rgba?\([^)]*\)/g) || []);
+        return { id: pag.id, sfumati, grande: !!pag.querySelector('.hh'), cielo: /gradient/.test(cs.backgroundImage), alto: cs.backgroundSize, finePanna: colori.length > 0 && colori[colori.length - 1] === cartaRgb, colori: colori.join(' → ') };
       });
     }
-    await page.evaluate(() => openDay(0)); await page.waitForTimeout(350);
-    fondi.timetable = await page.evaluate(() => ({ sfumati: [document.querySelector('#mDay'), document.querySelector('#mDay .tt-sheet')].filter(x => x && /gradient/.test(getComputedStyle(x).backgroundImage)).map(x => x.id || x.className) }));
-    const altrove = Object.entries(fondi).filter(([p, f]) => p !== 'plan' && f.sfumati.length).map(([p, f]) => `${p}: ${f.sfumati.join(', ')}`);
-    ok('6. la sfumatura del cielo sta solo in Home (.hh); le altre schermate hanno il fondo panna pulito', fondi.plan.sfumati.some(x => /hh/.test(x)) && !altrove.length,
-      altrove.join(' | ') || `Home: ${fondi.plan.sfumati.join(', ')} · altrove nessuna`);
+    const male = [];
+    if (!fondi.plan.sfumati.some(x => /hh/.test(x)) || !fondi.plan.grande) male.push('Home senza il cielo grande');
+    Object.entries(fondi).filter(([p]) => p !== 'plan').forEach(([p, f]) => {
+      if (f.grande) male.push(`${p}: il cielo grande con la città`);
+      if (!f.cielo) male.push(`${p}: senza la sfumatura in cima`);
+      else if (!/440px/.test(f.alto) || !f.finePanna) male.push(`${p}: sfumatura ${f.alto}, ${f.colori}`);
+      if (f.sfumati.length) male.push(`${p}: altri cieli dentro (${f.sfumati.join(', ')})`);
+    });
+    ok('6. il cielo grande con la città sta solo in Home (.hh); le altre schermate hanno in cima la sfumatura del cielo, alta 440 px, che finisce nel panna, e sotto il fondo pulito', !male.length,
+      male.join(' | ') || `Home: ${fondi.plan.sfumati.join(', ')} · altrove la sola sfumatura della pagina`);
     const barra = await page.evaluate(() => { closeSheet('mDay'); go('plan');
       const b = document.querySelector('.topbar');
       return { tema: [...b.querySelectorAll('button,[role="button"],[onclick]')].filter(x => /tema|dark|☾|☀/i.test((x.getAttribute('onclick') || '') + x.innerText + (x.getAttribute('aria-label') || '') + (x.title || ''))).map(x => x.outerHTML.slice(0, 60)),

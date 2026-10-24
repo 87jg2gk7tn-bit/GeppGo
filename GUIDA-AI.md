@@ -177,7 +177,7 @@ dentro `aiRichiesta`, e `test/prova-ai.js` controlla che resti così.
 
 | Funzione | Chiave | Cosa fa | Cosa manda |
 |---|---|---|---|
-| `assistenteChiedi` | `chat` | L'assistente, uno solo per la scheda e per la time-table; può cercare sul web | Gli ultimi 14 messaggi, la mappa dell'app (compatta, vedi sotto), il programma del viaggio (tappe, orari, meteo, posizioni arrotondate a ~110 m), e l'elenco di cosa si può cercare (`aiRicercaPer`) |
+| `assistenteChiedi` | `chat` | L'assistente, uno solo per la scheda e per il Programma (la vecchia time-table); può cercare sul web | Gli ultimi 14 messaggi, la mappa dell'app (compatta, vedi sotto), il programma del viaggio (tappe, orari, meteo, posizioni arrotondate a ~110 m), e l'elenco di cosa si può cercare (`aiRicercaPer`) |
 | `identifyPlace` | `identifica` | "Che posto è questa foto" | La foto ritagliata, ridisegnata (niente dati nascosti), e la destinazione |
 | `extractPlaces` | `reel` | Estrae i posti da un reel o uno screenshot | La didascalia e lo screenshot ridisegnato a 1280 px, senza GPS |
 | `importTrip` | `itinerario-scritto` | Trasforma un itinerario scritto in un viaggio | Il testo, tolti email, telefoni, carte e IBAN (i nomi restano: diventano i compagni) |
