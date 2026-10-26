@@ -15,10 +15,11 @@
       della valigia sì); senza un viaggio aperto il gruppo non c'è;
    4. la barra ha cinque voci con la parola sotto, intere da 320 a 430 px in
       cinque lingue, almeno a 12 px, coi caratteri veri; dove nella pillola
-      non ci stanno la barra prende tutta la larghezza, e dove non ci stanno
-      nemmeno così lo dice (sono le parole da accorciare, da decidere); ogni
-      voce apre la sua schermata, la scelta ha aria-current e il tondo
-      d'inchiostro, i tasti sono da 44;
+      non ci stanno la barra prende tutta la larghezza, e così ci stanno
+      sempre, anche in francese a 320 px (Accueil e Agenda, dalla Layout 3,
+      al posto di Aujourd'hui e Programme che non ci stavano); ogni voce apre
+      la sua schermata, la scelta ha aria-current e il tondo d'inchiostro, i
+      tasti sono da 44;
    5. la schermata si chiama «Programma» ovunque: titolo, barra, testi a
       schermo, frasi nel codice (tv, tp, toast), traduzioni e MAPPA_APP;
    6. Prenotazioni: le schede funzionano; si apre su Biglietti se c'è un
@@ -58,7 +59,7 @@ const PAROLE = {
   it: ['Oggi', 'Programma', 'Scopri', 'Spese', 'Prenotazioni'],
   en: ['Today', 'Schedule', 'Discover', 'Expenses', 'Bookings'],
   es: ['Hoy', 'Programa', 'Descubrir', 'Gastos', 'Reservas'],
-  fr: ['Aujourd’hui', 'Programme', 'Découvrir', 'Dépenses', 'Réservations'],
+  fr: ['Accueil', 'Agenda', 'Découvrir', 'Dépenses', 'Réservations'],
   pt: ['Hoje', 'Roteiro', 'Descobrir', 'Despesas', 'Reservas']
 };
 const PAGINE_VOCI = ['plan', 'mDay', 'discover', 'money', 'prenotazioni'];
@@ -325,7 +326,7 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
       b.voci.forEach(v => { if (!v.intera) tagliate.push(`${dove} «${v.testo}»`); if (v.px < 12) piccole.push(`${dove} «${v.testo}» ${v.px}px`); });
       if (b.scorre) {
         /* Non ci stanno nemmeno a tutta larghezza: la barra dev'essere piena,
-           e sono le parole da accorciare (si decide insieme). */
+           e sono parole da accorciare, come si e' fatto col francese. */
         if (!b.piena) fuori.push(`${dove}: scorre senza aver preso tutta la larghezza`);
         daDecidere.push(`${dove} (servono ${Math.round(b.serve)} px, ce ne sono ${b.posto})`);
       } else {
@@ -340,7 +341,10 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
     ok('4. e almeno a 12 px', !piccole.length, primi(piccole, 3));
     ok('4. tutte e cinque a schermo; dove nella pillola non ci stanno la barra prende tutta la larghezza, e solo lì', !fuori.length && !nonServe.length,
       primi(fuori.concat(nonServe), 4) || (piene.length ? 'a tutta larghezza: ' + piene.join(', ') : 'sempre nella pillola'));
-    ok('4. dove non ci stanno nemmeno a tutta larghezza la pista scorre con le parole intere: ' + (daDecidere.length ? 'DA DECIDERE, parole più corte per ' + daDecidere.join(', ') : 'nessun caso'), true);
+    /* Il francese a 320 px non ci stava (Aujourd'hui e Programme): dalla
+       Layout 3 dice Accueil e Agenda, e la barra non deve più scorrere in
+       nessuna lingua. Una parola nuova troppo lunga si vede qui. */
+    ok('4. a tutta larghezza le cinque parole ci stanno sempre, senza far scorrere la pista, anche in francese a 320 px', !daDecidere.length, primi(daDecidere, 4));
     /* Ogni voce apre la sua schermata; aria-current, nav, 44 px, tondo d'inchiostro. */
     const p = await apri(browser);
     const v = await p.evaluate(async pagine => {
@@ -366,7 +370,7 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
 
   /* ── 5. si chiama «Programma» ovunque ─────────────────────────────────── */
   if (fare(5)) await prova('5', async () => {
-    const TITOLI = { it: 'Programma', en: 'Schedule', es: 'Programa', fr: 'Programme', pt: 'Roteiro' };
+    const TITOLI = { it: 'Programma', en: 'Schedule', es: 'Programa', fr: 'Agenda', pt: 'Roteiro' };
     const titoli = [], vecchi = [];
     for (const lingua of LINGUE) {
       const p = await apri(browser, { lingua });
@@ -389,7 +393,7 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
       if (x.titolo !== TITOLI[lingua] || x.voce !== TITOLI[lingua]) titoli.push(`${lingua}: titolo «${x.titolo}», barra «${x.voce}»`);
       x.vecchio.forEach(l => vecchi.push(`${lingua}: «${l.slice(0, 70)}»`));
     }
-    ok('5. il titolo della schermata e la voce della barra sono la stessa parola, in cinque lingue (Programma, Schedule, Programa, Programme, Roteiro)', !titoli.length, titoli.join(' | '));
+    ok('5. il titolo della schermata e la voce della barra sono la stessa parola, in cinque lingue (Programma, Schedule, Programa, Agenda, Roteiro)', !titoli.length, titoli.join(' | '));
     ok('5. nessun testo a schermo dice più «Time Table» (Programma, menu della tappa, Home, Hotel, mail dell\'hotel, nuovo biglietto, Scopri)', !vecchi.length, primi(vecchi, 3));
     /* Il dizionario e MAPPA_APP: nessuna frase dice la parola vecchia. */
     const p = await apri(browser);

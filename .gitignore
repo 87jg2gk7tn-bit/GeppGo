@@ -8,3 +8,7 @@ node_modules
 # Le icone dell'app invece servono al telefono, e sono PNG perché iOS e
 # Android non usano l'SVG: le rifà «npm run icone» quando cambia il logo.
 !icone/*.png
+
+# La copia senza commenti che va online: la rifà «npm run sito», e la
+# pubblica .github/workflows/pubblica.yml. Non si modifica a mano.
+_site/

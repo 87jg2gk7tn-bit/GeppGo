@@ -1,0 +1,87 @@
+# La pubblicazione dell'app su GitHub Pages, senza i commenti (Layout 3).
+#
+# PERCHE'. Index 2.1.html si scrive coi commenti, che sono la memoria del
+# progetto; al telefono pero' non servono, e pesavano circa 180 dei 730 KB
+# compressi che ogni avvio scarica: col campo debole l'app si poteva usare
+# tre secondi e mezzo piu' tardi. Qui test/fai-il-sito.js scrive in _site/
+# la copia senza commenti (restano solo quelli di licenza, /*! ... */), la
+# controlla token per token contro l'originale, e la si pubblica. Il file
+# nel repo non cambia mai: la copia e' generata, e non si tocca a mano.
+#
+# Le prove girano anche sulla copia (il secondo lavoro di prove.yml): una
+# modifica arriva su main dopo che la sua copia ha passato la batteria.
+#
+# COSA SERVE, UNA VOLTA SOLA: in Settings > Pages, alla voce Source, scegliere
+# «GitHub Actions» al posto di «Deploy from a branch». Finche' resta sul
+# ramo, Pages continua a pubblicare il file coi commenti, e qui la copia si
+# fa e si controlla ma non si pubblica (lo dice un avviso giallo nel
+# riepilogo). Dopo il cambio basta un push su main, o «Run workflow».
+
+name: Pubblica
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Una pubblicazione alla volta, e quella in corso finisce: due copie che si
+# rincorrono potrebbero lasciare online la piu' vecchia.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  copia:
+    runs-on: ubuntu-latest
+    outputs:
+      fonte: ${{ steps.fonte.outputs.fonte }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Serve solo acorn, che legge il JavaScript come il browser. Niente
+      # script d'installazione: qui non si apre nessun browser.
+      - name: Installa le dipendenze
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      # Si ferma, e non pubblica niente, se un solo token della copia e'
+      # diverso dall'originale o se resta un commento.
+      - name: Fa la copia senza commenti
+        run: npm run sito
+
+      - name: Prepara l'artefatto di Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Da dove pubblica Pages
+        id: fonte
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          fonte=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" | jq -r '.build_type // "nessuna"')
+          echo "fonte=$fonte" >> "$GITHUB_OUTPUT"
+          if [ "$fonte" != "workflow" ]; then
+            echo "::warning title=Copia fatta, non pubblicata::GitHub Pages pubblica ancora dal ramo ($fonte), quindi online resta il file coi commenti. Per pubblicare la copia: Settings > Pages > Source: GitHub Actions, poi un push su main o Run workflow."
+          fi
+
+  pubblica:
+    needs: copia
+    if: needs.copia.outputs.fonte == 'workflow'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pagina.outputs.page_url }}
+    steps:
+      - name: Pubblica su GitHub Pages
+        id: pagina
+        uses: actions/deploy-pages@v4

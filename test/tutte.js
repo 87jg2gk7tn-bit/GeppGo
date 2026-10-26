@@ -208,8 +208,11 @@ function proveDb() {
 
 // ── e la sintassi dell'app, che è la prova più veloce che ci sia ────────────
 function proveSintassi() {
-  titolo("La sintassi dell'app");
-  const file = path.join(QUI, '..', 'Index 2.1.html');
+  /* Con APP_URL le prove girano su un'altra copia (quella senza commenti
+     che va online, Layout 3): la sintassi si guarda su quella. */
+  const altrove = /^file:\/\//.test(process.env.APP_URL || '') ? decodeURIComponent(process.env.APP_URL.slice(7)) : '';
+  const file = altrove || path.join(QUI, '..', 'Index 2.1.html');
+  titolo("La sintassi dell'app" + (altrove ? ' (' + path.relative(path.join(QUI, '..'), altrove) + ')' : ''));
   const html = fs.readFileSync(file, 'utf8');
   const blocchi = [...html.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/g)];
   let rotti = 0;
