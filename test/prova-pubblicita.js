@@ -9,7 +9,9 @@
    compra. È l'unico posto dell'app in cui quella differenza si vede, ed è il
    motivo per cui questa prova esiste: perché non vengano tolti di nuovo da
    qualcuno che li guarda e li trova inutili. */
-const { apriBrowser, APP } = require('./browser');
+const fs = require('fs');
+const path = require('path');
+const { apriBrowser, APP, RADICE } = require('./browser');
 
 (async () => {
   const browser = await apriBrowser();
@@ -78,11 +80,15 @@ const { apriBrowser, APP } = require('./browser');
      farne più, si cambia una riga sola — e vanno rifatte le schede privacy
      sugli store, perché la pubblicità cambia le risposte su tracciamento e
      identificatori. */
+  /* L'interruttore si cerca nella pagina che gira; l'avviso e' un commento,
+     e i commenti stanno nel file di lavoro: la copia che va online ne e'
+     senza (test/fai-il-sito.js), e li' si cercherebbe a vuoto. */
+  const lavoro = fs.readFileSync(path.join(RADICE, 'Index 2.1.html'), 'utf8');
   const spegnimento = await page.evaluate(() => {
     const src = document.documentElement.innerHTML;
-    return { interruttore: /const PUBBLICITA_ATTIVA=/.test(src),
-             avviso: /PRIVACY-STORE\.md/.test(src) };
+    return { interruttore: /const PUBBLICITA_ATTIVA=/.test(src) };
   });
+  spegnimento.avviso = /PRIVACY-STORE\.md/.test(lavoro.slice(Math.max(0, lavoro.indexOf('const PUBBLICITA_ATTIVA=') - 1500), lavoro.indexOf('const PUBBLICITA_ATTIVA=') + 1500));
   ok('c\'è un interruttore solo per spegnerli tutti', spegnimento.interruttore === true);
   ok('e accanto è scritto cosa va rifatto quando la pubblicità sarà vera',
      spegnimento.avviso === true);

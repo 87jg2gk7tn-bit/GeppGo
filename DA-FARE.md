@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 22 ottobre 2026.
+Aggiornato: 26 ottobre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -791,6 +791,23 @@ va rifatto vedere.
     spento** (che servono ad «A raccolta» e agli avvisi di partenza), gli
     acquisti dentro l'app per il Premium, e la presenza sugli store.
 
+    **Per la fase nativa, dalla Layout 3** (schermi grandi, 26 ottobre):
+    - compilare con Xcode e l'SDK di iOS 27.1 o successivo: così l'app usa
+      tutto lo schermo interno dell'iPhone Duo, invece di girarci dentro in
+      una finestra da telefono. Su App Store Connect vanno caricati anche gli
+      screenshot per il Duo, che danno l'etichetta «Made for iPhone Duo»;
+    - un plugin Capacitor per l'API della cerniera di iOS 27.1: col telefono
+      piegato a metà, la mappa nella metà alta e il Programma in quella
+      bassa. La disposizione larga c'è già (le due colonne del Programma);
+      con la piega si mette in verticale;
+    - nell'app nativa il codice sta dentro l'app e non si scarica: allora
+      valutare se caricare i dizionari delle altre quattro lingue solo
+      quando servono (oggi sono una buona parte dei 550 KB compressi);
+    - finché si è in Safari, le funzioni web sulla posizione della piega
+      (`screen.viewport`, i segmenti, `horizontal-viewport-segments`) sono
+      solo un'anteprima: non usarle. Per ora si decide tutto dallo spazio che
+      c'è, e va bene anche col Duo aperto.
+
 ### Accessibilità: a che punto è
 
 Miglioria 11, 18 ottobre 2026. `test/prova-accessibilita.js` gira tutte le
@@ -1142,28 +1159,31 @@ Identifica è una riga in cima a Scopri). Le parole sono a 12 px
 (`600 12px Plus Jakarta Sans`, ogni voce larga la sua parola più 4 px, e
 almeno 44): se nella pillola non ci stanno la barra prende tutta la
 larghezza (`navAdatta`), e così ci stanno da 320 a 430 px in italiano,
-inglese, spagnolo e portoghese. **Resta da decidere il francese a 320 px**:
-anche a tutta larghezza servono 345 px e ce ne sono 310 (da 360 px la
-barra è a tutta larghezza e ci sta), e lì la barra scorre come prima, con le
-parole intere. Le parole francesi più corte da scegliere (misurate a 12 px
-coi caratteri veri, ogni voce è la parola più 4 px e almeno 44, e a 320 px
-la pista è larga 310): «Aujourd'hui» (66 px) → «Accueil» (43) e
-«Programme» (69) → «Agenda» (45): 298 px su 310, 12 d'aria — la proposta;
-«Accueil» e «Planning» (50): 302; «Réservations» (75) → «Résas» (34) da
-solo arriva a 309,8 su 310, due decimi di pixel: troppo poco per fidarsi di
-un altro telefono. Una parola sola fra «Accueil», «Agenda» e «Planning» non
-basta (321–326). `test/prova-navigazione.js` (prova 4) lo dice a ogni giro.
+inglese, spagnolo e portoghese. **Il francese a 320 px: deciso e fatto
+(Layout 3, 26 ottobre).** Con «Aujourd'hui» e «Programme» servivano 345 px
+e a 320 px la pista ne ha 310, quindi la barra scorreva. Giacomo ha scelto
+**Accueil · Agenda · Découvrir · Dépenses · Réservations**: 298 px su 310,
+12 d'aria (misurate a 12 px coi caratteri veri, ogni voce è la parola più
+4 px e almeno 44). La schermata si chiama «Agenda» ovunque: titolo, testi
+che la nominano («dans l'agenda», «Ouvrir l'agenda») e i nomi che
+l'assistente riceve con MAPPA_APP; «au programme», che vuol dire
+«previsto», resta com'era. Le altre parole misurate allora: «Accueil» e
+«Planning» 302; «Résas» da solo 309,8 su 310, troppo poco per fidarsi di
+un altro telefono; una parola sola fra «Accueil», «Agenda» e «Planning» non
+bastava (321–326). Adesso `test/prova-navigazione.js` (prova 4) boccia la
+barra che scorre, in qualunque lingua.
 
-**Restano a 3 tocchi dalla Home, dalla Layout 2:** le voci dentro la scheda del
-viaggio, che si apre dal menu dei viaggi (le righine › «Viaggio» › la voce):
+**A 3 tocchi dalla Home, e va bene così (deciso nella Layout 3):** la regola
+adesso dice 2 tocchi per le funzioni d'uso frequente e 3 per le impostazioni
+e le azioni rare. Sono le voci dentro la scheda del viaggio, che si apre dal
+menu dei viaggi (le righine › «Viaggio» › la voce):
 «Rinomina», «Giorni», «Elimina viaggio», «Il ricordo», «PDF dell'itinerario»
 e «Calendario che si aggiorna». Prima la scheda si apriva dalla fila in
 Home, a un tocco. Altre strade a 2 ci sono per «Concludi» (Spese, nella
 scheda d'oro), i consigli (Scopri), i punti di ripristino e il diario
-(Profilo), la mappa del viaggio (Home) e i tetti (Spese › Budget). Da
-decidere se va bene così o se la scheda del viaggio deve tornare a un
-tocco (per esempio toccando il nome del viaggio sopra il gruppo nel menu,
-o l'occhiello in cima alla Home).
+(Profilo), la mappa del viaggio (Home) e i tetti (Spese › Budget).
+`prova-a-portata` e `prova-budget-mappa` le contano fra le azioni rare, e
+lo dicono.
 
 **Restano a 3 tocchi dalla Home** (per questi la richiesta era la scritta):
 «📎 PDF» (barra › Scopri › «Assistente» › «📎 PDF») e «✓ Pagato» (barra ›
@@ -1422,8 +1442,8 @@ schermata: in Prenotazioni c'è quella della scheda che si vede).
   larghezza (`navAdatta`, misura coi caratteri veri).
 - **«Time Table» si chiama «Programma»** ovunque: titolo, barra, testi (21
   frasi, cinque lingue), `MAPPA_APP`. In inglese «Schedule», in spagnolo
-  «Programa», in francese «Programme», in portoghese «Roteiro» (era già la
-  sua traduzione).
+  «Programa», in francese «Programme» (dalla Layout 3 «Agenda»), in
+  portoghese «Roteiro» (era già la sua traduzione).
 - **Prenotazioni**: una schermata col controllo a schede «Biglietti | Hotel»;
   le schede sono le schermate di prima, tali e quali (gli id `tickets` e
   `hotels` restano). Si apre su Biglietti se c'è un biglietto oggi o nelle
@@ -1476,18 +1496,143 @@ schermata: in Prenotazioni c'è quella della scheda che si vede).
   resta 320 ms come prima e col campo debole sparisce appena l'app è pronta
   (15 622 ms, 230 di margine).
 
-**Da decidere**
-- Il francese a 320 px nella barra (vedi «Nessuna funzione nascosta»): le
-  proposte di parole più corte sono lì.
-- Le voci dentro la scheda del viaggio sono a 3 tocchi dalla Home (vedi
-  «Nessuna funzione nascosta»).
-- Il tetto dell'avvio col campo debole: restano 230 ms, cioè una dozzina di
-  KB compressi, poi la prova 10 di `prova-avvio` ricadrà. I commenti sono
-  200 dei 734 KB compressi dell'HTML, i dizionari delle altre quattro
-  lingue buona parte del resto: toglierli dallo scaricamento (un passaggio
-  che li sfila prima di pubblicare, o i dizionari caricati solo da chi non
-  usa l'italiano) cambierebbe due regole fisse di `CLAUDE.md`, e lo decide
-  Giacomo.
+**Deciso nella Layout 3**: il francese della barra (Accueil e Agenda) e le
+voci della scheda del viaggio a 3 tocchi (la regola dei 2 e 3 tocchi, vedi
+«Nessuna funzione nascosta»).
+
+**Il tetto dell'avvio col campo debole**, che restava a 230 ms: deciso e
+fatto nella Layout 3. La copia che va online è senza commenti (vedi sotto),
+e col campo debole l'app si usa più di tre secondi prima.
+
+### Layout 3, schermi grandi: a che punto è
+
+26 ottobre 2026. L'interno e l'esterno dell'iPhone Duo, l'iPad, il computer:
+la stessa interfaccia sarà quella dell'app nativa (Capacitor), quindi tutto
+vale anche dentro la WebView. Le regole stanno in `CLAUDE.md` («Schermi
+grandi»), `test/prova-schermi-grandi.js` le controlla (10 prove). Nessuna
+funzione tolta; Premium e pubblicità come prima; su un iPhone normale
+(390 × 844) le schermate sono quelle di prima, pixel per pixel (prova 9).
+
+**Passo 0, i dubbi della Layout 2**
+- Francese: la barra dice **Accueil · Agenda**, e la schermata si chiama
+  «Agenda» ovunque (titolo, 23 frasi, i nomi che l'assistente riceve). A
+  320 px le parole stanno intere, e la barra non scorre più in nessuna
+  lingua (`prova-navigazione` ora lo pretende). Le traduzioni confermate:
+  Programma = Schedule / Programa / Agenda / Roteiro, Prenotazioni =
+  Bookings / Reservas / Réservations / Reservas.
+- La regola dei tocchi: 2 per le funzioni d'uso frequente, 3 per
+  impostazioni e azioni rare (in `CLAUDE.md`); la scheda del viaggio a 3
+  tocchi va bene così.
+- **La copia che va online è senza commenti.** `test/fai-il-sito.js`
+  (`npm run sito`) scrive `_site/`: gli stessi file del sito senza i
+  commenti di JavaScript (letti da acorn), CSS e HTML, tranne quelli di
+  licenza (`/*! … */`). Si ferma se un solo token della copia è diverso
+  dall'originale, a capo compresi (contano per il punto e virgola
+  automatico), o se resta un commento. Prove, documenti, SQL, funzioni e
+  ponte non vanno online: con la pubblicazione dal ramo andava online tutto
+  il repo, `DA-FARE.md` compreso.
+  Misure con la rete lenta di `prova-avvio` (400 kbps, 400 ms), il meglio di
+  tre giri:
+
+  |                                  | compresso (gzip -9) | app usabile dopo |
+  |----------------------------------|---------------------|------------------|
+  | `main` prima, coi commenti       | 731,6 KB            | 15 651 ms        |
+  | `main` prima, senza commenti     | 553,5 KB            | 12 003 ms        |
+  | Layout 3, coi commenti           | 737,5 KB            | 15 726 ms        |
+  | Layout 3, senza commenti (online) | 556,2 KB            | 12 033 ms        |
+
+  Senza commenti −181 KB (−25%) e −3,7 s. Il tetto della prova 10 di
+  `prova-avvio` (15 850 ms) sul file di lavoro ha ancora 124 ms di margine,
+  cioè sei KB compressi; sulla copia che va online ne ha 3,8 secondi.
+  Quando il file di lavoro lo supererà, la prova 10 andrà fatta solo sulla
+  copia (gira già sulla copia nel secondo lavoro di `prove.yml`): è quella
+  che scarica il telefono.
+  ⚠️ **Da fare a mano, una volta:** in GitHub, Settings › Pages, alla voce
+  Source scegliere «GitHub Actions» al posto di «Deploy from a branch».
+  Finché resta sul ramo, Pages continua a pubblicare il file coi commenti:
+  `pubblica.yml` fa la copia e la controlla, ma non la pubblica (lo dice un
+  avviso giallo nel riepilogo dell'esecuzione). Da qui non si può cambiare:
+  il proxy di questa sessione non lascia passare l'API di Pages.
+
+**Passo 1, bordi e misure**
+- I margini sicuri sinistro e destro sono separati ovunque (barra in alto,
+  pagine, barra in basso e di lato, fogli, cassetto, presentazione,
+  accesso, messaggi, «+», «Annulla»): sul Duo la fotocamera sta da una parte
+  sola. La prova 3 li finge davvero (48 px da un lato) e guarda che niente
+  ci finisca sotto e che l'altro lato non prenda gli stessi 48 px.
+- **Schermi bassi** (sotto i 700 px di altezza): il cielo della Home si
+  abbassa di 48 px. La scena (sole, luna, nuvole, nebbia e la sua maschera)
+  è in pixel per `--s`, e lì va a tre quarti, con le scritte che cominciano
+  a 48 px invece di 64: il tempo resta sopra di loro, e i conti dei
+  contrasti (`tingiCielo`) tengono conto della scala. Vale anche per
+  l'iPhone SE (667 px di altezza).
+
+**Passo 2, struttura adattiva** (soglie scelte dallo spazio, mai dal
+dispositivo: media query e una container query)
+- **640 px**: sotto è un telefono (anche Split View a 385 e l'esterno del Duo
+  a 466). Da lì le pagine si allargano quanto lo schermo, così il cielo va da
+  bordo a bordo, ma il contenuto sta in una colonna da leggere di 720 px al
+  centro (`--testo-max`, il margine lo misura `misuraBordi`). 640 perché è
+  la prima larghezza dove una colonna da telefono (fino a 430) più l'aria
+  intorno lascia spazio vuoto, e perché l'interno del Duo in verticale (670)
+  deve già avere le due colonne del Programma.
+- **900 px, o in orizzontale su uno schermo grande (720 × 500 almeno)**: la
+  barra in basso diventa una barra laterale di 96 px (più il margine sicuro
+  di sinistra), con icona e parola sotto, la scelta col tondo d'inchiostro.
+  L'iPad in verticale (768–834) tiene la barra in basso, l'interno del Duo
+  in orizzontale (950 × 585) e ogni iPad in orizzontale l'hanno di lato. Un
+  telefono in orizzontale (844 × 390) la tiene in basso: alto 390 px non è
+  uno schermo grande, e la barra di lato gli toglierebbe un ottavo della
+  larghezza per niente.
+- **I fogli** da 640 px sono schede al centro, larghe al massimo 560 px (la
+  mappa del viaggio 640), con l'azione principale in fondo; anche il meteo e
+  la scheda del viaggio, che prima scendevano dall'alto. Prima, in
+  orizzontale, arrivavano a 920 px.
+- Le altre schermate (Home, Scopri, Spese, Prenotazioni, Profilo) per ora
+  hanno la colonna da leggere: le due colonne le prenderanno quando le si
+  ridisegnerà una per una, come ha fatto il Programma.
+
+**Passo 3, il Programma largo** (la prima schermata pilota)
+- Quando la pagina ha almeno **600 px di spazio** (container query su
+  `.tt-sheet`; 600 perché la giornata non scende sotto i 320 px, la larghezza
+  del telefono più stretto, e la mappa sotto i 260): le tappe della giornata
+  a sinistra, la mappa grande a destra, ferma mentre la giornata scorre
+  (`position: sticky` sotto la testata dei giorni, che sta sopra tutte e
+  due); le misure le prende `ttMisure`.
+- Toccando una tappa si accende, d'oro, e si accende il suo segnaposto
+  (scuro con l'anello d'oro, la mappa ci va, la scheda del segnaposto si
+  apre con «Apri»); un altro tocco, o «Apri», apre il menu della tappa come
+  sul telefono. Toccando un segnaposto si accende la sua tappa e la giornata
+  scorre fin lì. Con la tastiera o VoiceOver il tocco apre subito il menu:
+  a chi la mappa non la vede, accenderla non dice niente. Sotto la giornata
+  l'aiuto lo dice, nelle cinque lingue.
+- «Aggiungi» e «Annulla» stanno sotto la colonna delle tappe: sopra la
+  mappa coprivano i suoi tasti.
+- **Tolti i giorni affiancati in orizzontale** (fino a tre colonne di giorni
+  da 700 px in orizzontale). Con le due colonne nuove non sarebbero mai più
+  comparsi: ogni schermo largo abbastanza per tre giorni ha la mappa. Gli
+  altri giorni stanno a un tocco nella testata. Se mancano, si possono
+  rimettere come una scelta (Giorni affiancati | Mappa).
+
+**Trovato per strada, sistemato**
+- `prova-tocchi` pretendeva che su almeno uno schermo la barra scorresse
+  (era il francese a 320 px). Adesso non scorre più da nessuna parte: la
+  prova la mette alla prova con le parole lunghe di prima, messe al posto di
+  quelle vere, così la rete per una parola nuova troppo lunga resta provata.
+- `prova-pubblicita` cercava un commento nella pagina che gira: sulla copia
+  senza commenti non c'è. Lo cerca nel file di lavoro.
+- Chi misurava lo spazio sopra la barra in basso (la chat dell'assistente,
+  il Programma che si apre sulla tappa di adesso) prendeva il bordo alto
+  della barra: con la barra di lato è in cima allo schermo, e lo spazio
+  sarebbe stato zero. Adesso passano da `sopraLaBarra()`.
+- Le prove cadevano a mezzanotte. `schermate.js` prendeva le date del
+  viaggio di prova all'avvio e l'orologio della pagina a ogni apertura: la
+  prova delle traduzioni, partita alle 23:59 su GitHub, ha aperto le pagine
+  al secondo giorno del viaggio (l'anello di «Fra poco» diceva ✓, la Home
+  mostrava il meteo di un altro giorno). `prova-a-portata` aveva lo stesso
+  difetto al contrario. Adesso il giorno si prende una volta sola
+  (`OGGI`), e «mm» conta come unità di misura e non come italiano. Per
+  riprovarlo: un `node -r` che sposta l'orologio di Node alle 23:59:50.
 
 ---
 

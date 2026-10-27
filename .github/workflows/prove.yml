@@ -53,7 +53,12 @@ jobs:
       PROVE_TUTTE: '1'
 
     steps:
+      # Con tutta la storia: prova-schermi-grandi (prova 9) confronta le
+      # schermate del telefono con quelle dell'ultima versione prima della
+      # Layout 3, e quella versione deve esserci.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -73,3 +78,59 @@ jobs:
 
       - name: Le prove
         run: npm test
+
+  # La copia che va online, senza commenti (test/fai-il-sito.js, Layout 3):
+  # le stesse prove dell'app, sulla copia invece che sul file di lavoro. Il
+  # comportamento deve essere identico, e l'unico modo di saperlo è provarla.
+  # Gira accanto all'altro lavoro, quindi non allunga l'attesa. Le prove sul
+  # database non c'entrano con la copia e restano di là; Postgres serve lo
+  # stesso, perché due prove dell'app (cloud-personale e pdf-calendario)
+  # controllano anche i permessi veri.
+  copia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: prove
+          POSTGRES_DB: geppgo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: prove
+      PGDATABASE: geppgo
+      PROVE_TUTTE: '1'
+    steps:
+      # Con tutta la storia: prova-schermi-grandi (prova 9) confronta le
+      # schermate del telefono con quelle dell'ultima versione prima della
+      # Layout 3, e quella versione deve esserci.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installa le dipendenze delle prove
+        run: npm install --no-audit --no-fund
+
+      - name: Installa Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: psql, per le prove sul database
+        run: sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Fa la copia senza commenti
+        run: npm run sito
+
+      - name: Le prove dell'app, sulla copia
+        run: APP_URL="file://$GITHUB_WORKSPACE/_site/Index%202.1.html" node test/tutte.js --solo-app

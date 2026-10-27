@@ -12,8 +12,15 @@ const { APP, leafletJs, leafletCss } = require('./browser');
 /* ── il viaggio di prova ───────────────────────────────────────────────────
    Pieno apposta: con un viaggio vuoto metà delle frasi non si disegna mai.
    L'orologio sta a mezzogiorno del primo giorno, così la tappa delle 12 è in
-   corso (l'anello di «Fra poco» dice «ora») a qualunque ora girino le prove. */
-const giornoA = s => { const b = new Date(); return new Date(b.getFullYear(), b.getMonth(), b.getDate() + s, 12, 0, 0); };
+   corso (l'anello di «Fra poco» dice «ora») a qualunque ora girino le prove.
+   Il giorno si prende una volta sola, alla partenza: le date del viaggio (D)
+   e l'orologio di ogni pagina devono restare lo stesso giorno anche quando
+   una prova passa la mezzanotte. Prima l'orologio si rifaceva a ogni
+   pagina, e una prova partita alle 23:59 apriva le pagine al secondo giorno
+   del viaggio: la tappa delle 12 era già finita e la Home mostrava il meteo
+   di un altro giorno. */
+const OGGI = new Date();
+const giornoA = s => new Date(OGGI.getFullYear(), OGGI.getMonth(), OGGI.getDate() + s, 12, 0, 0);
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const D = [0, 1, 2, 3].map(i => iso(giornoA(i)));
 const meteo = (d, code) => ({ code, tempMax: 21, tempMin: 12, precipitation: code > 50 ? 6 : 0, windSpeed: 9, sunrise: d + 'T06:40', sunset: d + 'T18:20', luogo: 'Kyoto' });

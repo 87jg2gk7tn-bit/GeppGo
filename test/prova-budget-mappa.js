@@ -21,8 +21,9 @@
       segnaposto apre la tappa giusta;
    8. con 200 tappe la mappa si apre e si muove senza blocchi;
    9. la mappa si raggiunge in al massimo 2 tocchi con una voce scritta, dalla
-      Home e dal Programma; dalla scheda del viaggio (anche i tetti) 2 tocchi
-      dal menu dei viaggi; l'elenco per VoiceOver contiene tutte le tappe;
+      Home e dal Programma; dalla scheda del viaggio (anche i tetti, che
+      sono un'impostazione) fino a 3, come vuole la regola per le azioni
+      rare; l'elenco per VoiceOver contiene tutte le tappe;
    10. i testi nuovi in cinque lingue; niente fuori schermo da 320 a 430 px nei
        due temi; nessuna violazione grave di axe.
 
@@ -627,7 +628,8 @@ const SPIA_AVVISI = permesso => {
     };
     /* Dalla Layout 2 la scheda del viaggio si apre dal menu dei viaggi (il
        nome in alto, poi «Viaggio»): quello che sta lì dentro è a 2 tocchi
-       dal menu, 3 dalla Home. Lo si conta e lo si dice, come in
+       dal menu, 3 dalla Home, e per le impostazioni e le azioni rare la
+       regola ne concede 3 (Layout 3). Lo si conta e lo si dice, come in
        prova-a-portata. */
     const SCHEDA = [['#menuViaggi', /\S/], ['#vgAzioni .vg-az', /Viaggio/]];
     const casi = [
@@ -643,7 +645,7 @@ const SPIA_AVVISI = permesso => {
       await page.waitForTimeout(700);
       let visti = [], esito = false;
       try { visti = await percorri(page, passi); esito = await aspetta(page, id => document.getElementById(id).classList.contains('active'), meta, 3000); } catch (e) { visti.push('si ferma: ' + e.message.split('\n')[0]); }
-      ok(`9. ${nome}: ${passi.length} ${passi.length === 1 ? 'tocco' : 'tocchi'}${limite > 2 ? ' (dietro la scheda del viaggio: 2 dal menu dei viaggi)' : ''}, ogni voce con la scritta`, esito && passi.length <= limite && visti.length === passi.length && visti.every(v => /[a-zA-Zà-ú]/.test(v)), visti.join(' › '));
+      ok(`9. ${nome}: ${passi.length} ${passi.length === 1 ? 'tocco' : 'tocchi'}${limite > 2 ? ' (azione rara, dietro la scheda del viaggio: fino a 3)' : ''}, ogni voce con la scritta`, esito && passi.length <= limite && visti.length === passi.length && visti.every(v => /[a-zA-Zà-ú]/.test(v)), visti.join(' › '));
       await page.close();
     }
     const page = await apriLocale(browser);

@@ -359,22 +359,30 @@ const stato = { trips: [
      a destra c'è dell'altro» e basta, e su uno schermo dove ci sta tutto
      sarebbe diventata rossa pur essendo l'app a comportarsi bene.
      Dalla Layout 2 le voci sono cinque, con la parola sotto: in italiano ci
-     stanno sempre (al bisogno la barra prende tutta la larghezza), in
-     francese a 320 px no, e la pista scorre come prima. Per questo il giro
-     si fa anche in francese, a 320. */
+     stanno sempre (al bisogno la barra prende tutta la larghezza). In
+     francese a 320 px non ci stavano, e la pista scorreva; dalla Layout 3
+     il francese dice Accueil e Agenda, e ci stanno anche lì. La pista che
+     scorre resta come rete per una parola nuova troppo lunga, e si prova
+     lo stesso: a 320 px in francese con le parole di prima (Aujourd'hui,
+     Programme), messe al posto di quelle vere. */
   /* Se un giorno la barra ci stesse su tutti gli schermi, i controlli qui
      sotto passerebbero senza guardare niente: la sfumatura non si
      pretenderebbe da nessuna parte. Si tiene il conto, e alla fine si
      pretende che almeno uno schermo l'abbia messa alla prova. */
   let haStrabordato = false;
-  for (const [largo, lingua] of [[320, null], [390, null], [430, null], [320, 'fr']]) {
+  for (const [largo, lingua, lunghe] of [[320, null], [390, null], [430, null], [320, 'fr'], [320, 'fr', ['Aujourd’hui', 'Programme']]]) {
     const p2 = await browser.newPage({ viewport: { width: largo, height: 844 } });
     p2.on('pageerror', e => err.push(`PAGEERROR(barra ${largo}): ` + e.message));
-    const qui = `${largo}px${lingua ? ' in francese' : ''}`;
+    const qui = `${largo}px${lingua ? ' in francese' : ''}${lunghe ? ' con le parole lunghe di prima' : ''}`;
     await p2.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), lingua ? { ...stato, settings: { ...(stato.settings || {}), lingua } } : stato);
     await p2.goto(APP, { waitUntil: 'domcontentloaded' });
     await p2.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await p2.waitForTimeout(700);
+    if (lunghe) await p2.evaluate(async parole => {
+      document.querySelectorAll('.nav .ni-tx').forEach((t, i) => { if (parole[i]) t.textContent = parole[i]; });
+      navAdatta(); navPortaInVista(true);
+      await new Promise(r2 => setTimeout(r2, 150));
+    }, lunghe);
 
     const d = await p2.evaluate(async () => {
       const attendi = ms => new Promise(r2 => setTimeout(r2, ms));

@@ -1,17 +1,20 @@
 /* TUTTO A PORTATA (miglioria 9c).
 
-   La regola «Nessuna funzione nascosta» (CLAUDE.md): ogni funzione a non
-   più di 2 tocchi dalla Home o dalla barra in basso, con una voce che ha una
-   scritta. Il controllo del 13 ottobre (DA-FARE) aveva trovato le funzioni
+   La regola «Nessuna funzione nascosta» (CLAUDE.md): ogni funzione d'uso
+   frequente a non più di 2 tocchi dalla Home o dalla barra in basso, le
+   impostazioni e le azioni rare a non più di 3 (dalla Layout 3), sempre con
+   una voce che ha una scritta. Il controllo del 13 ottobre (DA-FARE) aveva trovato le funzioni
    che non la rispettavano: un'icona sola, un titolo da toccare, tre o
    quattro tocchi. Qui si prova che adesso la rispettano.
 
-   1. ogni funzione dell'elenco si raggiunge in al massimo 2 tocchi dalla
-      Home, toccando voci con la scritta. Dalla Layout 2 anche la barra in
-      basso ha le parole (Oggi · Programma · Scopri · Spese · Prenotazioni),
-      e A raccolta, Bagagli, Compagni, Condividi e Viaggio stanno nel menu
-      dei viaggi: le voci dentro la scheda del viaggio sono a 2 tocchi dal
-      menu, 3 dalla Home, e la prova lo conta e lo dice;
+   1. ogni funzione d'uso frequente si raggiunge in al massimo 2 tocchi
+      dalla Home, toccando voci con la scritta; le impostazioni e le azioni
+      rare (rinominare, cambiare i giorni, eliminare un viaggio...) in al
+      massimo 3. Dalla Layout 2 anche la barra in basso ha le parole (Oggi ·
+      Programma · Scopri · Spese · Prenotazioni), e A raccolta, Bagagli,
+      Compagni, Condividi e Viaggio stanno nel menu dei viaggi: le voci
+      dentro la scheda del viaggio sono a 2 tocchi dal menu, 3 dalla Home, e
+      la prova le conta fra le azioni rare, dicendolo;
    2. da 320 a 430 px, in 5 lingue, in tema chiaro e scuro: niente esce
       dallo schermo, niente è troncato o sovrapposto, e intorno al centro di
       ogni tasto ci sono 44×44 px che rispondono a lui (compresa l'icona del
@@ -37,8 +40,11 @@ const errori = [];
 /* ── le date, e l'ora ────────────────────────────────────────────────────
    L'orologio della pagina sta a mezzogiorno di oggi: la tappa delle 11:30
    è in corso («ADESSO», e «ora» nell'anello) a qualunque ora girino le
-   prove. */
-const giornoA = scarto => { const b = new Date(); return new Date(b.getFullYear(), b.getMonth(), b.getDate() + scarto, 12, 0, 0); };
+   prove. Oggi si prende una volta sola, alla partenza, come in
+   schermate.js: il viaggio si costruisce a ogni pagina, e se la prova
+   passa la mezzanotte deve restare lo stesso giorno dell'orologio. */
+const OGGI = new Date();
+const giornoA = scarto => new Date(OGGI.getFullYear(), OGGI.getMonth(), OGGI.getDate() + scarto, 12, 0, 0);
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const dataFra = s => iso(giornoA(s));
 const MEZZOGIORNO = giornoA(0);
@@ -137,7 +143,9 @@ const NOME = VOCE('#menuViaggi', /Lisbona/);
 const MENU = VOCE('#vgAzioni .vg-az', /Viaggio/);
 /* la scheda del viaggio: il nome in alto, poi «Viaggio» nel menu dei viaggi */
 const VIAGGIO = [NOME, MENU];
-const SCHEDA = 'dietro la scheda del viaggio: 2 dal menu dei viaggi';
+/* le voci della scheda del viaggio sono impostazioni e azioni rare: fino a
+   3 tocchi dalla Home (la regola dei 2 e 3 tocchi, Layout 3) */
+const SCHEDA = 'azione rara, dietro la scheda del viaggio: fino a 3';
 const GIORNATA = VOCE('#homeHero .hh-eyebrow', /GIORNO 1 DI 4/);
 const PROFILO = VOCE('#tbProfilo', /^\s*A\s*$/);
 /* [funzione, partenza, passi, cosa deve succedere]. «dietro una scheda»:

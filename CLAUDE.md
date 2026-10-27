@@ -3,8 +3,9 @@
 ## Cos'è
 
 PWA per organizzare viaggi di gruppo, in un unico file HTML: **`Index 2.1.html`**
-(~32.600 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
-framework, niente build step. Interfaccia scritta in italiano; l'app si traduce
+(~33.000 righe; `index.html` rimanda solo lì). JavaScript vanilla, niente
+framework, niente build step per lavorare: l'unico passaggio è la copia
+senza commenti che va online, fatta da sola (vedi «La copia che va online»). Interfaccia scritta in italiano; l'app si traduce
 da sola in inglese, spagnolo, francese e portoghese seguendo la lingua del
 telefono (i dizionari stanno dentro l'HTML). Sviluppatore singolo che lavora da
 iPhone. Hosting statico su GitHub Pages: **ogni push su `main` va online**
@@ -51,6 +52,23 @@ quel file è la memoria.
   l'ambiente di lavoro deve poter raggiungere quel dominio.
   I caratteri di Google arrivano con un `<link>` che non ferma la pagina
   (mai un `@import`), e la service worker li tiene da parte.
+- **La copia che va online è generata.** Pages non pubblica il repo così
+  com'è: a ogni push su `main`, `.github/workflows/pubblica.yml` fa con
+  `test/fai-il-sito.js` (`npm run sito`) la cartella `_site/`, cioè gli
+  stessi file del sito senza i commenti di JavaScript, CSS e HTML (restano
+  solo quelli di licenza, `/*! … */`), e pubblica quella: circa 180 KB
+  compressi in meno a ogni avvio, tre secondi e mezzo col campo debole. Si
+  lavora sempre su `Index 2.1.html`, coi commenti: **la copia non si
+  modifica mai a mano**, si rifà, e non sta nel repo (`_site/` è in
+  `.gitignore`). Prima di uscire la copia si confronta con l'originale
+  token per token (stessi token, stessi a capo dove contano), e le prove
+  girano anche su di lei: il secondo lavoro di `prove.yml`, cioè
+  `APP_URL=file://…/_site/Index%202.1.html npm run test:app`. Un file nuovo
+  che il telefono deve aprire va aggiunto alle liste in cima a
+  `fai-il-sito.js`, se no online non c'è; prove, documenti, SQL e funzioni
+  non vanno online. Perché Pages pubblichi la copia, in Settings › Pages la
+  fonte dev'essere «GitHub Actions»: finché resta sul ramo, online va il file
+  coi commenti, e il flusso lo dice con un avviso.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
   funzioni `vicini` e `geo` (il ponte della mappa), `link-mappe` (apre i
   link corti di Google Maps) e `calendario` (il calendario che si aggiorna:
@@ -141,23 +159,28 @@ quel file è la memoria.
   Il portoghese dell'app è quello del Portogallo (`pt-PT`, «telemóvel»,
   «ecrã»), anche per chi ha il telefono in portoghese del Brasile.
 - **Mobile-first**: ogni modifica deve funzionare bene su iPhone (Safari,
-  schermo stretto, tocco).
-- **Nessuna funzione nascosta.** Ogni funzione deve essere raggiungibile
-  dalla Home o dalla barra in basso in al massimo 2 tocchi, tramite una voce
-  con un testo leggibile, non solo un'icona o un gesto. Prima di aggiungere
-  o spostare una funzione, verifica dove l'utente la cercherebbe. L'unica
+  schermo stretto, tocco), e anche sugli schermi grandi (vedi «Schermi
+  grandi»).
+- **Nessuna funzione nascosta.** Le funzioni d'uso frequente si raggiungono
+  dalla Home o dalla barra in basso in al massimo 2 tocchi; impostazioni e
+  azioni rare (per esempio rinominare, cambiare i giorni o eliminare un
+  viaggio) in al massimo 3. Sempre tramite voci con un testo leggibile, mai
+  solo icone o gesti. Prima di aggiungere o spostare una funzione, verifica
+  dove l'utente la cercherebbe. L'unica
   eccezione voluta è mCloud, nascosto di proposito dietro la pressione lunga
   sulla versione nel Profilo. (I bagagli stavano solo dentro la scheda del
   viaggio, e per trovarli bisognava chiederlo all'assistente. Dalla Layout 2
   stanno, con «A raccolta», «Compagni», «Condividi» e «Viaggio» (la scheda
   del viaggio), nel menu dei viaggi, sotto il nome del viaggio aperto: le
-  righine o il nome in alto, poi la voce. La barra in basso ha cinque voci
-  con la parola sotto l'icona: Oggi · Programma · Scopri · Spese ·
+  righine o il nome in alto, poi la voce. La barra in basso (sugli schermi
+  larghi sta di lato, la stessa) ha cinque voci con la parola sotto l'icona: Oggi · Programma · Scopri · Spese ·
   Prenotazioni; Hotel e Biglietti sono le due schede di Prenotazioni,
-  Identifica è una riga in cima a Scopri. A che punto è la regola, e quello
-  che resta da decidere — il francese a 320 px nella barra, le voci dentro
-  la scheda del viaggio a 3 tocchi dalla Home — sta in `DA-FARE.md`, alla
-  voce «Nessuna funzione nascosta». `test/prova-a-portata.js` tocca i
+  Identifica è una riga in cima a Scopri. In francese la barra dice Accueil
+  · Agenda · Découvrir · Dépenses · Réservations: «Aujourd'hui» e
+  «Programme» a 320 px non ci stavano, e la schermata si chiama «Agenda»
+  ovunque. Le voci della scheda del viaggio sono a 3 tocchi dalla Home, e va
+  bene così: sono impostazioni e azioni rare. Com'è andata la regola sta in
+  `DA-FARE.md`, alla voce «Nessuna funzione nascosta». `test/prova-a-portata.js` tocca i
   percorsi come farebbe un dito, `test/prova-navigazione.js` la barra, il
   menu dei viaggi e i vecchi indirizzi.) Un tasto è da 44×44 quando lo è
   toccandolo, non sommando i numeri del foglio di stile: l'area invisibile
@@ -302,7 +325,8 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
   bianca con la scritta oro. La barra in basso resta col tondo d'inchiostro
   dietro l'icona della voce scelta, con la parola sotto (12 px, mai
   tagliata: se nella pillola non ci sta, la barra prende tutta la larghezza,
-  `navAdatta`, e se nemmeno così la pista scorre, come in francese a 320 px);
+  `navAdatta`, e se nemmeno così la pista scorre; dalla Layout 3 non succede
+  in nessuna lingua, perché in francese le voci sono «Accueil» e «Agenda»);
 - componenti: tasti `.btn` con `.btn-primario` (oro), `.btn-secondario`
   (beige caldo col bordo leggero, `--tasto-fondo` e `--tasto-bordo`: mai
   bianco; sul cielo scuro della Home diventa di vetro, con la scritta
@@ -351,6 +375,53 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
   `test/prova-navigazione.js` quelle della Layout 2 (il cielo in cima a
   tutte le schermate, la barra con le parole, il menu dei viaggi,
   Prenotazioni, Identifica in Scopri, i vecchi indirizzi).
+
+## Schermi grandi
+
+Dalla Layout 3 (ottobre 2026) l'app ha anche la versione larga: l'interno
+dell'iPhone Duo, l'iPad, il computer. Sarà la stessa dell'app nativa
+(Capacitor): quello che si fa qui deve funzionare in Safari e nella WebView.
+
+- **Ogni schermata ridisegnata ha anche la versione larga.** Sotto i 640 px
+  è il telefono, e su un iPhone normale l'aspetto non cambia. Da 640 px la
+  pagina si allarga quanto lo schermo (il cielo va da bordo a bordo), il
+  testo sta in una colonna da leggere al centro (`--testo-max`, 720 px; il
+  margine lo misura `misuraBordi()` e sta in `--bordo`), e dove ha senso il
+  contenuto va su due colonne. Il Programma è la prima schermata pilota: le
+  tappe a sinistra, la mappa grande a destra e ferma, i giorni sopra tutte e
+  due, la tappa e il suo segnaposto accesi insieme (`ttLargo`, `ttMisure`,
+  `ttEvidenzia`). Le altre prendono la loro quando le si ridisegna.
+- **I margini sicuri sinistro e destro si trattano sempre separati**:
+  `padding-left:calc(… + env(safe-area-inset-left))` e
+  `padding-right:calc(… + env(safe-area-inset-right))`, mai una forma
+  abbreviata (`padding:0 env(…)`) che dà lo stesso valore ai due lati:
+  sull'iPhone Duo fotocamera e barra di stato stanno da una parte sola. Gli
+  sfondi arrivano al bordo, il contenuto resta fuori dalla fotocamera.
+- **Mai riconoscere il dispositivo**: si decide dallo spazio che c'è, con
+  media query e container query. Le soglie: 640 px (pagine larghe e fogli a
+  scheda, `LARGO_MQ`); 900 px, o in orizzontale su uno schermo grande
+  (720 × 500), per la barra laterale (`LATERALE_MQ`); 600 px di spazio nella
+  pagina per le due colonne del Programma (container query su `.tt-sheet`);
+  700 px di altezza per gli schermi bassi (il cielo della Home più basso, la
+  scena a `--s:.75`). Le soglie stanno scritte uguali nel foglio di stile e
+  in JavaScript (una prova le confronta), e JavaScript legge dal foglio di
+  stile se le due colonne ci sono (`--tt-largo`) invece di rifare il conto.
+  Le funzioni web sulla piega del Duo sono solo un'anteprima: non si usano.
+- **La barra laterale**: da 900 px la barra in basso sta in piedi a
+  sinistra (`--lato`, 96 px più il margine sicuro), con icona e parola e il
+  tondo d'inchiostro sulla scelta. Chi misura lo spazio in basso usa
+  `sopraLaBarra()`, non il bordo alto della barra.
+- **I fogli** da 640 px sono schede al centro, larghe al massimo 560 px (la
+  mappa del viaggio 640), con l'azione principale in fondo (`.sheet-piede`).
+- Una container query non va su un elemento che ha dentro elementi fissi
+  (`position:fixed`): su qualche Safari il contenitore se li tiene. Per
+  questo il contenitore del Programma è `.tt-sheet`, e «Aggiungi» e
+  «Annulla» stanno fuori.
+- `test/prova-schermi-grandi.js` prova 385, 466 × 678, 670 × 870, 950 × 585,
+  1024 e 1280 px in cinque lingue e due temi, la fotocamera da un lato solo
+  (la finge Chromium, `Emulation.setSafeAreaInsetsOverride`), la barra, i
+  fogli, il Programma largo, e che a 390 × 844 le schermate siano quelle di
+  prima della Layout 3, pixel per pixel.
 
 ## Due regole che non si toccano
 

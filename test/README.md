@@ -921,7 +921,9 @@ portata (l'elenco in DA-FARE, «Nessuna funzione nascosta»).
    ci sta); «ADESSO» e «ora» del riquadro
    «Fra poco» sono nella lingua dell'app. L'orologio della pagina sta a
    mezzogiorno (`page.clock`): la tappa delle 11:30 è in corso a qualunque
-   ora girino le prove.
+   ora girino le prove. Il giorno si prende una volta sola, alla partenza
+   (anche in `schermate.js`): una prova che passa la mezzanotte apriva le
+   pagine un giorno dopo le date del viaggio.
 7. `MAPPA_APP` coi percorsi nuovi, quelli vecchi spariti, e l'assistente che
    riceve la voce giusta chiedendo in cinque lingue.
 8. Le 22 frasi nuove nel dizionario di en, es, fr e pt, e a schermo nessuna
@@ -1453,12 +1455,12 @@ e fallisce. Le domande, una per prova:
 4. **La barra in basso**: cinque voci con la parola sotto, intere da 320 a
    430 px (sei larghezze) in cinque lingue, almeno a 12 px, coi caratteri
    veri; dove nella pillola non ci stanno la barra prende tutta la
-   larghezza, e dove non ci stanno nemmeno così la prova lo dice (il
-   francese a 320 px: le parole da accorciare sono in DA-FARE) e guarda che
-   la pista scorra; ogni voce apre la sua schermata, la scelta ha
-   `aria-current` e il tondo d'inchiostro, i tasti sono da 44×44.
+   larghezza, e così ci stanno sempre: dalla Layout 3 il francese dice
+   «Accueil» e «Agenda», e la barra che scorre in una lingua qualsiasi è un
+   errore; ogni voce apre la sua schermata, la scelta ha `aria-current` e il
+   tondo d'inchiostro, i tasti sono da 44×44.
 5. **«Programma» ovunque**: titolo e voce della barra uguali nelle cinque
-   lingue (Programma, Schedule, Programa, Programme, Roteiro); nessun testo a
+   lingue (Programma, Schedule, Programa, Agenda, Roteiro); nessun testo a
    schermo, nessuna frase del codice (`tv`, `tp`, `toast`), nessuna voce del
    dizionario e di `MAPPA_APP` che dica ancora «Time Table».
 6. **Prenotazioni**: le schede Biglietti e Hotel; si apre su Biglietti se
@@ -1493,3 +1495,106 @@ da una misura (le scritte sul cielo, lo stesso cielo dappertutto, il gruppo
 che sparisce senza viaggio) pretendono di aver avuto qualcosa da misurare:
 la prima controprova ne dava cinque per buoni sul codice di prima, solo
 perché lì il cielo e il gruppo non c'erano.
+
+## Gli schermi grandi (Layout 3)
+
+```sh
+node test/prova-schermi-grandi.js        # le 10 prove
+node test/prova-schermi-grandi.js 4 7    # solo le prove 4 e 7
+APP_URL=file:///percorso/di/un-altra-copia.html node test/prova-schermi-grandi.js
+```
+
+Le misure sono quelle del Passo 1: Split View (385), l'esterno del Duo
+(466 × 678), l'interno in verticale (670 × 870) e in orizzontale
+(950 × 585), l'iPad (1024 × 768) e il computer (1280 × 800). La prova 1
+pretende i caratteri veri (`CARATTERI_GOOGLE`, come prova-navigazione). La 9
+confronta le schermate con quelle della versione `b8a2eb5` (l'ultima prima
+della Layout 3, presa con `git show`): serve la storia del repo, e per
+questo `prove.yml` scarica tutto (`fetch-depth: 0`). Quando una modifica
+futura cambierà apposta l'aspetto sul telefono, il riferimento va spostato
+lì (`RIFERIMENTO` in cima alla prova). Le domande, una per prova:
+
+1. **Il Passo 0**: in francese a 320 px la barra dice «Accueil» e «Agenda»,
+   intere, e non scorre; il titolo del Programma è «Agenda»; le traduzioni
+   confermate (Schedule / Programa / Agenda / Roteiro, Bookings / Reservas /
+   Réservations / Reservas); nessuna frase francese chiama ancora la
+   schermata «programme»; l'assistente riceve i nomi della barra in ogni
+   lingua; in `CLAUDE.md` c'è la regola dei 2 e 3 tocchi.
+2. **La copia che va online**: `fai-il-sito.js` la scrive in una cartella
+   provvisoria; nella copia non resta un commento (JavaScript, CSS, HTML,
+   le altre pagine e la service worker), nel file di lavoro sì; restano
+   quelli di licenza, e dove un commento separava due pezzi resta uno
+   spazio; i token degli script sono gli stessi; nel browser gli stessi
+   fogli di stile e la stessa pagina, e l'app che parte e si usa senza
+   errori; sei prove principali passano sulla copia (versione, barra,
+   giornata, spese, annulla, prenotazioni); i KB compressi scendono di più
+   del 15%; i flussi di GitHub la fanno, la provano e la pubblicano, e
+   `_site/` non va nel repo.
+3. **I margini sicuri**: nel foglio di stile nessuna forma abbreviata con
+   il margine di sinistra o di destra, e nessun lato che prende quello
+   dell'altro; poi Chromium finge la fotocamera da una parte sola (48 px,
+   `Emulation.setSafeAreaInsetsOverride`) a 466, 670 e 950 px, a sinistra e
+   a destra: niente ci finisce sotto (barra in alto, barra delle sezioni,
+   pagina, Programma, un foglio), e l'altra parte non prende gli stessi 48
+   px. Con la barra di lato, la fotocamera di sinistra la copre la barra.
+4. **Niente fuori, niente tagliato**: le sei misure, cinque lingue, due
+   temi, nove schermate per giro (Oggi, Programma, Scopri, Spese,
+   Prenotazioni, Hotel, Profilo, il menu dei viaggi, un foglio): 540
+   schermate, la misura delle altre prove (`MISURA`). È la più lunga.
+5. **La barra**: di lato da 900 px e in orizzontale su uno schermo grande
+   (850 × 600, 950 × 585), in basso sotto (anche l'iPad in verticale e un
+   telefono in orizzontale); l'icona, la parola sotto, intera, a 12 px, 44
+   × 44; ogni voce apre la sua schermata, toccandola; le parole intere di
+   lato in cinque lingue; le soglie uguali nel foglio di stile e in
+   JavaScript.
+6. **I fogli**: a 670, 950, 1024 e 1280 px nove fogli (compresi meteo,
+   scheda del viaggio e mappa del viaggio) sono schede al centro, larghe al
+   massimo 560 px (la mappa 640), staccate dal fondo, con l'azione
+   principale visibile e libera.
+7. **Il Programma largo**: a 670, 950 e 1280 px due colonne, i giorni
+   sopra, la mappa alta e ferma mentre la giornata scorre, «Aggiungi» sotto
+   le tappe; un tocco vero su una tappa accende lei e il suo segnaposto (e
+   la scheda del segnaposto con «Apri»), il secondo apre il menu, «Apri»
+   pure; un tocco vero su un segnaposto accende la sua tappa e la porta a
+   vista; con la tastiera il menu si apre subito; un giorno senza posizioni
+   è una colonna al centro. A 390 px il Programma è quello di prima.
+8. **Split View e l'esterno del Duo**: barra in basso, margini da 16,
+   Programma a una colonna, fogli dal basso, ogni voce apre la sua
+   schermata; e sotto i 700 px di altezza il cielo della Home è più basso,
+   con «Fra poco» sopra la barra.
+9. **Un iPhone normale**: a 390 × 844, nei due temi, otto schermate (Oggi,
+   Programma, Scopri, Spese, Prenotazioni, il menu dei viaggi, un foglio, il
+   menu della tappa) uguali a quelle di prima della Layout 3: si contano i
+   pixel diversi, e più del 2 per mille è una differenza vera.
+10. **axe e la testa leggera**: nessuna violazione grave, contrasti a norma
+    e tasti da 44 sulle schermate larghe nei due temi; il CSS in testa sotto
+    1,5 KB senza commenti, e senza le regole degli schermi grandi.
+
+Sul codice di prima (`main` b8a2eb5, la Layout 2) passano 6 controlli su
+18 (le prove che si fermano prima ne contano meno), quelli che devono: le
+traduzioni di «Prenotazioni», che erano già quelle; la regola in
+`CLAUDE.md` e il CSS in testa e senza forme abbreviate, che la prova legge
+dal file di lavoro; le schermate del telefono, uguali a se stesse; nessun
+errore in pagina. Gli altri cadono per il motivo giusto: «Aujourd'hui» e
+«Programme» nella barra e nel titolo, venti frasi che dicono ancora
+«programme»; niente margini sicuri di lato, niente barra laterale, niente
+due colonne (le prove si fermano dove chiedono quello che non c'è); i
+fogli larghi 893 px a 950; i contrasti delle ore nei giorni affiancati di
+prima, a 1280. Su una copia dell'app di adesso con un solo ritocco
+visibile sul telefono (le lettere della città in Home un po' più larghe),
+la prova 9 boccia l'Oggi nei due temi e lascia passare le altre schermate.
+
+### La copia che va online, e le prove su di lei
+
+```sh
+npm run sito                  # scrive _site/ (test/fai-il-sito.js)
+APP_URL="file://$PWD/_site/Index%202.1.html" npm run test:app
+```
+
+È quello che fa il secondo lavoro di `prove.yml`, accanto all'altro, a ogni
+modifica. Le prove leggono il file a cui punta `APP_URL`, e dalla stessa
+cartella `sw.js`; quelle che guardano un commento (l'avviso accanto
+all'interruttore della pubblicità) lo cercano nel file di lavoro, perché
+nella copia non c'è. La batteria intera sulla copia, il 26 ottobre: tutte
+verdi tranne le due che vogliono Postgres, saltate perché qui non
+c'era (su GitHub il lavoro della copia ha il suo Postgres).
