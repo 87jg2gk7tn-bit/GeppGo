@@ -921,7 +921,9 @@ portata (l'elenco in DA-FARE, «Nessuna funzione nascosta»).
    ci sta); «ADESSO» e «ora» del riquadro
    «Fra poco» sono nella lingua dell'app. L'orologio della pagina sta a
    mezzogiorno (`page.clock`): la tappa delle 11:30 è in corso a qualunque
-   ora girino le prove.
+   ora girino le prove. Il giorno si prende una volta sola, alla partenza
+   (anche in `schermate.js`): una prova che passa la mezzanotte apriva le
+   pagine un giorno dopo le date del viaggio.
 7. `MAPPA_APP` coi percorsi nuovi, quelli vecchi spariti, e l'assistente che
    riceve la voce giusta chiedendo in cinque lingue.
 8. Le 22 frasi nuove nel dizionario di en, es, fr e pt, e a schermo nessuna

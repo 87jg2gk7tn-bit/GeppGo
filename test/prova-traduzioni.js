@@ -100,7 +100,7 @@ const copri = x => {
 };
 const SENZA_LETTERE = /^[^\p{L}]*$/u;
 const SIGLA = x => /^[A-Z]{3}( \(.{1,4}\))?$/.test(x) || /^(https?:|file:|mailto:)/.test(x) || /^[^\s@]+@[^\s@]+$/.test(x) || /^[\w:~+/=.-]{16,}$/.test(x);
-const UNITA = /\b(min|km|kg|MB|GB|px|h|m|JPY|EUR|USD)\b/g;
+const UNITA = /\b(min|km|kg|MB|GB|px|h|m|mm|JPY|EUR|USD)\b/g;
 /* I nomi dei giorni e dei mesi di una lingua: «dom 18» è giusto sia in
    italiano sia in spagnolo. */
 const dateDi = l => {

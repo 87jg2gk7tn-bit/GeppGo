@@ -40,8 +40,11 @@ const errori = [];
 /* ── le date, e l'ora ────────────────────────────────────────────────────
    L'orologio della pagina sta a mezzogiorno di oggi: la tappa delle 11:30
    è in corso («ADESSO», e «ora» nell'anello) a qualunque ora girino le
-   prove. */
-const giornoA = scarto => { const b = new Date(); return new Date(b.getFullYear(), b.getMonth(), b.getDate() + scarto, 12, 0, 0); };
+   prove. Oggi si prende una volta sola, alla partenza, come in
+   schermate.js: il viaggio si costruisce a ogni pagina, e se la prova
+   passa la mezzanotte deve restare lo stesso giorno dell'orologio. */
+const OGGI = new Date();
+const giornoA = scarto => new Date(OGGI.getFullYear(), OGGI.getMonth(), OGGI.getDate() + scarto, 12, 0, 0);
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const dataFra = s => iso(giornoA(s));
 const MEZZOGIORNO = giornoA(0);

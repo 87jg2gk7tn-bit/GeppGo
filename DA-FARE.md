@@ -1625,6 +1625,14 @@ dispositivo: media query e una container query)
   il Programma che si apre sulla tappa di adesso) prendeva il bordo alto
   della barra: con la barra di lato è in cima allo schermo, e lo spazio
   sarebbe stato zero. Adesso passano da `sopraLaBarra()`.
+- Le prove cadevano a mezzanotte. `schermate.js` prendeva le date del
+  viaggio di prova all'avvio e l'orologio della pagina a ogni apertura: la
+  prova delle traduzioni, partita alle 23:59 su GitHub, ha aperto le pagine
+  al secondo giorno del viaggio (l'anello di «Fra poco» diceva ✓, la Home
+  mostrava il meteo di un altro giorno). `prova-a-portata` aveva lo stesso
+  difetto al contrario. Adesso il giorno si prende una volta sola
+  (`OGGI`), e «mm» conta come unità di misura e non come italiano. Per
+  riprovarlo: un `node -r` che sposta l'orologio di Node alle 23:59:50.
 
 ---
 
