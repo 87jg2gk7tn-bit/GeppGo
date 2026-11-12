@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#070D1C">
+<title>GeppGo · anteprima «Oggi» B · mappa protagonista, satellite</title>
+<!--
+  ANTEPRIMA DI STILE, non è l'app: una pagina a sé, con dati di esempio fissi
+  (Osaka, giorno 15 di 15), per decidere che aspetto dare a «Oggi». Non usa
+  niente di Index 2.1.html e non salva niente.
+  Mappa: MapLibre GL JS con le immagini satellitari Esri World Imagery,
+  scurite come una città vista di notte: la mappa tiene tutto lo schermo e
+  l'oro è l'unico accento forte.
+  Questa pagina è ricavata da oggi-a.html: stessa struttura, altri colori.
+  Il fornitore definitivo della mappa si sceglie dopo, guardando costi e
+  condizioni: quanti pezzi di mappa costa un'apertura sta in DA-FARE.md.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..800,0..100,0..1;1,9..144,300..800,0..100,0..1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<style>
+:root{
+  /* l'identità di GeppGo: panna, inchiostro, l'oro del logo */
+  --panna:#F6EEDD; --carta:#FBF5E7; --bianco-foto:#FFFDF7;
+  --ink:#1E1A12; --ink-logo:#14110B; --ink-soft:#5C5346;
+  --oro:#C9962C; --oro-testo:#7A541E; --oro-chiaro:#F0D9A0;
+  --f-tit:'Fraunces',Georgia,'Times New Roman',serif;
+  --f-txt:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --f-mano:'Caveat Brush','Bradley Hand','Segoe Print',cursive;
+  /* i margini sicuri, un lato alla volta (sul Duo la fotocamera sta da una parte sola) */
+  --sx:calc(18px + env(safe-area-inset-left)); --dx:calc(18px + env(safe-area-inset-right));
+  --molla:cubic-bezier(.34,1.56,.64,1); --piano:cubic-bezier(.4,0,.2,1);
+  --grana:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .36  0 0 0 0 .27  0 0 0 0 .14  0 0 0 .11 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#E9DDC4;-webkit-text-size-adjust:100%}
+body{
+  max-width:480px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;
+  background:var(--panna) var(--grana);color:var(--ink);
+  font-family:var(--f-txt);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+/* niente scorrimento di lato: schede e biglietto, storti, sporgono di qualche pixel */
+main{overflow-x:hidden;overflow-x:clip}
+svg.ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.solo-voce{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
+
+/* ── IL PALCO: mappa a tutta larghezza, il cielo sopra, le schede che sporgono sotto ── */
+.palco{position:relative;height:calc(616px + env(safe-area-inset-top));isolation:isolate;
+  background:linear-gradient(180deg,#16263F 0,#2F4362 calc(168px + env(safe-area-inset-top)),#4A5A76 calc(240px + env(safe-area-inset-top)),#E3D2B0 calc(330px + env(safe-area-inset-top)))}
+#mappa{position:absolute;inset:0;transition:opacity .28s var(--piano),transform .5s var(--piano)}
+.palco.cambio #mappa{opacity:0;transform:scale(.96)}
+/* quello che MapLibre mette di suo e qui non serve */
+.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{display:none}
+.maplibregl-canvas{outline:none}
+/* un velo ai bordi: la mappa è una fotografia appoggiata sulla carta, non uno schermo */
+.orlo{position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(180deg,transparent 62%,rgba(74,52,24,.34) 100%),
+    radial-gradient(120% 80% at 50% 46%,transparent 58%,rgba(74,52,24,.3) 100%)}
+.tratto{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.tratto path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tratto .ombra{stroke:rgba(20,17,11,.5);stroke-width:7;filter:blur(1.6px)}
+.tratto .oro{stroke:#E8B23A;stroke-width:3.4;stroke-dasharray:9 8}
+.tratto .oro.passi{stroke-width:3.8;stroke-dasharray:.5 8.5}
+.tratto .oro.sottile{stroke-width:2.8;stroke-dasharray:.5 7}
+.tratto .ombra.sottile{stroke-width:5}
+.tratto .filo{stroke:rgba(255,253,247,.55);stroke-width:1.2;stroke-dasharray:1 9.5;transform:translate(0,-1px)}
+#t-viaggio .oro{stroke-width:3;stroke-dasharray:7 7}
+.palco:not(.mondo) #t-viaggio,.palco.mondo #t-giorno{display:none}
+.palco.apre .tratto{animation:traccia 1.9s var(--piano) .35s both}
+@keyframes traccia{from{clip-path:circle(0 at var(--gx,50%) var(--gy,50%))}to{clip-path:circle(150% at var(--gx,50%) var(--gy,50%))}}
+.palco.apre .sp-corpo,.palco.apre .casa i{animation:spunta .55s var(--molla) both;animation-delay:calc(var(--k,0) * 170ms + 450ms)}
+.palco.apre .mezzo{animation:spunta .4s var(--molla) 1.5s both}
+@keyframes spunta{from{scale:.2;opacity:0}}
+
+/* i mezzi sui tratti: un cartellino, non un tasto */
+.mezzo{position:absolute;left:0;top:0;height:26px;width:52px;margin:-13px 0 0 -26px;padding:0 0 0 6px;display:flex;align-items:center;gap:3px;
+  border-radius:13px 13px 13px 4px;background:var(--bianco-foto);color:var(--ink-logo);
+  font:600 13px/1 var(--f-tit);font-variation-settings:"SOFT" 100;white-space:nowrap;
+  box-shadow:0 3px 8px rgba(20,17,11,.35);will-change:transform;pointer-events:none}
+.mezzo svg.ic{width:17px;height:17px;stroke-width:1.9}
+.palco.mondo .mezzo{display:none}
+
+/* i segnaposto: un tondo con la foto, bordo bianco, numero. MapLibre muove
+   l'elemento con una trasformazione: gli effetti stanno sul figlio. */
+.spilla{width:48px;height:48px;padding:0;border:0;background:none;border-radius:50%;-webkit-tap-highlight-color:transparent}
+.sp-corpo{display:block;width:100%;height:100%;position:relative}
+.spilla .sp-foto{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;border:3px solid var(--bianco-foto);background:#CDB994;
+  box-shadow:0 8px 16px rgba(20,17,11,.42),0 1px 3px rgba(20,17,11,.4);transition:transform .3s var(--molla)}
+.spilla img{width:100%;height:100%;object-fit:cover;display:block}
+.spilla b{position:absolute;left:-6px;top:-6px;min-width:24px;height:24px;padding:0 5px;border-radius:12px;border:2px solid var(--bianco-foto);
+  background:var(--ink-logo);color:var(--panna);font:700 13px/20px var(--f-tit);text-align:center;transition:transform .3s var(--molla)}
+.spilla.prossima{width:58px;height:58px}
+.spilla.prossima .sp-foto{border-color:var(--oro);box-shadow:0 0 0 3px var(--bianco-foto),0 10px 20px rgba(20,17,11,.5)}
+.spilla.prossima b{background:var(--oro);color:var(--ink-logo)}
+.spilla.prossima .sp-corpo::after{content:'';position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--oro);opacity:0;animation:eco 2.8s ease-out infinite}
+.spilla.accesa .sp-foto{transform:scale(1.14)}
+.spilla.accesa b{transform:scale(1.14) translate(-2px,-2px)}
+@keyframes eco{0%{transform:scale(.8);opacity:.75}70%,100%{transform:scale(1.22);opacity:0}}
+.casa{width:36px;height:36px;pointer-events:none}
+.casa i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--ink-logo);color:var(--panna);border:2px solid var(--bianco-foto);box-shadow:0 5px 12px rgba(20,17,11,.4)}
+.casa i svg.ic{width:21px;height:21px}
+.palco.mondo .spilla,.palco.mondo .casa{visibility:hidden}
+.citta-m{width:12px;height:12px;position:relative;pointer-events:none}
+.citta-m i{display:block;width:12px;height:12px;border-radius:50%;background:var(--oro);border:2px solid var(--bianco-foto);box-shadow:0 2px 5px rgba(20,17,11,.45)}
+.citta-m span{position:absolute;white-space:nowrap;font:600 14px/1 var(--f-tit);font-variation-settings:"SOFT" 100;color:var(--ink-logo);background:rgba(255,253,247,.9);padding:3px 8px 4px;border-radius:999px;box-shadow:0 2px 6px rgba(20,17,11,.25)}
+.citta-m.dx span{left:17px;top:50%;transform:translateY(-50%)}
+.citta-m.sx span{right:17px;top:50%;transform:translateY(-50%)}
+.citta-m.su span{left:50%;bottom:16px;transform:translateX(-50%)}
+.citta-m.giu span{left:50%;top:17px;transform:translateX(-50%)}
+.citta-m.qui i{width:18px;height:18px;margin:-3px;border-width:3px;box-shadow:0 0 0 3px rgba(232,178,58,.35),0 2px 6px rgba(20,17,11,.5)}
+.citta-m.qui span{top:20px;background:var(--ink-logo);color:var(--panna)}
+.palco:not(.mondo) .citta-m{visibility:hidden}
+
+/* ── IL CIELO: notte velata che schiarisce verso la mappa ── */
+.cielo{position:absolute;left:0;right:0;top:0;height:calc(322px + env(safe-area-inset-top));pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,#16263F 0%,#1D304D 30%,#2F4362 52%,#3F5170 66%,rgba(84,92,116,.9) 76%,rgba(150,120,104,.56) 87%,rgba(226,190,140,.2) 95%,rgba(240,210,160,0) 100%)}
+.stelle{position:absolute;inset:0;opacity:.75;
+  background-image:
+    radial-gradient(circle 1.1px at 12% 9%,#fff,transparent),radial-gradient(circle .9px at 31% 4%,#fff,transparent),
+    radial-gradient(circle 1px at 47% 12%,#fff,transparent),radial-gradient(circle .8px at 58% 6%,#fff,transparent),
+    radial-gradient(circle 1.1px at 71% 15%,#fff,transparent),radial-gradient(circle .9px at 93% 8%,#fff,transparent),
+    radial-gradient(circle .8px at 6% 22%,#fff,transparent),radial-gradient(circle .9px at 86% 25%,#fff,transparent)}
+.luna{position:absolute;right:26px;top:calc(112px + env(safe-area-inset-top));width:46px;height:46px;border-radius:50%;background:#EEF2F7;
+  box-shadow:0 0 18px 6px rgba(228,238,248,.24),0 0 64px 24px rgba(228,238,248,.1)}
+.luna::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 122% 24%,rgba(13,22,40,.94) 52%,transparent 62%)}
+.velo{position:absolute;border-radius:50%;background:rgba(196,208,224,.34);filter:blur(13px);animation:passa 70s linear infinite}
+.velo.v1{width:230px;height:54px;right:-50px;top:calc(104px + env(safe-area-inset-top))}
+.velo.v2{width:170px;height:40px;right:30px;top:calc(140px + env(safe-area-inset-top));opacity:.7;animation-duration:96s;animation-delay:-30s}
+.velo.v3{width:260px;height:46px;left:-60px;top:40px;opacity:.45;animation-duration:120s;animation-delay:-50s}
+@keyframes passa{from{transform:translateX(-36px)}50%{transform:translateX(30px)}to{transform:translateX(-36px)}}
+
+.testa{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) var(--dx) 0 var(--sx);color:#fff;pointer-events:none}
+.testa a,.testa button{pointer-events:auto}
+.alto{display:flex;align-items:center;gap:8px}
+.vetro{height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;text-decoration:none;
+  font:600 15px/1 var(--f-txt);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+.vetro.tondo{padding:0;width:44px}
+.viaggio{padding:0 12px 0 10px;--ico-oro:#E8B23A}
+.viaggio svg.ic:last-child{width:16px;height:16px;opacity:.85}
+.alto .spazio{flex:1}
+.io{font:700 16px/1 var(--f-tit);background:var(--panna);color:var(--ink-logo);border-color:transparent}
+
+.riga1{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;height:44px}
+.tutto{padding:0 14px 0 10px;font-size:14px;font-weight:700;white-space:nowrap;--ico-oro:#E8B23A}
+.tutto svg.ic{width:22px;height:22px}
+.occhiello{font:700 12px/1.25 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;color:rgba(255,255,255,.93)}
+.ultimo{display:inline-block;vertical-align:middle;font:400 19px/1 var(--f-mano);font-variation-settings:normal;color:var(--ink-logo);background:#E7B94A;padding:4px 10px 6px;
+  transform:rotate(-5deg) translate(6px,-5px);text-shadow:none;clip-path:polygon(1% 12%,99% 0,100% 88%,97% 100%,2% 92%,0 30%)}
+.gradi{position:absolute;right:var(--dx);top:calc(166px + env(safe-area-inset-top));min-width:64px;min-height:44px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;
+  color:#fff;text-decoration:none;font:600 13px/1 var(--f-txt);text-shadow:0 1px 10px rgba(10,18,34,.5)}
+.gradi b{font:600 28px/1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.02em}
+.citta{font-family:var(--f-tit);font-weight:600;font-size:clamp(3.7rem,19.4vw,4.75rem);line-height:.86;letter-spacing:-.035em;
+  font-variation-settings:"SOFT" 100,"WONK" 0;color:#FFFCF3;padding-bottom:.1em;margin-top:-2px;text-shadow:0 2px 18px rgba(10,18,34,.35)}
+.umore{font-family:var(--f-tit);font-style:italic;font-weight:500;font-size:2rem;line-height:1.02;color:var(--oro-chiaro);
+  font-variation-settings:"SOFT" 100,"WONK" 1;text-shadow:0 1px 12px rgba(10,18,34,.4)}
+.meta{display:flex;align-items:center;gap:10px;margin-top:7px;font:500 15px/1.2 var(--f-txt);color:rgba(255,255,255,.95);text-shadow:0 1px 8px rgba(10,18,34,.5)}
+.gente{display:inline-flex;padding-left:8px}
+.gente i{width:28px;height:28px;margin-left:-9px;border-radius:50%;border:2px solid #FFFCF3;font:700 12px/24px var(--f-txt);font-style:normal;text-align:center;text-shadow:none;color:var(--ink-logo)}
+.gente i:nth-child(1){background:#F6EEDD}.gente i:nth-child(2){background:#E7B94A}.gente i:nth-child(3){background:#D9C9A8}
+.gente i:nth-child(4){background:#B8863C}.gente i:nth-child(5){background:#F1E6CE}.gente i:nth-child(6){background:#14110B;color:#F6EEDD}
+
+/* i comandi sopra la mappa: vetro chiaro */
+.vetro-chiaro{height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 15px 0 11px;border-radius:999px;border:1px solid rgba(255,255,255,.75);
+  background:rgba(255,252,246,.74);color:var(--ink-logo);font:700 14px/1 var(--f-txt);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 6px 16px rgba(30,26,18,.2)}
+.diritti{position:absolute;right:calc(5px + env(safe-area-inset-right));top:calc(262px + env(safe-area-inset-top));writing-mode:vertical-rl;transform:rotate(180deg);
+  font:600 12px/1.2 var(--f-txt);letter-spacing:.02em;color:var(--ink-logo);background:rgba(255,252,246,.62);padding:9px 3px;border-radius:999px}
+.diritti a{color:inherit;text-underline-offset:2px}
+.senza-mappa .avviso-mappa{display:block}
+.senza-mappa .diritti{display:none}
+.avviso-mappa{display:none;position:absolute;left:var(--sx);right:var(--dx);top:300px;font:600 15px/1.35 var(--f-txt);color:var(--ink);background:var(--carta);padding:12px 14px;border-radius:14px}
+
+/* ── LE TAPPE: stampe fotografiche, un po' storte, una sull'altra ── */
+.tappe{position:absolute;left:0;right:0;bottom:-58px;display:flex;align-items:flex-start;list-style:none;
+  overflow-x:auto;overflow-y:hidden;padding:30px var(--dx) 40px calc(var(--sx) + 4px);scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tappe::-webkit-scrollbar{display:none}
+.scheda{flex:none;width:126px;height:160px;margin-right:-12px;position:relative;scroll-snap-align:center;transform:rotate(var(--r,0deg));
+  transition:transform .35s var(--molla);animation:arriva .7s var(--molla) both;animation-delay:calc(var(--i) * 90ms + 250ms)}
+.scheda:nth-child(even){margin-top:12px}
+.scheda.su{transform:rotate(0deg) translateY(-8px) scale(1.04);z-index:9!important}
+.scheda .lastra{display:block;width:100%;height:100%;padding:0;border:3px solid var(--bianco-foto);border-radius:14px;overflow:hidden;position:relative;background:#CDB994;text-align:left;text-decoration:none;
+  box-shadow:0 14px 24px rgba(30,26,18,.3),0 2px 5px rgba(30,26,18,.22)}
+.scheda img{width:100%;height:100%;object-fit:cover;display:block}
+.scheda .lastra::after{content:'';position:absolute;left:0;right:0;bottom:0;height:74%;background:linear-gradient(180deg,rgba(20,17,11,0),rgba(20,17,11,.72) 40%,rgba(20,17,11,.95))}
+.s-testo{position:absolute;left:10px;right:16px;bottom:9px;z-index:1;color:#fff}
+.s-ora{display:block;font:600 21px/1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.01em;color:var(--oro-chiaro)}
+.s-nome{display:block;margin-top:3px;font:600 15px/1.1 var(--f-tit);font-variation-settings:"SOFT" 100}
+.s-n{position:absolute;left:-8px;top:-8px;z-index:2;width:28px;height:28px;border-radius:50%;border:2px solid var(--bianco-foto);background:var(--ink-logo);color:var(--panna);
+  font:700 14px/24px var(--f-tit);text-align:center;box-shadow:0 3px 7px rgba(20,17,11,.35)}
+.scheda.prima .s-n{background:var(--oro);color:var(--ink-logo)}
+@keyframes arriva{from{opacity:0;transform:translateY(34px) rotate(calc(var(--r,0deg) * 2.4))}}
+
+/* le etichette a mano: corte e storte, come adesivi */
+.adesivo{position:absolute;z-index:3;white-space:nowrap;font:400 17px/1 var(--f-mano);color:var(--ink-logo);transform:rotate(var(--ra,-6deg));filter:drop-shadow(0 2px 3px rgba(30,26,18,.28))}
+.adesivo span{display:block;padding:5px 10px 6px}
+.adesivo.nastro span{background:#E7B94A;clip-path:polygon(0 14%,3% 0,97% 6%,100% 22%,98% 100%,4% 94%,0 78%)}
+.adesivo.timbro span{background:var(--bianco-foto);border:1.8px solid var(--ink-logo);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;padding:4px 11px 5px}
+
+/* l'alloggio: il cartellino della chiave */
+.chiave{flex:none;width:126px;margin:16px 0 0 26px;position:relative;scroll-snap-align:center;transform:rotate(3.5deg);filter:drop-shadow(0 12px 16px rgba(30,26,18,.3));
+  animation:arriva .7s var(--molla) both;animation-delay:.7s;--r:3.5deg}
+.chiave .cartellino{display:flex;flex-direction:column;gap:3px;min-height:150px;padding:38px 12px 13px;background:var(--carta) var(--grana);color:var(--ink);
+  clip-path:polygon(24% 0,76% 0,100% 15%,100% 100%,0 100%,0 15%)}
+.chiave .cartellino::before{content:'';position:absolute;left:50%;top:11px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:#5B4426;box-shadow:inset 0 2px 3px rgba(0,0,0,.5),0 0 0 2.5px #C9A45C}
+.chiave .spago{position:absolute;left:50%;top:-22px;width:40px;height:40px;margin-left:-6px;fill:none;stroke:#C9A45C;stroke-width:2;stroke-linecap:round}
+.c-occhiello{font:700 12px/1.2 var(--f-txt);letter-spacing:.14em;text-transform:uppercase;color:var(--oro-testo)}
+.c-nome{font:600 18px/1.08 var(--f-tit);font-variation-settings:"SOFT" 100}
+.c-nota{font:500 13px/1.25 var(--f-txt);color:var(--ink-soft)}
+.chiave svg.ic{width:22px;height:22px;margin-bottom:2px}
+
+/* ── LA PROSSIMA TAPPA: un biglietto, con lo strappo tratteggiato ── */
+.biglietto-ombra{position:relative;z-index:2;margin:34px var(--dx) 0 var(--sx);transform:rotate(-1.1deg);
+  filter:drop-shadow(0 12px 18px rgba(30,26,18,.2)) drop-shadow(0 2px 3px rgba(30,26,18,.14));animation:arriva .7s var(--molla) .55s both}
+.biglietto{--strappo:104px;display:grid;grid-template-columns:1fr var(--strappo);min-height:94px;border-radius:16px;background:var(--carta) var(--grana);color:var(--ink);text-decoration:none;
+  -webkit-mask:radial-gradient(circle at calc(100% - var(--strappo)) 0,transparent 9px,#000 9.6px) top/100% 51% no-repeat,radial-gradient(circle at calc(100% - var(--strappo)) 100%,transparent 9px,#000 9.6px) bottom/100% 51% no-repeat;
+          mask:radial-gradient(circle at calc(100% - var(--strappo)) 0,transparent 9px,#000 9.6px) top/100% 51% no-repeat,radial-gradient(circle at calc(100% - var(--strappo)) 100%,transparent 9px,#000 9.6px) bottom/100% 51% no-repeat}
+.b-sx{padding:12px 12px 12px 17px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0}
+.b-occhiello{font:700 12px/1.2 var(--f-txt);letter-spacing:.14em;text-transform:uppercase;color:var(--oro-testo)}
+.b-nome{font:600 21px/1.05 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
+.b-nota{font:500 13px/1.3 var(--f-txt);color:var(--ink-soft)}
+.b-dx{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px}
+.b-dx::before{content:'';position:absolute;left:-1px;top:14px;bottom:14px;border-left:2px dashed rgba(30,26,18,.3)}
+.b-ora{position:relative;font:600 30px/1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.02em}
+.cerchio{position:absolute;left:-17px;top:-9px;width:calc(100% + 34px);height:calc(100% + 19px);fill:none;stroke:var(--oro);stroke-width:1.8;stroke-linecap:round;overflow:visible;
+  stroke-dasharray:330;stroke-dashoffset:330;animation:scrivi .9s var(--piano) 1.5s forwards}
+@keyframes scrivi{to{stroke-dashoffset:0}}
+.b-vai{display:inline-flex;align-items:center;gap:1px;font:700 13px/1 var(--f-txt);color:var(--oro-testo)}
+.b-vai svg.ic{width:15px;height:15px;stroke-width:2.2}
+
+/* ── IN FONDO: le altre anteprime e i crediti ── */
+.fondo{padding:44px var(--dx) calc(128px + env(safe-area-inset-bottom)) var(--sx)}
+.onda{display:block;width:120px;height:12px;fill:none;stroke:var(--oro);stroke-width:2.4;stroke-linecap:round;margin-bottom:20px}
+.f-occhiello{font:700 12px/1.2 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;color:var(--oro-testo);margin-bottom:6px}
+.altre{list-style:none;margin-bottom:34px}
+.altre a{display:grid;grid-template-columns:1fr 22px;align-items:center;column-gap:10px;min-height:56px;padding:11px 0;text-decoration:none;border-bottom:1px solid rgba(30,26,18,.14)}
+.altre b{grid-column:1;font:600 22px/1.1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
+.altre em{grid-column:1;font:italic 500 15px/1.25 var(--f-tit);color:var(--oro-testo);font-variation-settings:"SOFT" 100,"WONK" 1}
+.altre svg.ic{grid-column:2;grid-row:1 / span 2;width:20px;height:20px;color:var(--oro-testo);stroke-width:2}
+.nota{font:500 13px/1.5 var(--f-txt);color:var(--ink-soft);margin-bottom:22px}
+.crediti{font:500 13px/1.55 var(--f-txt);color:var(--ink-soft)}
+.crediti h2{font:700 12px/1.2 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin:18px 0 5px}
+.crediti ol,.crediti ul{padding-left:1.2em}
+.crediti a{color:var(--ink);text-underline-offset:2px}
+
+/* ── LA BARRA: cinque voci di vetro, larghe quanto la parola ── */
+.barra{position:fixed;z-index:20;bottom:calc(12px + env(safe-area-inset-bottom));
+  left:max(calc(12px + env(safe-area-inset-left)),calc(50% - 228px));right:max(calc(12px + env(safe-area-inset-right)),calc(50% - 228px));
+  height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 7px;border-radius:26px;
+  border:1px solid rgba(255,255,255,.78);background:rgba(255,251,243,.64);
+  -webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);
+  box-shadow:0 14px 34px rgba(30,26,18,.24),inset 0 1px 0 rgba(255,255,255,.7)}
+.voce{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:46px;height:52px;padding:0 3px;border-radius:19px;
+  color:var(--ink-logo);text-decoration:none;font:600 12px/1 var(--f-txt);-webkit-tap-highlight-color:transparent}
+.voce.qui{flex-direction:row;gap:7px;padding:0 15px 0 11px;background:var(--ink-logo);color:var(--panna);font:700 14px/1 var(--f-txt);--ico-oro:#E8B23A;--ico-su:#14110B;
+  box-shadow:0 6px 14px rgba(20,17,11,.3)}
+
+/* ── IL MESSAGGIO: nell'anteprima c'è una schermata sola, e le voci che non
+   portano da nessuna parte lo dicono, invece di restare mute ── */
+.messaggio{position:fixed;z-index:30;bottom:calc(90px + env(safe-area-inset-bottom));
+  left:max(calc(16px + env(safe-area-inset-left)),calc(50% - 224px));right:max(calc(16px + env(safe-area-inset-right)),calc(50% - 224px));
+  min-height:44px;display:flex;align-items:center;padding:10px 16px;border-radius:15px 15px 15px 5px;
+  background:rgba(20,17,11,.95);color:var(--panna);font:600 14px/1.35 var(--f-txt);box-shadow:0 14px 30px rgba(20,17,11,.36);
+  opacity:0;visibility:hidden;transform:translateY(10px) rotate(-.7deg);transition:opacity .2s var(--piano),transform .34s var(--molla),visibility 0s .2s}
+.messaggio.su{opacity:1;visibility:visible;transform:rotate(-.7deg);transition:opacity .2s var(--piano),transform .34s var(--molla)}
+
+/* Sugli schermi stretti (un iPhone SE della prima serie, 320 px) la testata e la
+   barra si stringono, senza perdere le parole. */
+@media (max-width:359px){
+  .tutto{padding:0 13px}
+  .tutto svg.ic,.m-alba{display:none}
+  .umore{font-size:1.75rem}
+  .ultimo{font-size:17px}
+  .gradi{top:calc(190px + env(safe-area-inset-top))}
+  .gradi b{font-size:24px}
+  .barra{padding:0 4px;left:calc(8px + env(safe-area-inset-left));right:calc(8px + env(safe-area-inset-right))}
+  .voce{min-width:44px;padding:0 1px}
+  .voce.qui{flex-direction:column;gap:3px;padding:0 9px;font:600 12px/1 var(--f-txt)}
+  .b-nome{font-size:19px}
+  .biglietto{--strappo:92px}
+}
+@media (prefers-reduced-motion:reduce){
+  .velo,.spilla.prossima .sp-corpo::after,.scheda,.chiave,.biglietto-ombra,.palco.apre .tratto,.palco.apre .sp-corpo,.palco.apre .casa i,.palco.apre .mezzo{animation:none}
+  .cerchio{animation:none;stroke-dashoffset:0}
+  #mappa,.scheda,.spilla .sp-foto,.spilla b,.messaggio,.messaggio.su{transition:none}
+}
+/* ══ B · SATELLITE DI NOTTE ══════════════════════════════════════════
+   Quello che cambia rispetto ad A: la mappa tiene tutto lo schermo, il
+   cielo è notte fonda, i comandi sono di vetro scuro e l'oro è l'unico
+   colore che si accende. */
+:root{--notte:#0A1222;--avorio:#F3ECDC;--oro-b:#F0BC45}
+html{background:#060B16}
+body{background:var(--notte);color:var(--avorio)}
+.palco{height:max(100svh,calc(800px + env(safe-area-inset-top)));background:var(--notte)}
+.orlo{background:
+    linear-gradient(180deg,transparent 44%,rgba(6,10,20,.5) 74%,rgba(6,10,20,.9) 100%),
+    radial-gradient(130% 84% at 50% 40%,transparent 52%,rgba(6,10,20,.55) 100%)}
+.cielo{height:calc(346px + env(safe-area-inset-top));
+  background:linear-gradient(180deg,#070D1C 0%,#0B1630 32%,#111F3D 56%,rgba(17,29,56,.9) 70%,rgba(15,25,48,.55) 85%,rgba(12,20,40,0) 100%)}
+.stelle{opacity:1;background-image:
+    radial-gradient(circle 1.2px at 12% 9%,#fff,transparent),radial-gradient(circle .9px at 31% 4%,#fff,transparent),
+    radial-gradient(circle 1px at 47% 12%,#fff,transparent),radial-gradient(circle .8px at 58% 6%,#fff,transparent),
+    radial-gradient(circle 1.2px at 71% 15%,#fff,transparent),radial-gradient(circle .9px at 93% 8%,#fff,transparent),
+    radial-gradient(circle .8px at 6% 22%,#fff,transparent),radial-gradient(circle 1px at 86% 25%,#fff,transparent),
+    radial-gradient(circle .8px at 22% 31%,#fff,transparent),radial-gradient(circle .9px at 40% 24%,#fff,transparent),
+    radial-gradient(circle .7px at 64% 33%,#fff,transparent),radial-gradient(circle 1px at 78% 40%,#fff,transparent),
+    radial-gradient(circle .7px at 15% 44%,#fff,transparent),radial-gradient(circle .8px at 52% 46%,#fff,transparent)}
+.luna::after{background:radial-gradient(circle at 122% 24%,rgba(7,13,28,.95) 52%,transparent 62%)}
+.velo{background:rgba(176,192,214,.26)}
+.tratto .ombra{stroke:rgba(0,0,0,.62)}
+.tratto .oro{stroke:var(--oro-b);filter:drop-shadow(0 0 5px rgba(240,188,69,.8))}
+.mezzo{background:rgba(10,18,34,.92);color:var(--avorio);border:1px solid rgba(255,255,255,.22);box-shadow:0 4px 12px rgba(0,0,0,.5);--ico-oro:var(--oro-b)}
+.spilla .sp-foto{box-shadow:0 10px 20px rgba(0,0,0,.6),0 1px 3px rgba(0,0,0,.5)}
+.spilla b{background:var(--notte);color:var(--avorio)}
+.spilla.prossima .sp-foto{border-color:var(--oro-b);box-shadow:0 0 0 3px rgba(10,18,34,.9),0 0 22px rgba(240,188,69,.55)}
+.spilla.prossima b{background:var(--oro-b);color:var(--ink-logo)}
+.spilla.prossima .sp-corpo::after{border-color:var(--oro-b)}
+.casa i{background:var(--oro-b);color:var(--ink-logo);border-color:rgba(10,18,34,.9);--ico-oro:#FFF3D0;box-shadow:0 0 18px rgba(240,188,69,.5)}
+.citta-m span{background:rgba(10,18,34,.76);color:var(--avorio);border:1px solid rgba(255,255,255,.18);box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.citta-m i{background:var(--oro-b);border-color:var(--notte)}
+.citta-m.qui span{background:var(--oro-b);color:var(--ink-logo);border-color:transparent}
+.citta-m.qui i{box-shadow:0 0 0 3px rgba(240,188,69,.3),0 0 16px rgba(240,188,69,.7)}
+.vetro{background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.2)}
+.io{background:rgba(10,18,34,.4);color:var(--avorio);border-color:var(--oro-b)}
+.ultimo{background:var(--oro-b)}
+.diritti{color:var(--avorio);background:rgba(10,18,34,.55)}
+.avviso-mappa{background:#16223C;color:var(--avorio)}
+
+/* schede, alloggio e biglietto stanno sopra la mappa, fino alla barra */
+.tappe{bottom:calc(152px + env(safe-area-inset-bottom))}
+.scheda .lastra{border:1px solid rgba(255,255,255,.34);border-radius:16px;background:#16223C;box-shadow:0 18px 30px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4)}
+.scheda.prima .lastra{border:2px solid var(--oro-b)}
+.s-n{background:var(--notte);color:var(--avorio);border:1px solid rgba(255,255,255,.4);line-height:26px}
+.scheda.prima .s-n{background:var(--oro-b);color:var(--ink-logo);border-color:var(--notte)}
+.adesivo.nastro span{background:var(--oro-b)}
+.adesivo.timbro span{background:rgba(10,18,34,.78);color:var(--oro-b);border-color:var(--oro-b)}
+.chiave{filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))}
+.chiave .cartellino{background:#16223C;color:var(--avorio)}
+.chiave .cartellino::before{background:var(--notte);box-shadow:inset 0 2px 3px rgba(0,0,0,.6),0 0 0 2.5px var(--oro-b)}
+.chiave .spago{stroke:var(--oro-b)}
+.c-occhiello{color:var(--oro-b)}.c-nota{color:rgba(243,236,220,.76)}
+.biglietto-ombra{margin-top:calc(-186px - env(safe-area-inset-bottom));margin-bottom:calc(92px + env(safe-area-inset-bottom));filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
+.biglietto{background:rgba(30,44,76,.62);color:var(--avorio);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),inset 0 1px 0 rgba(255,255,255,.22);-webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3)}
+.b-occhiello{color:var(--oro-b)}.b-nota{color:rgba(243,236,220,.8)}
+.b-dx::before{border-left-color:rgba(255,255,255,.34)}
+.b-ora{color:var(--oro-b)}.b-vai{color:var(--avorio)}
+.cerchio{stroke:rgba(240,188,69,.75)}
+
+.fondo{background:var(--notte)}
+.onda{stroke:var(--oro-b)}.f-occhiello{color:var(--oro-b)}
+.altre a{border-bottom-color:rgba(255,255,255,.14)}.altre em,.altre svg.ic{color:var(--oro-b)}
+.nota,.crediti{color:rgba(243,236,220,.74)}.crediti h2,.crediti a{color:var(--avorio)}
+
+.barra{border-color:rgba(255,255,255,.16);background:rgba(10,18,34,.56);box-shadow:0 16px 36px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}
+.voce{color:var(--avorio);--ico-oro:var(--oro-b);--ico-su:#14110B}
+.voce.qui{background:var(--oro-b);color:var(--ink-logo);--ico-oro:#FFF3D0;--ico-su:#14110B;box-shadow:0 6px 18px rgba(240,188,69,.35)}
+/* sulla notte il messaggio è chiaro, se no sparirebbe nel buio della mappa */
+.messaggio{background:rgba(243,236,220,.97);color:var(--ink-logo);box-shadow:0 14px 32px rgba(0,0,0,.55)}
+:focus-visible{outline-color:var(--oro-b)}
+</style>
+</head>
+<body>
+
+<!-- le icone: disegnate a mano per GeppGo, inchiostro con una macchia d'oro fuori registro -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-oggi" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M11.6 7.4 18.9 9.9 18.7 23.2 11.5 20.6Z"/><path d="M4.3 8.4c2-.9 4-1.7 6-2.4 2.5.8 4.9 1.8 7.4 2.6 2-.7 3.9-1.6 6-2.3.2 4.5-.1 9-.1 13.5-2 .8-4 1.7-6 2.4-2.4-.8-4.8-1.8-7.2-2.6-2 .7-4 1.6-6 2.3C4.2 17.4 4.4 12.900 4.3 8.4Z"/><path d="M10.3 6c.2 4.6 0 9.2.1 13.700M17.700 8.600c-.2 4.600.1 9.100-.1 13.700"/></symbol>
+  <symbol id="i-programma" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M15.3 15.6 15.2 8.2c3.900.4 6.700 3.300 7 7.200Z"/><path d="M14 5.300c5.100-.1 8.900 3.800 8.800 8.900-.1 4.900-3.900 8.700-8.800 8.700-5 .1-8.900-3.800-8.900-8.700C5 9.200 9 5.300 14 5.300Z"/><path d="M14 9.300c.1 1.700 0 3.300 0 5 1.100.9 2.200 1.700 3.300 2.600M11.200 2.900c1.900-.2 3.700-.2 5.600 0"/></symbol>
+  <symbol id="i-scopri" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M13.900 6.400c3.800.1 6.600 3.100 6.500 6.800-.1 3.600-3.100 6.400-6.700 6.300-3.700-.1-6.500-3.100-6.300-6.800.1-3.600 2.900-6.400 6.500-6.300Z"/><path d="M12.300 4.600c4.100-.1 7.300 3 7.400 7.100.1 4.100-3.100 7.400-7.200 7.500-4.100.1-7.400-3.100-7.500-7.200C4.900 8 8.200 4.700 12.300 4.600Z"/><path d="M17.700 17.500c1.900 1.900 3.700 3.800 5.600 5.700M9 10.300c.7-1.300 1.800-2.100 3.300-2.300"/></symbol>
+  <symbol id="i-spese" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M13.700 8.200c4.300 1.500 7.300 4.900 7.300 8.800 0 4.300-3.200 7.500-7.200 7.500S6.700 21.300 6.700 17c0-3.600 2.500-7 6.200-8.500Z"/><path d="M10.400 3.800c2.400-.2 4.800-.2 7.200.1-.6 1.100-1.300 2.200-1.800 3.300-1.200.1-2.300.1-3.500 0-.6-1.200-1.300-2.300-1.900-3.400Z"/><path d="M12.300 7.200C8.500 8.800 5.800 12.100 5.800 16c0 4.600 3.600 8.200 8.100 8.200 4.400 0 8.200-3.600 8.200-8.200 0-3.900-2.600-7.200-6.300-8.800"/><path style="stroke:var(--ico-su,currentColor)" d="M11.300 12.300 14 15.900l2.700-3.600M14 15.900v5M11.500 16.700h5M11.500 19h5"/></symbol>
+  <symbol id="i-prenota" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M18.800 9.100h5.300c.1.900 0 1.800.1 2.700-1.500.4-2.400 1.600-2.400 3.100s1 2.700 2.400 3.100c0 .9 0 1.800-.1 2.700h-5.400Z"/><path d="M4.300 10.600c-.1-.9 0-1.800.1-2.700 6.400-.2 12.800-.1 19.200 0 .1.900.1 1.800 0 2.700-1.500.4-2.500 1.700-2.500 3.300s1 2.900 2.500 3.300c.1.900.1 1.800 0 2.700-6.400.2-12.800.2-19.200 0-.1-.9-.2-1.800-.1-2.700 1.500-.4 2.500-1.700 2.500-3.300s-1-2.900-2.500-3.300Z"/><path d="M16.700 8.200v2.100M16.700 12.900v2.200M16.700 17.700v2.100"/></symbol>
+  <symbol id="i-metro" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M9.600 8.300h10.600c.5 0 .8.300.8.800v4.700H8.800V9.100c0-.5.300-.8.800-.8Z"/><path d="M9.200 4.600c3.200-.3 6.400-.3 9.600 0 1.500.2 2.500 1.300 2.600 2.800.2 3.400.2 6.800 0 10.200-.1 1.500-1.100 2.600-2.600 2.700-3.200.3-6.400.3-9.600 0-1.500-.1-2.500-1.200-2.600-2.700-.2-3.400-.2-6.800 0-10.200.1-1.500 1.100-2.600 2.600-2.800Z"/><path d="M6.700 13.200c4.900.2 9.700.2 14.600 0M10 16.800h.1M17.900 16.800h.1M10.300 20.400 8 24.200M17.700 20.400l2.300 3.800M11.900 4.500 12.600 2.800h2.800l.7 1.700"/></symbol>
+  <symbol id="i-piedi" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M17.300 5.100c1.900-.3 3.500 1.300 3.700 3.800.2 2.600-.6 5.300-2.400 5.600-1.800.3-3.100-1.900-3.500-4.600-.4-2.500.4-4.500 2.200-4.800Z"/><path d="M16.400 4.300c1.900-.3 3.500 1.300 3.700 3.800.2 2.600-.6 5.300-2.400 5.600-1.800.3-3.100-1.900-3.500-4.600-.4-2.500.4-4.500 2.200-4.800ZM14.900 15.900c1.200-.5 2.700-.7 3.900-.5.2 1.600-.5 2.900-1.800 3.200-1.300.2-2.200-1-2.100-2.700Z"/><path d="M9.700 10.500c1.800-.1 3.100 1.800 3.100 4.300 0 2.700-1.100 5.200-2.900 5.300-1.800.1-2.900-2.300-3-5-.1-2.500 1-4.500 2.800-4.600ZM7.400 22.200c1.300-.4 2.700-.4 3.900 0 0 1.600-.8 2.800-2.100 2.900-1.300 0-2-1.300-1.800-2.900Z"/></symbol>
+  <symbol id="i-globo" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M10.300 9.200c1.700-.9 3.700-.5 4.800.7.900 1 .3 2.300-.9 2.900-1 .5-1.200 1.500-.6 2.500.7 1.200.2 2.700-1.200 3.200-1.600.5-3.200-.5-3.900-2.200-.9-2.300-.3-5.900 1.800-7.100Z"/><path d="M14 4.300c5.400-.1 9.700 4.200 9.700 9.600 0 5.400-4.200 9.800-9.600 9.800-5.400.1-9.800-4.200-9.800-9.600C4.200 8.700 8.600 4.300 14 4.300Z"/><path d="M4.400 13.300c6.400.9 12.800.9 19.200 0M13.900 4.400c-3.700 3.300-3.800 15.400.2 19.200M14.100 4.400c3.700 3.400 3.700 15.500-.1 19.200"/></symbol>
+  <symbol id="i-posizione" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M14.900 9.300c1.800 0 3.100 1.300 3.100 3.100s-1.300 3.100-3.100 3.100-3.100-1.300-3.100-3.100 1.300-3.100 3.100-3.100Z"/><path d="M14 24.300c-3.900-3.600-7.700-7.500-7.800-12.300C6.100 7.600 9.600 4.100 14 4.100s7.900 3.500 7.800 7.900c-.1 4.800-3.900 8.700-7.800 12.300Z"/><path d="M14 9c1.700 0 2.900 1.200 2.900 2.900s-1.200 2.900-2.900 2.900-2.900-1.200-2.900-2.900S12.300 9 14 9Z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 28 28"><path d="M5.200 8.400c5.900-.3 11.700-.2 17.600.1M5.300 19.700c5.800.3 11.600.2 17.400-.1"/><path style="stroke:var(--ico-oro,#C9962C)" d="M5.200 14.100c3.900-.3 7.800-.2 11.700.1"/></symbol>
+  <symbol id="i-letto" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M7.600 12.300c1.600-.3 3.300-.2 4.900.1.300 1.200.3 2.300.1 3.400H7.400c-.2-1.200-.1-2.300.2-3.500Z"/><path d="M4.200 22.400c-.2-4.100-.1-8.300.1-12.400M4.300 16.100c6.500-.2 13-.2 19.500.1.100 2.100.1 4.100-.1 6.200M13.900 16.100c-.1-1.300-.1-2.600.1-3.900 2.100-.2 4.200-.2 6.300 0 2 .2 3.300 1.700 3.500 4"/><path d="M6.900 12.300c1.600-.3 3.200-.3 4.800 0"/></symbol>
+  <symbol id="i-avanti" viewBox="0 0 28 28"><path d="M10.600 6.300c2.600 2.500 5.100 5.100 7.600 7.700-2.500 2.600-5 5.200-7.600 7.700"/></symbol>
+  <symbol id="i-giu" viewBox="0 0 28 28"><path d="M6.900 10.600c2.400 2.400 4.700 4.900 7.100 7.300 2.400-2.400 4.800-4.800 7.100-7.300"/></symbol>
+  <symbol id="i-sole" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M14.7 9.4c2.8.1 4.9 2.3 4.8 5.1-.1 2.7-2.3 4.8-5 4.7-2.8-.1-4.9-2.3-4.8-5.1.1-2.7 2.3-4.8 5-4.700Z"/><path d="M14 8.700c3 0 5.300 2.300 5.300 5.300s-2.300 5.300-5.300 5.300-5.300-2.300-5.300-5.300S11 8.700 14 8.700Z"/><path d="M14 3.200v2.200M14 22.600v2.200M3.200 14h2.200M22.600 14h2.200M6.400 6.400 8 8M20 20l1.600 1.600M21.600 6.400 20 8M8 20l-1.600 1.600"/></symbol>
+</svg>
+
+<main>
+<section class="palco notte" id="palco" aria-label="La giornata sulla mappa">
+  <div id="mappa" role="group" aria-label="Mappa della giornata a Osaka: quattro tappe e l'alloggio"></div>
+  <p class="avviso-mappa">La mappa non si è caricata. Controlla la rete e riapri la pagina: le tappe restano qui sotto.</p>
+
+  <div class="cielo" aria-hidden="true">
+    <span class="stelle"></span><span class="velo v3"></span><span class="luna"></span><span class="velo v1"></span><span class="velo v2"></span>
+  </div>
+
+  <header class="testa">
+    <div class="alto">
+      <button class="vetro viaggio" type="button" data-finto aria-label="Giappone, apri il menu dei viaggi"><svg class="ic"><use href="#i-menu"/></svg>Giappone<svg class="ic"><use href="#i-giu"/></svg></button>
+      <span class="spazio"></span>
+      <a class="vetro tondo" href="oggi-a.html" aria-label="Guarda la versione di giorno (anteprima A)" style="--ico-oro:#F0BC45"><svg class="ic"><use href="#i-sole"/></svg></a>
+      <button class="vetro tondo io" type="button" data-finto aria-label="Il tuo profilo">G</button>
+    </div>
+    <div class="riga1">
+      <p class="occhiello">Giorno 15 di 15</p>
+      <button class="vetro tutto" id="tutto" type="button" aria-pressed="false"><svg class="ic"><use href="#i-globo"/></svg><span>Tutto il viaggio</span></button>
+    </div>
+    <a class="gradi" href="#" data-finto aria-label="14 gradi, apri il meteo"><b>14°</b><span>Meteo&nbsp;›</span></a>
+    <h1 class="citta" translate="no">Osaka</h1>
+    <p class="umore">notte velata <span class="ultimo">ultimo giorno!</span></p>
+    <p class="meta"><span><span class="m-alba">alba alle 6:24 · </span>6 in viaggio</span>
+      <span class="gente" aria-hidden="true"><i>A</i><i>L</i><i>M</i><i>P</i><i>S</i><i>T</i></span>
+    </p>
+  </header>
+
+  <p class="diritti">Powered by Esri · <a href="#crediti">fonti</a></p>
+
+  <ol class="tappe" id="tappe" aria-label="Le tappe di oggi">
+    <li class="scheda prima" style="--r:-3.5deg;--i:0;z-index:1" data-n="1">
+      <a class="lastra" href="luogo.html"><img src="foto/kuromon.jpg" alt="I portici del mercato Kuromon Ichiba, con le lanterne e i banchi" width="400" height="512">
+        <span class="s-testo"><span class="s-ora">09:30</span><span class="s-nome" translate="no">Kuromon Ichiba Market</span></span></a>
+      <b class="s-n" aria-hidden="true">1</b>
+      <i class="adesivo nastro" style="left:12px;top:-18px;--ra:-4deg"><span>da non perdere</span></i>
+    </li>
+    <li class="scheda" style="--r:2.5deg;--i:1;z-index:2" data-n="2">
+      <button class="lastra" type="button"><img src="foto/castello.jpg" alt="La torre del Castello di Osaka sopra le mura di pietra" width="400" height="512">
+        <span class="s-testo"><span class="s-ora">11:30</span><span class="s-nome">Castello di Osaka</span></span></button>
+      <b class="s-n" aria-hidden="true">2</b>
+      <i class="adesivo timbro" style="left:9px;top:30px;--ra:-7deg"><span>prenotato</span></i>
+    </li>
+    <li class="scheda" style="--r:-2deg;--i:2;z-index:3" data-n="3">
+      <button class="lastra" type="button"><img src="foto/shinsekai.jpg" alt="Le insegne di Shinsekai e la torre Tsūtenkaku" width="400" height="512">
+        <span class="s-testo"><span class="s-ora">15:00</span><span class="s-nome" translate="no">Shinsekai</span></span></button>
+      <b class="s-n" aria-hidden="true">3</b>
+    </li>
+    <li class="scheda" style="--r:3deg;--i:3;z-index:4" data-n="4">
+      <button class="lastra" type="button"><img src="foto/dotonbori.jpg" alt="Le luci di Dōtonbori sul canale, di sera" width="400" height="512">
+        <span class="s-testo"><span class="s-ora">19:00</span><span class="s-nome" translate="no">Dōtonbori</span></span></button>
+      <b class="s-n" aria-hidden="true">4</b>
+    </li>
+    <li class="chiave">
+      <svg class="spago" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 33C4 22 9 12 20 9c7-2 12-6 14-8"/></svg>
+      <div class="cartellino">
+        <svg class="ic" aria-hidden="true"><use href="#i-letto"/></svg>
+        <span class="c-occhiello">Stanotte</span>
+        <span class="c-nome" translate="no">Ryokan Tsubaki</span>
+        <span class="c-nota">Uehommachi · l'ultima notte</span>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<div class="biglietto-ombra">
+  <a class="biglietto" href="luogo.html" aria-label="Prossima tappa fra 3 ore e 40: Kuromon Ichiba Market, alle 9 e 30. Apri la scheda">
+    <span class="b-sx">
+      <span class="b-occhiello">Prossima tappa · fra 3 h 40</span>
+      <span class="b-nome" translate="no">Kuromon Ichiba Market</span>
+      <span class="b-nota">12 min a piedi dal ryokan · apre alle 9</span>
+    </span>
+    <span class="b-dx">
+      <span class="b-ora">09:30<svg class="cerchio" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><path d="M12 30C5 14 30 3 55 5c23 2 39 10 37 23-2 12-22 19-45 18C22 45 6 38 10 23c3-9 15-15 30-17"/></svg></span>
+      <span class="b-vai">la scheda<svg class="ic" aria-hidden="true"><use href="#i-avanti"/></svg></span>
+    </span>
+  </a>
+</div>
+
+<footer class="fondo">
+  <svg class="onda" viewBox="0 0 120 12" aria-hidden="true"><path d="M2 7c9-6 15 5 24 0s15-6 24 0 15 5 24-1 15-4 24 1 13 2 20-2"/></svg>
+  <p class="f-occhiello">Le altre anteprime</p>
+  <ul class="altre">
+    <li><a href="oggi-a.html"><b>Oggi, di giorno</b><em>mappa in toni caldi</em><svg class="ic" aria-hidden="true"><use href="#i-avanti"/></svg></a></li>
+    <li><a href="luogo.html"><b>La scheda di un posto</b><em>Kuromon Ichiba</em><svg class="ic" aria-hidden="true"><use href="#i-avanti"/></svg></a></li>
+  </ul>
+  <p class="nota">Anteprima di stile B, «mappa protagonista, satellite». I dati sono di esempio e fissi; l'app non cambia.</p>
+  <div class="crediti" id="crediti">
+    <h2>Foto</h2>
+    <ol id="crediti-foto"></ol>
+    <h2>Mappa</h2>
+    <p>Immagini satellitari <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noopener">Esri World Imagery</a>. Fonte: Esri, Vantor, Earthstar Geographics e la comunità degli utenti GIS. Disegnate con <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a> (licenza BSD a 3 clausole), qui scurite.</p>
+    <h2>Caratteri</h2>
+    <p><a href="https://fonts.google.com/specimen/Fraunces" target="_blank" rel="noopener">Fraunces</a> (Undercase Type), <a href="https://fonts.google.com/specimen/Plus+Jakarta+Sans" target="_blank" rel="noopener">Plus Jakarta Sans</a> (Tokotype) e <a href="https://fonts.google.com/specimen/Caveat+Brush" target="_blank" rel="noopener">Caveat Brush</a> (Impallari Type), da Google Fonts con licenza SIL Open Font 1.1.</p>
+  </div>
+</footer>
+</main>
+
+<nav class="barra" aria-label="Le sezioni dell'app">
+  <a class="voce qui" href="#" id="quiOggi" aria-current="page"><svg class="ic" aria-hidden="true"><use href="#i-oggi"/></svg>Oggi</a>
+  <a class="voce" href="#" data-finto><svg class="ic" aria-hidden="true"><use href="#i-programma"/></svg>Programma</a>
+  <a class="voce" href="luogo.html"><svg class="ic" aria-hidden="true"><use href="#i-scopri"/></svg>Scopri</a>
+  <a class="voce" href="#" data-finto><svg class="ic" aria-hidden="true"><use href="#i-spese"/></svg>Spese</a>
+  <a class="voce" href="#" data-finto><svg class="ic" aria-hidden="true"><use href="#i-prenota"/></svg>Prenotazioni</a>
+</nav>
+<p class="messaggio" id="messaggio" role="status"></p>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* ── i dati di esempio: fissi ── */
+  var TAPPE = [
+    { n: 1, nome: 'Kuromon Ichiba Market', ora: '09:30', ll: [135.5063, 34.6654], foto: 'foto/kuromon.jpg' },
+    { n: 2, nome: 'Castello di Osaka', ora: '11:30', ll: [135.5262, 34.6873], foto: 'foto/castello.jpg' },
+    { n: 3, nome: 'Shinsekai', ora: '15:00', ll: [135.5063, 34.6525], foto: 'foto/shinsekai.jpg' },
+    { n: 4, nome: 'Dōtonbori', ora: '19:00', ll: [135.5013, 34.6687], foto: 'foto/dotonbori.jpg' }
+  ];
+  var ALLOGGIO = { nome: 'Ryokan Tsubaki', ll: [135.5158, 34.6668] };
+  /* i tratti della giornata: da dove, a dove, con che mezzo, quanti minuti, da che parte curva */
+  var TRATTI = [
+    { da: ALLOGGIO.ll, a: TAPPE[0].ll, mezzo: 'piedi', min: 12, curva: -.2, sottile: true },
+    { da: TAPPE[0].ll, a: TAPPE[1].ll, mezzo: 'metro', min: 18, curva: .2 },
+    { da: TAPPE[1].ll, a: TAPPE[2].ll, mezzo: 'metro', min: 22, curva: .2 },
+    { da: TAPPE[2].ll, a: TAPPE[3].ll, mezzo: 'piedi', min: 25, curva: -.22 }
+  ];
+  /* nome, longitudine, latitudine, da che parte sta l'etichetta (Kyoto, Nara e Osaka sono a un passo) */
+  var CITTA = [['Tokyo', 139.767, 35.681, 'sx'], ['Kanazawa', 136.648, 36.578, 'dx'], ['Kyoto', 135.768, 35.011, 'su'], ['Nara', 135.805, 34.685, 'dx'], ['Hiroshima', 132.459, 34.397, 'su'], ['Osaka', 135.502, 34.669, 'giu']];
+  /* tappa, file su Wikimedia Commons, autore, licenza, indirizzo della licenza */
+  var FOTO = [
+    ['Kuromon Ichiba Market', '黒門市場 2024(2).jpg', 'ほっきー', 'CC0 1.0', 'https://creativecommons.org/publicdomain/zero/1.0/deed.it'],
+    ['Castello di Osaka', 'Tenshu of Osaka Castle 6.jpg', 'そらみみ (Soramimi)', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/deed.it'],
+    ['Shinsekai', 'Shinsekai street and Tsutenkaku 2022-04-23.jpg', 'Dick Thomas Johnson', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/deed.it'],
+    ['Dōtonbori', 'Dotonbori, Osaka, at night, November 2016.jpg', 'Martin Falbisoner', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/deed.it']
+  ];
+
+  var palco = document.getElementById('palco');
+  var riduci = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── i tasti che qui non portano da nessuna parte ──
+     Un collegamento vuoto riporta la pagina in cima, e un tasto muto sembra
+     rotto: chi tocca una voce che nell'anteprima non c'è lo legge, e resta
+     dov'era. Sta prima della mappa, perché vale anche se la mappa non arriva. */
+  var messaggio = document.getElementById('messaggio'), spegni;
+  function zitto() { clearTimeout(spegni); messaggio.classList.remove('su'); }
+  function di(testo) {
+    messaggio.textContent = testo; messaggio.classList.add('su');
+    clearTimeout(spegni); spegni = setTimeout(zitto, 3200);
+  }
+  messaggio.addEventListener('click', zitto);
+  [].forEach.call(document.querySelectorAll('[data-finto]'), function (el) {
+    el.addEventListener('click', function (e) { e.preventDefault(); di('È un\'anteprima di stile: questa voce qui non si apre.'); });
+  });
+  /* «Oggi» è la schermata che si sta guardando: toccarla riporta in cima. */
+  document.getElementById('quiOggi').addEventListener('click', function (e) {
+    e.preventDefault(); zitto(); window.scrollTo({ top: 0, behavior: riduci ? 'auto' : 'smooth' });
+  });
+
+  if (!window.maplibregl) { palco.classList.add('senza-mappa'); return; }
+
+  /* ── la mappa ──
+     Le immagini di Esri arrivano a colori e di giorno. Qui si spengono:
+     poco colore, molto contrasto, stese a metà sopra un fondo blu notte.
+     Le ombre diventano il blu del cielo, i tetti chiari restano accesi
+     come luci viste dall'alto. */
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  var TONO = {
+    'raster-saturation': ['interpolate', ['linear'], ['zoom'], 6, -.3, 9, -.5],
+    'raster-contrast': ['interpolate', ['linear'], ['zoom'], 6, .45, 9, .52],
+    'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6, .64, 9, .58], 'raster-fade-duration': 260
+  };
+  var OGGI = { center: [135.5137, 34.6699], zoom: 12.4, pitch: 56, bearing: -14 };
+  var MONDO = { center: [136.2, 35.5], zoom: 5, pitch: 44, bearing: -10 };
+  var map = new maplibregl.Map({
+    container: 'mappa', attributionControl: false,
+    center: OGGI.center, zoom: OGGI.zoom, pitch: OGGI.pitch, bearing: OGGI.bearing,
+    minZoom: 1.4, maxZoom: 17.4, maxPitch: 60, dragRotate: false, pitchWithRotate: false, touchPitch: false, renderWorldCopies: false,
+    style: {
+      version: 8, projection: { type: 'globe' },
+      sky: { 'sky-color': '#070D1C', 'horizon-color': '#1B2C52', 'fog-color': '#0B1630', 'fog-ground-blend': .45, 'horizon-fog-blend': .8, 'sky-horizon-blend': .9, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 2, 1, 6.5, .7, 9, 0] },
+      /* I pezzi di Esri sono da 256 px, ma qui si dichiarano da 362 (256 per
+         radice di due): così MapLibre sceglie sempre il livello più basso
+         dei due possibili, mai quello più fitto. Con 256 una mappa appena
+         più grande saltava al livello dopo e chiedeva il doppio dei pezzi
+         (34 invece di 17 su un telefono largo). */
+      sources: { esri: { type: 'raster', tiles: [ESRI], tileSize: 362, maxzoom: 19 } },
+      layers: [
+        { id: 'carta', type: 'background', paint: { 'background-color': '#0E1A36' } },
+        { id: 'esri', type: 'raster', source: 'esri', paint: TONO }
+      ]
+    }
+  });
+  map.touchZoomRotate.disableRotation();
+  window.__mappa = map;
+
+  /* L'inquadratura si calcola: i punti devono stare tutti nella striscia
+     libera fra il titolo e le schede, a qualunque larghezza. Si prova da
+     vicino e ci si allontana finché entrano; fra un tentativo e l'altro la
+     mappa non si disegna, quindi non si scarica niente. */
+  var ALTO = document.querySelector('.meta').getBoundingClientRect().bottom - palco.getBoundingClientRect().top + 10;
+  function striscia() {
+    var su = palco.getBoundingClientRect().top;
+    return { alto: ALTO, basso: document.getElementById('tappe').getBoundingClientRect().top - su + 22, sx: 26, dx: palco.clientWidth - 40 };
+  }
+  function inquadra(vista, punti, daZoom, margine, sotto) {
+    var s = striscia(), pad = { top: s.alto, bottom: palco.clientHeight - s.basso, left: 0, right: 0 }, c = vista.center, z = daZoom;
+    s.basso -= sotto || 0;
+    for (var giro = 0; giro < 3; giro++) {
+      for (z = daZoom; z > 2.6; z -= .04) {
+        map.jumpTo({ center: c, zoom: z, pitch: vista.pitch, bearing: vista.bearing, padding: pad });
+        var pp = punti.map(function (ll) { return map.project(ll); });
+        var x0 = Math.min.apply(0, pp.map(function (p) { return p.x; })), x1 = Math.max.apply(0, pp.map(function (p) { return p.x; }));
+        var y0 = Math.min.apply(0, pp.map(function (p) { return p.y; })), y1 = Math.max.apply(0, pp.map(function (p) { return p.y; }));
+        if (x1 - x0 <= s.dx - s.sx - 2 * margine && y1 - y0 <= s.basso - s.alto - 2 * margine) {
+          /* i punti ci stanno: si porta il loro centro al centro della striscia */
+          c = map.unproject([map.project(c).x + (x0 + x1) / 2 - (s.sx + s.dx) / 2, map.project(c).y + (y0 + y1) / 2 - (s.alto + s.basso) / 2]).toArray();
+          break;
+        }
+      }
+    }
+    map.jumpTo({ center: c, zoom: z, pitch: vista.pitch, bearing: vista.bearing, padding: pad });
+    return { center: c, zoom: z, pitch: vista.pitch, bearing: vista.bearing, padding: pad };
+  }
+  var PUNTI_OGGI = TAPPE.map(function (t) { return t.ll; }).concat([ALLOGGIO.ll]);
+  var PUNTI_MONDO = CITTA.map(function (c) { return [c[1], c[2]]; });
+  /* La giornata si guarda dal lato che la fa stare più grande: si provano
+     le direzioni e si tiene quella che permette di stare più vicini (a
+     parità, quella più simile al nord in alto). */
+  function migliore(vista, punti, daZoom, margine) {
+    var top = null;
+    for (var b = -180; b < 180; b += 15) {
+      var v = inquadra({ center: vista.center, pitch: vista.pitch, bearing: b }, punti, daZoom, margine);
+      v.voto = v.zoom - Math.abs(b) / 180 * .12;
+      if (!top || v.voto > top.voto) top = v;
+    }
+    map.jumpTo(top); return top;
+  }
+  OGGI = migliore(OGGI, PUNTI_OGGI, 14.2, 34);
+
+  /* sopra la tela, sotto i segnaposto: il velo ai bordi e il percorso a penna */
+  var NS = 'http://www.w3.org/2000/svg';
+  var tela = map.getCanvasContainer();
+  tela.appendChild(document.querySelector('.cielo'));
+  var orlo = document.createElement('div'); orlo.className = 'orlo'; tela.appendChild(orlo);
+  var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'tratto'); svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = '<g id="t-giorno"></g><g id="t-viaggio"></g>';
+  tela.appendChild(svg);
+  function linea(gruppo, classe) { var p = document.createElementNS(NS, 'path'); p.setAttribute('class', classe); gruppo.appendChild(p); return p; }
+  var gG = svg.querySelector('#t-giorno'), gV = svg.querySelector('#t-viaggio');
+  TRATTI.forEach(function (t) {
+    t.ombra = linea(gG, 'ombra' + (t.sottile ? ' sottile' : '')); t.oro = linea(gG, 'oro' + (t.sottile ? ' sottile' : t.mezzo === 'piedi' ? ' passi' : ''));
+    if (t.sottile) return;
+    var c = document.createElement('div'); c.className = 'mezzo'; c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', (t.mezzo === 'piedi' ? 'a piedi, ' : 'in metro, ') + t.min + ' minuti');
+    c.innerHTML = '<svg class="ic"><use href="#i-' + t.mezzo + '"/></svg>' + t.min + '′';
+    tela.appendChild(c); t.cartellino = c;
+  });
+  var LEGHE = [];
+  for (var i = 0; i < CITTA.length - 1; i++) LEGHE.push({ da: [CITTA[i][1], CITTA[i][2]], a: [CITTA[i + 1][1], CITTA[i + 1][2]], curva: i % 2 ? -.16 : .16, ombra: linea(gV, 'ombra'), oro: linea(gV, 'oro') });
+
+  /* Un tratto è una curva tirata fra i due capi sullo schermo, non sulla
+     terra: resta un segno di penna sopra la fotografia, con i puntini
+     sempre uguali anche quando la mappa è inclinata. */
+  function curva(t) {
+    var a = map.project(t.da), b = map.project(t.a), dx = b.x - a.x, dy = b.y - a.y;
+    var cx = (a.x + b.x) / 2 - dy * t.curva, cy = (a.y + b.y) / 2 + dx * t.curva;
+    var d = 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+    t.ombra.setAttribute('d', d); t.oro.setAttribute('d', d);
+    if (!t.cartellino) return;
+    /* il cartellino del mezzo sta sul tratto, nel punto più lontano dai segnaposto */
+    var meglio = -1e9;
+    [.5, .42, .58, .34, .66, .27, .73].forEach(function (u) {
+      var x = (1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * cx + u * u * b.x, y = (1 - u) * (1 - u) * a.y + 2 * (1 - u) * u * cy + u * u * b.y;
+      var largo = Math.min.apply(0, fermi.map(function (f) { return Math.sqrt((f.x - x) * (f.x - x) + (f.y - y) * (f.y - y)) - f.r; }));
+      if (largo > 26) largo = 26 + (.5 - Math.abs(u - .5)) * 4;
+      if (largo > meglio) { meglio = largo; t.mx = x; t.my = y; }
+    });
+  }
+  var fermi = [];
+  /* Due tappe a seicento metri, viste da qui, stanno una sull'altra: i
+     segnaposto e i cartellini si scostano quanto basta per non coprirsi.
+     Il percorso resta sul punto vero. */
+  var corpi = [];
+  function sgombra() {
+    var n = corpi.length, i, j, k;
+    for (i = 0; i < n; i++) { var a = corpi[i].ancora(); corpi[i].ax = corpi[i].x = a.x; corpi[i].ay = corpi[i].y = a.y; }
+    for (k = 0; k < 30; k++) for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) {
+      var A = corpi[i], B = corpi[j], dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy), min = A.r + B.r + 4;
+      if (d >= min) continue;
+      if (d < .5) { dx = 1; dy = .4 * (j - i); d = Math.sqrt(dx * dx + dy * dy); }
+      var s = (min - d) / d, wb = A.peso / (A.peso + B.peso), wa = 1 - wb;
+      A.x -= dx * s * wa; A.y -= dy * s * wa; B.x += dx * s * wb; B.y += dy * s * wb;
+    }
+    for (i = 0; i < n; i++) corpi[i].posa(corpi[i].x, corpi[i].y, corpi[i].ax, corpi[i].ay);
+  }
+  function ridisegna() {
+    var mondo = palco.classList.contains('mondo');
+    fermi = mondo ? [] : PUNTI_OGGI.map(function (ll, k) { var q = map.project(ll); return { x: q.x, y: q.y, r: k === 0 ? 31 : k === 4 ? 19 : 25 }; });
+    (mondo ? LEGHE : TRATTI).forEach(curva);
+    if (!mondo) sgombra();
+  }
+
+  /* i segnaposto */
+  var spille = {};
+  TAPPE.forEach(function (t) {
+    var el = document.createElement('button'); el.type = 'button'; el.className = 'spilla' + (t.n === 1 ? ' prossima' : '');
+    el.setAttribute('aria-label', 'Tappa ' + t.n + ': ' + t.nome + ', alle ' + t.ora);
+    el.innerHTML = '<span class="sp-corpo"><span class="sp-foto"><img src="' + t.foto + '" alt=""></span><b>' + t.n + '</b></span>';
+    el.addEventListener('click', function () { accendi(t.n, true); });
+    new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(t.ll).addTo(map);
+    el.style.zIndex = t.n === 1 ? 3 : 2;
+    spille[t.n] = el;
+    var corpo = el.firstChild; corpo.style.setProperty('--k', t.n);
+    corpi.push({ r: t.n === 1 ? 31 : 25, peso: t.n === 1 ? 5 : 3, ancora: function () { return map.project(t.ll); }, posa: function (x, y, ax, ay) { corpo.style.transform = 'translate(' + (x - ax).toFixed(1) + 'px,' + (y - ay).toFixed(1) + 'px)'; } });
+  });
+  var casa = document.createElement('div'); casa.className = 'casa'; casa.setAttribute('role', 'img'); casa.setAttribute('aria-label', 'L\'alloggio di stanotte: ' + ALLOGGIO.nome);
+  casa.innerHTML = '<i><svg class="ic"><use href="#i-letto"/></svg></i>';
+  new maplibregl.Marker({ element: casa, anchor: 'center' }).setLngLat(ALLOGGIO.ll).addTo(map);
+  corpi.push({ r: 19, peso: 2, ancora: function () { return map.project(ALLOGGIO.ll); }, posa: function (x, y, ax, ay) { casa.firstChild.style.transform = 'translate(' + (x - ax).toFixed(1) + 'px,' + (y - ay).toFixed(1) + 'px)'; } });
+  TRATTI.forEach(function (t) {
+    if (!t.cartellino) return;
+    corpi.push({ r: 21, peso: 1, ancora: function () { return { x: t.mx, y: t.my }; }, posa: function (x, y) { t.cartellino.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; } });
+  });
+  map.on('move', ridisegna); map.on('resize', ridisegna); ridisegna();
+  /* all'apertura il percorso si allarga dall'alloggio, come tirato a penna */
+  var parte = map.project(ALLOGGIO.ll);
+  svg.style.setProperty('--gx', parte.x.toFixed(0) + 'px');
+  svg.style.setProperty('--gy', parte.y.toFixed(0) + 'px');
+  palco.classList.add('apre');
+  setTimeout(function () { palco.classList.remove('apre'); }, 3200);
+  CITTA.forEach(function (c, k) {
+    var el = document.createElement('div'); el.className = 'citta-m ' + c[3] + (k === CITTA.length - 1 ? ' qui' : '');
+    el.innerHTML = '<i></i><span translate="no">' + c[0] + (k === CITTA.length - 1 ? ' · sei qui' : '') + '</span>';
+    new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([c[1], c[2]]).addTo(map);
+  });
+
+  /* schede e segnaposto si accendono insieme, senza muovere la mappa:
+     muoverla vorrebbe dire scaricare altri pezzi a ogni tocco */
+  var fila = document.getElementById('tappe'), schede = [].slice.call(fila.querySelectorAll('.scheda'));
+  function accendi(n, porta) {
+    schede.forEach(function (s) { s.classList.toggle('su', +s.dataset.n === n); });
+    Object.keys(spille).forEach(function (k) { spille[k].classList.toggle('accesa', +k === n); });
+    if (porta) { var s = schede[n - 1]; fila.scrollTo({ left: s.offsetLeft - (fila.clientWidth - s.offsetWidth) / 2, behavior: riduci ? 'auto' : 'smooth' }); }
+  }
+  schede.forEach(function (s) { var b = s.querySelector('button.lastra'); if (b) b.addEventListener('click', function () { accendi(+s.dataset.n, false); }); });
+
+  /* «Tutto il viaggio»: una dissolvenza e un salto, non un volo. Un volo
+     da Osaka al Giappone intero chiede i pezzi di tutti i livelli in mezzo. */
+  var tutto = document.getElementById('tutto'), eMondo = false;
+  tutto.addEventListener('click', function () {
+    eMondo = !eMondo;
+    tutto.setAttribute('aria-pressed', String(eMondo));
+    tutto.querySelector('span').textContent = eMondo ? 'Torna a oggi' : 'Tutto il viaggio';
+    tutto.querySelector('use').setAttribute('href', eMondo ? '#i-posizione' : '#i-globo');
+    function salta() {
+      map.stop(); palco.classList.toggle('mondo', eMondo);
+      if (eMondo) MONDO = inquadra(MONDO, PUNTI_MONDO, 6.8, 26, 62); else map.jumpTo(OGGI);
+      ridisegna(); palco.classList.remove('cambio');
+    }
+    if (riduci) { salta(); return; }
+    palco.classList.add('cambio'); setTimeout(salta, 300);
+  });
+
+  /* i crediti delle foto */
+  document.getElementById('crediti-foto').innerHTML = FOTO.map(function (f) {
+    return '<li>' + f[0] + ': <a href="https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(f[1].replace(/ /g, '_')) + '" target="_blank" rel="noopener">«' + f[1] + '»</a>' + ' di <span translate="no">' + f[2] + '</span>, <a href="' + f[4] + '" target="_blank" rel="noopener">' + f[3] + '</a>, da Wikimedia Commons; ritagliata e ridotta.</li>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 26 ottobre 2026.
+Aggiornato: 12 novembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -66,6 +66,11 @@ Restano queste cose, e non sono codice:
   che manda la lingua quando si registra (`options.data.lingua`) e i modelli
   che scelgono la frase in base a quella. I dettagli sono nel riepilogo della
   miglioria 10 e qui sotto, al punto 6.
+- **Guardare le tre anteprime di stile e scegliere** (12 novembre):
+  `https://87jg2gk7tn-bit.github.io/GeppGo/anteprime/oggi-a.html`, e da lì
+  le altre due coi collegamenti in fondo. Poi scegliere il fornitore della
+  mappa. Cosa c'è, da dove viene e quanti pezzi di mappa costa sta più
+  sotto, in «Anteprime di stile: a che punto è».
 
 ~~**Le condizioni del servizio dell'assistente per l'Europa**~~ ✅ **risolto
 l'8 ottobre cambiando servizio.** Sul piano gratuito quel servizio non era
@@ -1547,12 +1552,14 @@ funzione tolta; Premium e pubblicità come prima; su un iPhone normale
   Quando il file di lavoro lo supererà, la prova 10 andrà fatta solo sulla
   copia (gira già sulla copia nel secondo lavoro di `prove.yml`): è quella
   che scarica il telefono.
-  ⚠️ **Da fare a mano, una volta:** in GitHub, Settings › Pages, alla voce
-  Source scegliere «GitHub Actions» al posto di «Deploy from a branch».
-  Finché resta sul ramo, Pages continua a pubblicare il file coi commenti:
-  `pubblica.yml` fa la copia e la controlla, ma non la pubblica (lo dice un
-  avviso giallo nel riepilogo dell'esecuzione). Da qui non si può cambiare:
-  il proxy di questa sessione non lascia passare l'API di Pages.
+  ~~⚠️ **Da fare a mano, una volta:** in GitHub, Settings › Pages, alla voce
+  Source scegliere «GitHub Actions» al posto di «Deploy from a branch».~~
+  ✅ **fatto**: il 12 novembre online c'è la copia senza commenti
+  (`Index 2.1.html` pesa 2 022 KB contro i 2 466 del file di lavoro, e di
+  commenti HTML ne ha 3 su 63). Se un giorno la fonte tornasse sul ramo,
+  Pages pubblicherebbe di nuovo il file coi commenti: `pubblica.yml` fa la
+  copia e la controlla, ma non la pubblica, e lo dice con un avviso giallo
+  nel riepilogo dell'esecuzione.
 
 **Passo 1, bordi e misure**
 - I margini sicuri sinistro e destro sono separati ovunque (barra in alto,
@@ -1633,6 +1640,176 @@ dispositivo: media query e una container query)
   difetto al contrario. Adesso il giorno si prende una volta sola
   (`OGGI`), e «mm» conta come unità di misura e non come italiano. Per
   riprovarlo: un `node -r` che sposta l'orologio di Node alle 23:59:50.
+
+### Anteprime di stile: a che punto è
+
+12 novembre 2026. Giacomo: l'app «sembra ancora generata da un'AI», e la
+vuole accattivante come le migliori app di viaggio (mappa protagonista, foto
+vere, dettagli scritti a mano, profondità) senza perdere la sua faccia:
+panna, inchiostro, l'oro del logo, il cielo, Fraunces, il sottotitolo in
+corsivo oro. Prima di toccare l'app, tre pagine di prova per scegliere.
+**L'app non è cambiata**: stessa versione, stesso `CACHE_NAME`.
+
+**Cosa c'è**
+- `anteprime/oggi-a.html`, «mappa protagonista, giorno»: il cielo sfuma
+  nella mappa della giornata, il satellite riportato in due toni caldi
+  (bruno e panna). Il percorso tratteggiato in oro coi cartellini del mezzo
+  (trattini la metro, puntini a piedi), le tappe come segnaposto tondi con
+  la foto e il numero, sotto la fila di schede-foto inclinate e
+  sovrapposte, la prossima tappa come un biglietto con lo strappo, tre
+  adesivi a mano («ultimo giorno!», «da non perdere», «prenotato»), la
+  barra di vetro a cinque voci. «Tutto il viaggio» porta al globo, col giro
+  del Giappone.
+- `anteprime/oggi-b.html`, «satellite di notte»: la stessa pagina col
+  satellite scuro a tutto schermo, il cielo di notte, i comandi di vetro e
+  l'oro come unico colore acceso. È nata da A (stesso codice, un blocco di
+  stile in coda, «B · SATELLITE DI NOTTE», e pochi valori diversi: i toni,
+  l'inclinazione), ma sono due file a sé: una modifica ad A va riportata
+  in B a mano.
+- `anteprime/luogo.html`, la scheda di un posto (per Scopri e Identifica):
+  la foto grande col bordo di carta strappata, il nome enorme, la frase a
+  mano, «+ Aggiungi al programma», la riga dell'assistente in corsivo oro,
+  tre stampe col nastro e l'etichetta a mano, la cartina con la distanza
+  dall'alloggio.
+- Dati finti e fissi: Osaka, giorno 15 di 15, Kuromon Ichiba Market alle
+  09:30, Castello di Osaka alle 11:30, Shinsekai alle 15:00, Dōtonbori alle
+  19:00, la notte al «Ryokan Tsubaki» (inventato), sei compagni, «notte
+  velata». Le pagine non leggono e non scrivono niente dell'app. Le voci
+  che nell'anteprima non portano da nessuna parte (Programma, Spese,
+  Prenotazioni, il meteo, il menu dei viaggi, il profilo) lo dicono con un
+  messaggio; «Aggiungi al programma» fa vedere com'è dopo il tocco.
+- Sono solo in italiano, pensate a 390 × 844 (da 320 px in su; sugli
+  schermi larghi una colonna da 480 px al centro), coi loro colori e le
+  loro misure: per entrare nell'app vanno rifatte coi token e le regole
+  dell'app (cinque lingue, accessibilità, schermi grandi, `MAPPA_APP`).
+- Online: `https://87jg2gk7tn-bit.github.io/GeppGo/anteprime/oggi-a.html`,
+  `…/oggi-b.html`, `…/luogo.html`, con `noindex`. Ci arrivano perché
+  `anteprime` sta fra le `CARTELLE` di `test/fai-il-sito.js`, copiata così
+  com'è con le sue sottocartelle: prima la copia era a un livello solo, e
+  le foto restavano a casa (la prova 2 di `prova-schermi-grandi` adesso
+  controlla che le cartelle arrivino intere).
+- Si guardano con `node test/anteprime-dal-vivo.js` (vedi `test/README.md`,
+  «Le anteprime di stile»): non è una prova, esce in rete apposta.
+
+**Da dove viene quello che si vede**
+- Mappa: immagini satellitari **Esri World Imagery**, dall'indirizzo
+  pubblico senza chiave
+  (`server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`),
+  con «Powered by Esri» sulla mappa e nei crediti «Fonte: Esri, Vantor,
+  Earthstar Geographics e la comunità degli utenti GIS» (è il testo che dà
+  il servizio). Le disegna **MapLibre GL JS 5.24.0** (BSD a 3 clausole), da
+  unpkg.
+- Foto, da Wikimedia Commons, ritagliate e ridotte; autore e licenza stanno
+  in fondo a ogni pagina, col collegamento al file:
+  «黒門市場 2024(2).jpg» e «黒門市場 2024(1).jpg» di ほっきー (CC0 1.0);
+  «Tenshu of Osaka Castle 6.jpg» di そらみみ (CC BY-SA 4.0); «Shinsekai
+  street and Tsutenkaku 2022-04-23.jpg» di Dick Thomas Johnson (CC BY 2.0);
+  «Dotonbori, Osaka, at night, November 2016.jpg» di Martin Falbisoner
+  (CC BY-SA 4.0); «Seafood in Kuromon Market, Osaka on June 7th, 2017.jpg»
+  di Choi2451 (CC BY-SA 3.0); «Kuromon Market - panoramio (5).jpg» di DVMG
+  (CC BY 3.0).
+- Caratteri, da Google Fonts (SIL Open Font 1.1): Fraunces (con gli assi
+  SOFT e WONK), Plus Jakarta Sans e **Caveat Brush** per le scritte a mano,
+  solo etichette brevi e inclinate.
+- Icone: disegnate apposta, inchiostro con una macchia d'oro fuori
+  registro. Nessuna libreria.
+
+**I pezzi di mappa** (misurati il 12 novembre con
+`node test/anteprime-dal-vivo.js pezzi`: ogni misura parte da un browser
+nuovo, con la memoria vuota)
+
+| schermo                         | oggi-a | oggi-b | luogo |
+|---------------------------------|--------|--------|-------|
+| 360 × 740, Android piccolo      | 15     | 22     | 4     |
+| 390 × 844, iPhone 14, 15 e 16   | 17     | 17     | 4     |
+| 393 × 852, iPhone 15 e 16 Pro   | 17     | 18     | 4     |
+| 430 × 932, iPhone Pro Max       | 15     | 13     | 6     |
+| 390 × 664, Safari con le barre  | 17     | 22     | 4     |
+| **in media**                    | **16** | **18** | **4** |
+
+- Un'apertura di «Oggi» costa in media **17 pezzi** (300–550 KB), la
+  scheda di un posto 4 (110–150 KB). I gesti, a 390 × 844: toccare le
+  schede 0; «Tutto il viaggio» 12 in A e 17 in B; tornare a oggi 0;
+  trascinare la mappa 2–4; avvicinare di un livello 15.
+- La soglia gratuita di Esri (ArcGIS Location Platform, guardata a novembre
+  2026: **2 milioni di pezzi al mese**, poi 0,15 $ ogni mille) copre quindi
+  circa **116 000 aperture a freddo** al mese. Chi riapre nello stesso
+  giorno non chiede niente: l'indirizzo pubblico dà i pezzi buoni per 24
+  ore, e il browser li tiene. Una giornata d'uso generosa (l'apertura, il
+  giro del viaggio, qualche trascinamento, una volta più vicino) sta sui
+  60 pezzi: circa 33 000 giornate di viaggio al mese, cioè sulle 4 700
+  persone in viaggio per una settimana.
+- ⚠️ Le anteprime usano l'indirizzo pubblico, senza chiave. Nell'app
+  servirà l'account con la sua chiave e il suo indirizzo: è lì che i pezzi
+  si contano, e la durata in memoria può essere diversa. I numeri qui sopra
+  servono a decidere, non sono un preventivo: prezzi e condizioni vanno
+  riletti quando si sceglie il fornitore (anche se i pezzi si possono
+  tenere da parte per l'offline).
+- `tileSize: 362` è la scelta che tiene basso il conto: i pezzi di Esri
+  sono da 256 px, e dichiarandoli da 362 (256 per radice di due) MapLibre
+  sceglie sempre il livello meno fitto dei due possibili. Con 256, su un
+  telefono largo B saltava al livello dopo e chiedeva 34 pezzi invece di
+  17. Il prezzo è un'immagine appena più morbida: nitidezza e numero di
+  pezzi si pagano l'una con l'altro.
+- «Tutto il viaggio» è una dissolvenza con un salto (`jumpTo`), non un
+  volo: `flyTo` scaricava anche i livelli di mezzo.
+
+**Cose imparate, da non riscoprire**
+- **MapLibre 5, non 6**: la 6 è solo a moduli, e con un `<script>` normale
+  non si carica. Quando la mappa entrerà nell'app va messa in `LIBRERIE`
+  con la versione esatta e nella lista di `sw.js`, come le altre.
+- **I toni si fanno nella mappa**, con le proprietà del livello
+  (saturazione, contrasto, luminosità, opacità sopra un fondo colorato):
+  A è una stampa in due toni (grigio al 77% su un fondo arancio), B è la
+  notte (fondo blu, mezza saturazione). Da lontano resta un filo di colore,
+  perché il mare si stacchi dalla terra.
+- **Il percorso è un SVG sopra la mappa** e sotto i segnaposto, ridisegnato
+  a ogni movimento con `map.project`: curve, trattini tondi e cartellini a
+  metà tratto MapLibre da sola non li fa così. I segnaposto che si coprono
+  si scostano (`sgombra`), e l'inquadratura si calcola (`inquadra`,
+  `migliore`: prova le direzioni di 15° in 15° e tiene quella che permette
+  di stare più vicini), perché i punti stiano nella striscia libera fra il
+  titolo e le schede a ogni larghezza.
+- MapLibre scrive `opacity` sui segnaposto (per il globo): per nasconderli
+  si usa `visibility`. Un `clip-path` su un gruppo SVG nascondeva tutto il
+  percorso: l'animazione sta sull'`<svg>`.
+- **Il colore dentro un'icona usata con `<use>`** passa solo da una
+  variabile: `style="fill:var(--ico-oro,#C9962C)"` nel simbolo. Una classe
+  non ci arriva.
+- **I contrasti sopra foto, cielo e mappa si misurano sui pixel**: due foto
+  dello schermo, con le lettere e senza, e il rapporto fra il colore della
+  scritta e il punto peggiore del fondo vero. Il foglio di stile lì non sa
+  che colore c'è dietro. Lo fa `anteprime-dal-vivo.js`; il più basso è
+  5,45.
+- **Un collegamento vuoto (`href="#"`) riporta la pagina in cima.** I
+  tasti finti delle anteprime lo facevano tutti: sul telefono sembra un
+  guasto. Adesso si fermano e dicono che è un'anteprima.
+- **La service worker dell'app vede anche le anteprime**, perché stanno
+  nella sua cartella. L'HTML lo prende dalla rete, ma se in 3 secondi non
+  arriva ripiega sulla copia che ha: alla prima apertura, col campo molto
+  debole, può comparire l'app al posto dell'anteprima (si ricarica e
+  passa). Le foto invece le tiene da parte per sempre, fino al prossimo
+  `CACHE_NAME`: una foto cambiata deve cambiare nome.
+- Le foto sono `.jpg` perché `.gitignore` scarta i `.png`.
+- **Wikimedia Commons** da qui: l'API risponde 429 (regole per i robot),
+  le pagine normali e `upload.wikimedia.org` no. Una richiesta alla volta,
+  con un User-Agent che dice chi si è, e solo le misure standard delle
+  miniature.
+- In questo ambiente `cdn.sheetjs.com` è chiuso dal proxy: `npm install`
+  intero non riesce, e le prove che vogliono SheetJS girano solo su
+  GitHub. Per le anteprime sono stati aperti, col permesso di Giacomo,
+  Wikimedia, Esri, unpkg e `github.io`.
+
+**Cosa resta da decidere** (Giacomo)
+- Quale strada: A, B, o A di giorno e B col tema scuro. E se la scheda del
+  posto va bene così per Scopri e Identifica.
+- Il fornitore della mappa, guardando costi e condizioni coi numeri qui
+  sopra. Oggi l'app usa Leaflet con OpenStreetMap; il satellite vuole un
+  account.
+- Quando la mappa entra nell'app è un servizio nuovo a cui il telefono
+  chiede dei pezzi (e che quindi vede l'indirizzo IP e la zona guardata):
+  va dichiarato in `privacy.html`, nelle quattro traduzioni e in
+  `PRIVACY-STORE.md`.
 
 ---
 

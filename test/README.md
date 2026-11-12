@@ -1598,3 +1598,59 @@ all'interruttore della pubblicità) lo cercano nel file di lavoro, perché
 nella copia non c'è. La batteria intera sulla copia, il 26 ottobre: tutte
 verdi tranne le due che vogliono Postgres, saltate perché qui non
 c'era (su GitHub il lavoro della copia ha il suo Postgres).
+
+## Le anteprime di stile
+
+```sh
+node test/anteprime-dal-vivo.js              # controlli e pezzi di mappa
+node test/anteprime-dal-vivo.js controlli    # solo i controlli
+node test/anteprime-dal-vivo.js pezzi        # solo i pezzi di mappa
+node test/anteprime-dal-vivo.js controlli luogo.html    # una pagina sola
+ANTEPRIME_URL=https://87jg2gk7tn-bit.github.io/GeppGo/anteprime/ node test/anteprime-dal-vivo.js
+```
+
+**Non è una prova**: `npm test` non la lancia (non si chiama `prova-…`),
+come `fonti-dal-vivo.js`. Le tre pagine di `anteprime/` (novembre 2026:
+cosa sono sta in `DA-FARE.md`, «Anteprime di stile») hanno la mappa fatta
+con le immagini di Esri e i caratteri di Google: senza rete non c'è niente
+da guardare, e dalle prove in rete non si esce. Qui si esce apposta, perché
+le pagine hanno solo dati di esempio e non parlano con nessun servizio di
+GeppGo. Servono `unpkg.com`, `server.arcgisonline.com`,
+`fonts.googleapis.com` e `fonts.gstatic.com`; dietro un proxy il browser
+passa da `HTTPS_PROXY`. MapLibre disegna con WebGL: il browser parte con
+le opzioni che glielo fanno fare col processore.
+
+**I controlli**, per ogni pagina a 320, 360, 390 e 430 px: niente scorre di
+lato; i tasti sono da 44 (tranne i collegamenti dentro una riga di testo,
+nei crediti); la mappa c'è, ha chiesto dei pezzi e porta i diritti di Esri;
+le foto sono arrivate tutte, anche quelle in fondo; nessun errore in
+pagina. A 390 px anche:
+
+- **i contrasti, sui pixel**. Le scritte stanno sopra foto, cielo e mappa,
+  e il foglio di stile non sa che colore c'è dietro. Due foto dello
+  schermo, con le lettere e senza: i punti che cambiano sono le lettere. Il
+  colore della scritta è quello dichiarato, il fondo è il pixel vero, e
+  conta il punto peggiore (tolto il 5% più basso, i bordi sfumati). Soglie
+  delle WCAG: 4,5, e 3 per il testo grande. L'elenco delle scritte è
+  `SCRITTE`, in cima: una scritta nuova va aggiunta lì;
+- i collegamenti alle altre due anteprime, in fondo;
+- nessuna scritta sotto i 12 px;
+- **i tasti finti**: le voci che nell'anteprima non portano da nessuna
+  parte lo dicono con un messaggio e la pagina resta dov'è (un
+  collegamento vuoto la riportava in cima); «Oggi» riporta in cima;
+  «Aggiungi al programma» fa vedere il posto aggiunto e un altro tocco lo
+  toglie.
+
+**I pezzi di mappa**: quante richieste a Esri costa aprire ogni pagina su
+cinque schermi (ogni misura parte da un browser nuovo, con la memoria
+vuota: è la prima apertura), quanto pesano, e quante ne aggiungono i gesti.
+In fondo fa il conto con la soglia gratuita (`SOGLIA`, da ricontrollare
+quando si sceglie il fornitore). Va rilanciata ogni volta che cambiano
+l'inquadratura, l'inclinazione o `tileSize`: i numeri del 12 novembre
+stanno in `DA-FARE.md`.
+
+Controprova (12 novembre), su una copia delle pagine guastata apposta: una
+riga larga 520 px, un tasto da 36, i diritti nascosti, una foto tolta, un
+collegamento alle altre anteprime cancellato, una scritta a 11 px, due
+scritte schiarite (1,57 e 3,47), i collegamenti vuoti lasciati liberi di
+saltare in cima. Ogni controllo ha bocciato il suo guasto.

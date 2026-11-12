@@ -42,11 +42,14 @@ const RADICE = path.resolve(__dirname, '..');
 
 /* Cosa va online. Solo quello che il telefono apre: niente prove, documenti,
    SQL, funzioni di Supabase o codice del ponte. Con la pubblicazione dal
-   ramo, invece, andava online tutto il repo (DA-FARE.md compreso). */
+   ramo, invece, andava online tutto il repo (DA-FARE.md compreso).
+   Le cartelle si copiano così come sono, con le loro sottocartelle:
+   «anteprime» sono le pagine di prova dello stile (con le loro foto), che
+   non fanno parte dell'app e quindi non passano dalla pulizia dei commenti. */
 const PAGINE = ['Index 2.1.html', 'index.html', 'privacy.html', 'privacy-en.html', 'privacy-es.html', 'privacy-fr.html', 'privacy-pt.html'];
 const SCRIPT = ['sw.js'];
 const COPIE = ['manifest.webmanifest', 'icona.svg', '_redirects'];
-const CARTELLE = ['icone'];
+const CARTELLE = ['icone', 'anteprime'];
 
 /* ── togliere dei pezzi senza lasciare righe vuote ────────────────────────
    Un pezzo che sta da solo sulla sua riga (prima e dopo solo spazi) se ne
@@ -232,10 +235,7 @@ function faiIlSito(dest = path.join(RADICE, '_site'), opz = {}) {
     scrivi(f, senzaCommentiJs(src), src);
   }
   for (const f of COPIE) fs.copyFileSync(path.join(RADICE, f), path.join(dir, f));
-  for (const c of CARTELLE) {
-    fs.mkdirSync(path.join(dir, c), { recursive: true });
-    for (const f of fs.readdirSync(path.join(RADICE, c))) fs.copyFileSync(path.join(RADICE, c, f), path.join(dir, c, f));
-  }
+  for (const c of CARTELLE) fs.cpSync(path.join(RADICE, c), path.join(dir, c), { recursive: true });
   /* Senza, GitHub Pages passerebbe i file da Jekyll, che salta quelli che
      cominciano con «_». Con l'artefatto di Pages non serve, ma non costa
      niente e tiene la copia uguale ovunque la si pubblichi. */

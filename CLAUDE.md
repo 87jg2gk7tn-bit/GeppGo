@@ -69,6 +69,16 @@ quel file è la memoria.
   non vanno online. Perché Pages pubblichi la copia, in Settings › Pages la
   fonte dev'essere «GitHub Actions»: finché resta sul ramo, online va il file
   coi commenti, e il flusso lo dice con un avviso.
+- **Le anteprime di stile** (`anteprime/`, novembre 2026) non sono l'app:
+  pagine di prova a sé, con dati finti, per scegliere uno stile prima di
+  portarlo in `Index 2.1.html`. Non hanno traduzioni, non entrano in
+  `MAPPA_APP`, e cambiarle non cambia `VERSIONE_APP` né `CACHE_NAME`. Vanno
+  online così come sono (`anteprime` è fra le `CARTELLE` di
+  `fai-il-sito.js`), e si guardano con `node test/anteprime-dal-vivo.js`,
+  che esce in rete apposta e non fa parte di `npm test`. Cosa c'è dentro, da
+  dove vengono mappa e foto e quanti pezzi di mappa costano sta in
+  `DA-FARE.md`. Quello che si sceglie si rifà nell'app, con le regole
+  dell'app.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
   funzioni `vicini` e `geo` (il ponte della mappa), `link-mappe` (apre i
   link corti di Google Maps) e `calendario` (il calendario che si aggiorna:
