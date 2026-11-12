@@ -1745,6 +1745,12 @@ nuovo, con la memoria vuota)
   servono a decidere, non sono un preventivo: prezzi e condizioni vanno
   riletti quando si sceglie il fornitore (anche se i pezzi si possono
   tenere da parte per l'offline).
+- Esri ha anche un conto **a sessioni** al posto di quello a pezzi: 1 000
+  sessioni gratis al mese, poi 4 $ ogni mille. Sotto la soglia gratuita
+  conviene di gran lunga il conto a pezzi; sopra, una sessione costa come
+  27 pezzi, quindi conviene a chi in una sessione ne chiede di più (la
+  giornata generosa, sui 60). Cosa sia di preciso una sessione va letto
+  nelle condizioni.
 - `tileSize: 362` è la scelta che tiene basso il conto: i pezzi di Esri
   sono da 256 px, e dichiarandoli da 362 (256 per radice di due) MapLibre
   sceglie sempre il livello meno fitto dei due possibili. Con 256, su un
@@ -1788,8 +1794,9 @@ nuovo, con la memoria vuota)
   nella sua cartella. L'HTML lo prende dalla rete, ma se in 3 secondi non
   arriva ripiega sulla copia che ha: alla prima apertura, col campo molto
   debole, può comparire l'app al posto dell'anteprima (si ricarica e
-  passa). Le foto invece le tiene da parte per sempre, fino al prossimo
-  `CACHE_NAME`: una foto cambiata deve cambiare nome.
+  passa). Le foto invece le dà dalla copia che ha, e intanto le riprende
+  dalla rete: una foto cambiata si vede dalla seconda apertura. Per vederla
+  subito le si cambia nome.
 - Le foto sono `.jpg` perché `.gitignore` scarta i `.png`.
 - **Wikimedia Commons** da qui: l'API risponde 429 (regole per i robot),
   le pagine normali e `upload.wikimedia.org` no. Una richiesta alla volta,
