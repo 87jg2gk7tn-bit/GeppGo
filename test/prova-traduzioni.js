@@ -123,7 +123,18 @@ function rimasteInItaliano(inItaliano, l, visti, valori) {
   const tradotte = new Set(valori.map(copri));
   const paroleL = new Set(valori.join(' ').toLowerCase().match(/\p{L}+/gu) || []);
   const paroleData = new Set(dateDi(l).concat(dateDi('it')));
-  const soloData = x => { const p = x.toLowerCase().match(/\p{L}+/gu); return !!p && p.every(w => paroleData.has(w)); };
+  /* Prima si tolgono i nomi: «Tokyo · 12 nov – 15 nov» è una data col suo
+     posto. Senza, quella riga contava come una frase, e nei mesi che in
+     italiano e nella lingua d'arrivo si scrivono uguali («nov» in spagnolo,
+     «novembre» in francese; anche feb, mar, ago e dic) era «rimasta in
+     italiano». La prova è nata a settembre, con «set» e «sept», «ott» e
+     «oct»: è caduta il 12 novembre, senza che l'app fosse cambiata. */
+  const soloData = x => {
+    let resto = x;
+    for (const m of NOMI) resto = resto.split(m).join(' ').split(m.toUpperCase()).join(' ');
+    const p = resto.toLowerCase().match(/\p{L}+/gu);
+    return !!p && p.every(w => paroleData.has(w));
+  };
   /* I pezzi già tradotti, anche quelli fra un buco e l'altro di una frase
      composta («{1} pers.» dà «pers.»). */
   const pezzi = [...new Set(valori.flatMap(v => String(v || '').split(/\{\d+\}/)).map(s => s.trim()).filter(s => s.length > 2))].sort((a, b) => b.length - a.length);
@@ -294,6 +305,29 @@ function statico() {
                         : `${resta.contate} testi da tradurre guardati (${visti.size} letti in tutto), nessuno rimasto in italiano: copertura ${copertura}%`));
         if (process.env.DETTAGLI) fs.writeFileSync(process.env.DETTAGLI.replace(/\.json$/, '') + '-' + l + '.json', JSON.stringify({ resta, visti: [...visti] }, null, 1));
       }
+      /* I MESI CHE SI SCRIVONO UGUALI. «12 nov – 15 nov» è giusto in
+         italiano e in spagnolo, «novembre» anche in francese: una data col
+         suo posto non è italiano rimasto. Il giro qui sopra vede solo il
+         mese in cui gira (la prova è nata a settembre ed è caduta il 12
+         novembre), quindi qui si provano tutti e dodici, con le date scritte
+         come le scrive il browser. E una frase vera accanto a un nome deve
+         restare bocciata: togliere i nomi dalle date non deve togliere la
+         vista. */
+      const LOC = { it: 'it-IT', en: 'en-GB', es: 'es-ES', fr: 'fr-FR', pt: 'pt-PT' };
+      const righe = (l, m) => ['short', 'long'].flatMap(forma => {
+        const g = n => new Date(Date.UTC(2026, m, n)).toLocaleDateString(LOC[l], { day: 'numeric', month: forma, timeZone: 'UTC' });
+        return [`Tokyo · ${g(12)} – ${g(15)}`, `${g(12)} – ${g(15)} 2026 · Reykjavik`];
+      });
+      const valoriDi = l => Object.values(giri[l]).flatMap(e => e.valori);
+      const cadute = [];
+      for (const l of LINGUE) for (let m = 0; m < 12; m++) {
+        rimasteInItaliano(new Set(righe('it', m)), l, new Map(righe(l, m).map(x => [x, 'una data'])), valoriDi(l)).forEach(x => cadute.push(`${l}, mese ${m + 1}: ${x}`));
+      }
+      ok('2. una data col suo posto non passa per italiano rimasto, in nessuno dei dodici mesi (a novembre «nov» è anche spagnolo)', !cadute.length,
+        cadute.length ? `${cadute.length} righe: ` + cadute.slice(0, 5).join(' | ') : `${LINGUE.length} lingue per 12 mesi, col mese corto e per intero`);
+      const frase = 'Spostamento verso Tokyo';
+      const vista = LINGUE.filter(l => rimasteInItaliano(new Set([frase]), l, new Map([[frase, 'una frase']]), valoriDi(l)).length === 1);
+      ok('2. e una frase vera accanto a un nome resta bocciata («Spostamento verso Tokyo»)', vista.length === LINGUE.length, 'bocciata in: ' + vista.join(', '));
     }
 
     if (fare(7)) {

@@ -1807,6 +1807,21 @@ nuovo, con la memoria vuota)
   GitHub. Per le anteprime sono stati aperti, col permesso di Giacomo,
   Wikimedia, Esri, unpkg e `github.io`.
 
+**Trovato per strada, sistemato**
+- **Le prove cadevano a novembre.** `prova-traduzioni` è diventata rossa su
+  GitHub il 12 novembre senza che l'app fosse cambiata: «Tokyo · 12 nov –
+  15 nov» in spagnolo e «12 novembre – 15 novembre 2026 · Tokyo» in
+  francese passavano per italiano rimasto, perché a novembre il mese si
+  scrive uguale (in spagnolo anche feb, mar, ago e dic). Una data da sola
+  la prova la lasciava passare, col nome di un posto accanto no: adesso i
+  nomi si tolgono prima. La prova era nata a settembre e il giro vede solo
+  il mese in cui gira, quindi ora due controlli provano i dodici mesi senza
+  guardare il calendario. È la seconda volta che le prove cadono per la
+  data (la prima a mezzanotte, con la Layout 3): per riprovare un giorno
+  qualunque c'è `test/sposta-orologio.js`
+  (`SPOSTA_A=2027-02-10T10:00:00 node -r ./test/sposta-orologio.js
+  test/prova-traduzioni.js 2`).
+
 **Cosa resta da decidere** (Giacomo)
 - Quale strada: A, B, o A di giorno e B col tema scuro. E se la scheda del
   posto va bene così per Scopri e Identifica.

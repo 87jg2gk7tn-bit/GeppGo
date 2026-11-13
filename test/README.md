@@ -938,7 +938,7 @@ del «Nuovo viaggio» stava su una riga sola e scendeva a 39 px.
 ## Traduzioni al 100%
 
 ```sh
-node test/prova-traduzioni.js       # 33 controlli, in sette gruppi (circa 3 minuti)
+node test/prova-traduzioni.js       # 35 controlli, in sette gruppi (circa 3 minuti)
 node test/prova-traduzioni.js 2 7   # solo il giro delle schermate e le misure
 ```
 
@@ -1002,6 +1002,26 @@ accorge dei difetti messi apposta).
 ⚠️ Qui i caratteri di Google non arrivano: le misure della parte 7 vanno
 rifatte coi caratteri veri prima di fidarsi (vedi DA-FARE, «Cose scoperte a
 caro prezzo»). In CI arrivano, e la prova misura con quelli.
+
+**I mesi che si scrivono uguali** (12 novembre 2026). Il gruppo 2 è caduto
+su GitHub senza che l'app fosse cambiata: «Tokyo · 12 nov – 15 nov» in
+spagnolo e «12 novembre – 15 novembre 2026 · Tokyo» in francese erano
+«rimasti in italiano». Sono date giuste: a novembre il mese si scrive uguale
+(in spagnolo anche feb, mar, ago e dic). Una riga fatta solo di una data la
+prova la lasciava già passare, ma col nome di un posto accanto no: adesso i
+nomi si tolgono prima di guardare se resta solo la data. La prova era nata
+a settembre, con «set» e «sept», «ott» e «oct», e il giro vede solo il mese
+in cui gira: per questo il gruppo 2 ha due controlli in più, che non
+dipendono dal calendario. Uno prova una data col suo posto in tutti e
+dodici i mesi, nelle quattro lingue; l'altro che una frase vera accanto a
+un nome («Spostamento verso Tokyo») resti bocciata. Sul codice di prima il
+primo boccia 12 righe (feb, mar, ago, nov e dic in spagnolo, novembre in
+francese). Per riprovare un altro giorno dell'anno c'è
+`test/sposta-orologio.js`:
+
+```sh
+SPOSTA_A=2027-02-10T10:00:00 node -r ./test/sposta-orologio.js test/prova-traduzioni.js 2
+```
 
 ## Accessibilità
 
