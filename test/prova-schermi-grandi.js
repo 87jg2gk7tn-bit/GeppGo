@@ -151,6 +151,12 @@ const CONFRONTA = async ([a, b]) => {
         .concat([['sw.js', { js: sito.commentiJs(fs.readFileSync(path.join(dir, 'sw.js'), 'utf8'), 'script').filter(c => !(c.blocco && c.testo.startsWith('!'))).length, css: 0, html: 0 }]])
         .filter(([, n]) => n.js || n.css || n.html).map(([f, n]) => `${f}: ${n.js + n.css + n.html}`);
       ok('2. e nemmeno le altre pagine e la service worker', !altre.length, altre.join(', '));
+      /* Le cartelle arrivano intere, sottocartelle comprese: le anteprime di
+         stile hanno le foto in anteprime/foto, e una copia a un livello solo
+         le lasciava a casa. */
+      const tutti = (d, pre = '') => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? tutti(path.join(d, e.name), pre + e.name + '/') : [pre + e.name]);
+      const mancano = sito.CARTELLE.flatMap(c => tutti(path.join(RADICE, c), c + '/')).filter(f => !fs.existsSync(path.join(dir, f)));
+      ok('2. le cartelle che vanno online arrivano nella copia intere, con le sottocartelle (' + sito.CARTELLE.join(', ') + ')', !mancano.length, mancano.slice(0, 5).join(', '));
       const js = sito.senzaCommentiJs('a=1;/*! licenza MIT */\n// via\nb=2/* via */+3\n'), css = sito.senzaCommentiCss('a{margin:1px/**/2px}/*! licenza */');
       ok('2. restano solo i commenti di licenza (/*! … */), e dove un commento separava due pezzi resta uno spazio',
         /\/\*! licenza MIT \*\//.test(js) && !/via/.test(js) && /\/\*! licenza \*\//.test(css) && /1px 2px/.test(css), JSON.stringify([js, css]));

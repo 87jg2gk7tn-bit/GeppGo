@@ -938,7 +938,7 @@ del «Nuovo viaggio» stava su una riga sola e scendeva a 39 px.
 ## Traduzioni al 100%
 
 ```sh
-node test/prova-traduzioni.js       # 33 controlli, in sette gruppi (circa 3 minuti)
+node test/prova-traduzioni.js       # 35 controlli, in sette gruppi (circa 3 minuti)
 node test/prova-traduzioni.js 2 7   # solo il giro delle schermate e le misure
 ```
 
@@ -1002,6 +1002,26 @@ accorge dei difetti messi apposta).
 ⚠️ Qui i caratteri di Google non arrivano: le misure della parte 7 vanno
 rifatte coi caratteri veri prima di fidarsi (vedi DA-FARE, «Cose scoperte a
 caro prezzo»). In CI arrivano, e la prova misura con quelli.
+
+**I mesi che si scrivono uguali** (12 novembre 2026). Il gruppo 2 è caduto
+su GitHub senza che l'app fosse cambiata: «Tokyo · 12 nov – 15 nov» in
+spagnolo e «12 novembre – 15 novembre 2026 · Tokyo» in francese erano
+«rimasti in italiano». Sono date giuste: a novembre il mese si scrive uguale
+(in spagnolo anche feb, mar, ago e dic). Una riga fatta solo di una data la
+prova la lasciava già passare, ma col nome di un posto accanto no: adesso i
+nomi si tolgono prima di guardare se resta solo la data. La prova era nata
+a settembre, con «set» e «sept», «ott» e «oct», e il giro vede solo il mese
+in cui gira: per questo il gruppo 2 ha due controlli in più, che non
+dipendono dal calendario. Uno prova una data col suo posto in tutti e
+dodici i mesi, nelle quattro lingue; l'altro che una frase vera accanto a
+un nome («Spostamento verso Tokyo») resti bocciata. Sul codice di prima il
+primo boccia 12 righe (feb, mar, ago, nov e dic in spagnolo, novembre in
+francese). Per riprovare un altro giorno dell'anno c'è
+`test/sposta-orologio.js`:
+
+```sh
+SPOSTA_A=2027-02-10T10:00:00 node -r ./test/sposta-orologio.js test/prova-traduzioni.js 2
+```
 
 ## Accessibilità
 
@@ -1598,3 +1618,59 @@ all'interruttore della pubblicità) lo cercano nel file di lavoro, perché
 nella copia non c'è. La batteria intera sulla copia, il 26 ottobre: tutte
 verdi tranne le due che vogliono Postgres, saltate perché qui non
 c'era (su GitHub il lavoro della copia ha il suo Postgres).
+
+## Le anteprime di stile
+
+```sh
+node test/anteprime-dal-vivo.js              # controlli e pezzi di mappa
+node test/anteprime-dal-vivo.js controlli    # solo i controlli
+node test/anteprime-dal-vivo.js pezzi        # solo i pezzi di mappa
+node test/anteprime-dal-vivo.js controlli luogo.html    # una pagina sola
+ANTEPRIME_URL=https://87jg2gk7tn-bit.github.io/GeppGo/anteprime/ node test/anteprime-dal-vivo.js
+```
+
+**Non è una prova**: `npm test` non la lancia (non si chiama `prova-…`),
+come `fonti-dal-vivo.js`. Le tre pagine di `anteprime/` (novembre 2026:
+cosa sono sta in `DA-FARE.md`, «Anteprime di stile») hanno la mappa fatta
+con le immagini di Esri e i caratteri di Google: senza rete non c'è niente
+da guardare, e dalle prove in rete non si esce. Qui si esce apposta, perché
+le pagine hanno solo dati di esempio e non parlano con nessun servizio di
+GeppGo. Servono `unpkg.com`, `server.arcgisonline.com`,
+`fonts.googleapis.com` e `fonts.gstatic.com`; dietro un proxy il browser
+passa da `HTTPS_PROXY`. MapLibre disegna con WebGL: il browser parte con
+le opzioni che glielo fanno fare col processore.
+
+**I controlli**, per ogni pagina a 320, 360, 390 e 430 px: niente scorre di
+lato; i tasti sono da 44 (tranne i collegamenti dentro una riga di testo,
+nei crediti); la mappa c'è, ha chiesto dei pezzi e porta i diritti di Esri;
+le foto sono arrivate tutte, anche quelle in fondo; nessun errore in
+pagina. A 390 px anche:
+
+- **i contrasti, sui pixel**. Le scritte stanno sopra foto, cielo e mappa,
+  e il foglio di stile non sa che colore c'è dietro. Due foto dello
+  schermo, con le lettere e senza: i punti che cambiano sono le lettere. Il
+  colore della scritta è quello dichiarato, il fondo è il pixel vero, e
+  conta il punto peggiore (tolto il 5% più basso, i bordi sfumati). Soglie
+  delle WCAG: 4,5, e 3 per il testo grande. L'elenco delle scritte è
+  `SCRITTE`, in cima: una scritta nuova va aggiunta lì;
+- i collegamenti alle altre due anteprime, in fondo;
+- nessuna scritta sotto i 12 px;
+- **i tasti finti**: le voci che nell'anteprima non portano da nessuna
+  parte lo dicono con un messaggio e la pagina resta dov'è (un
+  collegamento vuoto la riportava in cima); «Oggi» riporta in cima;
+  «Aggiungi al programma» fa vedere il posto aggiunto e un altro tocco lo
+  toglie.
+
+**I pezzi di mappa**: quante richieste a Esri costa aprire ogni pagina su
+cinque schermi (ogni misura parte da un browser nuovo, con la memoria
+vuota: è la prima apertura), quanto pesano, e quante ne aggiungono i gesti.
+In fondo fa il conto con la soglia gratuita (`SOGLIA`, da ricontrollare
+quando si sceglie il fornitore). Va rilanciata ogni volta che cambiano
+l'inquadratura, l'inclinazione o `tileSize`: i numeri del 12 novembre
+stanno in `DA-FARE.md`.
+
+Controprova (12 novembre), su una copia delle pagine guastata apposta: una
+riga larga 520 px, un tasto da 36, i diritti nascosti, una foto tolta, un
+collegamento alle altre anteprime cancellato, una scritta a 11 px, due
+scritte schiarite (1,57 e 3,47), i collegamenti vuoti lasciati liberi di
+saltare in cima. Ogni controllo ha bocciato il suo guasto.

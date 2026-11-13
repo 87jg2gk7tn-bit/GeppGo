@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#14110B">
+<title>GeppGo · anteprima della scheda di un posto · Kuromon Ichiba Market</title>
+<!--
+  ANTEPRIMA DI STILE, non è l'app: la scheda di un posto, come si aprirebbe
+  da Scopri o da Identifica. Dati di esempio fissi (Kuromon Ichiba Market,
+  Osaka). Non usa niente di Index 2.1.html e non salva niente.
+  Mappa: MapLibre GL JS con le immagini satellitari Esri World Imagery in
+  due toni, ferma (non si trascina: la pagina deve poter scorrere).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..800,0..100,0..1;1,9..144,300..800,0..100,0..1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<style>
+:root{
+  --panna:#F6EEDD; --carta:#FBF5E7; --bianco-foto:#FFFDF7;
+  --ink:#1E1A12; --ink-logo:#14110B; --ink-soft:#5C5346;
+  --oro:#C9962C; --oro-testo:#7A541E; --oro-chiaro:#F0D9A0; --nastro:#E7B94A;
+  --grad:linear-gradient(135deg,#C99A3A 0%,#DDB04A 100%);
+  --f-tit:'Fraunces',Georgia,'Times New Roman',serif;
+  --f-txt:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --f-mano:'Caveat Brush','Bradley Hand','Segoe Print',cursive;
+  --sx:calc(18px + env(safe-area-inset-left)); --dx:calc(18px + env(safe-area-inset-right));
+  --molla:cubic-bezier(.34,1.56,.64,1); --piano:cubic-bezier(.4,0,.2,1);
+  --grana:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .36  0 0 0 0 .27  0 0 0 0 .14  0 0 0 .11 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#E9DDC4;-webkit-text-size-adjust:100%}
+body{max-width:480px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;background:var(--panna) var(--grana);color:var(--ink);
+  font-family:var(--f-txt);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+/* niente scorrimento di lato: le stampe storte sporgono di qualche pixel */
+main{overflow-x:hidden;overflow-x:clip}
+svg.ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
+
+/* ── LA COPERTINA: la foto a tutta larghezza, il nome enorme sopra, la carta che la strappa in fondo ── */
+.copertina{position:relative;height:calc(468px + env(safe-area-inset-top));overflow:hidden;background:#2A2118;color:#fff;isolation:isolate}
+.c-foto{position:absolute;left:0;top:-6%;width:100%;height:112%;object-fit:cover;object-position:50% 34%;will-change:transform}
+.c-velo{position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(20,17,11,.58) 0%,rgba(20,17,11,.08) 20%,rgba(20,17,11,0) 36%,rgba(20,17,11,.74) 60%,rgba(20,17,11,.94) 100%)}
+.vetro{position:absolute;left:var(--sx);top:calc(10px + env(safe-area-inset-top));height:44px;display:inline-flex;align-items:center;gap:4px;padding:0 16px 0 9px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.34);background:rgba(20,17,11,.3);color:#fff;text-decoration:none;font:600 15px/1 var(--f-txt);
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+.vetro svg.ic{width:22px;height:22px;stroke-width:2}
+.c-credito{position:absolute;right:calc(7px + env(safe-area-inset-right));top:calc(70px + env(safe-area-inset-top));white-space:nowrap;transform-origin:100% 0;transform:rotate(-90deg) translateY(-100%);
+  font:600 12px/1.3 var(--f-txt);letter-spacing:.03em;color:#fff;background:rgba(20,17,11,.74);padding:2px 9px;border-radius:999px}
+.c-credito a{color:inherit;text-underline-offset:2px}
+.c-titolo{position:absolute;left:var(--sx);right:var(--dx);bottom:40px;animation:sale .8s var(--piano) .1s both}
+.occhiello{font:700 12px/1.25 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.94);margin-bottom:6px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.nome{font-family:var(--f-tit);font-weight:600;font-variation-settings:"SOFT" 100,"WONK" 0;line-height:.84;letter-spacing:-.04em;color:#FFFCF3;text-shadow:0 2px 22px rgba(0,0,0,.45)}
+.nome span{display:block;font-size:clamp(4.4rem,21.6vw,5.4rem);padding-bottom:.08em}
+.nome em{display:block;font-size:2.15rem;font-weight:500;letter-spacing:-.02em;line-height:1.05;color:var(--oro-chiaro);font-variation-settings:"SOFT" 100,"WONK" 1;margin-top:2px}
+.strappo{position:absolute;left:-1px;bottom:-1px;width:calc(100% + 2px);height:26px;display:block;fill:var(--panna)}
+@keyframes sale{from{opacity:0;transform:translateY(18px)}}
+
+/* ── IL CORPO ── */
+.corpo{padding:2px var(--dx) 0 var(--sx)}
+.frase{position:relative;display:inline-block;font:400 27px/1.05 var(--f-mano);color:var(--ink-logo);transform:rotate(-2.4deg);margin:4px 0 0 2px}
+.sotto{position:absolute;left:-4px;right:-10px;bottom:-12px;width:calc(100% + 14px);height:12px;fill:none;stroke:var(--oro);stroke-width:2.6;stroke-linecap:round}
+.fatti{margin-top:26px;font:500 13px/1.4 var(--f-txt);color:var(--ink-soft)}
+.fatti b{font-weight:700;color:var(--ink)}
+.fatti span{white-space:nowrap}
+.aggiungi{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:56px;padding:0 22px;border:0;border-radius:16px 16px 16px 5px;
+  background:var(--grad);color:var(--ink-logo);font:700 17px/1.2 var(--f-txt);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 12px 22px rgba(160,116,36,.34),0 2px 0 rgba(255,255,255,.45) inset,0 -2px 0 rgba(120,84,20,.25) inset;transition:transform .25s var(--molla)}
+.aggiungi:active{transform:scale(.98)}
+.aggiungi svg.ic{width:24px;height:24px;stroke-width:2.4}
+/* aggiunto: il più diventa una spunta, che arriva con un piccolo rimbalzo */
+.aggiungi.fatto svg.ic{animation:fatto .45s var(--molla)}
+@keyframes fatto{from{transform:scale(.3) rotate(-24deg)}}
+.assistente{position:relative;margin-top:26px;padding-left:38px;font:italic 500 19px/1.34 var(--f-tit);font-variation-settings:"SOFT" 100,"WONK" 1;color:var(--oro-testo)}
+.assistente svg.ic{position:absolute;left:0;top:1px;width:28px;height:28px;color:var(--ink-logo);--ico-oro:#D9A93C}
+.assistente small{display:block;margin-top:6px;font:700 12px/1.2 var(--f-txt);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* le foto: stampe appiccicate col nastro, ognuna con la sua scritta a mano */
+.collage{position:relative;height:432px;margin:34px -4px 0}
+.stampa{position:absolute;background:var(--bianco-foto);padding:6px;box-shadow:0 14px 24px rgba(30,26,18,.24),0 2px 5px rgba(30,26,18,.18);transform:rotate(var(--r,0deg));opacity:0;transition:opacity .5s var(--piano),transform .7s var(--molla)}
+.stampa.vista{opacity:1}
+.stampa:not(.vista){transform:rotate(calc(var(--r,0deg) * 3)) translateY(30px)}
+.stampa img{display:block;width:100%;height:auto;aspect-ratio:var(--f)}
+.stampa.p1{--r:-3.5deg;--f:4/3;left:0;top:6px;width:218px;z-index:1}
+.stampa.p2{--r:4deg;--f:4/5;right:2px;top:64px;width:156px;z-index:2;transition-delay:.12s}
+.stampa.p3{--r:-2deg;--f:4/5;left:38px;top:182px;width:170px;padding-bottom:40px;z-index:3;transition-delay:.24s}
+.pezzo{position:absolute;width:66px;height:22px;background:rgba(231,185,74,.62);clip-path:polygon(0 12%,4% 0,9% 14%,14% 2%,100% 0,97% 16%,100% 34%,96% 52%,100% 70%,97% 88%,100% 100%,6% 100%,2% 84%,5% 62%,0 44%)}
+.p1 .pezzo{left:74px;top:-11px;transform:rotate(-5deg)}
+.p2 .pezzo{left:46px;top:-12px;transform:rotate(4deg);background:rgba(255,253,247,.7)}
+.p3 .pezzo{left:-20px;top:26px;transform:rotate(-48deg)}
+.mano{position:absolute;white-space:nowrap;font:400 22px/1 var(--f-mano);color:var(--ink-logo);transform:rotate(var(--ra,-5deg))}
+.mano.nastro{left:-10px;bottom:-12px;filter:drop-shadow(0 2px 3px rgba(30,26,18,.28))}
+.mano.nastro span{display:block;padding:5px 12px 7px;background:var(--nastro);clip-path:polygon(0 14%,3% 0,97% 6%,100% 22%,98% 100%,4% 94%,0 78%)}
+.mano.timbro{right:-12px;top:14px;--ra:7deg;filter:drop-shadow(0 2px 3px rgba(30,26,18,.28))}
+.mano.timbro span{display:block;padding:4px 12px 6px;background:var(--bianco-foto);border:1.8px solid var(--ink-logo);border-radius:255px 18px 225px 18px/18px 225px 18px 255px}
+.mano.scritta{left:12px;right:8px;bottom:9px;--ra:-2deg;font-size:21px}
+
+/* la cartina: un pezzo di mappa attaccato alla pagina */
+.dove{margin-top:14px}
+.cartina{position:relative;height:214px;margin:0 2px;padding:6px;background:var(--bianco-foto);transform:rotate(-1.2deg);box-shadow:0 14px 24px rgba(30,26,18,.22),0 2px 5px rgba(30,26,18,.16)}
+.cartina .pezzo{right:26px;top:-12px;transform:rotate(3deg)}
+#mappa{position:relative;width:100%;height:100%;background:#E3D2B0;overflow:hidden}
+.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{display:none}
+.orlo{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(74,52,24,.32) 100%)}
+.tratto{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.tratto path{fill:none;stroke-linecap:round}
+.tratto .ombra{stroke:rgba(20,17,11,.5);stroke-width:7;filter:blur(1.6px)}
+.tratto .oro{stroke:#E8B23A;stroke-width:3.8;stroke-dasharray:.5 8.5}
+.spilla{width:56px;height:56px;position:relative}
+.spilla .sp-foto{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;border:3px solid var(--oro);box-shadow:0 0 0 3px var(--bianco-foto),0 10px 20px rgba(20,17,11,.5)}
+.spilla img{width:100%;height:100%;object-fit:cover;display:block}
+.casa{width:36px;height:36px}
+.casa i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--ink-logo);color:var(--panna);border:2px solid var(--bianco-foto);box-shadow:0 5px 12px rgba(20,17,11,.4)}
+.casa i svg.ic{width:21px;height:21px}
+.mezzo{position:absolute;left:0;top:0;height:26px;width:52px;margin:-13px 0 0 -26px;padding:0 0 0 6px;display:flex;align-items:center;gap:3px;border-radius:13px 13px 13px 4px;background:var(--bianco-foto);color:var(--ink-logo);
+  font:600 13px/1 var(--f-tit);font-variation-settings:"SOFT" 100;box-shadow:0 3px 8px rgba(20,17,11,.35);pointer-events:none}
+.mezzo svg.ic{width:17px;height:17px;stroke-width:1.9}
+.diritti{position:absolute;right:9px;bottom:12px;z-index:2;writing-mode:vertical-rl;transform:rotate(180deg);font:600 12px/1.2 var(--f-txt);letter-spacing:.02em;color:var(--ink-logo);background:rgba(255,252,246,.66);padding:8px 3px;border-radius:999px}
+.diritti a{color:inherit;text-underline-offset:2px}
+.senza-mappa #mappa::after{content:'La mappa non si è caricata: controlla la rete.';position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;font:600 15px/1.35 var(--f-txt);color:var(--ink)}
+.distanza{margin:20px 2px 0;display:flex;align-items:baseline;gap:12px}
+.distanza b{font:600 2.6rem/1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.03em;white-space:nowrap}
+.distanza span{font:500 15px/1.3 var(--f-txt);color:var(--ink-soft)}
+.distanza span strong{display:block;font:italic 500 17px/1.2 var(--f-tit);font-variation-settings:"SOFT" 100,"WONK" 1;color:var(--oro-testo)}
+
+/* ── IN FONDO ── */
+.fondo{padding:46px var(--dx) calc(46px + env(safe-area-inset-bottom)) var(--sx)}
+.onda{display:block;width:120px;height:12px;fill:none;stroke:var(--oro);stroke-width:2.4;stroke-linecap:round;margin-bottom:20px}
+.f-occhiello{font:700 12px/1.2 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;color:var(--oro-testo);margin-bottom:6px}
+.altre{list-style:none;margin-bottom:34px}
+.altre a{display:grid;grid-template-columns:1fr 22px;align-items:center;column-gap:10px;min-height:56px;padding:11px 0;text-decoration:none;border-bottom:1px solid rgba(30,26,18,.14)}
+.altre b{grid-column:1;font:600 22px/1.1 var(--f-tit);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
+.altre em{grid-column:1;font:italic 500 15px/1.25 var(--f-tit);color:var(--oro-testo);font-variation-settings:"SOFT" 100,"WONK" 1}
+.altre svg.ic{grid-column:2;grid-row:1 / span 2;width:20px;height:20px;color:var(--oro-testo);stroke-width:2}
+.nota{font:500 13px/1.5 var(--f-txt);color:var(--ink-soft);margin-bottom:22px}
+.crediti{font:500 13px/1.55 var(--f-txt);color:var(--ink-soft)}
+.crediti h2{font:700 12px/1.2 var(--f-txt);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin:18px 0 5px}
+.crediti ol{padding-left:1.2em}
+.crediti a{color:var(--ink);text-underline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){
+  .c-titolo{animation:none}
+  .stampa,.stampa:not(.vista){opacity:1;transform:rotate(var(--r,0deg));transition:none}
+  .aggiungi{transition:none}
+  .aggiungi.fatto svg.ic{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- le icone: disegnate a mano per GeppGo, inchiostro con una macchia d'oro fuori registro -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-indietro" viewBox="0 0 28 28"><path d="M17.4 6.3c-2.6 2.5-5.1 5.1-7.6 7.7 2.5 2.6 5 5.2 7.6 7.7"/></symbol>
+  <symbol id="i-avanti" viewBox="0 0 28 28"><path d="M10.6 6.3c2.6 2.5 5.1 5.1 7.6 7.7-2.5 2.6-5 5.2-7.6 7.7"/></symbol>
+  <symbol id="i-piu" viewBox="0 0 28 28"><path d="M14.1 5.4c-.2 5.7-.1 11.5 0 17.2M5.4 13.9c5.7.2 11.5.2 17.2 0"/></symbol>
+  <symbol id="i-fatto" viewBox="0 0 28 28"><path d="M5.3 14.9c2.1 1.800 4.100 3.800 6 5.900 3.400-4.900 7.100-9.500 11.300-13.800"/></symbol>
+  <symbol id="i-scintilla" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M12.3 4.9c.6 3.9 2.5 5.8 6.500 6.600-3.900.8-5.800 2.800-6.600 6.700-.8-3.900-2.700-5.800-6.600-6.500 3.900-.8 5.900-2.800 6.700-6.800Z"/><path d="M11.7 3.700c.7 4.200 2.700 6.300 7 7.100-4.200.9-6.300 3-7.100 7.200-.9-4.200-2.900-6.200-7.100-7 4.200-.9 6.300-3 7.200-7.300Z"/><path d="M20.3 17.600c.1 1.900 0 3.800 0 5.700M17.500 20.500c1.900-.1 3.800-.1 5.700 0"/></symbol>
+  <symbol id="i-letto" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M7.6 12.3c1.600-.3 3.300-.2 4.900.1.300 1.200.3 2.300.1 3.400H7.400c-.2-1.200-.1-2.300.2-3.500Z"/><path d="M4.200 22.400c-.2-4.100-.1-8.300.1-12.400M4.300 16.100c6.500-.2 13-.2 19.500.1.100 2.100.1 4.100-.1 6.200M13.900 16.100c-.1-1.300-.1-2.600.1-3.900 2.100-.2 4.200-.2 6.300 0 2 .2 3.300 1.700 3.500 4"/><path d="M6.900 12.300c1.600-.3 3.200-.3 4.800 0"/></symbol>
+  <symbol id="i-piedi" viewBox="0 0 28 28"><path style="fill:var(--ico-oro,#C9962C);stroke:none" d="M17.3 5.100c1.900-.3 3.500 1.300 3.700 3.800.2 2.600-.6 5.300-2.400 5.600-1.800.3-3.100-1.900-3.500-4.600-.4-2.500.4-4.500 2.200-4.800Z"/><path d="M16.400 4.300c1.900-.3 3.500 1.300 3.700 3.800.2 2.600-.6 5.300-2.400 5.600-1.800.3-3.100-1.900-3.500-4.600-.4-2.500.4-4.500 2.200-4.800ZM14.900 15.900c1.200-.5 2.700-.7 3.900-.5.200 1.600-.5 2.900-1.800 3.200-1.300.2-2.200-1-2.100-2.700Z"/><path d="M9.700 10.500c1.800-.1 3.100 1.800 3.100 4.300 0 2.700-1.100 5.200-2.900 5.300-1.800.1-2.900-2.300-3-5-.1-2.500 1-4.500 2.800-4.600ZM7.400 22.200c1.300-.4 2.700-.4 3.900 0 0 1.600-.8 2.800-2.100 2.900-1.300 0-2-1.300-1.800-2.900Z"/></symbol>
+</svg>
+
+<main>
+<header class="copertina" id="copertina">
+  <img class="c-foto" id="cFoto" src="foto/kuromon-grande.jpg" alt="Sotto i portici del mercato Kuromon Ichiba: il tetto di legno e vetro, le lanterne di carta, la gente fra i banchi" width="960" height="1125">
+  <div class="c-velo"></div>
+  <a class="vetro" href="oggi-a.html" aria-label="Torna a Scopri"><svg class="ic" aria-hidden="true"><use href="#i-indietro"/></svg>Scopri</a>
+  <p class="c-credito">foto di <span translate="no">ほっきー</span> · <a href="#crediti">CC0</a></p>
+  <div class="c-titolo">
+    <p class="occhiello">Mercato coperto · Nipponbashi</p>
+    <h1 class="nome" translate="no"><span>Kuromon</span><em>Ichiba Market</em></h1>
+  </div>
+  <svg class="strappo" viewBox="0 0 400 26" preserveAspectRatio="none" aria-hidden="true"><path d="M0 26V6.1L13 3L18 9.5L29 7.9L38 6.3L47 3.2L54 9.4L59 8.8L66 3L74 7.1L85 5.9L92 3.6L99 6.6L104 8.7L113 10L121 7.6L129 5.8L142 14.1L150 8.3L163 7.4L168 3.8L176 4.2L181 16.1L192 8.8L200 6.2L209 8.9L214 12.9L227 3.2L235 9.6L244 5.6L257 6.3L265 7.3L270 4.9L283 5.2L292 3.4L303 5.6L312 12L321 13.4L330 13L337 4.2L342 7.8L350 5.6L361 6.6L368 10.1L379 9.7L388 12.4L400 9V26Z"/></svg>
+</header>
+
+<section class="corpo">
+  <p class="frase">il mercato che sveglia Osaka<svg class="sotto" viewBox="0 0 240 12" preserveAspectRatio="none" aria-hidden="true"><path d="M3 7c30-4 62-5 96-3 34 1 70 4 104 2 12-1 24-2 34-4M150 10c26-1 54-2 82-5"/></svg></p>
+  <p class="fatti"><b>580 m</b> di portici · circa <b>150 botteghe</b> · <span>di solito 9:00–18:00</span></p>
+
+  <button class="aggiungi" id="aggiungi" type="button" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-piu"/></svg><span>Aggiungi al programma</span></button>
+
+  <p class="assistente"><svg class="ic" aria-hidden="true"><use href="#i-scintilla"/></svg>Ti piacerà perché ami mangiare camminando: capesante alla griglia, anguilla e tamagoyaki caldo, un banco dopo l'altro.<small>l'assistente di GeppGo</small></p>
+
+  <div class="collage" id="collage">
+    <figure class="stampa p1"><i class="pezzo"></i><img src="foto/kuromon-cibo.jpg" alt="Un banco con spiedini di anguilla, seppie e tamagoyaki, coi cartellini da 500 yen" width="640" height="480" loading="lazy">
+      <figcaption class="mano nastro" style="--ra:-6deg"><span>street food</span></figcaption></figure>
+    <figure class="stampa p2"><i class="pezzo"></i><img src="foto/kuromon-ingresso.jpg" alt="L'ingresso del mercato, con l'insegna «Kuromon Market»" width="480" height="600" loading="lazy">
+      <figcaption class="mano timbro"><span>apre alle 9</span></figcaption></figure>
+    <figure class="stampa p3"><i class="pezzo"></i><img src="foto/kuromon-lanterne.jpg" alt="Le lanterne di carta accese all'ingresso dei portici, di sera" width="480" height="600" loading="lazy">
+      <figcaption class="mano scritta">di sera, le lanterne</figcaption></figure>
+  </div>
+
+  <section class="dove" aria-label="Dove si trova">
+    <div class="cartina"><i class="pezzo"></i>
+      <div id="mappa" role="img" aria-label="Mappa: il mercato Kuromon Ichiba e il tuo alloggio, a 900 metri"></div>
+      <p class="diritti">Powered by Esri · <a href="#crediti">fonti</a></p>
+    </div>
+    <p class="distanza"><b>900 m</b><span>dal tuo alloggio<strong>12 minuti a piedi dal Ryokan Tsubaki</strong></span></p>
+  </section>
+</section>
+
+<footer class="fondo">
+  <svg class="onda" viewBox="0 0 120 12" aria-hidden="true"><path d="M2 7c9-6 15 5 24 0s15-6 24 0 15 5 24-1 15-4 24 1 13 2 20-2"/></svg>
+  <p class="f-occhiello">Le altre anteprime</p>
+  <ul class="altre">
+    <li><a href="oggi-a.html"><b>Oggi, di giorno</b><em>mappa in toni caldi</em><svg class="ic" aria-hidden="true"><use href="#i-avanti"/></svg></a></li>
+    <li><a href="oggi-b.html"><b>Oggi, di notte</b><em>satellite scuro</em><svg class="ic" aria-hidden="true"><use href="#i-avanti"/></svg></a></li>
+  </ul>
+  <p class="nota">Anteprima di stile della scheda di un posto, per Scopri e Identifica. I dati sono di esempio e fissi; l'app non cambia.</p>
+  <div class="crediti" id="crediti">
+    <h2>Foto</h2>
+    <ol id="crediti-foto"></ol>
+    <h2>Mappa</h2>
+    <p>Immagini satellitari <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noopener">Esri World Imagery</a>. Fonte: Esri, Vantor, Earthstar Geographics e la comunità degli utenti GIS. Disegnate con <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a> (licenza BSD a 3 clausole), qui riportate in due toni.</p>
+    <h2>Caratteri</h2>
+    <p><a href="https://fonts.google.com/specimen/Fraunces" target="_blank" rel="noopener">Fraunces</a> (Undercase Type), <a href="https://fonts.google.com/specimen/Plus+Jakarta+Sans" target="_blank" rel="noopener">Plus Jakarta Sans</a> (Tokotype) e <a href="https://fonts.google.com/specimen/Caveat+Brush" target="_blank" rel="noopener">Caveat Brush</a> (Impallari Type), da Google Fonts con licenza SIL Open Font 1.1.</p>
+  </div>
+</footer>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script>
+(function () {
+  'use strict';
+  var riduci = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* i crediti delle foto: posto nella pagina, file su Wikimedia Commons, autore, licenza, indirizzo della licenza */
+  var FOTO = [
+    ['In copertina', '黒門市場 2024(2).jpg', 'ほっきー', 'CC0 1.0', 'https://creativecommons.org/publicdomain/zero/1.0/deed.it'],
+    ['«Street food»', 'Seafood in Kuromon Market, Osaka on June 7th, 2017.jpg', 'Choi2451', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/deed.it'],
+    ['«Apre alle 9»', '黒門市場 2024(1).jpg', 'ほっきー', 'CC0 1.0', 'https://creativecommons.org/publicdomain/zero/1.0/deed.it'],
+    ['«Di sera, le lanterne»', 'Kuromon Market - panoramio (5).jpg', 'DVMG', 'CC BY 3.0', 'https://creativecommons.org/licenses/by/3.0/deed.it']
+  ];
+  document.getElementById('crediti-foto').innerHTML = FOTO.map(function (f) {
+    return '<li>' + f[0] + ': <a href="https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(f[1].replace(/ /g, '_')) + '" target="_blank" rel="noopener">«' + f[1] + '»</a> di <span translate="no">' + f[2] + '</span>, <a href="' + f[4] + '" target="_blank" rel="noopener">' + f[3] + '</a>, da Wikimedia Commons; ritagliata e ridotta.</li>';
+  }).join('');
+
+  /* «Aggiungi al programma»: nell'anteprima non c'è un programma da
+     cambiare, ma il tasto fa vedere com'è dopo il tocco, e un altro tocco lo
+     rimette com'era. */
+  var aggiungi = document.getElementById('aggiungi');
+  aggiungi.addEventListener('click', function () {
+    var fatto = aggiungi.classList.toggle('fatto');
+    aggiungi.setAttribute('aria-pressed', fatto ? 'true' : 'false');
+    aggiungi.querySelector('use').setAttribute('href', fatto ? '#i-fatto' : '#i-piu');
+    aggiungi.querySelector('span').textContent = fatto ? 'Nel programma di oggi' : 'Aggiungi al programma';
+  });
+
+  /* la copertina resta un passo indietro mentre la pagina sale */
+  var foto = document.getElementById('cFoto'), copertina = document.getElementById('copertina'), inCorso = false;
+  if (!riduci) window.addEventListener('scroll', function () {
+    if (inCorso) return; inCorso = true;
+    requestAnimationFrame(function () {
+      var y = Math.min(window.scrollY, copertina.offsetHeight);
+      foto.style.transform = 'translate3d(0,' + (y * .22).toFixed(1) + 'px,0) scale(' + (1 + y / 2600).toFixed(4) + ')';
+      inCorso = false;
+    });
+  }, { passive: true });
+
+  /* le stampe si posano quando arrivano a schermo */
+  var stampe = [].slice.call(document.querySelectorAll('.stampa'));
+  if ('IntersectionObserver' in window && !riduci) {
+    var occhio = new IntersectionObserver(function (voci) { voci.forEach(function (v) { if (v.isIntersecting) { v.target.classList.add('vista'); occhio.unobserve(v.target); } }); }, { threshold: .25 });
+    stampe.forEach(function (s) { occhio.observe(s); });
+  } else stampe.forEach(function (s) { s.classList.add('vista'); });
+
+  /* ── la cartina: il posto, l'alloggio, il tratto a piedi ── */
+  var cartina = document.getElementById('mappa');
+  if (!window.maplibregl) { cartina.parentNode.classList.add('senza-mappa'); return; }
+  var POSTO = [135.5063, 34.6654], ALLOGGIO = [135.5158, 34.6668];
+  var map = new maplibregl.Map({
+    container: 'mappa', attributionControl: false, interactive: false,
+    center: [(POSTO[0] + ALLOGGIO[0]) / 2, (POSTO[1] + ALLOGGIO[1]) / 2], zoom: 14.2, pitch: 42, bearing: -8,
+    style: {
+      version: 8,
+      sources: { esri: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 362, maxzoom: 19 } },   /* 362 e non 256: il livello meno fitto dei due, cioè meno pezzi (vedi oggi-a.html) */
+      layers: [
+        { id: 'carta', type: 'background', paint: { 'background-color': '#F0B464' } },
+        { id: 'esri', type: 'raster', source: 'esri', paint: { 'raster-saturation': -1, 'raster-contrast': .36, 'raster-brightness-min': .25, 'raster-opacity': .77, 'raster-fade-duration': 260 } }
+      ]
+    }
+  });
+  window.__mappa = map;
+  /* i due punti devono stare larghi nella cartina: ci si allontana finché entrano */
+  (function inquadra() {
+    var w = cartina.clientWidth, h = cartina.clientHeight, z;
+    for (z = 15.6; z > 11; z -= .05) {
+      map.jumpTo({ zoom: z });
+      var a = map.project(POSTO), b = map.project(ALLOGGIO);
+      if (Math.abs(a.x - b.x) <= w - 150 && Math.abs(a.y - b.y) <= h - 110 && Math.min(a.x, b.x) > 50 && Math.max(a.x, b.x) < w - 62) break;
+    }
+  })();
+  var NS = 'http://www.w3.org/2000/svg', tela = map.getCanvasContainer();
+  var orlo = document.createElement('div'); orlo.className = 'orlo'; tela.appendChild(orlo);
+  var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'tratto'); svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = '<path class="ombra"/><path class="oro"/>'; tela.appendChild(svg);
+  var cartellino = document.createElement('div'); cartellino.className = 'mezzo'; cartellino.innerHTML = '<svg class="ic"><use href="#i-piedi"/></svg>12′'; tela.appendChild(cartellino);
+  function disegna() {
+    var a = map.project(ALLOGGIO), b = map.project(POSTO), dx = b.x - a.x, dy = b.y - a.y;
+    var cx = (a.x + b.x) / 2 - dy * .34, cy = (a.y + b.y) / 2 + dx * .34;
+    var d = 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+    svg.firstChild.setAttribute('d', d); svg.lastChild.setAttribute('d', d);
+    cartellino.style.transform = 'translate(' + ((a.x + 2 * cx + b.x) / 4).toFixed(1) + 'px,' + ((a.y + 2 * cy + b.y) / 4).toFixed(1) + 'px)';
+  }
+  map.on('move', disegna); map.on('resize', disegna); disegna();
+  var spilla = document.createElement('div'); spilla.className = 'spilla'; spilla.innerHTML = '<span class="sp-foto"><img src="foto/kuromon.jpg" alt=""></span>';
+  new maplibregl.Marker({ element: spilla, anchor: 'center' }).setLngLat(POSTO).addTo(map);
+  var casa = document.createElement('div'); casa.className = 'casa'; casa.innerHTML = '<i><svg class="ic"><use href="#i-letto"/></svg></i>';
+  new maplibregl.Marker({ element: casa, anchor: 'center' }).setLngLat(ALLOGGIO).addTo(map);
+})();
+</script>
+</body>
+</html>
