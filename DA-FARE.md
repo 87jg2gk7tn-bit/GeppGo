@@ -1,6 +1,6 @@
 # GeppGo — a che punto siamo
 
-Aggiornato: 12 novembre 2026.
+Aggiornato: 16 novembre 2026.
 
 Questo file esiste perché le sessioni di lavoro non si ricordano fra loro.
 Chi riprende in mano il progetto — Giacomo o un assistente — legge qui e sa
@@ -66,11 +66,12 @@ Restano queste cose, e non sono codice:
   che manda la lingua quando si registra (`options.data.lingua`) e i modelli
   che scelgono la frase in base a quella. I dettagli sono nel riepilogo della
   miglioria 10 e qui sotto, al punto 6.
-- **Guardare le tre anteprime di stile e scegliere** (12 novembre):
-  `https://87jg2gk7tn-bit.github.io/GeppGo/anteprime/oggi-a.html`, e da lì
-  le altre due coi collegamenti in fondo. Poi scegliere il fornitore della
-  mappa. Cosa c'è, da dove viene e quanti pezzi di mappa costa sta più
-  sotto, in «Anteprime di stile: a che punto è».
+- ~~**Guardare le tre anteprime di stile e scegliere**~~ ✅ **fatto il 16
+  novembre**: Giacomo le ha approvate. `oggi-a` (tema chiaro), `oggi-b`
+  (tema scuro) e `luogo` sono il riferimento per il ridisegno delle
+  schermate (`CLAUDE.md`, «Stile»). **Resta da scegliere il fornitore della
+  mappa**, guardando costi e condizioni: i numeri sono più sotto, in
+  «Anteprime di stile: a che punto è».
 
 ~~**Le condizioni del servizio dell'assistente per l'Europa**~~ ✅ **risolto
 l'8 ottobre cambiando servizio.** Sul piano gratuito quel servizio non era
@@ -1823,8 +1824,9 @@ nuovo, con la memoria vuota)
   test/prova-traduzioni.js 2`).
 
 **Cosa resta da decidere** (Giacomo)
-- Quale strada: A, B, o A di giorno e B col tema scuro. E se la scheda del
-  posto va bene così per Scopri e Identifica.
+- ~~Quale strada: A, B, o A di giorno e B col tema scuro. E se la scheda del
+  posto va bene così per Scopri e Identifica.~~ ✅ **deciso il 16 novembre**:
+  A col tema chiaro, B col tema scuro, e la scheda del posto va bene così.
 - Il fornitore della mappa, guardando costi e condizioni coi numeri qui
   sopra. Oggi l'app usa Leaflet con OpenStreetMap; il satellite vuole un
   account.
@@ -3874,3 +3876,36 @@ qualcuno che risponde".
   temporanea che spariva a fine sessione.
 - `MAPPA_APP`, dentro l'HTML, è la mappa che l'assistente dell'app usa per
   rispondere: va aggiornata quando l'interfaccia cambia.
+- **L'impegno (effort) per modello** sta in `.claude/settings.json`, chiave
+  `modelSettings` (serve Claude Code dalla 2.1.251; qui gira la 2.1.325):
+  Sonnet medium, Opus high, Fable high. Le chiavi sono sia gli alias
+  (`sonnet`, `opus`, `fable`: seguono le versioni nuove) sia i nomi completi
+  (`claude-opus-5-5`…, come li scrive Claude Code). Provato il 16 novembre
+  col Claude Code installato qui, in una cartella di prova, con
+  `/effort status`: Opus e Fable passano da medium a high, Sonnet resta
+  medium, Haiku (senza riga) tiene il suo livello. Un valore non valido, un
+  modello che non esiste o un campo inventato non danno errore: vengono
+  scartati. «max» nelle impostazioni non si può scrivere (`/effort max`,
+  solo per la sessione). Chi vince, dal più forte (dalla documentazione):
+  `CLAUDE_CODE_EFFORT_LEVEL`; un livello scelto nella sessione (`/effort`, il
+  selettore di `/model`, l'app del telefono); `--effort`; poi le
+  impostazioni, dove `.claude/settings.local.json` batte il file del
+  progetto, che batte quello personale (`~/.claude/settings.json`, dove
+  `/effort` salva i livelli: provato); infine il livello predefinito del
+  modello (medium per i modelli 5.5).
+- ⚠️ **Dal telefono il file non basta.** Le sessioni dell'app hanno un
+  impegno proprio, salvato dal server (le tre viste il 16 novembre: max in
+  questa, xhigh e high nelle altre due), e quello vince sul file. Provato
+  con lo stesso Claude Code: con un livello imposto `/model opus` lo lascia
+  dov'è (max anche su Opus), e `/effort auto` non rimette in mano il file ma
+  dà il livello predefinito del modello (medium su Opus, dove il file dice
+  high). Il file comanda nelle sessioni che partono senza impegno imposto
+  (`claude` da terminale, desktop, IDE): lì `/model` cambia da solo anche
+  l'impegno. Per il telefono la strada che regge è un comando di progetto
+  per modello: una skill in `.claude/skills/<nome>/SKILL.md` con `model:` ed
+  `effort:` nell'intestazione vale per quel turno, sopra l'impegno della
+  sessione, e le sessioni nel cloud leggono le skill del repo. Non è stata
+  fatta (non era stata chiesta, e una skill dal telefono da qui non si può
+  provare). Per vedere cosa vale: `/effort status` dice «Current effort
+  level: high» quando c'è un livello, «Effort level: auto (currently
+  medium)» quando c'è solo il predefinito del modello.
