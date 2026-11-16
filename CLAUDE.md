@@ -70,15 +70,14 @@ quel file è la memoria.
   fonte dev'essere «GitHub Actions»: finché resta sul ramo, online va il file
   coi commenti, e il flusso lo dice con un avviso.
 - **Le anteprime di stile** (`anteprime/`, novembre 2026) non sono l'app:
-  pagine di prova a sé, con dati finti, per scegliere uno stile prima di
-  portarlo in `Index 2.1.html`. Non hanno traduzioni, non entrano in
+  pagine a sé, con dati finti, approvate come riferimento per ridisegnare le
+  schermate (vedi «Stile»). Non hanno traduzioni, non entrano in
   `MAPPA_APP`, e cambiarle non cambia `VERSIONE_APP` né `CACHE_NAME`. Vanno
   online così come sono (`anteprime` è fra le `CARTELLE` di
   `fai-il-sito.js`), e si guardano con `node test/anteprime-dal-vivo.js`,
   che esce in rete apposta e non fa parte di `npm test`. Cosa c'è dentro, da
   dove vengono mappa e foto e quanti pezzi di mappa costano sta in
-  `DA-FARE.md`. Quello che si sceglie si rifà nell'app, con le regole
-  dell'app.
+  `DA-FARE.md`.
 - **Backend: Supabase** — account, sincronizzazione dei viaggi, foto, le
   funzioni `vicini` e `geo` (il ponte della mappa), `link-mappe` (apre i
   link corti di Google Maps) e `calendario` (il calendario che si aggiorna:
@@ -288,6 +287,19 @@ valgono per ogni schermata nuova e per ogni schermata che si tocca. La
 Layout 1b ha ridato calore: la Layout 1 aveva lasciato tutto bianco e
 inchiostro, ammassato e di un colore solo.
 
+- **Decisione di stile (16 novembre 2026): le anteprime sono approvate.**
+  `anteprime/oggi-a.html` (Oggi, tema chiaro), `anteprime/oggi-b.html`
+  (Oggi, tema scuro) e `anteprime/luogo.html` (la scheda di un posto, per
+  Scopri e Identifica) sono il riferimento per il ridisegno delle schermate:
+  mappa protagonista, foto vere, scritte a mano (solo etichette brevi e
+  inclinate, mai testi lunghi), profondità, e sempre l'identità di GeppGo
+  (panna, inchiostro, oro del logo, il cielo, Fraunces, il corsivo oro).
+  Sono pagine a sé, con colori, misure e icone loro e solo in italiano:
+  nell'app si rifanno coi token e le regole di questo file (cinque lingue,
+  accessibilità, schermi grandi, `MAPPA_APP`), e dove una regola qui sotto e
+  l'anteprima non vanno d'accordo si aggiorna la regola, insieme alla
+  schermata. Il fornitore della mappa non è scelto: le anteprime usano Esri
+  World Imagery senza chiave solo per provare (costi e pezzi in `DA-FARE.md`).
 - **Evoluzione, non rivoluzione**: riconoscibile e con stile, mai generica o
   da modello standard.
 - **Pagine pulite senza perdere funzioni**: all'apertura solo quello che
@@ -496,4 +508,13 @@ dell'iPhone Duo, l'iPad, il computer. Sarà la stessa dell'app nativa
   non *cosa* fa. Si scrive come parla l'app: piano, senza gergo.
 - Risposte concise e dirette; se una richiesta è ambigua, una sola domanda
   prima di procedere.
+- **Impegno per modello**: lo fissa `.claude/settings.json` (`modelSettings`):
+  Sonnet medium, Opus high, Fable high quando c'è. Un impegno scelto dentro
+  la sessione, o mandato dall'app del telefono, vince sul file e `/model`
+  non lo cambia: `/effort status` dice cosa vale davvero. Come funziona e
+  cosa è stato provato sta in `DA-FARE.md`.
+- **Lavori molto difficili**: se Fable non c'è, si usa Opus con
+  «ultrathink» nel prompt (vale per quel turno) o con l'impegno al massimo
+  (`/effort max`, solo per la sessione: nelle impostazioni «max» non si può
+  scrivere).
 - Quando cambia una decisione di progetto, aggiorna questo file.
