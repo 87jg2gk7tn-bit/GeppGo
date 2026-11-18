@@ -6,8 +6,8 @@
    prova-accessibilita (miglioria 11), e due copie dello stesso giro
    divergerebbero alla prima finestra nuova: una aggiunta qui la provano
    tutte e due. */
-const fs = require('fs');
-const { APP, leafletJs, leafletCss } = require('./browser');
+const { APP } = require('./browser');
+const { esriFinto } = require('./esri-finto');
 
 /* ── il viaggio di prova ───────────────────────────────────────────────────
    Pieno apposta: con un viaggio vuoto metà delle frasi non si disegna mai.
@@ -257,7 +257,7 @@ const MISURA = nomi => {
   radici.forEach(rad => {
     const w = document.createTreeWalker(rad, NodeFilter.SHOW_TEXT, { acceptNode: t => {
       const p = t.parentElement;
-      if (!p || p.closest('.leaflet-container,script,style,select,option,textarea')) return NodeFilter.FILTER_REJECT;
+      if (!p || p.closest('.maplibregl-map,.g-ferma,script,style,select,option,textarea')) return NodeFilter.FILTER_REJECT;
       return /\p{L}/u.test(t.data) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
     let t;
     while ((t = w.nextNode())) {
@@ -322,18 +322,18 @@ const MISURA = nomi => {
      riparte da zero;
    - valigia: la valigia vecchia, in italiano (vedi VALIGIA);
    - errori: dove finiscono gli errori della pagina;
-   - opzioni: quelle di Playwright per la pagina (reducedMotion, ...). */
-async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {}, indirizzo = APP } = {}) {
+   - opzioni: quelle di Playwright per la pagina (reducedMotion, ...);
+   - esri: come risponde Esri (test/esri-finto.js: { giu }, { rifiuta }...);
+     false se la prova lo fa da se'. */
+async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {}, indirizzo = APP, esri = {} } = {}) {
   const page = await browser.newPage(Object.assign({ viewport: { width: larghezza, height: altezza } }, opzioni));
   if (errori) page.on('pageerror', e => errori.push(`PAGEERROR(${lingua}${tema === 'scuro' ? ', scuro' : ''}): ` + e.message.split('\n')[0]));
   page.on('dialog', d => d.dismiss().catch(() => {}));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-  /* Anche il suo foglio di stile: senza, i controlli della mappa (la
-     scritta «Leaflet | © OSM», lo zoom) non stanno nei loro angoli, e qui
-     non si vede quello che si vede sul server delle prove, dove la CDN
-     risponde: la scritta finiva sopra il tasto 🧭. */
-  await page.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({ status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
-  await page.route(/tile\.openstreetmap\.org|api\.open-meteo\.com/, ro => ro.abort());
+  /* Le mappe rispondono come Esri (test/esri-finto.js): le schermate si
+     vedono come sul telefono, con la citazione vera. MapLibre arriva dal
+     pacchetto installato (il recinto, in browser.js). */
+  page.__esri = esri === false ? null : await esriFinto(page, esri);
+  await page.route(/api\.open-meteo\.com/, ro => ro.abort());
   await page.clock.install({ time: giornoA(0) });
   await page.addInitScript(([vv, val, l, scuro, k]) => {
     if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); localStorage.clear();

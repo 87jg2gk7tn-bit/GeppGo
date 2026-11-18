@@ -29,6 +29,28 @@ fare altro su Supabase, il token va allargato.
 
 Restano queste cose, e non sono codice:
 
+- **Prima del lancio: togliere il ripiego delle mappe su OpenStreetMap.**
+  Dalle mappe nuove (18 novembre 2026) se Esri non risponde la mappa usa le
+  mattonelle di `tile.openstreetmap.org`: serve finché la chiave di Esri non
+  si può provare da qui (vale solo dal sito pubblicato). Quei server sono di
+  volontari e un'app vera non ci si appoggia. Si toglie così:
+  `MAPPA_RIPIEGO_OSM=false` in `Index 2.1.html` (la mappa resta col fondo
+  color carta, i segnaposto e l'avviso), via la riga di
+  `tile.openstreetmap.org` dalla privacy (cinque lingue) e da
+  `PRIVACY-STORE.md`, e da `eMappa` in `sw.js` e da `test/prova-privacy.js`.
+- **Rifare la chiave di Esri prima di novembre 2027**, quando scade (sito di
+  ArcGIS Location Platform, chiave col solo permesso «Basemaps», limitata
+  all'indirizzo del sito), e scriverla in `ESRI_CHIAVE`, l'unico posto. Va
+  rifatta anche quando cambia l'indirizzo (un dominio suo, l'app nativa):
+  cambiare gli indirizzi di una chiave la rende non valida.
+- **Per la fase dell'app nativa: valutare una mappa offline permessa.** Le
+  condizioni di Esri non permettono di scaricare zone in anticipo, solo di
+  tenere quello che si è guardato per il tempo che dicono le sue risposte.
+  Per un vero «scarica la città» serve una mappa che lo permetta: per
+  esempio mappe vettoriali ospitate da noi, fatte dai dati di OpenStreetMap
+  (licenza ODbL: si possono scaricare e ridistribuire, con la citazione),
+  con un costo di spazio e di banda da valutare.
+
 - ~~**Lanciare su Supabase la migrazione del calendario che si aggiorna**~~
   ✅ **fatto**: Giacomo dice (22 ottobre, con la richiesta della Layout 2)
   che `supabase/migrazioni/2026-10-20-calendario.sql` è già stata lanciata.
@@ -1827,13 +1849,59 @@ nuovo, con la memoria vuota)
 - ~~Quale strada: A, B, o A di giorno e B col tema scuro. E se la scheda del
   posto va bene così per Scopri e Identifica.~~ ✅ **deciso il 16 novembre**:
   A col tema chiaro, B col tema scuro, e la scheda del posto va bene così.
-- Il fornitore della mappa, guardando costi e condizioni coi numeri qui
-  sopra. Oggi l'app usa Leaflet con OpenStreetMap; il satellite vuole un
-  account.
-- Quando la mappa entra nell'app è un servizio nuovo a cui il telefono
-  chiede dei pezzi (e che quindi vede l'indirizzo IP e la zona guardata):
-  va dichiarato in `privacy.html`, nelle quattro traduzioni e in
-  `PRIVACY-STORE.md`.
+- ~~Il fornitore della mappa, guardando costi e condizioni coi numeri qui
+  sopra.~~ ✅ **deciso il 17 novembre**: Esri, con l'account gratuito di
+  ArcGIS Location Platform di Giacomo (vedi «Mappe nuove» qui sotto).
+- ~~Quando la mappa entra nell'app è un servizio nuovo: va dichiarato.~~ ✅
+  **fatto il 18 novembre**: Esri sta in `privacy.html`, nelle quattro
+  traduzioni e in `PRIVACY-STORE.md`.
+
+### Mappe nuove (MapLibre ed Esri): a che punto è
+
+18 novembre 2026. Tutte le mappe sono passate da Leaflet con le mattonelle di
+OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
+`ESRI_CHIAVE`, vedi CLAUDE.md «Le mappe»).
+
+- **Le mappe**: Oggi (segnaposto col numero e la foto del posto dove c'è,
+  percorso d'oro tratteggiato, la scheda, la fila delle tappe che segue),
+  Programma stretto e largo (la tappa e il suo segnaposto accesi insieme),
+  Tutto il viaggio (il globo col suo cielo, un colore per giorno, i gruppi
+  delle tappe vicine; sulla mappa solo i segnaposto a vista, tutti
+  nell'Elenco), la scheda del viaggio (i posti col cerchio
+  dell'avviso, gli alberghi con «Portami qui», + e −), la scheda di un posto,
+  le mappine di Scopri (immagini ferme, non mappe WebGL). Il ricordo del
+  viaggio è un disegno su tela, senza mappa: non è cambiato.
+- **Lo stile** è quello delle anteprime: nel tema chiaro la foto grigia al
+  77% sopra un arancio (la stampa calda), nel tema scuro più bassa sopra il
+  blu notte. Strade e nomi di Esri solo da `ZOOM_CITTA` (13) in su, coi
+  colori dell'app; più indietro la foto si legge da sola.
+- **Lo stile di Esri si chiede senza la chiave nelle risposte**
+  (`echoToken=false`), come fa il plugin di Esri per MapLibre, e la chiave la
+  aggiunge l'app a pezzi, caratteri e simboli (`conChiave`). La forma delle
+  risposte di Esri qui non si poteva vedere (la chiave vale solo dal sito):
+  viene dalle prove del plugin ufficiale (`@esri/maplibre-arcgis` su npm), ed
+  è quella che imita `test/esri-finto.js`. **Da guardare dal vivo** dopo la
+  pubblicazione: gli indirizzi veri dei pezzi, le intestazioni Cache-Control
+  (quanto restano i pezzi senza rete) e quanti pezzi costa un'apertura.
+- **Senza rete, cosa permette Esri** (ArcGIS Location Platform Agreement,
+  E204, rev. 21/11/2025): 3.1 d.6 vieta di scaricare o estrarre dati in
+  blocco, e permette la cache solo «come permesso dalle intestazioni di
+  cache (HTTP/1.1) restituite dai servizi, quanto serve all'applicazione»;
+  7.3 b chiede di cancellare la cache quando l'accordo finisce. Quindi
+  (`pezzoDiMappa` in `sw.js`): si tiene solo quello che si è guardato, per il
+  tempo di Cache-Control/Expires (stale-if-error solo se Esri lo scrive),
+  no-store e no-cache non si tengono, al massimo 1.500 pezzi, e tutto via se
+  Esri risponde 401, 403, 498 o 499. Il Profilo dice quanti, quanto pesano e
+  per quanto restano. I pezzi presi dalla cache del telefono non si pagano.
+- **Pezzi per apertura** (390×844, con Esri finto): Oggi **4** pezzi della
+  foto (più qualche pezzo di strade e nomi e lo stile, una volta sola),
+  il Programma **3**. Prima del ritocco Oggi ne chiedeva **20–24**: la mappa
+  nasceva inquadrando la giornata e poi volava sulla tappa in mano, e il volo
+  chiede tutti i pezzi che attraversa. Ora nasce già lì, a `ZOOM_TAPPA`
+  (14,5), e la prima scelta salta senza volare.
+- **Il ripiego** su OpenStreetMap (`MAPPA_RIPIEGO_OSM`) va tolto prima del
+  lancio: vedi in cima, «DA FARE SUBITO».
+
 
 ---
 
@@ -1936,6 +2004,61 @@ qualcuno che risponde".
 ---
 
 ## Cose scoperte a caro prezzo, da non riscoprire
+
+- **Le rotte della pagina (Playwright) non vedono le richieste della service
+  worker; quelle del contesto sì** (Chromium, Playwright 1.62). Le mappe
+  passano dalla service worker, che le rifà per conto suo: `test/prova-mappa.js`
+  risponde come Esri con `context.route`, e `rete-finta.js` porta anche i nomi
+  di Esri al suo server locale. Senza, dal server delle prove una prova
+  avrebbe parlato con Esri vero.
+- **Qui la rete finta non va, su GitHub sì.** In questa macchina Chromium usa
+  il proxy scritto in `HTTPS_PROXY` anche con `--no-proxy-server`, e i nomi
+  delle CDN non arrivano al server locale (librerie mancanti, «0 KB di
+  JavaScript»). Il proxy non si toglie: le prove che usano `rete-finta.js`
+  (prova-avvio, prova-ai, prova-importa) si guardano su GitHub.
+- **MapLibre arrotonda il livello dei pezzi** (`roundZoom` delle sorgenti
+  raster): coi pezzi dichiarati da 362 px il livello è sempre quello sotto,
+  ma a uno zoom intero (15) è lo stesso dei 256. Per la metà dei pezzi serve
+  uno zoom con la virgola sotto il mezzo: 14,5 (`ZOOM_TAPPA`).
+- **MapLibre con `validateStyle` acceso scarta tutto lo stile per una regola
+  che non conosce**: con lo stile di Esri si spegne (`validateStyle:false`).
+  E `isStyleLoaded()` è falso finché arrivano i pezzi: per sapere quando si
+  possono aggiungere strati c'è `m._g.pronta`, messo da `style.load`.
+- **In MapLibre la scheda (popup) non ha uno z-index, i segnaposto sì** (lo
+  scelto, il pallino della posizione): un segnaposto vicino copriva la
+  crocetta, e il dito apriva un'altra tappa. Ora l'ordine è quello di
+  Leaflet: segnaposto (fino a 4), scheda (5), comandi e citazione (6). E la
+  scheda si sposta lontano da comandi, citazione e tasti sopra la mappa
+  contando 20 px intorno, perché le aree di tocco sporgono dai riquadri.
+- **Il riquadro di una scheda appena nata può mentire per un fotogramma.**
+  Una volta su quattro, nel fotogramma dopo l'apertura,
+  `getBoundingClientRect()` dava la scheda dentro la mappa mentre la sua
+  trasformazione (e lo schermo, un attimo dopo) la metteva 1.300 px più giù:
+  la sistemazione non spostava niente e la scheda restava fuori vista. La
+  posizione si calcola dalla trasformazione (`DOMMatrixReadOnly`) più la
+  misura della scheda.
+- **Ogni segnaposto di MapLibre è uno strato grafico a sé** (la sua
+  trasformazione è 3D), e farne uno nuovo costa il suo disegno. Tutto il
+  viaggio con 200 tappe rifaceva tutti i segnaposto a ogni zoom: 300–990 ms
+  di blocco nel browser delle prove, dove il nostro JavaScript ne pesava 20.
+  Ora ognuno ha la sua chiave (la tappa, o le tappe del gruppo), quello che
+  non cambia resta, e sulla mappa vanno solo quelli a vista più mezzo
+  schermo (le tappe stanno tutte nell'Elenco): 20–360 ms.
+- **Toccato un segnaposto in Oggi, la mappa non va più sulla tappa**: la
+  striscia delle tappe scorreva lì, e 180 ms dopo la mappa si ricentrava,
+  disfacendo la sistemazione della scheda (tre movimenti per un tocco). La
+  tappa toccata è già a vista; la scheda, se serve, sposta la mappa da sola.
+- **Le opzioni di WebGL del browser delle prove cambiano anche il disegno di
+  un SVG su una tela**: le icone ridisegnate per il confronto venivano con
+  400 pixel di bordo diversi. `apriBrowser({ webgl: false })`, e
+  `fai-le-icone.js` disegna sempre con un browser suo senza WebGL: i PNG del
+  repo restano identici.
+- **Le attese fisse nelle prove non reggono il WebGL fatto dal processore.**
+  Un foglio misurato dopo 450 ms era ancora a metà salita mentre sotto si
+  disegnava la mappa di Oggi; un controllo fatto con la macchina carica (due
+  prove insieme) cadeva per i tempi. Si aspetta lo stato (il foglio fermo,
+  `m42` a zero), non i millisecondi; e i tempi si misurano con una prova
+  sola alla volta, come su GitHub.
 
 - **Il giro delle schermate inghiottiva gli errori dei passi** (scoperto il
   17 ottobre). Un passo che si rompeva finiva in un `console.log`, e la misura

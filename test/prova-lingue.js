@@ -6,7 +6,7 @@
    più di tutto il resto: **quello che non è ancora tradotto resta in
    italiano**, invece di mostrare "menu.spese.aggiungi" a qualcuno che sta
    viaggiando. Metà delle prove qui sotto guardano proprio quello. */
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const path = require('path');
 
@@ -51,8 +51,6 @@ const stato = {
 async function apri(browser, lingua, linguaTelefono) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 },
     locale: linguaTelefono || 'it-IT' });
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.addInitScript(([s, l]) => {
     const st = JSON.parse(JSON.stringify(s));
@@ -293,7 +291,8 @@ async function apri(browser, lingua, linguaTelefono) {
      è tradotta — e i nomi propri stanno in un elenco scritto qui sotto, dove
      si vedono. */
   const IDENTICHE_PER_DAVVERO = new Set([
-    'GeppGo', 'Leaflet', '© OSM', 'A JavaScript library for interactive maps',
+    // la citazione delle mappe: «Powered by Esri» e' il nome di Esri, non si traduce
+    'GeppGo', 'Powered by', 'Powered by Esri', 'Esri', '©', '© OpenStreetMap',
     'Google Maps', 'Apple', 'Google', 'Android', 'Supabase', 'ChatGPT', 'Excel',
     'iPhone', 'Instagram', 'OpenStreetMap', 'GeppGo Premium', 'Premium', 'GPS',
     // dalla Layout 1 la 🗺️ davanti a «Maps» (Google Maps detto corto) è un'icona

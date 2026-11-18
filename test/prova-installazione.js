@@ -176,20 +176,22 @@ const PUNTI = {
   }
 };
 
-/* Una mappa e la sua citazione: c'è, ha il link, si vede, e non tocca le
-   aree da 44 px dei tasti che ci stanno sopra o intorno. */
+/* Una mappa e la sua citazione (dalle mappe nuove: «Powered by Esri», «©
+   OpenStreetMap» e «Fonti»): c'è, ha i link, si vede, e non tocca le aree
+   da 44 px dei tasti che ci stanno sopra o intorno. */
 const GUARDA_MAPPA = sel => {
   const c = document.querySelector(sel);
   if (!c || !c.getClientRects().length) return { manca: true };
-  const att = c.querySelector('.leaflet-control-attribution');
+  const att = c.querySelector('.g-diritti');
   if (!att) return { senzaCitazione: true };
   const r = c.getBoundingClientRect(), ra = att.getBoundingClientRect();
   const link = att.querySelector('a[href="https://www.openstreetmap.org/copyright"]');
+  const esri = att.querySelector('a[href="https://www.esri.com/"]');
   const lr = link && link.getBoundingClientRect();
   const sopra = link && document.elementFromPoint(lr.left + lr.width / 2, lr.top + lr.height / 2);
   const nome = x => (x.id ? '#' + x.id : x.tagName.toLowerCase() + '.' + String(x.className || '').split(' ')[0]) + ' «' + (x.textContent || x.getAttribute('aria-label') || '').trim().slice(0, 16) + '»';
   const tasti = [...new Set([...c.parentElement.querySelectorAll('button,a[href],[role=button],[onclick]')])]
-    .filter(x => x !== c && !att.contains(x) && !x.closest('.leaflet-marker-pane,.leaflet-popup-pane') && x.getClientRects().length);
+    .filter(x => x !== c && !att.contains(x) && !x.closest('.maplibregl-marker,.maplibregl-popup') && x.getClientRects().length);
   const male = [];
   for (const b of tasti) {
     const q = b.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
@@ -200,7 +202,7 @@ const GUARDA_MAPPA = sel => {
     }
   }
   return {
-    testo: att.textContent.replace(/\s+/g, ' ').trim(), link: !!link,
+    testo: att.textContent.replace(/\s+/g, ' ').trim(), link: !!link && !!esri,
     dentro: ra.left >= r.left - 0.5 && ra.right <= r.right + 0.5 && ra.top >= r.top - 0.5 && ra.bottom <= r.bottom + 0.5,
     siVede: !!(link && sopra && (sopra === link || link.contains(sopra))), tasti: tasti.map(nome), male
   };
@@ -234,12 +236,12 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
        (claude.match(/.{0,40}(006747|verde del brand).{0,40}/i) || [''])[0]);
   }
 
-  // ── 2. la citazione di OpenStreetMap su ogni mappa ───────────────────────
+  // ── 2. la citazione di Esri e di OpenStreetMap su ogni mappa ─────────────
   if (fai(2)) {
     const esiti = [], guai = [];
     for (const larghezza of [320, 430]) {
       const page = await apriPagina(browser, { larghezza, errori });
-      await page.waitForFunction(() => typeof L !== 'undefined', null, { timeout: 15000 }).catch(() => {});
+      await page.waitForFunction(() => typeof maplibregl !== 'undefined', null, { timeout: 15000 }).catch(() => {});
       const MAPPE = [
         ['Home', '#homeMap', null],
         ['viaggio', '#map', 'openTripZoom(1)'],
@@ -251,7 +253,7 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
         await page.evaluate(() => { document.querySelectorAll('.modal.active').forEach(m => closeSheet(m.id)); go('plan'); });
         await page.waitForTimeout(300);
         if (passo) await page.evaluate(passo);
-        await page.waitForFunction(s => { const c = document.querySelector(s); return c && c.querySelector('.leaflet-control-attribution a'); }, sel, { timeout: 8000 }).catch(() => {});
+        await page.waitForFunction(s => { const c = document.querySelector(s); const a = c && c.querySelector('.g-diritti'); return a && /Powered by Esri/.test(a.textContent); }, sel, { timeout: 8000 }).catch(() => {});
         await page.evaluate(s => { const c = document.querySelector(s); if (c) c.scrollIntoView({ block: 'center', behavior: 'instant' }); }, sel);
         await page.waitForTimeout(450);
         const m = await page.evaluate(GUARDA_MAPPA, sel);
@@ -259,8 +261,8 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
         const dove = `${nome} a ${larghezza} px`;
         if (m.manca || m.senzaCitazione) guai.push(dove + (m.manca ? ': la mappa non c\'è' : ': nessuna citazione'));
         else {
-          if (!/© OpenStreetMap/.test(m.testo)) guai.push(dove + ': dice «' + m.testo + '»');
-          if (!m.link) guai.push(dove + ': senza il link alla pagina dei diritti');
+          if (!/Powered by Esri/.test(m.testo) || !/© OpenStreetMap/.test(m.testo) || !/Fonti/.test(m.testo)) guai.push(dove + ': dice «' + m.testo + '»');
+          if (!m.link) guai.push(dove + ': senza i link a Esri e alla pagina dei diritti');
           if (!m.dentro || !m.siVede) guai.push(dove + ': la citazione non si vede tutta');
           guai.push(...m.male.map(x => dove + ': ' + x));
         }
@@ -268,7 +270,7 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
       await page.close();
     }
     const tutte = esiti.filter(e => !e.m.manca && !e.m.senzaCitazione);
-    ok('2. ogni mappa — Home, viaggio, giornata, anteprima di un posto, mappine dei risultati — mostra «© OpenStreetMap» col link ai diritti, a 320 e 430 px',
+    ok('2. ogni mappa — Home, viaggio, giornata, anteprima di un posto, mappine dei risultati — mostra «Powered by Esri», «© OpenStreetMap» col link ai diritti e «Fonti», a 320 e 430 px',
        !guai.filter(g => !/area da 44|prende la citazione/.test(g)).length && tutte.length === 10,
        guai.filter(g => !/area da 44|prende la citazione/.test(g)).join(' | ') || tutte.map(e => e.nome + ' ' + e.larghezza).length + ' mappe: «' + (tutte[0] || { m: {} }).m.testo + '»');
     const coiTasti = esiti.filter(e => e.m.tasti && e.m.tasti.length);
@@ -342,7 +344,7 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
     /* Ridisegnate adesso dal logo della testata: se il logo cambia e le
        icone no, qui si vede. Un margine per i bordi sfumati, che due
        versioni di Chromium possono disegnare un filo diverse. */
-    const fresche = await disegnaIcone(browser);
+    const fresche = await disegnaIcone();
     const diversi = [];
     for (const ic of fresche.icone) {
       const f = path.join(RADICE, ic.file);

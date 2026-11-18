@@ -12,7 +12,7 @@
    con tre viaggi in lista.
 
    Sul codice di prima non parte nemmeno: .hh-cielo non esiste. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const oggi = new Date().toISOString().slice(0, 10);
@@ -102,8 +102,6 @@ const oreFinte = (data) => {
     const page = await browser.newPage({ viewport: { width: opz.largo || 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     page._ore = [];
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     /* L'ordine conta: Playwright prova le rotte dall'ultima registrata, e la
        più specifica deve essere l'ultima. */
@@ -766,8 +764,6 @@ const oreFinte = (data) => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     const chiamate = [];
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     /* Il geocodificatore risponde come risponde quello vero a "Giappone":
        il paese, col suo centro geografico. */
@@ -847,8 +843,6 @@ const oreFinte = (data) => {
     const page2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page2.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     const chiamate = [];
-    await page2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page2.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page2.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());
     await page2.route(/api\.open-meteo\.com/, ro => {

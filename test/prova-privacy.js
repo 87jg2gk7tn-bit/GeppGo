@@ -71,6 +71,10 @@ const path = require('path');
     'commons.wikimedia.org': /Wikimedia/i, 'www.wikidata.org': /Wikidata/i,
     'cdn.jsdelivr.net': /jsDelivr/i, 'unpkg.com': /unpkg/i,
     'cdn.sheetjs.com': /SheetJS/i, 'fonts.gstatic.com': /Google Fonts/i,
+    /* Le mappe (novembre 2026): Esri le fornisce, e la pagina lo deve dire
+       per nome; finche' c'e' il ripiego, anche le mattonelle di
+       OpenStreetMap. */
+    'basemapstyles-api.arcgis.com': /\bEsri\b/, 'tile.openstreetmap.org': /tile\.openstreetmap\.org/,
     /* Il ponte dell'assistente non e' il fornitore: chi elabora le richieste
        e' Workers AI di Cloudflare, e la pagina lo deve chiamare per nome. */
     'workers.dev': /Cloudflare Workers AI/i,

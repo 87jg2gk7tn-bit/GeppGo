@@ -23,7 +23,7 @@
    stesso, e questa prova non pretende che ci stia. Per farcela entrare
    bisognerebbe rimpicciolire il titolo grosso, che e' la faccia
    dell'app. Li' si scorre, come si scorreva. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const oggi = new Date();
@@ -76,8 +76,6 @@ const stato = nome => ({
   async function apri(largo, alto, nome) {
     const page = await browser.newPage({ viewport: { width: largo, height: alto } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     /* Le tessere si servono finte: una mappa che aspetta la rete non e' alta
        come una che ce l'ha, e qui si misurano le altezze. */
     await page.route(/tile\.openstreetmap\.org/, ro => ro.fulfill({

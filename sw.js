@@ -11,8 +11,11 @@
    la versione esatta nell'indirizzo, quindi non invecchiano. Prima non si
    tenevano, e senza rete lo scanner, i codici a barre e la mappa non
    c'erano proprio, anche con le mattonelle della mappa gia' viste in
-   memoria. */
-const CACHE_NAME = 'geppgo-shell-v57';
+   memoria.
+
+   E i pezzi delle mappe gia' guardate, ma solo quanto Esri permette (vedi
+   «Le mappe senza rete», in fondo). */
+const CACHE_NAME = 'geppgo-shell-v58';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -20,8 +23,6 @@ const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webm
    senza che nessuno se ne accorga. Queste si scaricano in sottofondo dopo il
    primo avvio; quelle di LIBRERIE_AL_MOMENTO no (vedi sotto). */
 const LIBRERIE = [
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
   'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',
@@ -38,7 +39,11 @@ const LIBRERIE_AL_MOMENTO = [
   'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
   /* jsPDF, per il PDF dell'itinerario: 420 KB, e lo fa chi lo chiede, quando
      lo chiede. Stessa regola di SheetJS. */
-  'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js'
+  'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js',
+  /* MapLibre, per le mappe: un mega, e arriva la prima volta che a schermo
+     c'e' una mappa. Chi una mappa non la guarda non lo scarica. */
+  'https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js',
+  'https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css'
 ];
 /* Quanto si aspetta la rete prima di aprire la copia. Col campo debole
    l'HTML intero vuole parecchi secondi, e prima si aspettava tutto il
@@ -52,6 +57,10 @@ const HTML_ATTESA_MS = 3000;
    riscaricare. L'indirizzo e' lo stesso del <link id="caratteri">
    nell'HTML: una prova li confronta. */
 const CACHE_CARATTERI = 'geppgo-caratteri';
+/* I pezzi delle mappe (vedi «Le mappe senza rete»): anche questa senza la
+   versione nel nome, perche' cosa ci sta dentro lo decidono le date di Esri,
+   non la versione dell'app. La stessa di CACHE_MAPPE nell'HTML. */
+const CACHE_MAPPE = 'geppgo-mappe';
 const CARATTERI_CSS = 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap';
 
 self.addEventListener('install', (event) => {
@@ -72,7 +81,8 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     /* Le librerie che la versione nuova usa ancora passano nella cache nuova
        senza riscaricarle (col campo debole sono mezzo megabyte); poi le cache
-       vecchie se ne vanno tutte. */
+       vecchie se ne vanno tutte, tranne i caratteri e le mappe, che non hanno
+       la versione nel nome. */
     const nuova = await caches.open(CACHE_LIBRERIE);
     for (const k of keys) {
       if (k === CACHE_LIBRERIE || !k.startsWith('geppgo-librerie-')) continue;
@@ -83,7 +93,7 @@ self.addEventListener('activate', (event) => {
         if (r) await nuova.put(url, r);
       }
     }
-    await Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== CACHE_LIBRERIE && k !== CACHE_CARATTERI).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== CACHE_LIBRERIE && k !== CACHE_CARATTERI && k !== CACHE_MAPPE).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -92,11 +102,16 @@ self.addEventListener('activate', (event) => {
    una alla volta: cosi' scanner, codici a barre e mappa ci sono anche senza
    rete, comprese quelle che l'app carica solo al momento. */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.tipo === 'librerie') event.waitUntil(scaricaLibrerie().then(scaricaCaratteri));
+  if (event.data && event.data.tipo === 'librerie') event.waitUntil(scaricaLibrerie(event.data.usate).then(scaricaCaratteri));
 });
-async function scaricaLibrerie() {
+/* usate: le librerie «al momento» che la pagina ha gia' caricato prima che
+   questa service worker la guardasse (alla prima apertura, MapLibre per la
+   mappa di Oggi). Si tengono anche quelle, ma solo se stanno nella lista:
+   la pagina non puo' far scaricare qui un indirizzo qualunque. */
+async function scaricaLibrerie(usate) {
   const cache = await caches.open(CACHE_LIBRERIE);
-  for (const url of LIBRERIE) {
+  const giaUsate = (Array.isArray(usate) ? usate : []).filter((u) => LIBRERIE_AL_MOMENTO.includes(u));
+  for (const url of LIBRERIE.concat(giaUsate)) {
     if (await cache.match(url)) continue;
     try {
       const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
@@ -203,6 +218,7 @@ self.addEventListener('fetch', (event) => {
     // le librerie si tengono; le API e tutto il resto vanno alla rete, come sempre
     if (eLibreria(url)) event.respondWith(libreria(req));
     else if (eCarattere(url)) event.respondWith(carattere(event));
+    else if (eMappa(url)) event.respondWith(pezzoDiMappa(event));
     return;
   }
 
@@ -252,3 +268,127 @@ self.addEventListener('fetch', (event) => {
     return new Response('Offline e nessuna copia salvata di questa risorsa.', { status: 503, statusText: 'Offline' });
   })());
 });
+
+/* ===== LE MAPPE SENZA RETE =====
+   Le condizioni di Esri (ArcGIS Location Platform, E204 3.1 d.6 e 7.3 b)
+   permettono di tenere da parte le sue mappe solo come dicono le intestazioni
+   delle sue risposte (Cache-Control, Expires), quanto serve all'app per
+   funzionare, e chiedono di buttarle quando l'accordo finisce. Non permettono
+   di scaricarne in blocco. Quindi:
+   - si tiene solo quello che la mappa ha gia' chiesto mentre la si guardava:
+     niente «scarica la zona»;
+   - ogni pezzo resta finche' le sue intestazioni lo dicono fresco, e dopo non
+     si usa piu' (ne' con la rete ne' senza: senza rete, solo se Esri ha
+     scritto stale-if-error, e per quanto ha scritto). no-store e no-cache:
+     non si tiene;
+   - al massimo MAPPE_MAX pezzi: oltre, se ne vanno i piu' vecchi;
+   - se Esri risponde che la chiave non vale (401, 403, 498, 499: scaduta,
+     revocata, o finita la soglia gratuita) si butta tutto: l'app fa lo stesso
+     quando lo vede lei (chiaveRifiutata).
+   Valgono le stesse regole per le mattonelle di OpenStreetMap, finche' c'e' il
+   ripiego. La chiave non entra nell'indirizzo con cui il pezzo si tiene: cosi'
+   non sta scritta anche qui, e una chiave rifatta ritrova i pezzi validi.
+   Sopra ogni pezzo si annota quando e' arrivato, fino a quando vale e quanto
+   pesa: il Profilo li conta da li' (mappeQuante). */
+const MAPPE_MAX = 1500;
+const ESRI_RIFIUTI = [401, 403, 498, 499];
+/* Quante voci ci sono: contate una volta, poi tenute a mano a ogni pezzo
+   scritto, e ricontate ogni cinquanta (la pagina puo' svuotare la cache per
+   conto suo). Le scritture vanno in fila una alla volta (inFila): con tanti
+   pezzi che arrivano insieme, contare e sfoltire a meta' di un'altra
+   scrittura lasciava la cache sopra il tetto. */
+let mappeQuante = null, mappeScritte = 0, mappeFila = Promise.resolve();
+function inFila(fn) { const p = mappeFila.then(fn, fn); mappeFila = p.catch(() => {}); return p; }
+/* Il primo pezzo chiesto dopo che la service worker si e' svegliata fa anche
+   il giro dei pezzi che le date non permettono piu' di tenere: all'avvio
+   farebbe aspettare tutto il resto. */
+let mappeDaSfoltire = true;
+function eEsri(url) { return url.hostname === 'arcgis.com' || url.hostname.endsWith('.arcgis.com'); }
+function eMappa(url) { return eEsri(url) || url.hostname === 'tile.openstreetmap.org'; }
+function chiaveMappa(indirizzo) {
+  const u = new URL(indirizzo);
+  u.searchParams.delete('token');
+  return u.href;
+}
+/* Per quanto le intestazioni permettono di tenere la risposta, in ms: null se
+   non lo permettono. Senza Age leggibile si conta da quando arriva. */
+function permesso(r) {
+  const cc = (r.headers.get('cache-control') || '').toLowerCase();
+  if (/\bno-store\b|\bno-cache\b/.test(cc)) return null;
+  let fresco = null;
+  const ma = /\bmax-age=(\d+)/.exec(cc);
+  if (ma) fresco = Number(ma[1]) - (Number(r.headers.get('age')) || 0);
+  else {
+    const fine = Date.parse(r.headers.get('expires') || '');
+    const da = Date.parse(r.headers.get('date') || '') || Date.now();
+    if (isFinite(fine)) fresco = (fine - da) / 1000;
+  }
+  if (!(fresco > 0)) return null;
+  const se = /\bstale-if-error=(\d+)/.exec(cc);
+  return { fresco: fresco * 1000, errore: se ? Number(se[1]) * 1000 : 0 };
+}
+function valeAncora(c, ora, ancheErrore) {
+  const scade = Number(c.headers.get('x-geppgo-scade')) || 0;
+  return ora < scade + (ancheErrore ? (Number(c.headers.get('x-geppgo-errore')) || 0) : 0);
+}
+async function pezzoDiMappa(event) {
+  const req = event.request, url = new URL(req.url), chiave = chiaveMappa(req.url);
+  const cache = await caches.open(CACHE_MAPPE);
+  if (mappeDaSfoltire) { mappeDaSfoltire = false; event.waitUntil(inFila(() => sfoltisciMappe(true))); }
+  const c = await cache.match(chiave);
+  const ora = Date.now();
+  if (c && valeAncora(c, ora, false)) return c;
+  let r = null;
+  try { r = await fetch(req); } catch (e) {}
+  if (!r) return (c && valeAncora(c, ora, true)) ? c : Response.error();
+  if (eEsri(url) && ESRI_RIFIUTI.includes(r.status)) { event.waitUntil(caches.delete(CACHE_MAPPE)); return r; }
+  if (r.ok) event.waitUntil(tieniPezzo(cache, chiave, r.clone(), eEsri(url)));
+  else if (r.status >= 500 && c && valeAncora(c, ora, true)) return c;
+  return r;
+}
+async function tieniPezzo(cache, chiave, r, esri) {
+  try {
+    const p = permesso(r);
+    if (!p) return;
+    const corpo = await r.blob();
+    /* Esri dice gli errori anche dentro una risposta «200» (lo stile): un
+       errore non si tiene, e uno che dice «chiave» butta tutto. */
+    if (esri && /json/.test(r.headers.get('content-type') || '') && corpo.size < 4096) {
+      const t = await corpo.text();
+      const m = /"error"\s*:\s*\{[^}]*"code"\s*:\s*(\d+)/.exec(t);
+      if (m) { if (ESRI_RIFIUTI.includes(Number(m[1]))) await caches.delete(CACHE_MAPPE); return; }
+    }
+    const h = new Headers(r.headers), ora = Date.now();
+    h.set('x-geppgo-salvato', String(ora));
+    h.set('x-geppgo-scade', String(Math.round(ora + p.fresco)));
+    if (p.errore) h.set('x-geppgo-errore', String(p.errore));
+    h.set('x-geppgo-byte', String(corpo.size));
+    await inFila(async () => {
+      const nuovo = !(await cache.match(chiave));
+      await cache.put(chiave, new Response(corpo, { status: r.status, statusText: r.statusText, headers: h }));
+      if (mappeQuante === null || ++mappeScritte % 50 === 0) mappeQuante = (await cache.keys()).length;
+      else if (nuovo) mappeQuante++;
+      if (mappeQuante > MAPPE_MAX) await sfoltisciMappe(false);
+    });
+  } catch (e) {}
+}
+/* Oltre MAPPE_MAX se ne vanno i piu' vecchi (keys() li da' nell'ordine in
+   cui sono entrati); tutti: anche quelli che non valgono piu'. */
+async function sfoltisciMappe(tutti) {
+  try {
+    if (!(await caches.has(CACHE_MAPPE))) return;
+    const cache = await caches.open(CACHE_MAPPE);
+    let chiavi = await cache.keys();
+    if (tutti) {
+      const ora = Date.now(), restano = [];
+      for (const k of chiavi) {
+        const c = await cache.match(k);
+        if (c && valeAncora(c, ora, true)) restano.push(k); else await cache.delete(k);
+      }
+      chiavi = restano;
+    }
+    const via = Math.max(0, chiavi.length - MAPPE_MAX);
+    for (let i = 0; i < via; i++) await cache.delete(chiavi[i]);
+    mappeQuante = chiavi.length - via;
+  } catch (e) {}
+}

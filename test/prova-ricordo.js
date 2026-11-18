@@ -4,7 +4,7 @@
    stessa regola vista da due lati: il ricordo NON deve diventare una pagina
    pubblica del viaggio, e il racconto NON deve portarsi dietro il codice
    d'invito. Se cade uno dei due cade tutta la tutela sulle foto. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 /* Due giornate lontane fra loro, e dentro ognuna due tappe a un chilometro
@@ -57,8 +57,6 @@ const stato = {
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message + '\n' +
     String(e.stack || '').split('\n').slice(1, 7).join('\n')));
 
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route('**/tile.openstreetmap.org/**', ro => ro.fulfill({
     status: 200, contentType: 'image/png',
     body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }));

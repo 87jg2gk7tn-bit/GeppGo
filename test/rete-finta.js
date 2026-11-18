@@ -13,7 +13,14 @@
      versione installata e' quella scritta nell'indirizzo: un indirizzo che
      punta a un file inesistente qui da' 404, come lo darebbe la CDN;
    - la rete lenta la fa Chromium (latenza e banda), sulla risposta compressa,
-     perche' Pages e le CDN mandano tutto compresso.
+     perche' Pages e le CDN mandano tutto compresso;
+   - anche Esri e le mattonelle di OpenStreetMap (il ripiego) puntano li', e
+     rispondono come quelle vere (test/esri-finto.js): la service worker le
+     chiede per conto suo, e le sue richieste le rotte di Playwright non le
+     vedono. Senza, dal server delle prove sarebbero uscite in rete davvero.
+     stato.esri dice come risponde Esri: 'ok', 'giu' (non risponde),
+     'rifiuta' (la chiave non vale piu', 498), e stato.esriCache le sue
+     intestazioni Cache-Control.
 
    Questo file non e' una prova: tutte.js lancia solo i prova-*.js. */
 const http = require('http');
@@ -25,8 +32,10 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const { RADICE } = require('./browser');
+const { stileFinto, PNG_FOTO, HOST_ESRI } = require('./esri-finto');
 
 const HOST_CDN = ['unpkg.com', 'cdn.jsdelivr.net', 'cdn.sheetjs.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const HOST_MAPPE = HOST_ESRI.concat(['tile.openstreetmap.org']);
 const TIPI = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html; charset=utf-8',
   '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.png': 'image/png' };
 
@@ -95,7 +104,7 @@ function manda(q, r, buf, tipo, extra = {}) {
    - ripiego(url): per misurare il codice vecchio, il file da dare a un
      indirizzo che nei pacchetti non c'e' (jsDelivr lo minificava al volo). */
 async function serverFinti(opz = {}) {
-  const stato = Object.assign({ html: null, sw: null, ritardoHtml: 0, giu: false, cdnGiu: false, cdnRotti: new Set(), ripiego: null }, opz);
+  const stato = Object.assign({ html: null, sw: null, ritardoHtml: 0, giu: false, cdnGiu: false, cdnRotti: new Set(), ripiego: null, esri: 'ok', esriCache: 'max-age=86400' }, opz);
   const log = [];
   const app = http.createServer((q, r) => {
     const voce = { dove: 'app', path: decodeURIComponent(q.url.split('?')[0]), t: Date.now(), byte: 0 };
@@ -126,8 +135,9 @@ async function serverFinti(opz = {}) {
   const cdn = https.createServer(certificato(), (q, r) => {
     const host = (q.headers.host || '').split(':')[0];
     const url = 'https://' + host + q.url;
-    const voce = { dove: 'cdn', host, url, t: Date.now(), byte: 0 };
+    const voce = { dove: HOST_MAPPE.includes(host) ? 'mappe' : 'cdn', host, url, t: Date.now(), byte: 0 };
     log.push(voce);
+    if (voce.dove === 'mappe') return mappaFinta(q, r, host, voce);
     if (stato.cdnGiu) { q.socket.destroy(); voce.esito = 'giu'; return; }
     const cors = { 'access-control-allow-origin': '*', 'timing-allow-origin': '*', 'cache-control': 'public, max-age=31536000, immutable' };
     /* Di serie un foglio finto e basta. Con `caratteri` un foglio vero, con
@@ -165,6 +175,22 @@ async function serverFinti(opz = {}) {
     voce.byte = manda(q, r, buf, TIPI[path.extname(f)] || 'application/octet-stream', cors);
     voce.esito = 200;
   });
+  /* Esri e OpenStreetMap finti (vedi in cima). */
+  function mappaFinta(q, r, host, voce) {
+    if (stato.giu || stato.esri === 'giu') { q.socket.destroy(); voce.esito = 'giu'; return; }
+    const u = new URL('https://' + host + q.url);
+    voce.chiave = u.searchParams.get('token') || '';
+    const cors = { 'access-control-allow-origin': '*', 'cache-control': stato.esriCache };
+    if (host === 'basemapstyles-api.arcgis.com') {
+      if (stato.esri === 'rifiuta') { voce.byte = manda(q, r, Buffer.from(JSON.stringify({ error: { code: 498, message: 'Invalid token.' } })), TIPI['.json'], { 'access-control-allow-origin': '*' }); voce.esito = 200; return; }
+      voce.byte = manda(q, r, Buffer.from(JSON.stringify(stileFinto())), TIPI['.json'], cors); voce.esito = 200; return;
+    }
+    if (stato.esri === 'rifiuta' && host !== 'tile.openstreetmap.org') { r.writeHead(498, { 'access-control-allow-origin': '*', 'content-type': 'text/plain' }); r.end('Invalid token.'); voce.esito = 498; return; }
+    if (host === 'basemaps-api.arcgis.com') { voce.byte = manda(q, r, Buffer.alloc(0), 'application/x-protobuf', cors); voce.esito = 200; voce.vettore = true; return; }
+    if (host === 'cdn.arcgis.com') { voce.byte = manda(q, r, /\.json$/.test(u.pathname) ? Buffer.from('{}') : PNG_FOTO, /\.json$/.test(u.pathname) ? TIPI['.json'] : TIPI['.png'], cors); voce.esito = 200; return; }
+    voce.pezzo = true;
+    voce.byte = manda(q, r, PNG_FOTO, TIPI['.png'], cors); voce.esito = 200;
+  }
   await new Promise(ok => app.listen(0, '127.0.0.1', ok));
   await new Promise(ok => cdn.listen(0, '127.0.0.1', ok));
   const pc = cdn.address().port;
@@ -174,7 +200,7 @@ async function serverFinti(opz = {}) {
     /* Gli argomenti di Chromium: le CDN portano al server locale. Senza proxy,
        se no il nome lo risolve il proxy e la regola non conta. */
     args: ['--no-sandbox', '--allow-file-access-from-files', '--ignore-certificate-errors', '--no-proxy-server',
-      '--host-resolver-rules=' + HOST_CDN.map(h => `MAP ${h} 127.0.0.1:${pc}`).join(', ')],
+      '--host-resolver-rules=' + HOST_CDN.concat(HOST_MAPPE).map(h => `MAP ${h} 127.0.0.1:${pc}`).join(', ')],
     chiudi: () => { app.closeAllConnections && app.closeAllConnections(); cdn.closeAllConnections && cdn.closeAllConnections(); app.close(); cdn.close(); }
   };
 }

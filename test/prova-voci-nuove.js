@@ -19,7 +19,7 @@
  * entrata e come edificio è una riga, ma due Esselunga in due vie diverse
  * sono due.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -71,8 +71,6 @@ const MONDO = [
     const page = await browser.newPage({ viewport, permissions: ['geolocation'] });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     page._domande = [];
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page.route('**/api/interpreter', ro => {
       if (overpass === 'giu') return ro.fulfill({ status: 504, body: 'gateway timeout' });

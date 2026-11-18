@@ -16,7 +16,7 @@
    con l'ombra morbida. E non diceva a che punto della giornata sei.
 
    Sul codice di prima non parte: .tt-az non esiste. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const oggi = new Date().toISOString().slice(0, 10);
@@ -52,9 +52,6 @@ const stato = (titoloGiorno) => ({
   async function apri(st) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({ status: 200, contentType: 'text/css', body: '' }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page.route(/api\.open-meteo\.com/, ro => ro.abort());
     await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), st);
@@ -272,7 +269,7 @@ const stato = (titoloGiorno) => ({
 
   // ══ la mappa della giornata, chiesta due volte di fila ═══════════════
   /* La mappa nasce un attimo dopo, in un setTimeout. Due richieste di fila
-     (la giornata che si apre mentre Leaflet arriva, e mappaArrivata la
+     (la giornata che si apre mentre la mappa arriva, e mappaArrivata la
      ridisegna) lasciavano in attesa due nascite sullo stesso riquadro: la
      seconda si fermava con «Map container is already initialized». In
      locale non capitava mai; sul server delle prove si', perche' li' i tempi
@@ -280,10 +277,11 @@ const stato = (titoloGiorno) => ({
   page = await apri(stato());
   const prima = err.length;
   const dueVolte = await page.evaluate(async () => {
+    for (let i = 0; i < 50 && typeof maplibregl === 'undefined'; i++) await new Promise(r2 => setTimeout(r2, 100));
     buildDayMap(); buildDayMap();
     await new Promise(r2 => setTimeout(r2, 800));
     const box = document.getElementById('dayMap');
-    return { pannelli: box.querySelectorAll('.leaflet-map-pane').length, viva: !!dayMapObj && dayMapObj.getContainer() === box };
+    return { pannelli: box.querySelectorAll('.maplibregl-canvas').length, viva: !!dayMapObj && dayMapObj.getContainer() === box };
   });
   const nuovi = err.slice(prima);
   ok('la mappa della giornata chiesta due volte di fila nasce una volta sola, senza errori',

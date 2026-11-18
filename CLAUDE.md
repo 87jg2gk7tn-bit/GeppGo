@@ -34,19 +34,21 @@ quel file è la memoria.
   apre quella della sua lingua, e in caso di dubbio vale l'italiano),
   `index.html`, le icone (`icona.svg` e i PNG in `icone/`, fatti dal logo
   con `npm run icone`, cioè `test/fai-le-icone.js`), le funzioni Supabase
-  in `supabase/functions/`, le prove in `test/`. Le librerie arrivano da CDN (Leaflet, supabase-js,
-  jsQR, ZXing, bwip-js, SheetJS per i file di Excel, fflate per il file del
-  backup, jsPDF per il PDF dell'itinerario; pdf.js per i PDF),
+  in `supabase/functions/`, le prove in `test/`. Le librerie arrivano da CDN (MapLibre GL JS per
+  le mappe, supabase-js, jsQR, ZXing, bwip-js, SheetJS per i file di Excel,
+  fflate per il file del backup, jsPDF per il PDF dell'itinerario; pdf.js
+  per i PDF),
   **mai bloccanti**: stanno in
   `LIBRERIE` dentro l'HTML, ognuna con la versione esatta e un file che esiste
-  davvero nel pacchetto, e si caricano con `caricaLibreria` — Leaflet e
-  supabase-js all'avvio senza fermarlo, le altre quando servono. La stessa
+  davvero nel pacchetto, e si caricano con `caricaLibreria` — supabase-js
+  all'avvio senza fermarlo, le altre quando servono. La stessa
   lista sta in `sw.js`, che le tiene per l'offline: una prova le confronta.
   SheetJS, che pesa più di tutte le altre insieme, non si scarica in
   sottofondo: ha `alMomento:true` nell'app e sta in `LIBRERIE_AL_MOMENTO` di
   `sw.js`; arriva la prima volta che si apre l'importazione, e da lì resta.
   Lo stesso jsPDF (420 KB): arriva la prima volta che si crea il PDF
-  dell'itinerario.
+  dell'itinerario. E MapLibre (un mega, col suo foglio di stile): arriva la
+  prima volta che a schermo c'è una mappa (vedi «Le mappe»).
   SheetJS viene da `cdn.sheetjs.com` (il pacchetto «xlsx» su npm è fermo
   alla 0.18.5, con falle note): anche le prove lo installano da lì, quindi
   l'ambiente di lavoro deve poter raggiungere quel dominio.
@@ -124,9 +126,43 @@ quel file è la memoria.
   i link delle email di Supabase e da dove partono gli inviti. **Quando l'app
   passerà su un dominio suo va aggiornata**, insieme a Site URL e Redirect
   URLs in Supabase (Authentication › URL Configuration): un indirizzo che non
-  sta lì Supabase lo scarta senza dirlo. I link delle email usano il flusso
+  sta lì Supabase lo scarta senza dirlo. E insieme alla chiave di Esri
+  (`ESRI_CHIAVE`, vedi «Le mappe»), che vale solo dagli indirizzi scritti in
+  lei. I link delle email usano il flusso
   «implicit»: si aprono in Safari anche quando la richiesta parte dall'app
   sulla Home, quindi un flusso che pretende la stessa memoria (PKCE) non va.
+- **Le mappe** (novembre 2026): **MapLibre GL JS** (5.24.0, l'ultima che si
+  carica con un `<script>`: dalla 6 è solo a moduli) con le mappe di base di
+  **Esri** (ArcGIS Location Platform, account gratuito, permesso
+  «Basemaps»): il satellite ritoccato coi toni delle anteprime (il panna nel
+  tema chiaro, il blu notte nel tema scuro, `MAPPA_TONI`) e, da `ZOOM_CITTA`
+  in su, strade e nomi dallo stesso stile di Esri, nella lingua dell'app.
+  **La chiave sta nella costante `ESRI_CHIAVE`** (in `Index 2.1.html`,
+  blocco «LE MAPPE»), e solo lì (`test/prova-mappe.js` lo controlla su tutti
+  i file del repo; le prove la leggono da lì). È pubblica per forza — sta
+  nella pagina, come in ogni mappa sul web — ma vale solo da
+  `https://87jg2gk7tn-bit.github.io` e solo per le mappe di base: copiata
+  altrove Esri la rifiuta. **Scade a novembre 2027**: va rifatta prima, dal
+  sito di ArcGIS Location Platform. Un indirizzo nuovo (un dominio suo,
+  l'app nativa) va aggiunto alla chiave, e cambiare gli indirizzi la rende
+  non valida: si rifà. Tutte le mappe nascono da `nuovaMappa` (Oggi,
+  Programma, Tutto il viaggio col globo, la scheda del viaggio, la scheda di
+  un posto); le mappine dei risultati di Scopri sono immagini ferme
+  (`mappinaFerma`), perché otto mappe WebGL una sotto l'altra un telefono
+  non le regge. Ogni mappa porta la citazione «Powered by Esri · ©
+  OpenStreetMap · Fonti» (`dirittiMappa`; «Fonti» apre l'elenco di chi ha
+  fatto immagini e dati) in un angolo senza tasti, e nello stesso angolo
+  l'avviso quando la mappa satellitare non c'è. **Senza rete**: la service
+  worker tiene i pezzi già guardati solo come permettono le condizioni di
+  Esri (`pezzoDiMappa` in `sw.js`): per il tempo delle intestazioni
+  (Cache-Control), al massimo 1.500, mai una zona scaricata in anticipo, e
+  tutto buttato se Esri rifiuta la chiave (401, 403, 498, 499). Se Esri non
+  risponde la mappa lo dice, tradotto, con «Riprova», e va avanti coi
+  segnaposto; **il ripiego sulle mattonelle di OpenStreetMap
+  (`MAPPA_RIPIEGO_OSM`) serve alle prove e va tolto prima del lancio**
+  (`DA-FARE.md`). Le prove non parlano con Esri: `test/esri-finto.js`
+  risponde come lui (anche alla service worker, in `rete-finta.js`), e
+  `test/prova-mappe.js` e `test/prova-mappa.js` provano le mappe e l'offline.
 - **AI**: passa dal Worker Cloudflare `geppgo-ai`, il cui codice è
   **`worker/ponte-ai.js`** (si pubblica a mano dalla dashboard, `GUIDA-AI.md`).
   Il modello è Gemma 4 su **Cloudflare Workers AI** (collegamento `AI` del
@@ -263,8 +299,8 @@ quel file è la memoria.
   si ferma a 8 secondi e ha un limite di richieste (le regole in
   `link-mappe/regole.mjs`, provate da `test/prova-installazione.js`). Senza
   coordinate ma col nome, il posto lo cerca la ricerca di sempre. Ogni mappa
-  porta «© OpenStreetMap» col link ai diritti (`dirittiMappa`), in un angolo
-  senza tasti.
+  porta «Powered by Esri», «© OpenStreetMap» col link ai diritti e «Fonti»
+  (`dirittiMappa`), in un angolo senza tasti (vedi «Le mappe»).
 - **PDF dell'itinerario e calendario** (miglioria 13b, dalla scheda del
   viaggio): il PDF lo fa il telefono con jsPDF. I caratteri di base del PDF
   hanno solo le lettere dell'Europa occidentale: una riga in un altro
@@ -298,8 +334,9 @@ inchiostro, ammassato e di un colore solo.
   nell'app si rifanno coi token e le regole di questo file (cinque lingue,
   accessibilità, schermi grandi, `MAPPA_APP`), e dove una regola qui sotto e
   l'anteprima non vanno d'accordo si aggiorna la regola, insieme alla
-  schermata. Il fornitore della mappa non è scelto: le anteprime usano Esri
-  World Imagery senza chiave solo per provare (costi e pezzi in `DA-FARE.md`).
+  schermata. Il fornitore della mappa è Esri, con la chiave dell'app (vedi
+  «Le mappe»); le anteprime usano Esri World Imagery senza chiave solo per
+  provare (costi e pezzi in `DA-FARE.md`).
 - **Evoluzione, non rivoluzione**: riconoscibile e con stile, mai generica o
   da modello standard.
 - **Pagine pulite senza perdere funzioni**: all'apertura solo quello che
@@ -479,7 +516,8 @@ dell'iPhone Duo, l'iPad, il computer. Sarà la stessa dell'app nativa
    funzioni toccate: aprile, toccale come farebbe una persona e guarda che in
    console non compaiano errori. `test/browser.js` blocca la rete, quindi le
    librerie da CDN risultano assenti: quelle che servono vanno servite in
-   locale, come fanno le prove con Leaflet. Per l'avvio, la service worker e
+   locale, come fa il recinto con MapLibre (e Esri risponde finto,
+   `test/esri-finto.js`). Per l'avvio, la service worker e
    la rete lenta c'è `test/rete-finta.js`: app in http locale, CDN servite
    dai pacchetti npm installati.
 5. Lancia **`npm test`** (vedi `test/README.md`; gira anche da solo a ogni

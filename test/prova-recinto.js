@@ -18,9 +18,8 @@
  * senza, il giorno che qualcuno lo toglie nessuno se ne accorge finche' non
  * ricompare lo stesso guasto, in una prova che non c'entra niente.
  */
-const { apriBrowser, APP, leafletJs, fuoriFermate, FUORI_AMMESSI } = require('./browser');
+const { apriBrowser, APP, fuoriFermate, FUORI_AMMESSI } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
-const fs = require('fs');
 
 const stato = { trips: [{ id: 101, name: 'Prova', destination: 'Milano', currency: 'EUR', status: 'open',
   participants: [{ id: 1, name: 'Gepp', isMe: true }],
@@ -47,11 +46,6 @@ const stato = { trips: [{ id: 101, name: 'Prova', destination: 'Milano', currenc
      quello, ma non l'ha fermato il recinto — l'ha risposto lei. Va tenuto da
      parte, altrimenti finisce nel conto delle scappate. */
   const risposteDellaProva = [];
-
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => {
-    risposteDellaProva.push(ro.request().url());
-    ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') });
-  });
 
   /* Il finto Overpass, come in tutte le altre prove: e' anche la prova che
      una rotta messa dalla prova vince sul recinto. */

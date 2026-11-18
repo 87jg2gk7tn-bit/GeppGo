@@ -94,6 +94,19 @@ Google contano come raccolti i dati che *escono* dal telefono. Va detto lo
 stesso nella privacy policy — ed è detto — perché la promessa "non viene mai
 conservata", scritta senza distinguere, sarebbe falsa.
 
+**Le mappe** (novembre 2026: MapLibre e Esri). Per disegnare la mappa il
+telefono chiede a **Esri** (ArcGIS Location Platform) i pezzi della zona che
+si sta guardando: quando la mappa è centrata sulla posizione (il tasto 🧭),
+quella zona dice più o meno dov'è la persona, insieme all'indirizzo IP. Niente
+account, niente identificativi, niente tappe: è la stessa natura della
+posizione arrotondata del ponte (*Approximate Location → App Functionality,
+not linked, no tracking*), già dichiarata. I pezzi guardati restano **sul
+telefono** (la service worker, al massimo 1.500 e solo per il tempo che le
+intestazioni di Esri permettono): come la cache delle ricerche vicine, non è
+raccolta. Finché c'è il ripiego (`MAPPA_RIPIEGO_OSM`, da togliere prima del
+lancio) le stesse richieste possono andare a `tile.openstreetmap.org`, solo
+quando Esri non risponde.
+
 Lo stesso vale per il **backup** (Profilo → Backup → Esporta dati): il
 telefono fa un file .zip con viaggi, liste dei bagagli e le foto salvate sul
 telefono che ha messo l'utente, e lo consegna al foglio Condividi del sistema
@@ -329,7 +342,9 @@ Ricavato cercando nel codice ogni indirizzo esterno, il 1 settembre 2026.
 | `it.wikipedia.org`, `commons.wikimedia.org`, `www.wikidata.org` | Nomi di luoghi |
 | `api.mymemory.translated.net` | Il testo da tradurre |
 | `open.er-api.com` | Niente di personale (solo le valute) |
-| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare, fflate fa e legge il file del backup, jsPDF fa il PDF dell'itinerario) |
+| `basemapstyles-api.arcgis.com`, `ibasemaps-api.arcgis.com`, `basemaps-api.arcgis.com`, `cdn.arcgis.com` (Esri, ArcGIS Location Platform: le mappe) | Indirizzo IP e la zona della mappa guardata (i pezzi che il telefono chiede, che possono essere quelli intorno alla posizione), con la chiave pubblica dell'app (`ESRI_CHIAVE`). Niente account né tappe. I pezzi restano nel telefono per il tempo delle intestazioni di Esri, al massimo 1.500 (`sw.js`) |
+| `tile.openstreetmap.org` (ripiego provvisorio, `MAPPA_RIPIEGO_OSM`: da togliere prima del lancio) | Indirizzo IP e la zona della mappa guardata, solo quando Esri non risponde |
+| `cdn.jsdelivr.net`, `unpkg.com`, `cdn.sheetjs.com` | Indirizzo IP (scarico librerie; SheetJS legge i file di Excel da importare, fflate fa e legge il file del backup, jsPDF fa il PDF dell'itinerario, MapLibre disegna le mappe) |
 | `fonts.googleapis.com`, `fonts.gstatic.com` | Indirizzo IP (caratteri; dopo la prima volta restano sul telefono) |
 
 Google Maps, Google Calendar e i siti esterni si aprono **solo** quando è

@@ -15,7 +15,7 @@
    tipo, raggio e TUTTI i filtri di ogni enunciato, comprese la presenza di
    una chiave e la negazione. Senza quello, metà di queste righe passerebbe
    anche sul codice rotto. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -49,8 +49,6 @@ const stato = {
        cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
     const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     page._chiamate = [];
     await page.route('**/api/interpreter', async route => {

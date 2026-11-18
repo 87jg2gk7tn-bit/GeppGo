@@ -12,7 +12,7 @@
  * ancora salendo la sua scala di cinque giri in sottofondo: finché non
  * finiva, bagno, fumatori e bancomat non partivano più.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -35,8 +35,6 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
   const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
   const chieste = [];
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/api/interpreter', async ro => {
     const q = decodeURIComponent(ro.request().postData() || '');
@@ -119,8 +117,6 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Milano', currency:
   p2.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
   const perServer = {};
   let chiude = null;
-  await p2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await p2.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await p2.route('**/api/interpreter', async ro => {
     const casa = new URL(ro.request().url()).host;

@@ -1,23 +1,29 @@
-/* La mappa senza rete.
+/* LA MAPPA SENZA RETE (le mappe nuove: MapLibre ed Esri, novembre 2026).
 
    Il momento in cui GeppGo serve di più è quello in cui il telefono non ha
-   campo. Tutto il resto già funzionava offline: l'unica cosa che diventava un
-   rettangolo grigio era lo sfondo della mappa.
-
-   Il controllo che vale più di tutti è l'ultimo: **non esiste uno "scarica
-   tutta la città"**. Scaricare tessere in blocco dai server di OpenStreetMap
-   è vietato dalle loro condizioni — sono volontari, e ti bloccano. È lo stesso
-   ragionamento della cache di Overpass, e va tenuto fermo. */
-const { apriBrowser, RADICE, leafletJs } = require('./browser');
+   campo. Le zone già guardate restano nel telefono, ma solo come permettono
+   le condizioni di Esri (ArcGIS Location Platform, E204 3.1 d.6 e 7.3 b):
+   - si tiene solo quello che la mappa ha chiesto mentre la si guardava:
+     **non esiste uno «scarica tutta la città»**;
+   - ogni pezzo resta per il tempo che le intestazioni di Esri dicono
+     (Cache-Control), e dopo non si usa più, nemmeno senza rete;
+   - no-store e no-cache: non si tiene niente;
+   - al massimo 1.500 pezzi;
+   - se Esri dice che la chiave non vale più (498), si butta tutto.
+   Li tiene la service worker (sw.js, «Le mappe senza rete»): qui la si prova
+   per davvero, con l'app servita da un indirizzo http e le risposte di Esri
+   finte date dal contesto del browser, che vede anche le richieste che la
+   service worker fa per conto suo (le rotte della pagina no).
+   In fondo: la riga del Profilo, «Libera lo spazio della mappa», e le
+   mattonelle della mappa di prima buttate una volta sola. */
+const { apriBrowser, recinta, RADICE, maplibreJs, maplibreCss } = require('./browser');
+const { stileFinto, PNG_FOTO } = require('./esri-finto');
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
 
-/* L'app va servita da un indirizzo vero, non da file://. Tenere le tessere da
-   parte vuol dire prenderle con fetch, e da una pagina aperta come file il
-   browser il fetch verso un altro sito non lo lascia nemmeno partire: la
-   prova direbbe "non le tiene da parte" per un motivo che sul telefono non
-   esiste. Quindici righe di server valgono la differenza. */
+/* L'app va servita da un indirizzo vero, non da file://: la service worker
+   da un file non si registra. */
 function servi() {
   const s = http.createServer((req, res) => {
     const nome = decodeURIComponent(req.url.split('?')[0]).replace(/^\//, '') || 'Index 2.1.html';
@@ -25,237 +31,257 @@ function servi() {
     if (!f.startsWith(RADICE) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end(); return; }
     const tipo = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
                    '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' }[path.extname(f)] || 'text/plain';
-    res.writeHead(200, { 'Content-Type': tipo });
+    res.writeHead(200, { 'Content-Type': tipo, 'Cache-Control': 'no-cache' });
     res.end(fs.readFileSync(f));
   });
   return new Promise(r => s.listen(0, '127.0.0.1', () => r(s)));
 }
 
+const OGGI = new Date().toISOString().split('T')[0];
+const tappa = (id, name, time, lat, lng) => ({ id, name, time, timeEnd: '', lat, lng, type: 'outdoor', who: [1], completed: false, booking: { needed: false, done: false }, notes: '' });
 const stato = {
-  trips: [{ id: 1730000000011, name: 'Giappone', destination: 'Tokyo', currency: 'EUR',
-    status: 'open', start: '2026-03-14', end: '2026-03-16',
-    participants: [{ id: 1, name: 'Gepp', isMe: true }],
-    pois: [{ id: 'p1', name: 'Senso-ji', lat: 35.7148, lng: 139.7967, priority: 'essential', photo: 'x', _photoTry: 99 }],
-    expenses: [], tickets: [], hotels: [], weather: {}, createdAt: 1,
-    days: [{ id: 'd1', date: '2026-03-14', title: '', activities: [] }] }],
+  trips: [{ id: 1730000000011, name: 'Giappone', destination: 'Tokyo', currency: 'EUR', status: 'open', start: OGGI, end: OGGI,
+    participants: [{ id: 1, name: 'Gepp', isMe: true }], suggested: [],
+    pois: [], expenses: [], tickets: [], hotels: [], weather: {}, createdAt: 1,
+    days: [{ id: 'd1', date: OGGI, title: '', activities: [tappa(11, 'Senso-ji', '09:00', 35.7148, 139.7967), tappa(12, 'Ueno', '11:00', 35.7156, 139.7745)] }] }],
   currentTripId: 1730000000011, settings: { proxRadius: 200 }, myName: 'Gepp', skipAuth: true
 };
 
-// una tessera vera, 1×1 verde, perché si possa riconoscerla quando torna
-const TESSERA = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+/* Esri finto, dal contesto: come risponde lo decide `esri` mentre la prova
+   gira. */
+const esri = { giu: false, rifiuta: false, cache: 'max-age=86400', pezzi: 0, stile: 0, tutte: 0 };
+const ESRI = /(^|\.)arcgis\.com$/;
+async function esriDalContesto(ctx) {
+  await ctx.route(u => ESRI.test(u.hostname), route => {
+    const u = new URL(route.request().url());
+    esri.tutte++;
+    if (esri.giu) return route.abort('internetdisconnected');
+    const h = { 'access-control-allow-origin': '*', 'cache-control': esri.cache };
+    if (u.hostname === 'basemapstyles-api.arcgis.com') {
+      esri.stile++;
+      if (esri.rifiuta) return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ error: { code: 498, message: 'Invalid token.' } }) });
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: h, body: JSON.stringify(stileFinto()) });
+    }
+    if (esri.rifiuta) return route.fulfill({ status: 498, contentType: 'text/plain', headers: { 'access-control-allow-origin': '*' }, body: 'Invalid token.' });
+    if (u.hostname === 'ibasemaps-api.arcgis.com') { esri.pezzi++; return route.fulfill({ status: 200, contentType: 'image/png', headers: h, body: PNG_FOTO }); }
+    if (/\.json$/.test(u.pathname)) return route.fulfill({ status: 200, contentType: 'application/json', headers: h, body: '{}' });
+    if (u.hostname === 'cdn.arcgis.com') return route.fulfill({ status: 200, contentType: 'image/png', headers: h, body: PNG_FOTO });
+    return route.fulfill({ status: 200, contentType: 'application/x-protobuf', headers: h, body: Buffer.alloc(0) });
+  });
+  /* il ripiego non serve qui: se Esri non risponde, nemmeno lui */
+  await ctx.route(u => u.hostname === 'tile.openstreetmap.org', route => route.abort('internetdisconnected'));
+  /* MapLibre dal pacchetto installato anche quando lo chiede la service
+     worker (le rotte della pagina, dove sta il recinto, lei non le passa) */
+  await ctx.route(u => u.hostname === 'unpkg.com' && /^\/maplibre-gl@[\d.]+\/dist\/maplibre-gl\.(js|css)$/.test(u.pathname), route => {
+    const css = /\.css$/.test(route.request().url());
+    route.fulfill({ status: 200, contentType: css ? 'text/css' : 'application/javascript', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(css ? maplibreCss() : maplibreJs()) });
+  });
+}
+
+const r = [];
+const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
+const err = [];
+
+/* Quello che la service worker ha messo da parte: indirizzi e date annotate. */
+const memoria = page => page.evaluate(async () => {
+  if (!(await caches.has('geppgo-mappe'))) return { c: false, voci: [] };
+  const c = await caches.open('geppgo-mappe');
+  const voci = [];
+  for (const k of await c.keys()) {
+    const x = await c.match(k);
+    voci.push({ url: k.url, salvato: Number(x.headers.get('x-geppgo-salvato')), scade: Number(x.headers.get('x-geppgo-scade')), byte: Number(x.headers.get('x-geppgo-byte')) });
+  }
+  return { c: true, voci };
+});
+const pezziIn = m => m.voci.filter(v => /ibasemaps-api\.arcgis\.com\/.*\/tile\//.test(v.url));
 
 (async () => {
   const server = await servi();
   const APP = 'http://127.0.0.1:' + server.address().port + '/Index%202.1.html';
   const browser = await apriBrowser();
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const err = [];
+  const ctx = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 390, height: 844 }, locale: 'it-IT' });
+  await esriDalContesto(ctx);
+  await ctx.addInitScript(s => {
+    if (localStorage.getItem('prova-mappa')) return;
+    localStorage.clear();
+    localStorage.setItem('geppgo2', JSON.stringify(s));
+    localStorage.setItem('geppgo2_intro', '1');
+    localStorage.setItem('geppgo2_avviso_account2', String(Date.now()));
+    localStorage.setItem('prova-mappa', '1');
+  }, stato);
+  /* il recinto di tutte le prove (browser.js): dalla pagina non si esce */
+  const page = await recinta(await ctx.newPage());
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
+  const pronta = () => page.waitForFunction(() => typeof window.renderAll === 'function' && !document.getElementById('bootSplash'), null, { timeout: 30000 });
+  const mappaPronta = () => page.waitForFunction(() => !!homeMapObj && homeMapObj._g.pronta && homeMapObj.loaded(), null, { timeout: 20000 }).catch(() => {});
 
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-
-  let tessereChieste = 0;
-  let reteAccesa = true;
-  /* Un'espressione regolare e non il modello a stelline: "**\/tile.openstreetmap.org/**"
-     vuole una barra prima di "tile", e l'indirizzo vero è "a.tile.openstreetmap.org".
-     Non combaciava, e la prova guardava passare le richieste senza vederle. */
-  await page.route(/tile\.openstreetmap\.org/, async ro => {
-    tessereChieste++;
-    if (!reteAccesa) return ro.abort();
-    /* Il permesso di lettura da un altro sito: senza, il fetch non arriva a
-       vedere l'immagine — ed è esattamente quello che manda OpenStreetMap. */
-    await ro.fulfill({ status: 200, contentType: 'image/png', body: TESSERA,
-      headers: { 'Access-Control-Allow-Origin': '*' } });
-  });
-
-  await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => typeof window.stratoMappa === 'function', { timeout: 20000 });
-  await page.waitForTimeout(500);
+  await pronta();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  /* ── 0. MapLibre resta anche se e' arrivato prima della service worker ──
+     Alla primissima apertura la mappa di Oggi chiede MapLibre prima che la
+     service worker guardi la pagina: dopo qualche secondo l'app le dice
+     quali librerie sono gia' arrivate, e lei le tiene. */
+  const LIB = /const CACHE_NAME = '([^']+)'/.exec(fs.readFileSync(path.join(RADICE, 'sw.js'), 'utf8'))[1].replace('-shell-', '-librerie-');
+  const tenuta = await page.waitForFunction(async c => {
+    const k = await (await caches.open(c)).keys();
+    return k.filter(r => /maplibre-gl@[\d.]+\/dist\/maplibre-gl\.(js|css)$/.test(r.url)).length === 2;
+  }, LIB, { timeout: 15000, polling: 500 }).then(() => true, () => false);
+  ok('0. MapLibre, arrivato alla prima apertura prima della service worker, resta nella cache delle librerie (la mappa c\'è anche senza rete)', tenuta, LIB);
+  /* la prima apertura non passa ancora dalla service worker: si riapre */
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 });
+  await page.evaluate(() => caches.delete('geppgo-mappe'));
 
-  const r = [];
-  const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
+  // ── 1. guardando la mappa, i pezzi si tengono da parte ───────────────
+  esri.pezzi = 0;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  const chiesti = esri.pezzi;
+  let m = await memoria(page);
+  const pezzi = pezziIn(m);
+  ok('1. guardare la mappa di Oggi chiede i pezzi della foto a Esri', chiesti > 0, chiesti + ' pezzi');
+  ok('1. e la service worker li tiene da parte, senza la chiave nell\'indirizzo', pezzi.length > 0 && pezzi.length <= chiesti && !m.voci.some(v => /token=/.test(v.url)),
+    `${pezzi.length} pezzi, ${m.voci.length} voci in tutto`);
+  const durate = pezzi.map(v => v.scade - v.salvato);
+  ok('1. ognuno per il tempo delle intestazioni di Esri (max-age=86400: un giorno), non di più', durate.length && durate.every(d => Math.abs(d - 86400000) < 5000),
+    durate.slice(0, 3).join(', ') + ' ms');
+  ok('1. anche lo stile (i nomi e le strade sopra la foto si rivedono senza rete)', m.voci.some(v => /basemapstyles-api/.test(v.url)));
 
-  const svuota = () => page.evaluate(() => tessereButta());
-  const quante = () => page.evaluate(() => tessereQuante());
-  /* Il riquadro va messo nella pagina, con la sua misura, PRIMA di creare la
-     mappa: Leaflet decide quali tessere servono da quanto è grande il
-     contenitore, e su un contenitore staccato non ne chiede nessuna. */
-  const guarda = (lat, lng, z) => page.evaluate(async ([la, lo, zz]) => {
-    const d = document.createElement('div');
-    d.style.cssText = 'width:390px;height:400px';
-    document.body.appendChild(d);
-    const m = L.map(d, { attributionControl: false }).setView([la, lo], zz);
-    stratoMappa().addTo(m);
-    await new Promise(r => setTimeout(r, 2500));
-    const img = [...d.querySelectorAll('img.leaflet-tile')];
-    return { quante: img.length,
-             daMemoria: img.filter(i => i.dataset.geppgo === 'memoria').length,
-             daRete: img.filter(i => i.dataset.geppgo === 'rete').length,
-             vuote: img.filter(i => i.dataset.geppgo === 'vuota').length,
-             rotte: img.filter(i => !i.src).length };
-  }, [lat, lng, z]);
+  // ── 2. riaprire la stessa zona non la richiede alla rete ─────────────
+  esri.pezzi = 0;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  ok('2. riaprire la stessa zona non chiede di nuovo i pezzi', esri.pezzi === 0, esri.pezzi + ' chiesti di nuovo');
 
-  // ── guardare la mappa la mette da parte ──────────────────────────────────
-  await svuota();
-  tessereChieste = 0;
-  const primoGiro = await guarda(35.7148, 139.7967, 14);
-  const dopoPrima = await quante();
-  ok('guardare la mappa chiede le tessere alla rete', tessereChieste > 0, tessereChieste + ' chieste');
-  ok('e le mostra', primoGiro.daRete > 0, primoGiro.daRete + ' pezzi su ' + primoGiro.quante);
-  ok('e se le tiene da parte', dopoPrima.quante > 0, dopoPrima.quante + ' pezzi');
-  ok('e sa quanto pesano', dopoPrima.byte > 0, dopoPrima.byte + ' byte');
+  // ── 3. senza rete: la zona già vista c'è, con la foto di Esri ────────
+  esri.giu = true; esri.tutte = 0;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  const senza = await page.evaluate(() => ({ fonte: homeMapObj && homeMapObj._g.fonte, avviso: !document.querySelector('#homeMap .g-avviso').hidden, segni: homeMapMarks.length,
+    citazione: document.querySelector('#homeMap .g-diritti').textContent }));
+  ok('3. senza rete la zona già vista si rivede: la foto di Esri, i segnaposto, nessun avviso', senza.fonte === 'esri' && !senza.avviso && senza.segni === 2 && /Powered by Esri/.test(senza.citazione),
+    JSON.stringify(senza));
 
-  // ── la stessa zona non si richiede ───────────────────────────────────────
-  const prima = tessereChieste;
-  const secondoGiro = await guarda(35.7148, 139.7967, 14);
-  ok('riaprire la stessa zona non la richiede alla rete', tessereChieste === prima,
-     tessereChieste + ' chieste in tutto, erano ' + prima);
-  ok('e la ripesca dalla memoria', secondoGiro.daMemoria > 0,
-     secondoGiro.daMemoria + ' pezzi su ' + secondoGiro.quante);
-
-  // ── SENZA RETE: la zona già vista si vede lo stesso ──────────────────────
-  reteAccesa = false;
-  const offline = await guarda(35.7148, 139.7967, 14);
-  ok('senza rete la zona già guardata si vede lo stesso',
-     offline.daMemoria > 0, offline.daMemoria + ' pezzi su ' + offline.quante + ' presi dalla memoria');
-
-  // ── SENZA RETE, zona mai vista: un riquadro neutro, non un buco ──────────
-  const maiVista = await guarda(-33.86, 151.21, 14);   // Sydney
-  ok('una zona mai vista, senza rete, diventa un riquadro neutro',
-     maiVista.vuote > 0, maiVista.vuote + ' riquadri su ' + maiVista.quante);
-  ok('e non resta un\'immagine rotta', maiVista.rotte === 0, maiVista.rotte + ' rotte');
-  reteAccesa = true;
-
-  // ── il magazzino non cresce all'infinito ─────────────────────────────────
-  const tetto = await page.evaluate(async () => {
-    await tessereButta();
-    const db = await idbP();
-    await new Promise(res => {
-      const t = db.transaction('tessere', 'readwrite'), s = t.objectStore('tessere');
-      for (let i = 0; i < 1700; i++) s.put({ k: 'z/' + i + '/0', blob: new Blob(['x']), ts: i });
-      t.oncomplete = res; t.onerror = res;
-    });
-    await tessereSfoltisci();
-    return (await tessereQuante()).quante;
+  // ── 4. scaduto il tempo, non si usa più (nemmeno senza rete) ─────────
+  /* Si fanno scadere le date annotate: e' quello che fa il tempo. */
+  await page.evaluate(async () => {
+    const c = await caches.open('geppgo-mappe');
+    for (const k of await c.keys()) {
+      const x = await c.match(k);
+      const h = new Headers(x.headers); h.set('x-geppgo-scade', String(Date.now() - 1000));
+      await c.put(k, new Response(await x.blob(), { status: x.status, headers: h }));
+    }
   });
-  ok('il magazzino non cresce oltre il tetto', tetto === 1500, tetto + ' pezzi su 1700 scritti');
+  const unPezzo = pezzi[0] && pezzi[0].url;
+  const scaduto = await page.evaluate(u => fetch(u).then(r => 'servito ' + r.status, () => 'non servito'), unPezzo);
+  ok('4. un pezzo scaduto non si usa più, nemmeno senza rete', scaduto === 'non servito', scaduto);
+  esri.giu = false;
+
+  // ── 5. no-store: niente da parte ─────────────────────────────────────
+  await page.evaluate(() => caches.delete('geppgo-mappe'));
+  esri.cache = 'no-store';
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  m = await memoria(page);
+  ok('5. se Esri scrive no-store, non si tiene niente', !m.voci.length, m.voci.length + ' voci');
+  esri.cache = 'max-age=86400';
+
+  // ── 6. al massimo 1.500 pezzi: oltre, se ne vanno i più vecchi ───────
+  /* 1.590 pezzi già da parte (finti, freschi), poi la mappa ne chiede di
+     nuovi: ogni cinquanta pezzi scritti la service worker conta. */
+  await page.evaluate(async png => {
+    const c = await caches.open('geppgo-mappe'), ora = Date.now(), corpo = Uint8Array.from(atob(png), x => x.charCodeAt(0));
+    const h = { 'content-type': 'image/png', 'x-geppgo-salvato': String(ora), 'x-geppgo-scade': String(ora + 864e5), 'x-geppgo-byte': String(corpo.length) };
+    for (let i = 0; i < 1590; i++) await c.put('https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/3/0/' + i + '?f=json', new Response(corpo, { headers: h }));
+  }, PNG_FOTO.toString('base64'));
+  const prima = (await memoria(page)).voci.length;
+  await page.evaluate(async () => {
+    for (let i = 0; i < 60; i++) await fetch('https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/18/' + (1000 + i) + '/77?f=json&token=x').catch(() => {});
+  });
+  await page.waitForTimeout(1500);
+  const dopo = await memoria(page);
+  ok('6. al massimo 1.500 pezzi: oltre, se ne vanno i più vecchi', prima >= 1590 && dopo.voci.length <= 1500 && !dopo.voci.some(v => /\/tile\/3\/0\/0\?/.test(v.url)) && dopo.voci.some(v => /\/tile\/18\/1059\//.test(v.url)),
+    `${prima} prima, ${dopo.voci.length} dopo`);
+
+  // ── 7. la riga del Profilo, e «Libera lo spazio della mappa» ─────────
+  await page.evaluate(() => caches.delete('geppgo-mappe'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  const riga = await page.evaluate(async () => { apriProfilo(); mappeMostraStato(); await new Promise(x => setTimeout(x, 800)); return document.getElementById('mappeStato').textContent; });
+  ok('7. il Profilo dice quanti pezzi ci sono, quanto pesano e per quanto restano', /\d+ pezzi di mappa da parte · [\d,.]+ (KB|MB) · ognuno resta al massimo 1 giorno/.test(riga), riga);
+  const spiega = await page.evaluate(() => document.getElementById('mappeStato').closest('.card').innerText);
+  ok('7. e spiega in modo semplice cosa permette Esri: il tempo, 1.500 pezzi, niente città scaricate in anticipo',
+    /per il tempo che Esri/.test(spiega) && /1\.500 pezzi/.test(spiega) && /scaricare in anticipo una città intera non è permesso/.test(spiega), spiega.replace(/\s+/g, ' ').slice(0, 160));
+  await page.evaluate(() => { mappeSvuota(); document.getElementById('cfOk').click(); });
+  await page.waitForTimeout(800);
+  const vuota = await page.evaluate(async () => ({ c: await caches.has('geppgo-mappe'), riga: document.getElementById('mappeStato').textContent }));
+  ok('7. «Libera lo spazio della mappa» butta tutto', !vuota.c && /Ancora niente/.test(vuota.riga), JSON.stringify(vuota));
+
+  // ── 8. la chiave rifiutata: si butta tutto, e la mappa lo dice ───────
+  await page.evaluate(() => go('plan'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1200);
+  const pieno = (await memoria(page)).voci.length;
+  esri.rifiuta = true;
+  /* un pezzo nuovo (ci si avvicina): Esri risponde 498 */
+  await page.evaluate(() => { homeMapObj.jumpTo({ zoom: 17.5 }); });
+  await page.waitForTimeout(2500);
+  /* «vuota»: la cache la riapre a vuoto la prima richiesta che passa */
+  const rifiutata = await page.evaluate(async () => ({ c: (await caches.has('geppgo-mappe')) && (await (await caches.open('geppgo-mappe')).keys()).length > 0, fonte: homeMapObj._g.fonte,
+    avviso: (document.querySelector('#homeMap .g-avviso:not([hidden])') || {}).textContent || '', segni: homeMapMarks.length }));
+  ok('8. Esri rifiuta la chiave (498): i pezzi da parte si buttano tutti', pieno > 0 && !rifiutata.c, `${pieno} voci prima, cache ${rifiutata.c ? 'ancora piena' : 'vuota'}`);
+  ok('8. e la mappa lo dice, e va avanti coi segnaposto', rifiutata.fonte !== 'esri' && /La mappa satellitare ora non è disponibile/.test(rifiutata.avviso) && rifiutata.segni === 2, JSON.stringify(rifiutata));
+  esri.rifiuta = false;
+
+  // ── 9. niente «scarica la zona», e solo quello che si vede ───────────
+  const html = fs.readFileSync(path.join(RADICE, 'Index 2.1.html'), 'utf8'), sw = fs.readFileSync(path.join(RADICE, 'sw.js'), 'utf8');
+  /* In sw.js le mappe si prendono solo dentro pezzoDiMappa, cioe' quando la
+     pagina le chiede; nell'app nessuno chiede pezzi per conto suo, se non le
+     mappine ferme di Scopri, che mostrano quello che chiedono. */
+  const swFetch = [...sw.matchAll(/async function (\w+)\([^)]*\)\s*\{[\s\S]*?\n\}/g)].filter(x => /fetch\(/.test(x[0])).map(x => x[1]);
+  ok('9. niente «scarica la zona»: la service worker prende i pezzi solo quando la mappa li chiede',
+    !swFetch.some(n => /Mapp|mapp|pezz|Pezz/.test(n) && n !== 'pezzoDiMappa') && /if \(eMappa\(url\)\) event\.respondWith\(pezzoDiMappa\(event\)\)/.test(sw.replace(/else /g, '')),
+    swFetch.join(', '));
+  ok('9. e nell\'app non c\'è un modo di scaricare una zona in anticipo', !/scarica(re)? (la|una) zona|preload|prefetch/i.test(html.replace(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//g, '')));
+  esri.pezzi = 0;
+  await page.evaluate(() => caches.delete('geppgo-mappe'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await mappaPronta();
+  await page.waitForTimeout(1500);
+  ok('9. aprire Oggi chiede solo i pezzi che si vedono (una ventina, non centinaia)', esri.pezzi > 0 && esri.pezzi <= 40, esri.pezzi + ' pezzi');
+
+  // ── 10. le mattonelle della mappa di prima se ne vanno una volta ─────
   const vecchie = await page.evaluate(async () => {
+    localStorage.removeItem('geppgo2_tessere_via');
     const db = await idbP();
-    return await new Promise(res => {
-      const q = db.transaction('tessere').objectStore('tessere').get('z/0/0');
-      q.onsuccess = e => res(!!e.target.result); q.onerror = () => res(false);
-    });
+    await new Promise(ok2 => { const t = db.transaction('tessere', 'readwrite'); for (let i = 0; i < 5; i++) t.objectStore('tessere').put({ k: 'z/1/' + i, blob: new Blob(['x']), ts: 1 }); t.oncomplete = ok2; });
+    tessereVecchieVia();
+    await new Promise(x => setTimeout(x, 500));
+    const n = await new Promise(ok2 => { const q = db.transaction('tessere').objectStore('tessere').count(); q.onsuccess = () => ok2(q.result); });
+    return { rimaste: n, segnato: localStorage.getItem('geppgo2_tessere_via') };
   });
-  ok('e butta via le più vecchie', vecchie === false);
+  ok('10. le mattonelle tenute dalla mappa di prima si buttano, una volta sola', vecchie.rimaste === 0 && vecchie.segnato === '1', JSON.stringify(vecchie));
 
-  // ── in Profilo si vede quanto occupa, e si può liberare ──────────────────
-  await svuota();
-  await page.evaluate(() => { session = { user: { id: 'io', email: 'g@x.it' } }; renderProfile(); });
-  await page.waitForTimeout(600);
-  const vuoto = await page.evaluate(() => document.getElementById('tessereStato').textContent);
-  ok('a magazzino vuoto lo dice senza allarmare', /si riempie da sola/i.test(vuoto), vuoto);
-  const conRoba = await page.evaluate(async () => {
-    const db = await idbP();
-    await new Promise(res => {
-      const t = db.transaction('tessere', 'readwrite'), s = t.objectStore('tessere');
-      for (let i = 0; i < 12; i++) s.put({ k: 'a/' + i + '/0', blob: new Blob([new Uint8Array(20000)]), ts: i });
-      t.oncomplete = res; t.onerror = res;
-    });
-    tessereMostraStato();
-    await new Promise(r => setTimeout(r, 400));
-    return document.getElementById('tessereStato').textContent;
-  });
-  ok('con la mappa da parte dice quanti pezzi e quanto pesano',
-     /12 pezzi/.test(conRoba) && /MB/.test(conRoba), conRoba);
-  const dopoPulizia = await page.evaluate(async () => {
-    await tessereButta(); tessereMostraStato();
-    await new Promise(r => setTimeout(r, 400));
-    return (await tessereQuante()).quante;
-  });
-  ok('e si può liberare lo spazio', dopoPulizia === 0, String(dopoPulizia));
-
-  // ── le foto di chi c'era prima non si toccano ────────────────────────────
-  /* Il magazzino delle tessere è arrivato dopo, e ha alzato la versione del
-     database: chi ha già l'app installata ci arriva con le sue foto dentro. */
-  const foto = await page.evaluate(async () => {
-    const db = await idbP();
-    await new Promise(res => { db.transaction('ph', 'readwrite').objectStore('ph')
-      .put({ id: 'f1', tripId: 1, data: 'x', ts: 1 }).onsuccess = res; });
-    return await new Promise(res => {
-      db.transaction('ph').objectStore('ph').get('f1').onsuccess = e => res(!!e.target.result);
-    });
-  });
-  ok('il magazzino delle foto continua a funzionare', foto === true);
-
-  // ── LA REGOLA: niente "scarica tutta la città" ───────────────────────────
-  /* Scaricare tessere in blocco dai server di OpenStreetMap è vietato dalle
-     loro condizioni: sono volontari, e ti bloccano. La regola si controlla
-     guardando quello che l'app fa davvero, non cercando parole nel codice —
-     un controllo sulle parole boccerebbe la frase che spiega la scelta. */
-  await svuota();
-  tessereChieste = 0;
-  await guarda(48.8566, 2.3522, 13);   // Parigi, mai vista
-  /* Un riquadro di 390×400 a zoom 13 sta dentro una ventina di tessere: se un
-     giorno ne partissero centinaia vorrebbe dire che qualcuno ha aggiunto lo
-     "scarica la città", ed è il momento di fermarsi. */
-  ok('aprire la mappa chiede solo quello che si vede', tessereChieste > 0 && tessereChieste <= 40,
-     tessereChieste + ' tessere per una schermata');
-
-  // ── e la scelta è scritta dove la si legge ───────────────────────────────
-  /* textContent e non innerText: il Profilo in questo momento è nascosto, e
-     innerText legge solo quello che si vede a schermo. */
-  const spiega = await page.evaluate(() => document.body.textContent);
-  ok('la scelta è spiegata in Profilo', /vietato dalle loro condizioni/i.test(spiega));
-
-  // ── e il riquadro vuoto sa che ora è ─────────────────────────────────────
-  /* Dove la mappa non c'è ancora resta un riquadro. Era disegnato una volta
-     sola all'avvio, color crema: con il tema scuro veniva fuori una lastra
-     chiara in mezzo a una schermata nera — e proprio nella situazione per cui
-     la mappa offline esiste, cioè all'estero, senza campo, quasi sempre di
-     sera. Si legge il colore del pixel, non il codice. */
-  const riquadro = await page.evaluate(async () => {
-    const attendi = ms => new Promise(r2 => setTimeout(r2, ms));
-    const colore = async () => {
-      const im = new Image(); im.src = tesseraVuota(); await im.decode();
-      const c = document.createElement('canvas'); c.width = c.height = 8;
-      const g = c.getContext('2d'); g.drawImage(im, 0, 0);
-      const d = g.getImageData(1, 1, 1, 1).data;
-      /* Quanto è chiaro, da 0 (nero) a 255 (bianco). */
-      return Math.round(0.299 * d[0] + 0.587 * d[1] + 0.114 * d[2]);
-    };
-    app.settings.dark = false; applyTheme(); await attendi(60);
-    const chiaro = await colore();
-    app.settings.dark = true; applyTheme(); await attendi(60);
-    const scuro = await colore();
-    /* E quelle già appese devono essere ridipinte: senza, la lastra chiara
-       resta lì finché non si muove la mappa. */
-    const finta = document.createElement('img');
-    finta.dataset.geppgo = 'vuota';
-    app.settings.dark = false; applyTheme();
-    finta.src = tesseraVuota();
-    document.body.appendChild(finta);
-    const prima = finta.src;
-    app.settings.dark = true; applyTheme(); await attendi(60);
-    const dopo = finta.src;
-    finta.remove();
-    app.settings.dark = false; applyTheme();
-    return { chiaro, scuro, ridipinta: prima !== dopo };
-  });
-  ok('in tema chiaro il riquadro della mappa è chiaro',
-     riquadro.chiaro > 200, 'luminosità ' + riquadro.chiaro);
-  ok('in tema scuro è scuro, non una lastra bianca in mezzo al nero',
-     riquadro.scuro < 60, 'luminosità ' + riquadro.scuro);
-  ok('e cambiando tema quelle già a schermo vengono ridipinte',
-     riquadro.ridipinta === true);
-
+  ok('nessun errore in pagina', !err.length, err.slice(0, 3).join(' | '));
   console.log('\n' + r.join('\n'));
   const falliti = r.filter(x => x.includes('FALLITO')).length;
   console.log(`\n${r.length - falliti}/${r.length} passati`);
-  if (err.length) console.log('\nErrori in pagina:\n' + err.join('\n'));
   await browser.close();
   server.close();
-  process.exit(falliti || err.length ? 1 : 0);
-})();
+  process.exit(falliti ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

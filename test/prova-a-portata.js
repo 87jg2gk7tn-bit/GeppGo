@@ -31,7 +31,7 @@
    I tocchi sono veri: Playwright tocca il punto dove sta la voce e si
    rifiuta se lì sopra c'è altro, come farebbe un dito. */
 const fs = require('fs');
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 
 const r = [];
 const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
@@ -80,7 +80,6 @@ async function apri(browser, { larghezza = 390, scuro = false, lingua = null, vi
   const page = await browser.newPage({ viewport: { width: larghezza, height: 844 } });
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|ERR_BLOCKED|net::/.test(m.text())) errori.push('CONSOLE: ' + m.text().slice(0, 140)); });
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route(/api\.open-meteo\.com/, ro => ro.abort());
   await page.clock.install({ time: MEZZOGIORNO });

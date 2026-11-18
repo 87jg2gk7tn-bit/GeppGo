@@ -26,7 +26,7 @@
        430 px, nel tema chiaro e in quello scuro. */
 const fs = require('fs');
 const path = require('path');
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 
 /* fflate: lo stesso pacchetto che l'app chiede alla CDN, servito da qui; e
    in Node per aprire lo zip che l'app consegna. */
@@ -151,7 +151,6 @@ async function apri(browser, { stato = null, extraLs = null, ua = null, installa
   if (ua) opz.userAgent = ua;
   const page = await browser.newPage(opz);
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/fflate@*/**', ro => FFLATE_JS ? ro.fulfill({ status: 200, contentType: 'application/javascript', body: FFLATE_JS }) : ro.abort());
   await page.route('**/supabase-js@*/**', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: SUPA_FINTO }));

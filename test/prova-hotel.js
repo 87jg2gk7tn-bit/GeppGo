@@ -12,7 +12,7 @@
    saperlo bisognava andare in Spese e cercare la riga giusta.
 
    Sul codice di prima la prima riga è già rossa. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const g = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
@@ -47,8 +47,6 @@ const TUTTO = { id: 7, name: 'Hotel Josef', address: 'Rybná 20, Praha 1',
   async function apri(st) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page.route(/api\.open-meteo\.com/, ro => ro.abort());
     await page.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());

@@ -39,11 +39,25 @@ async function apriBrowser(opzioni = {}) {
      ricaricano per vedere cosa resta cadevano a caso, e sembrava l'app che
      perdeva i dati. L'app non legge file accanto a se', quindi l'opzione non
      le cambia niente. */
-  const browser = await chromium.launch(Object.assign(
-    { args: ['--no-sandbox', '--allow-file-access-from-files'] },
-    exe ? { executablePath: exe } : {},
-    opzioni
-  ));
+  /* Le tre opzioni di WebGL: le mappe sono MapLibre, che disegna con WebGL,
+     e Chromium senza schermo lo da' solo col disegnatore di ripiego
+     (SwiftShader), che va chiesto. Senza, ogni mappa diceva «Questo telefono
+     non riesce a disegnare la mappa». */
+  /* Chi non disegna mappe e vuole i pixel di sempre (le icone, vedi
+     fai-le-icone.js) chiede { webgl: false }: con queste opzioni anche il
+     disegno di un SVG su una tela passa da SwiftShader, e i bordi sfumati
+     vengono un filo diversi. */
+  const gl = opzioni.webgl === false ? [] : ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--ignore-gpu-blocklist'];
+  opzioni = Object.assign({}, opzioni); delete opzioni.webgl;
+  const base = ['--no-sandbox', '--allow-file-access-from-files'].concat(gl);
+  /* Gli argomenti di chi apre il browser si aggiungono a questi, non li
+     sostituiscono: prima chi passava i suoi (la rete finta) perdeva WebGL. */
+  const args = base.concat((opzioni.args || []).filter(a => !base.includes(a)));
+  const browser = await chromium.launch(Object.assign({}, exe ? { executablePath: exe } : {}, opzioni, { args }));
+  /* Con la rete finta (rete-finta.js) le CDN e le mappe rispondono da un
+     server locale: MapLibre va preso li', dove la prova lo conta e lo
+     rallenta, e non dal pacchetto (vedi il recinto). */
+  const reteFinta = args.some(a => a.startsWith('--host-resolver-rules'));
   /* Le pagine nascono in italiano, sempre. Da quando l'app segue la lingua
      del telefono, ereditare quella del computer su cui girano le prove
      significherebbe provare l'app in inglese senza averlo deciso - ed e' gia'
@@ -53,7 +67,7 @@ async function apriBrowser(opzioni = {}) {
   const nuovaPagina = browser.newPage.bind(browser);
   browser.newPage = async (opz = {}) => {
     const { avvisi, ...resto } = opz;
-    const page = await recinta(await nuovaPagina(Object.assign({ locale: 'it-IT' }, resto)));
+    const page = await recinta(await nuovaPagina(Object.assign({ locale: 'it-IT' }, resto)), { reteFinta });
     if (!avvisi) await avvisoGiaVisto(page);
     return page;
   };
@@ -97,7 +111,10 @@ async function avvisoGiaVisto(page) {
  *
  * COSA PASSA. Solo il guscio: i pacchetti e i caratteri delle CDN, che sono
  * codice e non dati nostri. Tutto il resto - il ponte, Overpass, Nominatim,
- * il meteo, le mattonelle - o se lo intercetta la prova, o non succede.
+ * il meteo, le mappe di Esri - o se lo intercetta la prova, o non succede.
+ * MapLibre, che e' un mega, arriva dal pacchetto installato anche dove la CDN
+ * risponde: e' la stessa versione, e una prova non aspetta la rete per una
+ * mappa (le risposte di Esri finte stanno in test/esri-finto.js).
  * Le rotte che la prova aggiunge dopo vincono su questa, perche' Playwright
  * guarda prima l'ultima registrata: il recinto e' il ripiego, non un muro.
  *
@@ -126,7 +143,7 @@ function carattereLocale(route, url) {
   return route.fulfill({ status: 200, contentType: file.endsWith('.css') ? 'text/css' : 'font/woff2', body: fs.readFileSync(dove) });
 }
 
-async function recinta(page) {
+async function recinta(page, { reteFinta = false } = {}) {
   const fermate = [];
   page.__fuori = fermate;
   /* Si aspetta che la rotta sia davvero posata prima di restituire la
@@ -139,6 +156,10 @@ async function recinta(page) {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return route.continue();
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return route.continue();
     if (CARATTERI && /^fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) return carattereLocale(route, url);
+    if (!reteFinta && url.hostname === 'unpkg.com' && /^\/maplibre-gl@\d+\.\d+\.\d+\/dist\/maplibre-gl\.(js|css)$/.test(url.pathname)) {
+      const file = dentroMapLibre(url.pathname.split('/').pop());
+      if (fs.existsSync(file)) return route.fulfill({ status: 200, contentType: file.endsWith('.css') ? 'text/css' : 'application/javascript', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(file) });
+    }
     if (FUORI_AMMESSI.has(url.hostname)) return route.continue();
     fermate.push(u);
     return route.abort('blockedbyclient');
@@ -149,15 +170,15 @@ async function recinta(page) {
 /* Quello che il recinto ha fermato, per chi lo vuole controllare. */
 function fuoriFermate(page) { return page.__fuori || []; }
 
-/* La mappa arriva da una CDN che qui non e' raggiungibile: le prove la
-   servono dal pacchetto installato. Il percorso lo chiede Node, invece di
-   costruirlo a mano da __dirname - che cambia appena un file si sposta di
-   cartella, come e' successo portando le prove dentro test/. */
-function leafletJs()  { return dentroLeaflet('leaflet.js'); }
-function leafletCss() { return dentroLeaflet('leaflet.css'); }
-function dentroLeaflet(nome) {
-  try { return require.resolve('leaflet/dist/' + nome); }
-  catch (e) { return path.join(RADICE, 'node_modules/leaflet/dist/', nome); }
+/* MapLibre arriva da una CDN: le prove lo servono dal pacchetto installato
+   (vedi il recinto). Il percorso lo chiede Node, invece di costruirlo a mano
+   da __dirname - che cambia appena un file si sposta di cartella, come e'
+   successo portando le prove dentro test/. */
+function maplibreJs()  { return dentroMapLibre('maplibre-gl.js'); }
+function maplibreCss() { return dentroMapLibre('maplibre-gl.css'); }
+function dentroMapLibre(nome) {
+  try { return require.resolve('maplibre-gl/dist/' + nome); }
+  catch (e) { return path.join(RADICE, 'node_modules/maplibre-gl/dist/', nome); }
 }
 
 /* Dove finiscono le immagini che le prove scattano per farsi guardare da un
@@ -173,4 +194,4 @@ function cartellaFoto() {
   return dir;
 }
 
-module.exports = { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto, fuoriFermate, FUORI_AMMESSI };
+module.exports = { apriBrowser, recinta, APP, RADICE, maplibreJs, maplibreCss, cartellaFoto, fuoriFermate, FUORI_AMMESSI };

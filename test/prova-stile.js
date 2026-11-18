@@ -80,8 +80,8 @@ const visibile = `el => { const q = el.getBoundingClientRect(); if (q.width < 1 
 const TIPI = {
   'principale': '.btn-primario', 'secondario': '.btn-secondario', 'terziario': '.btn-terziario', 'eliminazione': '.btn-elimina',
   'pillola': '.chip', 'controllo a schede': '.seg-btn', 'giorno': '.giorno', 'riga di elenco': '.riga',
-  'crocetta': '.x,.x-close,.val-x,.ub-x,.pchip button,.tap-chip button',
-  'barra in basso': '.nav-item', 'mappa': '.locate-fab,.leaflet-control a', 'segnaposto della mappa': '.leaflet-marker-icon',
+  'crocetta': '.x,.x-close,.val-x,.ub-x,.pchip button,.tap-chip button,.maplibregl-popup-close-button',
+  'barra in basso': '.nav-item', 'mappa': '.locate-fab,.maplibregl-ctrl-group button,.g-fonti', 'segnaposto della mappa': '.maplibregl-marker',
   'barra in alto': '.menu-btn,.th-btn,.tb-profilo', 'cielo della Home': '.hh-cerca,.hh-grado,.hh-eyebrow,.hh-city',
   'scheda': '.card,.hh-card,.hh-soon,.hh-empty,.hist-card,.exp-row,.person,.wcard,.cat,.tt-block,.tt-act,.res,.rcard,.ms-row,.split-item',
   'nome nella scheda': '.come-testo,.trip-hero-name,.hist-n,.ticket-n', 'link nel testo': 'a[href]:not(.btn):not(.chip)',
@@ -137,7 +137,7 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
         let t;
         while ((t = w.nextNode())) {
           const p = t.parentElement;
-          if (!p || p.closest('.leaflet-container,script,style,svg,option,#bootSplash') || !vis(p)) continue;
+          if (!p || p.closest('.maplibregl-map,.g-ferma,script,style,svg,option,#bootSplash') || !vis(p)) continue;
           const fs = parseFloat(getComputedStyle(p).fontSize);
           if (p.closest('.hh-city,.mt-temp')) { if (fs < 44) out.push(`${fs}px nel cielo «${t.data.trim().slice(0, 16)}»`); continue; }
           if (!SCALA.some(s => Math.abs(s - fs) < 0.3)) out.push(`${Math.round(fs * 10) / 10}px «${t.data.trim().slice(0, 18)}»`);
@@ -161,8 +161,10 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
        maschera è trasparenza, non colore), il logo e la schermata
        d'apertura (il marchio non si tocca), le illustrazioni della
        presentazione e dello scanner, i segnaposto e i pallini delle mappe,
-       la stampa del diario, la pubblicità e il Premium. */
-    const MOTIVATO = /\.cl-|\.cielo|\.hh-velo|\.hh-city|\.mt-hero|\.mt-txt|\.brand-logo|#bootSplash|\.bootSplash|\.sw-in|\.scan-|\.intro-ill|\.i-|\.pin|\.vm-|#diaryPrint|\.hh::after|\.hh\.cl|\.vetro|@keyframes|\.leaflet|\.ad-slot|\.prem/;
+       i toni delle mappine ferme (gli stessi di MAPPA_TONI: stanno sopra la
+       foto, che non cambia col tema), la stampa del diario, la pubblicità e
+       il Premium. */
+    const MOTIVATO = /\.cl-|\.cielo|\.hh-velo|\.hh-city|\.mt-hero|\.mt-txt|\.brand-logo|#bootSplash|\.bootSplash|\.sw-in|\.scan-|\.intro-ill|\.i-|\.pin|\.vm-|#diaryPrint|\.hh::after|\.hh\.cl|\.vetro|@keyframes|\.g-ferma|\.ad-slot|\.prem/;
     const COLORE = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/;
     const libero = d => MOTIVATO.test(d.sel) || /mask/.test(d.p);
     const colori = dichiarazioni.filter(d => COLORE.test(d.v) && !libero(d)).map(d => `${d.sel.slice(0, 36)} {${d.p}:${d.v.slice(0, 40)}}`);
@@ -268,7 +270,17 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
         await page.evaluate(() => document.querySelectorAll('.modal.active').forEach(m => closeSheet(m.id)));
         await page.waitForTimeout(80);
         await page.evaluate(js => { eval(js); }, js);
+        /* Si guarda il foglio arrivato, non a meta' corsa: 450 ms fissi
+           bastavano finche' sotto non c'era una mappa da disegnare. Con
+           MapLibre, nel browser delle prove (WebGL fatto dal processore,
+           SwiftShader) il foglio puo' metterci di piu' a salire mentre la
+           mappa di Oggi o del Programma si disegna. */
         await page.waitForTimeout(450);
+        await page.waitForFunction(() => {
+          const m = [...document.querySelectorAll('.modal.active')].pop(), s = m && m.querySelector('.sheet');
+          if (!s) return true;
+          return Math.abs(new DOMMatrixReadOnly(getComputedStyle(s).transform).m42) < 0.5 && !s.getAnimations().some(a => a.playState === 'running');
+        }, null, { timeout: 3000 }).catch(() => {});
         const e = await page.evaluate(() => {
           const m = [...document.querySelectorAll('.modal.active')].pop(); if (!m) return { niente: true };
           const s = m.querySelector('.sheet'); s.scrollTop = 0;

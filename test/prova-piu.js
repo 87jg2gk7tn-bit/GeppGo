@@ -1,4 +1,4 @@
-const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const oggi = new Date().toISOString().split('T')[0];
 const stato = {trips:[{id:1730000000001,name:'Praga',destination:'Praga',currency:'EUR',status:'open',start:oggi,end:oggi,
@@ -13,7 +13,6 @@ const stato = {trips:[{id:1730000000001,name:'Praga',destination:'Praga',currenc
   const b = await apriBrowser();
   const p = await b.newPage({ viewport:{width:390,height:844}, deviceScaleFactor:2 });
   const err=[]; p.on('pageerror', e=>err.push(e.message.split('\n')[0]));
-  await p.route('**/leaflet@1.9.4/dist/leaflet.js', r=>r.fulfill({status:200,contentType:'application/javascript',body:fs.readFileSync(leafletJs(),'utf8')}));
   await p.route('**/tile.openstreetmap.org/**', r=>r.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
   await p.addInitScript(s=>localStorage.setItem('geppgo2',JSON.stringify(s)), stato);
   await p.goto(APP,{waitUntil:'domcontentloaded'});

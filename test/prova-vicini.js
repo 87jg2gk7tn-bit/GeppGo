@@ -1,7 +1,7 @@
 /* I due casi segnalati: la banca sotto casa col bancomat, e il bagno del parco.
    Overpass non è raggiungibile da qui: si intercetta la chiamata, si legge la
    domanda che parte e si risponde come farebbe lui. */
-const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -31,7 +31,6 @@ const lontano = { lat: 45.4795, lng: 9.1900 };
        cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
     const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => r.push(' FALLITO  errore in pagina: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route('**/tile.openstreetmap.org/**', ro => ro.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }));
 
     const chiamate = [];

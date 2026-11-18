@@ -82,10 +82,10 @@ async function giroTesti(browser, lingua, larghezza, soloQuesti) {
    Una stringa che si legge uguale in italiano e nella lingua d'arrivo o è un
    nome, o è una parola uguale per davvero, o non è tradotta. */
 const IDENTICHE = new Set([
-  'GeppGo', 'GeppGo Premium', 'Premium', '✨ Premium', 'Leaflet', '© OSM', 'OpenStreetMap', 'Google Maps', 'Apple Maps', 'Apple', 'Google', 'Android',
+  'GeppGo', 'GeppGo Premium', 'Premium', '✨ Premium', 'Powered by', 'Powered by Esri', 'Esri', '©', '© OpenStreetMap', 'OpenStreetMap', 'Google Maps', 'Apple Maps', 'Apple', 'Google', 'Android',
   'iPhone', 'Instagram', 'TikTok', 'Excel', 'Numbers', 'CSV', 'PDF', 'QR', 'GPS', 'OK', 'ok', 'Go', 'Email', 'E-mail', 'Password', 'Budget',
   'Hotel', 'Check-in', 'Check-out', 'Italiano', 'English', 'Español', 'Français', 'Português', 'Supabase', 'Cloudflare',
-  'Project URL', 'https://...', 'es. MXP', 'es. NRT', 'A JavaScript library for interactive maps', 'Tavily',
+  'Project URL', 'https://...', 'es. MXP', 'es. NRT', 'Tavily',
   'Overpass', 'Nominatim', 'Photon', 'Wi-Fi', 'Bluetooth', 'Safari', 'Chrome', 'Home', 'Booking', 'Airbnb',
   'Every Door', 'Data Matrix', 'Aztec', 'PDF417', 'Louvre Musée d\'Orsay Sainte-Chapelle', 'Project Settings > API', 'https://xxxxx.supabase.co', 'Marco',
   // «Maps» è Google Maps detto corto: dalla Layout 1 la 🗺️ davanti è un'icona
