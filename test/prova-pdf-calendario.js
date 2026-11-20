@@ -40,7 +40,7 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const { pathToFileURL } = require('url');
-const { apriBrowser, APP, leafletJs, leafletCss, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const { VIAGGIO, PORTO, apriPagina, giornoA, iso } = require('./schermate');
 
 const r = [];
@@ -317,8 +317,6 @@ async function apriCloud(browser, utente, { larghezza = 390 } = {}) {
   page.on('pageerror', e => errori.push('PAGEERROR(cloud): ' + e.message.split('\n')[0]));
   page.on('dialog', d => d.dismiss().catch(() => {}));
   await page.exposeBinding('__nuvolaRpc', (src, q) => nuvola.esegui(q, src.page));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({ status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   /* Open-Meteo: solo la domanda del fuso (un giorno, timezone=auto) ha una
      risposta; il meteo vero resta fuori, come senza rete. */
@@ -497,7 +495,7 @@ function leggiIcs(testo) {
     const giorni = Array.from({ length: 21 }, (_, i) => ({ id: 'g' + i, date: iso(giornoA(i)), title: '', activities: [{ id: 5000 + i, name: 'Tappa ' + (i + 1), time: '10:00', timeEnd: '', lat: 35 + i * 0.01, lng: 135.7 + i * 0.01, who: [1], notes: '' }] }));
     const lungo = Object.assign(copia(VIAGGIO), { start: giorni[0].date, end: giorni[20].date, days: giorni, hotels: [] });
     const p = await apriPagina(browser, { errori, chiave: 'colori-' + Math.random(), viaggi: [lungo, PORTO] });
-    await p.waitForFunction(() => typeof L !== 'undefined', null, { timeout: 15000 }).catch(() => {});
+    await p.waitForFunction(() => typeof maplibregl !== 'undefined', null, { timeout: 15000 }).catch(() => {});
     await p.evaluate(() => apriMappaViaggio());
     await aspetta(p, () => document.querySelectorAll('#vmGiorni .vm-pallino').length >= 21, null, 6000);
     const visti = await p.evaluate(() => ({ elenco: COLORI_GIORNI.slice(), pallini: [...document.querySelectorAll('#vmGiorni .vm-pallino')].map(e => getComputedStyle(e).backgroundColor) }));
@@ -513,25 +511,28 @@ function leggiIcs(testo) {
 
     // le crocette: la mappa della Home e quella della giornata, in inglese
     const q = await apriPagina(browser, { lingua: 'en', errori, chiave: 'croci-' + Math.random() });
-    await q.waitForFunction(() => typeof L !== 'undefined', null, { timeout: 15000 }).catch(() => {});
-    /* la scheda della prima tappa, aperta come la apre il tocco sul segnaposto */
-    const croce = async (sel, mappa) => {
-      await aspetta(q, s => document.querySelectorAll(s + ' .leaflet-marker-icon').length > 0, sel, 8000);
-      await q.evaluate(nome => { const m = window.eval(nome); let primo = null; m.eachLayer(l => { if (!primo && l.getPopup && l.getPopup()) primo = l; }); primo.openPopup(); }, mappa);
-      await q.waitForSelector(sel + ' .leaflet-popup-close-button', { timeout: 3000 });
+    await q.waitForFunction(() => typeof maplibregl !== 'undefined', null, { timeout: 15000 }).catch(() => {});
+    /* la scheda della prima tappa, aperta col tocco sul segnaposto */
+    const croce = async sel => {
+      await aspetta(q, s => document.querySelectorAll(s + ' .maplibregl-marker').length > 0, sel, 8000);
+      await q.evaluate(s => document.querySelector(s + ' .maplibregl-marker.pin').click(), sel);
+      await q.waitForSelector(sel + ' .maplibregl-popup-close-button', { timeout: 3000 });
       await q.waitForTimeout(500);
       return q.evaluate(s => {
-        const b = document.querySelector(s + ' .leaflet-popup-close-button');
+        const b = document.querySelector(s + ' .maplibregl-popup-close-button');
         b.scrollIntoView({ block: 'center' });
         const k = b.getBoundingClientRect(), cx = k.left + k.width / 2, cy = k.top + k.height / 2;
-        const prende = (dx, dy) => { const el = document.elementFromPoint(cx + dx, cy + dy); return !!el && (el === b || b.contains(el)); };
-        return { nome: b.getAttribute('aria-label'), titolo: b.title, tocco: [[-21, 0], [21, 0], [0, -21], [0, 21]].every(([x, y]) => prende(x, y)),
-          scheda: b.closest('.leaflet-popup').querySelector('.leaflet-popup-content').innerText.trim() };
+        const chi = (dx, dy) => document.elementFromPoint(cx + dx, cy + dy);
+        const prende = (dx, dy) => { const el = chi(dx, dy); return !!el && (el === b || b.contains(el)); };
+        /* chi copre i punti che non la prendono: per sapere dove guardare */
+        const coperta = [[-21, 0], [21, 0], [0, -21], [0, 21]].filter(([x, y]) => !prende(x, y)).map(([x, y]) => { const el = chi(x, y); return `${x},${y}: ${el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '.' + String(el.className && el.className.baseVal != null ? el.className.baseVal : el.className).trim().replace(/\s+/g, '.') : 'niente'}`; });
+        return { nome: b.getAttribute('aria-label'), titolo: b.title, tocco: !coperta.length, ...(coperta.length ? { coperta } : {}),
+          scheda: b.closest('.maplibregl-popup').querySelector('.g-scheda-dentro').innerText.trim() };
       }, sel);
     };
-    const home = await croce('#homeMap', 'homeMapObj');
-    await q.evaluate(() => { homeMapObj.closePopup(); openDay(0); });
-    const giorno = await croce('#dayMap', 'dayMapObj');
+    const home = await croce('#homeMap');
+    await q.evaluate(() => { chiudiScheda(homeMapObj); openDay(0); });
+    const giorno = await croce('#dayMap');
     await q.close();
     ok('1. la crocetta della scheda sulla mappa della Home risponde su 44 px e si chiama «Close» in inglese', home.tocco && home.nome === 'Close' && home.titolo === 'Close', JSON.stringify(home));
     ok('1. e cosi\' quella sulla mappa della giornata (dove la scheda dice anche l\'ora in inglese)', giorno.tocco && giorno.nome === 'Close' && /\nat \d\d:\d\d$/.test(giorno.scheda), JSON.stringify(giorno));
@@ -861,7 +862,7 @@ function leggiIcs(testo) {
             if (radice.scrollWidth > radice.clientWidth + 1) guai.push('il foglio scorre di lato: ' + radice.scrollWidth + ' > ' + radice.clientWidth);
             radice.querySelectorAll('*').forEach(el => {
               const r2 = el.getBoundingClientRect();
-              if (!r2.width || !el.getClientRects().length || el.closest('.leaflet-pane,.leaflet-control-container')) return;
+              if (!r2.width || !el.getClientRects().length || el.closest('.maplibregl-canvas-container,.maplibregl-control-container')) return;
               if (r2.right > W + 1 || r2.left < -1) guai.push('fuori: ' + (el.id || el.className || el.tagName) + ' ' + Math.round(r2.left) + '–' + Math.round(r2.right));
               const st = getComputedStyle(el);
               if ((st.overflow === 'hidden' || st.textOverflow === 'ellipsis') && el.scrollWidth > el.clientWidth + 1 && el.children.length === 0 && el.textContent.trim()) guai.push('tagliato: ' + el.textContent.trim().slice(0, 30));

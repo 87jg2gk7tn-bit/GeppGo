@@ -1,4 +1,4 @@
-const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const oggi = new Date().toISOString().split('T')[0];
 // viaggio in yen: 20000 spesi in due, quindi 10000 a testa
@@ -10,7 +10,6 @@ const stato = {trips:[{id:1730000000001,name:'Giappone 26',destination:'Tokyo',c
   const b = await apriBrowser();
   const p = await b.newPage({ viewport:{width:390,height:844}, deviceScaleFactor:2 });
   const err=[]; p.on('pageerror', e=>err.push(e.message.split('\n')[0]));
-  await p.route('**/leaflet@1.9.4/dist/leaflet.js', r=>r.fulfill({status:200,contentType:'application/javascript',body:fs.readFileSync(leafletJs(),'utf8')}));
   await p.route('**/tile.openstreetmap.org/**', r=>r.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
   // il cambio: 1 JPY = 0,0060 EUR (niente rete, si risponde noi)
   await p.route('**/v6/latest/**', r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({rates:{EUR:0.006,JPY:1,USD:0.0067}})}));

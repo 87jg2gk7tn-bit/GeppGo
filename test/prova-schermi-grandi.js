@@ -430,9 +430,9 @@ const CONFRONTA = async ([a, b]) => {
       await blocco.scrollIntoViewIfNeeded(); await blocco.click(); await p.waitForTimeout(700);
       const t = await p.evaluate(() => {
         const el = document.querySelector('#ttBody .tt-block[data-id="13"]'), mk = dayMapSegni[13] && dayMapSegni[13].getElement();
-        return { tappa: el.classList.contains('scelta') && el.getAttribute('aria-current') === 'true', segno: !!mk && !!mk.querySelector('.pin.scelto'),
-          altri: document.querySelectorAll('#dayMap .pin.scelto').length, scheda: !!document.querySelector('#dayMap .leaflet-popup'),
-          apri: (() => { const x = document.querySelector('#dayMap .leaflet-popup .tt-apri-tappa'); return !!x && getComputedStyle(x).display !== 'none'; })(),
+        return { tappa: el.classList.contains('scelta') && el.getAttribute('aria-current') === 'true', segno: !!mk && mk.matches('.pin.scelto'),
+          altri: document.querySelectorAll('#dayMap .pin.scelto').length, scheda: !!document.querySelector('#dayMap .maplibregl-popup'),
+          apri: (() => { const x = document.querySelector('#dayMap .maplibregl-popup .tt-apri-tappa'); return !!x && getComputedStyle(x).display !== 'none'; })(),
           menu: document.getElementById('mActMenu').classList.contains('active') };
       });
       if (!t.tappa || !t.segno || t.altri !== 1 || !t.scheda || !t.apri || t.menu) male.push(`${dove}: toccando la tappa ${JSON.stringify(t)}`);
@@ -441,19 +441,26 @@ const CONFRONTA = async ([a, b]) => {
       await chiudiFogli(p); await p.waitForTimeout(400);
       /* «Apri» sulla scheda del segnaposto apre il menu */
       await p.evaluate(() => { ttEvidenzia(12, true); }); await p.waitForTimeout(500);
-      const tastoApri = p.locator('#dayMap .leaflet-popup .tt-apri-tappa');
+      const tastoApri = p.locator('#dayMap .maplibregl-popup .tt-apri-tappa');
       if (await tastoApri.count()) { await tastoApri.click(); await p.waitForTimeout(500); }
       const daApri = await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active') && actMenuRef && actMenuRef.id === 12);
       if (!daApri) male.push(`${dove}: «Apri» sulla mappa non apre la tappa`);
       await chiudiFogli(p); await p.waitForTimeout(400);
       /* un tocco vero su un segnaposto: si accende la sua tappa, e la giornata ci va */
-      await p.evaluate(() => { document.querySelector('main.scroll').scrollTop = 0; dayMapObj.setView(dayMapSegni[11].getLatLng(), 15, { animate: false }); }); await p.waitForTimeout(450);
+      await p.evaluate(() => { document.querySelector('main.scroll').scrollTop = 0; chiudiScheda(dayMapObj); dayMapObj.jumpTo({ center: dayMapSegni[11].getLngLat(), zoom: 14 }); }); await p.waitForTimeout(450);
       const xy = await p.evaluate(() => { const q = dayMapSegni[11].getElement().getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; });
       await p.mouse.click(xy.x, xy.y); await p.waitForTimeout(900);
+      /* la giornata ci va scorrendo: si aspetta che lo scorrimento finisca
+         (con WebGL fatto dal processore i fotogrammi possono rallentare), non
+         un numero fisso di millisecondi */
+      await p.waitForFunction(() => new Promise(fatto => {
+        const sc = document.querySelector('main.scroll'), a = sc.scrollTop;
+        setTimeout(() => fatto(Math.abs(sc.scrollTop - a) < 1), 150);
+      }), null, { timeout: 4000, polling: 200 }).catch(() => {});
       const s = await p.evaluate(() => {
         const el = document.querySelector('#ttBody .tt-block[data-id="11"]'), q = el.getBoundingClientRect(), sc = document.querySelector('main.scroll').getBoundingClientRect();
         const testa = document.getElementById('ttTestata').getBoundingClientRect().bottom;
-        return { tappa: el.classList.contains('scelta'), segno: !!dayMapSegni[11].getElement().querySelector('.pin.scelto'), aVista: q.top >= testa - 1 && q.bottom <= sc.bottom + 1, scelta: ttScelta };
+        return { tappa: el.classList.contains('scelta'), segno: dayMapSegni[11].getElement().matches('.pin.scelto'), aVista: q.top >= testa - 1 && q.bottom <= sc.bottom + 1, scelta: ttScelta };
       });
       if (!s.tappa || !s.segno || !s.aVista) male.push(`${dove}: toccando il segnaposto ${JSON.stringify(s)}`);
       /* con la tastiera (o VoiceOver) il menu si apre subito */
@@ -536,7 +543,12 @@ const CONFRONTA = async ([a, b]) => {
       ['Prenotazioni', "apriPrenotazioni('biglietti')"], ['menu dei viaggi', 'apriViaggi()'], ['Nuova spesa', 'openExpense()'], ['menu della tappa', 'openDay(0);tapAct(0,13)']];
     const foto = async (indirizzo, tema) => {
       const p = await apriPagina(browser, { errori, chiave: 'iph-' + Math.random(), attesa: 700, tema, indirizzo });
-      await p.addStyleTag({ content: '*{caret-color:transparent!important}' });
+      /* L'interno delle mappe si nasconde nelle due versioni: dalle mappe
+         nuove (MapLibre ed Esri, novembre 2026) e' cambiato apposta, e la
+         versione di riferimento ha ancora le mappe di prima, che per di piu'
+         arrivano da una CDN (qui o ci sono o no). Resta tutto il resto, con i
+         riquadri delle mappe al loro posto e delle loro misure. */
+      await p.addStyleTag({ content: '*{caret-color:transparent!important}#homeMap,#dayMap,#map,#vmMappa,.mini-map{visibility:hidden!important}#homeMapWrap,#dayMapWrap{display:block!important}#ttTutto{display:none!important}' });
       const out = [];
       for (const [nome, js] of SCHERMATE) {
         await chiudiFogli(p); await p.waitForTimeout(80);

@@ -27,7 +27,7 @@
    valigia» resta in Home, e le prove 3 e 4 sono quelle di prima. */
 const fs = require('fs');
 const path = require('path');
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const { fileURLToPath } = require('url');
 /* I file si leggono da dove sta l'app che si prova: con APP_URL che punta
    a una copia (la controprova sul codice di prima) si legge quella. */
@@ -64,7 +64,6 @@ async function apri(browser, { fra = 3, viaggioExtra = {}, larghezza = 390, scur
   const page = await browser.newPage({ viewport: { width: larghezza, height: 844 } });
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|ERR_BLOCKED|net::/.test(m.text())) errori.push('CONSOLE: ' + m.text().slice(0, 140)); });
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   if (ora) await page.clock.install({ time: ora });
   await page.addInitScript(([t, scuro, lingua, valigia, x]) => {

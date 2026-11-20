@@ -14,7 +14,7 @@
  * non esce in rete, le sue domande si catturano e basta. È questo script,
  * da fuori, a mandarle — così si sa esattamente cosa è partito.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -39,8 +39,6 @@ async function domandeDellApp() {
      cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
   const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   let viste = [];
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   /* Si risponde «niente» a tutto, con la data giusta: così l'app percorre
      tutta la scala fino in fondo, ricerca per nome compresa — che è il caso
      peggiore, quello di chi non trova. */

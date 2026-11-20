@@ -16,7 +16,7 @@
    diverso. Se guarda l'orologio della macchina, rispondono per forza
    uguale — qualunque ora sia. È quella riga a essere rossa sul codice di
    prima, sempre, non a volte. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 /* La data di OGGI in UTC: è su quella che cadono tutti e due i posti,
@@ -65,8 +65,6 @@ const stato = (scarto, punto, extra) => ({
   async function apri(st, oreFinte) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());
     await page.route(/api\.open-meteo\.com/, ro => ro.abort());
@@ -378,8 +376,6 @@ const stato = (scarto, punto, extra) => ({
   };
   page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());
   await page.route(/api\.open-meteo\.com/, ro => ro.fulfill({

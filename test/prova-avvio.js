@@ -10,7 +10,8 @@
    2. rete lenta oltre 3 secondi: si apre la copia, e la copia si aggiorna;
    3. rete buona: arriva subito l'ultima versione;
    4. all'avvio niente lettori dei codici ne' codici a barre; arrivano al
-      momento, e funzionano;
+      momento, e funzionano. La mappa (MapLibre) arriva solo se a schermo
+      c'e' una mappa;
    5. ogni libreria ha la versione esatta e punta a un file che c'e';
    6. dopo il primo avvio, senza rete: mappa, scanner, codici a barre;
    7. il cloud che non arriva: chi non ha l'account lo sa, chi ce l'ha entra;
@@ -24,6 +25,7 @@ const path = require('path');
 const { apriBrowser, APP, RADICE } = require('./browser');
 const { serverFinti, misuraAvvio, leggiIndirizzo, filePacchetto } = require('./rete-finta');
 const { funzioniMancanti } = require('./funzioni-mancanti');
+const { senzaCommentiHtml } = require('./fai-il-sito');
 
 /* Il file e' quello indicato da APP_URL, se c'e': cosi' la controprova sul
    codice vecchio prova davvero il codice vecchio, service worker compresa. */
@@ -175,8 +177,19 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     await p.waitForTimeout(2500);
     const avvio = srv.log.slice(da).filter(v => v.dove === 'cdn').map(v => v.url);
     const vietate = avvio.filter(u => /jsqr|zxing|bwip|sortable/i.test(u));
-    ok('4. all\'avvio non partono richieste per jsQR, ZXing, bwip-js e Sortable', !vietate.length && avvio.some(u => /leaflet/.test(u)),
+    ok('4. all\'avvio non partono richieste per jsQR, ZXing, bwip-js e Sortable', !vietate.length,
        vietate.join(' ') || avvio.map(u => u.split('/').slice(-3).join('/')).join(' '));
+    /* MapLibre (un mega) arriva quando a schermo c'e' una mappa: qui c'e',
+       quella di Oggi, e la mappa nasce. Arriva a schermata d'apertura
+       sparita (chiediMappe), quindi si aspetta la mappa, non un numero fisso
+       di millisecondi; le richieste vietate qui sopra si sono contate prima,
+       perche' dopo 4 secondi la service worker scarica in sottofondo proprio
+       quelle librerie. */
+    await p.waitForFunction(() => typeof maplibregl !== 'undefined' && !!homeMapObj, null, { timeout: 10000 }).catch(() => {});
+    const mappa = srv.log.slice(da).filter(v => v.dove === 'cdn' && /maplibre-gl@/.test(v.url));
+    const conMappa = await p.evaluate(() => ({ lib: typeof maplibregl, home: !!homeMapObj }));
+    ok('4. con una mappa a schermo MapLibre arriva, e la mappa di Oggi nasce', mappa.length === 2 && conMappa.lib === 'object' && conMappa.home,
+       JSON.stringify(conMappa) + ' · ' + mappa.length + ' richieste');
     // lo scanner: i lettori arrivano aprendolo, e la fotocamera (finta) parte
     const d2 = srv.log.length;
     await p.evaluate(() => openScanner());
@@ -198,6 +211,21 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const barre = await p.evaluate(() => { const c = document.querySelector('#qr-77 canvas'); return { bwip: typeof bwipjs, tela: !!c && c.width > 50 }; });
     ok('4. il codice a barre arriva al momento e viene disegnato', barre.bwip === 'object' && barre.tela && chieste(d3, /bwip/).length === 1, JSON.stringify(barre));
     await p.close();
+    /* Senza nessuna mappa a schermo (le tappe di oggi non hanno un posto)
+       MapLibre non si scarica: e' il mega che chi non guarda una mappa non
+       deve pagare. Arriva aprendo una mappa. */
+    const d4 = srv.log.length;
+    const senzaPosti = viaggio();
+    senzaPosti.trips[0].days[0].activities.forEach(a => { delete a.lat; delete a.lng; });
+    const q = await apri(senzaPosti);
+    await q.waitForTimeout(2500);
+    const prima = chieste(d4, /maplibre-gl@/).length, lib = await q.evaluate(() => typeof maplibregl);
+    await q.evaluate(() => apriMappaViaggio());
+    await q.waitForTimeout(2500);
+    const dopo = chieste(d4, /maplibre-gl@/).length, viva = await q.evaluate(() => !!vmMappa);
+    ok('4. senza mappe a schermo MapLibre non arriva; aprendo una mappa si', prima === 0 && lib === 'undefined' && dopo === 2 && viva,
+       `all'avvio ${prima} richieste (${lib}), aprendo Tutto il viaggio ${dopo} · mappa: ${viva}`);
+    await q.close();
   });
 
   /* ── 5. versioni esatte, file che esistono ───────────────────────────── */
@@ -205,8 +233,9 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     const nellApp = [...new Set(HTML.match(/https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net|cdn\.sheetjs\.com)\/[^'"`\s)]+/g))];
     /* Solo le liste di librerie di sw.js: li' c'e' anche l'indirizzo dei
        caratteri, che non e' una libreria. LIBRERIE si scarica in sottofondo,
-       LIBRERIE_AL_MOMENTO (SheetJS e, dalla miglioria 13b, jsPDF per il PDF
-       dell'itinerario) no: arriva quando serve e poi resta. */
+       LIBRERIE_AL_MOMENTO (SheetJS, dalla miglioria 13b jsPDF per il PDF
+       dell'itinerario, e dalle mappe nuove MapLibre col suo foglio di stile)
+       no: arriva quando serve e poi resta. */
     const lista = nome => [...((new RegExp('const ' + nome + ' = \\[([\\s\\S]*?)\\];').exec(SW) || [, ''])[1]).matchAll(/'(https:\/\/[^']+)'/g)].map(m => m[1]);
     const sottofondo = lista('LIBRERIE'), alMomento = lista('LIBRERIE_AL_MOMENTO');
     const nelSw = sottofondo.concat(alMomento);
@@ -224,8 +253,10 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     ok('5. e punta a un file che esiste davvero nel pacchetto di quella versione', !mancanti.length, mancanti.join(' ') || daControllare.length + ' controllati');
     ok('5. la lista della service worker è la stessa dell\'app', JSON.stringify([...lib].sort()) === JSON.stringify([...nelSw].sort()) && lib.length === 9,
        lib.length + ' nell\'app, ' + nelSw.length + ' in sw.js');
-    ok('5. e quelle solo al momento (SheetJS, jsPDF) non si scaricano in sottofondo', alMomento.length === 2 && alMomento.some(u => /sheetjs/.test(u)) && alMomento.some(u => /jspdf/.test(u))
-       && JSON.stringify(alMomentoApp) === JSON.stringify(alMomento) && sottofondo.length === 7, JSON.stringify({ alMomento, alMomentoApp, sottofondo: sottofondo.length }));
+    const cssAlMomento = [...HTML.matchAll(/alMomento:true,css:'(https:\/\/[^']+)'/g)].map(m => m[1]);
+    ok('5. e quelle solo al momento (SheetJS, jsPDF, MapLibre) non si scaricano in sottofondo', alMomento.length === 4 && alMomento.some(u => /sheetjs/.test(u)) && alMomento.some(u => /jspdf/.test(u))
+       && alMomento.filter(u => /maplibre-gl@/.test(u)).length === 2 && !sottofondo.some(u => /maplibre|leaflet/.test(u))
+       && JSON.stringify(alMomentoApp.concat(cssAlMomento).sort()) === JSON.stringify([...alMomento].sort()) && sottofondo.length === 5, JSON.stringify({ alMomento, alMomentoApp, cssAlMomento, sottofondo: sottofondo.length }));
   });
 
   /* ── 6. dopo il primo avvio, senza rete ──────────────────────────────── */
@@ -244,8 +275,8 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     await p.reload({ waitUntil: 'domcontentloaded' });
     await pronta(p);
     await p.waitForTimeout(1500);
-    const mappa = await p.evaluate(() => ({ L: typeof L, mappa: !!map, home: !!homeMapObj }));
-    ok('6. senza rete la mappa c\'è', mappa.L === 'object' && mappa.mappa && mappa.home, JSON.stringify(mappa));
+    const mappa = await p.evaluate(() => ({ lib: typeof maplibregl, home: !!homeMapObj, segni: homeMapMarks.length }));
+    ok('6. senza rete la mappa c\'è, coi segnaposto', mappa.lib === 'object' && mappa.home && mappa.segni === 2, JSON.stringify(mappa));
     await p.evaluate(() => openScanner());
     await p.waitForTimeout(2000);
     const scan = await p.evaluate(() => ({ jsQR: typeof jsQR, zx: typeof ZXing, acceso: scanOn }));
@@ -353,13 +384,26 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
 
   /* ── 10. le misure, prima e dopo ─────────────────────────────────────── */
   await prova('10', async () => {
+    /* Si misura l'HTML che arriva davvero ai telefoni: la copia senza
+       commenti (test/fai-il-sito.js), come la serve Pages. Col file coi
+       commenti ogni commento nuovo allungava l'avvio misurato (14 KB
+       compressi in piu' col blocco delle mappe, un quarto di secondo a 400
+       kbps) senza che sul telefono cambiasse niente. */
+    const html = srv.stato.html;
+    srv.stato.html = senzaCommentiHtml(HTML);
     const giri = [];
-    for (let i = 0; i < 2; i++) giri.push(await misuraAvvio(browser, srv, { stato: viaggio() }));
+    try { for (let i = 0; i < 2; i++) giri.push(await misuraAvvio(browser, srv, { stato: viaggio() })); }
+    finally { srv.stato.html = html; }
     const m = giri.sort((x, y) => x.usabile - y.usabile)[0];
     console.log(`  misure — prima: schermata ${PRIMA.prima} ms, usabile ${PRIMA.usabile} ms, JS ${PRIMA.kbJs} KB · ` +
-      `adesso: schermata ${m.prima} ms, usabile ${m.usabile} ms, JS ${m.kbJs} KB (${m.fileJs.join(', ')}), HTML ${m.kbHtml} KB`);
+      `adesso: schermata ${m.prima} ms, usabile ${m.usabile} ms, JS ${m.kbJs} KB (${m.fileJs.join(', ')}; ${m.kbMappe} KB di mappa, chiesta a ${m.maplibre} ms), HTML ${m.kbHtml} KB`);
     ok('10. con la rete lenta l\'app è usabile prima', m.usabile < PRIMA.usabile * 0.75, `${PRIMA.usabile} → ${m.usabile} ms`);
-    ok('10. e scarica meno JavaScript all\'avvio', m.kbJs < PRIMA.kbJs / 2, `${PRIMA.kbJs} → ${m.kbJs} KB`);
+    /* La mappa di Oggi e' a schermo e la sua libreria (MapLibre, 270 KB
+       compressi) arriva dopo che l'app e' usabile: non pesa sull'avvio, e si
+       conta a parte. Che arrivi dopo lo dice la voce che segue. */
+    ok('10. e scarica meno JavaScript all\'avvio (la libreria della mappa a parte)', m.kbJsSenzaMappe < PRIMA.kbJs / 2, `${PRIMA.kbJs} → ${m.kbJsSenzaMappe} KB, più ${m.kbMappe} KB di mappa`);
+    ok('10. MapLibre, per la mappa di Oggi, si chiede solo a schermata d\'apertura sparita', m.maplibre != null && m.maplibre >= m.usabile,
+      m.maplibre == null ? 'mai chiesto: la mappa di Oggi non c\'era' : `usabile a ${m.usabile} ms, MapLibre chiesto a ${m.maplibre} ms`);
     ok('10. la prima schermata non arriva più tardi', m.prima <= PRIMA.prima * 1.15, `${PRIMA.prima} → ${m.prima} ms`);
   });
 

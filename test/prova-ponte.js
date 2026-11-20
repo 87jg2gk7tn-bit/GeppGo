@@ -19,7 +19,7 @@
  * (supabase/functions/vicini/domanda.mjs) apposta per poter essere provato
  * da qui: qui non c'e' Deno, e una regola di sicurezza che non si riesce a
  * provare e' una regola di cui non si sa niente. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -86,8 +86,6 @@ const stato = {
        cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
     const pq = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     const dette = [];
-    await pq.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await pq.route('**/api/interpreter', ro => {
       dette.push(decodeURIComponent(ro.request().postData() || '').replace(/^data=/, ''));
       ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass([])) });
@@ -131,8 +129,6 @@ const stato = {
     /* Si blocca solo quello che uscirebbe davvero in rete, non tutto:
        bloccando tutto la pagina non si carica e la costante si legge
        `null` — cioè la prova diventa rossa per colpa sua. */
-    await p0.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await p0.route(/tile\.openstreetmap\.org|api\.interpreter|nominatim|photon/, ro => ro.abort());
     await p0.goto(APP, { waitUntil: 'domcontentloaded' });
     await p0.waitForFunction(() => typeof VICINI_ATTESA_MS === 'number', { timeout: 20000 });
@@ -190,8 +186,6 @@ const stato = {
   async function apri({ ponte }) {
     const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     page._ponte = [];
     page._diretto = [];
@@ -284,8 +278,6 @@ const stato = {
   const vicino = { lat: IO.lat + 0.0004, lng: IO.lng - 0.0004 };   /* ~60 m più in là */
   const pagina2 = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   pagina2._ponte = [];
-  await pagina2.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await pagina2.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await pagina2.route('**/functions/v1/vicini', async route => {
     pagina2._ponte.push(JSON.parse(route.request().postData() || '{}').q || '');
@@ -316,8 +308,6 @@ const stato = {
      un difetto proprio in quello che non si guarda. */
   const pg = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   pg._geo = []; pg._nominatim = [];
-  await pg.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await pg.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await pg.route('**/functions/v1/geo', async route => {
     pg._geo.push(JSON.parse(route.request().postData() || '{}').url || '');
@@ -376,8 +366,6 @@ const stato = {
     const pa = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     pa.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     const alPonte = [];
-    await pa.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await pa.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await pa.route('**/functions/v1/vicini', async route => {
       alPonte.push(Date.now());
@@ -449,8 +437,6 @@ const stato = {
   async function conPonteLento({ direttaGiu }) {
     const pl = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     pl.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-    await pl.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await pl.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await pl.route('**/functions/v1/vicini', async route => {
       await new Promise(s => setTimeout(s, 15000));

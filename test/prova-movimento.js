@@ -9,7 +9,7 @@
  * Leggendo il codice non si vedeva. Misurandolo sì. Per questo qui non si
  * controlla che *esista* un'animazione: si guarda dove sta il foglio,
  * fotogramma per fotogramma, e si pretende che si muova davvero. */
-const { apriBrowser, APP, leafletJs, leafletCss } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const stato = {
@@ -191,14 +191,10 @@ const SEGUI = `(async (id, quanti) => {
      allo schermo e alla barra in basso, non se esiste una riga di codice. */
   const conTappe = await browser.newPage({ viewport: { width: 390, height: 844 } });
   conTappe.on('pageerror', e => err.push('PAGEERROR(giornata): ' + e.message));
-  /* Leaflet dal pacchetto, come sul server delle prove, dove arriva dalla
-     CDN. Senza, qui la mappa del giorno non c'era e al suo posto stava la
+  /* La mappa del giorno c'e', come sul telefono: MapLibre lo serve il
+     recinto dal pacchetto (browser.js). Senza mappa al suo posto stava la
      riga «Tutto il viaggio», 86 px piu' bassa: la prova guardava un'altra
      schermata, e su GitHub, con la mappa, la tappa finiva a filo della barra. */
-  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-  await conTappe.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({
-    status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
   await conTappe.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await conTappe.addInitScript(s => {
     const st = JSON.parse(JSON.stringify(s));

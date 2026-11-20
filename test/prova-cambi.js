@@ -21,7 +21,7 @@
    7. totali e saldi non contano le spese in attesa e lo dicono;
    8. due telefoni: i campi nuovi passano dal documento del viaggio intatti;
    9. i testi nuovi ci sono in tutte e cinque le lingue. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const OGGI = new Date().toISOString().split('T')[0];
@@ -47,8 +47,6 @@ async function apri(browser, stato, { cambi = null, lingua = null, rete = true }
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const stato_rete = { su: rete, chiamate: [] };
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   /* Il servizio dei cambi: una tabella con base euro, la valuta del viaggio.
      Senza rete, o per un'altra base, la richiesta cade come cadrebbe in

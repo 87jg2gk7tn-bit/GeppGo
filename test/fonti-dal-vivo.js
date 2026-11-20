@@ -13,7 +13,7 @@
  * nuovo a cui mandare le ricerche di chi usa l'app, e quella è una scelta
  * da fare apposta, non di passaggio.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 const path = require('path');
@@ -86,8 +86,6 @@ async function primeDomande() {
      cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
   const page = await browser.newPage({ permissions: ['geolocation'] });
   let viste = [];
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route('**/api/interpreter', ro => {
     viste.push(decodeURIComponent(ro.request().postData() || '').replace(/^data=/, ''));
     ro.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(comeOverpass([])) });

@@ -39,7 +39,7 @@
 <div class="w">
 
 <h1>Confidentialité de GeppGo</h1>
-<p class="data">En vigueur depuis le 1er septembre 2026 · mise à jour le 20 octobre 2026</p>
+<p class="data">En vigueur depuis le 1er septembre 2026 · mise à jour le 18 novembre 2026</p>
 <p class="lingue"><a href="privacy.html" lang="it">Italiano</a> · <a href="privacy-en.html" lang="en">English</a> · <a href="privacy-es.html" lang="es">Español</a> · <strong>Français</strong> · <a href="privacy-pt.html" lang="pt">Português</a></p>
 
 <div class="box" id="fa-fede">
@@ -198,6 +198,15 @@ s’effacent toutes seules et <strong>ne quittent jamais le téléphone</strong>
 elles n’arrivent ni à nous ni à personne d’autre. Si tu effaces les données de
 l’appli, elles disparaissent tout de suite.</p>
 
+<h3>Les cartes sans réseau</h3>
+<p>Les cartes sont fournies par <b>Esri</b> (voir le tableau ci-dessous). Les
+zones que tu regardes restent dans le téléphone, et se revoient même sans
+réseau : seulement pendant le temps qu’Esri permet (il l’écrit dans ses
+réponses), au maximum 1 500 morceaux, et jamais téléchargées à l’avance. Elles
+ne nous arrivent pas. Dans le Profil, à « La carte sans réseau », tu vois
+combien il y en a et tu les enlèves quand tu veux ; si Esri cesse d’accepter
+l’appli, elles sont jetées d’elles-mêmes.</p>
+
 <h3>« On se retrouve »</h3>
 <p>Qui organise un voyage en groupe peut appeler les autres d’un bouton :
 leurs téléphones reçoivent une alerte <strong>avec le point où se trouve la
@@ -348,7 +357,9 @@ lui sert pour faire sa part.</p>
 <tr><td>Wikipedia, Wikimedia, Wikidata</td><td>Nom du lieu</td><td>Description et photos des lieux</td></tr>
 <tr><td>MyMemory</td><td>Le texte cherché</td><td>Traduire une recherche quand elle ne trouve rien en italien</td></tr>
 <tr><td>er-api</td><td>Seulement les devises</td><td>Les taux de change</td></tr>
-<tr><td>jsDelivr, unpkg, SheetJS</td><td>Adresse IP</td><td>Télécharger les bibliothèques de l’appli (SheetJS sert à lire les fichiers Excel, fflate à faire et lire le fichier de sauvegarde, jsPDF à faire le PDF de l’itinéraire)</td></tr>
+<tr><td><b>Esri</b> (ArcGIS Location Platform), le fournisseur des cartes</td><td>Adresse IP et la zone de la carte que tu regardes (les morceaux de carte que le téléphone demande, qui peuvent être ceux autour de là où tu es) — <b>pas</b> qui tu es ni les étapes du voyage</td><td>Les cartes : la photo satellite et, de près, les rues et les noms (voir « Les cartes sans réseau »)</td></tr>
+<tr><td>Les cartes d’OpenStreetMap (<code>tile.openstreetmap.org</code>)</td><td>Adresse IP et la zone de la carte que tu regardes</td><td>Pour l’instant, et seulement quand les cartes d’Esri ne répondent pas : une carte simple à leur place</td></tr>
+<tr><td>jsDelivr, unpkg, SheetJS</td><td>Adresse IP</td><td>Télécharger les bibliothèques de l’appli (SheetJS sert à lire les fichiers Excel, fflate à faire et lire le fichier de sauvegarde, jsPDF à faire le PDF de l’itinéraire, MapLibre à dessiner les cartes)</td></tr>
 <tr><td>Google Fonts</td><td>Adresse IP</td><td>Les polices de l’appli (après la première fois elles restent sur le téléphone)</td></tr>
 </table>
 

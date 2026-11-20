@@ -16,7 +16,7 @@
       versione, e il link d'invito si incolla in «Ho un codice»;
    9. niente che esca dallo schermo da 320 a 430 px, «Cosa cerchi» su una
       riga, e la pubblicita' al suo posto per chi non e' premium. */
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const path = require('path');
 
@@ -71,8 +71,6 @@ async function apri(browser, { stato = null, intro = false, locale = 'it-IT', pe
   if (geo) opz.geolocation = geo;
   const page = await browser.newPage(opz);
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/v6/latest/**', ro => ro.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ result: 'success', base_code: 'EUR', time_last_update_unix: Math.floor(Date.now() / 1000), rates: TABELLA_EUR }) }));

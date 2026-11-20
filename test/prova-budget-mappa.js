@@ -34,7 +34,7 @@
    `node test/prova-budget-mappa.js 3 7` fa solo le prove 3 e 7. */
 const fs = require('fs');
 const path = require('path');
-const { apriBrowser, APP, leafletJs, leafletCss, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const { apriPagina, giornoA, iso } = require('./schermate');
 
 const r = [];
@@ -196,8 +196,6 @@ async function apriCloud(browser, utente, { larghezza = 390 } = {}) {
   const page = await browser.newPage({ viewport: { width: larghezza, height: 844 } });
   page.on('pageerror', e => errori.push('PAGEERROR(cloud): ' + e.message.split('\n')[0]));
   await page.exposeBinding('__nuvolaRpc', (src, q) => nuvola.esegui(q, src.page));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({ status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/supabase-js@*/**', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: SUPA_FINTO }));
   await page.addInitScript(([u, s]) => {
@@ -258,7 +256,7 @@ const SPESE_CONTI = [
   { id: 804, desc: 'Ramen', amount: 0, origAmount: 5000, origCurrency: 'JPY', rate: null, cambioStato: 'attesa', payerId: 2, category: 'Cibo', splitAmong: [1, 2], date: D[0], paid: true }];
 async function apriLocale(browser, opz = {}) {
   const page = await apriPagina(browser, Object.assign({ viaggi: [viaggioLocale(opz.extra || {})], errori, chiave: 'prova-tetti-' + Math.random() }, opz));
-  await page.waitForFunction(() => typeof L !== 'undefined', null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => typeof maplibregl !== 'undefined', null, { timeout: 15000 }).catch(() => {});
   return page;
 }
 /* Gli avvisi passano da avvisa(): li si conta, e la notifica del telefono si
@@ -493,25 +491,26 @@ const SPIA_AVVISI = permesso => {
   if (fai(7)) await prova('7. mappa', async () => {
     const page = await apriLocale(browser);
     await page.evaluate(() => apriMappaViaggio());
-    await aspetta(page, () => typeof vmMappa !== 'undefined' && vmMappa && document.querySelectorAll('#vmMappa .leaflet-marker-icon').length > 0, null, 8000);
+    await aspetta(page, () => typeof vmMappa !== 'undefined' && vmMappa && document.querySelectorAll('#vmMappa .maplibregl-marker').length > 0, null, 8000);
     const colori = await page.evaluate(() => COLORI_GIORNI.slice(0, 2));
-    const segni = () => page.evaluate(() => [...document.querySelectorAll('#vmMappa .leaflet-marker-icon')].map(e => {
+    const segni = () => page.evaluate(() => [...document.querySelectorAll('#vmMappa .maplibregl-marker')].map(e => {
       const pin = e.querySelector('.vm-pin,.vm-grappolo,.vm-casa');
-      return { titolo: e.getAttribute('title') || '', testo: (pin && pin.textContent || '').trim(), colore: pin && pin.classList.contains('vm-pin') ? getComputedStyle(pin).backgroundColor : '', tipo: pin ? pin.className : '' };
+      return { titolo: e.getAttribute('aria-label') || '', testo: (pin && pin.textContent || '').trim(), colore: pin && pin.classList.contains('vm-pin') ? getComputedStyle(pin).backgroundColor : '', tipo: pin ? pin.className : '' };
     }));
     const rgb = h => { const n = parseInt(h.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
     // tutti i giorni: le 4 tappe con una posizione ci sono tutte, sciolte o nei gruppi
     let s = await segni();
     const tappeTutte = s.filter(x => /vm-pin/.test(x.tipo)).length + s.filter(x => /vm-grappolo/.test(x.tipo)).reduce((n, x) => n + Number(x.testo), 0);
     ok('7. «Tutti i giorni»: tutte le tappe con una posizione sulla mappa (sciolte o raccolte), e l\'albergo', tappeTutte === 4 && s.some(x => /vm-casa/.test(x.tipo)), s.map(x => x.titolo || x.testo).join(' | '));
-    /* Senza rete: lo sfondo e' lo strato di stratoMappa, quello che tiene da
-       parte le zone gia' viste (prova-mappa lo prova da solo). */
+    /* Lo sfondo e' quello di Esri (finto: test/esri-finto.js), col globo, e
+       la citazione con «Powered by Esri» e «© OpenStreetMap» col link ai
+       diritti. Le zone gia' viste per l'offline le prova prova-mappa. */
     const sfondo = await page.evaluate(() => {
-      let strato = false; vmMappa.eachLayer(l => { if (L.TileLayer.GeppGo && l instanceof L.TileLayer.GeppGo) strato = true; });
-      const a = document.querySelector('#vmMappa .leaflet-control-attribution a[href*="openstreetmap.org/copyright"]');
-      return { strato, citazione: a ? a.closest('.leaflet-control-attribution').textContent.trim() : '' };
+      const a = document.querySelector('#vmMappa .g-diritti a[href*="openstreetmap.org/copyright"]');
+      return { fonte: vmMappa._g.fonte, globo: vmMappa.getProjection().type, citazione: a ? a.closest('.g-diritti').textContent.trim() : '' };
     });
-    ok('7. lo sfondo e\' quello che resta per quando manca la rete, con «© OpenStreetMap» e il link ai diritti', sfondo.strato && /©\s*OpenStreetMap/.test(sfondo.citazione), JSON.stringify(sfondo));
+    ok('7. lo sfondo e\' quello di Esri, col globo, con «Powered by Esri» e «© OpenStreetMap» col link ai diritti',
+      sfondo.fonte === 'esri' && sfondo.globo === 'globe' && /Powered by Esri/.test(sfondo.citazione) && /©\s*OpenStreetMap/.test(sfondo.citazione), JSON.stringify(sfondo));
     // il primo giorno: tre numeri, nel colore del giorno, nell'ordine della giornata
     await page.evaluate(() => vmScegli(0));
     await page.waitForTimeout(500);
@@ -520,8 +519,8 @@ const SPIA_AVVISI = permesso => {
     ok('7. Giorno 1: 1, 2 e 3 nell\'ordine della giornata, tutti col colore del giorno',
       pins.length === 3 && ['1. Fushimi Inari', '2. Nishiki', '3. Kiyomizu'].every((n, i) => pins.some(x => x.titolo.startsWith(n) && x.testo === String(i + 1))) && pins.every(x => x.colore === rgb(colori[0])),
       pins.map(x => `${x.testo} ${x.titolo} ${x.colore}`).join(' | '));
-    const linea = await page.evaluate(() => vmLinee.getLayers().filter(l => l instanceof L.Polyline).map(l => ({ c: l.options.color, n: l.getLatLngs().length })));
-    ok('7. e la linea che le unisce, nel colore del giorno', linea.length === 1 && linea[0].c === colori[0] && linea[0].n === 3, JSON.stringify(linea));
+    const linea = await page.evaluate(() => ({ strato: !!vmMappa.getLayer('g-linee'), linee: vmMappa._g.dati.linee.features.map(f => ({ c: f.properties.colore, n: f.geometry.coordinates.length })) }));
+    ok('7. e la linea che le unisce, nel colore del giorno', linea.strato && linea.linee.length === 1 && linea.linee[0].c === colori[0] && linea.linee[0].n === 3, JSON.stringify(linea));
     const giorni = await page.evaluate(() => [...document.querySelectorAll('#vmGiorni .chip')].map(b => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')));
     ok('7. il filtro: «Tutti i giorni» e un tasto per giorno, quello scelto acceso', giorni.length === 6 && giorni[0].startsWith('Tutti i giorni') && giorni[1] === 'Giorno 1*', giorni.join(' · '));
     await page.evaluate(() => vmScegli(1));
@@ -537,18 +536,22 @@ const SPIA_AVVISI = permesso => {
     // la scheda del segnaposto e la tappa giusta
     await page.evaluate(() => vmScegli(0));
     await page.waitForTimeout(500);
-    await page.click('#vmMappa .leaflet-marker-icon[title^="2. Nishiki"]');
+    await page.click('#vmMappa .maplibregl-marker[aria-label^="2. Nishiki"]');
     await page.waitForSelector('.vm-pop', { timeout: 3000 });
     await page.waitForTimeout(500); // la mappa si sposta per far stare dentro la scheda
     const scheda = await page.evaluate(() => document.querySelector('.vm-pop').textContent.replace(/\s+/g, ' ').trim());
     const attesa = await page.evaluate(() => vmGiornoNome(T(), 0) + ' · ' + tv('ore {1}', '12:00'));
     ok('7. toccando un segnaposto: la scheda con nome, giorno e ora, e «Apri la tappa»', scheda.includes('2. Nishiki') && scheda.includes(attesa) && /Apri la tappa/.test(scheda), scheda);
-    /* la crocetta di Leaflet: 24 px e «Close popup» in inglese, se lasciata com'e' */
+    /* la crocetta di MapLibre: 20 px e «Close popup» in inglese, se lasciata com'e' */
     const croce = await page.evaluate(() => {
-      const b = document.querySelector('#vmMappa .leaflet-popup-close-button'); if (!b) return null;
+      const b = document.querySelector('#vmMappa .maplibregl-popup-close-button'); if (!b) return null;
       const q = b.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
-      const prende = (dx, dy) => { const el = document.elementFromPoint(cx + dx, cy + dy); return !!el && (el === b || b.contains(el)); };
-      return { nome: b.getAttribute('aria-label'), tocco: [[-21, 0], [21, 0], [0, -21], [0, 21]].every(([x, y]) => prende(x, y)) };
+      const chi = (dx, dy) => document.elementFromPoint(cx + dx, cy + dy);
+      const prende = (dx, dy) => { const el = chi(dx, dy); return !!el && (el === b || b.contains(el)); };
+      const punti = [[-21, 0], [21, 0], [0, -21], [0, 21]];
+      /* chi copre i punti che non la prendono: per sapere dove guardare */
+      const coperta = punti.filter(([x, y]) => !prende(x, y)).map(([x, y]) => { const el = chi(x, y); return `${x},${y}: ${el ? el.tagName.toLowerCase() + '.' + String(el.className && el.className.baseVal != null ? el.className.baseVal : el.className).trim().replace(/\s+/g, '.') : 'niente'}`; });
+      return { nome: b.getAttribute('aria-label'), tocco: !coperta.length, ...(coperta.length ? { coperta } : {}) };
     });
     ok('7. e la sua crocetta si chiama «Chiudi» e risponde su 44 px', !!croce && croce.nome === 'Chiudi' && croce.tocco, JSON.stringify(croce));
     await page.click('.vm-pop .btn');
@@ -559,7 +562,7 @@ const SPIA_AVVISI = permesso => {
     await page.evaluate(() => { closeSheet('mActMenu'); apriMappaViaggio(); });
     await aspetta(page, () => document.querySelectorAll('#vmMappa .vm-grappolo').length > 0, null, 6000);
     const z0 = await page.evaluate(() => vmMappa.getZoom());
-    await page.click('#vmMappa .leaflet-marker-icon:has(.vm-grappolo)');
+    await page.click('#vmMappa .maplibregl-marker:has(.vm-grappolo)');
     await page.waitForTimeout(900);
     const z1 = await page.evaluate(() => vmMappa.getZoom());
     ok('7. toccando un gruppo di tappe vicine, la mappa si avvicina', z1 > z0, `zoom ${z0} → ${z1}`);
@@ -584,10 +587,10 @@ const SPIA_AVVISI = permesso => {
     });
     const t0 = Date.now();
     await page.evaluate(() => apriMappaViaggio());
-    const nata = await aspetta(page, () => typeof vmMappa !== 'undefined' && vmMappa && document.querySelectorAll('#vmMappa .leaflet-marker-icon').length > 0, null, 10000);
+    const nata = await aspetta(page, () => typeof vmMappa !== 'undefined' && vmMappa && document.querySelectorAll('#vmMappa .maplibregl-marker').length > 0, null, 10000);
     const apertura = Date.now() - t0;
     const conto = await page.evaluate(() => {
-      const el = [...document.querySelectorAll('#vmMappa .leaflet-marker-icon')];
+      const el = [...document.querySelectorAll('#vmMappa .maplibregl-marker')];
       const sciolte = el.filter(e => e.querySelector('.vm-pin')).length;
       const raccolte = el.filter(e => e.querySelector('.vm-grappolo')).reduce((n, e) => n + Number(e.textContent.trim()), 0);
       return { segni: el.length, tappe: sciolte + raccolte };
@@ -703,6 +706,12 @@ const SPIA_AVVISI = permesso => {
         for (const [nome, js, sel] of SCHERMI) {
           await page.evaluate(js);
           await page.waitForTimeout(nome.startsWith('mappa') ? 900 : 350);
+          /* Si misura a schermata ferma, come fa prova-accessibilita: le
+             animazioni in corso si portano alla fine. L'entrata delle pagine
+             (.page) dura 350 ms, quanto l'attesa qui sopra, e con un
+             fotogramma di ritardo axe trovava la Home ancora un po'
+             trasparente: nel tema scuro i colori sbiaditi non reggevano. */
+          await page.evaluate(() => document.getAnimations().forEach(x => { try { x.finish(); } catch (e) {} }));
           await page.evaluate(() => document.querySelectorAll('.prox.avv').forEach(e => e.remove()));
           const m = await page.evaluate(s => {
             const radice = document.querySelector(s);
@@ -715,7 +724,7 @@ const SPIA_AVVISI = permesso => {
             if (radice.scrollWidth > radice.clientWidth + 1) guai.push('il foglio scorre di lato: ' + radice.scrollWidth + ' > ' + radice.clientWidth);
             radice.querySelectorAll('*').forEach(el => {
               const r2 = el.getBoundingClientRect();
-              if (!r2.width || !el.getClientRects().length || el.closest('.leaflet-pane,.leaflet-control-container')) return;
+              if (!r2.width || !el.getClientRects().length || el.closest('.maplibregl-canvas-container,.maplibregl-control-container')) return;
               if ((r2.right > W + 1 || r2.left < -1) && !inFilaCheScorre(el)) guai.push('fuori: ' + (el.id || el.className || el.tagName) + ' ' + Math.round(r2.left) + '–' + Math.round(r2.right));
               const st = getComputedStyle(el);
               if ((st.overflow === 'hidden' || st.textOverflow === 'ellipsis') && el.scrollWidth > el.clientWidth + 1 && el.children.length === 0 && el.textContent.trim()) guai.push('tagliato: ' + el.textContent.trim().slice(0, 30));

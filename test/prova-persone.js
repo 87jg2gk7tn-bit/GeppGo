@@ -1,4 +1,4 @@
-const { apriBrowser, APP, RADICE, leafletJs } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 (async () => {
   const b = await apriBrowser();
@@ -7,7 +7,6 @@ const fs = require('fs');
   async function apri(){
     const p = await b.newPage({ viewport:{width:390,height:844} });
     p.on('pageerror', e=>r.push(' FALLITO  errore in pagina: '+e.message.split('\n')[0]));
-    await p.route('**/leaflet@1.9.4/dist/leaflet.js', ro=>ro.fulfill({status:200,contentType:'application/javascript',body:fs.readFileSync(leafletJs(),'utf8')}));
     await p.route('**/tile.openstreetmap.org/**', ro=>ro.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64')}));
     await p.route('**/api/interpreter', ro=>ro.fulfill({status:200,contentType:'application/json',body:'{"elements":[]}'}));
     await p.addInitScript(()=>localStorage.setItem('geppgo2', JSON.stringify({trips:[],currentTripId:null,settings:{proxRadius:200},myName:'Gepp',skipAuth:true})));

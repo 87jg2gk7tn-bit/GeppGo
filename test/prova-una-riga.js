@@ -12,7 +12,7 @@
  * fermate SENZA nome lontane fra loro sono due fermate, e due bancomat della
  * stessa banca a trecento metri sono due bancomat.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { rispondi, comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -58,8 +58,6 @@ const MONDO = [
      cosa serve (vedi LA POSIZIONE, SOLO QUANDO SERVE) e la ricerca aspetta. */
   const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/api/interpreter', ro => {
     const q = decodeURIComponent(ro.request().postData() || '').replace(/^data=/, '');

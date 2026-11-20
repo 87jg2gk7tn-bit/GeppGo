@@ -1,4 +1,4 @@
-const { apriBrowser, APP, RADICE, leafletJs, leafletCss } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 
 const tappa = (id, name, time, lat, lng) => ({
@@ -25,8 +25,6 @@ const viaggio = (activities, travelMode) => ({
   async function apri(stato) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => r.push(' FALLITO  errore in pagina: ' + e.message.split('\n')[0]));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-    await page.route('**/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: fs.readFileSync(leafletCss(), 'utf8') }));
     await page.route('**/tile.openstreetmap.org/**', route => route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }));
     await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato);
     await page.goto(APP, { waitUntil: 'domcontentloaded' });

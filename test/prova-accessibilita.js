@@ -39,12 +39,12 @@
      suoi chip) non può essere un tasto: un tasto dentro un tasto VoiceOver
      non lo legge. Il suo tocco resta per il dito, e la prova controlla che
      lo stesso lo faccia un tasto vero lì dentro.
-   - Dentro le mappe si misurano i tasti dello zoom, non i segnaposto (sono
-     disegni sulla mappa, e ripetono tappe e alberghi che hanno i loro tasti
-     negli elenchi) né la parola «Leaflet» nella scritta dei diritti. Le
-     mappe girano con Leaflet e il suo foglio di stile serviti in locale,
-     come sul telefono: senza il foglio, i controlli non stanno nei loro
-     angoli e la scritta che copriva il 🧭 qui non si vedeva. */
+   - Dentro le mappe si misurano i tasti dello zoom e quello dell'avviso, non
+     i segnaposto (stanno sulla mappa, e ripetono tappe e alberghi che hanno
+     i loro tasti negli elenchi) né i link della citazione. Le mappe girano
+     con MapLibre e il suo foglio di stile serviti in locale e con le
+     risposte di Esri finte, come sul telefono: senza il foglio, i controlli
+     non stanno nei loro angoli. */
 const fs = require('fs');
 const path = require('path');
 const { apriBrowser, RADICE } = require('./browser');
@@ -153,7 +153,7 @@ const MISURA_A11Y = unioni => {
   radici.forEach(rad => {
     const w = document.createTreeWalker(rad, NodeFilter.SHOW_TEXT, { acceptNode: t => {
       const p = t.parentElement;
-      if (!p || p.closest('.leaflet-container,script,style,select,option,textarea')) return NodeFilter.FILTER_REJECT;
+      if (!p || p.closest('.maplibregl-map,.g-ferma,script,style,select,option,textarea')) return NodeFilter.FILTER_REJECT;
       /* le emoji sono disegni a colori, non testo: il contrasto non le riguarda */
       return /[\p{L}\p{N}]/u.test(t.data) || conSegni.test(t.data.trim()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
     let t;
@@ -217,12 +217,12 @@ const MISURA_A11Y = unioni => {
   const tasti = [];
   radici.forEach(rad => rad.querySelectorAll(SEL).forEach(el => {
     if (tasti.includes(el) || !visibile(el) || spento(el)) return;
-    /* Della mappa contano i tasti dello zoom. Il riquadro della mappa non è
-       un tasto (Leaflet gli dà il tabindex per le frecce della tastiera); i
-       segnaposto e i loro fumetti ripetono tappe e alberghi che hanno già i
-       loro tasti negli elenchi; «Leaflet» è una parola dentro la scritta dei
-       diritti. */
-    if (el.matches('.leaflet-container') || el.closest('.leaflet-marker-pane,.leaflet-popup-pane,.leaflet-control-attribution')) return;
+    /* Della mappa contano i tasti dello zoom e quello dell'avviso. Il
+       riquadro della mappa non è un tasto (MapLibre gli dà il tabindex per
+       le frecce della tastiera); i segnaposto e le loro schede ripetono
+       tappe e alberghi che hanno già i loro tasti negli elenchi; la
+       citazione ha i suoi link, piccoli come in ogni mappa. */
+    if (el.matches('.maplibregl-canvas,.maplibregl-canvas-container') || el.closest('.maplibregl-marker,.maplibregl-popup,.g-diritti')) return;
     /* un'etichetta è un tasto quando accende una spunta o sceglie un file */
     if (el.tagName === 'LABEL' && !el.hasAttribute('onclick') && !(el.control && ['checkbox', 'radio', 'file'].includes(el.control.type))) return;
     /* un onclick che ferma soltanto il tocco (la maniglia che allunga una tappa) non è un tasto */
@@ -271,7 +271,7 @@ const MISURA_A11Y = unioni => {
   });
   /* chi ha la manina senza essere un tasto: il dito ci prova, VoiceOver no */
   radici.forEach(rad => rad.querySelectorAll('*').forEach(el => {
-    if (tasti.includes(el) || nativo(el) || el.closest('.leaflet-container') || el.getAttribute('aria-hidden') === 'true') return;
+    if (tasti.includes(el) || nativo(el) || el.closest('.maplibregl-map,.g-ferma') || el.getAttribute('aria-hidden') === 'true') return;
     if (RUOLI.test(el.getAttribute('role') || '')) return;
     if (getComputedStyle(el).cursor !== 'pointer') return;
     if (el.parentElement && getComputedStyle(el.parentElement).cursor === 'pointer') return;
@@ -782,13 +782,16 @@ if (require.main === module) (async () => {
        Home. Con «Riduci movimento» nessuna deve durare più di un attimo. */
     const leggi = page => page.evaluate(async () => {
       go('plan');
+      /* la mappa di Oggi: arriva con MapLibre, un attimo dopo la pagina */
+      for (let i = 0; i < 50 && !homeMapObj; i++) await new Promise(ok => setTimeout(ok, 100));
+      let mappa = null;
+      if (homeMapObj) { const c = homeMapObj.getCenter(); vaiA(homeMapObj, [c.lng + 0.01, c.lat], homeMapObj.getZoom()); mappa = homeMapObj.isMoving(); homeMapObj.stop(); }
       openSheet('mNewTrip'); toast('Un messaggio');
       await new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)));
       const durate = document.getAnimations().map(a => { const t = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : {}; return Number(t.duration) || 0; });
       const sheet = getComputedStyle(document.querySelector('#mNewTrip .sheet')).transitionDuration.split(',').map(s => parseFloat(s) * (/ms/.test(s) ? 1 : 1000));
       closeSheet('mNewTrip');
-      return { n: durate.length, lunghe: durate.filter(d => d > 1).length, max: Math.max(0, ...durate), foglio: Math.max(...sheet), meno: menoMovimento(), scorre: comeScorrere(),
-        mappa: typeof L !== 'undefined' && L.Map ? L.Map.prototype.options.zoomAnimation : null };
+      return { n: durate.length, lunghe: durate.filter(d => d > 1).length, max: Math.max(0, ...durate), foglio: Math.max(...sheet), meno: menoMovimento(), scorre: comeScorrere(), mappa };
     });
     const normale = await apriPagina(browser, { errori });
     const n = await leggi(normale); await normale.close();
@@ -798,7 +801,7 @@ if (require.main === module) (async () => {
       n.lunghe > 0 && n.foglio >= 200 && m.lunghe === 0 && m.foglio <= 1,
       `di solito ${n.lunghe} animazioni lunghe (fino a ${Math.round(n.max)} ms), foglio in ${Math.round(n.foglio)} ms · ridotto: ${m.lunghe} su ${m.n}, foglio in ${m.foglio} ms`);
     ok('8. e anche quelle fatte da JavaScript: niente scorrimenti morbidi, mappe senza zoom che scivola', !n.meno && n.scorre === 'smooth' && m.meno && m.scorre === 'auto' && n.mappa === true && m.mappa === false
-      && !/behavior:\s*'smooth'/.test(HTML), `scorrimento ${n.scorre} → ${m.scorre}, zoom animato della mappa ${n.mappa} → ${m.mappa}`);
+      && !/behavior:\s*'smooth'/.test(HTML), `scorrimento ${n.scorre} → ${m.scorre}, la mappa che scivola ${n.mappa} → ${m.mappa}`);
   });
 
   /* ── 9. niente testi tagliati o sovrapposti ───────────────────────────── */

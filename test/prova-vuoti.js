@@ -13,7 +13,7 @@
    Non vale ovunque: dove l'azione è già lì vicino, un secondo tasto sarebbe
    lo stesso tasto due volte — ed è un errore che ho già fatto. Questa prova
    controlla tutt'e due le cose. */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const fs = require('fs');
 
 const oggi = new Date().toISOString().slice(0, 10);
@@ -39,9 +39,6 @@ const stato = {
 
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.css', ro => ro.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route(/api\.open-meteo\.com/, ro => ro.abort());
   await page.route(/nominatim\.openstreetmap\.org/, ro => ro.abort());

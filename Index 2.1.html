@@ -215,14 +215,50 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:var(--fs
 .imp-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-card);padding:var(--sp-4)}
 #map{height:260px;border-radius:var(--r-card);overflow:hidden;margin-bottom:var(--sp-4);box-shadow:var(--sh-1)}
 .mini-map{height:130px;border-radius:var(--r-ctl);overflow:hidden;margin:var(--sp-3) 0}
-.leaflet-container{font-family:inherit}
-/* La citazione di OpenStreetMap. Leaflet la fa bianca all'80% col link
-   azzurro: sopra il fondo scuro della mappa della Home, nel tema scuro, il
-   link scende sotto 4,5:1. Fondo pieno coi colori del tema e link col colore
-   del testo, sottolineato, cosi' si legge sopra qualunque mappa. Il foglio di
-   Leaflet arriva dopo questo: le regole devono pesare di piu' delle sue. */
-.leaflet-container .leaflet-control-container .leaflet-control-attribution{background:var(--surface);color:var(--ink-soft)}
-.leaflet-container .leaflet-control-attribution a{color:var(--ink);text-decoration:underline}
+/* Le mappine ferme dei risultati (mappinaFerma): i pezzi della foto in fila
+   come immagini, col tono del tema fatto qui a occhio come MAPPA_TONI (la
+   foto grigia sopra l'arancio nel chiaro, piu' bassa sul blu notte nello
+   scuro), e il segnaposto al centro. Prima che arrivi la foto, il colore
+   della carta. */
+.g-ferma{position:relative;background:#EFE7D8}
+.g-ferma[data-fonte="esri"]{background:#F0B464}
+.g-ferma-pezzi{position:absolute;inset:0}
+.g-ferma-pezzi img{position:absolute;max-width:none;filter:grayscale(1) contrast(1.5) brightness(1.12);opacity:.77}
+.g-ferma[data-fonte="osm"] .g-ferma-pezzi img{filter:none;opacity:1}
+body.dark .g-ferma{background:#221F19}
+body.dark .g-ferma[data-fonte="esri"]{background:#0E1A36}
+body.dark .g-ferma-pezzi img{filter:saturate(.5) contrast(2);opacity:.58}
+body.dark .g-ferma[data-fonte="osm"] .g-ferma-pezzi img{filter:brightness(.62) saturate(.75);opacity:1}
+.g-ferma-pin{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:var(--r-pill);background:var(--scelto);border:3px solid var(--su-colore);box-shadow:var(--sh-1)}
+.maplibregl-map{font-family:inherit}
+/* LA CITAZIONE E L'AVVISO DELLE MAPPE, nello stesso angolo senza tasti (vedi
+   dirittiMappa). Fondo pieno coi colori del tema e link col colore del
+   testo, sottolineato, cosi' si leggono sopra qualunque foto: sopra il
+   satellite scuro un link azzurro su un velo bianco scendeva sotto 4,5:1. Non
+   arrivano mai sotto i tasti dell'altro angolo (max-width). Il foglio di
+   MapLibre arriva dopo questo: le regole che toccano le sue classi pesano di
+   piu' delle sue. */
+/* Chi sta sopra chi, come con le mappe di prima: i segnaposto (z-index fino a 4, il
+   pallino della posizione), sopra la scheda aperta, sopra ancora i comandi e
+   la citazione. Senza un numero suo la scheda finiva sotto i segnaposto
+   vicini, e il dito che cercava la crocetta apriva un'altra tappa. */
+.maplibregl-map .maplibregl-popup{z-index:5}
+.maplibregl-map .maplibregl-ctrl-top-left,.maplibregl-map .maplibregl-ctrl-top-right,.maplibregl-map .maplibregl-ctrl-bottom-left,.maplibregl-map .maplibregl-ctrl-bottom-right{z-index:6}
+.g-angolo{position:absolute;z-index:6;display:flex;gap:var(--sp-1);max-width:calc(100% - 64px);pointer-events:none}
+.g-angolo.g-tl,.g-angolo.g-tr{top:var(--sp-1);flex-direction:column-reverse}
+.g-angolo.g-bl,.g-angolo.g-br{bottom:var(--sp-1);flex-direction:column}
+.g-angolo.g-tl,.g-angolo.g-bl{left:var(--sp-1);align-items:flex-start}
+.g-angolo.g-tr,.g-angolo.g-br{right:var(--sp-1);align-items:flex-end}
+.g-diritti,.g-avviso{pointer-events:auto;background:var(--surface);color:var(--ink-soft);font-size:var(--fs-xs);line-height:1.35;border-radius:var(--r-ctl);padding:2px var(--sp-2);box-shadow:var(--sh-1)}
+.g-diritti a,.g-diritti .g-fonti{color:var(--ink);text-decoration:underline}
+.g-fonti{background:none;border:0;padding:0;margin:0;font:inherit;cursor:pointer;position:relative}
+/* «Fonti» e' alto una riga: l'area da 44 al tocco sta sopra e sotto */
+.g-fonti::after{content:'';position:absolute;inset:-14px -4px}
+.g-fonti-testo{display:block;margin-top:2px}
+.g-fonti-testo[hidden]{display:none}
+.g-avviso{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-2);color:var(--ink)}
+.g-avviso[hidden]{display:none}
+.g-avviso .btn{flex-shrink:0}
 .trip-hero{position:relative;border-radius:var(--r-card);overflow:hidden;padding:var(--sp-5);margin-bottom:var(--sp-4);color:var(--su-colore);background:var(--grad);box-shadow:var(--sh-1)}
 .th-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative}
 .trip-hero-name{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600;letter-spacing:-.01em}
@@ -856,21 +892,48 @@ body.dark .avatar.me{color:var(--oro-su)}
 .vm-pin{width:26px;height:26px;border-radius:var(--r-pill);border:2px solid var(--su-colore);color:var(--su-colore);display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;box-shadow:var(--sh-1)}
 .vm-grappolo{width:34px;height:34px;border-radius:var(--r-pill);border:2px solid var(--su-colore);background:var(--oro-su);color:var(--su-colore);display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;box-shadow:var(--sh-1)}
 .vm-casa{background:var(--su-colore);border:2px solid var(--clay);width:30px;height:30px;border-radius:var(--r-ctl);display:flex;align-items:center;justify-content:center;font-size:var(--fs-m)}
-/* I segnaposto delle mappe: stanno sopra le mattonelle, che non cambiano col
-   tema, quindi hanno colori fissi (vedi --su-colore e --oro-su). */
-.pin{border-radius:var(--r-pill);border:2px solid var(--su-colore);color:var(--su-colore);background:var(--green);display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;box-shadow:var(--sh-1)}
-.pin.on{background:var(--oro-su);font-size:var(--fs-s)}
+/* I segnaposto delle mappe (segno): tasti veri, senza la veste dei tasti.
+   L'area da 44 al tocco parte dal centro anche per i tondi piccoli. Stanno
+   sopra la foto, che non cambia col tema, quindi hanno colori fissi (vedi
+   --su-colore e --oro-su). MapLibre li muove con transform: qui non si tocca
+   ne' position ne' transform dell'elemento. */
+.g-segno{padding:0;margin:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.g-segno::after{content:'';position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);border-radius:var(--r-pill)}
+.g-segno:focus-visible{outline:3px solid var(--scelto);outline-offset:3px;border-radius:var(--r-pill)}
+.pin{width:24px;height:24px;border-radius:var(--r-pill);border:2px solid var(--su-colore);color:var(--su-colore);background:var(--green);display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;box-shadow:var(--sh-1)}
+.pin.on{width:30px;height:30px;background:var(--oro-su);font-size:var(--fs-s)}
 .pin.fuori{background:var(--clay)}
+/* Con la foto del posto, come nelle anteprime: il tondo con la foto e il
+   bordo panna, il numero in un ovale sull'angolo; acceso, piu' grande col
+   bordo d'oro. */
+.pin.con-foto{width:40px;height:40px;border:3px solid var(--su-colore);background:#CDB994;box-shadow:0 6px 14px rgba(20,17,11,.42),0 1px 3px rgba(20,17,11,.4)}
+.pin.con-foto.on,.pin.con-foto.scelto{width:50px;height:50px;border-color:var(--scelto)}
+.pin .g-foto{display:block;width:100%;height:100%;border-radius:var(--r-pill);overflow:hidden}
+.pin .g-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.pin.con-foto b{position:absolute;left:-7px;top:-7px;min-width:22px;height:22px;padding:0 5px;border-radius:11px;border:2px solid var(--su-colore);background:var(--oro-su);color:var(--su-colore);font-size:var(--fs-xs);line-height:18px;text-align:center}
+.pin.con-foto.on b,.pin.con-foto.scelto b{background:var(--scelto);color:var(--su-scelto)}
+/* i posti salvati nella mappa del viaggio, e il posto della sua scheda */
+.g-punto{display:block;width:16px;height:16px;border-radius:var(--r-pill);border:2px solid var(--su-colore);box-shadow:var(--sh-1)}
+.g-spillo{display:block;width:18px;height:18px;border-radius:var(--r-pill);background:var(--scelto);border:3px solid var(--su-colore);box-shadow:var(--sh-1)}
+.g-io{width:20px;height:20px}
 .pin-me{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:var(--r-pill);background:var(--green);border:3px solid var(--su-colore);box-shadow:var(--sh-1)}
 .pin-cono{position:absolute;left:50%;top:50%;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:26px solid var(--green);opacity:.35;transform-origin:50% 100%}
 .pop-sotto{font-size:var(--fs-s);color:var(--ink-soft)}
 .vm-pop{min-width:180px;max-width:240px}
 .vm-pop-n{font-weight:700;font-size:var(--fs-m);color:var(--ink);line-height:1.3}
-/* La crocetta delle schede su tutte le mappe (leafletSistemato): 44 px al
-   tocco. Un gradino sopra il foglio di Leaflet, che arriva dopo. */
-.leaflet-container .leaflet-popup a.leaflet-popup-close-button{width:34px;height:34px;font-size:var(--fs-xl);line-height:34px;color:var(--ink-soft)}
-.leaflet-container .leaflet-popup a.leaflet-popup-close-button::after{content:'';position:absolute;inset:-5px}
-.leaflet-container .leaflet-popup .leaflet-popup-content{margin-right:var(--sp-6)}
+/* Le schede dei segnaposto su tutte le mappe (schedaMappa): coi colori del
+   tema (MapLibre le fa bianche), la crocetta da 44 al tocco in alto a destra
+   e lo spazio per lei accanto al titolo. Un gradino sopra il foglio di
+   MapLibre, che arriva dopo. */
+.maplibregl-popup.g-scheda .maplibregl-popup-content{background:var(--surface);color:var(--ink);border-radius:var(--r-ctl);box-shadow:var(--sh-2);padding:var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-3);font-size:var(--fs-s);line-height:1.45}
+.maplibregl-popup.g-scheda .maplibregl-popup-content a{color:var(--ink);text-decoration:underline}
+.maplibregl-popup.g-scheda .maplibregl-popup-close-button{width:34px;height:34px;top:2px;right:2px;font-size:var(--fs-xl);line-height:1;color:var(--ink-soft);border-radius:var(--r-pill)}
+.maplibregl-popup.g-scheda .maplibregl-popup-close-button::after{content:'';position:absolute;inset:-5px}
+.maplibregl-popup.g-scheda .maplibregl-popup-close-button:hover{background:var(--sand-tint)}
+.maplibregl-popup-anchor-top.g-scheda .maplibregl-popup-tip,.maplibregl-popup-anchor-top-left.g-scheda .maplibregl-popup-tip,.maplibregl-popup-anchor-top-right.g-scheda .maplibregl-popup-tip{border-bottom-color:var(--surface)}
+.maplibregl-popup-anchor-bottom.g-scheda .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-left.g-scheda .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-right.g-scheda .maplibregl-popup-tip{border-top-color:var(--surface)}
+.maplibregl-popup-anchor-left.g-scheda .maplibregl-popup-tip{border-right-color:var(--surface)}
+.maplibregl-popup-anchor-right.g-scheda .maplibregl-popup-tip{border-left-color:var(--surface)}
 .vm-pop-q{font-size:var(--fs-s);color:var(--ink-soft);margin:var(--sp-1) 0 var(--sp-2)}
 .vm-pop .btn{width:100%;min-height:44px;font-size:var(--fs-s)}
 .vm-pop-lista{display:flex;flex-direction:column;gap:var(--sp-2);max-height:220px;overflow-y:auto}
@@ -1245,7 +1308,6 @@ body.dark{
   --tasto-fondo:#2A2217;--tasto-bordo:#43372A;
 }
 body.dark .ad-slot{background:var(--surface)}
-body.dark img.leaflet-tile{filter:brightness(.92) contrast(1.02)}
 
 #diaryPrint{background:var(--su-colore);color:var(--stampa-ink);padding:var(--sp-5);font-family:'Plus Jakarta Sans',sans-serif}
 #diaryPrint h1{font-family:'Fraunces',serif;font-size:var(--fs-xl);margin:0 0 var(--sp-1)}
@@ -2418,15 +2480,17 @@ button.nav-item{border:0;background:none;font-family:inherit;-webkit-appearance:
 .tic-ic::after     {inset:-8px}        /* 30 → 44 */
 .locate-fab::after {inset:-4px}        /* 38 → 44 */
 .hh-map-wrap .locate-fab::after{inset:-6px}   /* 34 → 44 */
-/* Lo zoom della mappa del viaggio: Leaflet lo fa da 30 px, e qui cresce
-   davvero (i due tasti si toccano, un'area che sborda finirebbe sull'altro).
-   Il foglio di Leaflet arriva dopo questo: la regola deve pesare di piu'. */
-.leaflet-container .leaflet-bar.leaflet-control-zoom a{width:44px;height:44px;line-height:44px}
-/* E nel tema scuro seguono il tema (Layout 1): Leaflet li fa bianchi, e
-   sulla mappa scurita erano due quadrati accesi. */
-body.dark .leaflet-container .leaflet-bar{border-color:var(--line)}
-body.dark .leaflet-container .leaflet-bar a,body.dark .leaflet-container .leaflet-bar a:hover{background:var(--surface);color:var(--ink);border-bottom-color:var(--line)}
-body.dark .leaflet-container .leaflet-bar a.leaflet-disabled{background:var(--surface);color:var(--ink-faint)}
+/* Lo zoom delle mappe (+ e −): MapLibre lo fa da 29 px, e qui cresce
+   davvero (i due tasti si toccano, un'area che sborda finirebbe
+   sull'altro). Coi colori del tema: nel tema scuro erano due quadrati bianchi
+   accesi sulla foto scura. Il foglio di MapLibre arriva dopo questo: le
+   regole devono pesare di piu' delle sue. */
+.maplibregl-map .maplibregl-ctrl-group{background:var(--surface);border-radius:var(--r-ctl);box-shadow:var(--sh-1);border:1px solid var(--line)}
+.maplibregl-map .maplibregl-ctrl-group button{width:44px;height:44px}
+.maplibregl-map .maplibregl-ctrl-group button+button{border-top:1px solid var(--line)}
+.maplibregl-map .maplibregl-ctrl-group button:not(:disabled):hover{background-color:var(--sand-tint)}
+body.dark .maplibregl-map .maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1) brightness(1.6)}
+.maplibregl-map .maplibregl-ctrl-group button:disabled .maplibregl-ctrl-icon{opacity:.35}
 button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 .tt-travel-x::after,.tt-travel-skip::after,.tt-travel-toggle::after{inset:-16px -18px}
 /* Nella striscia dall'albergo il mezzo sta a destra, accanto alla ✕: un po'
@@ -2635,7 +2699,7 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
 /* La tappa scelta e il suo segnaposto si accendono insieme, d'oro come
    ogni cosa scelta. */
 .tt-block.scelta{outline:3px solid var(--scelto);outline-offset:1px;z-index:6}
-.pin.scelto{background:var(--oro-su);font-size:var(--fs-s);box-shadow:0 0 0 4px var(--scelto)}
+.pin.scelto{width:30px;height:30px;background:var(--oro-su);font-size:var(--fs-s);box-shadow:0 0 0 4px var(--scelto)}
 /* l'aiuto sotto la giornata e «Apri» nella scheda del segnaposto: quelli
    del Programma largo si vedono solo con le due colonne */
 .aiuto-largo,.tt-apri-tappa{display:none}
@@ -2920,10 +2984,10 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
         <select id="sceltaLingua" aria-label="Lingua" onchange="cambiaLingua(this.value)"></select>
         <p id="linguaCopertura" style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-top:var(--sp-2)"></p></div>
       <div class="card"><div class="card-h" style="margin-bottom:var(--sp-1)">La mappa senza rete</div>
-        <div class="card-sub" style="margin-bottom:var(--sp-3)">Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l'hai lì.</div>
-        <div id="tessereStato" style="font-size:var(--fs-s);color:var(--ink-soft);margin-bottom:var(--sp-2)">—</div>
-        <button class="btn btn-secondario btn-block" onclick="tessereSvuota()">Libera lo spazio della mappa</button>
-        <p style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-top:var(--sp-2)">Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.</p></div>
+        <div class="card-sub" style="margin-bottom:var(--sp-3)">Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, per il tempo che Esri, che fornisce le mappe, permette di tenerle.</div>
+        <div id="mappeStato" style="font-size:var(--fs-s);color:var(--ink-soft);margin-bottom:var(--sp-2)">—</div>
+        <button class="btn btn-secondario btn-block" onclick="mappeSvuota()">Libera lo spazio della mappa</button>
+        <p style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-top:var(--sp-2)">Al massimo 1.500 pezzi, e solo quelli che hai già guardato: scaricare in anticipo una città intera non è permesso dalle condizioni di Esri.</p></div>
       <div class="card"><div class="card-h" style="margin-bottom:var(--sp-1)">Backup</div>
         <div class="card-sub" style="margin-bottom:var(--sp-2)">Un file solo con i viaggi e le foto di questo telefono: tienilo al sicuro, e con quello li ritrovi anche su un altro telefono.</div>
         <div class="bk-ultimo" id="backupUltimo"></div>
@@ -4401,7 +4465,7 @@ let app=JSON.parse(localStorage.getItem('geppgo2'))||{trips:[],currentTripId:nul
 /* Il primissimo avvio: niente di salvato e la presentazione mai vista. Va
    guardato qui, prima che l'app scriva qualcosa: dopo non si saprebbe piu'. */
 const PRIMO_AVVIO=(()=>{try{return !localStorage.getItem('geppgo2')&&!localStorage.getItem('geppgo2_intro');}catch(e){return false;}})();
-let map,markers=[],miniMaps={},searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
+let map=null,markers=[],searchT=null,gpsId=null,meMarker=null,notified=new Set(),posWatch=null;
 let dayIdxForAct=null,pendingPOI=null,ntPeople=[],scanStream=null,scanOn=false,scanZxLast=0,scanGen=0;
 /* I cambi si tengono anche fra un'apertura e l'altra: in viaggio la rete c'e'
    a tratti, e senza questo la seconda valuta sparirebbe proprio quando serve.
@@ -4424,9 +4488,11 @@ function persistLastPush(){try{localStorage.setItem('geppgo2_lastpush',JSON.stri
    lo scanner non lo apre mai. Col campo debole erano venti secondi di
    schermata d'avvio (misurato: vedi prova-avvio).
    Adesso:
-   - la mappa e il cloud partono quando parte l'app, senza fermarla: l'HTML a
-     quel punto e' gia' arrivato tutto, e non gli rubano banda. Chi li usa li
-     aspetta (mappaArrivata, supaBoot);
+   - il cloud parte quando parte l'app, senza fermarla: l'HTML a quel punto
+     e' gia' arrivato tutto, e non gli ruba banda. Chi lo usa lo aspetta
+     (supaBoot);
+   - la mappa arriva quando a schermo c'e' una mappa (chiediMappe, e le
+     mappe gia' a schermo nascono con mappaArrivata);
    - i lettori dei codici si scaricano aprendo lo scanner o leggendo un
      biglietto da una foto, i codici a barre quando ce n'e' uno da disegnare.
    Ogni indirizzo ha la versione esatta e punta a un file che c'e' davvero nel
@@ -4437,7 +4503,12 @@ function persistLastPush(){try{localStorage.setItem('geppgo2_lastpush',JSON.stri
    La stessa lista sta in sw.js, che le tiene da parte per l'offline: una
    prova controlla che restino uguali. */
 const LIBRERIE={
-  leaflet:{js:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',css:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',pronta:()=>typeof L!=='undefined',sistema:()=>leafletSistemato()},
+  /* MapLibre, per tutte le mappe (vedi LE MAPPE). Solo al momento: e' un
+     mega (276 KB compressi), e arriva la prima volta che a schermo c'e' una
+     mappa; da li' resta nella cache, e le mappe si aprono anche senza rete.
+     La 5.x e' l'ultima che si carica con un <script> semplice: dalla 6
+     MapLibre e' solo a moduli. */
+  maplibre:{js:'https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js',alMomento:true,css:'https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css',pronta:()=>typeof maplibregl!=='undefined'&&!!maplibregl.Map},
   supabase:{js:'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js',pronta:()=>typeof supabase!=='undefined'&&!!supabase.createClient},
   jsqr:{js:'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',pronta:()=>typeof jsQR!=='undefined'},
   zxing:{js:'https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js',pronta:()=>typeof ZXing!=='undefined'},
@@ -4463,8 +4534,8 @@ const LIBRERIE={
    vogliono piu' di cinque secondi. Se poi arriva lo stesso, la volta dopo
    e' gia' pronta. */
 const LIBRERIE_ATTESA_MS=30000;
-/* Quello che una libreria vuole sistemato appena arriva (vedi leafletSistemato):
-   una volta sola, prima di chiunque la stia aspettando. */
+/* Quello che una libreria vuole sistemato appena arriva (lib.sistema): una
+   volta sola, prima di chiunque la stia aspettando. */
 function libreriaSistemata(lib){
   if(!lib.sistema||lib.sistemata)return;
   lib.sistemata=true;
@@ -4518,7 +4589,6 @@ function quandoAvviata(fn){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(fn,0));
   else setTimeout(fn,0);
 }
-caricaLibreria('leaflet').then(()=>quandoAvviata(mappaArrivata)).catch(()=>{});
 if(window.GEPPGO_SUPA_URL&&window.GEPPGO_SUPA_KEY)caricaLibreria('supabase').catch(()=>{});
 const CURR=[{c:'EUR',s:'€'},{c:'USD',s:'$'},{c:'GBP',s:'£'},{c:'JPY',s:'¥'},{c:'CHF',s:'CHF'},{c:'CNY',s:'¥'},{c:'KRW',s:'₩'},{c:'THB',s:'฿'},{c:'INR',s:'₹'},{c:'AUD',s:'A$'},{c:'CAD',s:'C$'},{c:'NZD',s:'NZ$'},{c:'MXN',s:'$'},{c:'BRL',s:'R$'},{c:'ZAR',s:'R'},{c:'AED',s:'AED'},{c:'TRY',s:'₺'},{c:'SEK',s:'kr'},{c:'NOK',s:'kr'},{c:'DKK',s:'kr'},{c:'PLN',s:'zł'},{c:'CZK',s:'Kč'},{c:'HUF',s:'Ft'},{c:'SGD',s:'S$'},{c:'HKD',s:'HK$'},{c:'IDR',s:'Rp'},{c:'MYR',s:'RM'},{c:'PHP',s:'₱'},{c:'VND',s:'₫'},{c:'EGP',s:'E£'},{c:'MAD',s:'DH'},{c:'ILS',s:'₪'},{c:'SAR',s:'SAR'},{c:'TWD',s:'NT$'},{c:'ISK',s:'kr'},{c:'CLP',s:'$'},{c:'COP',s:'$'},{c:'ARS',s:'$'},{c:'PEN',s:'S/'}];
 const C2C={JP:'JPY',US:'USD',GB:'GBP',IE:'EUR',FR:'EUR',DE:'EUR',IT:'EUR',ES:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',AT:'EUR',GR:'EUR',FI:'EUR',LU:'EUR',SK:'EUR',SI:'EUR',EE:'EUR',LV:'EUR',LT:'EUR',CY:'EUR',MT:'EUR',HR:'EUR',CH:'CHF',CN:'CNY',KR:'KRW',TH:'THB',IN:'INR',AU:'AUD',CA:'CAD',NZ:'NZD',MX:'MXN',BR:'BRL',ZA:'ZAR',AE:'AED',TR:'TRY',SE:'SEK',NO:'NOK',DK:'DKK',PL:'PLN',CZ:'CZK',HU:'HUF',SG:'SGD',HK:'HKD',ID:'IDR',MY:'MYR',PH:'PHP',VN:'VND',EG:'EGP',MA:'MAD',IL:'ILS',SA:'SAR',TW:'TWD',IS:'ISK',CL:'CLP',CO:'COP',AR:'ARS',PE:'PEN'};
@@ -4966,14 +5036,31 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
    prima apertura con internet, l'app si apre e resta usabile (creare un
    viaggio, aggiungere attività...) anche senza connessione e senza GPS. */
 /* Poco dopo, la service worker scarica in sottofondo le librerie che l'app
-   carica solo al momento (vedi LE LIBRERIE e sw.js): lo scanner, i codici a
-   barre e la mappa ci sono anche senza rete. Si aspetta un po' apposta, per
-   non contendere la banda a quello che l'app sta ancora facendo. */
+   carica solo al momento (vedi LE LIBRERIE e sw.js): lo scanner e i codici a
+   barre ci sono anche senza rete. Si aspetta un po' apposta, per non
+   contendere la banda a quello che l'app sta ancora facendo. E le si dice
+   quali librerie «al momento» sono gia' arrivate (usate): alla prima apertura
+   MapLibre arriva per la mappa di Oggi prima che la service worker guardi la
+   pagina, e senza questo non finiva nella cache, e senza rete la mappa non
+   c'era fino alla visita dopo. */
 const LIBRERIE_SOTTOFONDO_MS=4000;
+/* Gia' detto una volta (librerieDette): una libreria «al momento» arrivata
+   dopo, come MapLibre col campo debole (vedi chiediMappe), la si dice di
+   nuovo, se no alla prima visita restava fuori dalla cache. */
+let librerieDette=false;
+function diciLibrerieAllaSw(){
+  if(!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.ready.then(r=>{
+    const usate=[];
+    Object.values(LIBRERIE).forEach(l=>{try{if(l.alMomento&&l.pronta())usate.push(...[l.js,l.css].filter(Boolean));}catch(e){}});
+    librerieDette=true;
+    if(r.active)r.active.postMessage({tipo:'librerie',usate});
+  }).catch(()=>{});
+}
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
-    setTimeout(()=>{navigator.serviceWorker.ready.then(r=>{if(r.active)r.active.postMessage({tipo:'librerie'});}).catch(()=>{});},LIBRERIE_SOTTOFONDO_MS);
+    setTimeout(diciLibrerieAllaSw,LIBRERIE_SOTTOFONDO_MS);
   });
 }
 /* Appena torna la connessione, prova subito a rimandare le modifiche fatte
@@ -6283,7 +6370,7 @@ const DIZIONARIO_RACCOLTA={
     'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Suggestions come from your interests and the places you save. How sensitive the alerts are, and how far they reach, is set in Settings.',
     'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'I create the days missing from the range. The ones already there, with their activities, stay where they are: I never take anything away.',
     'I posti che hai già nel Programma. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'The places you already have in the schedule. Tap the label to say whether it’s a must-see or skippable: it changes how much I warn you when you pass nearby.',
-    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'The areas you look at on the map stay in the phone, and you can see them again with no signal. Look at an area before you leave and you’ve got it there.',
+    'Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, per il tempo che Esri, che fornisce le mappe, permette di tenerle.':'The areas you look at on the map stay in the phone and you can see them again with no signal, for as long as Esri, which provides the maps, allows them to be kept.',
     'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR and barcodes, from the camera, from a photo or from a PDF downloaded from your mail: I just copy them, exactly as they are, in their original shape.',
     'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ An Instagram link alone isn’t enough: Instagram doesn’t allow reading other people’s video content. Paste the text or a screenshot.',
     'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Tick the ones you like: you’ll find them among the saved places in “Discover”, and from there they show up on the trip preview map too.',
@@ -6296,7 +6383,7 @@ const DIZIONARIO_RACCOLTA={
     'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'If someone is in danger right now, call 112. In Italy, reports about material involving minors also go to the Polizia Postale, at commissariatodips.it.',
     'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'For those who’d rather wander than plan: paste a list (an AI-generated one is fine, one item per line), I’ll turn it into saved places and warn you when you pass nearby.',
     'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Photograph a monument or building you don’t know: I’ll tell you what it is, a bit of history and context, and whether you need to book to visit it. Drag your finger across the photo to circle the subject.',
-    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'There’s no “download the whole city”: OpenStreetMap’s maps are kept up by volunteers, and downloading them in bulk is forbidden by their terms. Keeping what you’ve already looked at, on the other hand, is exactly what they ask you to do.',
+    'Al massimo 1.500 pezzi, e solo quelli che hai già guardato: scaricare in anticipo una città intera non è permesso dalle condizioni di Esri.':'At most 1,500 pieces, and only the ones you’ve already looked at: downloading a whole city in advance isn’t allowed by Esri’s terms.',
     'Questa giornata è ancora vuota':'This day is still empty',
     'Aggiungi la prima tappa':'Add the first stop',
     '📣 A raccolta':'📣 Gather round',
@@ -6353,7 +6440,7 @@ const DIZIONARIO_RACCOLTA={
     'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Las sugerencias nacen de tus intereses y de los lugares que guardas. La sensibilidad y el radio de los avisos se ajustan en Ajustes.',
     'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Creo los días que faltan en el intervalo. Los que ya están, con sus actividades, se quedan donde están: nunca quito nada.',
     'I posti che hai già nel Programma. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Los sitios que ya tienes en el programa. Toca la etiqueta para decir si es imprescindible o prescindible: cambia cuánto te aviso al pasar cerca.',
-    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'Las zonas que miras en el mapa se quedan en el teléfono, y se vuelven a ver aunque no haya cobertura. Mira una zona antes de salir y ya la tienes.',
+    'Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, per il tempo che Esri, che fornisce le mappe, permette di tenerle.':'Las zonas que miras en el mapa se quedan en el teléfono y se vuelven a ver aunque no haya cobertura, durante el tiempo que Esri, que proporciona los mapas, permite guardarlas.',
     'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR y códigos de barras, desde la cámara, desde una foto o desde un PDF descargado del correo: solo los copio, tal cual, con su forma original.',
     'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ El enlace de Instagram por sí solo no basta: Instagram no permite leer el contenido de los vídeos ajenos. Pega el texto o una captura.',
     'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Marca los que te interesen: los encuentras entre los lugares guardados en «Descubre», y de ahí aparecen también en el mapa de la vista previa del viaje.',
@@ -6366,7 +6453,7 @@ const DIZIONARIO_RACCOLTA={
     'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Si alguien está en peligro ahora mismo, llama al 112. En Italia las denuncias sobre material que afecta a menores se hacen también a la Polizia Postale, en commissariatodips.it.',
     'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Para quien quiere callejear sin planificar: pega una lista (también generada por una IA, una entrada por línea), la convierto en lugares guardados y te aviso cuando pases cerca.',
     'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Fotografía un monumento o edificio que no conozcas: te cuento qué es, algo de historia y contexto, y si hace falta reservar para visitarlo. Arrastra el dedo sobre la foto para rodear el sujeto.',
-    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'No existe un «descarga toda la ciudad»: los mapas de OpenStreetMap los mantienen voluntarios, y descargarlos en bloque está prohibido por sus condiciones. Guardar lo que ya has mirado, en cambio, es justo lo que piden hacer.',
+    'Al massimo 1.500 pezzi, e solo quelli che hai già guardato: scaricare in anticipo una città intera non è permesso dalle condizioni di Esri.':'Como mucho 1500 trozos, y solo los que ya has mirado: descargar por adelantado una ciudad entera no lo permiten las condiciones de Esri.',
     'Questa giornata è ancora vuota':'Este día está todavía vacío',
     'Aggiungi la prima tappa':'Añade la primera parada',
     '📣 A raccolta':'📣 Reunión',
@@ -6423,7 +6510,7 @@ const DIZIONARIO_RACCOLTA={
     'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'Les suggestions viennent de tes centres d’intérêt et des lieux que tu enregistres. La sensibilité et le rayon des alertes se règlent dans les Réglages.',
     'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Je crée les jours qui manquent dans l’intervalle. Ceux qui existent déjà, avec leurs activités, restent où ils sont : je n’enlève jamais rien.',
     'I posti che hai già nel Programma. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Les endroits que tu as déjà dans l’agenda. Touche l’étiquette pour dire si c’est incontournable ou facultatif : ça change à quel point je te préviens en passant à côté.',
-    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'Les zones que tu regardes sur la carte restent dans le téléphone, et se revoient même sans réseau. Regarde une zone avant de partir et tu l’as.',
+    'Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, per il tempo che Esri, che fornisce le mappe, permette di tenerle.':'Les zones que tu regardes sur la carte restent dans le téléphone et se revoient même sans réseau, pendant le temps qu’Esri, qui fournit les cartes, permet de les garder.',
     'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR et codes-barres, depuis l’appareil photo, une photo ou un PDF téléchargé depuis le mail : je les copie, tels quels, avec leur forme d’origine.',
     'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ Le lien Instagram seul ne suffit pas : Instagram ne permet pas de lire le contenu des vidéos des autres. Colle le texte ou une capture.',
     'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Coche ceux qui t’intéressent : tu les retrouves parmi les lieux enregistrés dans « Découvrir », et de là ils apparaissent aussi sur la carte de l’aperçu du voyage.',
@@ -6436,7 +6523,7 @@ const DIZIONARIO_RACCOLTA={
     'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Si quelqu’un est en danger maintenant, appelle le 112. En Italie, les signalements de contenus impliquant des mineurs se font aussi à la Polizia Postale, sur commissariatodips.it.',
     'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Pour ceux qui préfèrent flâner que planifier : colle une liste (même générée par une IA, une entrée par ligne), je la transforme en lieux enregistrés et je te préviens quand tu passes à côté.',
     'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Photographie un monument ou un bâtiment que tu ne connais pas : je te raconte ce que c’est, un peu d’histoire et de contexte, et s’il faut réserver pour le visiter. Fais glisser ton doigt sur la photo pour entourer le sujet.',
-    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'Il n’existe pas de « télécharge toute la ville » : les cartes d’OpenStreetMap sont tenues par des bénévoles, et les télécharger en bloc est interdit par leurs conditions. Garder ce que tu as déjà regardé, en revanche, c’est exactement ce qu’ils demandent.',
+    'Al massimo 1.500 pezzi, e solo quelli che hai già guardato: scaricare in anticipo una città intera non è permesso dalle condizioni di Esri.':'Au maximum 1 500 morceaux, et seulement ceux que tu as déjà regardés : télécharger à l’avance une ville entière n’est pas permis par les conditions d’Esri.',
     'Questa giornata è ancora vuota':'Cette journée est encore vide',
     'Aggiungi la prima tappa':'Ajoute la première étape',
     '📣 A raccolta':'📣 On se retrouve',
@@ -6493,7 +6580,7 @@ const DIZIONARIO_RACCOLTA={
     'I suggerimenti nascono dagli interessi e dai luoghi che salvi. Sensibilità e raggio degli avvisi si regolano nelle Impostazioni.':'As sugestões nascem dos teus interesses e dos lugares que guardas. A sensibilidade e o raio dos avisos regulam-se nas Definições.',
     'Creo i giorni che mancano nell\'intervallo. Quelli che ci sono già, con le loro attività, restano dove sono: non tolgo mai niente.':'Crio os dias que faltam no intervalo. Os que já existem, com as suas atividades, ficam onde estão: nunca tiro nada.',
     'I posti che hai già nel Programma. Tocca l\'etichetta per dire se è essenziale o saltabile: cambia quanto ti avviso passandoci vicino.':'Os sítios que já tens no roteiro. Toca na etiqueta para dizer se é imperdível ou dispensável: muda o quanto te aviso ao passar perto.',
-    'Le zone che guardi sulla mappa restano nel telefono, e si rivedono anche senza campo. Guarda una zona prima di partire e ce l\'hai lì.':'As zonas que olhas no mapa ficam no telemóvel, e vêem-se outra vez mesmo sem rede. Olha para uma zona antes de partir e ficas com ela.',
+    'Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, per il tempo che Esri, che fornisce le mappe, permette di tenerle.':'As zonas que olhas no mapa ficam no telemóvel e vêem-se outra vez mesmo sem rede, durante o tempo que a Esri, que fornece os mapas, permite guardá-las.',
     'QR e codici a barre, da fotocamera, da foto o da un PDF scaricato dalla mail: li copio e basta, tali e quali, con la loro forma originale.':'QR e códigos de barras, da câmara, de uma foto ou de um PDF descarregado do email: copio-os e pronto, tal e qual, com a forma original.',
     'ℹ️ Il solo link di Instagram non basta: Instagram non permette di leggere il contenuto dei video altrui. Incolla il testo o uno screenshot.':'ℹ️ Só a ligação do Instagram não chega: o Instagram não deixa ler o conteúdo dos vídeos dos outros. Cola o texto ou uma captura.',
     'Spunta quelli che ti interessano: li ritrovi tra i luoghi salvati in "Scopri", e da lì compaiono anche sulla mappa dell\'anteprima del viaggio.':'Marca os que te interessam: encontra-los entre os lugares guardados em «Descobrir», e daí aparecem também no mapa da pré-visualização da viagem.',
@@ -6506,7 +6593,7 @@ const DIZIONARIO_RACCOLTA={
     'Se c\'è pericolo per qualcuno adesso, chiama il 112. In Italia le segnalazioni su materiale che riguarda minori si fanno anche alla Polizia Postale, su commissariatodips.it.':'Se alguém está em perigo agora, liga para o 112. Em Itália, as denúncias sobre material que envolve menores fazem-se também à Polizia Postale, em commissariatodips.it.',
     'Per chi vuole bighellonare senza pianificare: incolla una lista (anche generata da un\'AI, una voce per riga), la trasformo in luoghi salvati e ti avviso quando ci passi vicino.':'Para quem quer vaguear sem planear: cola uma lista (mesmo gerada por uma IA, uma entrada por linha), transformo-a em lugares guardados e aviso-te quando passares perto.',
     'Fotografa un monumento o edificio che non conosci: ti racconto cos\'è, un po\' di storia e contesto, e se serve prenotare per visitarlo. Trascina il dito sulla foto per cerchiare il soggetto.':'Fotografa um monumento ou edifício que não conheças: conto-te o que é, um pouco de história e contexto, e se é preciso reservar para o visitar. Arrasta o dedo sobre a foto para rodear o motivo.',
-    'Non esiste uno "scarica tutta la città": le mappe di OpenStreetMap le tengono su dei volontari, e scaricarle in blocco è vietato dalle loro condizioni. Tenere da parte quello che hai già guardato invece è proprio quello che chiedono di fare.':'Não existe um «descarrega a cidade toda»: os mapas do OpenStreetMap são mantidos por voluntários, e descarregá-los em bloco é proibido pelas condições deles. Guardar o que já olhaste, pelo contrário, é exatamente o que pedem para fazer.',
+    'Al massimo 1.500 pezzi, e solo quelli che hai già guardato: scaricare in anticipo una città intera non è permesso dalle condizioni di Esri.':'No máximo 1500 pedaços, e só os que já olhaste: descarregar antecipadamente uma cidade inteira não é permitido pelas condições da Esri.',
     'Questa giornata è ancora vuota':'Este dia ainda está vazio',
     'Aggiungi la prima tappa':'Acrescenta a primeira paragem',
     '📣 A raccolta':'📣 Toca a reunir',
@@ -14158,6 +14245,56 @@ const DIZIONARIO_STILE={
   }
 };
 Object.keys(DIZIONARIO_STILE).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_STILE[l]));
+/* Le mappe nuove (MapLibre ed Esri, novembre 2026): i nomi delle mappe per
+   VoiceOver, «Fonti» nella citazione, gli avvisi quando la mappa satellitare
+   non c'e', e per quanto restano i pezzi tenuti per l'offline. */
+const DIZIONARIO_MAPPE_ESRI={
+  en:{
+    'Mappa della giornata':'Map of the day',
+    'Mappa del viaggio':'Trip map',
+    'Fonti':'Sources',
+    'La mappa satellitare non risponde: controlla la rete e riprova.':'The satellite map isn’t responding: check your connection and try again.',
+    'La mappa satellitare ora non è disponibile: riprova più tardi.':'The satellite map isn’t available right now: try again later.',
+    'Questo telefono non riesce a disegnare la mappa.':'This phone can’t draw the map.',
+    'ognuno resta al massimo {1}':'each one stays {1} at most',
+    '{1} ora':'{1} hour',
+    '{1} ore':'{1} hours'
+  },
+  es:{
+    'Mappa della giornata':'Mapa del día',
+    'Mappa del viaggio':'Mapa del viaje',
+    'Fonti':'Fuentes',
+    'La mappa satellitare non risponde: controlla la rete e riprova.':'El mapa por satélite no responde: revisa la conexión y vuelve a intentarlo.',
+    'La mappa satellitare ora non è disponibile: riprova più tardi.':'El mapa por satélite no está disponible ahora: vuelve a intentarlo más tarde.',
+    'Questo telefono non riesce a disegnare la mappa.':'Este teléfono no consigue dibujar el mapa.',
+    'ognuno resta al massimo {1}':'cada uno se queda {1} como mucho',
+    '{1} ora':'{1} hora',
+    '{1} ore':'{1} horas'
+  },
+  fr:{
+    'Mappa della giornata':'Carte de la journée',
+    'Mappa del viaggio':'Carte du voyage',
+    'Fonti':'Sources',
+    'La mappa satellitare non risponde: controlla la rete e riprova.':'La carte satellite ne répond pas : vérifie ta connexion et réessaie.',
+    'La mappa satellitare ora non è disponibile: riprova più tardi.':'La carte satellite n’est pas disponible pour l’instant : réessaie plus tard.',
+    'Questo telefono non riesce a disegnare la mappa.':'Ce téléphone n’arrive pas à afficher la carte.',
+    'ognuno resta al massimo {1}':'chacun reste {1} au maximum',
+    '{1} ora':'{1} heure',
+    '{1} ore':'{1} heures'
+  },
+  pt:{
+    'Mappa della giornata':'Mapa do dia',
+    'Mappa del viaggio':'Mapa da viagem',
+    'Fonti':'Fontes',
+    'La mappa satellitare non risponde: controlla la rete e riprova.':'O mapa de satélite não responde: verifica a ligação e tenta de novo.',
+    'La mappa satellitare ora non è disponibile: riprova più tardi.':'O mapa de satélite não está disponível agora: tenta de novo mais tarde.',
+    'Questo telefono non riesce a disegnare la mappa.':'Este telemóvel não consegue desenhar o mapa.',
+    'ognuno resta al massimo {1}':'cada um fica {1} no máximo',
+    '{1} ora':'{1} hora',
+    '{1} ore':'{1} horas'
+  }
+};
+Object.keys(DIZIONARIO_MAPPE_ESRI).forEach(l=>Object.assign(DIZIONARIO[l],DIZIONARIO_MAPPE_ESRI[l]));
 
 /* Le frasi con un simbolo davanti valgono anche senza (Layout 1). I comandi
    hanno lasciato le emoji per le icone a linea (vedi ico): «🗺️ Tutto il
@@ -14431,10 +14568,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   else if(location.hash.startsWith('#join=')){try{handleJoin(location.hash.slice(6));}catch(e){}}
   else if(window.GEPPGO_LINK_RIFIUTATO)setTimeout(avvisaLinkNonValido,800);
   if(!T() && app.trips.length){app.currentTripId=app.trips.filter(t=>t.status!=='closed')[0]?.id||app.trips[0].id;}
-  try{initMap();}catch(e){}
   document.getElementById('proxRadius').value=app.settings.proxRadius;
   document.getElementById('notifLevel').value=app.settings.notifLevel||'saved';
   applyTheme();
+  /* a cose fatte: il telefono all'avvio ha di meglio da fare */
+  setTimeout(tessereVecchieVia,6000);
   /* Il navigatore di GeppGo non c'e' piu': chi l'aveva scelto qui vede
      «Chiedimelo», e al primo percorso sceglie fra Apple e Google. */
   document.getElementById('navPref').value=(app.settings.nav==='internal'?'ask':app.settings.nav)||'ask';
@@ -14504,290 +14642,683 @@ function coloreBarra(){
   m.setAttribute('content',c);
 }
 
-/* ===== LA MAPPA SENZA RETE =====
-   Il momento in cui quest'app serve di piu' e' quello in cui il telefono non
-   ha campo: sei in una via che non conosci e vuoi vedere dove sei. Tutto il
-   resto gia' funziona offline (i viaggi stanno nel telefono, la scorza
-   dell'app la tiene da parte la service worker): l'unica cosa che diventava
-   un rettangolo grigio era lo sfondo della mappa.
+/* ===== LE MAPPE: MapLibre ed Esri (novembre 2026) =====
+   Tutte le mappe dell'app nascono qui (nuovaMappa): quella di Oggi, quella
+   della giornata nel Programma, Tutto il viaggio, quella nella scheda del
+   viaggio e quella nella scheda di un posto. Le mappine dei risultati di
+   Scopri invece sono immagini ferme (mappinaFerma): otto mappe vere una
+   sotto l'altra vorrebbero dire otto disegnatori WebGL, e un telefono ne
+   regge pochi.
 
-   Le tessere che hai GIA' guardato si tengono da parte e si rivedono senza
-   rete. Quelle mai viste, offline, diventano un riquadro neutro invece di un
-   buco: sopra restano il tuo giro, le tappe e il pallino, che sono la roba
-   che serve davvero.
+   Il fondo e' il satellite di Esri (ArcGIS Location Platform, permesso
+   «Basemaps»), ritoccato come nelle anteprime approvate (anteprime/oggi-a e
+   oggi-b): nel tema chiaro una stampa calda intonata al panna, nel tema
+   scuro piu' cupo e scenografico. Da vicino (ZOOM_CITTA), dove la sola foto
+   dall'alto si legge male, sopra ci sono strade e nomi, dallo stesso stile
+   di Esri. Prima erano un'altra libreria e le mattonelle di OpenStreetMap,
+   che sono di volontari e non reggono un'app vera (DA-FARE.md, «Il fornitore
+   della mappa»).
 
-   Quello che NON si fa, ed e' una scelta: non esiste "scarica la mappa di
-   Tokyo". Scaricare tessere in blocco dai server di OpenStreetMap e' vietato
-   dalle loro condizioni d'uso - sono volontari, e ti bloccano. E' lo stesso
-   ragionamento della cache di Overpass. Tenere da parte quello che si e' gia'
-   guardato, invece, e' proprio quello che quelle condizioni chiedono di
-   fare. */
-const TESSERE_MAX=1500;
-const TESSERE_URL='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-let tessereScritte=0;
-/* Un riquadro vuoto ma non bianco: cosi' si capisce che li' la mappa non c'e'
-   ancora, invece di sembrare rotta.
-   Ce ne vogliono due, uno per tema. Prima era uno solo, color crema, disegnato
-   una volta all'avvio: con il tema scuro veniva fuori una lastra chiara in
-   mezzo a una schermata nera - e proprio nella situazione per cui la mappa
-   offline esiste, cioe' all'estero, senza campo, quasi sempre di sera. */
-const TESSERE_COLORI={chiaro:['#EFE7D8','#E0D5BE'],scuro:['#221F19','#2F2B22']};
-const TESSERE_DISEGNATE={};
-function tesseraVuota(){
-  const tema=document.body.classList.contains('dark')?'scuro':'chiaro';
-  if(TESSERE_DISEGNATE[tema])return TESSERE_DISEGNATE[tema];
-  try{
-    const [fondo,punti]=TESSERE_COLORI[tema];
-    const c=document.createElement('canvas');c.width=c.height=256;
-    const g=c.getContext('2d');
-    g.fillStyle=fondo;g.fillRect(0,0,256,256);
-    g.fillStyle=punti;
-    for(let y=8;y<256;y+=32)for(let x=8;x<256;x+=32)g.fillRect(x,y,2,2);
-    return TESSERE_DISEGNATE[tema]=c.toDataURL('image/png');
-  }catch(e){return '';}
-}
-/* Le tessere gia' disegnate tengono l'immagine vecchia: cambiando tema vanno
-   ridipinte, altrimenti la lastra chiara resta li' finche' non si muove la
-   mappa. */
-function tessereRitinta(){
-  document.querySelectorAll('img[data-geppgo="vuota"]').forEach(img=>{
-    try{img.src=tesseraVuota();}catch(e){}
-  });
-}
-function tessereLeggi(k){
-  return idbP().then(db=>new Promise(res=>{
-    const q=db.transaction('tessere').objectStore('tessere').get(k);
-    q.onsuccess=e=>res(e.target.result?e.target.result.blob:null);
-    q.onerror=()=>res(null);
-  })).catch(()=>null);
-}
-function tessereScrivi(k,blob){
-  return idbP().then(async db=>{
-    await new Promise(res=>{
-      const t=db.transaction('tessere','readwrite');
-      t.objectStore('tessere').put({k:k,blob:blob,ts:Date.now()});
-      t.oncomplete=res;t.onerror=res;t.onabort=res;
-    });
-    /* Non si conta a ogni tessera: contarle tutte a ogni scrittura costerebbe
-       piu' della scrittura. Ogni duecento si fa il giro e si buttano le piu'
-       vecchie. */
-    if(++tessereScritte>=200){tessereScritte=0;await tessereSfoltisci();}
-  }).catch(()=>{});
-}
-async function tessereSfoltisci(){
-  try{
-    const db=await idbP();
-    const tutte=await new Promise(res=>{
-      const out=[];const c=db.transaction('tessere').objectStore('tessere').openCursor();
-      c.onsuccess=e=>{const cur=e.target.result;if(cur){out.push({k:cur.value.k,ts:cur.value.ts||0});cur.continue();}else res(out);};
-      c.onerror=()=>res(out);
-    });
-    if(tutte.length<=TESSERE_MAX)return;
-    tutte.sort((a,b)=>a.ts-b.ts);
-    const daButtare=tutte.slice(0,tutte.length-TESSERE_MAX);
-    await new Promise(res=>{
-      const t=db.transaction('tessere','readwrite'),s=t.objectStore('tessere');
-      daButtare.forEach(x=>s.delete(x.k));
-      t.oncomplete=res;t.onerror=res;t.onabort=res;
-    });
-  }catch(e){}
-}
-async function tessereQuante(){
-  try{
-    const db=await idbP();
-    return await new Promise(res=>{
-      let n=0,byte=0;
-      const c=db.transaction('tessere').objectStore('tessere').openCursor();
-      c.onsuccess=e=>{const cur=e.target.result;
-        if(cur){n++;byte+=(cur.value.blob&&cur.value.blob.size)||0;cur.continue();}
-        else res({quante:n,byte:byte});};
-      c.onerror=()=>res({quante:n,byte:byte});
-    });
-  }catch(e){return {quante:0,byte:0};}
-}
-async function tessereButta(){
-  try{
-    const db=await idbP();
-    await new Promise(res=>{
-      const t=db.transaction('tessere','readwrite');
-      t.objectStore('tessere').clear();
-      t.oncomplete=res;t.onerror=res;t.onabort=res;
-    });
-  }catch(e){}
-}
-/* Lo strato della mappa: prima guarda quello che ha gia' da parte, poi la
-   rete. Cosi' una zona gia' vista si riapre subito anche col campo pieno, e
-   senza campo si vede lo stesso. */
-function stratoMappa(opzioni){
-  if(typeof L==='undefined')return null;
-  if(!L.TileLayer.GeppGo){
-    L.TileLayer.GeppGo=L.TileLayer.extend({
-      createTile:function(coords,done){
-        const img=document.createElement('img');
-        img.alt='';
-        const chiave=coords.z+'/'+coords.x+'/'+coords.y;
-        const url=this.getTileUrl(coords);
-        /* Una tessera che arriva quando la mappa non c'e' piu' si butta via.
-           Prima le tessere si caricavano come immagini e basta: adesso passano
-           dalla memoria e dalla rete, quindi la risposta puo' arrivare molto
-           dopo - e in mezzo la schermata si e' ridisegnata e la mappa e' stata
-           tolta. Consegnarla lo stesso faceva rompere Leaflet dentro, con un
-           errore (_leaflet_pos) che usciva da tutt'altra parte e solo sulle
-           macchine lente, dove le tessere ci mettono davvero un po'. */
-        const strato=this;
-        const consegna=()=>{if(strato._map)done(null,img);};
-        /* L'ultima spiaggia, e vale la pena spiegarla. Tenere le tessere da
-           parte vuol dire prenderle con fetch, e fetch ha bisogno del permesso
-           del server che le ospita: dove quel permesso manca la mappa
-           resterebbe bianca. Percio' se il fetch non riesce si torna a
-           caricarla come una qualunque immagine, che funziona sempre. Si
-           perde la copia da parte, non la mappa. */
-        const comeImmagine=()=>{
-          img.onload=()=>{img.dataset.geppgo='rete';consegna();};
-          /* Si staccano tutti e due i ganci prima di mettere il riquadro
-             vuoto: quello che carica scatterebbe di nuovo sul riquadro stesso
-             e cancellerebbe il fatto che li' la mappa non c'era. */
-          img.onerror=()=>{img.onload=null;img.onerror=null;img.src=tesseraVuota();img.dataset.geppgo='vuota';consegna();};
-          img.src=url;
-        };
-        tessereLeggi(chiave).then(blob=>{
-          if(blob){img.src=URL.createObjectURL(blob);img.dataset.geppgo='memoria';consegna();return;}
-          if(navigator.onLine===false){img.src=tesseraVuota();img.dataset.geppgo='vuota';consegna();return;}
-          fetch(url).then(r=>r.ok?r.blob():null).then(b=>{
-            if(!b){comeImmagine();return;}
-            tessereScrivi(chiave,b);
-            img.src=URL.createObjectURL(b);img.dataset.geppgo='rete';consegna();
-          }).catch(()=>comeImmagine());
-        }).catch(()=>comeImmagine());
-        return img;
-      }
-    });
+   MapLibre arriva solo quando serve una mappa (LIBRERIE, alMomento): pesa
+   quattro volte la libreria di prima, e chi apre l'app senza guardare una
+   mappa non lo scarica. Le mappe gia' guardate restano per l'offline solo quanto Esri
+   permette (sw.js, «Le mappe senza rete»). */
+
+/* LA CHIAVE DI ESRI. E' pubblica per forza - sta nella pagina, come in ogni
+   mappa sul web - e per questo vale solo dal sito pubblicato
+   (https://87jg2gk7tn-bit.github.io) e solo per le mappe di base: copiata
+   altrove, Esri la rifiuta. Scade a novembre 2027: va rifatta prima, e si
+   scrive solo qui (test/prova-mappe.js controlla che non compaia altrove). */
+const ESRI_CHIAVE='AAPTaEi4r7gjLRstKrLG2tEyZsg..jfXqihld59VVsCCfmcjpy1Y1GA2rtfHRELa4aYV8ufpXDBbX_LZiYdRfwkK30XIOH-bmASJA3uBnpRxEcI7bcIJ020hT_3k7mudbNHlaLYXwlieWMQ-v7A-JKF3GwS4FCtmQTWeX5FxoS_-B1qHuLK4WI_wvi_vYPuRRTag5HDNk6oEI4nHGuQRQeQJ7gFzOIvrmEyqQce2qQEJJbczpc3lugCDAo1I11N3SVzhODDupFOv4Q5waAT1_WxKJj6i9';
+/* Lo stile «Imagery» di Esri: il satellite e, sopra, strade e nomi. */
+const ESRI_STILE='https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery';
+/* IL RIPIEGO. Se Esri non risponde, la mappa lo dice e - finche' questo e'
+   acceso - mette sotto le mattonelle di OpenStreetMap. Serve alle prove,
+   finche' la chiave non si puo' provare da qui (vale solo dal sito
+   pubblicato). VA SPENTO PRIMA DEL LANCIO (DA-FARE.md): quei server sono di
+   volontari, e un'app vera non ci si appoggia. Spento, resta il fondo color
+   carta coi segnaposto sopra: la mappa dice cosa succede, e l'app va avanti
+   lo stesso. */
+const MAPPA_RIPIEGO_OSM=true;
+const OSM_TESSERE='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+/* Da qui in su (lo zoom di MapLibre conta i pezzi da 512 px: 13 e' un
+   quartiere) sopra la foto compaiono strade e nomi. Piu' indietro la foto
+   si legge da sola, e i nomi coprirebbero i segnaposto. */
+const ZOOM_CITTA=13;
+/* Quanto ci si avvicina a una tappa (Oggi, il Programma largo, il tasto della
+   posizione). 14,5 e non 15: MapLibre prende i pezzi del livello sopra solo
+   da 15 in su (coi pezzi dichiarati da 362 px, vedi stileDaEsri), e la stessa
+   vista costa meta' dei pezzi. Si vede un isolato in piu' intorno. */
+const ZOOM_TAPPA=14.5;
+/* La stessa di sw.js: li' si riempie, qui la si conta e la si svuota. */
+const CACHE_MAPPE='geppgo-mappe';
+/* Le risposte con cui Esri dice che la chiave non va (mancante, scaduta,
+   senza permesso, o la soglia gratuita finita: in tutti i casi la chiave
+   smette di valere). Allora le mappe tenute da parte si buttano: le
+   condizioni di Esri lo chiedono. */
+const ESRI_RIFIUTI=[401,403,498,499];
+/* I toni delle due anteprime approvate. Nel tema chiaro la foto diventa
+   grigia (saturazione -1) e sta al 77% sopra un fondo arancio: il nero
+   diventa bruno, il bianco panna. Da lontano resta un filo di colore e piu'
+   contrasto, perche' il mare si stacchi dalla terra. Nel tema scuro la foto
+   sta piu' bassa sopra un blu notte. I nomi sono d'inchiostro col bordo
+   panna nel chiaro, panna col bordo notte nello scuro. fondoVuoto e' il
+   colore della carta quando la foto non c'e' (ancora in arrivo, o niente
+   rete): un riquadro neutro, non un arancio acceso. */
+const MAPPA_TONI={
+  chiaro:{
+    fondo:'#F0B464',fondoVuoto:'#EFE7D8',
+    raster:{'raster-saturation':['interpolate',['linear'],['zoom'],6,-.62,9,-1],'raster-contrast':['interpolate',['linear'],['zoom'],6,.5,9,.36],'raster-brightness-min':['interpolate',['linear'],['zoom'],6,.08,9,.25],'raster-opacity':.77},
+    osm:{'raster-saturation':0,'raster-contrast':0,'raster-brightness-min':0,'raster-brightness-max':1,'raster-opacity':1},
+    nomi:{'text-color':'#1E1810','text-halo-color':'rgba(251,245,231,.92)','text-halo-width':1.3},
+    cielo:{'sky-color':'#E9D6B0','horizon-color':'#F3E3C2','fog-color':'#EEDDBA','fog-ground-blend':.55,'horizon-fog-blend':.75,'sky-horizon-blend':.9,'atmosphere-blend':['interpolate',['linear'],['zoom'],3,.85,6.5,.45,9,0]}
+  },
+  scuro:{
+    fondo:'#0E1A36',fondoVuoto:'#221F19',
+    raster:{'raster-saturation':['interpolate',['linear'],['zoom'],6,-.3,9,-.5],'raster-contrast':['interpolate',['linear'],['zoom'],6,.45,9,.52],'raster-brightness-min':0,'raster-opacity':['interpolate',['linear'],['zoom'],6,.64,9,.58]},
+    osm:{'raster-saturation':-.25,'raster-contrast':.05,'raster-brightness-min':0,'raster-brightness-max':.62,'raster-opacity':1},
+    nomi:{'text-color':'#F6EEDD','text-halo-color':'rgba(9,16,34,.88)','text-halo-width':1.3},
+    cielo:{'sky-color':'#070D1C','horizon-color':'#1B2C52','fog-color':'#0B1630','fog-ground-blend':.45,'horizon-fog-blend':.8,'sky-horizon-blend':.9,'atmosphere-blend':['interpolate',['linear'],['zoom'],2,1,6.5,.7,9,0]}
   }
-  const s=new L.TileLayer.GeppGo(TESSERE_URL,Object.assign({attribution:DIRITTI_OSM},opzioni||{}));
-  /* Gli indirizzi temporanei delle immagini vanno rilasciati quando la
-     tessera esce di scena, altrimenti la memoria cresce mentre si trascina
-     la mappa. */
-  s.on('tileunload',e=>{
-    const src=e.tile&&e.tile.src;
-    if(src&&src.indexOf('blob:')===0){try{URL.revokeObjectURL(src);}catch(x){}}
-  });
-  return s;
-}
-/* LA CITAZIONE DI OPENSTREETMAP. La licenza dei dati e le regole delle
-   mattonelle la chiedono su ogni mappa: «© OpenStreetMap», col link alla
-   pagina dei diritti. La Home, l'anteprima di un posto e le mappine dei
-   risultati non l'avevano proprio; le altre due dicevano solo «© OSM».
-   Senza la scritta di Leaflet davanti, che nessuno chiede e che sulle mappe
-   piccole si prendeva mezza riga. L'angolo e' scelto mappa per mappa, dove
-   non ci sono tasti: la citazione deve leggersi senza coprire niente (vedi
-   test/prova-installazione.js). */
+};
+/* LA CITAZIONE DI OPENSTREETMAP, accanto a quella di Esri su ogni mappa: i
+   posti, le tappe trovate e i nomi vengono anche da li' (Nominatim,
+   Overpass), e lo stile di Esri stesso usa i suoi dati. */
 const DIRITTI_OSM='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
-/* La crocetta delle schede di Leaflet e' da 24 px e, per VoiceOver, si chiama
-   «Close popup», in inglese per tutti. Su ogni mappa (miglioria 13b; prima
-   solo su quella del viaggio): risponde su 44 px (il foglio di stile, vedi
-   .leaflet-popup-close-button) e si chiama «Chiudi» nella lingua dell'app.
-   E la scheda si apre a 16 px dal bordo della mappa invece di 5: a filo del
-   bordo la crocetta restava mezza fuori, e col dito non la si prendeva. Si
-   fa una volta, quando arriva Leaflet, e vale per ogni mappa fatta dopo. */
-function leafletSistemato(){
-  L.Popup.prototype.options.autoPanPadding=L.point(16,16);
-  L.Map.addInitHook(function(){this.on('popupopen',crocettaTradotta);});
+const mappeVive=new Set();
+function temaMappa(){return document.body.classList.contains('dark')?'scuro':'chiaro';}
+/* I nomi sulla mappa nella lingua dell'app. Il portoghese e' quello del
+   Portogallo, come il resto dell'app. */
+function linguaEsri(){const l=linguaScelta();return l==='pt'?'pt-PT':(['it','en','es','fr'].includes(l)?l:'it');}
+function vivo(m){return !!m&&mappeVive.has(m);}
+
+/* LO STILE DI ESRI, chiesto una volta per lingua. Lo si chiede senza la
+   chiave nelle risposte (echoToken=false), come fa il plugin di Esri per
+   MapLibre, e la chiave la si aggiunge qui a pezzi, caratteri e simboli
+   (conChiave): cosi' sta in un posto solo, ed e' sempre quella di adesso. */
+const ESRI_STILI={},ESRI_PRONTI={};
+function erroreMappa(motivo,codice){const e=new Error('mappa: '+motivo);e.motivo=motivo;e.codice=codice||0;return e;}
+function stileEsri(lingua){
+  if(ESRI_STILI[lingua])return ESRI_STILI[lingua];
+  const url=ESRI_STILE+'?language='+encodeURIComponent(lingua)+'&echoToken=false&token='+encodeURIComponent(ESRI_CHIAVE);
+  const p=fetch(url,{credentials:'omit'})
+    .then(r=>r.text().then(testo=>{
+      let j=null;try{j=JSON.parse(testo);}catch(e){}
+      /* Esri dice gli errori anche dentro una risposta «200», col codice
+         nel corpo: si guardano tutti e due. */
+      const codice=(j&&j.error&&Number(j.error.code))||r.status;
+      if(ESRI_RIFIUTI.includes(codice)){console.log('Esri rifiuta la chiave:',codice,(j&&j.error&&j.error.message)||'');chiaveRifiutata();throw erroreMappa('chiave',codice);}
+      if(!r.ok||!j||!j.sources||!Array.isArray(j.layers)){console.log('Esri non da\' lo stile:',codice,testo.slice(0,200));throw erroreMappa(codice===429?'soglia':'servizio',codice);}
+      return j;
+    }))
+    .catch(e=>{if(!(e&&e.motivo))console.log('Esri non risponde:',e);throw (e&&e.motivo)?e:erroreMappa('rete',0);});
+  ESRI_STILI[lingua]=p;
+  p.then(j=>{ESRI_PRONTI[lingua]=j;},()=>{
+    /* Una risposta andata male non resta in memoria: la mappa dopo riprova. */
+    if(ESRI_STILI[lingua]===p)delete ESRI_STILI[lingua];
+  });
+  return p;
 }
-function crocettaTradotta(e){
-  const el=e&&e.popup&&e.popup.getElement&&e.popup.getElement();
-  const b=el&&el.querySelector('.leaflet-popup-close-button');
-  if(b){b.setAttribute('aria-label',tv('Chiudi'));b.title=tv('Chiudi');}
+/* La chiave, sui soli indirizzi di Esri (gli altri non la devono vedere). Ai
+   pezzi e ai caratteri anche f=json, come il plugin di Esri. */
+function conChiave(u,f){
+  if(typeof u!=='string'||!/^https:\/\/[^/?#]*\.arcgis\.com\//.test(u)||/[?&]token=/.test(u))return u;
+  return u+(u.indexOf('?')<0?'?':'&')+(f?'f=json&':'')+'token='+encodeURIComponent(ESRI_CHIAVE);
 }
-function dirittiMappa(m,angolo){
+/* Esri non accetta piu' la chiave (scaduta, revocata, soglia finita): le
+   condizioni chiedono di svuotare le mappe tenute da parte. La service worker
+   lo fa anche da sola, quando vede la stessa risposta su un pezzo. */
+function chiaveRifiutata(){
+  try{if(window.caches)caches.delete(CACHE_MAPPE).catch(()=>{});}catch(e){}
+}
+/* Dallo stile di Esri a quello dell'app: la chiave negli indirizzi, il fondo
+   e i toni del tema, strade e nomi solo da ZOOM_CITTA in su. Lo stile di Esri
+   arrivato resta com'e' (ESRI_PRONTI): da qui escono copie. */
+function stileDaEsri(esri,opz){
+  const toni=MAPPA_TONI[temaMappa()];
+  const s={version:8,sources:{},layers:[{id:'g-fondo',type:'background',paint:{'background-color':toni.fondo}}]};
+  if(esri.glyphs)s.glyphs=conChiave(esri.glyphs,true);
+  if(esri.sprite)s.sprite=Array.isArray(esri.sprite)?esri.sprite.map(x=>Object.assign({},x,{url:conChiave(x.url)})):conChiave(esri.sprite);
+  Object.keys(esri.sources||{}).forEach(id=>{
+    const f=Object.assign({},esri.sources[id]);
+    /* Con i pezzi gia' scritti, l'indirizzo della descrizione non serve: e'
+       una richiesta in meno a ogni mappa. */
+    if(Array.isArray(f.tiles)&&f.tiles.length){f.tiles=f.tiles.map(u=>conChiave(u,true));delete f.url;}
+    else if(f.url)f.url=conChiave(f.url,true);
+    ['minzoom','maxzoom','tileSize'].forEach(k=>{if(f[k]==null)return;const n=Number(f[k]);if(isFinite(n))f[k]=n;else delete f[k];});
+    /* I pezzi della foto sono da 256 px, ma si dichiarano da 362 (256 per
+       radice di due): cosi' MapLibre prende sempre il livello piu' basso
+       dei due possibili. Con 256 una mappa appena piu' grande saltava al
+       livello dopo e chiedeva il doppio dei pezzi (vedi le anteprime). */
+    if(f.type==='raster')f.tileSize=Math.round((f.tileSize||256)*Math.SQRT2);
+    s.sources[id]=f;
+  });
+  (esri.layers||[]).forEach(l0=>{
+    if(!l0||l0.type==='background'||!s.sources[l0.source])return;
+    const l=Object.assign({},l0);
+    if(l.type==='raster')l.paint=Object.assign({},l0.paint,toni.raster);
+    else{
+      if(l0.maxzoom!=null&&Number(l0.maxzoom)<=ZOOM_CITTA)return;
+      l.minzoom=Math.max(Number(l0.minzoom)||0,ZOOM_CITTA);
+      if(l.type==='symbol'&&l0.layout&&l0.layout['text-field'])l.paint=Object.assign({},l0.paint,toni.nomi);
+    }
+    s.layers.push(l);
+  });
+  return conGlobo(s,opz,toni);
+}
+function stileOsm(opz){
+  const toni=MAPPA_TONI[temaMappa()];
+  return conGlobo({version:8,sources:{osm:{type:'raster',tiles:[OSM_TESSERE],tileSize:256,maxzoom:19}},
+    layers:[{id:'g-fondo',type:'background',paint:{'background-color':toni.fondoVuoto}},{id:'osm',type:'raster',source:'osm',paint:Object.assign({},toni.osm)}]},opz,toni);
+}
+function stileVuoto(opz){
+  const toni=MAPPA_TONI[temaMappa()];
+  return conGlobo({version:8,sources:{},layers:[{id:'g-fondo',type:'background',paint:{'background-color':toni.fondoVuoto}}]},opz,toni);
+}
+/* Il globo e il suo cielo solo per Tutto il viaggio: da lontano si vede la
+   terra tonda, da vicino torna piatta da sola. */
+function conGlobo(s,opz,toni){if(opz&&opz.globo){s.projection={type:'globe'};s.sky=Object.assign({},toni.cielo);}return s;}
+/* Le parole dei comandi di MapLibre, nella lingua dell'app: di suo sono in
+   inglese per tutti («Zoom in», «Close popup»). */
+function paroleMappa(){
+  return {'NavigationControl.ZoomIn':tv('Aumenta zoom'),'NavigationControl.ZoomOut':tv('Riduci zoom'),'Popup.Close':tv('Chiudi'),'Map.Title':tv('Mappa'),'Marker.Title':tv('Mappa')};
+}
+
+/* UNA MAPPA. opz: centro [lng,lat], zoom, nome (per VoiceOver), diritti
+   (l'angolo della citazione: 'tl','tr','bl','br', sempre uno senza tasti),
+   zoomTasti (l'angolo dei tasti + e −), globo, ferma (non si muove col dito),
+   aperta/chiusa (quando si apre o chiude una scheda), rifai (come rifarla
+   da capo: serve a «Riprova»). */
+function nuovaMappa(el,opz){
+  opz=opz||{};
+  if(typeof el==='string')el=document.getElementById(el);
+  if(!el||typeof maplibregl==='undefined')return null;
+  const pronto=ESRI_PRONTI[linguaEsri()];
+  let m;
   try{
-    if(!m.attributionControl)L.control.attribution({prefix:false,position:angolo}).addTo(m);
-    else{m.attributionControl.setPrefix(false);m.attributionControl.setPosition(angolo);}
-  }catch(e){/* una scritta che non si mette non deve rompere la mappa */}
+    m=new maplibregl.Map({container:el,
+      style:pronto?stileDaEsri(pronto,opz):stileVuoto(opz),
+      center:opz.centro||[0,20],zoom:opz.zoom!=null?opz.zoom:1,
+      minZoom:0,maxZoom:18,maxPitch:0,attributionControl:false,
+      interactive:!opz.ferma,dragRotate:false,pitchWithRotate:false,touchPitch:false,
+      /* Lo stile di Esri si da' per buono: controllarlo a ogni mappa costa,
+         e una regola che MapLibre non conosce fermerebbe tutta la mappa
+         invece di quella regola sola. */
+      validateStyle:false,
+      fadeDuration:menoMovimento()?0:300,locale:paroleMappa()});
+  }catch(e){console.log('La mappa non parte:',e);mappaNonSiPuo(el,'webgl');return null;}
+  /* Niente rotazione: col nord sempre in alto ci si orienta, e due dita che
+     ruotano senza volerlo non servono a nessuno. */
+  try{m.touchZoomRotate.disableRotation();if(m.keyboard&&m.keyboard.disableRotation)m.keyboard.disableRotation();}catch(e){}
+  /* Con «Riduci movimento» la mappa non continua a correre dopo il dito. */
+  if(menoMovimento())try{m.dragPan.enable({linearity:0,maxSpeed:0});}catch(e){}
+  m._g={opz:opz,dati:{},fonte:pronto?'esri':'vuota',pronta:false,scheda:null,io:null,lingua:linguaEsri()};
+  mappeVive.add(m);
+  m.on('style.load',()=>{m._g.pronta=true;sovrapponi(m);});
+  m.on('error',e=>mappaErrore(m,e));
+  if(opz.nome)try{m.getCanvas().setAttribute('aria-label',opz.nome);}catch(e){}
+  if(opz.zoomTasti)m.addControl(new maplibregl.NavigationControl({showCompass:false,visualizePitch:false}),opz.zoomTasti);
+  dirittiMappa(m,opz.diritti||'bl');
+  if(!pronto)fondoMappa(m);
+  return m;
 }
-/* Prima di togliere una mappa le si dice di stare ferma. Se una zoomata e'
-   ancora in corso quando il riquadro sparisce, Leaflet la finisce lo stesso e
-   va a cercare un pannello che non c'e' piu': "Cannot read properties of
-   undefined (reading '_leaflet_pos')". Non si vede quasi mai - serve una
-   macchina lenta e il momento giusto - ed e' successo una volta sulla
-   macchina delle prove, con tutti i controlli passati. stop() annulla il
-   movimento in corso, e il momento giusto smette di esistere. */
-function fermaMappa(m){
-  try{if(m&&m.stop)m.stop();}catch(e){}
-  /* stop() ferma lo spostamento, ma non la ZOOMATA: quella si chiude da sola
-     con un transitionend che arriva dopo, e a quel punto _onZoomTransitionEnd
-     va a leggere un pannello che non c'e' piu'. Dentro Leaflet quel gestore
-     comincia con "se non sto zoomando, lascia perdere": abbassare la
-     bandierina e' l'unico modo per dirglielo. E' roba interna della libreria,
-     e sta scritto qui perche' si sappia perche'. */
-  try{if(m)m._animatingZoom=false;}catch(e){}
+/* Il fondo vero: lo stile di Esri appena c'e', o il ripiego. La mappa nasce
+   prima, col fondo color carta, perche' segnaposto e percorso non debbano
+   aspettare la risposta di Esri. */
+function fondoMappa(m){
+  stileEsri(linguaEsri()).then(esri=>{
+    if(!vivo(m))return;
+    m._g.fonte='esri';m._g.pronta=false;
+    m.setStyle(stileDaEsri(esri,m._g.opz),{diff:false});
+    avvisoMappa(m,null);scriviDiritti(m);
+  },err=>{
+    if(!vivo(m))return;
+    if(MAPPA_RIPIEGO_OSM){m._g.fonte='osm';m._g.pronta=false;m.setStyle(stileOsm(m._g.opz),{diff:false});}
+    avvisoMappa(m,err.motivo||'servizio');scriviDiritti(m);
+  });
 }
-/* Leaflet arriva dopo l'avvio (vedi LE LIBRERIE): le mappe che l'app ha
-   disegnato senza di lui - quella del viaggio, la mini-mappa della home,
-   quella della giornata aperta - si fanno adesso. */
+function togliMappa(m){
+  if(!m)return;
+  mappeVive.delete(m);
+  try{m.stop();}catch(e){}
+  try{m.remove();}catch(e){}
+}
+/* Una mappa che riparte col disegno da capo (il riquadro ha cambiato misura,
+   il foglio si e' appena aperto). MapLibre lo vede quasi sempre da solo; qui
+   per i casi in cui il riquadro era nascosto. */
+function rimisura(m){if(vivo(m))try{m.resize();}catch(e){}}
+/* Un pezzo che non arriva per colpa della chiave: le mappe passano al
+   ripiego e lo dicono. Gli altri errori (un pezzo perso per strada) si
+   lasciano a MapLibre, che riprova da solo. */
+function mappaErrore(m,e){
+  const st=e&&e.error&&(e.error.status||e.error.statusCode);
+  if(!ESRI_RIFIUTI.includes(Number(st))||!vivo(m)||m._g.fonte!=='esri')return;
+  console.log('Esri rifiuta un pezzo:',st);
+  chiaveRifiutata();
+  Object.keys(ESRI_PRONTI).forEach(k=>delete ESRI_PRONTI[k]);
+  Object.keys(ESRI_STILI).forEach(k=>delete ESRI_STILI[k]);
+  mappeVive.forEach(x=>{
+    if(x._g.fonte!=='esri')return;
+    x._g.fonte=MAPPA_RIPIEGO_OSM?'osm':'vuota';x._g.pronta=false;
+    x.setStyle(MAPPA_RIPIEGO_OSM?stileOsm(x._g.opz):stileVuoto(x._g.opz),{diff:false});
+    avvisoMappa(x,'chiave');scriviDiritti(x);
+  });
+}
+
+/* LE COSE DISEGNATE SOPRA: percorso, linee dei giorni, cerchi dei posti,
+   alone della posizione. Stanno in m._g.dati e si rimettono a ogni stile
+   nuovo (quando arriva quello di Esri, o il ripiego), perche' cambiare stile
+   le cancella. */
+const STRATI_G={
+  anelli:[{id:'g-anelli-f',type:'fill',paint:{'fill-color':['get','colore'],'fill-opacity':.1}},
+          {id:'g-anelli-l',type:'line',paint:{'line-color':['get','colore'],'line-width':1.5,'line-opacity':.55,'line-dasharray':[3,3]}}],
+  linee:[{id:'g-linee',type:'line',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','colore'],'line-width':3,'line-opacity':.8}}],
+  /* Il percorso della giornata: tratteggio d'oro su un'ombra scura, come
+     nelle anteprime, perche' si stacchi sia dalla foto chiara sia da quella
+     scura. */
+  percorso:[{id:'g-percorso-ombra',type:'line',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'rgba(20,17,11,.45)','line-width':7,'line-blur':2}},
+            {id:'g-percorso',type:'line',layout:{'line-join':'round'},paint:{'line-color':'#E8B23A','line-width':3.4,'line-dasharray':[2.6,2.4]}}],
+  alone:[{id:'g-alone',type:'fill',paint:{'fill-color':'#B8863C','fill-opacity':.14}}]
+};
+function sovrapponi(m){
+  if(!vivo(m)||!m._g.pronta)return;
+  try{
+    Object.keys(m._g.dati).forEach(nome=>{
+      const id='g-'+nome+'-dati';
+      if(!m.getSource(id))m.addSource(id,{type:'geojson',data:m._g.dati[nome]});
+      STRATI_G[nome].forEach(l=>{if(!m.getLayer(l.id))m.addLayer(Object.assign({source:id},l));});
+    });
+  }catch(e){console.log('Mappa: non riesco a disegnare sopra',e);}
+  mappaRitinta(m);
+}
+function datiMappa(m,nome,features){
+  if(!vivo(m)||!STRATI_G[nome])return;
+  const fc={type:'FeatureCollection',features:(features||[]).filter(Boolean)};
+  m._g.dati[nome]=fc;
+  const src=m._g.pronta&&m.getSource('g-'+nome+'-dati');
+  if(src)src.setData(fc);else sovrapponi(m);
+}
+/* Un cerchio vero, in metri (i cerchi dei posti, l'alone della posizione):
+   un poligono di 48 lati, che segue la mappa a ogni zoom. */
+function cerchioGeo(lat,lng,metri,prop){
+  lat=Number(lat);lng=Number(lng);
+  const pt=[],dLat=metri/111320,dLng=metri/(111320*Math.max(.01,Math.cos(lat*Math.PI/180)));
+  for(let k=0;k<=48;k++){const a=k/48*2*Math.PI;pt.push([lng+dLng*Math.cos(a),lat+dLat*Math.sin(a)]);}
+  return {type:'Feature',properties:prop||{},geometry:{type:'Polygon',coordinates:[pt]}};
+}
+/* Il percorso fra le tappe: tratti appena curvi, come tirati a penna (le
+   anteprime), uno a destra e uno a sinistra perche' andata e ritorno non si
+   sovrappongano. */
+function percorsoGeo(punti){
+  if(!punti||punti.length<2)return null;
+  const out=[punti[0]];
+  for(let i=1;i<punti.length;i++){
+    const a=punti[i-1],b=punti[i],dx=b[0]-a[0],dy=b[1]-a[1],k=i%2?.16:-.16;
+    const cx=(a[0]+b[0])/2-dy*k,cy=(a[1]+b[1])/2+dx*k;
+    for(let s=1;s<=16;s++){const u=s/16;out.push([(1-u)*(1-u)*a[0]+2*(1-u)*u*cx+u*u*b[0],(1-u)*(1-u)*a[1]+2*(1-u)*u*cy+u*u*b[1]]);}
+  }
+  return {type:'Feature',properties:{},geometry:{type:'LineString',coordinates:out}};
+}
+function lineaGeo(punti,prop){return punti&&punti.length>1?{type:'Feature',properties:prop||{},geometry:{type:'LineString',coordinates:punti}}:null;}
+/* Inquadrare dei punti [lng,lat]: tutti dentro, senza zoomare oltre max. */
+function limitiDi(punti){
+  let w=180,s=90,e=-180,n=-90;
+  punti.map(p=>[Number(p[0]),Number(p[1])]).forEach(p=>{if(p[0]<w)w=p[0];if(p[0]>e)e=p[0];if(p[1]<s)s=p[1];if(p[1]>n)n=p[1];});
+  return [[w,s],[e,n]];
+}
+function camera(m,punti,opz){
+  opz=opz||{};
+  if(!vivo(m)||!punti||!punti.length)return null;
+  punti=punti.map(p=>[Number(p[0]),Number(p[1])]).filter(p=>isFinite(p[0])&&isFinite(p[1]));
+  if(!punti.length)return null;
+  if(punti.length===1)return {center:punti[0],zoom:opz.uno!=null?opz.uno:(opz.max||15)};
+  try{
+    const c=m.getContainer(),pad=Math.max(0,Math.min(opz.margine!=null?opz.margine:28,Math.floor(Math.min(c.clientWidth,c.clientHeight)/2)-8));
+    const cam=m.cameraForBounds(limitiDi(punti),{padding:pad,maxZoom:opz.max||15});
+    if(cam&&cam.center)return {center:cam.center,zoom:cam.zoom};
+  }catch(e){}
+  return {center:punti[0],zoom:opz.max||15};
+}
+function inquadra(m,punti,opz){const cam=camera(m,punti,opz);if(cam)m.jumpTo(cam);}
+/* Andare in un punto: senza scivolare con «Riduci movimento». */
+function vaiA(m,ll,zoom,subito){
+  if(!vivo(m))return;
+  const z=zoom!=null?zoom:m.getZoom();
+  if(subito||menoMovimento())m.jumpTo({center:ll,zoom:z});else m.easeTo({center:ll,zoom:z,duration:400});
+}
+
+/* UN SEGNAPOSTO: un tasto vero, che si raggiunge con la tastiera e con
+   VoiceOver, messo sulla mappa da MapLibre. opz: nome (cosa dice
+   VoiceOver), classe, scheda (il contenuto della scheda che apre: testo HTML
+   o una funzione), tocco (cosa fa in piu' il tocco), sopra (chi sta sopra
+   quando si coprono), fermo (solo da guardare). */
+function segno(m,ll,html,opz){
+  opz=opz||{};
+  const el=document.createElement(opz.fermo?'div':'button');
+  if(opz.fermo)el.setAttribute('aria-hidden','true');else el.type='button';
+  el.className='g-segno'+(opz.classe?' '+opz.classe:'');
+  el.innerHTML=html;
+  if(opz.nome)el.setAttribute('aria-label',opz.nome);
+  if(opz.sopra)el.style.zIndex=String(opz.sopra);
+  const mk=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([Number(ll[0]),Number(ll[1])]).addTo(m);
+  mk._gopz=opz;
+  if(opz.scheda||opz.tocco)el.addEventListener('click',e=>{
+    /* Il tocco resta al segnaposto: arrivato alla mappa, chiuderebbe
+       subito la scheda appena aperta. */
+    e.stopPropagation();
+    if(opz.scheda)schedaMappa(m,mk,opz.scheda,opz);
+    if(opz.tocco)opz.tocco(e);
+  });
+  return mk;
+}
+/* LA SCHEDA di un segnaposto: titolo e righe, la crocetta da 44 px col nome
+   nella lingua dell'app (paroleMappa). Una per mappa. Se esce dal riquadro
+   la mappa si sposta quanto basta: le mappe piccole la tagliavano. */
+function schedaMappa(m,mk,contenuto,opz){
+  if(!vivo(m))return null;
+  opz=opz||{};
+  chiudiScheda(m);
+  const dentro=document.createElement('div');dentro.className='g-scheda-dentro';
+  const c=typeof contenuto==='function'?contenuto():contenuto;
+  if(typeof c==='string')dentro.innerHTML=c;else if(c)dentro.appendChild(c);
+  const p=new maplibregl.Popup({closeButton:true,closeOnClick:true,closeOnMove:false,maxWidth:opz.largo||'260px',
+    offset:opz.offset||18,className:'g-scheda',focusAfterOpen:true})
+    .setLngLat(mk?mk.getLngLat():opz.ll).setDOMContent(dentro).addTo(m);
+  m._g.scheda=p;
+  /* il nome della crocetta lo mette MapLibre (paroleMappa); il titolo, per
+     chi usa il mouse, lo si mette qui */
+  const croce=p.getElement()&&p.getElement().querySelector('.maplibregl-popup-close-button');
+  if(croce)croce.title=tv('Chiudi');
+  p.on('close',()=>{if(m._g.scheda===p)m._g.scheda=null;if(m._g.opz.chiusa)m._g.opz.chiusa();});
+  if(m._g.opz.aperta)m._g.opz.aperta();
+  /* Se la mappa sta gia' andando da qualche parte (la tappa scelta nella
+     giornata), ci si sistema quando arriva: spostarla a meta' strada
+     fermerebbe il viaggio a meta'. */
+  /* E lontano dai comandi della mappa, dalla citazione e dai tasti che le
+     stanno sopra («La mia posizione», «Tutto il viaggio»): sono sopra la
+     scheda, e una crocetta finita sotto il «+» non si tocca. Ognuno conta
+     con 20 px intorno: le aree di tocco sporgono dai riquadri («Fonti» di 14
+     px sopra e sotto, la crocetta di 5), e due riquadri lontani 10 px
+     litigavano lo stesso dito. Fra le strade possibili (in giu', in su, di
+     lato) quella piu' corta che tiene la scheda dentro la mappa; se non ce
+     n'e', resta dov'e'. */
+  const aggiusta=()=>{
+    try{
+      if(!vivo(m)||!p.isOpen())return;
+      /* Dove sta la scheda lo dice la sua trasformazione (MapLibre la mette
+         con translate dentro la mappa), non il suo riquadro: appena nata,
+         una volta su quattro Chromium dava per un fotogramma intero il
+         riquadro di un'altra posizione, e la scheda fuori vista restava li'. */
+      const c=m.getContainer(),el=p.getElement(),b=c.getBoundingClientRect(),pad=12;
+      let r;
+      try{
+        const t=new DOMMatrixReadOnly(getComputedStyle(el).transform),x=b.left+c.clientLeft+t.m41,y=b.top+c.clientTop+t.m42;
+        r={left:x,top:y,right:x+el.offsetWidth,bottom:y+el.offsetHeight};
+      }catch(e){r=el.getBoundingClientRect();}
+      let dx=0,dy=0;
+      if(r.top<b.top+pad)dy=r.top-(b.top+pad);else if(r.bottom>b.bottom-pad)dy=Math.min(r.bottom-(b.bottom-pad),r.top-(b.top+pad));
+      if(r.left<b.left+pad)dx=r.left-(b.left+pad);else if(r.right>b.right-pad)dx=Math.min(r.right-(b.right-pad),r.left-(b.left+pad));
+      const sopra=[...c.querySelectorAll('.maplibregl-ctrl-group,.g-angolo>:not([hidden])'),...(c.parentElement?c.parentElement.querySelectorAll(':scope>button'):[])]
+        .map(o=>o.getBoundingClientRect()).filter(o=>o.width&&o.height).map(o=>({top:o.top-20,bottom:o.bottom+20,left:o.left-20,right:o.right+20}));
+      const dove=(x,y)=>({top:r.top-y,bottom:r.bottom-y,left:r.left-x,right:r.right-x});
+      const tocca=(q,o)=>q.right>o.left&&q.left<o.right&&q.bottom>o.top&&q.top<o.bottom;
+      const libera=(x,y)=>{const q=dove(x,y);return q.top>=b.top+pad-.5&&q.bottom<=b.bottom-pad+.5&&q.left>=b.left+pad-.5&&q.right<=b.right-pad+.5&&!sopra.some(o=>tocca(q,o));};
+      const o=sopra.find(o=>tocca(dove(dx,dy),o));
+      if(o){
+        const q=dove(dx,dy);
+        const strade=[[dx,dy+q.top-o.bottom],[dx,dy+q.bottom-o.top],[dx+q.left-o.right,dy],[dx+q.right-o.left,dy]]
+          .filter(([x,y])=>libera(x,y)).sort((u,v)=>Math.hypot(u[0]-dx,u[1]-dy)-Math.hypot(v[0]-dx,v[1]-dy));
+        if(strade.length)[dx,dy]=strade[0];
+      }
+      if(dx||dy)m.panBy([dx,dy],{duration:menoMovimento()?0:250},{gScheda:true});
+    }catch(e){}
+  };
+  /* Se la mappa si sta muovendo ci pensa la fine del movimento (dopo); e un
+     secondo sguardo piu' tardi, perche' non ogni movimento finisce con un
+     moveend da ascoltare (uno interrotto da un altro). Sistemarsi due volte
+     non costa niente: se la scheda e' gia' a posto non si muove nulla. */
+  requestAnimationFrame(()=>{if(!(m.isMoving&&m.isMoving()))aggiusta();});
+  setTimeout(()=>{if(p.isOpen()&&!(m.isMoving&&m.isMoving()))aggiusta();},700);
+  /* Ci si risistema anche dopo (e se la mappa si sta gia' muovendo, e' qui
+     che ci si sistema la prima volta): quando la mappa la sposta l'app (in Oggi va
+     sulla tappa scelta 180 ms dopo il tocco, a scheda gia' sistemata) e
+     quando la citazione cresce (arriva lo stile di Esri, compare un avviso:
+     risistemaScheda). Mai dopo uno spostamento fatto col dito
+     (originalEvent), ne' dopo il proprio (gScheda): uno girerebbe la mappa
+     sotto il dito, l'altro non finirebbe piu'. */
+  const dopo=e=>{if(!e||e.originalEvent||e.gScheda)return;aggiusta();};
+  m.on('moveend',dopo);
+  p.on('close',()=>m.off('moveend',dopo));
+  p._gAggiusta=aggiusta;
+  return p;
+}
+/* La scheda di un segnaposto aperta da fuori (la tappa toccata nella
+   giornata, nel Programma largo). */
+function apriSegno(m,mk){if(mk&&mk._gopz&&mk._gopz.scheda)return schedaMappa(m,mk,mk._gopz.scheda,mk._gopz);return null;}
+function risistemaScheda(m){
+  const p=m&&m._g&&m._g.scheda;if(!p||!p._gAggiusta)return;
+  requestAnimationFrame(()=>{if(!p.isOpen())return;if(m.isMoving&&m.isMoving())return;p._gAggiusta();});
+}
+function chiudiScheda(m){
+  if(!m||!m._g||!m._g.scheda)return;
+  const p=m._g.scheda;m._g.scheda=null;
+  try{p.remove();}catch(e){}
+}
+
+/* LA CITAZIONE, su ogni mappa e in un angolo senza tasti: «Powered by Esri»
+   (le condizioni di Esri la vogliono sempre a vista, ed e' il suo nome:
+   non si traduce), «© OpenStreetMap», e «Fonti», che apre l'elenco di chi
+   ha fatto le immagini e i dati, preso dallo stile stesso (come il riquadro
+   che si allarga delle mappe di Esri). Nello stesso angolo, sopra o sotto,
+   l'avviso quando la mappa vera non c'e'. Non e' un controllo di MapLibre:
+   cosi' sta dove si decide qui, e uguale anche sulle mappine ferme. */
+function dirittiMappa(m,angolo){
+  const box=angoloMappa(m.getContainer(),angolo);
+  m._g.angolo=box;
+  scriviDiritti(m);
+}
+function angoloMappa(contenitore,angolo){
+  let box=contenitore.querySelector(':scope > .g-angolo');
+  if(!box){
+    box=document.createElement('div');
+    box.innerHTML='<div class="g-avviso" role="status" hidden></div><div class="g-diritti"></div>';
+    contenitore.appendChild(box);
+  }
+  box.className='g-angolo g-'+(angolo||'bl');
+  return box;
+}
+function fontiDa(esri){
+  if(!esri)return '';
+  const visti=[];
+  Object.keys(esri.sources||{}).forEach(k=>{const a=String(esri.sources[k].attribution||esri.sources[k].copyrightText||'').replace(/<[^>]*>/g,'').trim();if(a&&!visti.includes(a))visti.push(a);});
+  return visti.join(' · ');
+}
+function scriviDiritti(m){
+  const box=m&&m._g&&m._g.angolo;if(!box)return;
+  scriviDirittiIn(box,m._g.fonte,m._g.fonte==='esri'?fontiDa(ESRI_PRONTI[linguaEsri()]):'');
+  risistemaScheda(m);
+}
+function scriviDirittiIn(box,fonte,fonti){
+  const d=box.querySelector('.g-diritti');if(!d)return;
+  const esri=fonte==='esri';
+  d.innerHTML=(esri?'<span translate="no">Powered by <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a></span> · ':'')+DIRITTI_OSM+
+    (esri&&fonti?` · <button type="button" class="g-fonti" aria-expanded="false" onclick="fontiMappa(this)">${esc(tv('Fonti'))}</button><span class="g-fonti-testo" hidden>${esc(fonti)}</span>`:'');
+}
+function fontiMappa(b){
+  const t=b.parentNode.querySelector('.g-fonti-testo');if(!t)return;
+  const apri=t.hidden;t.hidden=!apri;b.setAttribute('aria-expanded',String(apri));
+}
+/* L'AVVISO sulla mappa quando la mappa vera non c'e': cosa e' successo e
+   «Riprova». Sotto, la mappa va avanti col ripiego o col fondo color carta:
+   segnaposto, percorso e schede restano. */
+const MAPPA_AVVISI={
+  rete:'La mappa satellitare non risponde: controlla la rete e riprova.',
+  chiave:'La mappa satellitare ora non è disponibile: riprova più tardi.',
+  soglia:'La mappa satellitare ora non è disponibile: riprova più tardi.',
+  servizio:'La mappa satellitare ora non è disponibile: riprova più tardi.'
+};
+function avvisoMappa(m,motivo){
+  const box=m&&m._g&&m._g.angolo,av=box&&box.querySelector('.g-avviso');if(!av)return;
+  if(!motivo){av.hidden=true;av.innerHTML='';return;}
+  av.innerHTML=`<span>${esc(tv(MAPPA_AVVISI[motivo]||MAPPA_AVVISI.servizio))}</span><button type="button" class="btn btn-secondario btn-compatto">${esc(tv('Riprova'))}</button>`;
+  av.querySelector('button').onclick=e=>{e.stopPropagation();riprovaMappe();};
+  av.hidden=false;
+  risistemaScheda(m);
+}
+/* «Riprova» rifa tutte le mappe che non hanno il fondo di Esri: se Esri
+   e' tornato, tornano tutte insieme. */
+function riprovaMappe(){
+  Object.keys(ESRI_STILI).forEach(k=>{if(!ESRI_PRONTI[k])delete ESRI_STILI[k];});
+  mappeVive.forEach(m=>{if(m._g.fonte!=='esri')fondoMappa(m);});
+  mappineRiprova();
+}
+/* Senza MapLibre (mai scaricato e niente rete) o senza WebGL (telefoni
+   vecchi): lo dice al posto della mappa, invece di un riquadro vuoto. */
+function mappaNonSiPuo(el,motivo,riprova){
+  if(!el)return;
+  const w=el.closest('.map-wrap,.hh-map-wrap,.vm-mappa-wrap,#dayMapWrap')||el.parentNode||el;
+  const vecchio=w.querySelector(':scope > .mappa-giu');if(vecchio)vecchio.remove();
+  const testo=motivo==='webgl'?tv('Questo telefono non riesce a disegnare la mappa.'):tv('La mappa non si è caricata: controlla la rete e riprova.');
+  w.insertAdjacentHTML('beforeend',`<div class="mappa-giu"><span>${esc(testo)}</span>${motivo==='webgl'?'':`<button type="button" class="btn btn-secondario">${esc(tv('Riprova'))}</button>`}</div>`);
+  const b=w.querySelector(':scope > .mappa-giu button');
+  if(b)b.onclick=()=>{const g=w.querySelector(':scope > .mappa-giu');if(g)g.remove();(riprova||chiediMappe)();};
+}
+/* MapLibre, quando serve: le mappe a schermo nascono appena arriva
+   (mappaArrivata). Chi la chiede due volte aspetta la stessa. */
+/* MapLibre si chiede a schermata d'apertura sparita: e' un mega (270 KB
+   compressi), e chiesto durante l'avvio, col campo debole, contendeva la
+   banda alla prima schermata. Il riquadro della mappa intanto e' gia' al
+   suo posto, e la mappa arriva un attimo dopo che l'app si puo' usare. */
+function dopoLApertura(fn){
+  const t0=Date.now();
+  const guarda=()=>{const sp=document.getElementById('bootSplash');if(!sp||sp.classList.contains('hide')||Date.now()-t0>15000)fn();else setTimeout(guarda,100);};
+  guarda();
+}
+function chiediMappe(){
+  return new Promise(dopoLApertura).then(()=>caricaLibreria('maplibre')).then(()=>{quandoAvviata(mappaArrivata);if(librerieDette)diciLibrerieAllaSw();}).catch(()=>{
+    document.querySelectorAll('#homeMap,#dayMap,#map,#vmMappa,#piMap').forEach(el=>{if(el.offsetParent)mappaNonSiPuo(el,'rete');});
+  });
+}
+/* Le mappe che erano a schermo prima che MapLibre ci fosse - quella di
+   Oggi, quella della giornata aperta, quella del viaggio - si fanno adesso,
+   coi dati del loro ultimo disegno. */
 function mappaArrivata(){
-  /* Chi ha chiesto meno movimento sul telefono non vuole nemmeno lo zoom
-     che scivola, o la mappa che continua a correre dopo il dito: vale per
-     tutte le mappe che nascono da qui in poi. */
-  if(menoMovimento()&&L.Map&&L.Map.mergeOptions)L.Map.mergeOptions({zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,inertia:false});
-  try{initMap();}catch(e){}
-  const giu=document.getElementById('mappaGiu');if(giu)giu.remove();
-  /* La posizione arrivata prima della mappa: il pallino si mette adesso,
-     senza far sembrare piu' fresca la posizione di quanto sia. */
-  if(myPos&&map&&!meMarker){const at=myPosAt;try{placeMe({coords:{latitude:myPos.lat,longitude:myPos.lng,accuracy:myPosAcc}});}catch(e){}myPosAt=at;}
-  /* Solo la mini-mappa, con i dati dell'ultimo disegno della home: rifare
-     tutta la home sotto il dito di chi la sta usando sarebbe peggio. */
+  document.querySelectorAll('.mappa-giu').forEach(g=>g.remove());
   const t=T();
-  if(t&&homeSoonDay)try{buildHomeMap(t,homeSoonDay,homeSoonActs);}catch(e){}
+  if(t&&homeSoonDay&&!homeMapObj&&document.getElementById('homeMap'))try{buildHomeMap(t,homeSoonDay,homeSoonActs,true);}catch(e){console.log(e);}
   const md=document.getElementById('mDay');
-  if(md&&md.classList.contains('active'))try{buildDayMap();}catch(e){}
+  if(md&&md.classList.contains('active')&&!dayMapObj)try{buildDayMap();}catch(e){console.log(e);}
   const tz=document.getElementById('mTripZoom');
-  if(map&&tz&&tz.classList.contains('active'))setTimeout(()=>{if(map)map.invalidateSize();},120);
+  if(tz&&tz.classList.contains('active')&&!map)try{initMap();}catch(e){console.log(e);}
+  const vm=document.getElementById('mViaggioMappa');
+  if(vm&&vm.classList.contains('active')&&!vmMappa)try{vmCreaMappa();}catch(e){console.log(e);}
+  if(piAttesa){const f=piAttesa;piAttesa=null;try{f();}catch(e){console.log(e);}}
 }
-/* La mappa del viaggio aperta senza Leaflet (niente rete, e mai scaricato
-   prima): lo dice al posto della mappa, invece di un riquadro vuoto. */
-function mappaAssente(){
-  const w=document.querySelector('#mTripZoom .map-wrap');if(!w||document.getElementById('mappaGiu'))return;
-  w.insertAdjacentHTML('beforeend',`<div id="mappaGiu" class="mappa-giu"><span>${esc(tv('La mappa non si è caricata: controlla la rete e riprova.'))}</span><button class="btn btn-secondario" onclick="riprovaMappa()">${esc(tv('Riprova'))}</button></div>`);
+/* Il tema cambia anche le mappe aperte, senza rifarle: si ridipingono gli
+   stessi strati. */
+function mappeRitinta(){mappeVive.forEach(m=>{try{mappaRitinta(m);}catch(e){}});}
+function mappaRitinta(m){
+  if(!vivo(m)||!m._g.pronta)return;
+  const toni=MAPPA_TONI[temaMappa()],st=m.getStyle();if(!st)return;
+  st.layers.forEach(l=>{
+    if(l.id==='g-fondo')m.setPaintProperty(l.id,'background-color',m._g.fonte==='esri'?toni.fondo:toni.fondoVuoto);
+    else if(l.type==='raster'){const p=m._g.fonte==='osm'?toni.osm:toni.raster;Object.keys(p).forEach(k=>m.setPaintProperty(l.id,k,p[k]));}
+    else if(l.type==='symbol'&&l.layout&&l.layout['text-field']&&!/^g-/.test(l.id))Object.keys(toni.nomi).forEach(k=>m.setPaintProperty(l.id,k,toni.nomi[k]));
+  });
+  if(m._g.opz.globo&&m.setSky)try{m.setSky(Object.assign({},toni.cielo));}catch(e){}
 }
-function riprovaMappa(){
-  caricaLibreria('leaflet').then(mappaArrivata).catch(()=>toast('La mappa non si è caricata: controlla la rete e riprova.'));
+
+/* LE MAPPINE FERME dei risultati di Scopri: due o quattro pezzi della foto
+   messi in fila come immagini, col segnaposto al centro e la citazione.
+   Arrivano quando la scheda entra nello schermo, non prima: una ricerca con
+   otto risultati non chiede pezzi per quelli che nessuno guarda. Il tono
+   del tema lo fa il foglio di stile (.g-ferma). */
+let mappineGuardia=null;
+function mappinaFerma(el,lat,lng){
+  if(!el||!isFinite(lat)||!isFinite(lng))return;
+  el.classList.add('g-ferma');el.dataset.lat=lat;el.dataset.lng=lng;
+  if(!('IntersectionObserver' in window)){mappinaDisegna(el);return;}
+  if(!mappineGuardia)mappineGuardia=new IntersectionObserver(voci=>voci.forEach(v=>{if(v.isIntersecting){mappineGuardia.unobserve(v.target);mappinaDisegna(v.target);}}),{rootMargin:'120px'});
+  mappineGuardia.observe(el);
 }
-/* La citazione della mappa sta in basso a sinistra: nel suo angolo di
-   sempre, a destra, finiva sopra il tasto 🧭, gli copriva il bordo e si
-   prendeva il tocco della sua parte bassa (miglioria 11). Deve restare
-   leggibile, quindi si sposta lei e non il tasto (vedi dirittiMappa). */
-function initMap(){if(map||typeof L==='undefined')return;map=L.map('map',{zoomControl:false}).setView([20,0],2);L.control.zoom({zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(map);dirittiMappa(map,'bottomleft');stratoMappa().addTo(map);drawMarkers();}
+function mappinaDisegna(el){
+  if(!el.isConnected)return;
+  stileEsri(linguaEsri()).then(esri=>{
+    const f=Object.values(esri.sources||{}).find(s=>s.type==='raster'&&Array.isArray(s.tiles)&&s.tiles.length);
+    if(!f)throw erroreMappa('servizio',0);
+    mappinaPezzi(el,conChiave(f.tiles[0],true),'esri',fontiDa(esri),null);
+  }).catch(err=>{
+    mappinaPezzi(el,MAPPA_RIPIEGO_OSM?OSM_TESSERE:'',MAPPA_RIPIEGO_OSM?'osm':'vuota','',(err&&err.motivo)||'servizio');
+  });
+}
+/* Lo zoom 14 da 362 px fa la stessa scala del 15 da 256 (come le mappe vere,
+   vedi stileDaEsri): metà dei pezzi. */
+function mappinaPezzi(el,modello,fonte,fonti,motivo){
+  if(!el.isConnected)return;
+  const lat=Number(el.dataset.lat),lng=Number(el.dataset.lng);
+  const W=el.clientWidth||320,H=el.clientHeight||130,z=14,lato=fonte==='osm'?256:362,n=Math.pow(2,z);
+  const x=(lng+180)/360*n,s=Math.sin(lat*Math.PI/180),y=(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n;
+  const x0=Math.floor(x-W/2/lato),x1=Math.floor(x+W/2/lato),y0=Math.floor(y-H/2/lato),y1=Math.floor(y+H/2/lato);
+  /* L'immagine per VoiceOver sono i pezzi, non tutto il riquadro: dentro il
+     riquadro c'e' la citazione coi suoi link, che devono restare raggiungibili. */
+  let h=`<div class="g-ferma-pezzi" role="img" aria-label="${esc(tv('Mappa'))}">`;
+  if(modello)for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
+    if(ty<0||ty>=n)continue;
+    const u=modello.replace('{z}',z).replace('{x}',((tx%n)+n)%n).replace('{y}',ty);
+    h+=`<img src="${esc(u)}" alt="" crossorigin="anonymous" decoding="async" style="left:${Math.round(W/2+(tx-x)*lato)}px;top:${Math.round(H/2+(ty-y)*lato)}px;width:${lato}px;height:${lato}px" onerror="this.remove()">`;
+  }
+  h+='</div><span class="g-ferma-pin" aria-hidden="true"></span>';
+  el.innerHTML=h;
+  el.dataset.fonte=fonte;
+  const box=angoloMappa(el,'br'),av=box.querySelector('.g-avviso');
+  scriviDirittiIn(box,fonte,fonti);
+  /* qui l'avviso non ha «Riprova»: la mappina e' piccola, e il tasto c'e'
+     nella scheda del posto, che si apre toccando il risultato */
+  if(motivo){av.innerHTML=`<span>${esc(tv(MAPPA_AVVISI[motivo]||MAPPA_AVVISI.servizio))}</span>`;av.hidden=false;}
+}
+function mappineRiprova(){document.querySelectorAll('.g-ferma').forEach(el=>{if(el.dataset.fonte!=='esri')mappinaDisegna(el);});}
+
+/* ===== LA MAPPA DELLA SCHEDA DEL VIAGGIO =====
+   I posti salvati, col cerchio dell'avviso intorno (in metri, come nelle
+   impostazioni dei luoghi: piu' grande per gli imperdibili), e gli alberghi
+   con «Portami qui». La citazione sta in basso a sinistra: a destra c'e' il
+   tasto della posizione, in alto a sinistra + e −. */
+function initMap(){
+  if(map||typeof maplibregl==='undefined')return;
+  const el=document.getElementById('map');if(!el)return;
+  map=nuovaMappa(el,{centro:[0,20],zoom:1,diritti:'bl',zoomTasti:'top-left',nome:tv('Mappa del viaggio')});
+  if(!map)return;
+  if(myPos)meMarker=ioMetti(map);
+  drawMarkers();
+}
 function drawMarkers(){
-  if(!map||typeof L==='undefined')return;
-  markers.forEach(m=>map.removeLayer(m));markers=[];const t=T();if(!t)return;
-  const rE=app.settings.proxRadius||200,rS=Math.round(rE*0.6);
+  if(!vivo(map))return;
+  markers.forEach(mk=>{try{mk.remove();}catch(e){}});markers=[];
+  chiudiScheda(map);
+  const t=T();if(!t){datiMappa(map,'anelli',[]);return;}
+  const rE=app.settings.proxRadius||200,rS=Math.round(rE*0.6),anelli=[];
   t.pois.forEach(p=>{
     const color=p.visited?'#98A19B':(p.priority==='essential'?'#B85C38':'#B8863C');
-    if(!p.visited){
-      const ring=L.circle([p.lat,p.lng],{radius:(p.priority==='essential'?rE:rS),color,weight:1.5,opacity:.55,fillColor:color,fillOpacity:.10,dashArray:'5,5'}).addTo(map);
-      markers.push(ring);
-    }
-    const mk=L.circleMarker([p.lat,p.lng],{radius:8,fillColor:color,color:'#fff',weight:2,fillOpacity:.9}).addTo(map);
+    if(!p.visited)anelli.push(cerchioGeo(p.lat,p.lng,p.priority==='essential'?rE:rS,{colore:color}));
     let h=`<strong>${esc(p.name)}</strong><br>`;
     if(p.address)h+=`<small>${esc(p.address)}</small><br>`;
     if(p.hours)h+=`🕐 ${esc(p.hours)}<br>`;
-    if(p.website)h+=`🌐 <a href="${esc(p.website)}" target="_blank">Sito</a><br>`;
-    h+=`<br><a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">📍 Google Maps</a>`;
-    mk.bindPopup(h);markers.push(mk);
+    if(p.website)h+=`🌐 <a href="${esc(p.website)}" target="_blank" rel="noopener">${esc(tv('Sito'))}</a><br>`;
+    h+=`<br><a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank" rel="noopener">📍 Google Maps</a>`;
+    markers.push(segno(map,[p.lng,p.lat],`<span class="g-punto" style="background:${color}"></span>`,{classe:'g-posto',nome:String(p.name||''),scheda:h,offset:12}));
   });
+  datiMappa(map,'anelli',anelli);
   (t.hotels||[]).forEach(h=>{
     if(!h.lat)return;
-    const hi=L.divIcon({html:'<div style="background:var(--sand);border:2px solid var(--clay);width:34px;height:34px;border-radius:var(--r-ctl);display:flex;align-items:center;justify-content:center;font-size:var(--fs-l);box-shadow:var(--sh-1)">🏠</div>',className:'',iconSize:[34,34],iconAnchor:[17,17]});
-    const hm=L.marker([h.lat,h.lng],{icon:hi}).addTo(map);
-    hm.bindPopup(`<strong>${esc(h.name)}</strong><br><span class="pop-sotto">${fmtRange(h.checkIn,h.checkOut)}</span><br><button class="btn btn-secondario" onclick="openNav(${h.lat},${h.lng},${jesc(h.name)})" style="margin-top:var(--sp-2)">Portami qui</button>`);
-    markers.push(hm);
+    markers.push(segno(map,[h.lng,h.lat],'<span class="vm-casa">🏠</span>',{classe:'g-albergo',nome:tv('Albergo: {1}',String(h.name||'')),offset:20,
+      scheda:`<strong>${esc(h.name)}</strong><br><span class="pop-sotto">${fmtRange(h.checkIn,h.checkOut)}</span><br><button class="btn btn-secondario" onclick="openNav(${h.lat},${h.lng},${jesc(h.name)})" style="margin-top:var(--sp-2)">${esc(tv('Portami qui'))}</button>`}));
   });
   if(!t.pois.length&&!(t.hotels||[]).length){
-    if(t.destBB)map.fitBounds([[t.destBB[0],t.destBB[2]],[t.destBB[1],t.destBB[3]]],{padding:[18,18]});
-    else if(t.destLoc)map.setView([t.destLoc.lat,t.destLoc.lng],5);
+    if(t.destBB)inquadra(map,[[t.destBB[2],t.destBB[0]],[t.destBB[3],t.destBB[1]]],{margine:18,max:14});
+    else if(t.destLoc)map.jumpTo({center:[Number(t.destLoc.lng),Number(t.destLoc.lat)],zoom:4});
     if(!t.destBB&&t.destination&&!t._bbTry){t._bbTry=1;ensureDestLoc(t).then(()=>drawMarkers());}
   }
-  if(t.pois.length)map.fitBounds(L.latLngBounds(t.pois.map(p=>[p.lat,p.lng])),{padding:[40,40],maxZoom:14});
+  if(t.pois.length)inquadra(map,t.pois.map(p=>[p.lng,p.lat]),{margine:40,max:13});
 }
 /* ===== SCHERMI GRANDI (Layout 3) =====
    Le stesse misure del foglio di stile, scritte uguali (una prova le
@@ -14927,7 +15458,7 @@ function go(p){
   if(voce){voce.classList.add('active');voce.setAttribute('aria-current','page');}
   document.getElementById(p).classList.add('active');
   navPortaInVista();navBordi();
-  if(p==='plan'&&map)setTimeout(()=>map.invalidateSize(),120);
+  if(p==='plan'&&map)setTimeout(()=>rimisura(map),120);
   if(p==='identify'&&idImg)setTimeout(drawIdCanvas,60);
   /* Lo stato del cloud si conta solo col Profilo davanti (vedi
      mostraStatoCloud): disegnato mentre si guardava altro, era rimasto vuoto. */
@@ -15053,11 +15584,13 @@ function openTripZoom(id){
   app.currentTripId=id;const cm=document.getElementById('chatMsgs');if(cm){cm.dataset.init='';cm.innerHTML='';}
   save();renderAll();identityCheck();
   openSheet('mTripZoom');
+  /* La mappa nasce col foglio gia' a schermo, quando si sa quanto e'
+     grande; se MapLibre non c'e' ancora la fa nascere mappaArrivata, e se
+     non arriva lo si dice (chiediMappe). */
   setTimeout(()=>{
-    if(map)return map.invalidateSize();
-    /* Leaflet non c'e' ancora: se sta arrivando la mappa compare da sola
-       (mappaArrivata), se non arriva lo si dice. */
-    caricaLibreria('leaflet').then(mappaArrivata).catch(mappaAssente);
+    if(map)return rimisura(map);
+    if(typeof maplibregl==='undefined'){chiediMappe();return;}
+    initMap();
   },350);
 }
 function closeTripZoom(){closeSheet('mTripZoom');}
@@ -15383,15 +15916,39 @@ function updateSoonWalk(){
    quella "in mano": il suo segnaposto è scuro e la mappa la insegue. Toccando
    un segnaposto la striscia scorre fino alla card corrispondente. */
 let homeMapObj=null,homeMapMarks=[],homeMapPts=[],homeCardSel=-1,homeSyncQueued=false,homeMoveT=null;
+/* Quale disegno della Home e' quello di adesso: i conti rimandati di un
+   disegno vecchio (la Home rifatta nel frattempo) non toccano quello nuovo. */
+let homeGiro=0;
+/* Il disegno in cui la striscia e' gia' stata portata sulla tappa di
+   partenza: prima di allora la tappa «in mano» e' ancora la prima, e la mappa
+   non la deve seguire (ci andrebbe per poi tornare indietro). */
+let homePosata=-1;
 /* Le tappe del giorno mostrato, nello stesso ordine delle card: servono per
    riempire il riquadro in cima con quella evidenziata. */
 let homeSoonActs=[],homeSoonDay=null,homeSoonDi=0;
-function destroyHomeMap(){
-  if(homeMapObj){fermaMappa(homeMapObj);try{homeMapObj.remove();}catch(e){}homeMapObj=null;}
+/* tieni: la mappa resta viva per il disegno nuovo (vedi renderHome), e se
+   ne vanno solo la scheda e i segnaposto, che il disegno nuovo rifa'. */
+function destroyHomeMap(tieni){
+  homeGiro++;
+  if(homeMapObj&&tieni){
+    chiudiScheda(homeMapObj);
+    homeMapMarks.forEach(mk=>{try{mk.remove();}catch(e){}});
+    homeMapObj._g.manoPrima=homeCardSel;
+  }else if(homeMapObj){
+    togliMappa(homeMapObj);homeMapObj=null;
+    /* se ne va con la mappa: tenerne il riferimento vorrebbe dire provare a
+       toglierlo da una mappa che non esiste piu' */
+    homeMeMarker=null;
+  }
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
-  /* se ne vanno con la mappa: tenerne il riferimento vorrebbe dire provare a
-     toglierli da una mappa che non esiste piu' */
-  homeMeMarker=null;homeMeHalo=null;
+}
+/* La mappa di Oggi si puo' tenere per il disegno nuovo se e' viva e parla
+   la lingua di adesso (le scritte di Esri sono nella lingua dell'app): torna
+   il suo riquadro, che renderHome rimette al posto di quello nuovo. */
+function homeMapTenibile(){
+  if(!vivo(homeMapObj)||homeMapObj._g.lingua!==linguaEsri())return null;
+  const el=homeMapObj.getContainer();
+  return el&&el.id==='homeMap'?el:null;
 }
 /* Il riquadro col conto alla rovescia diceva sempre e solo la prossima tappa,
    anche mentre in mappa se ne stava guardando un'altra: due cose diverse una
@@ -15420,64 +15977,109 @@ function homeSoonFill(idx){
   if(nome)nome.textContent=a.name||'';
   updateSoonWalk();
 }
-function homeMapIcon(n,on){
-  const sz=on?30:23;
-  return L.divIcon({
-    html:`<div class="pin${on?' on':''}" style="width:${sz}px;height:${sz}px">${n}</div>`,
-    className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
-  });
+/* I segnaposto delle tappe (Oggi e Programma): il tondo col numero o, se
+   la tappa ha una foto del posto, la foto con il numero sopra, come nelle
+   anteprime approvate. Si riconosce la tappa senza leggerne il nome. */
+function fotoTappa(t,a){
+  const poi=a&&a.poiId?((t&&t.pois)||[]).find(pp=>pp.id===a.poiId):null;
+  return (a&&a.photo)||(poi&&poi.photo)||'';
 }
-function buildHomeMap(t,day,acts){
+function htmlTappa(n,foto){
+  return foto?`<span class="g-foto"><img src="${esc(foto)}" alt="" decoding="async" onerror="var p=this.closest('.pin');if(p)p.classList.remove('con-foto');this.parentNode.remove()"></span><b>${n}</b>`:`<b>${n}</b>`;
+}
+function nomeTappa(n,a){return [n+'. '+String(a.name||''),a.time?tv('ore {1}',a.time):''].filter(Boolean).join(' · ');}
+/* soloMappa: la chiama mappaArrivata, quando MapLibre arriva a Home gia'
+   aperta. Allora nasce solo la mappa, sulla tappa che si ha in mano: la
+   striscia non torna indietro sotto il dito. */
+function buildHomeMap(t,day,acts,soloMappa){
   const wrap=document.getElementById('homeMapWrap');if(!wrap)return;
-  if(typeof L==='undefined'){wrap.style.display='none';return;}
   // solo le tappe di cui sappiamo dove sono: le altre non hanno niente da mostrare
   const pts=(acts||[]).map((a,i)=>({a:a,i:i,loc:actLoc(t,a)})).filter(x=>x.loc);
   if(!pts.length){wrap.style.display='none';return;}
   wrap.style.display='block';
   homeMapPts=pts;
-  homeMapObj=L.map('homeMap',{zoomControl:false}).setView([pts[0].loc.lat,pts[0].loc.lng],16);
-  /* In alto a sinistra: in alto a destra c'e' il 🧭, e in basso compare
-     l'avviso della tappa senza posizione. */
-  dirittiMappa(homeMapObj,'topleft');
-  stratoMappa().addTo(homeMapObj);
-  pts.forEach((x,n)=>{
-    const mk=L.marker([x.loc.lat,x.loc.lng],{icon:homeMapIcon(n+1,false)}).addTo(homeMapObj);
-    mk.bindPopup(`<strong>${esc(x.a.name||'')}</strong>${x.a.time?'<br>'+esc(tv('ore {1}',x.a.time)):''}`);
-    mk.on('click',()=>homeScrollToCard(x.i));
-    homeMapMarks.push(mk);
-  });
-  /* la mappa e' appena rinata: se sappiamo dove siamo, il pallino torna subito */
-  homeMePlace();
-  // fitBounds da solo può zoomare troppo indietro se una tappa (es. l'aeroporto
-  // del volo di ritorno) è lontana dalle altre: non scende mai sotto una vista
-  // di quartiere, anche se questo lascia fuori dall'inquadratura i punti più lontani.
-  if(pts.length>1){
-    const bounds=L.latLngBounds(pts.map(x=>[x.loc.lat,x.loc.lng]));
-    const idealZoom=homeMapObj.getBoundsZoom(bounds,false,[34,34]);
-    homeMapObj.setView(bounds.getCenter(),Math.max(13,Math.min(idealZoom,16)));
-  }
+  const giro=homeGiro;
   /* Si parte dalla prossima tappa, non dalla prima della giornata: se le prime
      sono già passate, mappa, card e riquadro in cima dicevano tre cose diverse
      appena aperta la home. */
   const nx=homeNext(t,day);
   const partenza=nx?(acts||[]).findIndex(a=>a.id===nx.a.id):0;
+  /* MapLibre non c'e' ancora: il riquadro resta al suo posto (niente salto
+     della pagina quando arriva), e la mappa la fa nascere mappaArrivata. La
+     striscia delle tappe intanto funziona lo stesso. */
+  const inMano=soloMappa&&homeCardSel>=0?homeCardSel:Math.max(0,partenza);
+  const chiave=String(t.id)+'|'+String(day&&day.date||'');
+  if(typeof maplibregl==='undefined')chiediMappe();
+  else if(vivo(homeMapObj))homeMappaRiempi(t,pts,inMano,chiave,true);
+  else homeMappaNasce(t,pts,inMano,chiave);
+  if(soloMappa){setTimeout(()=>{if(giro===homeGiro&&homeMapObj){rimisura(homeMapObj);if(homePosata===giro)homeCardsSync(true);}},60);return;}
   setTimeout(()=>{
-    if(!homeMapObj)return;
-    homeMapObj.invalidateSize();
+    if(giro!==homeGiro)return;
+    if(homeMapObj)rimisura(homeMapObj);
     if(partenza>0)homeScrollToCard(partenza);
+    homePosata=giro;
     homeCardsSync(true);
   },220);
   const strip=document.querySelector('.hh-cards');
-  if(strip)strip.addEventListener('scroll',()=>{
-    if(homeSyncQueued)return;homeSyncQueued=true;
-    requestAnimationFrame(()=>{homeSyncQueued=false;homeCardsSync();});
-  },{passive:true});
+  if(strip&&!strip._segue){
+    strip._segue=true;
+    strip.addEventListener('scroll',()=>{
+      if(homeSyncQueued)return;homeSyncQueued=true;
+      requestAnimationFrame(()=>{homeSyncQueued=false;homeCardsSync();});
+    },{passive:true});
+  }
+}
+/* La mappa nasce gia' sulla tappa che si ha in mano (inMano, l'indice della
+   card), da vicino: e' li' che la porterebbe subito homeMapSelect. Prima
+   nasceva inquadrando tutta la giornata e poi volava sulla tappa: due viste,
+   e il doppio dei pezzi di mappa, per arrivare allo stesso posto. La
+   citazione in alto a sinistra: in alto a destra c'e' il 🧭, e in basso
+   compare l'avviso della tappa senza posizione. */
+function homeMappaNasce(t,pts,inMano,chiave){
+  const x0=pts.find(x=>x.i===inMano);
+  homeMapObj=nuovaMappa('homeMap',{centro:x0?[x0.loc.lng,x0.loc.lat]:[pts[0].loc.lng,pts[0].loc.lat],zoom:ZOOM_TAPPA,diritti:'tl',nome:tv('Mappa della giornata')});
+  if(!homeMapObj)return;
+  homeMappaRiempi(t,pts,inMano,chiave,false);
+}
+/* Segnaposto, percorso e pallino, su una mappa nuova o su quella tenuta dal
+   disegno di prima (tenuta). Tenuta e con lo stesso giorno, la mappa resta
+   dove l'hai lasciata: un disegno fatto per altro (una spunta, il cloud) non
+   la sposta, e la tappa in mano di prima non la fa ripartire (restaFerma).
+   Con un altro giorno va sulla tappa in mano, come se nascesse li'. */
+function homeMappaRiempi(t,pts,inMano,chiave,tenuta){
+  const m=homeMapObj,x0=pts.find(x=>x.i===inMano);
+  const stesso=tenuta&&m._g.giorno===chiave;
+  m._g.giorno=chiave;
+  if(tenuta&&!stesso)m.jumpTo({center:x0?[x0.loc.lng,x0.loc.lat]:[pts[0].loc.lng,pts[0].loc.lat],zoom:ZOOM_TAPPA});
+  /* la prima tappa scelta (homeMapSelect) ci si va senza volare: il volo
+     chiede tutti i pezzi che attraversa */
+  m._g.primaScelta=!stesso;
+  m._g.restaFerma=stesso&&m._g.manoPrima!=null&&m._g.manoPrima>=0?m._g.manoPrima:null;
+  pts.forEach((x,n)=>{
+    const foto=fotoTappa(t,x.a);
+    const mk=segno(homeMapObj,[x.loc.lng,x.loc.lat],htmlTappa(n+1,foto),{classe:'pin'+(foto?' con-foto':''),nome:nomeTappa(n+1,x.a),
+      offset:foto?26:18,scheda:()=>`<strong>${esc(x.a.name||'')}</strong>${x.a.time?'<br>'+esc(tv('ore {1}',x.a.time)):''}`,
+      tocco:()=>{if(homeMapObj&&homeMapObj._g)homeMapObj._g.dalSegno={i:x.i,t:Date.now()};homeScrollToCard(x.i);}});
+    homeMapMarks.push(mk);
+  });
+  /* Il percorso della giornata, nell'ordine delle tappe: tratteggio d'oro. */
+  datiMappa(homeMapObj,'percorso',[percorsoGeo(pts.map(x=>[x.loc.lng,x.loc.lat]))]);
+  /* la mappa e' appena rinata: se sappiamo dove siamo, il pallino torna subito */
+  homeMePlace();
+  /* Se la tappa in mano non ha un posto si inquadra la giornata. Inquadrare
+     tutto da solo puo' allontanarsi troppo se una tappa (es. l'aeroporto
+     del volo di ritorno) e' lontana dalle altre: non si va mai piu' indietro
+     di un quartiere, anche se cosi' i punti piu' lontani restano fuori. */
+  if(!stesso&&!x0&&pts.length>1){
+    const cam=camera(homeMapObj,pts.map(x=>[x.loc.lng,x.loc.lat]),{margine:34,max:ZOOM_TAPPA});
+    if(cam)homeMapObj.jumpTo({center:cam.center,zoom:Math.max(12,Math.min(cam.zoom,ZOOM_TAPPA))});
+  }
 }
 function homeMapSelect(cardIdx){
   if(!homeMapObj||!homeMapPts.length)return;
   let sel=-1;
   homeMapPts.forEach((x,n)=>{if(x.i===cardIdx)sel=n;});
-  homeMapMarks.forEach((mk,n)=>mk.setIcon(homeMapIcon(n+1,n===sel)));
+  homeMapMarks.forEach((mk,n)=>{const el=mk.getElement();el.classList.toggle('on',n===sel);el.style.zIndex=n===sel?'3':'';});
   // Nessun segnaposto per questa tappa: si dice perche', invece di tacere.
   const nota=document.getElementById('homeMapNote');
   if(nota)nota.style.display=sel<0?'block':'none';
@@ -15487,13 +16089,23 @@ function homeMapSelect(cardIdx){
      Lo zoom non scende mai sotto quello scelto a mano, altrimenti ogni volta
      che ci si allarga per guardarsi intorno la mappa ti richiude in faccia. */
   if(sel<0)return;
-  const meta=[homeMapPts[sel].loc.lat,homeMapPts[sel].loc.lng];
+  /* Scelta toccandone il segnaposto, la tappa e' gia' a vista e la sua
+     scheda si e' appena sistemata lontano da citazione e tasti: la mappa
+     resta dov'e'. Andarci la rimetteva sotto la citazione, e la scheda
+     doveva risistemarsi: tre movimenti per un tocco. */
+  const ds=homeMapObj._g.dalSegno;homeMapObj._g.dalSegno=null;
+  if(ds&&ds.i===cardIdx&&Date.now()-ds.t<1000){homeMapObj._g.primaScelta=false;clearTimeout(homeMoveT);return;}
+  /* la Home ridisegnata con la stessa tappa in mano: la mappa tenuta resta
+     dov'era (vedi homeMappaRiempi) */
+  const rf=homeMapObj._g.restaFerma;homeMapObj._g.restaFerma=null;
+  if(rf!=null&&rf===cardIdx){homeMapObj._g.primaScelta=false;clearTimeout(homeMoveT);return;}
+  const meta=[Number(homeMapPts[sel].loc.lng),Number(homeMapPts[sel].loc.lat)];
+  const subito=!!homeMapObj._g.primaScelta;homeMapObj._g.primaScelta=false;
   clearTimeout(homeMoveT);
   homeMoveT=setTimeout(()=>{
     if(!homeMapObj)return;
-    const zc=(typeof homeMapObj.getZoom==='function'?homeMapObj.getZoom():0)||0;
-    try{homeMapObj.setView(meta,Math.max(zc,16),{animate:!menoMovimento(),duration:.4});}catch(e){}
-  },180);
+    try{vaiA(homeMapObj,meta,Math.max(homeMapObj.getZoom()||0,ZOOM_TAPPA),subito);}catch(e){}
+  },subito?0:180);
 }
 /* Qual è la card più a sinistra fra quelle visibili nella striscia. */
 function homeCardsSync(force){
@@ -16148,8 +16760,19 @@ function renderHomeHero(){
     strip.scrollLeft+=(or.left-sr.left)-(sr.width-or.width)/2;
   };
   const paint=html=>{
-    destroyHomeMap();
+    /* La mappa di Oggi non rinasce a ogni disegno: la Home si ridisegna di
+       continuo (una spunta, un cambio di tema, il cloud che arriva), e con
+       MapLibre ogni rinascita era un WebGL nuovo, lo stile e i pezzi da
+       capo e la mappa che lampeggiava. Il suo riquadro, con la tela dentro,
+       prende il posto di quello vuoto del disegno nuovo. */
+    const tenuta=homeMapTenibile();
+    destroyHomeMap(!!tenuta);
     box.innerHTML=html;
+    if(tenuta){
+      const posto=box.querySelector('#homeMap');
+      if(posto)posto.replaceWith(tenuta);
+      else{togliMappa(homeMapObj);homeMapObj=null;homeMeMarker=null;}
+    }
     cieloSullePagine(box.querySelector('.hh.cielo'));
     const place=()=>{
       center(box.querySelector('.hh-days'),'.giorno.on',keepD);
@@ -16916,7 +17539,6 @@ function rankPlaces(data,q){
 }
 function placeIcon(t,c){const m={station:'🚉',aerodrome:'✈️',airport:'✈️',museum:'🏛️',castle:'🏰',palace:'🏰',cathedral:'⛪',church:'⛪',monument:'🗿',attraction:'⭐',memorial:'🪦',ruins:'🏛️',hotel:'🏨',restaurant:'🍴',cafe:'☕',park:'🌳',beach:'🏖️',viewpoint:'🔭',theme_park:'🎢',zoo:'🦁',aquarium:'🐠',archaeological_site:'🗿',artwork:'🖼️',bus_station:'🚌',subway_entrance:'🚇',garden:'🌸'};return m[t]||m[c]||'📍';}
 function renderResults(data,target){
-  Object.values(miniMaps).forEach(m=>{fermaMappa(m);try{m.remove()}catch(e){}});miniMaps={};
   document.getElementById(target).innerHTML=`<div class="results">${data.map((p,i)=>{
     const name=p.display_name.split(',')[0],addr=p.display_name.split(',').slice(1,4).join(',').trim();
     const type=p.type||p.class,hours=p.extratags?.opening_hours||'',website=p.extratags?.website||p.extratags?.['contact:website']||'',phone=p.extratags?.phone||p.extratags?.['contact:phone']||'';
@@ -16927,26 +17549,14 @@ function renderResults(data,target){
        non lo legge. La scheda resta da toccare tutta, per il dito. */
     return `<div class="res" style="cursor:pointer" onclick='openPlaceInfo(${pd})'><div class="res-top"><div class="res-ic">${ic}</div><div class="res-body"><button class="res-name come-testo" onclick='event.stopPropagation();openPlaceInfo(${pd})'>${esc(name)}</button><div class="res-addr">${esc(addr)}</div><div class="tags">${p._top?'<span class="tag top">⭐ Top</span>':''}${type?`<span class="tag">${esc(type)}</span>`:''}${hours?`<span class="tag b">🕐 ${esc(hours.substring(0,22))}</span>`:''}</div></div></div><div class="mini-map" id="${target}-mini-${i}"></div><div class="chips"><button class="chip green" onclick='event.stopPropagation();openSavePOI(${pd})'><svg class="ico" aria-hidden="true"><use href="#i-salva"/></svg>Salva</button><a class="chip" onclick="event.stopPropagation()" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank"><svg class="ico" aria-hidden="true"><use href="#i-mappa"/></svg>Maps</a>${website?`<a class="chip" onclick="event.stopPropagation()" href="${esc(website)}" target="_blank"><svg class="ico" aria-hidden="true"><use href="#i-globo"/></svg>Sito</a>`:''}${phone?`<a class="chip" onclick="event.stopPropagation()" href="tel:${esc(phone)}">${ico('telefono')}${esc(tv('Chiama'))}</a>`:''}</div></div>`;
   }).join('')}</div>`;
-  /* Le mini-mappe nascono 120 ms dopo, e in mezzo la schermata puo' essersi
-     gia' rifatta da capo: il riquadro su cui stavano per nascere puo' essere
-     staccato dalla pagina, oppure essere gia' stato preso da un'altra mappa.
-     In tutti e due i casi Leaflet si rompe dentro, e l'errore arriva a
-     schermo da tutt'altra parte. Si ricontrolla adesso, non 120 ms fa. */
-  data.forEach((p,i)=>setTimeout(()=>{
-    const el=document.getElementById(`${target}-mini-${i}`);
-    if(!el||!el.isConnected||el._leaflet_id)return;
-    try{
-      /* keyboard:false: una mappina che non si muove non deve fermare la
-         tastiera, che altrimenti si posava su ogni risultato due volte. */
-      const pm=L.map(el,{zoomControl:false,keyboard:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false}).setView([parseFloat(p.lat),parseFloat(p.lon)],15);
-      dirittiMappa(pm,'bottomright');
-      stratoMappa().addTo(pm);
-      L.marker([parseFloat(p.lat),parseFloat(p.lon)]).addTo(pm);
-      miniMaps[`${target}-${i}`]=pm;
-    }catch(e){/* una mappina decorativa non deve mai rompere la pagina */}
-  },120));
+  /* Le mappine sono immagini ferme (vedi LE MAPPINE FERME): non si muovono e
+     non prendono la tastiera, che altrimenti si posava su ogni risultato due
+     volte. Una mappina decorativa non deve mai rompere la pagina. */
+  data.forEach((p,i)=>{try{mappinaFerma(document.getElementById(`${target}-mini-${i}`),parseFloat(p.lat),parseFloat(p.lon));}catch(e){}});
 }
-let piMapObj=null;
+/* La mappa della scheda di un posto; piAttesa e' quella da far nascere
+   quando arriva MapLibre (vedi mappaArrivata). */
+let piMapObj=null,piAttesa=null;
 /* ===== FOTO DI UN LUOGO: ricerca profonda ==========================
    Un solo tentativo sul titolo esatto della Wikipedia italiana lasciava
    senza immagine tutto quello che non ha una voce con quel nome preciso:
@@ -17149,12 +17759,14 @@ function renderPlaceInfo(place,extra,opts){
       ${hasLoc?`<button class="btn btn-secondario" style="flex:1" onclick="openNav(${place.lat},${place.lng},${jesc(place.name)})"><svg class="ico" aria-hidden="true"><use href="#i-bussola"/></svg>Naviga</button>`:''}
     </div>`;
   if(hasLoc)setTimeout(()=>{
-    if(piMapObj){fermaMappa(piMapObj);try{piMapObj.remove()}catch(e){}piMapObj=null;}
-    if(typeof L==='undefined')return;
-    piMapObj=L.map('piMap',{zoomControl:false}).setView([place.lat,place.lng],16);
-    dirittiMappa(piMapObj,'bottomright');
-    stratoMappa().addTo(piMapObj);
-    L.marker([place.lat,place.lng]).addTo(piMapObj);
+    if(piMapObj){togliMappa(piMapObj);piMapObj=null;}
+    const nasce=()=>{
+      const el=document.getElementById('piMap');if(!el||!el.isConnected)return;
+      piMapObj=nuovaMappa(el,{centro:[Number(place.lng),Number(place.lat)],zoom:15,diritti:'br',nome:tv('Mappa')});
+      if(piMapObj)segno(piMapObj,[place.lng,place.lat],'<span class="g-spillo"></span>',{classe:'g-posto-qui',fermo:true});
+    };
+    if(typeof maplibregl==='undefined'){piAttesa=nasce;chiediMappe();return;}
+    nasce();
   },150);
 }
 function initChat(){
@@ -17246,7 +17858,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Importare un viaggio da un foglio di Excel, Numbers, Fogli Google o da un CSV: in Home quando non c'e' ancora un viaggio ("Importa da Excel o CSV"), in cima al foglio "Nuovo viaggio" ("Hai gia' il viaggio su Excel? Importalo") e nel cassetto delle tre righine, sotto "Aggiungi viaggio" ("Importa da Excel"). Si sceglie il file (.xlsx, .xls, .csv, .txt, anche Numbers) oppure si incollano nel riquadro "Incolla le celle" le celle copiate dal foglio e si tocca "Leggi le celle". Una riga per ogni attivita', con la data (anche scritta una volta sola per tutto il giorno, o i giorni numerati 1, 2, 3 piu' la data del primo giorno) e, se c'e', l'ora. L'app riconosce da sola le colonne (data, ora, fine, durata, attivita', luogo, indirizzo, citta', note, costo, valuta, link, tipo) in cinque lingue e mostra cosa ha capito: ogni colonna ha un menu per cambiarlo (se il foglio non ha i nomi delle colonne si scelgono li'), sotto c'e' l'anteprima di come diventera' il viaggio, e poi le righe da sistemare (data non riconosciuta, riga vuota), ognuna da correggere o da saltare. Si sceglie se fare un viaggio nuovo (conta nel limite del piano gratuito) o aggiungere le righe al viaggio aperto (prima l'app salva un punto di ripristino). Le righe di tipo hotel, alloggio, airbnb o B&B diventano Hotel con check-in e check-out; i costi diventano spese previste in Soldi. Alla fine c'e' il riepilogo (giorni, attivita', hotel, righe saltate, luoghi da sistemare) e l'app cerca da sola le posizioni dei luoghi, una al secondo, con una barra che avanza: quelli che non trova restano con la scritta "senza posizione" nel Programma, e si sistemano aprendo l'attivita'. Limiti: 5 MB e 1.000 righe. "Scarica un modello da compilare" da' un file Excel con le colonne giuste e due righe d'esempio, nella lingua dell'app. Il file si legge sul telefono e non viene mandato a nessuno. Un itinerario scritto (non una tabella) lo puo' leggere l'assistente: l'app lo propone quando non vede colonne.
 - Il primo avvio: tre schermate di presentazione (il viaggio giorno per giorno, il gruppo in un'app, i conti in ogni valuta), che si scorrono col dito o con "Avanti", si saltano con "Salta" e non tornano piu'. Chi apre l'app da un invito non le vede e va dritto al suo invito. Poi la schermata di accesso, con tre tasti grandi: "Crea un account", "Accedi" e "Prova senza account". Con l'account i viaggi sono su tutti i propri dispositivi e si condividono con gli amici; senza, restano solo su quel telefono. Per registrarsi si scrivono email, password e conferma e basta un tocco su "Crea account"; se serve confermare l'email l'app lo dice ("Ti abbiamo mandato un'email: apri il link per confermare, poi torna qui") e poi si entra con "Accedi".
 - La posizione: all'apertura l'app non la chiede mai. La chiede la prima volta che si usa una cosa che ne ha bisogno ("Cosa cerchi qui intorno?", "A raccolta", il GPS con gli avvisi vicino alle tappe e il "dove sono" sulla mappa): prima un foglio dice a cosa serve, con "Continua" e "Non ora", e solo dopo "Continua" il telefono chiede il permesso. Chi l'aveva gia' data non vede niente di nuovo. Senza posizione la home resta piena: citta' e meteo vengono dalla destinazione del viaggio. Se il permesso e' stato negato, si riattiva dalle impostazioni del telefono.
-- Home: il viaggio in corso, la prossima tappa, la mappa. Sulla mappa della Home c'e' "Tutto il viaggio ›": apre la mappa di tutto il viaggio. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono il Programma su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. "Cosa cerchi qui intorno?" sta da solo, largo quanto la riga. "A raccolta", "Bagagli", "Compagni", "Condividi" e "Viaggio" NON sono piu' in Home: stanno nel menu dei viaggi (le tre righine, o il nome del viaggio in alto), sotto il nome del viaggio aperto. I bagagli stanno li', e anche nella scheda del viaggio ("Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dal menu dei viaggi col tasto "Viaggio", toccando il titolo in cima al Programma, oppure dal Profilo toccando il viaggio; in Home il titolo apre il Programma, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "Il ricordo" (anche a viaggio in corso), "Diario PDF", "PDF dell'itinerario" e "Calendario che si aggiorna" (per i viaggi nel cloud; senza account al suo posto c'e' "Esporta nel calendario"). Accanto a "La giornata" c'e' "Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "Su misura": l'assistente prepara l'itinerario.
+- Home: il viaggio in corso, la prossima tappa, la mappa. Sulla mappa della Home ci sono le tappe del giorno col numero (con la foto del posto, quando c'e') e il percorso della giornata tratteggiato in oro; toccando un numero si apre la sua scheda e la fila delle tappe va fin li'. Sulla mappa della Home c'e' "Tutto il viaggio ›": apre la mappa di tutto il viaggio. In alto a destra, sulla stessa riga del nome del viaggio, c'e' la temperatura con la scritta "Meteo" ("22° · Meteo ›"): si tocca e si apre il meteo. Sopra "La giornata" c'e' la fila dei giorni (ven 7, sab 8, dom 9...): un tocco cambia la giornata mostrata, due tocchi sullo stesso giorno aprono il Programma su quel giorno. Sotto il nome del viaggio c'e' UN TASTO SOLO, "Cosa cerchi qui intorno?": si tocca e si apre l'elenco di quello che si puo' cercare intorno a dove sei, in quest'ordine - stazione dei treni, metropolitana (l'ENTRATA piu' vicina, non il centro della stazione), fermata del bus (con le linee che ci passano, quando la mappa le sa), bagno pubblico, area fumatori, bancomat, supermarket, farmacia, ristorante (con la cucina, quando la mappa la sa) e bar - nel senso di dove bere qualcosa di alcolico: cocktail bar, pub, birrerie; il bar della colazione non c'e'. Cercano col GPS sulla mappa di OpenStreetMap, allargando il giro finche' non trovano qualcosa. Se il servizio della mappa non risponde l'app RIPROVA DA SOLA su server diversi, senza chiedere niente. E se dopo qualche secondo la mappa non ha ancora trovato niente, parte da sola una RICERCA VELOCE su altri due servizi di OpenStreetMap (Photon e Nominatim): i suoi risultati compaiono subito con la scritta "Trovati con la ricerca veloce", e se poi la mappa risponde la sua lista, piu' ricca di dettagli (orari, se si paga), prende il loro posto. Se non risponde proprio nessuno, mostra L'ULTIMA RISPOSTA CHE AVEVA, dicendo di quando e' - e intanto continua a cercare da sola quella di adesso, che prende il suo posto appena arriva. Solo se non c'e' nemmeno quella dice che non ce l'ha fatta, e scrive cosa e' andato storto. Quello che salta fuori solo dal nome viene controllato: una "Stazione Carabinieri" o una "stazione di servizio" non sono la stazione dei treni e non vengono mostrate. QUANTO SI ALLARGANO dipende da cosa si cerca: stazione dei treni e metropolitana arrivano fino a VENTI CHILOMETRI, a scalini (1, 2, 3, 5, 10, 20 km), perche' se stai in un paese fuori citta' il metro sta in citta' ed e' quello che volevi sapere; il bus si ferma a dieci; bagni, aree fumatori e bancomat restano entro cinque, perche' un bagno a venti chilometri non serve a nessuno; supermarket, farmacie, ristoranti e bar arrivano fino a otto, e ristoranti e bar partono da un giro piu' stretto (500 metri) perche' in centro ce ne sono tanti. Ci si ferma al primo giro che trova qualcosa: in centro il primo basta. Per stazione, metro e bus ogni posto compare UNA volta sola: le tre entrate della stessa fermata del metro, i due lati della strada della stessa fermata del bus, la stazione segnata due volte diventano una riga, la piu' vicina. Bagni e bancomat no: due sportelli della stessa banca in due vie diverse sono due bancomat. Supermarket, farmacie, ristoranti e bar stanno in mezzo: lo stesso negozio segnato due volte (l'entrata e l'edificio) diventa una riga, ma due supermercati con lo stesso nome in due vie diverse restano due. Prima erano sei pillole separate in home: adesso no. "Cosa cerchi qui intorno?" sta da solo, largo quanto la riga. "A raccolta", "Bagagli", "Compagni", "Condividi" e "Viaggio" NON sono piu' in Home: stanno nel menu dei viaggi (le tre righine, o il nome del viaggio in alto), sotto il nome del viaggio aperto. I bagagli stanno li', e anche nella scheda del viaggio ("Bagagli"). In cima alla lista bagagli c'e' il tasto "Importa una lista": si tocca e si apre il riquadro dove incollare un elenco o allegare un PDF, che vengono divisi per categoria. Nei 7 giorni prima della partenza e il primo giorno del viaggio, sotto l'intestazione c'e' anche la scheda "Prepara la valigia": dice quante voci sono pronte (per esempio "12 su 30 pronte") e ha il tasto "Apri la lista"; si chiude con la X e torna il giorno dopo; dal secondo giorno del viaggio non c'e' piu'. "Condividi" c'e' anche di fianco a ogni viaggio nell'elenco del Profilo e dentro la scheda del viaggio. Le cose che governano il viaggio (concludere, rinominare, i giorni, i consigli, il ripristino) stanno nella scheda del viaggio, che si apre dal menu dei viaggi col tasto "Viaggio", toccando il titolo in cima al Programma, oppure dal Profilo toccando il viaggio; in Home il titolo apre il Programma, e apre la scheda solo se il viaggio non ha ancora giorni. Nella scheda ci sono anche "Il ricordo" (anche a viaggio in corso), "Diario PDF", "PDF dell'itinerario" e "Calendario che si aggiorna" (per i viaggi nel cloud; senza account al suo posto c'e' "Esporta nel calendario"). Accanto a "La giornata" c'e' "Aggiungi", per aggiungere una tappa a quel giorno. In un viaggio che non ha ancora giorni, in Home c'e' anche "Su misura": l'assistente prepara l'itinerario.
 - Programma: la giornata ora per ora (si chiamava Time Table). In cima, grande, c'e' la data del giorno che stai guardando; sotto la striscia dei giorni, dove un tocco cambia giorno. Sulla mappa della giornata c'e' "Tutto il viaggio ›", che apre la mappa di tutto il viaggio (nei giorni senza mappa, una riga al suo posto). Sopra la griglia ci sono QUATTRO tasti, due righe da due: le due cose che si fanno camminando, "Naviga la giornata" (apre il navigatore col giro di tutto il giorno, dalla prima tappa all'ultima e le altre come soste; sta solo qui, non in home) e "Chiedi all'assistente" (una chat su quella giornata, dove "PDF" allega un PDF), e sotto le due che si usano mentre il viaggio si costruisce, "Ordina il giro" (rimette in fila con l'IA le tappe che ci sono gia') e "Autopilota" (gli incolli un elenco di posti e li mette lui in orario). "Costruisci la giornata" non c'e' piu'. Se la giornata e' oggi, una riga color mattone attraversa la griglia all'ora che e' adesso, e si sposta da sola. Tutto quello che si AGGIUNGE a una giornata sta dietro il tasto "Aggiungi", in basso a destra, che apre un menu con cinque voci: "Nuova attività" (da scrivere), "Attività salvata" (pesca dai luoghi salvati che non sono ancora in nessuna giornata, con gli essenziali in cima), "Rientro in hotel", "Foto" e "Importa lista". Le tappe si spostano tenendole premute, e si allungano tirando il bordo di sotto (o con due dita, allargandole sul riquadro). Se lo spostamento o l'allungamento viene male, il tasto "Annulla" rimette gli orari com'erano: compare in basso a sinistra, dalla parte opposta a "Aggiungi", solo subito dopo una modifica e per qualche secondo, poi se ne va. Vale per l'ultima modifica fatta, e si azzera cambiando giorno. Il giorno si cambia anche scorrendo col dito sulla giornata: la prima volta che si apre il Programma, sotto i giorni, una riga lo dice ("Scorri con un dito ← → per cambiare giorno"), e poi non torna. Fra una tappa e l'altra c'e' la striscia del tratto: tempo e distanza, e l'icona del mezzo da toccare per cambiarlo (e' piccola, ma risponde anche un po' intorno). I mezzi sono sei: a piedi, in bici, in macchina, in treno, in metro e in bus. A piedi, in bici e in macchina il tempo e' quello vero sulle strade, calcolato da un servizio di percorsi e tenuto nel telefono (si vede anche senza rete); finche' non arriva, e coi mezzi pubblici sempre, il tempo e' una stima e ha davanti il segno "≈". La stima dei mezzi pubblici conta anche i minuti per arrivare alla fermata, aspettare e uscire. Il navigatore di GeppGo dentro l'app non c'e' piu': ogni tasto per farsi portare apre Apple Maps o Google Maps col mezzo del tratto (in bici Apple Maps apre il percorso a piedi). Quale dei due si sceglie nel Profilo, sotto Impostazioni; chi aveva scelto il navigatore di GeppGo, al primo percorso sceglie fra i due. Sugli schermi larghi (un iPad, un computer, l'interno dell'iPhone Duo) il Programma ha due colonne: le tappe della giornata a sinistra e la mappa grande a destra, che resta ferma mentre la giornata scorre; i giorni stanno sopra tutte e due. Li' toccando una tappa la si vede accesa sulla mappa (il segnaposto diventa scuro con l'anello d'oro, e la mappa ci va), e un altro tocco - o "Apri" nella scheda del segnaposto - apre il suo menu; toccando un segnaposto si accende la sua tappa, e la giornata scorre fin li'. I giorni affiancati in orizzontale non ci sono piu': al loro posto c'e' la mappa, e un altro giorno si apre toccandolo in cima.
 - Scopri: in cima la riga "Identifica" (si fotografa un monumento o un edificio e l'app dice cos'e', un po' di storia e se serve prenotare; da li' si torna con "Scopri"), poi tre schede. "Cerca" per trovare posti e salvarli, "Assistente" (questa: si puo' scrivere, incollare un itinerario o allegare un PDF col tasto "PDF"), "Importa" che a sua volta ha "Posti da un reel", "Su misura" (farsi costruire l'itinerario; c'e' anche in Home nei viaggi senza giorni e come spunta nel foglio "Nuovo viaggio") e "Prenotazione" (c'e' anche in Prenotazioni › Biglietti, "Prenotazione dalla mail"). In "Cerca", sotto la ricerca, c'e' l'interruttore "Consigli nei dintorni": acceso, l'app propone posti in linea con quelli salvati e avvisa quando ci si passa vicino (e' lo stesso di "Consigli attivi/off" nella scheda del viaggio).
 - "Prenotazione" e' il lettore delle mail di conferma: si incolla il testo della mail (o le arriva da solo col tasto Condividi del telefono) e ne ricava tipo, nome, luoghi, date, orari, codice di prenotazione e totale. Riconosce voli, treni, autobus, traghetti, alloggi, noleggio auto, ristoranti e attivita', e legge le mail scritte in italiano, inglese, spagnolo, francese e portoghese - la mail arriva nella lingua del sito su cui hai prenotato, non nella tua. Se nella mail ci sono andata E ritorno le trova tutte e due e si aggiungono una per volta. Gate, terminal, binario, carrozza e posto finiscono nelle note dell'attivita'. Tutto questo succede dentro il telefono: il testo della prenotazione non viene mandato a nessuno.
@@ -17259,7 +17871,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - A raccolta: serve a chiamare i compagni quando bisogna ripartire e non ci si trova. Il tasto "A raccolta" sta nel menu dei viaggi (le tre righine, o il nome del viaggio in alto), sotto il nome del viaggio aperto: c'e' nei viaggi con almeno un'altra persona, e per chiamare bisogna essere admin di un viaggio condiviso (se manca qualcosa, toccandolo lo dice). Si tocca, si puo' scrivere due parole ("Si parte", "Si mangia"), e sui telefoni degli altri compare un avviso con il punto dove sei e il tasto "Portami li'", che apre il navigatore (Apple Maps o Google Maps). La posizione e' quella di chi chiama, presa in quel momento e mai piu' aggiornata: nessuno viene seguito. Dopo due ore la chiamata scade e non la vede piu' nessuno. Con l'app aperta la chiamata compare subito; con GeppGo in secondo piano arriva come notifica del telefono (se le notifiche sono attive) e toccandola si apre la chiamata. Ad app chiusa non arriva ancora: servira' l'app nativa.
 - Chi e' admin di un viaggio puo' togliere un compagno dalla scheda "Compagni di viaggio" (nel menu dei viaggi "Compagni"; la scritta rossa "Togli" accanto al nome; accanto c'e' anche "Rendi admin" o "Togli admin"): quella persona non vede piu' il viaggio ne' le foto. Un admin non puo' togliere un altro admin: prima gli si toglie il ruolo.
 - La lingua: in Profilo c'e' il menu con italiano, inglese, spagnolo, francese e portoghese. Se non la si sceglie, l'app segue quella del telefono: telefono in spagnolo, app in spagnolo. Le date, i numeri, le valute (dove va il simbolo, il separatore delle migliaia) e i plurali seguono la lingua scelta. Sotto il menu una riga dice quanto e' tradotto davvero. La privacy ("Come tratto i tuoi dati" in Profilo, e il link sotto "Crea account") si apre nella lingua dell'app: le versioni tradotte dicono in cima che, se c'e' un dubbio, vale il testo italiano, e hanno i link per passare alle altre lingue.
-- La mappa senza rete: le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, cosi' l'app funziona dove serve di piu'. Guardare una zona prima di partire vuol dire averla li'. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte e quanto pesano, e c'e' il tasto per liberare lo spazio. Non esiste "scarica tutta la citta'": le mappe di OpenStreetMap le tengono su dei volontari e scaricarle in blocco e' vietato dalle loro condizioni. Dove la mappa non c'e' ancora, senza rete, resta un riquadro neutro e sopra si vedono lo stesso il giro, le tappe e il pallino.
+- La mappa senza rete: le mappe sono la foto dal satellite di Esri, che le fornisce, e da vicino ci sono sopra strade e nomi. Le zone che guardi sulla mappa restano nel telefono e si rivedono anche senza campo, ma solo per il tempo che Esri permette (lo scrive nelle sue risposte) e al massimo 1.500 pezzi. Non esiste "scarica tutta la citta'": scaricare in anticipo una zona non e' permesso dalle condizioni di Esri, si tiene solo quello che si e' gia' guardato. In Profilo, sotto "La mappa senza rete", si legge quanti pezzi di mappa sono da parte, quanto pesano e per quanto restano, e c'e' il tasto "Libera lo spazio della mappa"; se Esri smette di accettare l'app, si buttano da soli. Se la mappa satellitare non risponde (niente rete, o il servizio ora non disponibile), la mappa lo dice con un avviso e il tasto "Riprova", e sotto restano i segnaposto, il percorso e le schede. In un angolo di ogni mappa c'e' la citazione "Powered by Esri · © OpenStreetMap · Fonti": "Fonti" mostra chi ha fatto le immagini e i dati.
 - L'assistente (questa chat, "Su misura", i posti da un reel, "Che posto e'", le proposte per sistemare la giornata, la lettura di un itinerario o della mail di un albergo): risponde nella lingua scelta per l'app, e i nomi dei posti restano quelli originali. Ha bisogno della rete, e senza lo dice subito. Mentre aspetta, il tasto che l'ha chiamato resta spento, cosi' un secondo tocco non fa partire un'altra richiesta; se ci mette piu' di dieci secondi in alto compare "Ci sta mettendo più del solito…" con il tasto "Annulla". Dopo 30 secondi (60 con una foto o un PDF) si ferma e dice di riprovare; se e' molto richiesto dice di riprovare fra qualche minuto. C'e' un limite di richieste al giorno, uguale per tutti: quando finisce, l'assistente dice a che ora (del telefono) torna disponibile. Il modello gira su Cloudflare (Workers AI). Per i fatti che cambiano (orari, prezzi, se serve prenotare) cerca sul web con Tavily, a cui vanno solo nomi di posti, la destinazione e le date, mai nomi di persone o recapiti; se la ricerca sul web non e' attiva o ha finito i crediti del mese, risponde lo stesso con quello che sa e lo dice in una riga piccola. Gli orari di apertura per "Ordina il giro con l'IA" e i posti di una lista incollata ("Aggiungi così come sono") li controlla la mappa di OpenStreetMap, non l'assistente: dove la mappa non li sa, restano vuoti. Un PDF scansionato (pagine fotografate, senza testo) si legge lo stesso: le prime tre pagine vanno all'assistente come immagini, e da un'immagine nomi e numeri non si possono togliere. Niente dati sensibili (salute, documenti, numeri di carta, password). Dettagli nella privacy.
 - Le parti che arrivano al momento: la mappa, lo scanner dei biglietti e i codici a barre si scaricano la prima volta che servono, e dopo la prima apertura con la rete l'app li tiene da parte, cosi' funzionano anche senza campo. Il lettore dei file di Excel arriva la prima volta che si apre l'importazione da Excel, e da li' resta anche lui. Lo stesso il pezzo che fa il file del backup: dopo la prima apertura con la rete c'e' anche senza. E quello che fa il PDF dell'itinerario arriva la prima volta che si tocca "Crea il PDF", e da li' resta: i PDF dopo si fanno anche senza campo. Se non arrivano (niente rete e mai scaricati prima) l'app lo dice al posto loro, col tasto "Riprova"; il numero del biglietto resta comunque in chiaro, da far battere a mano. Se il cloud non risponde, chi non ha ancora un account vede la schermata d'accesso con "Il cloud non risponde" e i tasti "Riprova" e "Prova senza account"; chi l'account ce l'ha entra coi dati del telefono, e la sincronizzazione riparte da sola quando il cloud torna.
 - Le email di accesso: "Password dimenticata?", "Entra con un link via email" e la conferma dopo "Crea un account" mandano una mail con un link e un codice a 6 cifre. Toccare il link apre l'app gia' dentro: dopo il recupero si apre subito il foglio per la password nuova, ed e' obbligatorio: copre tutto, non si chiude, e se l'app viene chiusa torna alla riapertura; "Annulla" fa uscire dall'account, e salvata la password nuova sugli altri dispositivi bisogna accedere di nuovo. Dopo la conferma compare "Account confermato". Se il link era gia' stato usato o e' scaduto, l'app lo dice e c'e' il tasto "Chiedi un link nuovo". Su iPhone, chi usa l'app dall'icona sulla Home deve fare cosi': nella schermata d'accesso "Ho un codice o un link di recupero", poi incollare il link della mail (tenendolo premuto, senza aprirlo) o scrivere le 6 cifre. Vale per tutte e tre le email.
@@ -17271,7 +17883,7 @@ const MAPPA_APP=`COM'E' FATTA GEPPGO, per le domande sull'app stessa:
 - Invitare i compagni: "Condividi" nel menu dei viaggi (o "Condividi" di fianco al viaggio nell'elenco del Profilo, o dentro la scheda del viaggio) da' un link e un QR. Con un account, "Copia il link" e il tocco sul link stesso lo copiano negli appunti, e "Copia il codice" (nella tendina "Se il link non funziona, c'e' il codice") copia il codice di riserva; compare una conferma breve. Su iPhone c'e' anche "Invia il link", che apre il tasto Condividi del telefono. Se il telefono non lascia copiare, il testo resta a schermo gia' selezionato: si tiene premuto e si sceglie "Copia". Chi riceve il link apre l'app, crea il suo account ed entra nel viaggio scegliendo chi e'. Un link che porta a un server diverso da quello che usa GeppGo viene ignorato e l'app dice "Questo invito non e' valido": non e' un guasto, e' una protezione contro i link finti - basta farsi mandare un invito nuovo, fatto dall'app. Chi ha ricevuto un link o un codice puo' incollarlo anche in "Ho un codice" (in Home quando non c'e' ancora un viaggio, e nel Profilo accanto ad "Aggiungi viaggio"): il codice nel campo in alto, il link intero nel riquadro "Ti hanno mandato un link?". Nessun link puo' cambiare il server dell'app: lo si cambia solo a mano, da un pannello tecnico per chi ha un server suo, che non ha un tasto: si apre tenendo premuta per due secondi la riga della versione nel Profilo.
 - I link di Google Maps: si incollano, anche quelli corti di "Condividi" (maps.app.goo.gl), nella ricerca di Scopri › "Cerca", nella ricerca degli hotel, nella "Posizione sulla mappa" del foglio dell'hotel, nella posizione a mano della mail dell'hotel e nell'indirizzo di una tappa: l'app legge il posto dal link (le coordinate, oppure il nome, che poi cerca). Su Android, condividendo un posto da Google Maps a GeppGo, si apre Scopri › "Cerca" con quel posto, da aprire e salvare nel viaggio. Se un link non si riesce a leggere l'app lo dice, e si incolla l'indirizzo.
 - I tetti di spesa: in Spese › Budget, la scheda "Tetti di spesa" (si apre anche dalla scheda del viaggio: "Viaggio" nel menu dei viaggi › "Tetti di spesa"). Tre tipi di tetto, tutti facoltativi e nella valuta del viaggio: il tetto del gruppo, per tutto il viaggio; un tetto per categoria (Voli, Hotel, Cibo, Attrazioni, Trasporti, Shopping), sempre del gruppo; e il tuo tetto, per la tua parte delle spese, che e' privato: lo vedi solo tu, i compagni no. I tetti del gruppo li vedono tutti, ma li impostano e li cambiano solo gli admin del viaggio. Per ogni tetto si legge quanto e' speso, quanto resta, la percentuale e "restano X per i prossimi N giorni, cioe' Y al giorno". Le spese previste (non ancora pagate) non contano nello speso: una riga dice "con le previste arriveresti a Z". Le spese in attesa di cambio restano fuori finche' il cambio non arriva, e una riga lo dice. All'80% e al 100% arriva un avviso, una volta sola per soglia, come gli altri avvisi (notifica se e' permessa, se no un banner nell'app); se un admin cambia il tetto, gli avvisi ripartono per quello nuovo. Quando un tetto passa l'80%, in Home compare una riga che porta al Budget.
-- La mappa di tutto il viaggio: tutte le tappe di tutti i giorni su una mappa, un colore per giorno, coi numeri nell'ordine della giornata, la linea che le unisce giorno per giorno e gli alberghi con la casetta. Si apre da "Tutto il viaggio ›" sulla mappa della Home e su quella della giornata nel Programma, e dalla scheda del viaggio ("Viaggio" nel menu dei viaggi › "Tutto il viaggio"). In cima si sceglie "Tutti i giorni" o un giorno solo ("Giorno 1", "Giorno 2"...); all'apertura la mappa inquadra tutto. Toccando un numero compare una scheda con nome, giorno e ora, e il tasto "Apri la tappa". Dove le tappe sono tante e vicine diventano un tondo scuro col numero delle tappe: toccandolo ci si avvicina. "Elenco" mostra le stesse tappe in fila, giorno per giorno (anche quelle senza posizione): e' anche il modo di usarla con VoiceOver. Senza rete si vedono le zone della mappa gia' viste.
+- La mappa di tutto il viaggio: tutte le tappe di tutti i giorni su una mappa, un colore per giorno, coi numeri nell'ordine della giornata, la linea che le unisce giorno per giorno e gli alberghi con la casetta. Si apre da "Tutto il viaggio ›" sulla mappa della Home e su quella della giornata nel Programma, e dalla scheda del viaggio ("Viaggio" nel menu dei viaggi › "Tutto il viaggio"). In cima si sceglie "Tutti i giorni" o un giorno solo ("Giorno 1", "Giorno 2"...); all'apertura la mappa inquadra tutto. Toccando un numero compare una scheda con nome, giorno e ora, e il tasto "Apri la tappa". Dove le tappe sono tante e vicine diventano un tondo scuro col numero delle tappe: toccandolo ci si avvicina. Da lontano la mappa e' un globo: la terra tonda, col suo cielo. "Elenco" mostra le stesse tappe in fila, giorno per giorno (anche quelle senza posizione): e' anche il modo di usarla con VoiceOver. Senza rete si vedono le zone della mappa gia' viste (per il tempo che Esri permette).
 - Il PDF dell'itinerario: dalla scheda del viaggio ("Viaggio" nel menu dei viaggi › "PDF dell'itinerario", accanto a "Diario PDF"). E' un PDF da mandare a chi parte con te prima di partire: la copertina (nome, date, destinazione, compagni), poi giorno per giorno le tappe con l'ora, il posto, l'indirizzo e il link "Apri in Google Maps", gli spostamenti fra una tappa e l'altra col mezzo e il tempo, e l'albergo di ogni notte con l'indirizzo e l'ora del check-in. Prima di crearlo si sceglie cosa metterci: "Includi i costi" (spento all'inizio), "Includi le note" e "Includi l'elenco dei biglietti" - i codici e i QR dei biglietti non ci vanno mai, restano nell'app. Si tocca "Crea il PDF", poi "Condividi o salva": si apre il foglio Condividi del telefono col file "Itinerario - nome del viaggio.pdf", da mandare in chat o salvare in File (dove il foglio Condividi non c'e', il tasto e' "Scarica il PDF"). E' scritto nella lingua dell'app, e i nomi dei posti si leggono in ogni alfabeto, anche giapponese e cinese. Il "Diario PDF" e' un'altra cosa: il racconto del viaggio con le foto, che passa dalla stampa del telefono.
 - Il calendario che si aggiorna: dalla scheda del viaggio ("Viaggio" nel menu dei viaggi › "Calendario che si aggiorna"), per i viaggi nel cloud (serve l'account). Si tocca "Crea il link" e poi "Aggiungi al calendario": il calendario del telefono chiede di iscriversi, e da li' le tappe con l'orario, i check-in e i check-out degli alberghi e i viaggi dei biglietti compaiono nel calendario e si aggiornano da soli quando il viaggio cambia (una tappa spostata si sposta, una cancellata sparisce; il calendario del telefono lo riguarda da solo, ogni tanto, quindi un cambio non compare nello stesso istante). Gli orari sono quelli del posto: a casa si vedono nell'ora di casa, in viaggio in quella di li'. "Copia il link" lo copia, per un altro calendario. Chi ha il link vede l'itinerario (non le note, non le spese, non i biglietti): "Disattiva il link" lo spegne, e "Crea un link nuovo" ne fa un altro e spegne quello di prima. Il link e' di una persona sola; chi esce dal viaggio, o ne viene tolto, lo perde. Senza account, o per un viaggio solo sul telefono, al suo posto c'e' "Esporta nel calendario": un file .ics fatto una volta, che non si aggiorna (c'e' anche in fondo al foglio del calendario: "Oppure scarica un file .ics, una volta sola"). Il file passa dal foglio Condividi del telefono (si sceglie Calendario, una mail o File); reimportato aggiorna gli stessi eventi invece di raddoppiarli, e le note non ci vanno.
 - Eliminare (una spesa, un albergo, un luogo salvato, una voce della valigia, una tappa, un viaggio, l'account) si fa sempre dal suo foglio o dalla sua scheda: il tasto rosso sta in fondo, staccato dal resto. Sulle righe ci sono "Modifica" e la freccia, non il cestino.
@@ -17306,7 +17918,7 @@ const MAPPA_CHIAVI=[
   ['A raccolta',['raccolta','ritrovarsi','gather','meet up','reunir','rassembler']],
   ['Chi e\' admin',['admin','togliere un compagno','remove a member','quitar a','retirer un','remover um']],
   ['La lingua',['lingua','language','idioma','langue','lingua da app']],
-  ['La mappa senza rete',['senza rete','offline','sin conexion','hors ligne','sem rede']],
+  ['La mappa senza rete',['senza rete','offline','sin conexion','hors ligne','sem rede','satellit','esri','fonti della mappa','powered by']],
   ['L\'assistente',['assistente','chat','intelligenza artificiale','assistant','asistente','chatbot','privacy','dati personali','personal data','datos personales','donnees personnelles','dados pessoais','ricerca sul web','web search','limite','limit','scansione','scansionato','scanned','escaneado','scanne','digitalizado']],
   ['Le parti che arrivano al momento',['scanner','codice a barre','codici a barre','qr','barcode','escaner','codigo de barras','code-barres','leitor']],
   ['Le email di accesso',['password','accesso','recupero','login','sign in','log in','reset','contrasena','acceso','mot de passe','connexion','palavra-passe','senha','acesso']],
@@ -23190,8 +23802,11 @@ function beginWatch(){
   );
   gpsFabsOn(true);
 }
-let meHalo=null,meCentered=false,dayMeMarker=null,dayMeHalo=null,myHeading=null,headingOn=false;
-let homeMeMarker=null,homeMeHalo=null;
+/* Il pallino sulle tre mappe che seguono la posizione: quella del viaggio
+   (meMarker), quella della giornata e quella di Oggi. Ognuno e' quello che
+   ioMetti ha messo su quella mappa, o null. */
+let meCentered=false,dayMeMarker=null,myHeading=null,headingOn=false;
+let homeMeMarker=null;
 let myPos=null; /* ultima posizione nota, per il "a piedi" della card "fra poco" */
 let myPosAcc=0;  /* quanto e' precisa: e' il raggio dell'alone intorno al pallino */
 /* Quando e' stata letta. Per il "a piedi" una posizione di dieci minuti fa va
@@ -23202,16 +23817,34 @@ const POS_FRESCA_MS=9e5;   // un quarto d'ora
 /* Il pallino della posizione ha un cono di visibilità (come Google Maps) quando
    il dispositivo fornisce la bussola: ruota con l'orientamento del telefono,
    così capisci subito da che parte stai guardando rispetto alle tappe vicine. */
-function meDivIcon(heading){
-  const cone=(heading!=null)?`<div class="pin-cono" style="transform:translate(-50%,-100%) rotate(${Math.round(heading)}deg)"></div>`:'';
-  return L.divIcon({className:'',html:`<div style="position:relative;width:20px;height:20px">${cone}<div class="pin-me"></div></div>`,iconSize:[20,20],iconAnchor:[10,10]});
+/* Il pallino e il suo alone (quanto e' precisa la posizione, al massimo
+   120 m) su una mappa: si mette la prima volta e poi si sposta. Il tocco
+   dice «Sei qui». */
+function ioMetti(m){
+  if(!vivo(m)||!myPos)return null;
+  const ll=[Number(myPos.lng),Number(myPos.lat)];
+  let io=m._g.io;
+  if(io)io.segno.setLngLat(ll);
+  else{
+    const mk=segno(m,ll,'<span class="pin-cono" hidden></span><span class="pin-me"></span>',{classe:'g-io',nome:tv('La mia posizione'),sopra:4,offset:14,
+      scheda:()=>`<strong>${esc(tv('📍 Sei qui'))}</strong>`});
+    io=m._g.io={segno:mk};
+  }
+  ioCono(io);
+  datiMappa(m,'alone',[cerchioGeo(ll[1],ll[0],Math.min(myPosAcc||30,120),{})]);
+  return io;
 }
-function updateMeIcon(){
-  const icon=meDivIcon(myHeading);
-  if(meMarker)meMarker.setIcon(icon);
-  if(dayMeMarker)dayMeMarker.setIcon(icon);
-  if(homeMeMarker)homeMeMarker.setIcon(icon);
+function ioCono(io){
+  const c=io&&io.segno.getElement().querySelector('.pin-cono');if(!c)return;
+  if(myHeading==null){c.hidden=true;return;}
+  c.hidden=false;c.style.transform=`translate(-50%,-100%) rotate(${Math.round(myHeading)}deg)`;
 }
+function ioTogli(m){
+  if(!m||!m._g)return;
+  if(m._g.io){try{m._g.io.segno.remove();}catch(e){}m._g.io=null;}
+  if(vivo(m))datiMappa(m,'alone',[]);
+}
+function updateMeIcon(){mappeVive.forEach(m=>{if(m._g.io)ioCono(m._g.io);});}
 /* I tasti della posizione si accendono insieme. Quello della home esiste solo
    quando la mini-mappa e' a schermo - se la giornata non ha tappe con un posto
    la mappa non c'e' proprio - quindi si guarda sempre se c'e' prima di toccarlo. */
@@ -23254,41 +23887,30 @@ function stopHeading(){
    dall'altra parte della citta' le farebbe perdere il senso. Per andarci c'e'
    il tasto. */
 function homeMePlace(){
-  if(!homeMapObj||typeof L==='undefined')return;
   const b=document.getElementById('locateFabHome');
   if(b)b.classList.toggle('on',gpsId!==null);
-  if(homeMeMarker){try{homeMapObj.removeLayer(homeMeMarker);}catch(e){}homeMeMarker=null;}
-  if(homeMeHalo){try{homeMapObj.removeLayer(homeMeHalo);}catch(e){}homeMeHalo=null;}
-  if(!myPos||Date.now()-myPosAt>POS_FRESCA_MS)return;
-  homeMeHalo=L.circle([myPos.lat,myPos.lng],{radius:Math.min(myPosAcc||30,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(homeMapObj);
-  homeMeMarker=L.marker([myPos.lat,myPos.lng],{icon:meDivIcon(myHeading)}).addTo(homeMapObj);
-  homeMeMarker.bindPopup('📍 Sei qui');
+  if(!homeMapObj)return;
+  if(!myPos||Date.now()-myPosAt>POS_FRESCA_MS){ioTogli(homeMapObj);homeMeMarker=null;return;}
+  homeMeMarker=ioMetti(homeMapObj);
 }
 function locateFabHome(){
   if(gpsId===null){toggleGPS();return;}
-  if(homeMeMarker&&homeMapObj)homeMapObj.setView(homeMeMarker.getLatLng(),16);
+  if(homeMeMarker&&homeMapObj)vaiA(homeMapObj,homeMeMarker.segno.getLngLat().toArray(),ZOOM_TAPPA);
   else toast('Sto ancora cercando la tua posizione...');
 }
 function placeMe(pos){
   const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy||30;
   /* Segnata qui e non solo in checkProx: cosi' chi disegna il pallino trova
      sempre la posizione appena arrivata, non quella del giro prima. E prima
-     di guardare la mappa: Leaflet arriva dopo l'avvio (vedi LE LIBRERIE), e
-     una posizione arrivata prima di lui andava persa. Il pallino, in quel
-     caso, lo mette mappaArrivata. */
+     di guardare la mappa: le mappe nascono quando servono (vedi LE MAPPE),
+     e una posizione arrivata prima di loro andava persa. Il pallino, in quel
+     caso, lo mette la mappa quando nasce (ioMetti). */
   myPos={lat:lat,lng:lng};myPosAt=Date.now();myPosAcc=acc;
-  if(!map||typeof L==='undefined')return;
-  if(meMarker)map.removeLayer(meMarker);
-  if(meHalo)map.removeLayer(meHalo);
-  meHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(map);
-  meMarker=L.marker([lat,lng],{icon:meDivIcon(myHeading)}).addTo(map);
-  meMarker.bindPopup('📍 Sei qui');
-  if(dayMapObj){
-    if(dayMeMarker)dayMapObj.removeLayer(dayMeMarker);
-    if(dayMeHalo)dayMapObj.removeLayer(dayMeHalo);
-    dayMeHalo=L.circle([lat,lng],{radius:Math.min(acc,120),color:'#B8863C',weight:0,fillColor:'#B8863C',fillOpacity:.14}).addTo(dayMapObj);
-    dayMeMarker=L.marker([lat,lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
+  if(map){
+    meMarker=ioMetti(map);
+    if(!meCentered&&meMarker){vaiA(map,[lng,lat],14,true);meCentered=true;}
   }
+  if(dayMapObj)dayMeMarker=ioMetti(dayMapObj);
   homeMePlace();
   const t=T();
   if(t&&t.pois.length){
@@ -23296,11 +23918,10 @@ function placeMe(pos){
     t.pois.forEach(p=>{const d=calcDist(lat,lng,p.lat,p.lng);if(d<nd){nd=d;near=p;}});
     if(near)document.getElementById('gpsPill').title=tv('{1} a {2}',near.name,nd<1000?Math.round(nd)+' m':fmtNum(nd/1000,1)+' km');
   }
-  if(!meCentered){map.setView([lat,lng],15);meCentered=true;}
 }
-function centerMe(){if(meMarker){map.setView(meMarker.getLatLng(),16);}else toast('Attiva prima il GPS');}
+function centerMe(){if(meMarker&&map){vaiA(map,meMarker.segno.getLngLat().toArray(),ZOOM_TAPPA);}else toast('Attiva prima il GPS');}
 function locateFab(){if(gpsId===null){toggleGPS();return;}centerMe();}
-function locateFabDay(){if(gpsId===null){toggleGPS();return;}if(dayMeMarker&&dayMapObj)dayMapObj.setView(dayMeMarker.getLatLng(),16);else toast('Sto ancora cercando la tua posizione...');}
+function locateFabDay(){if(gpsId===null){toggleGPS();return;}if(dayMeMarker&&dayMapObj)vaiA(dayMapObj,dayMeMarker.segno.getLngLat().toArray(),ZOOM_TAPPA);else toast('Sto ancora cercando la tua posizione...');}
 function gpsError(err){
   /* si spengono anche i tasti sulle mappe: restavano accesi dopo un errore, e
      sembrava che il GPS stesse funzionando */
@@ -23318,13 +23939,8 @@ function stopGPS(){
     else navigator.geolocation.clearWatch(gpsId);
     gpsId=null;gpsNative=false;
   }
-  if(meMarker){map.removeLayer(meMarker);meMarker=null;}
-  if(meHalo){map.removeLayer(meHalo);meHalo=null;}
-  if(dayMapObj&&dayMeMarker){try{dayMapObj.removeLayer(dayMeMarker);}catch(e){}}
-  if(dayMapObj&&dayMeHalo){try{dayMapObj.removeLayer(dayMeHalo);}catch(e){}}
-  if(homeMapObj&&homeMeMarker){try{homeMapObj.removeLayer(homeMeMarker);}catch(e){}}
-  if(homeMapObj&&homeMeHalo){try{homeMapObj.removeLayer(homeMeHalo);}catch(e){}}
-  dayMeMarker=null;dayMeHalo=null;homeMeMarker=null;homeMeHalo=null;meCentered=false;
+  [map,dayMapObj,homeMapObj].forEach(ioTogli);
+  meMarker=null;dayMeMarker=null;homeMeMarker=null;meCentered=false;
   /* Si dimentica anche DOVE eravamo, e non solo il pallino disegnato. Senza
      questa riga il pallino spariva e poi tornava: la mappa della home lo
      ridisegna a ogni ridisegno, e guardava solo se la posizione era fresca -
@@ -26363,7 +26979,7 @@ function ttMisure(){
   const rc=col.getBoundingClientRect();
   pag.style.setProperty('--tt-fab-dx',Math.max(8,Math.round(innerWidth-rc.right))+'px');
   pag.style.setProperty('--tt-undo-sx',Math.max(8,Math.round(rc.left))+'px');
-  if(dayMapObj){try{dayMapObj.invalidateSize();}catch(e){}}
+  rimisura(dayMapObj);
 }
 /* La tappa scelta, accesa nella giornata e sulla mappa insieme. Nel
    Programma largo il primo tocco su una tappa la sceglie e la mappa ci va;
@@ -26383,8 +26999,8 @@ function ttEvidenzia(id,dallaGiornata){
   const mk=dayMapSegni[id];
   if(mk&&dayMapObj){
     try{
-      dayMapObj.setView(mk.getLatLng(),Math.max(dayMapObj.getZoom()||0,15),{animate:!menoMovimento()});
-      mk.openPopup();
+      vaiA(dayMapObj,mk.getLngLat().toArray(),Math.max(dayMapObj.getZoom()||0,ZOOM_TAPPA-.5));
+      apriSegno(dayMapObj,mk);
     }catch(e){}
   }
   if(!dallaGiornata){
@@ -26398,17 +27014,16 @@ function ttRiaccendi(){
     el.classList.toggle('scelta',on);
     if(on)el.setAttribute('aria-current','true');else el.removeAttribute('aria-current');
   });
-  Object.keys(dayMapSegni).forEach(k=>{const mk=dayMapSegni[k];try{mk.setIcon(iconaTappa(mk._n,mk._a,Number(k)===ttScelta));}catch(e){}});
+  Object.keys(dayMapSegni).forEach(k=>{const el=dayMapSegni[k].getElement(),on=Number(k)===ttScelta;el.classList.toggle('scelto',on);el.style.zIndex=on?'3':'2';});
 }
 function ttApriScelta(id){
-  if(dayMapObj){try{dayMapObj.closePopup();}catch(e){}}
+  chiudiScheda(dayMapObj);
   tapAct(ttDay,id);
 }
 /* Il segnaposto di una tappa sulla mappa del giorno: acceso, e' piu' grande
    e scuro con l'anello d'oro, come la tappa nella giornata. */
-function iconaTappa(n,a,scelta){
-  const sz=scelta?30:24;
-  return L.divIcon({html:`<div class="pin${a.type==='outdoor'?' fuori':''}${scelta?' scelto':''}" style="width:${sz}px;height:${sz}px">${n}</div>`,className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+function classiTappa(a,scelta,foto){
+  return 'pin'+(a.type==='outdoor'?' fuori':'')+(scelta?' scelto':'')+(foto?' con-foto':'');
 }
 let _ttResizeT=null;
 window.addEventListener('resize',()=>{
@@ -26419,8 +27034,8 @@ window.addEventListener('resize',()=>{
        prima: segnaposto fuori posto e riquadri di mappa mancanti finché non
        le si tocca. E la striscia cambia quante tappe mostra, quindi cambia
        anche quale è quella in mano: vanno ricalcolate entrambe. */
-    try{if(homeMapObj){homeMapObj.invalidateSize();homeCardsSync(true);}}catch(e){}
-    try{if(dayMapObj)dayMapObj.invalidateSize();}catch(e){}
+    try{if(homeMapObj){rimisura(homeMapObj);homeCardsSync(true);}}catch(e){}
+    rimisura(dayMapObj);
   },150);
 });
 /* L'attivita' piu' stretta che contiene per intero questo intervallo: la piu'
@@ -26650,18 +27265,17 @@ function initTTFab(){
 }
 /* La mappa della giornata nasce un attimo dopo (setTimeout), quando il
    riquadro e' gia' a schermo. Due chiamate di fila - la giornata che si apre
-   mentre Leaflet arriva (mappaArrivata) - lasciavano in attesa due nascite
-   sullo stesso riquadro, e la seconda si fermava con «Map container is
-   already initialized». Ne resta in attesa una sola: l'ultima. */
+   mentre arriva MapLibre (mappaArrivata) - lasciavano in attesa due nascite
+   sullo stesso riquadro. Ne resta in attesa una sola: l'ultima. */
 let _dayMapAttesa=null;
 function buildDayMap(){
   const t=T(),d=t.days[ttDay],wrap=document.getElementById('dayMapWrap'),due=document.getElementById('ttDue');
   const pts=(d.activities||[]).filter(a=>a.lat).sort((x,y)=>String(x.time||'99').localeCompare(String(y.time||'99')));
   const hh=(t.hotels||[]).find(h=>h.lat&&h.checkIn&&h.checkOut&&d.date>=h.checkIn&&d.date<h.checkOut);
   clearTimeout(_dayMapAttesa);_dayMapAttesa=null;
-  if(dayMapObj){fermaMappa(dayMapObj);try{dayMapObj.remove()}catch(e){}dayMapObj=null;}
+  if(dayMapObj){togliMappa(dayMapObj);dayMapObj=null;}
   wrap.classList.remove('con-scheda');
-  dayMeMarker=null;dayMeHalo=null;dayMapSegni={};
+  dayMeMarker=null;dayMapSegni={};
   /* Senza la mappa del giorno, «Tutto il viaggio» resta: una riga al suo
      posto, se nel viaggio c'e' almeno una tappa con una posizione. */
   const tutto=document.getElementById('ttTutto');
@@ -26669,46 +27283,42 @@ function buildDayMap(){
      giornata resta in una colonna sola, al centro */
   const senza=()=>{wrap.style.display='none';if(due)due.classList.remove('con-mappa');if(tutto)tutto.style.display=vmTappe(t).some(x=>x.loc)?'':'none';ttMisure();};
   if(!pts.length&&!hh){senza();return;}
-  if(typeof L==='undefined'){senza();return;}
   if(tutto)tutto.style.display='none';
   wrap.style.display='block';
   if(due)due.classList.add('con-mappa');
+  /* MapLibre non c'e' ancora: il riquadro resta (niente salto), e la mappa
+     la fa nascere mappaArrivata. */
+  if(typeof maplibregl==='undefined'){chiediMappe();ttMisure();return;}
   _dayMapAttesa=setTimeout(()=>{
     _dayMapAttesa=null;
     const c0=pts[0]||hh;
-    dayMapObj=L.map('dayMap',{zoomControl:false}).setView([c0.lat,c0.lng],13);
-    /* a sinistra, come nella mappa del viaggio (vedi initMap): a destra c'e' il 🧭 */
-    dirittiMappa(dayMapObj,'bottomleft');
-    stratoMappa().addTo(dayMapObj);
-    // «Tutto il viaggio» si fa da parte finche' una scheda e' aperta (vedi .con-scheda)
-    dayMapObj.on('popupopen',()=>wrap.classList.add('con-scheda'));
-    dayMapObj.on('popupclose',()=>wrap.classList.remove('con-scheda'));
+    /* La citazione a sinistra, come nella mappa del viaggio (vedi initMap):
+       a destra c'e' il 🧭. «Tutto il viaggio» si fa da parte finche' una
+       scheda e' aperta (vedi .con-scheda). */
+    dayMapObj=nuovaMappa('dayMap',{centro:[Number(c0.lng),Number(c0.lat)],zoom:12,diritti:'bl',nome:tv('Mappa della giornata'),
+      aperta:()=>wrap.classList.add('con-scheda'),chiusa:()=>wrap.classList.remove('con-scheda')});
+    if(!dayMapObj){ttMisure();return;}
     /* «Apri» c'e' solo nel Programma largo (lo mostra il foglio di stile):
        li' il tocco su un segnaposto accende la tappa, e dalla mappa la si
        apre senza tornare alla giornata. */
     pts.forEach((a,i2)=>{
-      const mk=L.marker([a.lat,a.lng],{icon:iconaTappa(i2+1,a,a.id===ttScelta)}).addTo(dayMapObj)
-        .bindPopup(`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>'+esc(tv('ore {1}',a.time)):''}<br><button type="button" class="btn btn-secondario btn-compatto tt-apri-tappa" onclick="ttApriScelta(${a.id})">${esc(tv('Apri'))}</button>`);
+      const foto=fotoTappa(t,a);
+      const mk=segno(dayMapObj,[a.lng,a.lat],htmlTappa(i2+1,foto),{classe:classiTappa(a,a.id===ttScelta,foto),nome:nomeTappa(i2+1,a),offset:foto?26:16,sopra:2,
+        scheda:()=>`<strong>${i2+1}. ${esc(a.name)}</strong>${a.time?'<br>'+esc(tv('ore {1}',a.time)):''}<br><button type="button" class="btn btn-secondario btn-compatto tt-apri-tappa" onclick="ttApriScelta(${a.id})">${esc(tv('Apri'))}</button>`,
+        tocco:()=>{if(ttLargo())ttEvidenzia(a.id,false);}});
       mk._n=i2+1;mk._a=a;
-      mk.on('click',()=>{if(ttLargo())ttEvidenzia(a.id,false);});
       dayMapSegni[a.id]=mk;
     });
-    if(hh){
-      const hi=L.divIcon({html:'<div class="vm-casa">🏠</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});
-      L.marker([hh.lat,hh.lng],{icon:hi}).addTo(dayMapObj).bindPopup(`<strong>${esc(hh.name)}</strong>`);
-    }
-    const all=pts.map(a=>[a.lat,a.lng]).concat(hh?[[hh.lat,hh.lng]]:[]);
-    if(meMarker){
-      const mm=meMarker.getLatLng();
-      dayMeMarker=L.marker([mm.lat,mm.lng],{icon:meDivIcon(myHeading)}).addTo(dayMapObj);
-      /* La propria posizione si vede, ma non entra nell'inquadratura: partendo
-         da casa si e' a mille chilometri dalle tappe e la mappa si allargava
-         fin li', mostrando mezzo continente invece della giornata. Il tasto
-         della bussola resta per andarci quando serve. */
-    }
-    if(all.length>1)dayMapObj.fitBounds(L.latLngBounds(all),{padding:[28,28],maxZoom:16});
-    else if(all.length===1)dayMapObj.setView(all[0],16);
-    setTimeout(()=>{if(dayMapObj)dayMapObj.invalidateSize();},120);
+    if(hh)segno(dayMapObj,[hh.lng,hh.lat],'<span class="vm-casa">🏠</span>',{classe:'g-albergo',nome:tv('Albergo: {1}',String(hh.name||'')),offset:20,scheda:`<strong>${esc(hh.name)}</strong>`});
+    /* il percorso della giornata, nell'ordine delle tappe */
+    datiMappa(dayMapObj,'percorso',[percorsoGeo(pts.map(a=>[Number(a.lng),Number(a.lat)]))]);
+    /* La propria posizione si vede, ma non entra nell'inquadratura: partendo
+       da casa si e' a mille chilometri dalle tappe e la mappa si allargava
+       fin li', mostrando mezzo continente invece della giornata. Il tasto
+       della bussola resta per andarci quando serve. */
+    if(myPos&&gpsId!==null)dayMeMarker=ioMetti(dayMapObj);
+    inquadra(dayMapObj,pts.map(a=>[a.lng,a.lat]).concat(hh?[[hh.lng,hh.lat]]:[]),{margine:28,max:15});
+    setTimeout(()=>rimisura(dayMapObj),120);
     ttMisure();
   },320);
 }
@@ -26735,11 +27345,7 @@ function buildDayMap(){
 const COLORI_GIORNI=['#C62C07','#4B4DCF','#166B02','#6E034F','#206F79','#836404','#3A385B','#7A4F5C','#3D4108','#740D16','#A637A8',
   '#58330A','#4D0193','#C52350','#6C734B','#0C74B7','#6E698F','#8B654F','#128263','#01435E','#014933'];
 function coloreGiorno(i){return COLORI_GIORNI[i%COLORI_GIORNI.length];}
-let vmMappa=null,vmLinee=null,vmSegni=null,vmFiltro='tutti',vmVistaOra='mappa',vmPunti=[];
-/* Le schede della mappa del viaggio: a 16 px dal bordo come tutte (vedi
-   leafletSistemato), ma qui ripetuto, perche' qui la crocetta in alto e'
-   quella che si tocca di piu'. */
-const VM_SCHEDA={maxWidth:260,autoPanPadding:[16,16]};
+let vmMappa=null,vmSegni=[],vmSegniPer=new Map(),vmCase=[],vmFiltro='tutti',vmVistaOra='mappa',vmPunti=[];
 /* Le tappe del viaggio, giorno per giorno: n e' il numero dentro la giornata,
    loc la posizione (anche quella del posto o dell'albergo collegato). */
 function vmTappe(viaggio){
@@ -26759,28 +27365,25 @@ function apriMappaViaggio(){
   vmDisegnaGiorni(viaggio);
   openSheet('mViaggioMappa');
   vmVista(vmVistaOra);
-  /* La mappa nasce quando il foglio e' gia' a schermo: Leaflet deve sapere
-     quanto e' grande il riquadro. Se Leaflet non c'e' (mai scaricato, e
-     niente rete) lo si dice, e l'elenco resta. */
-  setTimeout(()=>{caricaLibreria('leaflet').then(vmCreaMappa).catch(vmMappaAssente);},350);
-}
-function vmMappaAssente(){
-  const w=document.getElementById('vmMappaWrap');if(!w||w.querySelector('.mappa-giu'))return;
-  w.insertAdjacentHTML('beforeend',`<div class="mappa-giu"><span>${esc(tv('La mappa non si è caricata: controlla la rete e riprova.'))}</span><button class="btn btn-secondario" onclick="this.parentNode.remove();caricaLibreria('leaflet').then(vmCreaMappa).catch(vmMappaAssente)">${esc(tv('Riprova'))}</button></div>`);
+  /* La mappa nasce quando il foglio e' gia' a schermo: MapLibre deve sapere
+     quanto e' grande il riquadro. Se MapLibre non c'e' (mai scaricato, e
+     niente rete) lo si dice (chiediMappe), e l'elenco resta. */
+  setTimeout(()=>{if(typeof maplibregl==='undefined'){chiediMappe();return;}vmCreaMappa();},350);
 }
 function vmCreaMappa(){
   const m=document.getElementById('mViaggioMappa');
-  if(!T()||typeof L==='undefined'||!m||!m.classList.contains('active'))return;
+  if(!T()||typeof maplibregl==='undefined'||!m||!m.classList.contains('active'))return;
   if(!vmMappa){
-    vmMappa=L.map('vmMappa',{zoomControl:false});
-    /* lo zoom in alto a destra, la citazione in basso a sinistra: lontani,
-       e nessuno dei due copre l'altro */
-    L.control.zoom({position:'topright',zoomInTitle:'Aumenta zoom',zoomOutTitle:'Riduci zoom'}).addTo(vmMappa);
-    dirittiMappa(vmMappa,'bottomleft');
-    stratoMappa().addTo(vmMappa);
-    vmMappa.on('zoomend',vmDisegnaSegni);
+    /* Il globo: da lontano la terra e' tonda, e un viaggio fra due continenti
+       si legge com'e'. Lo zoom in alto a destra, la citazione in basso a
+       sinistra: lontani, e nessuno dei due copre l'altro. */
+    vmMappa=nuovaMappa('vmMappa',{centro:[0,20],zoom:1,globo:true,zoomTasti:'top-right',diritti:'bl'});
+    if(!vmMappa)return;
+    /* dopo ogni zoom e ogni spostamento: i gruppi dipendono dallo zoom, e
+       si mettono solo i segnaposto a vista (vmDisegnaSegni) */
+    vmMappa.on('moveend',vmDisegnaSegni);
   }
-  vmMappa.invalidateSize();
+  rimisura(vmMappa);
   vmDisegna(true);
 }
 function vmScegli(v){
@@ -26804,68 +27407,79 @@ function vmVista(quale){
   if(vuota&&el)vuota.style.display='none';
   [['vmSegMappa',!el],['vmSegElenco',el]].forEach(([id,on])=>{const b=document.getElementById(id);if(b){b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));}});
   if(el)vmDisegnaElenco();
-  else if(vmMappa)setTimeout(()=>{if(vmMappa){vmMappa.invalidateSize();vmDisegna(true);}},60);
+  else if(vmMappa)setTimeout(()=>{if(vmMappa){rimisura(vmMappa);vmDisegna(true);}},60);
 }
 /* Le linee e gli alberghi si disegnano una volta per giorno scelto; i
-   segnaposto si rifanno a ogni zoom (vmDisegnaSegni), perche' i gruppi
-   dipendono da quanto sono vicini a schermo. */
-function vmDisegna(inquadra){
-  const viaggio=T();if(!viaggio||!vmMappa)return;
+   segnaposto si rivedono a ogni zoom e spostamento (vmDisegnaSegni), perche'
+   i gruppi dipendono da quanto sono vicini a schermo. Qui, con le tappe
+   nuove, si ripartono da zero: lo stesso numero puo' voler dire un'altra
+   tappa. */
+function vmDisegna(rinquadra){
+  const viaggio=T();if(!viaggio||!vivo(vmMappa))return;
   const tutte=vmTappe(viaggio).filter(x=>vmFiltro==='tutti'||x.di===vmFiltro);
   vmPunti=tutte.filter(x=>x.loc);
-  if(vmLinee)vmMappa.removeLayer(vmLinee);
-  vmLinee=L.layerGroup().addTo(vmMappa);
+  chiudiScheda(vmMappa);
+  vmSegniPer.forEach(mk=>{try{mk.remove();}catch(e){}});vmSegniPer=new Map();vmSegni=[];
   const perGiorno={};
-  vmPunti.forEach(p=>{(perGiorno[p.di]=perGiorno[p.di]||[]).push([p.loc.lat,p.loc.lng]);});
-  Object.keys(perGiorno).forEach(di=>{if(perGiorno[di].length>1)L.polyline(perGiorno[di],{color:coloreGiorno(Number(di)),weight:3,opacity:.8,interactive:false}).addTo(vmLinee);});
+  vmPunti.forEach(p=>{(perGiorno[p.di]=perGiorno[p.di]||[]).push([Number(p.loc.lng),Number(p.loc.lat)]);});
+  datiMappa(vmMappa,'linee',Object.keys(perGiorno).map(di=>lineaGeo(perGiorno[di],{colore:coloreGiorno(Number(di))})));
   const giornoData=vmFiltro==='tutti'?null:(viaggio.days[vmFiltro]||{}).date;
   const case_=(viaggio.hotels||[]).filter(h=>h.lat!=null&&h.lng!=null&&(!giornoData||(h.checkIn&&h.checkOut&&giornoData>=h.checkIn&&giornoData<h.checkOut)));
+  vmCase.forEach(mk=>{try{mk.remove();}catch(e){}});vmCase=[];
   case_.forEach(h=>{
-    const ic=L.divIcon({html:'<div class="vm-casa">🏠</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});
-    L.marker([h.lat,h.lng],{icon:ic,title:tv('Albergo: {1}',String(h.name||'')),keyboard:true})
-      .bindPopup(`<div class="vm-pop"><div class="vm-pop-n">🏠 ${esc(h.name||'')}</div>${h.checkIn&&h.checkOut?`<div class="vm-pop-q">${esc(fmtRange(h.checkIn,h.checkOut))}</div>`:''}</div>`,VM_SCHEDA)
-      .addTo(vmLinee);
+    vmCase.push(segno(vmMappa,[h.lng,h.lat],'<span class="vm-casa">🏠</span>',{classe:'g-albergo',nome:tv('Albergo: {1}',String(h.name||'')),offset:20,
+      scheda:`<div class="vm-pop"><div class="vm-pop-n">🏠 ${esc(h.name||'')}</div>${h.checkIn&&h.checkOut?`<div class="vm-pop-q">${esc(fmtRange(h.checkIn,h.checkOut))}</div>`:''}</div>`}));
   });
-  vmDisegnaSegni();
   const vuota=document.getElementById('vmVuota');
   if(vuota){
     const niente=!vmPunti.length;
     vuota.style.display=niente&&vmVistaOra==='mappa'?'':'none';
     vuota.textContent=!niente?'':(tutte.length?tv('Queste tappe non hanno ancora una posizione: aprile e incolla l\'indirizzo, e compariranno qui. Le trovi tutte in Elenco.'):tv('Qui non ci sono ancora tappe.'));
   }
-  if(!inquadra)return;
-  const tutti=vmPunti.map(p=>[p.loc.lat,p.loc.lng]).concat(case_.map(h=>[h.lat,h.lng]));
-  if(tutti.length>1)vmMappa.fitBounds(L.latLngBounds(tutti),{padding:[36,36],maxZoom:16});
-  else if(tutti.length===1)vmMappa.setView(tutti[0],15);
-  else if(viaggio.destBB)vmMappa.fitBounds([[viaggio.destBB[0],viaggio.destBB[2]],[viaggio.destBB[1],viaggio.destBB[3]]],{padding:[18,18]});
-  else if(viaggio.destLoc)vmMappa.setView([viaggio.destLoc.lat,viaggio.destLoc.lng],5);
-  else vmMappa.setView([20,0],2);
+  if(!rinquadra){vmDisegnaSegni();return;}
+  const tutti=vmPunti.map(p=>[p.loc.lng,p.loc.lat]).concat(case_.map(h=>[h.lng,h.lat]));
+  if(tutti.length)inquadra(vmMappa,tutti,{margine:36,max:15,uno:14});
+  else if(viaggio.destBB)inquadra(vmMappa,[[viaggio.destBB[2],viaggio.destBB[0]],[viaggio.destBB[3],viaggio.destBB[1]]],{margine:18,max:14});
+  else if(viaggio.destLoc)vmMappa.jumpTo({center:[Number(viaggio.destLoc.lng),Number(viaggio.destLoc.lat)],zoom:4});
+  else vmMappa.jumpTo({center:[0,20],zoom:1});
+  vmDisegnaSegni();
 }
+/* Ogni segnaposto e' uno strato grafico a se' (MapLibre lo muove con una
+   trasformazione 3D), e farne uno nuovo costa al telefono il suo disegno:
+   con 200 tappe, rifarli tutti a ogni zoom erano mezzo secondo e piu' di
+   blocco. Quindi ognuno ha la sua chiave (la tappa, o le tappe del gruppo) e
+   quello che resta uguale resta com'e'; e sulla mappa vanno solo quelli a
+   vista, con mezzo schermo di margine: gli altri arrivano quando la mappa
+   ci va, e intanto stanno tutti nell'Elenco. */
 function vmDisegnaSegni(){
-  if(!vmMappa)return;
-  if(vmSegni)vmMappa.removeLayer(vmSegni);
-  vmSegni=L.layerGroup().addTo(vmMappa);
+  if(!vivo(vmMappa))return;
   /* Due segnaposto a meno di 30 px l'uno dall'altro vanno nello stesso
      gruppo: a quella distanza i tondi si coprono e il dito non sa piu' quale
      tocca. */
-  const z=vmMappa.getZoom(),R=30,gruppi=[];
+  const R=30,gruppi=[],c=vmMappa.getContainer(),W=c.clientWidth,H=c.clientHeight,M=Math.max(W,H)/2;
   vmPunti.forEach(p=>{
-    const px=vmMappa.project([p.loc.lat,p.loc.lng],z);
+    const px=vmMappa.project([Number(p.loc.lng),Number(p.loc.lat)]);
     const g=gruppi.find(x=>Math.abs(x.px.x-px.x)<R&&Math.abs(x.px.y-px.y)<R);
     if(g)g.punti.push(p);else gruppi.push({px,punti:[p]});
   });
-  gruppi.forEach(g=>(g.punti.length===1?vmSegnoTappa(g.punti[0]):vmSegnoGruppo(g.punti)).addTo(vmSegni));
+  const nuovi=new Map();
+  gruppi.forEach(g=>{
+    if(g.px.x<-M||g.px.x>W+M||g.px.y<-M||g.px.y>H+M)return;
+    const k=g.punti.map(p=>p.di+'\u0001'+p.a.id).join('\u0002');
+    nuovi.set(k,vmSegniPer.get(k)||(g.punti.length===1?vmSegnoTappa(g.punti[0]):vmSegnoGruppo(g.punti)));
+    vmSegniPer.delete(k);
+  });
+  vmSegniPer.forEach(mk=>{try{mk.remove();}catch(e){}});
+  vmSegniPer=nuovi;vmSegni=[...nuovi.values()];
 }
 /* Tappe e gruppi stanno sopra gli alberghi (VM_SOPRA): l'albergo e' quasi
    sempre in mezzo alle tappe, e da lontano la sua casetta copriva il tondo
    del gruppo, che col dito non si riusciva piu' a toccare. */
-const VM_SOPRA=1000;
+const VM_SOPRA=2;
 function vmSegnoTappa(p){
-  const ic=L.divIcon({html:`<div class="vm-pin" style="background:${coloreGiorno(p.di)}">${p.n}</div>`,className:'',iconSize:[26,26],iconAnchor:[13,13]});
-  const mk=L.marker([p.loc.lat,p.loc.lng],{icon:ic,keyboard:true,riseOnHover:true,zIndexOffset:VM_SOPRA,
-    title:tv('{1}. {2} · Giorno {3}',p.n,String(p.a.name||''),p.di+1)});
+  const mk=segno(vmMappa,[p.loc.lng,p.loc.lat],`<span class="vm-pin" style="background:${coloreGiorno(p.di)}">${p.n}</span>`,{classe:'g-vm',sopra:VM_SOPRA,offset:16,
+    nome:tv('{1}. {2} · Giorno {3}',p.n,String(p.a.name||''),p.di+1),scheda:()=>vmScheda(p)});
   mk._tappa={di:p.di,id:p.a.id};
-  mk.bindPopup(()=>vmScheda(p),VM_SCHEDA);
   return mk;
 }
 function vmScheda(p){
@@ -26874,16 +27488,18 @@ function vmScheda(p){
   return d;
 }
 function vmSegnoGruppo(punti){
-  const lat=punti.reduce((s,p)=>s+p.loc.lat,0)/punti.length,lng=punti.reduce((s,p)=>s+p.loc.lng,0)/punti.length;
-  const ic=L.divIcon({html:`<div class="vm-grappolo">${punti.length}</div>`,className:'',iconSize:[34,34],iconAnchor:[17,17]});
-  const mk=L.marker([lat,lng],{icon:ic,keyboard:true,zIndexOffset:VM_SOPRA,
-    title:tp(punti.length,'{1} tappa qui vicino: tocca per avvicinarti','{1} tappe qui vicine: tocca per avvicinarti')});
-  mk.on('click',()=>{
-    const b=L.latLngBounds(punti.map(p=>[p.loc.lat,p.loc.lng]));
-    const stesso=b.getNorthEast().distanceTo(b.getSouthWest())<15;
-    if(stesso||vmMappa.getZoom()>=vmMappa.getMaxZoom()){mk.bindPopup(vmSchedaGruppo(punti),VM_SCHEDA).openPopup();return;}
-    vmMappa.fitBounds(b,{padding:[48,48],maxZoom:18});
-  });
+  const pp=punti.map(p=>[Number(p.loc.lng),Number(p.loc.lat)]);
+  const lng=pp.reduce((s,q)=>s+q[0],0)/pp.length,lat=pp.reduce((s,q)=>s+q[1],0)/pp.length;
+  const mk=segno(vmMappa,[lng,lat],`<span class="vm-grappolo">${punti.length}</span>`,{classe:'g-vm',sopra:VM_SOPRA,
+    nome:tp(punti.length,'{1} tappa qui vicino: tocca per avvicinarti','{1} tappe qui vicine: tocca per avvicinarti'),
+    tocco:()=>{
+      /* le tappe nello stesso punto (lo stesso posto in due giorni), o gia'
+         al massimo dello zoom: il loro elenco; se no ci si avvicina */
+      const b=limitiDi(pp),stesso=calcDist(b[0][1],b[0][0],b[1][1],b[1][0])<15;
+      if(stesso||vmMappa.getZoom()>=vmMappa.getMaxZoom()-.01){schedaMappa(vmMappa,mk,()=>vmSchedaGruppo(punti),{offset:20});return;}
+      const cam=camera(vmMappa,pp,{margine:48,max:17});
+      if(cam){if(menoMovimento())vmMappa.jumpTo(cam);else vmMappa.easeTo(Object.assign({duration:450},cam));}
+    }});
   return mk;
 }
 function vmSchedaGruppo(punti){
@@ -31542,7 +32158,7 @@ function snapNow(force){
     localStorage.setItem('geppgo2_snap',out);
   }catch(e){}
 }
-function applyTheme(){document.body.classList.toggle('dark',!!app.settings.dark);tessereRitinta();coloreBarra();if(typeof tingiPaginaPresto==='function')tingiPaginaPresto();}
+function applyTheme(){document.body.classList.toggle('dark',!!app.settings.dark);mappeRitinta();coloreBarra();if(typeof tingiPaginaPresto==='function')tingiPaginaPresto();}
 function toggleDark(v){app.settings.dark=v;save();applyTheme();renderAll();}
 /* ===== QW-6: PUNTI DI RIPRISTINO RESI VISIBILI ===== */
 function getSnaps(){try{return JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){return [];}}
@@ -31564,7 +32180,7 @@ function renderProfile(){
   const em=(session&&session.user)?session.user.email:null;
   box.innerHTML=`<div class="card"><div class="card-head"><div style="display:flex;align-items:center;gap:var(--sp-3);min-width:0"><div class="avatar me" style="width:44px;height:44px;font-size:var(--fs-l);flex-shrink:0">${em?esc(em.charAt(0).toUpperCase()):'?'}</div><div style="min-width:0"><div class="card-h">${em?'Il tuo account':'Non connesso'}</div><div class="card-sub" style="word-break:break-all">${em?esc(em):'I viaggi vivono solo su questo telefono'}</div><div style="font-size:var(--fs-xs);color:var(--ink-faint);margin-top:var(--sp-1)">GeppGo · ${esc(VERSIONE_APP)}</div>${em?`<div class="stato-cloud${ultimoStatoCloud.attesa?' in-attesa':''}" id="statoCloud" role="status">${esc(ultimoStatoCloud.t)}</div>`:''}</div></div></div>${em?`<div style="display:flex;gap:var(--sp-2)"><button class="btn btn-secondario" style="flex:1" onclick="openNewPass()">Cambia password</button><button class="btn btn-secondario" style="flex:1" onclick="authOut()">Esci</button></div>`:`<button class="btn btn-primario btn-block" onclick="accediOra()">Accedi o crea account</button>`}<label class="split-item ${app.settings.dark?'on':''}" style="margin-top:var(--sp-3)"><input type="checkbox" ${app.settings.dark?'checked':''} onchange="this.closest('.split-item').classList.toggle('on',this.checked);toggleDark(this.checked)"><span>Tema scuro</span></label><button class="btn btn-secondario btn-block" style="margin-top:var(--sp-3)" onclick="openDiary()">Diario del viaggio (stampa / PDF)</button>${em?`<div class="zona-elimina"><button class="btn btn-elimina btn-block" onclick="apriEliminaAccount()">${ico('cestino')}${esc(tv('Elimina il mio account'))}</button></div>`:''}</div>
   <div class="card"><div class="card-h" style="margin-bottom:var(--sp-1)">Punti di ripristino</div><p style="font-size:var(--fs-xs);color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-2)">Fotografie automatiche dei dati, su questo telefono. Se qualcuno cancella per sbaglio, torni indietro: il ripristino viene rispedito anche al cloud.</p>${snapRowsHtml()}</div>`;
-  tessereMostraStato();
+  mappeMostraStato();
   versioneMostra();
   mostraLingua();
   mostraUltimoBackup();mostraHomeRiga();mostraStatoCloud();
@@ -31587,13 +32203,41 @@ function mostraLingua(){
     :tv('Tradotto circa il {1}% di quello che si legge nelle schermate. Il resto arriva, e intanto resta in italiano.',q))+
     (linguaPronta(ora)?'':tv(' Finché è così, l\'app non passa a questa lingua da sola: la scegli tu qui.'));
 }
-function tessereMostraStato(){
-  const box=document.getElementById('tessereStato');if(!box)return;
-  tessereQuante().then(({quante,byte})=>{
-    const b=document.getElementById('tessereStato');if(!b)return;
-    if(!quante){b.textContent='Ancora niente: la mappa si riempie da sola mentre la guardi.';return;}
-    const mb=byte?(byte/1048576):0;
-    b.textContent=tp(quante,'{1} pezzo di mappa da parte','{1} pezzi di mappa da parte')+(mb?' · '+fmtNum(mb,1)+' MB':'');
+/* LA MAPPA SENZA RETE, nel Profilo: quanti pezzi sono da parte, quanto
+   pesano e per quanto restano. Li tiene la service worker (sw.js, «Le mappe
+   senza rete»), solo per il tempo che Esri scrive nelle sue risposte: qui si
+   leggono le date che lei ha annotato su ognuno. */
+async function mappeQuante(){
+  const vuoto={quante:0,byte:0,durata:0};
+  try{
+    if(!window.caches||!(await caches.has(CACHE_MAPPE)))return vuoto;
+    const c=await caches.open(CACHE_MAPPE),chiavi=await c.keys(),durate=[];
+    let quante=0,byte=0;
+    for(const r of chiavi){
+      const x=await c.match(r);if(!x||!x.headers.get('x-geppgo-salvato'))continue;
+      quante++;byte+=Number(x.headers.get('x-geppgo-byte'))||0;
+      const da=Number(x.headers.get('x-geppgo-salvato'))||0,a=Number(x.headers.get('x-geppgo-scade'))||0;
+      if(a>da)durate.push(a-da);
+    }
+    durate.sort((x,y)=>x-y);
+    return {quante,byte,durata:durate.length?durate[Math.floor(durate.length/2)]:0};
+  }catch(e){return vuoto;}
+}
+function durataTesto(ms){
+  const ore=ms/36e5;
+  if(ore>=23.5)return tp(Math.max(1,Math.round(ore/24)),'{1} giorno','{1} giorni');
+  return tp(Math.max(1,Math.round(ore)),'{1} ora','{1} ore');
+}
+/* Il peso: sotto il mega in KB, se no «0,0 MB» non dice niente. */
+function pesoTesto(byte){
+  return byte<1048576?fmtNum(Math.max(1,Math.round(byte/1024)))+' KB':fmtNum(byte/1048576,1)+' MB';
+}
+function mappeMostraStato(){
+  if(!document.getElementById('mappeStato'))return;
+  mappeQuante().then(({quante,byte,durata})=>{
+    const b=document.getElementById('mappeStato');if(!b)return;
+    if(!quante){b.textContent=tv('Ancora niente: la mappa si riempie da sola mentre la guardi.');return;}
+    b.textContent=[tp(quante,'{1} pezzo di mappa da parte','{1} pezzi di mappa da parte'),byte?pesoTesto(byte):'',durata?tv('ognuno resta al massimo {1}',durataTesto(durata)):''].filter(Boolean).join(' · ');
   });
 }
 /* ===== CHE VERSIONE STO USANDO =====
@@ -31604,7 +32248,7 @@ function tessereMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-10-26 23:51';
+const VERSIONE_APP='2026-11-20 15:59';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
@@ -31641,11 +32285,23 @@ async function forzaAggiornamento(){
      memoria del browser, che e' un'altra cache ancora. */
   location.replace(location.pathname+'?v='+Date.now()+location.hash);
 }
-function tessereSvuota(){
+function mappeSvuota(){
   confirmDo('Liberare lo spazio della mappa?',
     'Le zone che hai guardato non si vedranno più senza campo. Si riempie di nuovo da sola appena riapri la mappa con la rete.',
-    ()=>{tessereButta().then(()=>{tessereMostraStato();toast('🗺️ Spazio liberato');});},
+    ()=>{(window.caches?caches.delete(CACHE_MAPPE):Promise.resolve()).catch(()=>{}).then(()=>{mappeMostraStato();toast('🗺️ Spazio liberato');});},
     '🗺️','Libera','btn-primario');
+}
+/* Le mattonelle di OpenStreetMap tenute dalla mappa di prima (fino a 1.500,
+   decine di MB nel database delle foto): con le mappe nuove non servono
+   piu', e si buttano una volta sola. */
+function tessereVecchieVia(){
+  try{if(localStorage.getItem('geppgo2_tessere_via'))return;}catch(e){return;}
+  idbP().then(db=>{
+    const fatto=()=>{try{localStorage.setItem('geppgo2_tessere_via','1');}catch(e){}};
+    if(!db.objectStoreNames.contains('tessere')){fatto();return;}
+    const t=db.transaction('tessere','readwrite');t.objectStore('tessere').clear();
+    t.oncomplete=fatto;
+  }).catch(()=>{});
 }
 function restoreSnap(ts){
   let snaps=[];try{snaps=JSON.parse(localStorage.getItem('geppgo2_snap')||'[]');}catch(e){}

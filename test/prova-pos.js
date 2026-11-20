@@ -1,4 +1,4 @@
-const { apriBrowser, APP, RADICE, leafletJs, leafletCss, cartellaFoto } = require('./browser');
+const { apriBrowser, APP, RADICE, cartellaFoto } = require('./browser');
 const OUT = cartellaFoto();
 
 // due tappe con posizione, così la mini-mappa della home viene costruita
@@ -28,18 +28,9 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
   const err = [];
   page.on('pageerror', e => err.push('PAGEERROR: ' + e.message));
 
-  // Leaflet arriva da un CDN irraggiungibile da qui: si serve la stessa versione presa da npm
-  const fs = require('fs');
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({
-    status: 200, contentType: 'application/javascript',
-    body: fs.readFileSync(leafletJs(), 'utf8')
-  }));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({
-    status: 200, contentType: 'text/css',
-    body: fs.readFileSync(leafletCss(), 'utf8')
-  }));
-
-  // le tile della mappa non si scaricano da qui: si serve un pixel trasparente
+  /* MapLibre lo serve il recinto dal pacchetto (browser.js); Esri qui non
+     risponde, e la mappa usa il ripiego: le sue mattonelle non si scaricano
+     da qui, si serve un pixel trasparente */
   await page.route('**/tile.openstreetmap.org/**', route => route.fulfill({
     status: 200, contentType: 'image/png',
     body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')
@@ -58,12 +49,12 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
     const b = document.getElementById('locateFabHome');
     const rect = b ? b.getBoundingClientRect() : null;
     return {
-      pallino: !!homeMeMarker, alone: !!homeMeHalo,
+      pallino: !!homeMeMarker, alone: !!(homeMapObj && homeMapObj._g.dati.alone && homeMapObj._g.dati.alone.features.length),
       tasto: !!b, tastoAcceso: b ? b.classList.contains('on') : null,
       tastoSiVede: rect ? (rect.width > 0 && rect.y > 0 && rect.y < innerHeight) : false,
       // il pallino è davvero disegnato dentro la mappa della home?
-      nelDom: document.querySelectorAll('#homeMap .leaflet-marker-icon').length,
-      dove: homeMeMarker ? homeMeMarker.getLatLng() : null
+      nelDom: document.querySelectorAll('#homeMap .maplibregl-marker').length,
+      dove: homeMeMarker ? homeMeMarker.segno.getLngLat() : null
     };
   });
 
@@ -95,12 +86,14 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
   ok('e il tasto è ancora acceso', s.tastoAcceso === true);
 
   // ── il tasto centra sulla posizione ──────────────────────────────────
-  const centro = await page.evaluate(() => {
-    homeMapObj.setView([35.0, 139.0], 13);          // porto la vista lontano
+  /* la mappa ci va scivolando (easeTo, 400 ms): si guarda dove si ferma */
+  const centro = await page.evaluate(() => new Promise(fatto => {
+    homeMapObj.jumpTo({ center: [139.0, 35.0], zoom: 13 });          // porto la vista lontano
+    const fine = () => { const c = homeMapObj.getCenter(); fatto({ lat: c.lat, lng: c.lng }); };
+    homeMapObj.once('moveend', () => setTimeout(fine, 0));
     locateFabHome();
-    const c = homeMapObj.getCenter();
-    return { lat: c.lat, lng: c.lng };
-  });
+    setTimeout(fine, 3000);
+  }));
   ok('il tasto 🧭 porta la mappa sulla posizione',
      Math.abs(centro.lat - 35.68) < 1e-4 && Math.abs(centro.lng - 139.74) < 1e-4, JSON.stringify(centro));
 
@@ -154,7 +147,7 @@ const POS = { coords: { latitude: 35.6800, longitude: 139.7400, accuracy: 25 } }
   const altre = await page.evaluate(p => {
     if (typeof initMap === 'function' && (typeof map === 'undefined' || !map)) initMap();
     gpsId = 1; placeMe(p);
-    return { grande: !!meMarker, aloneGrande: !!meHalo };
+    return { grande: !!meMarker, aloneGrande: !!(map && map._g.dati.alone && map._g.dati.alone.features.length) };
   }, POS);
   ok('il pallino sulla mappa grande funziona ancora', altre.grande && altre.aloneGrande, JSON.stringify(altre));
 

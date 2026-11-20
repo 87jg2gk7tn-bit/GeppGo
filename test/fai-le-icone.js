@@ -89,10 +89,13 @@ function png(lato, rgba, alfa) {
 
 /* I pixel di ogni icona, disegnati da Chromium. Torna { svg, icone: [{ file,
    lato, fondo, rgba (Buffer), png (Buffer) }] }. */
-async function disegnaIcone(browser) {
+async function disegnaIcone() {
   const svg = logoDallApp();
-  const proprio = !browser;
-  if (proprio) browser = await apriBrowser();
+  /* Sempre un browser suo, senza le opzioni di WebGL che servono alle mappe
+     (vedi apriBrowser): le icone si disegnano come sono sempre state
+     disegnate, e il confronto in prova-installazione non vede bordi diversi
+     che non vengono dal logo. */
+  const browser = await apriBrowser({ webgl: false });
   const page = await browser.newPage();
   try {
     await page.setContent('<!doctype html><html><body></body></html>');
@@ -121,7 +124,7 @@ async function disegnaIcone(browser) {
     return { svg, icone: fatte };
   } finally {
     await page.close();
-    if (proprio) await browser.close();
+    await browser.close();
   }
 }
 

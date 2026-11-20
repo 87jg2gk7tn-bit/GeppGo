@@ -24,7 +24,12 @@ jobs:
     # prova-carattere, che gira le schermate in cinque lingue e due temi).
     # Con 55 le prove venivano fermate a cinque dalla fine, più quelle sul
     # database, e una batteria fermata non dice niente: né verde né rossa.
-    timeout-minutes: 80
+    # Novembre 2026: 66 minuti con Leaflet. Le mappe di adesso (MapLibre)
+    # disegnano con WebGL, che qui fa il processore (SwiftShader), e c'è una
+    # prova nuova (prova-mappe): 120 lascia margine. Con due opzioni di
+    # Chromium di troppo (vedi browser.js) la batteria era arrivata a quasi
+    # due ore: se ci si torna vicino, prima si guarda perché.
+    timeout-minutes: 120
 
     # Un Postgres vero per le prove sui permessi: quelle non si possono
     # simulare, perché è proprio il database a decidere chi vede cosa.
@@ -88,7 +93,8 @@ jobs:
   # controllano anche i permessi veri.
   copia:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    # come l'altro lavoro: le stesse prove dell'app, con le mappe in WebGL
+    timeout-minutes: 120
     services:
       postgres:
         image: postgres:16

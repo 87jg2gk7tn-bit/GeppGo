@@ -23,7 +23,7 @@
       nessuna mentre si trascina;
    10. una tappa spostata in un altro posto: il tempo si ricalcola;
    11. testi in cinque lingue, e niente fuori schermo da 320 a 430 px. */
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 const fs = require('fs');
 const path = require('path');
 
@@ -64,8 +64,6 @@ async function apri(browser, stato, { servizio = {}, larghezza = 390, lingua = n
   const serv = Object.assign({ modo: 'ok', ritardo: {}, chiamate: [], risposta: null }, servizio);
   page.__serv = serv;
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-    status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/routing.openstreetmap.de/**', ro => {
     const u = ro.request().url();

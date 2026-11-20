@@ -9,7 +9,7 @@
  * mappa risponde in fretta la veloce NON parte: stazione e metro, che
  * funzionano, devono restare esattamente come sono.
  */
-const { apriBrowser, APP, leafletJs } = require('./browser');
+const { apriBrowser, APP } = require('./browser');
 const { comeOverpass } = require('./overpass-finto');
 const fs = require('fs');
 
@@ -35,8 +35,6 @@ const stato = { trips: [{ id: 1, name: 'Prova', destination: 'Muggiò', currency
     const page = await browser.newPage({ permissions: ['geolocation'], viewport: { width: 390, height: 844 } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     page._photon = []; page._nominatim = [];
-    await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({
-      status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
     await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
     await page.route('**/api/interpreter', async ro => {
       const q = decodeURIComponent(ro.request().postData() || '');

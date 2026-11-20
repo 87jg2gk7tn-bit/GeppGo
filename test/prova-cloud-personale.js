@@ -28,7 +28,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { apriBrowser, APP, leafletJs, RADICE } = require('./browser');
+const { apriBrowser, APP, RADICE } = require('./browser');
 
 const FFLATE_JS = (() => { try { return fs.readFileSync(path.join(RADICE, 'node_modules', 'fflate', 'umd', 'index.js'), 'utf8'); } catch (e) { return null; } })();
 let fflate = null;
@@ -199,7 +199,6 @@ async function apri(browser, { utente = null, stato = null, extraLs = null, foto
   const page = await browser.newPage({ viewport: { width: larghezza, height: altezza }, avvisi });
   page.on('pageerror', e => errori.push('PAGEERROR: ' + e.message.split('\n')[0]));
   await page.exposeBinding('__nuvolaRpc', (src, q) => nuvola.esegui(q, src.page));
-  await page.route('**/leaflet@1.9.4/dist/leaflet.js', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(leafletJs(), 'utf8') }));
   await page.route(/tile\.openstreetmap\.org/, ro => ro.abort());
   await page.route('**/fflate@*/**', ro => FFLATE_JS ? ro.fulfill({ status: 200, contentType: 'application/javascript', body: FFLATE_JS }) : ro.abort());
   await page.route('**/supabase-js@*/**', ro => ro.fulfill({ status: 200, contentType: 'application/javascript', body: SUPA_FINTO }));

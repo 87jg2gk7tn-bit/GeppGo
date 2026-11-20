@@ -89,6 +89,19 @@ riscrivono localStorage); chi lo vuole vedere apre la pagina con
 `newPage({ avvisi: true })`, come fanno `prova-dati` e
 `prova-cloud-personale`.
 
+**Il browser delle prove disegna con WebGL** (novembre 2026, le mappe sono
+MapLibre): il Chromium di Playwright lo fa col processore (SwiftShader), e
+`apriBrowser` aggiunge solo `--enable-unsafe-swiftshader`, che glielo lascia
+usare anche dove andrebbe chiesto. **Non si aggiungono
+`--use-angle=swiftshader` e `--ignore-gpu-blocklist`**: ci sono state per
+un giorno, e facevano passare da SwiftShader tutto il disegno della pagina.
+Una mappa nasceva in 1,4 secondi invece di 0,15, e su GitHub la batteria è
+passata da 66 minuti a quasi due ore, con due prove fermate al limite. Anche
+così una mappa che si disegna può rallentare un foglio che sale: si aspetta
+lo stato (il foglio fermo) e non un numero fisso di millisecondi, e i tempi
+si misurano con una prova sola alla volta. Chi vuole i pixel di sempre (le
+icone, `fai-le-icone.js`) apre il browser con `apriBrowser({ webgl: false })`.
+
 
 Il cloud di GeppGo si regge su una riga sola. L'app chiede i viaggi così:
 
@@ -247,9 +260,9 @@ barra in basso, con un po' di griglia sopra, e la pagina in cima con la
 testata del giorno a vista (o scesa solo quanto basta, se la barra taglierebbe
 la tappa). Fino alla Layout 1 la griglia partiva dalle 06:00 e la pagina
 scorreva fin sopra la prima tappa, facendo sparire la testata; dalla Layout
-1b è la griglia a partire dall'ora piena prima della prima tappa. Leaflet si
-serve dal pacchetto, come sul server delle prove: senza, la mappa del giorno
-non c'era e la prova guardava un'altra schermata. Sul codice della Layout 1
+1b è la griglia a partire dall'ora piena prima della prima tappa. La mappa
+del giorno c'è, come sul telefono (MapLibre lo serve il recinto dal
+pacchetto): senza, la prova guardava un'altra schermata. Sul codice della Layout 1
 cade il terzo controllo, per il motivo giusto: pagina scorsa di 475 px,
 testata mancante. Sul primo codice della 1b cade anche lui: la giornata
 scendeva di 8 px perché misurava la pagina mentre entrava salendo.
@@ -471,6 +484,31 @@ Tre controlli meritano di essere letti:
   contrario di quello che il pannello promette. La prova conta le chiamate di
   rete e verifica anche che la promessa sia ancora scritta lì.
 
+## Le mappe nuove (MapLibre ed Esri)
+
+```sh
+node test/prova-mappe.js        # o solo alcune parti: node test/prova-mappe.js 1 4
+```
+
+Dal 18 novembre 2026 le mappe sono MapLibre col satellite di Esri. Le prove non
+parlano con Esri: la chiave vale solo dal sito pubblicato, e comunque una prova
+che parla col servizio vero non prova niente. `test/esri-finto.js` risponde
+come lui (lo stile fatto come quello vero, i pezzi della foto, le strade, i
+caratteri, i simboli) e conta le richieste; `schermate.js` lo mette su ogni
+pagina, e `rete-finta.js` porta i nomi di Esri al suo server locale per le
+richieste della service worker.
+
+La prova guarda: ogni mappa (Oggi, Programma stretto e largo, Tutto il viaggio
+col globo, la scheda del viaggio, la scheda di un posto, le mappine di Scopri)
+coi suoi segnaposto, il percorso d'oro e le schede; i toni dei due temi e il
+cambio di tema; strade e nomi solo da vicino; la chiave su ogni richiesta a
+Esri e nella sola costante `ESRI_CHIAVE` (in tutti i file del repo); la
+citazione «Powered by Esri · © OpenStreetMap · Fonti» che non tocca i tasti, lo
+zoom da 44 px, axe; Esri giù o che rifiuta la chiave (l'avviso tradotto,
+«Riprova», l'app che va avanti); MapLibre che arriva solo con una mappa a
+schermo; niente Leaflet nel codice. E stampa quanti pezzi costa aprire Oggi e il
+Programma.
+
 ## La mappa senza rete
 
 ```sh
@@ -478,29 +516,24 @@ node test/prova-mappa.js
 ```
 
 Il momento in cui GeppGo serve di più è quello in cui il telefono non ha campo.
-Tutto il resto già funzionava offline: l'unica cosa che diventava un rettangolo
-grigio era lo sfondo della mappa. Misurato: la stessa zona, guardata con la
-rete e riaperta senza, **prima mostrava 0 tessere su 9; ora 9 su 9**.
-
-Il controllo che vale più di tutti è quello che tiene ferma una scelta:
-**non esiste uno «scarica tutta la città»**. Scaricare tessere in blocco dai
-server di OpenStreetMap è vietato dalle loro condizioni — sono volontari, e ti
-bloccano, esattamente come per Overpass. La prova guarda quello che l'app fa
-davvero (una schermata deve chiedere una ventina di tessere, non centinaia) e
-non cerca parole nel codice: un controllo sulle parole boccerebbe la frase che
-spiega la scelta.
+Le zone già guardate restano nel telefono, ma solo come permettono le
+condizioni di Esri: per il tempo delle intestazioni delle sue risposte, al
+massimo 1.500 pezzi, mai una zona scaricata in anticipo, e tutto via se Esri
+rifiuta la chiave. Li tiene la service worker (`pezzoDiMappa` in `sw.js`), e la
+prova la usa per davvero: l'app da un indirizzo http, le risposte di Esri date
+dal **contesto** del browser, l'unico che vede le richieste che la service
+worker fa per conto suo (le rotte della pagina no). Guarda: i pezzi tenuti con
+la loro scadenza, la zona rivista senza rete, un pezzo scaduto che non si usa
+più, no-store, il tetto dei 1.500, la riga del Profilo e «Libera lo spazio
+della mappa», la chiave rifiutata, e le mattonelle della mappa di prima buttate
+una volta sola.
 
 Due cose imparate scrivendola, e valgono per tutte le prove:
 
-- **l'app va servita da un indirizzo vero, non da `file://`.** Tenere le
-  tessere da parte vuol dire prenderle con `fetch`, e da una pagina aperta come
-  file il browser non lo lascia nemmeno partire: la prova direbbe «non le tiene
-  da parte» per un motivo che sul telefono non esiste. Quindici righe di server
-  valgono la differenza;
-- **`'**/tile.openstreetmap.org/**'` non intercetta niente.** Quel modello
-  vuole una barra prima di `tile`, e l'indirizzo vero è
-  `a.tile.openstreetmap.org`. Le richieste passavano e la prova le guardava
-  senza vederle. Si usa un'espressione regolare.
+- **l'app va servita da un indirizzo vero, non da `file://`**: da un file la
+  service worker non si registra;
+- **le rotte della pagina non vedono le richieste della service worker**:
+  quelle del contesto sì (Chromium, Playwright 1.62).
 
 ## Le lingue
 
@@ -1053,11 +1086,11 @@ nell'app. Le nove domande:
    foglio può essere ancora a metà della salita.
 4. **Il dito**: nove punti intorno al centro di ogni tasto, a 320, 390 e 430
    px, devono rispondere a lui (o a un tasto vicino che fa la stessa cosa).
-   Nelle mappe contano i tasti dello zoom; i segnaposto no (ripetono tappe e
-   alberghi che hanno i loro tasti negli elenchi), né la parola «Leaflet»
-   nella scritta dei diritti. Leaflet arriva in locale col suo foglio di
-   stile: senza, qui i controlli non stavano nei loro angoli, e la scritta
-   che sul server delle prove copriva il 🧭 non si vedeva.
+   Nelle mappe contano i tasti dello zoom e quello dell'avviso; i segnaposto
+   no (ripetono tappe e alberghi che hanno i loro tasti negli elenchi), né i
+   link della citazione. MapLibre arriva in locale col suo foglio di stile, e
+   Esri risponde finto (`test/esri-finto.js`): senza il foglio i controlli
+   non stanno nei loro angoli.
 5. **`lang`** segue la lingua dell'app, anche cambiandola dal Profilo.
 6. **Il fuoco nei fogli**, toccando come un dito: entra aprendo, torna al
    tasto di partenza chiudendo con la ✕, con Esc, toccando fuori e
@@ -1192,8 +1225,8 @@ ore della modifica com'erano, e lascia passare il resto. Le dieci domande:
    del Cibo sull'altro, il nome e una spesa dal compagno, tutti senza rete;
    alla fine tutto insieme, uguale nel cloud e sui tre telefoni.
 7. **La mappa**: tutte le tappe con la posizione (sciolte o nei tondi) e
-   l'albergo; lo sfondo è lo strato che tiene da parte le zone già viste
-   (quello di `prova-mappa`), con «© OpenStreetMap»; nel Giorno 1 i numeri 1, 2, 3 nell'ordine della giornata col
+   l'albergo; lo sfondo è quello di Esri (finto), col globo, con «Powered by
+   Esri» e «© OpenStreetMap»; nel Giorno 1 i numeri 1, 2, 3 nell'ordine della giornata col
    colore del giorno e la linea; il filtro; l'albergo solo nelle notti in cui
    ci si dorme; la scheda del segnaposto, con la crocetta che si chiama
    «Chiudi» e risponde su 44 px, e «Apri la tappa» sulla tappa giusta; un
