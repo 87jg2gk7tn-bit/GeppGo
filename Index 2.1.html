@@ -5044,14 +5044,23 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
    pagina, e senza questo non finiva nella cache, e senza rete la mappa non
    c'era fino alla visita dopo. */
 const LIBRERIE_SOTTOFONDO_MS=4000;
+/* Gia' detto una volta (librerieDette): una libreria «al momento» arrivata
+   dopo, come MapLibre col campo debole (vedi chiediMappe), la si dice di
+   nuovo, se no alla prima visita restava fuori dalla cache. */
+let librerieDette=false;
+function diciLibrerieAllaSw(){
+  if(!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.ready.then(r=>{
+    const usate=[];
+    Object.values(LIBRERIE).forEach(l=>{try{if(l.alMomento&&l.pronta())usate.push(...[l.js,l.css].filter(Boolean));}catch(e){}});
+    librerieDette=true;
+    if(r.active)r.active.postMessage({tipo:'librerie',usate});
+  }).catch(()=>{});
+}
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
-    setTimeout(()=>{navigator.serviceWorker.ready.then(r=>{
-      const usate=[];
-      Object.values(LIBRERIE).forEach(l=>{try{if(l.alMomento&&l.pronta())usate.push(...[l.js,l.css].filter(Boolean));}catch(e){}});
-      if(r.active)r.active.postMessage({tipo:'librerie',usate});
-    }).catch(()=>{});},LIBRERIE_SOTTOFONDO_MS);
+    setTimeout(diciLibrerieAllaSw,LIBRERIE_SOTTOFONDO_MS);
   });
 }
 /* Appena torna la connessione, prova subito a rimandare le modifiche fatte
@@ -14843,7 +14852,7 @@ function nuovaMappa(el,opz){
   try{m.touchZoomRotate.disableRotation();if(m.keyboard&&m.keyboard.disableRotation)m.keyboard.disableRotation();}catch(e){}
   /* Con «Riduci movimento» la mappa non continua a correre dopo il dito. */
   if(menoMovimento())try{m.dragPan.enable({linearity:0,maxSpeed:0});}catch(e){}
-  m._g={opz:opz,dati:{},fonte:pronto?'esri':'vuota',pronta:false,scheda:null,io:null};
+  m._g={opz:opz,dati:{},fonte:pronto?'esri':'vuota',pronta:false,scheda:null,io:null,lingua:linguaEsri()};
   mappeVive.add(m);
   m.on('style.load',()=>{m._g.pronta=true;sovrapponi(m);});
   m.on('error',e=>mappaErrore(m,e));
@@ -15176,8 +15185,17 @@ function mappaNonSiPuo(el,motivo,riprova){
 }
 /* MapLibre, quando serve: le mappe a schermo nascono appena arriva
    (mappaArrivata). Chi la chiede due volte aspetta la stessa. */
+/* MapLibre si chiede a schermata d'apertura sparita: e' un mega (270 KB
+   compressi), e chiesto durante l'avvio, col campo debole, contendeva la
+   banda alla prima schermata. Il riquadro della mappa intanto e' gia' al
+   suo posto, e la mappa arriva un attimo dopo che l'app si puo' usare. */
+function dopoLApertura(fn){
+  const t0=Date.now();
+  const guarda=()=>{const sp=document.getElementById('bootSplash');if(!sp||sp.classList.contains('hide')||Date.now()-t0>15000)fn();else setTimeout(guarda,100);};
+  guarda();
+}
 function chiediMappe(){
-  return caricaLibreria('maplibre').then(()=>quandoAvviata(mappaArrivata)).catch(()=>{
+  return new Promise(dopoLApertura).then(()=>caricaLibreria('maplibre')).then(()=>{quandoAvviata(mappaArrivata);if(librerieDette)diciLibrerieAllaSw();}).catch(()=>{
     document.querySelectorAll('#homeMap,#dayMap,#map,#vmMappa,#piMap').forEach(el=>{if(el.offsetParent)mappaNonSiPuo(el,'rete');});
   });
 }
@@ -15908,13 +15926,29 @@ let homePosata=-1;
 /* Le tappe del giorno mostrato, nello stesso ordine delle card: servono per
    riempire il riquadro in cima con quella evidenziata. */
 let homeSoonActs=[],homeSoonDay=null,homeSoonDi=0;
-function destroyHomeMap(){
+/* tieni: la mappa resta viva per il disegno nuovo (vedi renderHome), e se
+   ne vanno solo la scheda e i segnaposto, che il disegno nuovo rifa'. */
+function destroyHomeMap(tieni){
   homeGiro++;
-  if(homeMapObj){togliMappa(homeMapObj);homeMapObj=null;}
+  if(homeMapObj&&tieni){
+    chiudiScheda(homeMapObj);
+    homeMapMarks.forEach(mk=>{try{mk.remove();}catch(e){}});
+    homeMapObj._g.manoPrima=homeCardSel;
+  }else if(homeMapObj){
+    togliMappa(homeMapObj);homeMapObj=null;
+    /* se ne va con la mappa: tenerne il riferimento vorrebbe dire provare a
+       toglierlo da una mappa che non esiste piu' */
+    homeMeMarker=null;
+  }
   homeMapMarks=[];homeMapPts=[];homeCardSel=-1;
-  /* se ne va con la mappa: tenerne il riferimento vorrebbe dire provare a
-     toglierlo da una mappa che non esiste piu' */
-  homeMeMarker=null;
+}
+/* La mappa di Oggi si puo' tenere per il disegno nuovo se e' viva e parla
+   la lingua di adesso (le scritte di Esri sono nella lingua dell'app): torna
+   il suo riquadro, che renderHome rimette al posto di quello nuovo. */
+function homeMapTenibile(){
+  if(!vivo(homeMapObj)||homeMapObj._g.lingua!==linguaEsri())return null;
+  const el=homeMapObj.getContainer();
+  return el&&el.id==='homeMap'?el:null;
 }
 /* Il riquadro col conto alla rovescia diceva sempre e solo la prossima tappa,
    anche mentre in mappa se ne stava guardando un'altra: due cose diverse una
@@ -15973,8 +16007,11 @@ function buildHomeMap(t,day,acts,soloMappa){
   /* MapLibre non c'e' ancora: il riquadro resta al suo posto (niente salto
      della pagina quando arriva), e la mappa la fa nascere mappaArrivata. La
      striscia delle tappe intanto funziona lo stesso. */
+  const inMano=soloMappa&&homeCardSel>=0?homeCardSel:Math.max(0,partenza);
+  const chiave=String(t.id)+'|'+String(day&&day.date||'');
   if(typeof maplibregl==='undefined')chiediMappe();
-  else homeMappaNasce(t,pts,soloMappa&&homeCardSel>=0?homeCardSel:Math.max(0,partenza));
+  else if(vivo(homeMapObj))homeMappaRiempi(t,pts,inMano,chiave,true);
+  else homeMappaNasce(t,pts,inMano,chiave);
   if(soloMappa){setTimeout(()=>{if(giro===homeGiro&&homeMapObj){rimisura(homeMapObj);if(homePosata===giro)homeCardsSync(true);}},60);return;}
   setTimeout(()=>{
     if(giro!==homeGiro)return;
@@ -15998,13 +16035,26 @@ function buildHomeMap(t,day,acts,soloMappa){
    e il doppio dei pezzi di mappa, per arrivare allo stesso posto. La
    citazione in alto a sinistra: in alto a destra c'e' il 🧭, e in basso
    compare l'avviso della tappa senza posizione. */
-function homeMappaNasce(t,pts,inMano){
+function homeMappaNasce(t,pts,inMano,chiave){
   const x0=pts.find(x=>x.i===inMano);
   homeMapObj=nuovaMappa('homeMap',{centro:x0?[x0.loc.lng,x0.loc.lat]:[pts[0].loc.lng,pts[0].loc.lat],zoom:ZOOM_TAPPA,diritti:'tl',nome:tv('Mappa della giornata')});
   if(!homeMapObj)return;
+  homeMappaRiempi(t,pts,inMano,chiave,false);
+}
+/* Segnaposto, percorso e pallino, su una mappa nuova o su quella tenuta dal
+   disegno di prima (tenuta). Tenuta e con lo stesso giorno, la mappa resta
+   dove l'hai lasciata: un disegno fatto per altro (una spunta, il cloud) non
+   la sposta, e la tappa in mano di prima non la fa ripartire (restaFerma).
+   Con un altro giorno va sulla tappa in mano, come se nascesse li'. */
+function homeMappaRiempi(t,pts,inMano,chiave,tenuta){
+  const m=homeMapObj,x0=pts.find(x=>x.i===inMano);
+  const stesso=tenuta&&m._g.giorno===chiave;
+  m._g.giorno=chiave;
+  if(tenuta&&!stesso)m.jumpTo({center:x0?[x0.loc.lng,x0.loc.lat]:[pts[0].loc.lng,pts[0].loc.lat],zoom:ZOOM_TAPPA});
   /* la prima tappa scelta (homeMapSelect) ci si va senza volare: il volo
      chiede tutti i pezzi che attraversa */
-  homeMapObj._g.primaScelta=true;
+  m._g.primaScelta=!stesso;
+  m._g.restaFerma=stesso&&m._g.manoPrima!=null&&m._g.manoPrima>=0?m._g.manoPrima:null;
   pts.forEach((x,n)=>{
     const foto=fotoTappa(t,x.a);
     const mk=segno(homeMapObj,[x.loc.lng,x.loc.lat],htmlTappa(n+1,foto),{classe:'pin'+(foto?' con-foto':''),nome:nomeTappa(n+1,x.a),
@@ -16020,7 +16070,7 @@ function homeMappaNasce(t,pts,inMano){
      tutto da solo puo' allontanarsi troppo se una tappa (es. l'aeroporto
      del volo di ritorno) e' lontana dalle altre: non si va mai piu' indietro
      di un quartiere, anche se cosi' i punti piu' lontani restano fuori. */
-  if(!x0&&pts.length>1){
+  if(!stesso&&!x0&&pts.length>1){
     const cam=camera(homeMapObj,pts.map(x=>[x.loc.lng,x.loc.lat]),{margine:34,max:ZOOM_TAPPA});
     if(cam)homeMapObj.jumpTo({center:cam.center,zoom:Math.max(12,Math.min(cam.zoom,ZOOM_TAPPA))});
   }
@@ -16045,6 +16095,10 @@ function homeMapSelect(cardIdx){
      doveva risistemarsi: tre movimenti per un tocco. */
   const ds=homeMapObj._g.dalSegno;homeMapObj._g.dalSegno=null;
   if(ds&&ds.i===cardIdx&&Date.now()-ds.t<1000){homeMapObj._g.primaScelta=false;clearTimeout(homeMoveT);return;}
+  /* la Home ridisegnata con la stessa tappa in mano: la mappa tenuta resta
+     dov'era (vedi homeMappaRiempi) */
+  const rf=homeMapObj._g.restaFerma;homeMapObj._g.restaFerma=null;
+  if(rf!=null&&rf===cardIdx){homeMapObj._g.primaScelta=false;clearTimeout(homeMoveT);return;}
   const meta=[Number(homeMapPts[sel].loc.lng),Number(homeMapPts[sel].loc.lat)];
   const subito=!!homeMapObj._g.primaScelta;homeMapObj._g.primaScelta=false;
   clearTimeout(homeMoveT);
@@ -16706,8 +16760,19 @@ function renderHomeHero(){
     strip.scrollLeft+=(or.left-sr.left)-(sr.width-or.width)/2;
   };
   const paint=html=>{
-    destroyHomeMap();
+    /* La mappa di Oggi non rinasce a ogni disegno: la Home si ridisegna di
+       continuo (una spunta, un cambio di tema, il cloud che arriva), e con
+       MapLibre ogni rinascita era un WebGL nuovo, lo stile e i pezzi da
+       capo e la mappa che lampeggiava. Il suo riquadro, con la tela dentro,
+       prende il posto di quello vuoto del disegno nuovo. */
+    const tenuta=homeMapTenibile();
+    destroyHomeMap(!!tenuta);
     box.innerHTML=html;
+    if(tenuta){
+      const posto=box.querySelector('#homeMap');
+      if(posto)posto.replaceWith(tenuta);
+      else{togliMappa(homeMapObj);homeMapObj=null;homeMeMarker=null;}
+    }
     cieloSullePagine(box.querySelector('.hh.cielo'));
     const place=()=>{
       center(box.querySelector('.hh-days'),'.giorno.on',keepD);
@@ -32183,7 +32248,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-18 18:12';
+const VERSIONE_APP='2026-11-20 15:59';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

@@ -2048,17 +2048,43 @@ qualcuno che risponde".
   striscia delle tappe scorreva lì, e 180 ms dopo la mappa si ricentrava,
   disfacendo la sistemazione della scheda (tre movimenti per un tocco). La
   tappa toccata è già a vista; la scheda, se serve, sposta la mappa da sola.
-- **Le opzioni di WebGL del browser delle prove cambiano anche il disegno di
-  un SVG su una tela**: le icone ridisegnate per il confronto venivano con
-  400 pixel di bordo diversi. `apriBrowser({ webgl: false })`, e
-  `fai-le-icone.js` disegna sempre con un browser suo senza WebGL: i PNG del
-  repo restano identici.
+- **Per WebGL nelle prove basta `--enable-unsafe-swiftshader`.** Per un
+  giorno `apriBrowser` ha avuto anche `--use-angle=swiftshader` e
+  `--ignore-gpu-blocklist`, credute necessarie: facevano passare da
+  SwiftShader tutto il disegno della pagina. Una mappa nasceva in 1,4 s
+  invece di 0,15, il giro delle schermate durava 70 s invece di 48, e su
+  GitHub la batteria è passata da 66 minuti a quasi due ore, con
+  accessibilita e schermi-grandi fermate ai 15 minuti e altre quattro rosse
+  per i tempi (movimento, ricordo, la rete lenta di avvio). Il Chromium di
+  Playwright ha WebGL anche senza opzioni: prima di aggiungerne una, la si
+  misura. Le stesse due cambiavano anche il disegno di un SVG su una tela (le
+  icone ridisegnate per il confronto avevano 400 pixel di bordo diversi):
+  `fai-le-icone.js` disegna con `apriBrowser({ webgl: false })`.
+- **La mappa di Oggi rinasceva a ogni disegno della Home** (`renderHome` la
+  toglieva e la rifaceva): con Leaflet costava poco, con MapLibre ogni volta
+  un WebGL nuovo, gli shader, lo stile e i pezzi da capo, e la mappa che
+  lampeggiava a ogni spunta o sincronizzazione. Un giro delle schermate ne
+  faceva nascere 49, 39 di Oggi. Ora resta viva (`homeMapTenibile`): il suo
+  riquadro prende il posto di quello vuoto del disegno nuovo, e si rifanno
+  solo segnaposto e percorso. Stesso giorno, resta dov'era; altro giorno, va
+  sulla tappa in mano; lingua cambiata, rinasce (le scritte di Esri sono
+  nella lingua dell'app). Nel giro, 12 mappe invece di 49.
+- **MapLibre si chiede a schermata d'apertura sparita** (`dopoLApertura` in
+  `chiediMappe`): 270 KB compressi, e col campo debole chiesti durante
+  l'avvio contendevano la banda alla prima schermata. La prova dell'avvio
+  con la rete lenta (prova-avvio, 10) conta il JavaScript dell'avvio senza
+  la libreria della mappa e controlla che MapLibre arrivi dopo; e misura la
+  copia senza commenti, quella che arriva ai telefoni (col file coi commenti
+  il blocco delle mappe, 14 KB compressi, bastava a passare il limite).
 - **Le attese fisse nelle prove non reggono il WebGL fatto dal processore.**
   Un foglio misurato dopo 450 ms era ancora a metà salita mentre sotto si
   disegnava la mappa di Oggi; un controllo fatto con la macchina carica (due
   prove insieme) cadeva per i tempi. Si aspetta lo stato (il foglio fermo,
-  `m42` a zero), non i millisecondi; e i tempi si misurano con una prova
-  sola alla volta, come su GitHub.
+  `m42` a zero; la mappa nata), non i millisecondi; e i tempi si misurano
+  con una prova sola alla volta, come su GitHub.
+- **Un numero scritto a mano in una prova invecchia**: prova-ai voleva almeno
+  6 librerie in sottofondo, che erano 6 con Leaflet. Ora le conta dalla
+  lista di `sw.js`.
 
 - **Il giro delle schermate inghiottiva gli errori dei passi** (scoperto il
   17 ottobre). Un passo che si rompeva finiva in un `console.log`, e la misura

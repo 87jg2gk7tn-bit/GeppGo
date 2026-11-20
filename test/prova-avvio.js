@@ -25,6 +25,7 @@ const path = require('path');
 const { apriBrowser, APP, RADICE } = require('./browser');
 const { serverFinti, misuraAvvio, leggiIndirizzo, filePacchetto } = require('./rete-finta');
 const { funzioniMancanti } = require('./funzioni-mancanti');
+const { senzaCommentiHtml } = require('./fai-il-sito');
 
 /* Il file e' quello indicato da APP_URL, se c'e': cosi' la controprova sul
    codice vecchio prova davvero il codice vecchio, service worker compresa. */
@@ -179,10 +180,16 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
     ok('4. all\'avvio non partono richieste per jsQR, ZXing, bwip-js e Sortable', !vietate.length,
        vietate.join(' ') || avvio.map(u => u.split('/').slice(-3).join('/')).join(' '));
     /* MapLibre (un mega) arriva quando a schermo c'e' una mappa: qui c'e',
-       quella di Oggi, e la mappa nasce. */
+       quella di Oggi, e la mappa nasce. Arriva a schermata d'apertura
+       sparita (chiediMappe), quindi si aspetta la mappa, non un numero fisso
+       di millisecondi; le richieste vietate qui sopra si sono contate prima,
+       perche' dopo 4 secondi la service worker scarica in sottofondo proprio
+       quelle librerie. */
+    await p.waitForFunction(() => typeof maplibregl !== 'undefined' && !!homeMapObj, null, { timeout: 10000 }).catch(() => {});
+    const mappa = srv.log.slice(da).filter(v => v.dove === 'cdn' && /maplibre-gl@/.test(v.url));
     const conMappa = await p.evaluate(() => ({ lib: typeof maplibregl, home: !!homeMapObj }));
-    ok('4. con una mappa a schermo MapLibre arriva, e la mappa di Oggi nasce', avvio.filter(u => /maplibre-gl@/.test(u)).length === 2 && conMappa.lib === 'object' && conMappa.home,
-       JSON.stringify(conMappa) + ' · ' + avvio.filter(u => /maplibre/.test(u)).length + ' richieste');
+    ok('4. con una mappa a schermo MapLibre arriva, e la mappa di Oggi nasce', mappa.length === 2 && conMappa.lib === 'object' && conMappa.home,
+       JSON.stringify(conMappa) + ' · ' + mappa.length + ' richieste');
     // lo scanner: i lettori arrivano aprendolo, e la fotocamera (finta) parte
     const d2 = srv.log.length;
     await p.evaluate(() => openScanner());
@@ -377,13 +384,26 @@ const fileQR = (page, testo) => page.evaluateHandle(async t => {
 
   /* ── 10. le misure, prima e dopo ─────────────────────────────────────── */
   await prova('10', async () => {
+    /* Si misura l'HTML che arriva davvero ai telefoni: la copia senza
+       commenti (test/fai-il-sito.js), come la serve Pages. Col file coi
+       commenti ogni commento nuovo allungava l'avvio misurato (14 KB
+       compressi in piu' col blocco delle mappe, un quarto di secondo a 400
+       kbps) senza che sul telefono cambiasse niente. */
+    const html = srv.stato.html;
+    srv.stato.html = senzaCommentiHtml(HTML);
     const giri = [];
-    for (let i = 0; i < 2; i++) giri.push(await misuraAvvio(browser, srv, { stato: viaggio() }));
+    try { for (let i = 0; i < 2; i++) giri.push(await misuraAvvio(browser, srv, { stato: viaggio() })); }
+    finally { srv.stato.html = html; }
     const m = giri.sort((x, y) => x.usabile - y.usabile)[0];
     console.log(`  misure — prima: schermata ${PRIMA.prima} ms, usabile ${PRIMA.usabile} ms, JS ${PRIMA.kbJs} KB · ` +
-      `adesso: schermata ${m.prima} ms, usabile ${m.usabile} ms, JS ${m.kbJs} KB (${m.fileJs.join(', ')}), HTML ${m.kbHtml} KB`);
+      `adesso: schermata ${m.prima} ms, usabile ${m.usabile} ms, JS ${m.kbJs} KB (${m.fileJs.join(', ')}; ${m.kbMappe} KB di mappa, chiesta a ${m.maplibre} ms), HTML ${m.kbHtml} KB`);
     ok('10. con la rete lenta l\'app è usabile prima', m.usabile < PRIMA.usabile * 0.75, `${PRIMA.usabile} → ${m.usabile} ms`);
-    ok('10. e scarica meno JavaScript all\'avvio', m.kbJs < PRIMA.kbJs / 2, `${PRIMA.kbJs} → ${m.kbJs} KB`);
+    /* La mappa di Oggi e' a schermo e la sua libreria (MapLibre, 270 KB
+       compressi) arriva dopo che l'app e' usabile: non pesa sull'avvio, e si
+       conta a parte. Che arrivi dopo lo dice la voce che segue. */
+    ok('10. e scarica meno JavaScript all\'avvio (la libreria della mappa a parte)', m.kbJsSenzaMappe < PRIMA.kbJs / 2, `${PRIMA.kbJs} → ${m.kbJsSenzaMappe} KB, più ${m.kbMappe} KB di mappa`);
+    ok('10. MapLibre, per la mappa di Oggi, si chiede solo a schermata d\'apertura sparita', m.maplibre != null && m.maplibre >= m.usabile,
+      m.maplibre == null ? 'mai chiesto: la mappa di Oggi non c\'era' : `usabile a ${m.usabile} ms, MapLibre chiesto a ${m.maplibre} ms`);
     ok('10. la prima schermata non arriva più tardi', m.prima <= PRIMA.prima * 1.15, `${PRIMA.prima} → ${m.prima} ms`);
   });
 

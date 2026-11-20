@@ -47,6 +47,12 @@ const FILE_APP = APP.startsWith('file://') ? decodeURIComponent(APP.slice(7)) : 
 const accanto = nome => fs.existsSync(path.join(path.dirname(FILE_APP), nome)) ? path.join(path.dirname(FILE_APP), nome) : path.join(RADICE, nome);
 const HTML = fs.readFileSync(FILE_APP, 'utf8');
 const SW = fs.readFileSync(accanto('sw.js'), 'utf8');
+/* Le librerie di tutti i giorni, quelle che la service worker scarica in
+   sottofondo: si contano dalla sua lista, non si scrivono a mano. Erano sei
+   finche' c'era Leaflet, e un 6 scritto qui ha fatto diventare rossa questa
+   prova il giorno in cui le mappe sono passate a MapLibre, che arriva solo
+   quando serve. */
+const SOTTOFONDO = ((/const LIBRERIE = \[([\s\S]*?)\];/.exec(SW) || [])[1] || '').match(/'https:[^']+'/g) || [];
 const PRIVACY = fs.readFileSync(accanto('privacy.html'), 'utf8').replace(/\s+/g, ' ');
 let XLSX = null;
 try { XLSX = require(path.join(RADICE, 'node_modules', 'xlsx')); } catch (e) {}
@@ -290,12 +296,12 @@ function misureJpeg(buf) {
       /* Si aspetta che il sottofondo abbia finito il suo giro: le librerie
          di tutti i giorni in cache, e poi ancora un po'. */
       let tenute = [];
-      for (let i = 0; i < 80 && tenute.length < 6; i++) { await p.waitForTimeout(500); tenute = await inCache(); }
+      for (let i = 0; i < 80 && tenute.length < SOTTOFONDO.length; i++) { await p.waitForTimeout(500); tenute = await inCache(); }
       await p.waitForTimeout(2000);
       tenute = await inCache();
       const primaDiAprire = srv.log.filter(v => v.dove === 'cdn' && /cdn\.sheetjs\.com/.test(v.url));
-      ok('1. all\'avvio e in sottofondo SheetJS non si scarica', tenute.length >= 6 && !primaDiAprire.length && !tenute.some(u => /sheetjs/.test(u)),
-         `${tenute.length} librerie in sottofondo, ${primaDiAprire.length} richieste a SheetJS`);
+      ok('1. all\'avvio e in sottofondo SheetJS non si scarica', SOTTOFONDO.length >= 5 && tenute.length >= SOTTOFONDO.length && !primaDiAprire.length && !tenute.some(u => /sheetjs/.test(u)),
+         `${tenute.length} librerie in sottofondo su ${SOTTOFONDO.length}, ${primaDiAprire.length} richieste a SheetJS`);
       // si apre l'importazione dal cassetto, come farebbe una persona
       await p.evaluate(() => openSheet('mViaggi'));
       await p.waitForTimeout(400);

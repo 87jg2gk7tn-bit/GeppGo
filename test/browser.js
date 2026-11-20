@@ -39,15 +39,19 @@ async function apriBrowser(opzioni = {}) {
      ricaricano per vedere cosa resta cadevano a caso, e sembrava l'app che
      perdeva i dati. L'app non legge file accanto a se', quindi l'opzione non
      le cambia niente. */
-  /* Le tre opzioni di WebGL: le mappe sono MapLibre, che disegna con WebGL,
-     e Chromium senza schermo lo da' solo col disegnatore di ripiego
-     (SwiftShader), che va chiesto. Senza, ogni mappa diceva «Questo telefono
-     non riesce a disegnare la mappa». */
+  /* WebGL: le mappe sono MapLibre, che disegna con WebGL, e Chromium senza
+     schermo lo da' col disegnatore di ripiego (SwiftShader).
+     --enable-unsafe-swiftshader glielo lascia usare anche dove andrebbe
+     chiesto. BASTA QUESTA. Le altre due che c'erano (--use-angle=swiftshader
+     e --ignore-gpu-blocklist) facevano passare da SwiftShader tutto il
+     disegno della pagina, non solo le mappe: far nascere una mappa costava
+     1,4 secondi invece di 0,15, il giro delle schermate 70 invece di 48, e
+     su GitHub la batteria passava da 66 minuti a quasi due ore, con
+     accessibilita e schermi-grandi fermate al limite dei 15 minuti. */
   /* Chi non disegna mappe e vuole i pixel di sempre (le icone, vedi
-     fai-le-icone.js) chiede { webgl: false }: con queste opzioni anche il
-     disegno di un SVG su una tela passa da SwiftShader, e i bordi sfumati
-     vengono un filo diversi. */
-  const gl = opzioni.webgl === false ? [] : ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--ignore-gpu-blocklist'];
+     fai-le-icone.js) chiede { webgl: false }: i pixel delle icone si
+     confrontano con quelli del repo, fatti senza nessuna opzione. */
+  const gl = opzioni.webgl === false ? [] : ['--enable-unsafe-swiftshader'];
   opzioni = Object.assign({}, opzioni); delete opzioni.webgl;
   const base = ['--no-sandbox', '--allow-file-access-from-files'].concat(gl);
   /* Gli argomenti di chi apre il browser si aggiungono a questi, non li

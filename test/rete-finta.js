@@ -232,6 +232,12 @@ const SPIA = () => {
     new MutationObserver(guarda).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
     guarda();
   });
+  /* quando l'app chiede MapLibre (lo script della mappa): deve succedere
+     dopo che l'app e' usabile, mai durante l'avvio (vedi chiediMappe) */
+  new MutationObserver(lista => {
+    if (window.__misure.maplibre != null) return;
+    for (const r of lista) for (const n of r.addedNodes) if (n.tagName === 'SCRIPT' && /maplibre-gl/.test(n.src || '')) { window.__misure.maplibre = performance.now(); return; }
+  }).observe(document, { subtree: true, childList: true });
 };
 
 /* Un avvio a freddo con la rete lenta: niente service worker (e' la prima
@@ -257,10 +263,16 @@ async function misuraAvvio(browser, srv, { stato, kbps = 400, latenza = 400, qui
   const m = await page.evaluate(() => window.__misure);
   const voci = srv.log.slice(da);
   const js = voci.filter(v => v.dove === 'cdn' && /\.js(\?|$)/.test(v.url) && v.esito === 200);
+  const mappe = js.filter(v => /maplibre-gl/.test(v.url));
   await page.close();
   return {
     prima: Math.round(m.prima || 0), usabile: Math.round(m.usabile), dcl: Math.round(m.dcl),
     kbJs: Math.round(js.reduce((s, v) => s + v.byte, 0) / 1024),
+    /* la libreria delle mappe a parte: arriva per la mappa a schermo, dopo
+       che l'app e' usabile; maplibre e' quando l'app l'ha chiesta */
+    kbJsSenzaMappe: Math.round(js.filter(v => !mappe.includes(v)).reduce((s, v) => s + v.byte, 0) / 1024),
+    kbMappe: Math.round(mappe.reduce((s, v) => s + v.byte, 0) / 1024),
+    maplibre: m.maplibre != null ? Math.round(m.maplibre) : null,
     fileJs: js.map(v => v.url.replace(/^https:\/\/[^/]+\/(npm\/)?/, '')),
     kbHtml: Math.round(voci.filter(v => v.dove === 'app' && v.path === '/Index 2.1.html').reduce((s, v) => s + v.byte, 0) / 1024)
   };

@@ -25,8 +25,10 @@ jobs:
     # Con 55 le prove venivano fermate a cinque dalla fine, più quelle sul
     # database, e una batteria fermata non dice niente: né verde né rossa.
     # Novembre 2026: 66 minuti con Leaflet. Le mappe di adesso (MapLibre)
-    # disegnano con WebGL, che qui fa il processore (SwiftShader): le prove
-    # che girano le schermate durano anche la metà in più, quindi 120.
+    # disegnano con WebGL, che qui fa il processore (SwiftShader), e c'è una
+    # prova nuova (prova-mappe): 120 lascia margine. Con due opzioni di
+    # Chromium di troppo (vedi browser.js) la batteria era arrivata a quasi
+    # due ore: se ci si torna vicino, prima si guarda perché.
     timeout-minutes: 120
 
     # Un Postgres vero per le prove sui permessi: quelle non si possono

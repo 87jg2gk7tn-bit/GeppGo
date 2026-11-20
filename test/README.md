@@ -90,13 +90,17 @@ riscrivono localStorage); chi lo vuole vedere apre la pagina con
 `prova-cloud-personale`.
 
 **Il browser delle prove disegna con WebGL** (novembre 2026, le mappe sono
-MapLibre): `apriBrowser` lo fa partire con le opzioni che fanno fare WebGL
-al processore (SwiftShader). Sono lente: una pagina con la mappa che si
-disegna può far salire un foglio più piano, quindi si aspetta lo stato (il
-foglio fermo) e non un numero fisso di millisecondi, e i tempi si misurano
-con una prova sola alla volta. E cambiano anche come si disegna un SVG su
-una tela: chi vuole i pixel di sempre (le icone, `fai-le-icone.js`) apre il
-browser con `apriBrowser({ webgl: false })`.
+MapLibre): il Chromium di Playwright lo fa col processore (SwiftShader), e
+`apriBrowser` aggiunge solo `--enable-unsafe-swiftshader`, che glielo lascia
+usare anche dove andrebbe chiesto. **Non si aggiungono
+`--use-angle=swiftshader` e `--ignore-gpu-blocklist`**: ci sono state per
+un giorno, e facevano passare da SwiftShader tutto il disegno della pagina.
+Una mappa nasceva in 1,4 secondi invece di 0,15, e su GitHub la batteria è
+passata da 66 minuti a quasi due ore, con due prove fermate al limite. Anche
+così una mappa che si disegna può rallentare un foglio che sale: si aspetta
+lo stato (il foglio fermo) e non un numero fisso di millisecondi, e i tempi
+si misurano con una prova sola alla volta. Chi vuole i pixel di sempre (le
+icone, `fai-le-icone.js`) apre il browser con `apriBrowser({ webgl: false })`.
 
 
 Il cloud di GeppGo si regge su una riga sola. L'app chiede i viaggi così:

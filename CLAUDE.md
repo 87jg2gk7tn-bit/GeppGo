@@ -149,7 +149,12 @@ quel file è la memoria.
   Programma, Tutto il viaggio col globo, la scheda del viaggio, la scheda di
   un posto); le mappine dei risultati di Scopri sono immagini ferme
   (`mappinaFerma`), perché otto mappe WebGL una sotto l'altra un telefono
-  non le regge. Ogni mappa porta la citazione «Powered by Esri · ©
+  non le regge. Una mappa WebGL non si rifà a ogni disegno: quella di Oggi
+  resta viva fra un disegno della Home e l'altro (`homeMapTenibile`), e si
+  rifanno solo segnaposto e percorso. MapLibre si chiede a schermata
+  d'apertura sparita (`dopoLApertura`), mai durante l'avvio, perché non
+  contenda la banda alla prima schermata. Ogni mappa porta la citazione
+  «Powered by Esri · ©
   OpenStreetMap · Fonti» (`dirittiMappa`; «Fonti» apre l'elenco di chi ha
   fatto immagini e dati) in un angolo senza tasti, e nello stesso angolo
   l'avviso quando la mappa satellitare non c'è. **Senza rete**: la service
