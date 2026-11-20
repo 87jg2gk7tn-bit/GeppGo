@@ -1880,9 +1880,25 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   aggiunge l'app a pezzi, caratteri e simboli (`conChiave`). La forma delle
   risposte di Esri qui non si poteva vedere (la chiave vale solo dal sito):
   viene dalle prove del plugin ufficiale (`@esri/maplibre-arcgis` su npm), ed
-  è quella che imita `test/esri-finto.js`. **Da guardare dal vivo** dopo la
-  pubblicazione: gli indirizzi veri dei pezzi, le intestazioni Cache-Control
-  (quanto restano i pezzi senza rete) e quanti pezzi costa un'apertura.
+  è quella che imita `test/esri-finto.js`. **Guardata dal vivo il 20
+  novembre** (`node test/mappe-dal-vivo.js`, sul sito pubblicato): stile e
+  pezzi arrivano tutti (stato 200), la forma è quella del finto (foto da
+  `ibasemaps-api.arcgis.com/…/World_Imagery`, strade e nomi da
+  `basemaps-api.arcgis.com/…/World_Basemap_v2`, simboli da `cdn.arcgis.com`),
+  e la citazione porta le fonti vere.
+- **Quanto si possono tenere, secondo le intestazioni di Esri** (20 novembre):
+  la foto dal satellite 1 giorno (`max-age=86400`), strade e nomi 12 ore
+  (43200), lo stile 10 minuti (600), simboli e caratteri 5 minuti (300). La
+  service worker tiene ognuno per il suo tempo, non di più. **Il limite che
+  conta è lo stile**: con l'app aperta resta in memoria e la mappa va
+  anche senza rete per tutto il giorno dei pezzi guardati; ma se l'app
+  riparte senza rete più di 10 minuti dopo, lo stile non c'è e la mappa
+  mostra segnaposto e percorso con l'avviso. **Da decidere**: la foto dal
+  satellite si può disegnare senza lo stile di Esri (l'indirizzo dei pezzi
+  è noto), con uno stile fatto dall'app e i pezzi tenuti entro il loro
+  giorno; le condizioni lo permettono (si usa solo cache valida), ma
+  andrebbe riletto prima. Per l'offline vero resta la strada dell'app nativa
+  (vedi in cima).
 - **Senza rete, cosa permette Esri** (ArcGIS Location Platform Agreement,
   E204, rev. 21/11/2025): 3.1 d.6 vieta di scaricare o estrarre dati in
   blocco, e permette la cache solo «come permesso dalle intestazioni di
@@ -1895,7 +1911,8 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   per quanto restano. I pezzi presi dalla cache del telefono non si pagano.
 - **Pezzi per apertura** (390×844, con Esri finto): Oggi **4** pezzi della
   foto (più qualche pezzo di strade e nomi e lo stile, una volta sola),
-  il Programma **3**. Prima del ritocco Oggi ne chiedeva **20–24**: la mappa
+  il Programma **3**; dal vivo, con Esri vero, Oggi **6** e il Programma
+  **3**. Prima del ritocco Oggi ne chiedeva **20–24**: la mappa
   nasceva inquadrando la giornata e poi volava sulla tappa in mano, e il volo
   chiede tutti i pezzi che attraversa. Ora nasce già lì, a `ZOOM_TAPPA`
   (14,5), e la prima scelta salta senza volare.
