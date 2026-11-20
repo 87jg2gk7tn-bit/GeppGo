@@ -706,6 +706,12 @@ const SPIA_AVVISI = permesso => {
         for (const [nome, js, sel] of SCHERMI) {
           await page.evaluate(js);
           await page.waitForTimeout(nome.startsWith('mappa') ? 900 : 350);
+          /* Si misura a schermata ferma, come fa prova-accessibilita: le
+             animazioni in corso si portano alla fine. L'entrata delle pagine
+             (.page) dura 350 ms, quanto l'attesa qui sopra, e con un
+             fotogramma di ritardo axe trovava la Home ancora un po'
+             trasparente: nel tema scuro i colori sbiaditi non reggevano. */
+          await page.evaluate(() => document.getAnimations().forEach(x => { try { x.finish(); } catch (e) {} }));
           await page.evaluate(() => document.querySelectorAll('.prox.avv').forEach(e => e.remove()));
           const m = await page.evaluate(s => {
             const radice = document.querySelector(s);
