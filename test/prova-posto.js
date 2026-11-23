@@ -394,6 +394,10 @@ const scheda = p => p.evaluate(() => {
     const p = await pagina(browser, { larghezza: w, altezza: h });
     await p.evaluate(() => { go('plan'); tapAct(0, 11); });
     await pausa(1500);
+    /* quello che arriva dalla rete (OpenStreetMap, Wikipedia) ridisegna i
+       foglietti: si misura dopo */
+    await p.waitForFunction(() => { const P = psDati(); return !!P && psExtraMemo.has(psChiave(P)); }, null, { timeout: 8000 }).catch(() => {});
+    await pausa(500);
     /* I tasti si toccano come un dito (come in prova-accessibilita): nove
        punti a 21 px dal centro devono prenderli. La citazione della mappa e il
        credito delle foto hanno i loro link piccoli, come in ogni mappa e in
@@ -401,7 +405,10 @@ const scheda = p => p.evaluate(() => {
     const m = await p.evaluate(async () => {
       const sh = document.querySelector('#mPosto .sheet'), r = sh.getBoundingClientRect();
       const piccoli = [];
-      for (const b of [...sh.querySelectorAll('button, a[href]')].filter(b => b.offsetParent && !b.closest('.g-angolo,.cp-credito,.ps-crediti,.a-mano'))) {
+      const tasti = () => [...sh.querySelectorAll('button, a[href]')].filter(b => b.offsetParent && !b.closest('.g-angolo,.cp-credito,.ps-crediti,.a-mano'));
+      for (let i = 0; i < tasti().length; i++) {
+        /* riletti a ogni passo: un pezzo ridisegnato non lascia tasti staccati */
+        const b = tasti()[i]; if (!b) break;
         b.scrollIntoView({ block: 'center', behavior: 'instant' });
         await new Promise(x => requestAnimationFrame(x));
         const q = b.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;

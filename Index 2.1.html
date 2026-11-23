@@ -2836,6 +2836,7 @@ body.dark .og-vetro{background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.
 #plan .og-gradi .hh-grado-m{font-size:var(--fs-s);font-weight:600;margin:0;vertical-align:0;color:inherit}
 #plan .og-testa .hh-city{font-family:'Fraunces',serif;font-weight:600;font-size:var(--fs-citta);line-height:.86;letter-spacing:-.035em;color:#FFFCF3;padding:0 0 .1em;margin-top:-2px;
   text-shadow:0 2px 18px rgba(10,18,34,.35);pointer-events:auto;max-width:calc(100% - 70px);overflow-wrap:anywhere}
+#plan .og-testa .hh-city{cursor:default}
 #plan .og-testa .hh-city[onclick]{cursor:pointer}
 /* L'interlinea stretta dell'anteprima va bene per «Osaka»; un nome con le
    code (la y di Kyoto, la g di Parigi) le infilerebbe nella frase sotto. Li'
@@ -2903,8 +2904,10 @@ body.dark .og-chiave .c-nota{color:rgba(243,236,220,.76)}
 #plan .og-biglietto .biglietto{--strappo:104px}
 
 /* ── sotto il biglietto: i giorni, la ricerca, le schede quando servono ── */
-/* in fondo 8 px: con i 16 della pubblicita' (o di «Da prenotare») fanno i 24 fra le sezioni */
-#plan .og-sotto{margin-top:var(--sp-6);padding-bottom:var(--sp-2)}
+#plan .og-sotto{margin-top:var(--sp-6)}
+/* fra Oggi e quello che viene dopo (la pubblicita', «Da prenotare») i 24 px
+   fra le sezioni: il margine si fonde con i 16 di sotto, e vince il piu' grande */
+#plan #homeHero{margin-bottom:var(--sp-5)}
 #plan .og-sotto .hh-sec{margin:0 2px var(--sp-1)}
 #plan .og-sotto .hh-sec-t{font-family:'Fraunces',serif;font-size:var(--fs-xl);font-weight:600}
 #plan .og-sotto .hh-days{margin-top:0}
@@ -16791,7 +16794,11 @@ function testataStretta(){
   /* Con un viaggio il marchio non c'e' comunque: niente da misurare, e
      renderAll non paga un ricalcolo della pagina in piu'. */
   if(riga.classList.contains('con-viaggio'))return;
-  if(nome.scrollWidth>nome.clientWidth+1)riga.classList.add('senza-marchio');
+  /* si misura il testo vero, coi decimali: scrollWidth e clientWidth sono
+     arrotondati, e a 430 px sulla barra di vetro di Oggi mancava un pixel e
+     mezzo che loro non vedevano (e «I tuoi viaggi» finiva coi puntini) */
+  const rg=document.createRange();rg.selectNodeContents(nome);
+  if(rg.getBoundingClientRect().width>nome.getBoundingClientRect().width+.25)riga.classList.add('senza-marchio');
 }
 /* Le tre righine sono un interruttore: se il cassetto e' gia' fuori,
    ritoccarle lo rimanda dentro. Un tasto che apre e basta costringe a
@@ -17929,6 +17936,11 @@ const CIELO_SFUMA_CARTA=[[0,null,1],[.4,null,1],[1,null,0]];
 function tingiCielo(box){
   const hh=box&&box.querySelector('.hh');if(!hh)return;
   const q=hh.getBoundingClientRect();if(!q.height)return;
+  /* I colori si leggono dal foglio di stile, con una sonda: se in quel
+     momento non si leggono (tutto trasparente, come quando una prova
+     nasconde le scritte per fotografare il fondo), ogni colore sembrerebbe
+     nero e sotto le scritte comparirebbe un fondo nero. Si lascia stare. */
+  if(coloreCss('#ffffff').join()!=='255,255,255')return;
   const cs=getComputedStyle(hh);
   const alto=coloreCss((hh.classList.contains('cielo')&&cs.getPropertyValue('--cl-alto').trim())||cs.getPropertyValue('--cielo-a').trim());
   const carta=coloreCss(cs.getPropertyValue('--paper').trim());
@@ -29038,6 +29050,11 @@ function bindBlockDrag(el,act,t,d){
     if(e.target.closest('.tszr')||e.target.closest('.tt-child'))return;
     const r=actRange(act);if(!r)return;
     pid=e.pointerId;sy=e.clientY;sx=e.clientX;orig=r[0];ns=orig;dur=r[1]-r[0];hadEnd=!!act.timeEnd;
+    /* Il dito che tiene la tappa e' gia' lo spostamento: nei 600 ms prima
+       dell'aggancio partiva la richiesta dei tempi, e la giornata si
+       ridisegnava sotto il dito. Si spegne quando il dito si alza (o il
+       telefono prende lo scorrimento: pointercancel), come sempre. */
+    ttStaSpostando=true;
     disarma();armato=setTimeout(aggancia,PRESSIONE_LUNGA_MS);
   });
   el.addEventListener('pointermove',e=>{
@@ -34168,7 +34185,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-23 15:30';
+const VERSIONE_APP='2026-11-23 20:45';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

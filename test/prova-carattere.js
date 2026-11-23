@@ -160,6 +160,10 @@ const RADICI = `(() => { const a = [...document.querySelectorAll('.modal.active'
       await page.waitForTimeout(100);
       await page.click('.nav-item[data-p="mDay"]');
       await page.waitForTimeout(700);
+      /* Il Programma scende al fotogramma (ttApriDoveServe): con la macchina
+         carica un fotogramma arrivava dopo i 700 ms, e si misurava la pagina
+         ancora in cima. Si aspettano due fotogrammi, non piu' tempo fisso. */
+      await page.evaluate(() => new Promise(ok => { const basta = setTimeout(ok, 3000); requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(basta); ok(); })); }));
       return page;
     }
     const breve = m => `scorso ${m.st} di ${m.giu}; testata ${m.testa ? (m.testa.vista ? 'a vista' : 'NON a vista') : 'MANCA'}; ` + m.blocchi.map(b => `${b.id} ${b.top}→${b.bottom}${b.vista ? '' : ' (no)'}`).join(', ');

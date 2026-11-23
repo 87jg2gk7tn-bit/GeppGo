@@ -448,7 +448,8 @@ function statico() {
       const bVisti = v.condividi.grassetto, bAttesi = v.condividi.attese;
       if (v.condividi.resta.length || v.condividi.restaLocale.length || !bAttesi.every(a => bVisti.includes(a)))
         male.condividi.push(`${l}: resta ${JSON.stringify(v.condividi.resta.concat(v.condividi.restaLocale))}, frasi col grassetto ${JSON.stringify(bVisti).slice(0, 160)}`);
-      if (!v.spostamento.testo.includes(v.spostamento.atteso) || /Come ci arrivi|dalla tappa prima|non necessario/.test(v.spostamento.testo)) male.spostamento.push(`${l}: «${v.spostamento.testo.slice(0, 80)}»`);
+      /* l'etichetta «Come ci arrivi» e' in maiuscolo spaziato (CSS): si confronta senza badare alle maiuscole */
+      if (!v.spostamento.testo.toLowerCase().includes(v.spostamento.atteso.toLowerCase()) || /Come ci arrivi|dalla tappa prima|non necessario/i.test(v.spostamento.testo)) male.spostamento.push(`${l}: «${v.spostamento.testo.slice(0, 80)}»`);
       if (v.email.codice !== v.email.codiceAtteso || /Invio email/.test(v.email.codice) || v.email.link !== v.email.linkAtteso || !v.email.link.includes('q@x.it') || /inviato/.test(v.email.link))
         male.email.push(`${l}: «${v.email.codice}» / «${v.email.link.slice(0, 60)}»`);
     }

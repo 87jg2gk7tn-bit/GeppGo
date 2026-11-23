@@ -378,7 +378,18 @@ async function giro(browser, { lingua = 'it', larghezza = 390, tema = 'chiaro', 
     document.querySelectorAll('.scroll,.sheet').forEach(x => { x.scrollTop = 0; });
     window.scrollTo(0, 0);
   });
+  /* Si misura la schermata disegnata. Ruoli, nomi e traduzioni l'app li mette
+     al fotogramma (requestAnimationFrame), prima di disegnare: chi guarda il
+     telefono non vede mai lo stato di mezzo. Con quattro giri in parallelo e
+     le mappe WebGL fatte dal processore (Oggi ridisegnata, novembre 2026) un
+     fotogramma arrivava dopo i 260 ms d'attesa, e la prova leggeva la pagina
+     fra la modifica e il disegno: tasti senza nome in schermate mai toccate. */
+  const disegnata = () => page.evaluate(() => new Promise(ok => {
+    const basta = setTimeout(ok, 3000);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(basta); ok(); }));
+  }));
   const leggi = async nome => {
+    await disegnata();
     esiti[nome] = await guarda(page, nome);
     (await page.evaluate(() => [...document.querySelectorAll('.modal.active')].map(m => m.id))).forEach(a => aperte.add(a));
   };
