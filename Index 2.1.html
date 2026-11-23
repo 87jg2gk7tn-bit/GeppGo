@@ -2726,6 +2726,10 @@ body.su-oggi{background-image:var(--grana)}
 /* sul cielo scuro il vetro e' scuro e la scritta bianca (oggi-a e oggi-b) */
 .su-oggi.oggi-buio .topbar:not(.ferma) .menu-btn,.su-oggi.oggi-buio .topbar:not(.ferma) .gps-pill:not(.on),.su-oggi.oggi-buio .topbar:not(.ferma) .th-btn{
   border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff}
+/* sul cielo grigio (la pioggia di giorno, nel tema chiaro) il vetro chiaro
+   schiariva il fondo e il bianco si leggeva a 4,2:1: li' il vetro e' scuro.
+   Di notte resta quello dell'anteprima, chiaro sul blu della notte. */
+.su-oggi.oggi-grigio .topbar:not(.ferma) .menu-btn,.su-oggi.oggi-grigio .topbar:not(.ferma) .gps-pill:not(.on),.su-oggi.oggi-grigio .topbar:not(.ferma) .th-btn{background:rgba(10,18,34,.26)}
 body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .menu-btn,body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .gps-pill:not(.on),body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .th-btn{
   background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.2)}
 body.dark.su-oggi .topbar:not(.ferma) .tb-profilo{background:rgba(10,18,34,.4);color:var(--avorio);border:1px solid var(--nastro)}
@@ -2834,6 +2838,10 @@ body.dark .og-vetro{background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.
 /* sul cielo chiaro di giorno il vetro e' chiaro e la scritta d'inchiostro
    (og-buio lo mette ogBuio, guardando il colore vero del cielo) */
 .og-palco:not(.og-buio) .og-vetro{border-color:rgba(255,255,255,.75);background:rgba(255,252,246,.74);color:var(--oro-su);box-shadow:0 6px 16px rgba(30,26,18,.2)}
+/* sul cielo grigio il vetro scuro, come i tasti della barra (vedi sopra) */
+.og-palco.og-grigio .og-vetro{background:rgba(10,18,34,.26)}
+/* l'adesivo del giorno che toccherebbe il meteo va a capo (ogAdesivoACapo) */
+#plan .og-testa .hh-mood .adesivo.in-riga.a-capo{display:block;width:max-content;max-width:100%;margin-top:6px}
 #plan .og-gradi{position:absolute;right:var(--og-dx);top:calc(166px + env(safe-area-inset-top));z-index:3;min-width:64px;min-height:44px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;
   padding:0;border:0;background:none;color:#fff;font-family:inherit;font-size:var(--fs-s);font-weight:600;line-height:1;letter-spacing:0;text-shadow:0 1px 10px rgba(10,18,34,.5);cursor:pointer}
 #plan .og-gradi b{font-family:'Fraunces',serif;font-size:var(--fs-gradi);font-weight:600;letter-spacing:-.02em;line-height:1}
@@ -17535,16 +17543,35 @@ function ogTuttoIlViaggio(){
   if(menoMovimento()){salta();return;}
   pal.classList.add('cambio');setTimeout(salta,300);
 }
+/* L'adesivo del giorno sta in riga con l'umore («sera piovosa primo
+   giorno!»), come nell'anteprima. Con un umore lungo («sera tempestosa», o
+   in un'altra lingua) finiva sotto il meteo, a destra, e copriva «Meteo ›».
+   Se lo tocca va a capo, sotto l'umore; se no resta dov'e'. Lo guarda
+   tingiCielo, che passa dopo ogni disegno, a ogni cambio di misura e quando
+   arriva il carattere a mano (che cambia la larghezza dell'adesivo). */
+function ogAdesivoACapo(hh){
+  const ad=hh&&hh.querySelector('.og-testa .hh-mood .adesivo.in-riga');
+  /* le scritte del meteo, non il suo tasto: a sinistra il tasto ha uno
+     spazio vuoto, e l'adesivo dell'anteprima ci arriva gia' */
+  const scritte=hh?[...hh.querySelectorAll('.og-testa .og-gradi b,.og-testa .og-gradi .hh-grado-m')]:[];
+  if(!ad||!scritte.length)return;
+  ad.classList.remove('a-capo');
+  const a=ad.getBoundingClientRect();
+  if(a.width&&scritte.some(s=>{const g=s.getBoundingClientRect();return g.width&&a.right>g.left-2&&a.left<g.right&&a.bottom>g.top&&a.top<g.bottom;}))ad.classList.add('a-capo');
+}
 /* Il cielo e' scuro o chiaro? Lo dice il suo colore vero, non il tempo che
    fa: i tasti di vetro, la barra in alto e le scritte si regolano su questo. */
 function ogBuio(pal){
-  let buio=false;
+  let buio=false,grigio=false;
   if(pal){
-    const cs=getComputedStyle(pal),c=coloreCss((cs.getPropertyValue('--cl-alto')||'').trim()||cs.getPropertyValue('--cielo-a').trim());
-    buio=pal.classList.contains('notte')||luceRel(c)<.2;
-    pal.classList.toggle('og-buio',buio);
+    const cs=getComputedStyle(pal),c=coloreCss((cs.getPropertyValue('--cl-alto')||'').trim()||cs.getPropertyValue('--cielo-a').trim()),l=luceRel(c);
+    buio=pal.classList.contains('notte')||l<.2;
+    /* scuro ma non abbastanza (la pioggia di giorno): il vetro chiaro dei
+       tasti lo schiariva troppo per il bianco, li' il vetro e' scuro */
+    grigio=buio&&l>.09;
+    pal.classList.toggle('og-buio',buio);pal.classList.toggle('og-grigio',grigio);
   }
-  document.body.classList.toggle('oggi-buio',buio);
+  document.body.classList.toggle('oggi-buio',buio);document.body.classList.toggle('oggi-grigio',grigio);
 }
 /* La barra in alto: di vetro sul cielo, col suo fondo quando la pagina e'
    scesa oltre il cielo (sotto, le scritte della pagina le passerebbero dietro). */
@@ -17978,11 +18005,19 @@ function contrastoDi(a,b){const x=luceRel(a),y=luceRel(b);return (Math.max(x,y)+
    [dove, colore, quanto copre]. Senza mappa il cielo sfuma nella carta. */
 const CIELO_NOTTE_A=[[0,[22,38,63],1],[.30,[29,48,77],1],[.52,[47,67,98],1],[.66,[63,81,112],1],[.76,[84,92,116],.9],[.87,[150,120,104],.56],[.95,[226,190,140],.2],[1,[240,210,160],0]];
 const CIELO_NOTTE_B=[[0,[7,13,28],1],[.32,[11,22,48],1],[.56,[17,31,61],1],[.70,[17,29,56],.9],[.85,[15,25,48],.55],[1,[12,20,40],0]];
-const CIELO_SFUMA=[[0,null,1],[.66,null,1],[.76,null,.9],[.87,null,.56],[.95,null,.2],[1,null,0]];
+/* Di giorno il cielo e' il suo colore pieno fino al 52% e poi sfuma nel
+   trasparente, e sopra c'e' la maschera (piena fino al 66%): quanto copre e'
+   il prodotto delle due. Prima si contava solo la maschera, e a meta' del
+   cielo (dove sta «Meteo ›») il conto non vedeva il quinto di fotografia che
+   passa gia': col cielo di pioggia il bianco sembrava bastare e non bastava. */
+const CIELO_SFUMA=[[0,null,1],[.52,null,1],[.66,null,.708],[.76,null,.45],[.87,null,.152],[.95,null,.021],[1,null,0]];
 const CIELO_SFUMA_CARTA=[[0,null,1],[.4,null,1],[1,null,0]];
 function tingiCielo(box){
   const hh=box&&box.querySelector('.hh');if(!hh)return;
   const q=hh.getBoundingClientRect();if(!q.height)return;
+  /* prima si sistema la riga dell'umore (vedi ogAdesivoACapo): i conti
+     dei colori guardano dove stanno davvero le scritte */
+  if(hh.classList.contains('og-palco'))ogAdesivoACapo(hh);
   /* I colori si leggono dal foglio di stile, con una sonda: se in quel
      momento non si leggono (tutto trasparente, come quando una prova
      nasconde le scritte per fotografare il fondo), ogni colore sembrerebbe
@@ -18050,7 +18085,17 @@ function tingiCielo(box){
     fondo(y,r).forEach(b=>{out.push(b);veli.forEach(([c,a,dove])=>{const k=a*m*dove(f,y-q.top,r);if(k>0.01)out.push(b.map((v,i)=>v*(1-k)+c[i]*k));});});
     return out;
   };
-  const sotto=el=>{const r=el.getBoundingClientRect();return [r.top+1,(r.top+r.bottom)/2,r.bottom-1].flatMap(y=>fondiA(y,r));};
+  /* Dell'umore conta la riga scritta: con l'adesivo andato a capo il
+     paragrafo e' alto due righe, e il conto guardava anche giu', dove
+     passa la mappa (e l'oro dell'anteprima diventava nero per niente). */
+  const rettScritta=el=>{
+    if(!el.matches('.hh-mood'))return el.getBoundingClientRect();
+    const rr=[];
+    el.childNodes.forEach(n=>{if(n.nodeType===3&&n.data.trim()){const g=document.createRange();g.selectNodeContents(n);rr.push(...[...g.getClientRects()].filter(x=>x.width));}});
+    if(!rr.length)return el.getBoundingClientRect();
+    return {left:Math.min(...rr.map(x=>x.left)),top:Math.min(...rr.map(x=>x.top)),right:Math.max(...rr.map(x=>x.right)),bottom:Math.max(...rr.map(x=>x.bottom))};
+  };
+  const sotto=el=>{const r=rettScritta(el);return [r.top+1,(r.top+r.bottom)/2,r.bottom-1].flatMap(y=>fondiA(y,r));};
   const buio=hh.classList.contains('cl-buio')||hh.classList.contains('og-buio');
   CIELO_SCRITTE.forEach(([sel,chiari,scuri,soglia])=>hh.querySelectorAll(sel).forEach(el=>{
     let op=1;for(let x=el;x&&x!==hh;x=x.parentElement)op*=parseFloat(getComputedStyle(x).opacity)||1;
@@ -18072,7 +18117,7 @@ function tingiCielo(box){
        prende un fondo del colore del cielo, sfumato, come sulle altre
        schermate (tingiPagina), e il colore si sceglie su quello. */
     if(palco&&!regge){
-      const qe=el.getBoundingClientRect(),c=cieloA((qe.top+qe.bottom)/2),m=c.map(Math.round).join(',');
+      const qe=rettScritta(el),c=cieloA((qe.top+qe.bottom)/2),m=c.map(Math.round).join(',');
       el.style.backgroundColor='rgb('+m+')';el.style.boxShadow='0 0 8px 8px rgb('+m+')';el.style.borderRadius='var(--r-ctl)';
       scelto=scegli([c]).c;
     }
@@ -34248,7 +34293,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-23 21:17';
+const VERSIONE_APP='2026-11-23 22:53';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
