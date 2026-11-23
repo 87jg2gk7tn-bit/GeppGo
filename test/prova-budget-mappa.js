@@ -391,7 +391,13 @@ const SPIA_AVVISI = permesso => {
       save(); renderAll();
     }, [id, amount, cat, among]);
     const togli = id => page.evaluate(i => { T().expenses = T().expenses.filter(e => e.id !== i); save(); renderAll(); }, id);
-    const avvisi = async () => { await page.waitForTimeout(650); return page.evaluate(() => window.__avvisi.map(a => (a.dove && a.dove.tipo) + ':' + a.testo)); };
+    /* Il conto dei tetti parte 400 ms dopo il disegno (controllaTettiPresto).
+       L'orologio della pagina e' quello finto di Playwright: aspettando 650 ms
+       veri, a volte il suo timer non era ancora scattato (dopo le sezioni 1-3,
+       con Oggi che ormai non ridisegna niente a vuoto), e l'avviso arrivava
+       alla misura dopo. Si fa avanzare l'orologio: i timer scattano in ordine,
+       sempre. */
+    const avvisi = async () => { await page.clock.runFor(650); await page.waitForTimeout(50); return page.evaluate(() => window.__avvisi.map(a => (a.dove && a.dove.tipo) + ':' + a.testo)); };
     await spendi(1, 70);
     let a = await avvisi();
     ok('4. sotto l\'80% nessun avviso', a.length === 0, a.join(' | '));

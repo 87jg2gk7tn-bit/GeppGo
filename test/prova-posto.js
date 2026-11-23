@@ -267,6 +267,11 @@ const scheda = p => p.evaluate(() => {
       const p = await pagina(browser, { lingua });
       await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
       await pausa(2500);
+      /* Wikidata, Wikipedia, Commons e OpenStreetMap arrivano uno dopo
+         l'altro: con la macchina carica i 2,5 secondi non bastavano, e in
+         francese si guardava la scheda prima che arrivasse niente. Si
+         aspetta che ci siano, fino a 15 secondi. */
+      await p.waitForFunction(() => { const c = document.getElementById('psCorpo'); return !!((document.getElementById('psFrase') || {}).textContent && c.querySelector('#psStoria .ps-storia-x') && c.querySelectorAll('#psCollage .stampa.appiccicata').length >= 3 && /09:00/.test(c.textContent)); }, null, { timeout: 15000 }).catch(() => {});
       const w = await p.evaluate(() => {
         const c = document.getElementById('psCorpo'), img = c.querySelector('.copertina .cp-foto');
         const st = [...c.querySelectorAll('#psCollage .stampa.appiccicata')];
