@@ -28,6 +28,10 @@ const AXE = require.resolve('axe-core/axe.min.js');
 const r = [], err = [];
 const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 const pausa = ms => new Promise(x => setTimeout(x, ms));
+/* Una sezione che si ferma si dice, e le altre vanno avanti: sul codice di
+   prima (la controprova) la prova deve bocciare sezione per sezione, non
+   cadere alla prima schermata che manca. */
+const sezione = async (n, f) => { try { await f(); } catch (e) { ok(`${n}. si è fermata`, false, String((e && e.message) || e).split('\n')[0].slice(0, 200)); } };
 const PONTE = /geppgo-ai\.merati-giacomo94\.workers\.dev/;
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type', 'access-control-allow-methods': 'POST, OPTIONS' };
 
@@ -116,7 +120,7 @@ const scheda = p => p.evaluate(() => {
   const browser = await apriBrowser();
 
   // ── 1. una scheda sola, da cinque posti ──────────────────────────────
-  {
+  await sezione('1', async () => {
     const p = await pagina(browser);
     /* da Oggi: il tocco su una scheda-foto */
     await p.evaluate(() => go('plan'));
@@ -175,10 +179,10 @@ const scheda = p => p.evaluate(() => {
     ok('1. e nell\'app «Apri la scheda» sta davvero sotto il risultato di Identifica', fonte);
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 2. foglietti e biglietti ─────────────────────────────────────────
-  {
+  await sezione('2', async () => {
     const p = await pagina(browser);
     await p.evaluate(() => { go('plan'); tapAct(0, 11); });
     await pausa(1500);
@@ -219,10 +223,10 @@ const scheda = p => p.evaluate(() => {
     ok('2. una tappa senza note invita a scriverla («Scrivi una nota»)', /Scrivi una nota/.test(vuota), vuota);
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 3. la riga dell'assistente ───────────────────────────────────────
-  {
+  await sezione('3', async () => {
     let p = await pagina(browser);
     await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
     await pausa(2500);
@@ -255,39 +259,41 @@ const scheda = p => p.evaluate(() => {
     ok('3. con i consigli del viaggio spenti non si chiede niente all\'assistente', p.__ai.perche === 0 && await p.evaluate(() => document.getElementById('psPerche').hidden), p.__ai.perche + ' richieste');
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 4. dalla rete, nella lingua dell'app ─────────────────────────────
-  for (const lingua of ['it', 'fr']) {
-    const p = await pagina(browser, { lingua });
-    await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
-    await pausa(2500);
-    const w = await p.evaluate(() => {
-      const c = document.getElementById('psCorpo'), img = c.querySelector('.copertina .cp-foto');
-      const st = [...c.querySelectorAll('#psCollage .stampa.appiccicata')];
-      return { frase: (document.getElementById('psFrase') || {}).textContent || '', storia: (c.querySelector('#psStoria .ps-storia-x') || {}).textContent || '', corta: !!c.querySelector('#psStoria .ps-storia-x.corta'),
-        wiki: (c.querySelector('#psStoria a') || {}).href || '', credito: (document.getElementById('psCredito') || {}).textContent || '',
-        srcset: img && img.getAttribute('srcset'), sizes: img && img.getAttribute('sizes'), foto: st.length, etichette: st.map(x => (x.querySelector('.a-mano') || {}).textContent || ''), pigre: st.every(x => x.querySelector('img').getAttribute('loading') === 'lazy'),
-        crediti: (c.querySelector('.ps-crediti') || {}).textContent || '', orari: [...c.querySelectorAll('#psFoglietti .foglietto')].map(x => x.textContent).join(' | ') };
-    });
-    const frase = lingua === 'it' ? 'tempio buddista a Kyoto' : 'temple bouddhiste à Kyoto';
-    ok(`4. ${lingua}: la frase a mano è la descrizione breve di Wikidata nella lingua dell'app`, w.frase === frase, w.frase);
-    ok(`4. ${lingua}: «Un po' di storia» da Wikipedia in quella lingua, corta con «continua», e il link`, w.storia.startsWith(`[${lingua}]`) && w.corta && new RegExp(`${lingua}\\.wikipedia\\.org`).test(w.wiki), w.storia.slice(0, 40));
-    ok(`4. ${lingua}: il credito della foto in copertina, da Commons`, /Copertina/.test(w.credito) && /CC BY-SA 4\.0/.test(w.credito), w.credito);
-    ok(`4. ${lingua}: tre altre foto appiccicate, con «foto di …» a mano, pigre, e i crediti sotto`, w.foto === 3 && w.etichette.every(e => /Fotografo/.test(e)) && w.pigre && /Wikimedia Commons/.test(w.crediti) && /CC BY-SA/.test(w.crediti), JSON.stringify(w.etichette));
-    ok(`4. ${lingua}: la copertina alla misura dello schermo (le misure di Wikimedia, sizes)`, /500px-/.test(w.srcset || '') && /960px-/.test(w.srcset || '') && /1280px-/.test(w.srcset || '') && /560px/.test(w.sizes || ''), (w.sizes || '') + ' · ' + (w.srcset || '').slice(0, 80));
-    ok(`4. ${lingua}: gli orari di OpenStreetMap di oggi`, /09:00–17:00/.test(w.orari), w.orari.slice(0, 120));
-    /* una volta per posto: riaprendo, niente si richiede */
-    const prima = Object.assign({}, p.__conta);
-    await p.evaluate(k => { closeSheet('mPosto'); openPlaceInfo(k); }, KINKAKU);
-    await pausa(1200);
-    ok(`4. ${lingua}: riaprendo la scheda, OpenStreetMap, Wikidata e Wikipedia non si richiedono`, p.__conta.osm === prima.osm && p.__conta.wikidata === prima.wikidata && p.__conta.wikipedia === prima.wikipedia, JSON.stringify([prima, p.__conta]));
-    err.push(...p.__errori);
-    await p.close();
-  }
+  await sezione('4', async () => {
+    for (const lingua of ['it', 'fr']) {
+      const p = await pagina(browser, { lingua });
+      await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
+      await pausa(2500);
+      const w = await p.evaluate(() => {
+        const c = document.getElementById('psCorpo'), img = c.querySelector('.copertina .cp-foto');
+        const st = [...c.querySelectorAll('#psCollage .stampa.appiccicata')];
+        return { frase: (document.getElementById('psFrase') || {}).textContent || '', storia: (c.querySelector('#psStoria .ps-storia-x') || {}).textContent || '', corta: !!c.querySelector('#psStoria .ps-storia-x.corta'),
+          wiki: (c.querySelector('#psStoria a') || {}).href || '', credito: (document.getElementById('psCredito') || {}).textContent || '',
+          srcset: img && img.getAttribute('srcset'), sizes: img && img.getAttribute('sizes'), foto: st.length, etichette: st.map(x => (x.querySelector('.a-mano') || {}).textContent || ''), pigre: st.every(x => x.querySelector('img').getAttribute('loading') === 'lazy'),
+          crediti: (c.querySelector('.ps-crediti') || {}).textContent || '', orari: [...c.querySelectorAll('#psFoglietti .foglietto')].map(x => x.textContent).join(' | ') };
+      });
+      const frase = lingua === 'it' ? 'tempio buddista a Kyoto' : 'temple bouddhiste à Kyoto';
+      ok(`4. ${lingua}: la frase a mano è la descrizione breve di Wikidata nella lingua dell'app`, w.frase === frase, w.frase);
+      ok(`4. ${lingua}: «Un po' di storia» da Wikipedia in quella lingua, corta con «continua», e il link`, w.storia.startsWith(`[${lingua}]`) && w.corta && new RegExp(`${lingua}\\.wikipedia\\.org`).test(w.wiki), w.storia.slice(0, 40));
+      ok(`4. ${lingua}: il credito della foto in copertina, da Commons`, /Copertina/.test(w.credito) && /CC BY-SA 4\.0/.test(w.credito), w.credito);
+      ok(`4. ${lingua}: tre altre foto appiccicate, con «foto di …» a mano, pigre, e i crediti sotto`, w.foto === 3 && w.etichette.every(e => /Fotografo/.test(e)) && w.pigre && /Wikimedia Commons/.test(w.crediti) && /CC BY-SA/.test(w.crediti), JSON.stringify(w.etichette));
+      ok(`4. ${lingua}: la copertina alla misura dello schermo (le misure di Wikimedia, sizes)`, /500px-/.test(w.srcset || '') && /960px-/.test(w.srcset || '') && /1280px-/.test(w.srcset || '') && /560px/.test(w.sizes || ''), (w.sizes || '') + ' · ' + (w.srcset || '').slice(0, 80));
+      ok(`4. ${lingua}: gli orari di OpenStreetMap di oggi`, /09:00–17:00/.test(w.orari), w.orari.slice(0, 120));
+      /* una volta per posto: riaprendo, niente si richiede */
+      const prima = Object.assign({}, p.__conta);
+      await p.evaluate(k => { closeSheet('mPosto'); openPlaceInfo(k); }, KINKAKU);
+      await pausa(1200);
+      ok(`4. ${lingua}: riaprendo la scheda, OpenStreetMap, Wikidata e Wikipedia non si richiedono`, p.__conta.osm === prima.osm && p.__conta.wikidata === prima.wikidata && p.__conta.wikipedia === prima.wikipedia, JSON.stringify([prima, p.__conta]));
+      err.push(...p.__errori);
+      await p.close();
+    }
+  });
 
   // ── 5. le azioni ─────────────────────────────────────────────────────
-  {
+  await sezione('5', async () => {
     const p = await pagina(browser);
     await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
     await pausa(1500);
@@ -341,90 +347,92 @@ const scheda = p => p.evaluate(() => {
     ok('5. «Aggiungi biglietto»: il biglietto nasce attaccato alla tappa, senza crearne un\'altra', tk.aperto && tk.giorno && tk.nome === 'Nishiki' && tk.act === 12 && tk.tappe === 3, JSON.stringify(tk));
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 6. come l'anteprima, cinque lingue, larghezze, axe, tasti ────────
-  for (const tema of ['chiaro', 'scuro']) {
-    const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await pa.goto('file://' + path.join(RADICE, 'anteprime', 'luogo.html'));
-    await pausa(1200);
-    const ant = await pa.evaluate(() => {
-      const b = s => { const e = document.querySelector(s); const x = e.getBoundingClientRect(); return { y: x.top + scrollY, h: x.height, w: x.width }; };
-      return { cop: b('.copertina'), nome: b('.nome span'), frase: b('.frase'), az: b('.aggiungi'), cart: b('.cartina'), dist: b('.distanza b') };
-    });
-    await pa.close();
-    const p = await pagina(browser, { tema });
-    await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
-    await pausa(2500);
-    const app = await p.evaluate(() => {
-      const sh = document.querySelector('#mPosto .sheet'), off = sh.getBoundingClientRect().top - sh.scrollTop;
-      const b = s => { const e = document.querySelector(s); if (!e) return null; const x = e.getBoundingClientRect(); return { y: x.top - off, h: x.height, w: x.width }; };
-      return { cop: b('#psCorpo .copertina'), nome: b('#psCorpo .cp-nome span'), frase: b('#psFrase'), az: b('#psCorpo .ps-azione'), cart: b('#psCorpo .cartina'), dist: b('#psCorpo .distanza b'), strappo: b('#psCorpo .copertina .strappo') };
-    });
-    const manca = Object.keys(app).filter(k => !app[k]);
-    ok(`6. ${tema}: ci sono gli elementi dell'anteprima (copertina strappata, nome enorme, frase a mano, tasto d'oro, cartina, distanza)`, !manca.length, manca.join(', '));
-    if (!manca.length) {
-      const ord = o => [o.cop.y, o.frase.y, o.az.y, o.cart.y, o.dist.y];
-      ok(`6. ${tema}: nello stesso ordine dell'anteprima`, ord(app).every((v, i, a) => !i || v > a[i - 1]), ord(app).map(Math.round).join(' < '));
-      ok(`6. ${tema}: con le stesse proporzioni (copertina, nome, tasto, cartina)`, Math.abs(app.cop.h - ant.cop.h) <= 6 && Math.abs(app.nome.h - ant.nome.h) <= 16 && app.az.h >= 54 && Math.abs(app.cart.h - ant.cart.h) <= 6 && Math.abs(app.frase.y - app.cop.h - (ant.frase.y - ant.cop.h)) <= 24,
-        `copertina ${Math.round(app.cop.h)}/${Math.round(ant.cop.h)}, nome ${Math.round(app.nome.h)}/${Math.round(ant.nome.h)}, cartina ${Math.round(app.cart.h)}/${Math.round(ant.cart.h)}`);
-    }
-    await p.addScriptTag({ path: AXE });
-    const v = await p.evaluate(async () => {
-      const res = await axe.run({ include: [document.querySelector('#mPosto')] }, { resultTypes: ['violations'] });
-      return res.violations.filter(x => x.impact === 'serious' || x.impact === 'critical').map(x => `${x.impact} ${x.id}: ${x.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')}`);
-    });
-    ok(`6. ${tema}: nessuna violazione grave o critica di axe nella scheda`, !v.length, v.join(' | ').slice(0, 400));
-    err.push(...p.__errori);
-    await p.close();
-  }
-  for (const lingua of ['en', 'es', 'fr', 'pt']) {
-    const p = await pagina(browser, { lingua });
-    await p.evaluate(() => { go('plan'); tapAct(0, 11); });
-    await pausa(1200);
-    const t = await p.evaluate(() => document.getElementById('psCorpo').innerText);
-    /* parole intere: «Navigate» contiene «Naviga» */
-    const rimasti = ['Aggiungi biglietto', 'Sposta', 'Modifica', 'Elimina la tappa', 'Come ci arrivi', 'Prenotazione', 'Indirizzo', 'Orari di', 'da prenotare', 'Naviga', 'dall\'albergo', 'Giorno 1', 'a piedi']
-      .filter(x => new RegExp('(^|[^\\p{L}])' + x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'u').test(t));
-    ok(`6. in ${lingua} niente italiano rimasto nella scheda di una tappa`, !rimasti.length, rimasti.join(', '));
-    err.push(...p.__errori);
-    await p.close();
-  }
-  for (const [w, h] of [[320, 700], [360, 780], [430, 932], [1024, 768]]) {
-    const p = await pagina(browser, { larghezza: w, altezza: h });
-    await p.evaluate(() => { go('plan'); tapAct(0, 11); });
-    await pausa(1500);
-    /* quello che arriva dalla rete (OpenStreetMap, Wikipedia) ridisegna i
-       foglietti: si misura dopo */
-    await p.waitForFunction(() => { const P = psDati(); return !!P && psExtraMemo.has(psChiave(P)); }, null, { timeout: 8000 }).catch(() => {});
-    await pausa(500);
-    /* I tasti si toccano come un dito (come in prova-accessibilita): nove
-       punti a 21 px dal centro devono prenderli. La citazione della mappa e il
-       credito delle foto hanno i loro link piccoli, come in ogni mappa e in
-       ogni didascalia (CC BY-SA chiede nome e licenza, non un tasto). */
-    const m = await p.evaluate(async () => {
-      const sh = document.querySelector('#mPosto .sheet'), r = sh.getBoundingClientRect();
-      const piccoli = [];
-      const tasti = () => [...sh.querySelectorAll('button, a[href]')].filter(b => b.offsetParent && !b.closest('.g-angolo,.cp-credito,.ps-crediti,.a-mano'));
-      for (let i = 0; i < tasti().length; i++) {
-        /* riletti a ogni passo: un pezzo ridisegnato non lascia tasti staccati */
-        const b = tasti()[i]; if (!b) break;
-        b.scrollIntoView({ block: 'center', behavior: 'instant' });
-        await new Promise(x => requestAnimationFrame(x));
-        const q = b.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
-        const male = [[0, 0], [-21, 0], [21, 0], [0, -21], [0, 21], [-15, -15], [15, -15], [-15, 15], [15, 15]].filter(([dx, dy]) => {
-          const h = document.elementFromPoint(cx + dx, cy + dy); return !h || (h !== b && !b.contains(h));
-        });
-        if (male.length) piccoli.push({ n: (b.textContent || b.className).trim().slice(0, 20), w: Math.round(q.width), h: Math.round(q.height), punti: male.map(x => x.join(',')).slice(0, 3).join(' ') });
+  await sezione('6', async () => {
+    for (const tema of ['chiaro', 'scuro']) {
+      const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await pa.goto('file://' + path.join(RADICE, 'anteprime', 'luogo.html'));
+      await pausa(1200);
+      const ant = await pa.evaluate(() => {
+        const b = s => { const e = document.querySelector(s); const x = e.getBoundingClientRect(); return { y: x.top + scrollY, h: x.height, w: x.width }; };
+        return { cop: b('.copertina'), nome: b('.nome span'), frase: b('.frase'), az: b('.aggiungi'), cart: b('.cartina'), dist: b('.distanza b') };
+      });
+      await pa.close();
+      const p = await pagina(browser, { tema });
+      await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
+      await pausa(2500);
+      const app = await p.evaluate(() => {
+        const sh = document.querySelector('#mPosto .sheet'), off = sh.getBoundingClientRect().top - sh.scrollTop;
+        const b = s => { const e = document.querySelector(s); if (!e) return null; const x = e.getBoundingClientRect(); return { y: x.top - off, h: x.height, w: x.width }; };
+        return { cop: b('#psCorpo .copertina'), nome: b('#psCorpo .cp-nome span'), frase: b('#psFrase'), az: b('#psCorpo .ps-azione'), cart: b('#psCorpo .cartina'), dist: b('#psCorpo .distanza b'), strappo: b('#psCorpo .copertina .strappo') };
+      });
+      const manca = Object.keys(app).filter(k => !app[k]);
+      ok(`6. ${tema}: ci sono gli elementi dell'anteprima (copertina strappata, nome enorme, frase a mano, tasto d'oro, cartina, distanza)`, !manca.length, manca.join(', '));
+      if (!manca.length) {
+        const ord = o => [o.cop.y, o.frase.y, o.az.y, o.cart.y, o.dist.y];
+        ok(`6. ${tema}: nello stesso ordine dell'anteprima`, ord(app).every((v, i, a) => !i || v > a[i - 1]), ord(app).map(Math.round).join(' < '));
+        ok(`6. ${tema}: con le stesse proporzioni (copertina, nome, tasto, cartina)`, Math.abs(app.cop.h - ant.cop.h) <= 6 && Math.abs(app.nome.h - ant.nome.h) <= 16 && app.az.h >= 54 && Math.abs(app.cart.h - ant.cart.h) <= 6 && Math.abs(app.frase.y - app.cop.h - (ant.frase.y - ant.cop.h)) <= 24,
+          `copertina ${Math.round(app.cop.h)}/${Math.round(ant.cop.h)}, nome ${Math.round(app.nome.h)}/${Math.round(ant.nome.h)}, cartina ${Math.round(app.cart.h)}/${Math.round(ant.cart.h)}`);
       }
-      sh.scrollTop = 0;
-      return { lato: sh.scrollWidth - sh.clientWidth, larga: r.width, centro: Math.round(r.left + r.width / 2 - innerWidth / 2), piccoli };
-    });
-    const forma = w >= 640 ? m.larga <= 560 && Math.abs(m.centro) <= 2 : m.larga === w;
-    ok(`6. a ${w} px la scheda ${w >= 640 ? 'è una scheda al centro, larga al massimo 560' : 'prende lo schermo'}, non scorre di lato, e i tasti sono da 44`, forma && m.lato <= 0 && !m.piccoli.length, JSON.stringify(m).slice(0, 300));
-    err.push(...p.__errori);
-    await p.close();
-  }
+      await p.addScriptTag({ path: AXE });
+      const v = await p.evaluate(async () => {
+        const res = await axe.run({ include: [document.querySelector('#mPosto')] }, { resultTypes: ['violations'] });
+        return res.violations.filter(x => x.impact === 'serious' || x.impact === 'critical').map(x => `${x.impact} ${x.id}: ${x.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')}`);
+      });
+      ok(`6. ${tema}: nessuna violazione grave o critica di axe nella scheda`, !v.length, v.join(' | ').slice(0, 400));
+      err.push(...p.__errori);
+      await p.close();
+    }
+    for (const lingua of ['en', 'es', 'fr', 'pt']) {
+      const p = await pagina(browser, { lingua });
+      await p.evaluate(() => { go('plan'); tapAct(0, 11); });
+      await pausa(1200);
+      const t = await p.evaluate(() => document.getElementById('psCorpo').innerText);
+      /* parole intere: «Navigate» contiene «Naviga» */
+      const rimasti = ['Aggiungi biglietto', 'Sposta', 'Modifica', 'Elimina la tappa', 'Come ci arrivi', 'Prenotazione', 'Indirizzo', 'Orari di', 'da prenotare', 'Naviga', 'dall\'albergo', 'Giorno 1', 'a piedi']
+        .filter(x => new RegExp('(^|[^\\p{L}])' + x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'u').test(t));
+      ok(`6. in ${lingua} niente italiano rimasto nella scheda di una tappa`, !rimasti.length, rimasti.join(', '));
+      err.push(...p.__errori);
+      await p.close();
+    }
+    for (const [w, h] of [[320, 700], [360, 780], [430, 932], [1024, 768]]) {
+      const p = await pagina(browser, { larghezza: w, altezza: h });
+      await p.evaluate(() => { go('plan'); tapAct(0, 11); });
+      await pausa(1500);
+      /* quello che arriva dalla rete (OpenStreetMap, Wikipedia) ridisegna i
+         foglietti: si misura dopo */
+      await p.waitForFunction(() => { const P = psDati(); return !!P && psExtraMemo.has(psChiave(P)); }, null, { timeout: 8000 }).catch(() => {});
+      await pausa(500);
+      /* I tasti si toccano come un dito (come in prova-accessibilita): nove
+         punti a 21 px dal centro devono prenderli. La citazione della mappa e il
+         credito delle foto hanno i loro link piccoli, come in ogni mappa e in
+         ogni didascalia (CC BY-SA chiede nome e licenza, non un tasto). */
+      const m = await p.evaluate(async () => {
+        const sh = document.querySelector('#mPosto .sheet'), r = sh.getBoundingClientRect();
+        const piccoli = [];
+        const tasti = () => [...sh.querySelectorAll('button, a[href]')].filter(b => b.offsetParent && !b.closest('.g-angolo,.cp-credito,.ps-crediti,.a-mano'));
+        for (let i = 0; i < tasti().length; i++) {
+          /* riletti a ogni passo: un pezzo ridisegnato non lascia tasti staccati */
+          const b = tasti()[i]; if (!b) break;
+          b.scrollIntoView({ block: 'center', behavior: 'instant' });
+          await new Promise(x => requestAnimationFrame(x));
+          const q = b.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
+          const male = [[0, 0], [-21, 0], [21, 0], [0, -21], [0, 21], [-15, -15], [15, -15], [-15, 15], [15, 15]].filter(([dx, dy]) => {
+            const h = document.elementFromPoint(cx + dx, cy + dy); return !h || (h !== b && !b.contains(h));
+          });
+          if (male.length) piccoli.push({ n: (b.textContent || b.className).trim().slice(0, 20), w: Math.round(q.width), h: Math.round(q.height), punti: male.map(x => x.join(',')).slice(0, 3).join(' ') });
+        }
+        sh.scrollTop = 0;
+        return { lato: sh.scrollWidth - sh.clientWidth, larga: r.width, centro: Math.round(r.left + r.width / 2 - innerWidth / 2), piccoli };
+      });
+      const forma = w >= 640 ? m.larga <= 560 && Math.abs(m.centro) <= 2 : m.larga === w;
+      ok(`6. a ${w} px la scheda ${w >= 640 ? 'è una scheda al centro, larga al massimo 560' : 'prende lo schermo'}, non scorre di lato, e i tasti sono da 44`, forma && m.lato <= 0 && !m.piccoli.length, JSON.stringify(m).slice(0, 300));
+      err.push(...p.__errori);
+      await p.close();
+    }
+  });
 
   await browser.close();
   ok('nessun errore in pagina', !err.length, err.slice(0, 3).join(' | '));

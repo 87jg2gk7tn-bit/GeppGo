@@ -2785,7 +2785,11 @@ button.og-spilla{width:48px;height:48px;padding:0;border:0;background:none;borde
 button.og-spilla.prossima{width:58px;height:58px}
 .og-spilla.prossima .sp-foto{border-color:var(--green);box-shadow:0 0 0 3px var(--bianco-foto),0 10px 20px rgba(20,17,11,.5)}
 .og-spilla.prossima b{background:var(--green);color:var(--oro-su)}
-.og-spilla.prossima .sp-corpo::after{content:'';position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--green);opacity:0;animation:og-eco 2.8s ease-out infinite}
+/* L'eco della prossima tappa batte tre volte quando la mappa si disegna, poi
+   si ferma. Nell'anteprima non finiva mai: sopra una mappa WebGL ogni battito
+   fa ridisegnare lo schermo, e con la pagina ferma il telefono non dormiva
+   (nelle prove: un processore intero). */
+.og-spilla.prossima .sp-corpo::after{content:'';position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--green);opacity:0;animation:og-eco 2.8s ease-out 3}
 .og-spilla.accesa .sp-foto{transform:scale(1.14)}
 .og-spilla.accesa b{transform:scale(1.14) translate(-2px,-2px)}
 @keyframes og-eco{0%{transform:scale(.8);opacity:.75}70%,100%{transform:scale(1.22);opacity:0}}
@@ -15741,8 +15745,31 @@ function nuovaMappa(el,opz){
          e una regola che MapLibre non conosce fermerebbe tutta la mappa
          invece di quella regola sola. */
       validateStyle:false,
+      /* la misura la segue l'app (vedi sotto), non MapLibre */
+      trackResize:false,
       fadeDuration:menoMovimento()?0:300,locale:paroleMappa()});
   }catch(e){console.log('La mappa non parte:',e);mappaNonSiPuo(el,'webgl');return null;}
+  /* Un riquadro che si nasconde (si cambia pagina, si chiude un foglio) per
+     MapLibre misura 0×0: prendeva la misura di ripiego, 400×300, e
+     ridisegnava subito tutta la mappa; tornando a vista, di nuovo, alla misura
+     vera. Due disegni interi a ogni cambio di pagina, per una mappa che
+     nessuno guardava: con quella di Oggi grande e inclinata erano secondi di
+     processore nelle prove, e batteria sul telefono. Qui si segue la misura e
+     un riquadro nascosto si lascia stare: tornato a vista ha la misura di
+     prima, e la tela e' ancora quella giusta. */
+  if(typeof ResizeObserver!=='undefined'){
+    let misura=el.clientWidth+'x'+el.clientHeight;
+    const osserva=new ResizeObserver(()=>{
+      const w=el.clientWidth,h=el.clientHeight;
+      if(!w||!h)return;
+      const k=w+'x'+h;if(k===misura)return;misura=k;
+      /* e subito il disegno, come faceva MapLibre: la tela rifatta e' vuota,
+         e fino al fotogramma dopo si vedrebbe un lampo */
+      if(vivo(m))try{m.resize();m.redraw();}catch(e){}
+    });
+    osserva.observe(el);
+    m.once('remove',()=>osserva.disconnect());
+  }
   /* Niente rotazione: col nord sempre in alto ci si orienta, e due dita che
      ruotano senza volerlo non servono a nessuno. */
   try{m.touchZoomRotate.disableRotation();if(m.keyboard&&m.keyboard.disableRotation)m.keyboard.disableRotation();}catch(e){}
@@ -15782,9 +15809,21 @@ function togliMappa(m){
   try{m.remove();}catch(e){}
 }
 /* Una mappa che riparte col disegno da capo (il riquadro ha cambiato misura,
-   il foglio si e' appena aperto). MapLibre lo vede quasi sempre da solo; qui
-   per i casi in cui il riquadro era nascosto. */
-function rimisura(m){if(vivo(m))try{m.resize();}catch(e){}}
+   il foglio si e' appena aperto). La misura la segue nuovaMappa; qui per chi
+   vuole esserne sicuro dopo un disegno. Solo se la misura e' cambiata
+   davvero: resize() rifa' la tela anche alla stessa misura (una tela WebGL
+   nuova, vuota) e la mappa intera si ridisegna. Con la mappa di Oggi grande
+   e inclinata, chiamata a ogni disegno della Home, erano secondi di
+   processore nelle prove. Un riquadro nascosto si lascia stare. */
+function rimisura(m){
+  if(!vivo(m))return;
+  try{
+    const el=m.getContainer(),c=m.getCanvas(),w=el.clientWidth,h=el.clientHeight;
+    if(!w||!h)return;
+    if(Math.round(parseFloat(c.style.width))===w&&Math.round(parseFloat(c.style.height))===h)return;
+    m.resize();m.redraw();
+  }catch(e){}
+}
 /* Un pezzo che non arriva per colpa della chiave: le mappe passano al
    ripiego e lo dicono. Gli altri errori (un pezzo perso per strada) si
    lasciano a MapLibre, che riprova da solo. */
@@ -15832,6 +15871,14 @@ function sovrapponi(m){
 function datiMappa(m,nome,features){
   if(!vivo(m)||!STRATI_G[nome])return;
   const fc={type:'FeatureCollection',features:(features||[]).filter(Boolean)};
+  /* Gli stessi dati di prima non si rimandano: setData rifa' i pezzi della
+     sorgente e la mappa si ridisegna. Il pallino della posizione, rimesso a
+     ogni disegno della Home, la faceva ridisegnare otto volte per niente
+     (con la mappa grande di Oggi, secondi di processore nelle prove). Uno
+     stile nuovo le rimette comunque tutte (sovrapponi). */
+  const js=JSON.stringify(fc),giaJs=m._g.datiJs||(m._g.datiJs={});
+  if(giaJs[nome]===js&&m._g.dati[nome])return;
+  giaJs[nome]=js;
   m._g.dati[nome]=fc;
   const src=m._g.pronta&&m.getSource('g-'+nome+'-dati');
   if(src)src.setData(fc);else sovrapponi(m);
@@ -17914,7 +17961,7 @@ const CIELO_SCRITTE=[
   ['.og-occhiello',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],4.5],
   ['.hh-meta',['var(--ink-soft)','var(--ink)','#000000'],['#FFFFFF'],4.5]
 ];
-let _sondaColore=null,_cieloOsserva=null;
+let _sondaColore=null,_cieloOsserva=null,_cieloOsservato=null,_cieloCaratteri=false;
 /* Un colore scritto come lo scrive il CSS (anche var(--ink)) in numeri. */
 function coloreCss(c){
   if(!_sondaColore){_sondaColore=document.createElement('i');_sondaColore.style.display='none';document.body.appendChild(_sondaColore);}
@@ -18039,11 +18086,27 @@ function tingiCielo(box){
     el.classList.toggle('vetro',buio&&regge);
   });
   /* Le scritte cambiano posto quando cambia la larghezza o arrivano i
-     caratteri: si rifa' il conto. */
-  if(typeof ResizeObserver!=='undefined'){
+     caratteri: si rifa' il conto. L'osservatore nasce una volta per cielo.
+     Rifatto a ogni conto si svegliava appena nato (un osservatore nuovo lo
+     fa sempre, una volta), rifaceva il conto e ne nasceva un altro: sessanta
+     conti al secondo con la pagina ferma, e da quando il conto rimette fondi
+     e ombre alle scritte di Oggi lo schermo si ridisegnava senza fine (un
+     processore intero nelle prove, la batteria sul telefono). Adesso si
+     sveglia solo quando la misura cambia davvero. */
+  if(typeof ResizeObserver!=='undefined'&&_cieloOsservato!==hh){
     if(_cieloOsserva)_cieloOsserva.disconnect();
-    _cieloOsserva=new ResizeObserver(()=>requestAnimationFrame(()=>{if(hh.isConnected)tingiCielo(box);}));
-    _cieloOsserva.observe(hh);
+    let prima='';
+    _cieloOsserva=new ResizeObserver(v=>{
+      const r=v[v.length-1].contentRect,m=Math.round(r.width)+'x'+Math.round(r.height);
+      if(m===prima)return;
+      const nato=!prima;prima=m;if(nato)return;
+      requestAnimationFrame(()=>{if(hh.isConnected)tingiCielo(box);});
+    });
+    _cieloOsservato=hh;_cieloOsserva.observe(hh);
+    if(!_cieloCaratteri&&document.fonts&&document.fonts.addEventListener){
+      _cieloCaratteri=true;
+      document.fonts.addEventListener('loadingdone',()=>{const b=document.getElementById('homeHero');if(b)tingiCielo(b);});
+    }
   }
 }
 /* IL CIELO DELLA HOME SULLE ALTRE SCHERMATE (Layout 2). Una scena sola per
@@ -34185,7 +34248,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-23 20:45';
+const VERSIONE_APP='2026-11-23 21:17';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

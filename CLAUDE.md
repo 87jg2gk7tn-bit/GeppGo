@@ -151,7 +151,13 @@ quel file è la memoria.
   (`mappinaFerma`), perché otto mappe WebGL una sotto l'altra un telefono
   non le regge. Una mappa WebGL non si rifà a ogni disegno: quella di Oggi
   resta viva fra un disegno della Home e l'altro (`homeMapTenibile`), e si
-  rifanno solo segnaposto e percorso. La mappa di Oggi (novembre 2026) e'
+  rifanno solo segnaposto e percorso. E non lavora per niente: la misura la
+  segue `nuovaMappa` (non MapLibre, che ridisegnava tutto quando il
+  riquadro si nascondeva), `rimisura` e `datiMappa` non fanno niente se
+  misura e dati sono quelli di prima, e sopra una mappa niente si muove per
+  sempre (l'eco della prossima tappa batte tre volte): ogni fotogramma
+  sopra WebGL è un disegno, e con la pagina ferma il telefono deve poter
+  dormire. La mappa di Oggi (novembre 2026) e'
   inclinata e a tutta larghezza, col cielo dentro (sopra la foto e sotto i
   segnaposto, `ogCieloNellaMappa`), e **si muove con due dita**
   (`cooperativeGestures`, opzione `dueDita` di `nuovaMappa`): con un dito si

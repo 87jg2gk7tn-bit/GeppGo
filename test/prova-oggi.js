@@ -32,6 +32,10 @@ const AXE = require.resolve('axe-core/axe.min.js');
 const r = [], err = [];
 const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 const pausa = ms => new Promise(x => setTimeout(x, ms));
+/* Una sezione che si ferma si dice, e le altre vanno avanti: sul codice di
+   prima (la controprova) la prova deve bocciare sezione per sezione, non
+   cadere alla prima schermata che manca. */
+const sezione = async (n, f) => { try { await f(); } catch (e) { ok(`${n}. si è fermata`, false, String((e && e.message) || e).split('\n')[0].slice(0, 200)); } };
 
 /* Un viaggio spostato di g giorni: tutte le date, il meteo e gli alberghi. */
 function sposta(v, g) {
@@ -63,53 +67,61 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
   const browser = await apriBrowser();
 
   // ── 1. come le anteprime, a 390×844 nei due temi ─────────────────────
-  /* Le anteprime e l'app si misurano nello stesso browser, coi caratteri di
-     ripiego tutte e due (quelli di Google qui non arrivano): le misure che
-     contano sono dove stanno le cose, non i pixel delle lettere. */
-  const PREV = { occ: '.riga1 .occhiello', tutto: '#tutto', gradi: '.gradi', citta: '.citta', umore: '.umore', meta: '.meta', tappe: '#tappe', scheda: '#tappe .scheda', chiave: '#tappe .chiave', biglietto: '.biglietto' };
-  const APPS = { occ: '#plan .og-occhiello', tutto: '#ogTutto', gradi: '#plan .og-gradi', citta: '#plan .og-testa .hh-city', umore: '#plan .og-testa .hh-mood', meta: '#plan .og-testa .hh-meta', tappe: '#plan .og-tappe', scheda: '#plan .og-tappe .stampa', chiave: '#plan .og-chiave', biglietto: '#ogBiglietto' };
-  for (const [tema, file] of [['chiaro', 'oggi-a.html'], ['scuro', 'oggi-b.html']]) {
-    const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await pa.goto('file://' + path.join(RADICE, 'anteprime', file));
-    await pausa(1500);
-    await ferma(pa);
-    const ant = {};
-    for (const [k, s] of Object.entries(PREV)) ant[k] = await box(pa, s);
-    await pa.close();
-    /* il primo giorno di un viaggio di quattro, con l'albergo: sul telefono la
-       fila parte dalla tappa in mano, qui la si riporta alla prima, come
-       nell'anteprima */
-    const p = await oggi(browser, { tema });
-    await p.evaluate(() => { const s = document.querySelector('#plan .og-tappe'); s.scrollLeft = 0; });
-    await pausa(400);
-    const app = {};
-    for (const [k, s] of Object.entries(APPS)) app[k] = await box(p, s);
-    const manca = Object.keys(APPS).filter(k => !app[k] || !ant[k]);
-    ok(`1. ${tema}: ci sono tutti gli elementi dell'anteprima (riga del giorno, «Tutto il viaggio», meteo, città, frase, riga sotto, schede-foto, chiave, biglietto)`, !manca.length, manca.join(', '));
-    if (!manca.length) {
-      const ordine = o => ['occ', 'citta', 'umore', 'meta', 'tappe', 'biglietto'].map(k => o[k].y);
-      const crescente = a => a.every((v, i) => !i || v > a[i - 1]);
-      ok(`1. ${tema}: nello stesso ordine dall'alto (giorno, città, frase, riga sotto, schede, biglietto)`, crescente(ordine(app)) && crescente(ordine(ant)), ordine(app).map(Math.round).join(' < '));
-      const scarti = ['occ', 'citta', 'umore', 'meta', 'scheda', 'biglietto'].map(k => [k, Math.round(app[k].y - ant[k].y)]);
-      ok(`1. ${tema}: alla stessa altezza dell'anteprima (entro 24 px)`, scarti.every(([, d]) => Math.abs(d) <= 24), scarti.map(x => x.join(' ')).join(', '));
-      ok(`1. ${tema}: con le stesse proporzioni (schede 126 px, biglietto alto come quello, «Tutto il viaggio» e meteo a destra)`,
-        Math.abs(app.scheda.w - ant.scheda.w) <= 14 && Math.abs(app.biglietto.h - ant.biglietto.h) <= 16 && app.tutto.r > 330 && app.gradi.r > 330 && Math.abs(app.chiave.w - ant.chiave.w) <= 14,
-        `scheda ${Math.round(app.scheda.w)}/${Math.round(ant.scheda.w)}, biglietto ${Math.round(app.biglietto.h)}/${Math.round(ant.biglietto.h)}`);
+  await sezione('1', async () => {
+    /* Le anteprime e l'app si misurano nello stesso browser, coi caratteri di
+       ripiego tutte e due (quelli di Google qui non arrivano): le misure che
+       contano sono dove stanno le cose, non i pixel delle lettere. */
+    const PREV = { occ: '.riga1 .occhiello', tutto: '#tutto', gradi: '.gradi', citta: '.citta', umore: '.umore', meta: '.meta', tappe: '#tappe', scheda: '#tappe .scheda', chiave: '#tappe .chiave', biglietto: '.biglietto' };
+    const APPS = { occ: '#plan .og-occhiello', tutto: '#ogTutto', gradi: '#plan .og-gradi', citta: '#plan .og-testa .hh-city', umore: '#plan .og-testa .hh-mood', meta: '#plan .og-testa .hh-meta', tappe: '#plan .og-tappe', scheda: '#plan .og-tappe .stampa', chiave: '#plan .og-chiave', biglietto: '#ogBiglietto' };
+    for (const [tema, file] of [['chiaro', 'oggi-a.html'], ['scuro', 'oggi-b.html']]) {
+      const pa = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await pa.goto('file://' + path.join(RADICE, 'anteprime', file));
+      await pausa(1500);
+      /* I caratteri dell'anteprima arrivano da Google: misurata prima che
+         arrivassero (su GitHub, con la macchina carica) il biglietto era
+         alto 127 px col carattere di ripiego, 112 con Fraunces. L'app li ha
+         tutti e due: si aspettano. */
+      await pa.evaluate(() => document.fonts.ready.then(() => true)).catch(() => {});
+      await pa.waitForFunction(() => [...document.fonts].some(f => f.family === 'Fraunces' && f.status === 'loaded'), null, { timeout: 10000 }).catch(() => {});
+      await ferma(pa);
+      const ant = {};
+      for (const [k, s] of Object.entries(PREV)) ant[k] = await box(pa, s);
+      await pa.close();
+      /* il primo giorno di un viaggio di quattro, con l'albergo: sul telefono la
+         fila parte dalla tappa in mano, qui la si riporta alla prima, come
+         nell'anteprima */
+      const p = await oggi(browser, { tema });
+      await p.evaluate(() => { const s = document.querySelector('#plan .og-tappe'); s.scrollLeft = 0; });
+      await pausa(400);
+      const app = {};
+      for (const [k, s] of Object.entries(APPS)) app[k] = await box(p, s);
+      const manca = Object.keys(APPS).filter(k => !app[k] || !ant[k]);
+      ok(`1. ${tema}: ci sono tutti gli elementi dell'anteprima (riga del giorno, «Tutto il viaggio», meteo, città, frase, riga sotto, schede-foto, chiave, biglietto)`, !manca.length, manca.join(', '));
+      if (!manca.length) {
+        const ordine = o => ['occ', 'citta', 'umore', 'meta', 'tappe', 'biglietto'].map(k => o[k].y);
+        const crescente = a => a.every((v, i) => !i || v > a[i - 1]);
+        ok(`1. ${tema}: nello stesso ordine dall'alto (giorno, città, frase, riga sotto, schede, biglietto)`, crescente(ordine(app)) && crescente(ordine(ant)), ordine(app).map(Math.round).join(' < '));
+        const scarti = ['occ', 'citta', 'umore', 'meta', 'scheda', 'biglietto'].map(k => [k, Math.round(app[k].y - ant[k].y)]);
+        ok(`1. ${tema}: alla stessa altezza dell'anteprima (entro 24 px)`, scarti.every(([, d]) => Math.abs(d) <= 24), scarti.map(x => x.join(' ')).join(', '));
+        ok(`1. ${tema}: con le stesse proporzioni (schede 126 px, biglietto alto come quello, «Tutto il viaggio» e meteo a destra)`,
+          Math.abs(app.scheda.w - ant.scheda.w) <= 14 && Math.abs(app.biglietto.h - ant.biglietto.h) <= 16 && app.tutto.r > 330 && app.gradi.r > 330 && Math.abs(app.chiave.w - ant.chiave.w) <= 14,
+          `scheda ${Math.round(app.scheda.w)}/${Math.round(ant.scheda.w)}, biglietto ${Math.round(app.biglietto.h)}/${Math.round(ant.biglietto.h)}`);
+      }
+      const mappa = await p.evaluate(() => ({ larga: document.getElementById('homeMap').getBoundingClientRect().width, cielo: !!document.querySelector('#homeMap .cm-cielo'), spille: document.querySelectorAll('#homeMap .og-spilla').length,
+        tratti: document.querySelectorAll('#homeMap .og-tratto .og-giorno-tratto path.oro').length, mezzi: document.querySelectorAll('#homeMap .og-mezzo').length, casa: !!document.querySelector('#homeMap .og-casa'), pitch: homeMapObj.getPitch() }));
+      ok(`1. ${tema}: il cielo sfuma dentro la mappa a tutta larghezza, inclinata, coi segnaposto, il percorso d'oro, i mezzi e l'albergo`,
+        mappa.larga === 390 && mappa.cielo && mappa.spille === 3 && mappa.tratti === 3 && mappa.mezzi >= 1 && mappa.casa && mappa.pitch > 30, JSON.stringify(mappa));
+      if (tema === 'scuro') {
+        const sopra = await p.evaluate(() => { const m = document.getElementById('homeMap').getBoundingClientRect(), b = document.getElementById('ogBiglietto').getBoundingClientRect(); return { mappa: m.bottom, biglietto: b.bottom }; });
+        ok('1. scuro: come oggi-b, la mappa tiene tutto il primo schermo e il biglietto ci sta sopra', sopra.mappa >= 840 && sopra.biglietto < sopra.mappa, JSON.stringify(sopra));
+      }
+      err.push(...p.__errori);
+      await p.close();
     }
-    const mappa = await p.evaluate(() => ({ larga: document.getElementById('homeMap').getBoundingClientRect().width, cielo: !!document.querySelector('#homeMap .cm-cielo'), spille: document.querySelectorAll('#homeMap .og-spilla').length,
-      tratti: document.querySelectorAll('#homeMap .og-tratto .og-giorno-tratto path.oro').length, mezzi: document.querySelectorAll('#homeMap .og-mezzo').length, casa: !!document.querySelector('#homeMap .og-casa'), pitch: homeMapObj.getPitch() }));
-    ok(`1. ${tema}: il cielo sfuma dentro la mappa a tutta larghezza, inclinata, coi segnaposto, il percorso d'oro, i mezzi e l'albergo`,
-      mappa.larga === 390 && mappa.cielo && mappa.spille === 3 && mappa.tratti === 3 && mappa.mezzi >= 1 && mappa.casa && mappa.pitch > 30, JSON.stringify(mappa));
-    if (tema === 'scuro') {
-      const sopra = await p.evaluate(() => { const m = document.getElementById('homeMap').getBoundingClientRect(), b = document.getElementById('ogBiglietto').getBoundingClientRect(); return { mappa: m.bottom, biglietto: b.bottom }; });
-      ok('1. scuro: come oggi-b, la mappa tiene tutto il primo schermo e il biglietto ci sta sopra', sopra.mappa >= 840 && sopra.biglietto < sopra.mappa, JSON.stringify(sopra));
-    }
-    err.push(...p.__errori);
-    await p.close();
-  }
+  });
 
   // ── 2. le schede-foto ────────────────────────────────────────────────
-  {
+  await sezione('2', async () => {
     const p = await oggi(browser, {});
     const s = await p.evaluate(() => {
       const c = [...document.querySelectorAll('#plan .og-tappe .stampa')];
@@ -165,10 +177,10 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     ok('2. con «Riduci movimento» niente si muove (schede, biglietto, segnaposto, percorso)', anim.vive === 0 && anim.eco === 'none' && !anim.apre, JSON.stringify(anim));
     err.push(...pr.__errori);
     await pr.close();
-  }
+  });
 
   // ── 3. gli adesivi ───────────────────────────────────────────────────
-  {
+  await sezione('3', async () => {
     const conta = p => p.evaluate(() => [...document.querySelectorAll('#plan .adesivo')].map(a => a.textContent.trim()));
     let p = await oggi(browser, {});
     let ad = await conta(p);
@@ -205,10 +217,10 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
        che gli adesivi non escano da li'. */
     const fuori = [...lettere].filter(c => c.charCodeAt(0) < 0x20 || c.charCodeAt(0) > 0xFF);
     ok('3. le lettere degli adesivi, in tutte le lingue, sono fra quelle del carattere a mano (accentate comprese)', !fuori.length, fuori.join(' '));
-  }
+  });
 
   // ── 4. con un dito si scorre la pagina, con due si muove la mappa ─────
-  {
+  await sezione('4', async () => {
     const p = await oggi(browser, { opzioni: { hasTouch: true, isMobile: true } });
     const cdp = await p.context().newCDPSession(p);
     const prima = await p.evaluate(() => ({ y: document.querySelector('main.scroll').scrollTop, c: homeMapObj.getCenter().toArray(), z: homeMapObj.getZoom(), coop: homeMapObj.cooperativeGestures.isEnabled() }));
@@ -235,10 +247,10 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     ok('4. e chi ci prova con un dito legge come si fa, nella lingua dell\'app', testo === 'Usa due dita per spostare la mappa', testo);
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 5. gli stati ─────────────────────────────────────────────────────
-  {
+  await sezione('5', async () => {
     const stato = async (viaggi, js) => {
       const p = await apriPagina(browser, { attesa: 1200, viaggi, errori: err });
       await p.evaluate(() => go('plan'));
@@ -270,52 +282,56 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     s = await p.evaluate(() => ({ occ: document.querySelector('#plan .og-occhiello').textContent, ad: [...document.querySelectorAll('#plan .adesivo')].map(a => a.textContent), b: (document.getElementById('ogBiglietto') || {}).textContent }));
     ok('5. viaggio concluso: l\'ultimo giorno, «ultimo giorno!», e il biglietto «Viaggio concluso» col ricordo', s.occ === 'GIORNO 4 DI 4' && s.ad.includes('ultimo giorno!') && /Viaggio concluso/.test(s.b || '') && /Il ricordo/.test(s.b || ''), JSON.stringify(s));
     await p.close();
-  }
+  });
 
   // ── 6. le larghezze ──────────────────────────────────────────────────
-  for (const w of [320, 360, 390, 430]) {
-    const p = await oggi(browser, { larghezza: w, altezza: 800 });
-    const m = await p.evaluate(() => {
-      const sc = document.querySelector('main.scroll'), W = innerWidth;
-      const piccoli = [...document.querySelectorAll('#plan .og-palco button, #plan .og-palco a, #ogBiglietto')]/* la citazione della mappa sta in un angolo senza tasti, e la sua misura la guarda prova-installazione */
-        .filter(b => b.offsetParent && !b.closest('.maplibregl-ctrl') && !b.closest('.g-angolo'))
-        .map(b => { const r = b.getBoundingClientRect(); return { n: (b.className || b.tagName).toString().split(' ')[0], w: r.width, h: r.height }; })
-        .filter(x => x.w < 43.5 || x.h < 43.5);
-      const fuori = ['#plan .og-testa .hh-city', '#ogBiglietto', '#ogTutto', '#plan .og-gradi'].filter(s => { const e = document.querySelector(s); return e && e.getBoundingClientRect().right > W + .5; });
-      return { lato: sc.scrollWidth - sc.clientWidth, piccoli, fuori };
-    });
-    ok(`6. a ${w} px niente scorre di lato, niente esce e i tasti sono da 44`, m.lato <= 0 && !m.fuori.length && !m.piccoli.length, JSON.stringify(m).slice(0, 300));
-    err.push(...p.__errori);
-    await p.close();
-  }
-  for (const [w, h] of [[670, 870], [1024, 768], [1280, 800]]) {
-    const p = await oggi(browser, { larghezza: w, altezza: h });
-    const m = await p.evaluate(() => {
-      const pal = document.querySelector('#plan .og-palco'), mp = document.getElementById('homeMap').getBoundingClientRect(), fila = document.querySelector('#plan .og-tappe').getBoundingClientRect();
-      const cielo = document.querySelector('#plan .og-palco > .cm-cielo'), sc = document.querySelector('main.scroll').getBoundingClientRect();
-      return { largo: ogLargo(pal), mappaSx: mp.left, mappaDx: mp.right, filaDx: fila.right, alta: mp.height, cieloSx: cielo && cielo.getBoundingClientRect().left, cieloDx: cielo && cielo.getBoundingClientRect().right, paginaSx: sc.left, paginaDx: sc.right, W: innerWidth, H: innerHeight };
-    });
-    ok(`6. a ${w}×${h} le due colonne: le schede a sinistra, la mappa a destra fino al bordo, alta quasi quanto lo schermo, il cielo sopra tutte e due`,
-      m.largo && m.mappaSx >= m.filaDx && Math.abs(m.mappaDx - m.paginaDx) < 2 && m.alta >= Math.min(700, m.H - 80) && Math.abs(m.cieloSx - m.paginaSx) < 2 && Math.abs(m.cieloDx - m.paginaDx) < 2, JSON.stringify(m));
-    err.push(...p.__errori);
-    await p.close();
-  }
+  await sezione('6', async () => {
+    for (const w of [320, 360, 390, 430]) {
+      const p = await oggi(browser, { larghezza: w, altezza: 800 });
+      const m = await p.evaluate(() => {
+        const sc = document.querySelector('main.scroll'), W = innerWidth;
+        const piccoli = [...document.querySelectorAll('#plan .og-palco button, #plan .og-palco a, #ogBiglietto')]/* la citazione della mappa sta in un angolo senza tasti, e la sua misura la guarda prova-installazione */
+          .filter(b => b.offsetParent && !b.closest('.maplibregl-ctrl') && !b.closest('.g-angolo'))
+          .map(b => { const r = b.getBoundingClientRect(); return { n: (b.className || b.tagName).toString().split(' ')[0], w: r.width, h: r.height }; })
+          .filter(x => x.w < 43.5 || x.h < 43.5);
+        const fuori = ['#plan .og-testa .hh-city', '#ogBiglietto', '#ogTutto', '#plan .og-gradi'].filter(s => { const e = document.querySelector(s); return e && e.getBoundingClientRect().right > W + .5; });
+        return { lato: sc.scrollWidth - sc.clientWidth, piccoli, fuori };
+      });
+      ok(`6. a ${w} px niente scorre di lato, niente esce e i tasti sono da 44`, m.lato <= 0 && !m.fuori.length && !m.piccoli.length, JSON.stringify(m).slice(0, 300));
+      err.push(...p.__errori);
+      await p.close();
+    }
+    for (const [w, h] of [[670, 870], [1024, 768], [1280, 800]]) {
+      const p = await oggi(browser, { larghezza: w, altezza: h });
+      const m = await p.evaluate(() => {
+        const pal = document.querySelector('#plan .og-palco'), mp = document.getElementById('homeMap').getBoundingClientRect(), fila = document.querySelector('#plan .og-tappe').getBoundingClientRect();
+        const cielo = document.querySelector('#plan .og-palco > .cm-cielo'), sc = document.querySelector('main.scroll').getBoundingClientRect();
+        return { largo: ogLargo(pal), mappaSx: mp.left, mappaDx: mp.right, filaDx: fila.right, alta: mp.height, cieloSx: cielo && cielo.getBoundingClientRect().left, cieloDx: cielo && cielo.getBoundingClientRect().right, paginaSx: sc.left, paginaDx: sc.right, W: innerWidth, H: innerHeight };
+      });
+      ok(`6. a ${w}×${h} le due colonne: le schede a sinistra, la mappa a destra fino al bordo, alta quasi quanto lo schermo, il cielo sopra tutte e due`,
+        m.largo && m.mappaSx >= m.filaDx && Math.abs(m.mappaDx - m.paginaDx) < 2 && m.alta >= Math.min(700, m.H - 80) && Math.abs(m.cieloSx - m.paginaSx) < 2 && Math.abs(m.cieloDx - m.paginaDx) < 2, JSON.stringify(m));
+      err.push(...p.__errori);
+      await p.close();
+    }
+  });
 
   // ── 7. axe, nei due temi ─────────────────────────────────────────────
-  for (const tema of ['chiaro', 'scuro']) {
-    const p = await oggi(browser, { tema });
-    await p.addScriptTag({ path: AXE });
-    const v = await p.evaluate(async () => {
-      const res = await axe.run({ include: [document.querySelector('#plan')] }, { resultTypes: ['violations'] });
-      return res.violations.filter(x => x.impact === 'serious' || x.impact === 'critical').map(x => `${x.impact} ${x.id}: ${x.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')}`);
-    });
-    ok(`7. ${tema}: nessuna violazione grave o critica di axe in Oggi`, !v.length, v.join(' | ').slice(0, 400));
-    err.push(...p.__errori);
-    await p.close();
-  }
+  await sezione('7', async () => {
+    for (const tema of ['chiaro', 'scuro']) {
+      const p = await oggi(browser, { tema });
+      await p.addScriptTag({ path: AXE });
+      const v = await p.evaluate(async () => {
+        const res = await axe.run({ include: [document.querySelector('#plan')] }, { resultTypes: ['violations'] });
+        return res.violations.filter(x => x.impact === 'serious' || x.impact === 'critical').map(x => `${x.impact} ${x.id}: ${x.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')}`);
+      });
+      ok(`7. ${tema}: nessuna violazione grave o critica di axe in Oggi`, !v.length, v.join(' | ').slice(0, 400));
+      err.push(...p.__errori);
+      await p.close();
+    }
+  });
 
   // ── 8. la mappa non rinasce ──────────────────────────────────────────
-  {
+  await sezione('8', async () => {
     const p = await oggi(browser, {});
     const m = await p.evaluate(async () => {
       const diOggi = () => [...mappeVive].filter(m => m.getContainer().id === 'homeMap').length;
@@ -327,10 +343,10 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     ok('8. ridisegnando la Home (anche quattro volte) la mappa resta la stessa: stessa tela, nessuna mappa nuova, i segnaposto rifatti', m.stessa && m.tela && m.vive && m.spille === 3, JSON.stringify(m));
     err.push(...p.__errori);
     await p.close();
-  }
+  });
 
   // ── 9. la prima schermata non aspetta niente di nuovo ────────────────
-  {
+  await sezione('9', async () => {
     const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await p.addInitScript(() => {
       window.__quando = {};
@@ -358,7 +374,7 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     const testa = html.slice(0, html.indexOf('</head>')).replace(/<!--[\s\S]*?-->/g, '');
     ok('9. in testa all\'HTML nessun carattere nuovo che fermi la pagina: un <link> solo, che non blocca, e Caveat Brush non c\'è', (testa.match(/fonts\.googleapis\.com\/css2/g) || []).length === 1 && !/Caveat/.test(testa) && /media="print" onload=/.test(testa));
     await p.close();
-  }
+  });
 
   await browser.close();
   ok('nessun errore in pagina', !err.length, err.slice(0, 3).join(' | '));

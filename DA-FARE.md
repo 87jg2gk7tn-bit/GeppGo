@@ -2028,6 +2028,29 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
 - Le risposte finte di OpenStreetMap devono riguardare solo il posto
   provato: Oggi, dietro, cerca le foto delle tappe per conto suo, e con una
   risposta valida per tutti le tappe si prendono i dati del posto sbagliato.
+- **Il costo del disegno** (23 novembre): la batteria su GitHub era passata
+  da 69 a 116 minuti (limite 120), schermi-grandi fermata ai 15 minuti, e
+  le prove che aprono spesso Oggi ci mettevano il doppio. Il JavaScript era
+  lo stesso: era il disegno, cinque lavori inutili che a occhio non si
+  vedono. (1) `tingiCielo` rifaceva il suo ResizeObserver a ogni conto, e un
+  osservatore nuovo si sveglia sempre una volta appena nato: sessanta conti
+  al secondo a pagina ferma (c'era anche su `main`, ma lì ridava gli stessi
+  colori e non si ridisegnava niente; adesso rimette fondi e ombre). (2)
+  MapLibre, col riquadro nascosto (si cambia pagina), prendeva la misura di
+  ripiego, 400×300, e ridisegnava subito tutta la mappa, e di nuovo al
+  ritorno: la misura la segue `nuovaMappa` (`trackResize:false`) e un
+  riquadro nascosto si lascia stare. (3) `rimisura` chiamava `resize()`
+  anche alla stessa misura, che rifà la tela WebGL. (4) Il pallino della
+  posizione, rimesso uguale a ogni disegno della Home, rifaceva la sorgente
+  (`setData`, otto disegni): `datiMappa` non rimanda gli stessi dati. (5)
+  L'eco della prossima tappa non finiva mai: batte tre volte. Stesso giro
+  di schermate, processore del browser: 48 s → 18,6 (`main` 17).
+  Come si misura: i `/proc/<pid>/stat` dei processi di Chromium figli di
+  node (il «gpu-process» è quello che disegna, qui con SwiftShader);
+  `document.getAnimations()` per le animazioni che non finiscono; le
+  chiamate a `requestAnimationFrame` contate con la loro pila per i giri a
+  vuoto; gli eventi `render` e `sourcedata` della mappa per chi la fa
+  ridisegnare.
 
 **Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
 il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,
