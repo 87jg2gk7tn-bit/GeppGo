@@ -280,7 +280,9 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
       go('plan'); renderHomeHero();
       const hero = document.getElementById('homeHero'), cerca = hero.querySelector('.hh-cerca'), riga = cerca && cerca.closest('.hh-azioni');
       const parole = [...hero.querySelectorAll('button')].map(b => b.textContent.trim()).filter(t => /^(A raccolta|Bagagli|Compagni|Condividi|Viaggio)$/.test(t));
-      const hh = hero.querySelector('.hh'), hs = getComputedStyle(hh), dentro = hh.getBoundingClientRect().width - parseFloat(hs.paddingLeft) - parseFloat(hs.paddingRight);
+      /* dal ridisegno di Oggi la ricerca sta sotto il palco (che va da bordo a
+         bordo), nella sezione dei giorni: la riga e' quella */
+      const hh = (cerca && cerca.closest('.og-sotto')) || hero.querySelector('.hh'), hs = getComputedStyle(hh), dentro = hh.getBoundingClientRect().width - parseFloat(hs.paddingLeft) - parseFloat(hs.paddingRight);
       return { parole, vecchi: hero.querySelectorAll('.hh-raccolta,.hh-rapido,.hh-rapidi').length, largo: cerca ? Math.round(cerca.getBoundingClientRect().width) : 0, riga: Math.round(dentro), soli: riga ? riga.children.length : 0,
         valigia: !!hero.querySelector('#valScheda') };
     });
@@ -380,7 +382,7 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
         openDay(0); await new Promise(r => setTimeout(r, 300));
         const titolo = document.querySelector('#mDay .tt-title').textContent.trim(), voce = (document.querySelector('.nav-item[data-p="mDay"] .ni-tx') || { textContent: '(nessuna parola)' }).textContent.trim();
         raccogli();
-        tapAct(0, 12); await new Promise(r => setTimeout(r, 300)); raccogli(); closeSheet('mActMenu');
+        tapAct(0, 12); await new Promise(r => setTimeout(r, 300)); raccogli(); closeSheet('mPosto');
         go('plan'); raccogli();
         if (typeof apriPrenotazioni === 'function') apriPrenotazioni('hotel'); else go('hotels'); raccogli(); apriMailHotel(); await new Promise(r => setTimeout(r, 200)); raccogli();
         document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
@@ -394,7 +396,7 @@ const scena = (codice, notte) => `(() => { const t = T(), w = t.weather[t.days[0
       x.vecchio.forEach(l => vecchi.push(`${lingua}: «${l.slice(0, 70)}»`));
     }
     ok('5. il titolo della schermata e la voce della barra sono la stessa parola, in cinque lingue (Programma, Schedule, Programa, Agenda, Roteiro)', !titoli.length, titoli.join(' | '));
-    ok('5. nessun testo a schermo dice più «Time Table» (Programma, menu della tappa, Home, Hotel, mail dell\'hotel, nuovo biglietto, Scopri)', !vecchi.length, primi(vecchi, 3));
+    ok('5. nessun testo a schermo dice più «Time Table» (Programma, scheda della tappa, Home, Hotel, mail dell\'hotel, nuovo biglietto, Scopri)', !vecchi.length, primi(vecchi, 3));
     /* Il dizionario e MAPPA_APP: nessuna frase dice la parola vecchia. */
     const p = await apri(browser);
     const d = await p.evaluate(() => {

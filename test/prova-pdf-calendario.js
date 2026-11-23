@@ -481,6 +481,10 @@ function leggiIcs(testo) {
       });
       await page.waitForTimeout(500);
       await page.evaluate(() => { window.__avvisi = []; T().expenses.push({ id: 901, desc: 'Cena', amount: 110, origAmount: 110, origCurrency: 'EUR', rate: 1, payerId: 1, category: 'Cibo', splitAmong: [1, 2], date: T().start, paid: true }); save(); renderAll(); });
+      /* l'avviso parte un attimo dopo il disegno (controllaTettiPresto): lo si
+         aspetta, invece di un tempo fisso che con la macchina carica non basta;
+         poi ancora un po', per vedere che non ne arrivi un secondo */
+      await page.waitForFunction(() => window.__avvisi.length > 0, null, { timeout: 5000 }).catch(() => {});
       await page.waitForTimeout(700);
       avvisi[lingua] = await page.evaluate(() => window.__avvisi);
       await page.close();
@@ -509,7 +513,9 @@ function leggiIcs(testo) {
     ok('1. e si distinguono a occhio (CIEDE2000 almeno 15 fra due qualunque), col numero bianco leggibile (4,5:1)', minimo >= 15 && Math.min(...contrasti) >= 4.5,
       `minimo ${minimo.toFixed(1)} (${coppia}), contrasto minimo ${Math.min(...contrasti).toFixed(2)}:1`);
 
-    // le crocette: la mappa della Home e quella della giornata, in inglese
+    // la crocetta della scheda sulla mappa della giornata, in inglese. Su Oggi
+    // i segnaposto non aprono un fumetto: la loro scheda e' nella fila delle
+    // schede-foto (ridisegno di Oggi, novembre 2026)
     const q = await apriPagina(browser, { lingua: 'en', errori, chiave: 'croci-' + Math.random() });
     await q.waitForFunction(() => typeof maplibregl !== 'undefined', null, { timeout: 15000 }).catch(() => {});
     /* la scheda della prima tappa, aperta col tocco sul segnaposto */
@@ -530,12 +536,10 @@ function leggiIcs(testo) {
           scheda: b.closest('.maplibregl-popup').querySelector('.g-scheda-dentro').innerText.trim() };
       }, sel);
     };
-    const home = await croce('#homeMap');
-    await q.evaluate(() => { chiudiScheda(homeMapObj); openDay(0); });
+    await q.evaluate(() => openDay(0));
     const giorno = await croce('#dayMap');
     await q.close();
-    ok('1. la crocetta della scheda sulla mappa della Home risponde su 44 px e si chiama «Close» in inglese', home.tocco && home.nome === 'Close' && home.titolo === 'Close', JSON.stringify(home));
-    ok('1. e cosi\' quella sulla mappa della giornata (dove la scheda dice anche l\'ora in inglese)', giorno.tocco && giorno.nome === 'Close' && /\nat \d\d:\d\d$/.test(giorno.scheda), JSON.stringify(giorno));
+    ok('1. la crocetta della scheda sulla mappa della giornata risponde su 44 px, si chiama «Close» in inglese, e la scheda dice l\'ora in inglese', giorno.tocco && giorno.nome === 'Close' && giorno.titolo === 'Close' && /\nat \d\d:\d\d$/.test(giorno.scheda), JSON.stringify(giorno));
   });
 
   // ── 2. il PDF: cosa c'e' dentro, e le opzioni ──────────────────────────────

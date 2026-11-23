@@ -433,17 +433,18 @@ const CONFRONTA = async ([a, b]) => {
         return { tappa: el.classList.contains('scelta') && el.getAttribute('aria-current') === 'true', segno: !!mk && mk.matches('.pin.scelto'),
           altri: document.querySelectorAll('#dayMap .pin.scelto').length, scheda: !!document.querySelector('#dayMap .maplibregl-popup'),
           apri: (() => { const x = document.querySelector('#dayMap .maplibregl-popup .tt-apri-tappa'); return !!x && getComputedStyle(x).display !== 'none'; })(),
-          menu: document.getElementById('mActMenu').classList.contains('active') };
+          menu: document.getElementById('mPosto').classList.contains('active') };
       });
       if (!t.tappa || !t.segno || t.altri !== 1 || !t.scheda || !t.apri || t.menu) male.push(`${dove}: toccando la tappa ${JSON.stringify(t)}`);
       await blocco.click(); await p.waitForTimeout(500);
-      if (!await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active'))) male.push(`${dove}: il secondo tocco non apre il menu della tappa`);
+      /* dal ridisegno di Oggi la tappa si apre nella scheda del posto (era il menu della tappa) */
+      if (!await p.evaluate(() => document.getElementById('mPosto').classList.contains('active'))) male.push(`${dove}: il secondo tocco non apre la scheda della tappa`);
       await chiudiFogli(p); await p.waitForTimeout(400);
-      /* «Apri» sulla scheda del segnaposto apre il menu */
+      /* «Apri» sulla scheda del segnaposto apre la scheda della tappa */
       await p.evaluate(() => { ttEvidenzia(12, true); }); await p.waitForTimeout(500);
       const tastoApri = p.locator('#dayMap .maplibregl-popup .tt-apri-tappa');
       if (await tastoApri.count()) { await tastoApri.click(); await p.waitForTimeout(500); }
-      const daApri = await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active') && actMenuRef && actMenuRef.id === 12);
+      const daApri = await p.evaluate(() => document.getElementById('mPosto').classList.contains('active') && psRif && psRif.id === 12);
       if (!daApri) male.push(`${dove}: «Apri» sulla mappa non apre la tappa`);
       await chiudiFogli(p); await p.waitForTimeout(400);
       /* un tocco vero su un segnaposto: si accende la sua tappa, e la giornata ci va */
@@ -463,9 +464,9 @@ const CONFRONTA = async ([a, b]) => {
         return { tappa: el.classList.contains('scelta'), segno: dayMapSegni[11].getElement().matches('.pin.scelto'), aVista: q.top >= testa - 1 && q.bottom <= sc.bottom + 1, scelta: ttScelta };
       });
       if (!s.tappa || !s.segno || !s.aVista) male.push(`${dove}: toccando il segnaposto ${JSON.stringify(s)}`);
-      /* con la tastiera (o VoiceOver) il menu si apre subito */
+      /* con la tastiera (o VoiceOver) la scheda si apre subito */
       await p.locator('#ttBody .tt-block[data-id="12"]').focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
-      if (!await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active') && actMenuRef.id === 12)) male.push(`${dove}: con la tastiera il menu della tappa non si apre subito`);
+      if (!await p.evaluate(() => document.getElementById('mPosto').classList.contains('active') && psRif && psRif.id === 12)) male.push(`${dove}: con la tastiera la scheda della tappa non si apre subito`);
       await chiudiFogli(p); await p.waitForTimeout(300);
       /* un giorno senza posizioni: una colonna sola, al centro */
       await p.evaluate(() => openDay(3)); await ferma(p, 700);
@@ -474,7 +475,7 @@ const CONFRONTA = async ([a, b]) => {
       await p.close();
     }
     ok('7. Programma largo (670, 950 e 1280 px): due colonne, i giorni sopra, la mappa ferma mentre si scorre, «Aggiungi» sotto le tappe', !male.filter(x => /colonne|affiancate|giorni|ferma|alta|Aggiungi/.test(x)).length, primi(male.filter(x => /colonne|affiancate|giorni|ferma|alta|Aggiungi/.test(x)), 3));
-    ok('7. toccando una tappa si accende anche il suo segnaposto (e un altro tocco, o «Apri», apre il menu); toccando un segnaposto si accende la sua tappa e la giornata ci va; con la tastiera il menu si apre subito',
+    ok('7. toccando una tappa si accende anche il suo segnaposto (e un altro tocco, o «Apri», apre la sua scheda); toccando un segnaposto si accende la sua tappa e la giornata ci va; con la tastiera la scheda si apre subito',
       !male.filter(x => /toccando|tocco|Apri|tastiera/.test(x)).length, primi(male.filter(x => /toccando|tocco|Apri|tastiera/.test(x)), 3));
     ok('7. un giorno senza posizioni resta una colonna sola, al centro', !male.filter(x => /senza mappa/.test(x)).length, primi(male.filter(x => /senza mappa/.test(x)), 2));
     /* sul telefono il Programma resta com'era */
@@ -486,7 +487,7 @@ const CONFRONTA = async ([a, b]) => {
       return { largo: ttLargo(), sopra: m.bottom <= b.top + 1, alta: Math.round(document.getElementById('dayMap').getBoundingClientRect().height), id: !!el };
     });
     await p.locator('#ttBody .tt-block[data-id="13"]').scrollIntoViewIfNeeded(); await p.locator('#ttBody .tt-block[data-id="13"]').click(); await p.waitForTimeout(500);
-    const menu = await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active'));
+    const menu = await p.evaluate(() => document.getElementById('mPosto').classList.contains('active'));
     await p.close();
     ok('7. sul telefono (390 px) una colonna sola, la mappa alta 130 px sopra la giornata, e il tocco apre la tappa come prima', !tel.largo && tel.sopra && tel.alta === 130 && menu, JSON.stringify(tel) + ' menu ' + menu);
   });
@@ -519,13 +520,26 @@ const CONFRONTA = async ([a, b]) => {
       await p.close();
     }
     ok('8. a 385 px (Split View) e sull\'esterno del Duo (466×678) è l\'app del telefono: barra in basso, margini da 16, Programma a una colonna, fogli dal basso, ogni voce apre la sua schermata', !male.length, primi(male, 4));
-    /* sull'esterno del Duo, basso, il cielo della Home si abbassa */
-    const alto = await apri(browser, { larghezza: 466, altezza: 900 }), basso = await apri(browser, { larghezza: 466, altezza: 678 });
-    const c = async p => p.evaluate(() => { const hh = document.querySelector('#plan .hh'), q = hh.getBoundingClientRect(), s = document.querySelector('#plan .hh-soon'); return { h: Math.round(q.height), sopra: parseFloat(getComputedStyle(hh).paddingTop), soon: s ? Math.round(s.getBoundingClientRect().bottom) : 0, H: innerHeight }; });
-    const ca = await c(alto), cb = await c(basso);
-    await alto.close(); await basso.close();
-    ok('8. sotto i 700 px di altezza il cielo della Home è più basso, e la tappa di «Fra poco» resta sopra la barra',
-      cb.h < ca.h - 30 && cb.sopra < ca.sopra && cb.soon > 0 && cb.soon < cb.H - 75, `alto ${ca.h} px (sopra ${ca.sopra}), basso ${cb.h} px (sopra ${cb.sopra}), «Fra poco» finisce a ${cb.soon} di ${cb.H}`);
+    /* Sull'esterno del Duo, basso, Oggi si stringe: il nome della citta' piu'
+       piccolo, il palco (cielo, mappa, schede) piu' basso, e la scheda della
+       tappa in mano (era «Fra poco») resta sopra la barra; il biglietto si
+       affaccia sotto le schede. Nei due temi: in quello scuro la mappa
+       riempie lo schermo. */
+    const c = async p => p.evaluate(() => {
+      const pal = document.querySelector('#plan .og-palco'), citta = document.querySelector('#plan .og-testa .hh-city');
+      const fila = [...document.querySelectorAll('#plan .og-tappe .stampa')], mano = fila.find(x => x.classList.contains('prima')) || fila[0];
+      const nav = document.querySelector('.nav').getBoundingClientRect();
+      return { h: Math.round(pal.getBoundingClientRect().height), citta: parseFloat(getComputedStyle(citta).fontSize), mano: mano ? Math.round(mano.getBoundingClientRect().bottom) : 0, barra: Math.round(nav.top), H: innerHeight };
+    });
+    for (const tema of ['chiaro', 'scuro']) {
+      const alto = await apri(browser, { larghezza: 466, altezza: 900, tema }), basso = await apri(browser, { larghezza: 466, altezza: 678, tema });
+      await ferma(alto, 900); await ferma(basso, 900);
+      const ca = await c(alto), cb = await c(basso);
+      await alto.close(); await basso.close();
+      ok(`8. sotto i 700 px di altezza Oggi è più bassa e la scheda della tappa in mano resta sopra la barra (${tema})`,
+        cb.citta < ca.citta && cb.h < ca.h && cb.mano > 0 && cb.mano <= cb.barra - 4,
+        `citta' ${ca.citta} → ${cb.citta} px, palco ${ca.h} → ${cb.h} px, la scheda in mano finisce a ${cb.mano} (la barra da ${cb.barra}, su ${cb.H})`);
+    }
   });
 
   /* ── 9. un iPhone normale: com'era prima della Layout 3 ───────────────── */
@@ -539,10 +553,16 @@ const CONFRONTA = async ([a, b]) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppgo-prima-'));
     fs.writeFileSync(path.join(dir, 'Index 2.1.html'), git.stdout);
     const prima = pathToFileURL(path.join(dir, 'Index 2.1.html')).href;
-    const SCHERMATE = [['Oggi', "go('plan')"], ['Programma', 'openDay(0)'], ['Scopri', "go('discover');setDiscover('search')"], ['Spese', "go('money')"],
-      ['Prenotazioni', "apriPrenotazioni('biglietti')"], ['menu dei viaggi', 'apriViaggi()'], ['Nuova spesa', 'openExpense()'], ['menu della tappa', 'openDay(0);tapAct(0,13)']];
+    /* Oggi e la scheda di una tappa (era il menu della tappa) sono state
+       ridisegnate apposta come le anteprime approvate (novembre 2026): il
+       loro aspetto lo guardano prova-oggi e prova-posto. Qui restano le
+       altre. E i caratteri di Google si fermano in tutte e due le versioni:
+       dalle anteprime Fraunces arriva nella sua forma morbida (SOFT 100), e
+       qui si confronta la disposizione, non il disegno delle lettere. */
+    const SCHERMATE = [['Programma', 'openDay(0)'], ['Scopri', "go('discover');setDiscover('search')"], ['Spese', "go('money')"],
+      ['Prenotazioni', "apriPrenotazioni('biglietti')"], ['menu dei viaggi', 'apriViaggi()'], ['Nuova spesa', 'openExpense()']];
     const foto = async (indirizzo, tema) => {
-      const p = await apriPagina(browser, { errori, chiave: 'iph-' + Math.random(), attesa: 700, tema, indirizzo });
+      const p = await apriPagina(browser, { errori, chiave: 'iph-' + Math.random(), attesa: 700, tema, indirizzo, senzaCaratteri: true });
       /* L'interno delle mappe si nasconde nelle due versioni: dalle mappe
          nuove (MapLibre ed Esri, novembre 2026) e' cambiato apposta, e la
          versione di riferimento ha ancora le mappe di prima, che per di piu'

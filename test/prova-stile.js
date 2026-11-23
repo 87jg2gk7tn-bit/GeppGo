@@ -70,6 +70,20 @@ const visibile = `el => { const q = el.getBoundingClientRect(); if (q.width < 1 
   for (let x = el; x && x !== document.documentElement; x = x.parentElement) { const c = getComputedStyle(x);
     if (c.display === 'none' || c.visibility === 'hidden' || parseFloat(c.opacity) < 0.05) return false; } return true; }`;
 
+/* I COMPONENTI DELLE ANTEPRIME (le stampe, novembre 2026: foglietto con lo
+   scotch, biglietto con lo strappo, scheda-foto, adesivo, copertina, il cielo
+   che sfuma nella mappa coi suoi segnaposto e il vetro sul cielo; vedi
+   «Stile» in CLAUDE.md). Disegnano carta, nastro, foto e vetro veri, come
+   il cielo e il logo: colori, spazi, raggi e ombre sono quelli delle
+   anteprime approvate, e la grandezza del testo viene dalla loro scala
+   (--fs-vetro … --fs-nome), che vale solo per loro. Sono Oggi e la scheda
+   di un posto, piu' i componenti dovunque si usino. */
+const STAMPE = /\.adesivo|\.foglietto|\.biglietto|\.stampa|\.fila-stampe|\.copertina|\.cielo-mappa|\.cm-|\.og-|\.ps-|\.cartina|\.distanza|\.scotch|\.strappo|\.g-dv|\.su-oggi|#homeMap|#mPosto/;
+const SCALA_STAMPE = /^var\(--fs-(vetro|mano|foto|frase|gradi|ora|nome-sotto|distanza|citta|nome)\)$/;
+const DENTRO_STAMPE = '.og-palco,.ps-foglio,.stampa,.biglietto,.foglietto,.adesivo,.copertina,.cartina,.distanza,.su-oggi .topbar';
+/* le misure della scala delle stampe, in px: 14, 19, 21, 27, 28, 30, 34,4 e 41,6 */
+const PX_STAMPE = [14, 19, 21, 27, 28, 30, 34.4, 41.6];
+
 /* I tipi di tasto della Layout 1. Le famiglie di prima (.tt-az, .hh-rapido,
    .auth-link…) restano per la disposizione, ma ognuna porta la classe del
    suo tipo. In fondo le eccezioni dichiarate in CLAUDE.md: i controlli e
@@ -86,13 +100,16 @@ const TIPI = {
   'scheda': '.card,.hh-card,.hh-soon,.hh-empty,.hist-card,.exp-row,.person,.wcard,.cat,.tt-block,.tt-act,.res,.rcard,.ms-row,.split-item',
   'nome nella scheda': '.come-testo,.trip-hero-name,.hist-n,.ticket-n', 'link nel testo': 'a[href]:not(.btn):not(.chip)',
   'tragitto in Time Table': '.tt-travel-mezzo,.tt-travel-x,.tt-travel-skip,.tt-travel-toggle', 'link da copiare': '.share-link',
-  'pubblicità': '.ad-x'
+  'pubblicità': '.ad-x',
+  /* i tasti delle stampe (Oggi e la scheda di un posto, come le anteprime) */
+  'vetro sul cielo': '.og-vetro,.ps-indietro', 'scheda-foto': '.stampa .lastra', 'biglietto': '.biglietto', 'cartellino dell\'albergo': '.og-chiave .cartellino', 'foglietto': '.foglietto'
 };
 /* I comandi dove una scritta ci deve essere: tutto, tranne le schede (che
    portano il loro contenuto: una spesa col suo «🍜», una tappa col tempo),
    i segnaposto delle mappe e la pubblicità. */
 /* Dalla Layout 2 anche la barra in basso: la parola sotto ogni icona. */
-const CON_PAROLE = ['principale', 'secondario', 'terziario', 'eliminazione', 'pillola', 'controllo a schede', 'giorno', 'riga di elenco', 'nome nella scheda', 'cielo della Home', 'barra in basso'];
+const CON_PAROLE = ['principale', 'secondario', 'terziario', 'eliminazione', 'pillola', 'controllo a schede', 'giorno', 'riga di elenco', 'nome nella scheda', 'cielo della Home', 'barra in basso',
+  'vetro sul cielo', 'scheda-foto', 'biglietto', 'cartellino dell\'albergo', 'foglietto'];
 /* I comandi che possono essere fatti di un segno solo, col nome per
    VoiceOver: la crocetta, i controlli della mappa, l'iniziale del Profilo
    e il tondo del tema, il mezzo e la crocetta del tragitto. */
@@ -113,14 +130,16 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
     const scala = /^var\(--fs-(xs|s|m|l|xl|xxl|cielo)\)$/;
     /* La schermata d'apertura sta in testa, prima delle variabili: i suoi
        32 px sono scritti in rem (vedi IN TESTA SOLO LA SCHERMATA D'APERTURA). */
-    const fuori = dichiarazioni.filter(d => d.p === 'font-size' && !scala.test(d.v) && !/bootSplash/.test(d.sel)).map(d => `${d.sel.slice(0, 40)} {font-size:${d.v}}`);
-    ok('1. nel foglio di stile e negli style="" ogni grandezza del testo è una variabile della scala (--fs-xs … --fs-xxl, --fs-cielo)', !fuori.length, primi(fuori) ||
+    const fuori = dichiarazioni.filter(d => d.p === 'font-size' && !scala.test(d.v) && !/bootSplash/.test(d.sel) && !(STAMPE.test(d.sel) && SCALA_STAMPE.test(d.v))).map(d => `${d.sel.slice(0, 40)} {font-size:${d.v}}`);
+    /* e la scala delle stampe solo nelle stampe */
+    const fuoriStampe = dichiarazioni.filter(d => d.p === 'font-size' && SCALA_STAMPE.test(d.v) && !STAMPE.test(d.sel)).map(d => `${d.sel.slice(0, 40)} {font-size:${d.v}}`);
+    ok('1. nel foglio di stile e negli style="" ogni grandezza del testo è una variabile della scala (--fs-xs … --fs-xxl, --fs-cielo; nelle stampe la loro)', !fuori.length && !fuoriStampe.length, primi([...fuori, ...fuoriStampe]) ||
       `${dichiarazioni.filter(d => d.p === 'font-size').length} dichiarazioni`);
     const vars = Object.fromEntries([...css.matchAll(/(--fs-[\w-]+)\s*:\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
     const px = v => parseFloat(v) * (/rem$/.test(v) ? 16 : 1);
     const giuste = ['--fs-xs', '--fs-s', '--fs-m', '--fs-l', '--fs-xl', '--fs-xxl'].map(k => px(vars[k] || '0'));
     ok('1. la scala è 12, 13, 15, 17, 22, 32 px', JSON.stringify(giuste) === JSON.stringify([12, 13, 15, 17, 22, 32]), giuste.join(', '));
-    const g = await giro(browser, { larghezza: 390, guarda: async page => page.evaluate(([STRATO, visibile]) => {
+    const g = await giro(browser, { larghezza: 390, guarda: async page => page.evaluate(([STRATO, visibile, DENTRO_STAMPE, PX_STAMPE]) => {
       const vis = eval(visibile), SCALA = [12, 13, 15, 17, 22, 32], out = [], campi = [];
       let visti = 0;
       for (const rad of eval(STRATO)) {
@@ -140,11 +159,13 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
           if (!p || p.closest('.maplibregl-map,.g-ferma,script,style,svg,option,#bootSplash') || !vis(p)) continue;
           const fs = parseFloat(getComputedStyle(p).fontSize);
           if (p.closest('.hh-city,.mt-temp')) { if (fs < 44) out.push(`${fs}px nel cielo «${t.data.trim().slice(0, 16)}»`); continue; }
+          /* nelle stampe la loro scala, e i titoli enormi (la citta', il nome di un posto) */
+          if (p.closest(DENTRO_STAMPE) && (PX_STAMPE.some(s => Math.abs(s - fs) < 0.3) || (fs >= 44 && p.closest('.cp-nome')))) continue;
           if (!SCALA.some(s => Math.abs(s - fs) < 0.3)) out.push(`${Math.round(fs * 10) / 10}px «${t.data.trim().slice(0, 18)}»`);
         }
       }
       return { testi: [...new Set(out)], campi: [...new Set(campi)], visti };
-    }, [STRATO, visibile]) });
+    }, [STRATO, visibile, DENTRO_STAMPE, PX_STAMPE]) });
     const male = Object.entries(g.esiti).flatMap(([n, l]) => ((l && l.testi) || []).map(x => `${n}: ${x}`));
     const campiPiccoli = Object.entries(g.esiti).flatMap(([n, l]) => ((l && l.campi) || []).map(x => `${n}: ${x}`));
     const campiVisti = Object.values(g.esiti).reduce((a, l) => a + ((l && l.visti) || 0), 0);
@@ -166,9 +187,9 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
        il Premium. */
     const MOTIVATO = /\.cl-|\.cielo|\.hh-velo|\.hh-city|\.mt-hero|\.mt-txt|\.brand-logo|#bootSplash|\.bootSplash|\.sw-in|\.scan-|\.intro-ill|\.i-|\.pin|\.vm-|#diaryPrint|\.hh::after|\.hh\.cl|\.vetro|@keyframes|\.g-ferma|\.ad-slot|\.prem/;
     const COLORE = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/;
-    const libero = d => MOTIVATO.test(d.sel) || /mask/.test(d.p);
+    const libero = d => MOTIVATO.test(d.sel) || STAMPE.test(d.sel) || /mask/.test(d.p);
     const colori = dichiarazioni.filter(d => COLORE.test(d.v) && !libero(d)).map(d => `${d.sel.slice(0, 36)} {${d.p}:${d.v.slice(0, 40)}}`);
-    ok('2. colori scritti a mano solo dove è motivato (cielo, logo, illustrazioni, maschere, stampa)', !colori.length, primi(colori) ||
+    ok('2. colori scritti a mano solo dove è motivato (cielo, logo, illustrazioni, maschere, stampa, i componenti delle anteprime)', !colori.length, primi(colori) ||
       `${dichiarazioni.filter(d => COLORE.test(d.v)).length} valori, tutti in quei posti`);
     const spazi = dichiarazioni.filter(d => /^(margin|padding)(-[\w-]+)?$|^(row-|column-)?gap$/.test(d.p) && !libero(d))
       .filter(d => (d.v.match(/(?<![\w.(-])-?\d*\.?\d+(?:px|rem|em)\b/g) || []).some(t => !['0px', '1px', '2px', '-1px', '-2px'].includes(t)))
@@ -329,7 +350,8 @@ const SOLO_SEGNO = ['crocetta', 'mappa', 'barra in alto', 'tragitto in Time Tabl
       });
     }
     const male = [];
-    if (!fondi.plan.sfumati.some(x => /hh/.test(x)) || !fondi.plan.grande) male.push('Home senza il cielo grande');
+    /* dal ridisegno di Oggi il cielo grande e' .cm-cielo, che sfuma nella mappa */
+    if (!fondi.plan.sfumati.some(x => /hh|cm-cielo/.test(x)) || !fondi.plan.grande) male.push('Home senza il cielo grande');
     Object.entries(fondi).filter(([p]) => p !== 'plan').forEach(([p, f]) => {
       if (f.grande) male.push(`${p}: il cielo grande con la città`);
       if (!f.cielo) male.push(`${p}: senza la sfumatura in cima`);

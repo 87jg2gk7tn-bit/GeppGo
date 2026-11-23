@@ -325,8 +325,11 @@ const stato = { trips: [
     t.pois = []; t.days.forEach(d => d.activities = []);
     save(); renderAll(); go('plan');
     await new Promise(r2 => setTimeout(r2, 500));
-    const el = document.querySelector('.hh-empty');
+    /* dal ridisegno di Oggi e' la stampa bianca in fondo alla mappa (era il riquadro .hh-empty) */
+    const el = document.querySelector('#plan .stampa.bianca .lastra') || document.querySelector('.hh-empty');
     if (!el) return { c: 'non c\'è' };
+    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    await new Promise(r2 => setTimeout(r2, 100));
     const b = el.getBoundingClientRect();
     let chiamato = false;
     const vero = window.homeAdd;

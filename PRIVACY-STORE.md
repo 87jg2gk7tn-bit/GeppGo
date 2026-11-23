@@ -176,7 +176,12 @@ Stessa sostanza, nomi diversi:
   i dati nascosti del file (niente punto GPS).
 - **Posizione → Posizione precisa**: raccolta ma non conservata sui server
   (vedi sopra; quello che resta nel telefono non conta come raccolta).
-- **Attività nell'app → Altre azioni**: il contenuto dei viaggi.
+- **Attività nell'app → Altre azioni**: il contenuto dei viaggi. Ne fa parte
+  anche la riga «Ti piacerà perché…» della scheda di un posto (campo
+  `perche` del viaggio): l'assistente la scrive una volta sola per posto,
+  ricevendo il nome, il tipo e la città del posto e i gusti del viaggio
+  (niente persone), e resta nel viaggio come il resto. Con i consigli del
+  viaggio spenti non si chiede.
 - **Attività nell'app → Altri contenuti generati dall'utente**: la valigia di
   ogni viaggio, il proprio tetto di spesa e alcune impostazioni (navigatore,
   qualità delle foto, avvisi di prossimità, tema, il proprio nome), salvate

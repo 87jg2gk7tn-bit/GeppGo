@@ -94,7 +94,8 @@ const chiudiFogli = p => p.evaluate(() => document.querySelectorAll('.modal.acti
    - spezzate: parole tagliate a meta' fra due righe;
    - coperti: tasti con sopra un'altra cosa (al centro del tasto il dito
      tocca altro);
-   - addosso: la scheda che copre la fila o finisce sotto «Fra poco». */
+   - addosso: la scheda che copre la fila o ci finisce sotto il biglietto
+     della tappa in mano (era «Fra poco»). */
 /* dove = 'casa' (la scheda della valigia in Home) o 'cassetto' (il gruppo
    del viaggio nel menu dei viaggi, da aprire prima). */
 const MISURA = dove => {
@@ -102,7 +103,7 @@ const MISURA = dove => {
   if (document.documentElement.scrollWidth > innerWidth + 1) out.fuori.push('la pagina scorre di lato');
   const cassetto = dove === 'cassetto';
   const fila = cassetto ? document.querySelector('#vgAzioni .vg-az-griglia') : document.querySelector('#homeHero .hh-cerca');
-  const vs = cassetto ? null : document.querySelector('#homeHero #valScheda'), so = cassetto ? null : document.querySelector('#homeHero .hh-soon');
+  const vs = cassetto ? null : document.querySelector('#homeHero #valScheda'), so = cassetto ? null : document.querySelector('#homeHero #ogBigliettoBox');
   const tasti = [...document.querySelectorAll(cassetto ? '#vgAzioni .vg-az' : '#homeHero #valScheda .val-x, #homeHero #valScheda .val-apri')];
   out.tasti = tasti.length;
   const nome = el => (el.className || el.id || '').toString().split(' ')[0] + ' «' + el.textContent.trim().slice(0, 18) + '»';
@@ -131,7 +132,8 @@ const MISURA = dove => {
     }
   });
   if (vs && fila && vs.getBoundingClientRect().top < fila.getBoundingClientRect().bottom - 0.5) out.addosso.push('la scheda copre «Cosa cerchi»');
-  if (vs && so && vs.getBoundingClientRect().bottom > so.getBoundingClientRect().top + 0.5) out.addosso.push('«Fra poco» finisce sopra la scheda');
+  /* dal ridisegno di Oggi la scheda sta sotto il biglietto (era «Fra poco», sopra) */
+  if (vs && so && so.getBoundingClientRect().bottom > vs.getBoundingClientRect().top + 0.5) out.addosso.push('il biglietto della tappa finisce sopra la scheda');
   const b = document.querySelector(cassetto ? '#vgAzioni .vg-az' : '#homeHero #valScheda .val-apri');
   if (b) { const cs = getComputedStyle(b); if (cs.color === cs.backgroundColor) out.fuori.push('testo invisibile ' + cs.color); }
   return out;

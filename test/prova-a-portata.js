@@ -127,7 +127,7 @@ const aCasa = async (p, corrente = 1) => {
 /* Le funzioni che, toccate davvero, partirebbero per la loro strada (il
    prompt per rinominare, il PDF, il file del calendario, l'assistente, la
    posizione): qui si guarda solo che il tocco ci arrivi. */
-const SPIE = ['toggleGPS', 'renameTrip', 'toggleStatus', 'openDiary', 'exportICS', 'sistemaGiornata', 'openGenForDay', 'undoDrag', 'toggleSuggest', 'raccoltaDalMenu'];
+const SPIE = ['toggleGPS', 'renameTrip', 'toggleStatus', 'openDiary', 'exportICS', 'sistemaGiornata', 'openGenForDay', 'undoDrag', 'toggleSuggest', 'raccoltaDalMenu', 'ogTuttoIlViaggio'];
 const spia = p => p.evaluate(n => { window.__spie = []; n.forEach(k => { window[k] = function () { window.__spie.push(k); }; }); }, SPIE);
 
 /* ── 1. i percorsi ─────────────────────────────────────────────────────────
@@ -178,7 +178,12 @@ const FUNZIONI = [
   ['esportare nel calendario', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Esporta nel calendario/)], 'spia:exportICS', SCHEDA],
   ['il PDF dell\'itinerario, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /PDF dell'itinerario/)], 'mPdfItin', SCHEDA],
   ['i tetti di spesa, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Tetti di spesa/)], 'mTetti', SCHEDA],
-  ['la mappa di tutto il viaggio, dalla mappa della Home', 1, [VOCE('#homeMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
+  /* In Oggi «Tutto il viaggio» allarga la stessa mappa alle città (ridisegno
+     di Oggi): la mappa con tutte le tappe sta nel Programma e nella scheda. */
+  ['tutto il viaggio sulla mappa di Oggi', 1, [VOCE('#ogTutto', /Tutto il viaggio/)], 'spia:ogTuttoIlViaggio'],
+  /* la scheda del posto, dalle schede-foto di Oggi, e le note sui suoi foglietti */
+  ['la scheda di una tappa, da Oggi', 1, [VOCE('#plan .og-tappe .stampa .lastra', /\S/)], 'mPosto'],
+  ['la nota di una tappa, da Oggi', 1, [VOCE('#plan .og-tappe .stampa .lastra', /\S/), VOCE('#mPosto .foglietto', /nota/i)], 'mActNote'],
   ['la mappa di tutto il viaggio, dalla scheda del viaggio', 1, [...VIAGGIO, VOCE('#tripZoomBody button', /Tutto il viaggio/)], 'mViaggioMappa', SCHEDA],
   ['la mappa di tutto il viaggio, dal Programma', 1, [GIORNATA, VOCE('#dayMapWrap .mappa-tutto', /Tutto il viaggio/)], 'mViaggioMappa'],
   ['Identifica, da Scopri', 1, [BARRA('discover'), VOCE('#discover .sc-identifica', /Identifica/)], 'pagina:identify'],
@@ -250,7 +255,7 @@ async function percorri(p, passi) {
      invisibile intorno, e conta se sopra c'è altro);
    - invisibili: testo dello stesso colore del fondo. */
 const SCHERMI = [
-  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#plan .hh-add', '#homeMapWrap .mappa-tutto'] },
+  { nome: 'Home', prepara: 'casa', sel: ['#menuViaggi', '#gpsPill', '#tbProfilo', '#homeHero .hh-grado', '#homeHero .hh-cerca', '#plan .hh-add', '#ogTutto', '#ogBiglietto'] },
   { nome: 'Home senza giorni', prepara: 'porto', sel: ['#menuViaggi', '#homeHero .hh-sumisura', '#homeHero .hh-cerca'] },
   { nome: 'cassetto', prepara: 'cassetto', sel: ['#cassChiudi', '#mViaggi .vg-voce', '#vgAzioni .vg-az', '#mViaggi .vg-nuovo', '#mViaggi .vg-importa', '#mViaggi .vg-codice'] },
   { nome: 'scheda del viaggio', prepara: 'scheda', sel: ['#tripZoomBody .chip', '#tripZoomBody .btn'] },
@@ -511,14 +516,17 @@ const MISURA = ([sels, mezzi]) => {
     const viste = [];
     for (const lingua of ['it', 'en', 'es', 'fr', 'pt']) {
       const q = await apri(browser, { lingua, viaggi: [soloAdesso(), porto()] });
-      const v = await q.evaluate(() => ({ etichetta: (document.querySelector('.hh-soon .hh-soon-l') || {}).textContent || '',
-        anello: (document.querySelector('.hh-soon .hh-ring span') || {}).textContent || '' }));
-      const d = await q.evaluate(l => l === 'it' ? { ADESSO: 'ADESSO', ora: 'ora' } : { ADESSO: DIZIONARIO_DATI[l].ADESSO, ora: DIZIONARIO_DATI[l].ora }, lingua);
-      const giusto = v.etichetta === d.ADESSO && v.anello === d.ora && (lingua === 'it' || (v.etichetta !== 'ADESSO' && v.anello !== 'ora'));
+      /* il riquadro «Fra poco» col suo anello e' diventato il biglietto della
+         tappa in mano (ridisegno di Oggi): ADESSO a sinistra, «la scheda» di
+         la' dallo strappo */
+      const v = await q.evaluate(() => ({ etichetta: (document.querySelector('#ogBiglietto .b-occhiello') || {}).textContent || '',
+        anello: ((document.querySelector('#ogBiglietto .b-vai') || {}).textContent || '').trim() }));
+      const d = await q.evaluate(l => l === 'it' ? { ADESSO: 'ADESSO', ora: 'la scheda' } : { ADESSO: DIZIONARIO_DATI[l].ADESSO, ora: DIZIONARIO[l]['la scheda'] }, lingua);
+      const giusto = v.etichetta === d.ADESSO && v.anello === d.ora && (lingua === 'it' || (v.etichetta !== 'ADESSO' && v.anello !== 'la scheda'));
       viste.push([lingua, giusto, `«${v.etichetta}» «${v.anello}»`]);
       await q.close();
     }
-    ok('6. nel riquadro «Fra poco» «ADESSO» e «ora» sono nella lingua dell\'app', viste.every(x => x[1]), viste.map(x => `${x[0]} ${x[2]}`).join(' · '));
+    ok('6. nel biglietto della tappa in mano (era «Fra poco») «ADESSO» e «la scheda» sono nella lingua dell\'app', viste.every(x => x[1]), viste.map(x => `${x[0]} ${x[2]}`).join(' · '));
   });
 
   /* ── 7. MAPPA_APP ──────────────────────────────────────────────────────── */

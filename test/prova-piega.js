@@ -42,9 +42,9 @@ const giorni = [4, 3, 2, 1, 0].map((n, i) => ({
   })) : []
 }));
 
-const stato = nome => ({
+const stato = (nome, citta) => ({
   trips: [{
-    id: 1, name: nome || 'Parigi 26', destination: 'Parigi', currency: 'EUR', status: 'open',
+    id: 1, name: nome || 'Parigi 26', destination: citta || 'Parigi', currency: 'EUR', status: 'open',
     start: d(4), end: d(0),
     participants: [{ id: 'p1', name: 'Gepp', isMe: true }, { id: 'p2', name: 'Ali' }],
     suggested: [], pois: [], expenses: [], tickets: [],
@@ -73,7 +73,7 @@ const stato = nome => ({
   const err = [];
   const ok = (nome, cond, extra = '') => r.push(`${cond ? '  OK  ' : ' FALLITO '} ${nome}${extra ? ' — ' + extra : ''}`);
 
-  async function apri(largo, alto, nome) {
+  async function apri(largo, alto, nome, citta) {
     const page = await browser.newPage({ viewport: { width: largo, height: alto } });
     page.on('pageerror', e => err.push('PAGEERROR: ' + e.message.split('\n')[0]));
     /* Le tessere si servono finte: una mappa che aspetta la rete non e' alta
@@ -82,7 +82,7 @@ const stato = nome => ({
       status: 200, contentType: 'image/png',
       body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }));
     await page.route(/api\.open-meteo\.com|nominatim/, ro => ro.abort());
-    await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato(nome));
+    await page.addInitScript(s => localStorage.setItem('geppgo2', JSON.stringify(s)), stato(nome, citta));
     await page.goto(APP, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof go === 'function', { timeout: 20000 });
     await page.waitForFunction(() => !document.getElementById('bootSplash'), { timeout: 20000 });
@@ -95,7 +95,8 @@ const stato = nome => ({
     const q = s => document.querySelector(s);
     const box = e => e ? e.getBoundingClientRect() : null;
     const mappa = box(q('#homeMapWrap')), pillola = box(q('.nav'));
-    const eb = box(q('.hh-eyebrow')), grado = box(q('.hh-grado-solo')), sole = box(q('.cl-astro'));
+    /* Oggi ridisegnata (anteprime): i gradi sono .og-gradi, sotto la luna */
+    const eb = box(q('.hh-eyebrow')), grado = box(q('.og-gradi') || q('.hh-grado-solo')), sole = box(q('.cl-astro')), citta = box(q('.hh-city'));
     /* Due riquadri si toccano se non sono separati da nessuna delle quattro
        parti. Si guardano i riquadri e non le classi: e' l'unico modo di
        sapere se dal vivo una scritta finisce addosso a un'altra. */
@@ -105,6 +106,9 @@ const stato = nome => ({
        stanno a due pixel di distanza: se i gradi tornassero a prendersi una
        riga loro, questa diventerebbe falsa. */
     const stessaRiga = (eb && grado) ? (eb.top < grado.bottom - 2 && grado.top < eb.bottom - 2) : null;
+    /* Oggi ridisegnata: i gradi stanno accanto al nome della citta' (o alla
+       frase sotto), a destra, non su una riga loro */
+    const accantoCitta = (grado && citta) ? (grado.top < citta.bottom + 40 && grado.bottom > citta.top) : null;
 
     /* DOVE STA DAVVERO L'INCHIOSTRO. Il nome della citta' ha interlinea .88,
        cioe' piu' STRETTA delle lettere: il riquadro della riga e' piu'
@@ -142,8 +146,9 @@ const stato = nome => ({
       mappaF: mappa ? Math.round(mappa.bottom) : null,
       pillola: pillola ? Math.round(pillola.top) : null,
       cieloVuoto: (eb && q('.hh')) ? Math.round(eb.top - box(q('.hh')).top) : null,
-      stessaRiga,
-      ebTocca: tocca(eb, grado), ebToccaSole: tocca(eb, sole), gradoToccaSole: tocca(grado, sole)
+      stessaRiga, accantoCitta,
+      ebTocca: tocca(eb, grado), ebToccaSole: tocca(eb, sole), gradoToccaSole: tocca(grado, sole),
+      cittaTocca: tocca(citta, grado), cittaToccaSole: tocca(citta, sole)
     };
   });
 
@@ -167,8 +172,11 @@ const stato = nome => ({
   // ══ i gradi non hanno piu' una riga tutta loro ═══════════════════════
   let page = await apri(390, 844);
   let m = await misura(page);
-  ok('i gradi stanno sulla riga della scritta, non su una loro',
-     m.stessaRiga === true, m.stessaRiga === null ? 'uno dei due non c\'è' : '');
+  /* Dal ridisegno di Oggi (anteprime/oggi-a): la riga in cima ha «GIORNO 1 DI
+     5» e «Tutto il viaggio»; i gradi stanno a destra, sotto la luna, accanto
+     al nome della citta'. Una riga loro non ce l'hanno nemmeno qui. */
+  ok('i gradi non hanno una riga loro: stanno accanto alla città',
+     m.accantoCitta === true, m.accantoCitta === null ? 'uno dei due non c\'è' : '');
   /* Il numero da cui e' partito tutto: quanto cielo vuoto c'e' prima della
      scritta. Era 103, cioe' la fila dei viaggi che non c'e' piu'. Si
      chiede che stia sotto i novanta: sotto quella soglia la mappa entra, e
@@ -177,8 +185,8 @@ const stato = nome => ({
   ok('e sopra la scritta non c\'è più il vuoto della fila dei viaggi',
      m.cieloVuoto != null && m.cieloVuoto < 90, m.cieloVuoto + 'px di cielo vuoto');
   ok('niente si tocca, col nome corto',
-     m.ebTocca === false && m.ebToccaSole === false && m.gradoToccaSole === false,
-     `scritta/gradi ${m.ebTocca}, scritta/sole ${m.ebToccaSole}, gradi/sole ${m.gradoToccaSole}`);
+     m.ebTocca === false && m.ebToccaSole === false && m.gradoToccaSole === false && m.cittaTocca === false && m.cittaToccaSole === false,
+     `scritta/gradi ${m.ebTocca}, scritta/sole ${m.ebToccaSole}, gradi/sole ${m.gradoToccaSole}, città/gradi ${m.cittaTocca}, città/sole ${m.cittaToccaSole}`);
   await page.close();
 
   // ══ e con un nome lungo, che è dove si rompe ═════════════════════════
@@ -187,15 +195,18 @@ const stato = nome => ({
      allargava in giu' e finiva addosso al numero. Per questo adesso sono
      una riga vera con due colonne: cosi' non possono toccarsi nemmeno
      volendo. E per questo la prova il nome lungo ce l'ha. */
-  page = await apri(390, 844, 'Viaggio di nozze in Giappone e Corea 2026');
+  /* Dal ridisegno di Oggi il nome del viaggio non sta piu' sulla riga in cima
+     (sta nel menu dei viaggi): il nome lungo da provare e' quello della
+     citta', che va a capo e scende accanto ai gradi. */
+  page = await apri(390, 844, 'Viaggio di nozze in Giappone e Corea 2026', 'San Cristóbal de las Casas');
   m = await misura(page);
   ok('con un nome lungo la scritta non finisce addosso ai gradi',
-     m.ebTocca === false, 'si toccano: ' + m.ebTocca);
+     m.ebTocca === false && m.cittaTocca === false, `scritta ${m.ebTocca}, città ${m.cittaTocca}`);
   /* E non finisce nemmeno dietro al sole, che sta in alto a destra ed e'
      alto cinquantadue pixel: e' il sole a dire quanto in alto si puo'
      portare la scritta, non il gusto di chi guarda. */
   ok('e nemmeno dietro al sole',
-     m.ebToccaSole === false, 'si toccano: ' + m.ebToccaSole);
+     m.ebToccaSole === false && m.cittaToccaSole === false, `scritta ${m.ebToccaSole}, città ${m.cittaToccaSole}`);
   ok('e la mappa si vede tutta anche così',
      m.mappaF != null && m.pillola != null && m.mappaF <= m.pillola,
      m.mappaF != null ? `mappa fino a ${m.mappaF}, barra da ${m.pillola}` : 'la mappa non c\'è');

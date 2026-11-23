@@ -1892,13 +1892,30 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   service worker tiene ognuno per il suo tempo, non di più. **Il limite che
   conta è lo stile**: con l'app aperta resta in memoria e la mappa va
   anche senza rete per tutto il giorno dei pezzi guardati; ma se l'app
-  riparte senza rete più di 10 minuti dopo, lo stile non c'è e la mappa
-  mostra segnaposto e percorso con l'avviso. **Da decidere**: la foto dal
-  satellite si può disegnare senza lo stile di Esri (l'indirizzo dei pezzi
-  è noto), con uno stile fatto dall'app e i pezzi tenuti entro il loro
-  giorno; le condizioni lo permettono (si usa solo cache valida), ma
-  andrebbe riletto prima. Per l'offline vero resta la strada dell'app nativa
-  (vedi in cima).
+  riparte senza rete più di 10 minuti dopo, lo stile non c'è. **Deciso e
+  fatto il 23 novembre** (ridisegno di Oggi, «passo 0»): in quel caso la
+  mappa si disegna con uno stile fatto dall'app (`stileRiserva`), che usa
+  solo la foto dal satellite (`ESRI_FOTO_PEZZI`, l'indirizzo dei pezzi è
+  quello noto) e solo i pezzi già guardati e ancora validi: l'indirizzo porta
+  `geppgo=memoria`, e la service worker per quelli risponde solo dalla
+  memoria (mai dalla rete) e solo entro il loro Cache-Control; fuori, 404, e
+  quel pezzo resta color carta. La citazione resta quella di Esri, con le
+  fonti della foto (`ESRI_FONTI_FOTO`), e l'avviso dice «Sei senza rete: vedi
+  solo le foto dal satellite già guardate.». Le condizioni lette (E204 rev.
+  21/11/2025 ed E300): **3.1 d.6.A** permette la cache «as permitted by the
+  caching headers (HTTP/1.1) returned by the Services, to the extent
+  necessary for enabling or optimizing the use of the Customer
+  Application» — è esattamente quello che si usa; **3.1 d.3** solo per
+  vedere la mappa nell'app (è così); **3.1 d.4** la citazione non si toglie
+  (resta); **E300 nota 109** dice «Basemap Styles are for use only with
+  ArcGIS Location Platform Basemap Services», cioè il contrario (gli stili
+  di Esri con dati d'altri): qui è uno stile dell'app coi pezzi di Esri, e
+  non lo vieta; l'unico punto da interpretare è **3.1 b.4** («may not
+  unbundle or independently use individual or component parts»), letto come
+  smontare la piattaforma per usarne i pezzi fuori: la foto resta servita e
+  pagata da Esri, guardata nell'app, con la sua citazione. Le prove:
+  `test/prova-mappa.js` (la rete staccata e lo stile scaduto). Per
+  l'offline vero resta la strada dell'app nativa (vedi in cima).
 - **Senza rete, cosa permette Esri** (ArcGIS Location Platform Agreement,
   E204, rev. 21/11/2025): 3.1 d.6 vieta di scaricare o estrarre dati in
   blocco, e permette la cache solo «come permesso dalle intestazioni di
@@ -1918,6 +1935,106 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   (14,5), e la prima scelta salta senza volare.
 - **Il ripiego** su OpenStreetMap (`MAPPA_RIPIEGO_OSM`) va tolto prima del
   lancio: vedi in cima, «DA FARE SUBITO».
+- I pezzi per apertura qui sopra sono di prima del ridisegno di Oggi: con
+  la mappa a tutta larghezza e inclinata delle anteprime Oggi ne chiede
+  quanti le anteprime (vedi la sezione qui sotto).
+
+### Oggi ridisegnata e scheda del posto: a che punto è
+
+23 novembre 2026. Oggi è come le anteprime approvate (`anteprime/oggi-a`
+nel tema chiaro, `oggi-b` nel tema scuro) e la scheda di un posto come
+`anteprime/luogo.html`, coi dati veri e senza funzioni tolte. Le risposte
+di Giacomo ai nove punti del piano sono la regola: ricerca, giorni con
+«+ Aggiungi», valigia e tetto sotto il biglietto; «Tutto il viaggio» nel
+cielo allarga la stessa mappa con «Torna a oggi»; le note nel biglietto,
+le persone nella scheda; «Fra poco» è il biglietto; la riga in cima perde
+il nome del viaggio e apre il Programma; menu della tappa e foglio «Luogo»
+sono la scheda del posto; «+ Aggiungi al programma» con un tocco (giorno
+guardato, primo orario libero, «Aggiunto · Cambia»); la frase a mano da
+Wikidata/Wikipedia nella lingua dell'app, se no dall'assistente, se no
+niente; le altre foto da Commons con «foto di …».
+
+**Dove sta nel codice**: «OGGI COME L'ANTEPRIMA» (`ogPalco`, `ogAdesivi`,
+`renderHomeHero`), «LA MAPPA DI OGGI» (`ogDisegna`, `ogInquadra`,
+`ogStriscia`, `ogSgombra`, `ogTuttoIlViaggio`), «LA SCHEDA DI UN POSTO»
+(`apriPosto`, `psDati`, `psDisegna`, `psArricchisci`), «IL KIT DELLE
+STAMPE» (`foglietto`, `biglietto`, `schedaFoto`, `adesivo`, `copertina`,
+`fotoAttr`), e nel foglio di stile «LE STAMPE» e «Oggi larga». I
+componenti e quando usarli sono in CLAUDE.md, «Stile».
+
+**Scelte fatte, e perché**
+- **Due dita per la mappa** (`cooperativeGestures`, opzione `dueDita`): con
+  un dito si scorre la pagina, e se ci si prova la mappa lo dice (tradotto);
+  col tocco per attivarla si sarebbe aggiunto un passo a ogni uso.
+- **Il percorso è un segno di penna sullo schermo** (`.og-tratto`, SVG
+  sopra la foto), non un livello della mappa: curve, tratteggio, cartellini
+  dei minuti come nell'anteprima. Si ridisegna a ogni movimento.
+- **La mappa non rinasce** ridisegnando la Home (`homeMapTenibile`): si
+  rifanno segnaposto e percorso. Le schede e i segnaposto si accendono
+  insieme senza spostare la mappa (spostarla vuol dire pezzi in più).
+- **Schermi bassi** (sotto i 700 px: SE, esterno del Duo): città più
+  piccola, schede da 112×140, la mappa resta in mezzo con la giornata
+  leggibile e la scheda della tappa in mano sopra la barra; il biglietto
+  si affaccia sotto e si raggiunge scorrendo. La citazione in piedi non ci
+  sta (le servono 236 px fra meteo e schede): lì è sdraiata sotto la riga
+  dell'alba. Provato a stringere tutto perché anche il biglietto stesse
+  sopra la barra: la mappa restava una striscia di 60 px coi segnaposto
+  sulla città, peggio.
+- **Il tasto della posizione** sta sopra le schede, accanto alla citazione
+  in piedi (non addosso: la sua area da 44 px resta libera).
+- **Le scritte sul cielo** le colora `tingiCielo`: le nuvole contano solo
+  dove passano davvero (si muovono e sono sfocate: si conta tutta la strada
+  che fanno, e dove due si sovrappongono il bianco si somma); dove né il
+  nero né il bianco reggono (il meteo sopra una foto chiara) la scritta
+  prende un fondo del colore del cielo, sfumato, come fa `tingiPagina`.
+- **Nomi di città con le code** (la y di Kyoto, la g di Parigi): l'interlinea
+  stretta dell'anteprima (.86) le infila nella frase sotto; `conCoda` dà
+  aria solo a quei nomi, così «Osaka» resta identica all'anteprima.
+- **Le icone dei tasti sul cielo** usano `--green` per il tratto d'oro (le
+  anteprime avevano un oro più chiaro): i colori vengono dai token. Le icone
+  del tipo di un posto (sulle schede-foto, nei segnaposto) sono contenuto,
+  come le emoji dei tipi, col tratto `--oro-chiaro`.
+- **Colori, spazi, raggi e ombre delle stampe** sono quelli delle anteprime
+  (carta, nastro, foto, vetro): l'eccezione dichiarata in CLAUDE.md, che
+  `test/prova-stile.js` lascia passare solo lì (`STAMPE`).
+
+**I pezzi di mappa**: aprire Oggi (390 × 844, Esri finto) ne chiede **19**,
+come le anteprime dal vivo (17 in media, fino a 22); il Programma 3–4. La
+prova (`prova-mappe.js` 7) tiene Oggi sotto i 24.
+
+**Le prove**: `test/prova-oggi.js` (49 controlli: confronto con le
+anteprime nei due temi, schede-foto e segnaposto, adesivi, scorrimento con
+un dito, stati, 320–430 px e larga, la mappa che non rinasce, la rete
+lenta) e `test/prova-posto.js` (59: la stessa scheda da cinque posti,
+foglietti e biglietti, «Ti piacerà perché…» una volta sola, Wikidata,
+Wikipedia e Commons nella lingua dell'app, le azioni, cinque lingue,
+larghezze, axe). Le prove vecchie che cercavano la Home di prima (il
+riquadro «Fra poco», il menu della tappa, `.hh-cards`, i gradi su una riga
+loro) guardano adesso il biglietto, la scheda del posto e la fila.
+
+**Cose imparate, da non riscoprire**
+- Qui `Input.synthesizeScrollGesture` di Chromium non scorre niente: lo
+  scorrimento col dito si prova con `Input.dispatchTouchEvent`, un tocco
+  alla volta.
+- Un elemento dentro la mappa sta nel suo contesto di sovrapposizione: la
+  fila delle schede (sopra la mappa) gli rubava il tocco anche dove era
+  vuota. La fila ha `pointer-events:none` e le schede `auto`: scorre lo
+  stesso, perché il dito che parte da una scheda muove chi la contiene.
+- In questo ambiente i caratteri di Google arrivano davvero: un confronto
+  di pixel fra due versioni che chiedono Fraunces diverse (la morbida delle
+  anteprime) li deve fermare in tutte e due (`senzaCaratteri`).
+- Una foto che non arriva l'app la toglie (mai un'immagine rotta): nelle
+  prove le foto di Wikimedia vanno servite finte, se no spariscono.
+- Le risposte finte di OpenStreetMap devono riguardare solo il posto
+  provato: Oggi, dietro, cerca le foto delle tappe per conto suo, e con una
+  risposta valida per tutti le tappe si prendono i dati del posto sbagliato.
+
+**Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
+il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,
+il segnaposto che si accende); il biglietto e la scheda del posto da Oggi,
+Programma, Scopri, Identifica e luoghi salvati; un iPhone SE (schermo
+basso); il tema scuro di notte; la frase a mano (Caveat Brush arriva dopo
+la schermata d'apertura).
 
 
 ---

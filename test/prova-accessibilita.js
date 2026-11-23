@@ -655,11 +655,13 @@ if (require.main === module) (async () => {
     entra = await dentro('mCerca');
     await p.keyboard.press('Escape'); await attesa();
     casi.push(['«Cosa cerchi», chiuso con Esc', entra, await p.evaluate(() => document.activeElement.classList.contains('hh-cerca')), await fuoco()]);
-    /* c) un riquadro-tasto (la prossima tappa in Home) → chiuso toccando fuori */
-    await p.click('.hh-soon'); await attesa();
-    entra = await dentro('mActMenu');
-    await p.mouse.click(195, 12); await attesa();
-    casi.push(['la prossima tappa in Home, chiuso toccando fuori', entra, await p.evaluate(() => document.activeElement.classList.contains('hh-soon') && !document.getElementById('mActMenu').classList.contains('active')), await fuoco()]);
+    /* c) la prossima tappa in Oggi (il biglietto, era «Fra poco») → la
+       scheda del posto, che sul telefono prende tutto lo schermo: si chiude
+       col suo «‹ Oggi» in cima */
+    await p.click('#ogBigliettoBox .biglietto'); await attesa();
+    entra = await dentro('mPosto');
+    await p.click('#mPosto .ps-indietro'); await attesa();
+    casi.push(['la prossima tappa in Oggi, chiusa con «‹ Oggi»', entra, await p.evaluate(() => document.activeElement.classList.contains('biglietto') && !document.getElementById('mPosto').classList.contains('active')), await fuoco()]);
     /* d) una tendina dentro un foglio: la scelta riporta sulla tendina */
     await p.click('.nav-item[data-p="money"]'); await attesa();
     await p.click('.mh-spesa'); await attesa();
@@ -690,14 +692,15 @@ if (require.main === module) (async () => {
     let fuori = 0;
     for (let i = 0; i < 40; i++) { await p.keyboard.press(i % 7 === 6 ? 'Shift+Tab' : 'Tab'); if (!(await dentro('mNewTrip'))) fuori++; }
     await p.keyboard.press('Escape'); await attesa();
+    /* il riquadro-tasto di Oggi: il nome della citta', che apre il Programma */
     await p.click('.nav-item[data-p="plan"]'); await attesa();
-    await p.focus('.hh-soon');
+    await p.focus('#plan .og-testa .hh-city');
     await p.keyboard.press('Enter'); await attesa();
-    const conInvio = await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active'));
-    await p.keyboard.press('Escape'); await attesa();
-    await p.focus('.hh-soon');
+    const conInvio = await p.evaluate(() => document.getElementById('mDay').classList.contains('active'));
+    await p.evaluate(() => go('plan')); await attesa();
+    await p.focus('#plan .og-testa .hh-city');
     await p.keyboard.press(' '); await attesa();
-    const conSpazio = await p.evaluate(() => document.getElementById('mActMenu').classList.contains('active'));
+    const conSpazio = await p.evaluate(() => document.getElementById('mDay').classList.contains('active'));
     await p.close();
     ok('6. con la tastiera: Tab e Maiusc+Tab restano dentro il foglio aperto, Invio e spazio aprono un riquadro-tasto', !fuori && conInvio && conSpazio,
       `40 tasti Tab, ${fuori} finiti fuori · Invio ${conInvio}, spazio ${conSpazio}`);

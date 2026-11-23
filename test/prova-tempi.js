@@ -192,15 +192,15 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
       if (a.length !== 1 || !a[0].startsWith('maps://') || !a[0].includes('dirflg=' + A[m])) sbagliati.push('apple ' + m + ': ' + a.join(' '));
     });
     ok('3. Google Maps col travelmode giusto e Apple Maps col dirflg giusto, per tutti e sei i mezzi (in bici Apple a piedi)', !sbagliati.length, sbagliati.slice(0, 2).join(' | '));
-    // i tasti veri: «🧭 Naviga» nel menu della tappa, col mezzo del tratto
+    // i tasti veri: «Naviga» nella scheda della tappa (era il menu della tappa), col mezzo del tratto
     const tasti = await p.evaluate(async () => {
       app.settings.nav = 'google';
       const out = {};
       for (const [id, nome] of [[13, 'bike'], [14, 'car'], [16, 'train']]) {
         window.__aperti = [];
         tapAct(0, id); await new Promise(x => setTimeout(x, 300));
-        const b = document.getElementById('amNavBtn');
-        if (b && b.style.display !== 'none') b.click();
+        const b = document.querySelector('#mPosto .ps-azione[onclick="psNaviga()"]');
+        if (b) b.click();
         await new Promise(x => setTimeout(x, 1000));
         out[nome] = window.__aperti.slice();
         document.querySelectorAll('.modal.active').forEach(m => closeSheet(m));
@@ -210,10 +210,10 @@ const trattoDi = (lista, emoji) => lista.find(x => x.startsWith(emoji)) || '';
       out.dettaglio = window.__aperti.slice();
       return out;
     });
-    ok('3. «🧭 Naviga» nel menu di una tappa usa il mezzo con cui ci si arriva',
+    ok('3. «Naviga» nella scheda di una tappa usa il mezzo con cui ci si arriva',
        tasti.bike.some(u => /travelmode=bicycling/.test(u)) && tasti.car.some(u => /travelmode=driving/.test(u)) && tasti.train.some(u => /travelmode=transit/.test(u)),
        JSON.stringify({ bike: tasti.bike.length, car: tasti.car.length, train: tasti.train.length }));
-    ok('3. e così la scheda della tappa', tasti.dettaglio.some(u => /travelmode=walking/.test(u)), tasti.dettaglio.join(' '));
+    ok('3. e così il foglio per modificarla', tasti.dettaglio.some(u => /travelmode=walking/.test(u)), tasti.dettaglio.join(' '));
     // con «Chiedimelo ogni volta» il foglio offre solo Apple e Google
     const chiedi = await p.evaluate(() => {
       app.settings.nav = 'ask'; window.__aperti = [];

@@ -358,8 +358,10 @@ function statico() {
         const d = document.createElement('div');
         d.innerHTML = '<div id="provaTaglio" style="width:60px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Una frase troppo lunga</div>' +
           '<div>Una riga qualunque <span id="provaSopra" style="position:relative;top:-1.1em;left:-4em;display:inline-block">Testo sopra</span></div>';
-        document.querySelector('.page.active').prepend(d);
-        window.scrollTo(0, 0);
+        /* sotto il palco di Oggi: in cima, sul cielo, ci passa sopra la barra
+           di vetro, che copre e non si sovrappone */
+        (document.querySelector('#plan .og-sotto') || document.querySelector('.page.active')).prepend(d);
+        d.scrollIntoView({ block: 'center', behavior: 'instant' });
         const m = eval(misura)(nomi);
         d.remove();
         return { taglio: m.troncati.some(x => x.includes('provaTaglio')), sopra: m.sovrapposti.some(x => x.includes('provaSopra')) };
@@ -426,10 +428,12 @@ function statico() {
         openShareLocal(); await respira();
         fuori.condividi.restaLocale = condIt.filter(s => document.getElementById('shareBody').innerText.includes(s));
         closeSheet('mShare');
-        go('plan'); tapAct(0, 11); await respira();
-        const tr = document.querySelector('#amTravel > div');
-        fuori.spostamento = { testo: tr ? tr.textContent : '', atteso: tv('Spostamento verso {1}', 'Nishiki') };
-        closeSheet('mActMenu');
+        /* dal ridisegno di Oggi il tragitto verso la tappa sta nella sua scheda,
+           sotto «Come ci arrivi» (era «Spostamento verso …» nel menu della tappa) */
+        go('plan'); tapAct(0, 12); await respira(); await aspetta(300);
+        const dist = document.getElementById('psDistanza');
+        fuori.spostamento = { testo: dist ? dist.innerText.replace(/\s+/g, ' ') : '', atteso: tv('Come ci arrivi') };
+        closeSheet('mPosto');
         const msg = document.getElementById('auMsg'); document.getElementById('auEmail').value = 'q@x.it';
         sb = { auth: { resetPasswordForEmail: () => new Promise(() => {}), signInWithOtp: async () => ({ error: null }) } };
         authForgot(); await respira();
@@ -444,36 +448,39 @@ function statico() {
       const bVisti = v.condividi.grassetto, bAttesi = v.condividi.attese;
       if (v.condividi.resta.length || v.condividi.restaLocale.length || !bAttesi.every(a => bVisti.includes(a)))
         male.condividi.push(`${l}: resta ${JSON.stringify(v.condividi.resta.concat(v.condividi.restaLocale))}, frasi col grassetto ${JSON.stringify(bVisti).slice(0, 160)}`);
-      if (v.spostamento.testo !== v.spostamento.atteso || /Spostamento/.test(v.spostamento.testo)) male.spostamento.push(`${l}: «${v.spostamento.testo}»`);
+      if (!v.spostamento.testo.includes(v.spostamento.atteso) || /Come ci arrivi|dalla tappa prima|non necessario/.test(v.spostamento.testo)) male.spostamento.push(`${l}: «${v.spostamento.testo.slice(0, 80)}»`);
       if (v.email.codice !== v.email.codiceAtteso || /Invio email/.test(v.email.codice) || v.email.link !== v.email.linkAtteso || !v.email.link.includes('q@x.it') || /inviato/.test(v.email.link))
         male.email.push(`${l}: «${v.email.codice}» / «${v.email.link.slice(0, 60)}»`);
     }
     ok('3. Saldi: «deve ricevere», «deve dare», «in pari», «+ Aggiungi persona» e «Come pareggiare» tradotti in tutte le lingue', !male.saldi.length, male.saldi.slice(0, 2).join(' | '));
     ok('3. la finestra Condividi è tradotta, con e senza account, e le frasi col grassetto sono intere', !male.condividi.length, male.condividi.slice(0, 2).join(' | '));
-    ok('3. «Spostamento verso …» nel menu della tappa è tradotto', !male.spostamento.length, male.spostamento.join(' | '));
+    ok('3. «Come ci arrivi» nella scheda della tappa (era «Spostamento verso …» nel menu) è tradotto, coi mezzi e la distanza', !male.spostamento.length, male.spostamento.join(' | '));
     ok('3. i messaggi d\'invio delle email («Invio email con il codice...», «Link inviato a …») sono tradotti', !male.email.length, male.email.join(' | '));
 
-    /* L'anello di «Fra poco»: la tappa è cominciata da mezz'ora, quindi
-       dice «ora». In francese «en cours», che è giusto e va su due righe più
-       piccole: deve stare dentro il cerchio, a 320 e a 430 px. */
+    /* Il biglietto della tappa in mano (era l'anello di «Fra poco»): la tappa
+       è cominciata da mezz'ora, quindi dice «ADESSO», nella lingua dell'app;
+       l'ora sta dentro il suo cerchio d'oro e «la scheda ›» dentro il
+       biglietto, a 320 e a 430 px. */
     const adesso = Object.assign({}, VIAGGIO, { days: [{ id: 'd0', date: D[0], title: '', activities: [att(31, 'Kinkakuji', '11:30', '12:45', 35.039, 135.729)] }].concat(VIAGGIO.days.slice(1)) });
     const anelli = [];
     for (const l of ['it'].concat(LINGUE)) for (const w of [320, 430]) {
       const q = await apri(browser, l, w, [adesso, PORTO]);
       const a = await q.evaluate(() => {
-        const s = document.querySelector('#homeHero .hh-ring span'), g = s && s.closest('.hh-ring');
-        if (!s) return null;
-        const rg = document.createRange(); rg.selectNodeContents(s);
-        const x = rg.getBoundingClientRect(), c = g.getBoundingClientRect();
-        return { testo: s.textContent, lungo: s.classList.contains('lungo'), dentro: x.left >= c.left + 4 && x.right <= c.right - 4 && x.top >= c.top + 4 && x.bottom <= c.bottom - 4,
+        const b = document.querySelector('#ogBigliettoBox .biglietto');
+        if (!b) return null;
+        const occ = b.querySelector('.b-occhiello'), ora = b.querySelector('.b-ora'), cer = b.querySelector('.cerchio'), vai = b.querySelector('.b-vai');
+        if (!occ || !ora || !cer || !vai) return { manca: true };
+        const rg = document.createRange(); rg.selectNodeContents(ora.firstChild);
+        const x = rg.getBoundingClientRect(), c = cer.getBoundingClientRect(), qb = b.getBoundingClientRect(), qv = vai.getBoundingClientRect();
+        return { testo: occ.textContent.split(' · ')[0].trim(), atteso: tv('ADESSO'),
+          dentro: x.left >= c.left && x.right <= c.right && x.top >= c.top && x.bottom <= c.bottom && qv.left >= qb.left && qv.right <= qb.right,
           misure: `${Math.round(x.width)}×${Math.round(x.height)} in ${Math.round(c.width)}×${Math.round(c.height)}` };
       });
       await q.close();
       anelli.push({ l, w, a });
     }
-    const atteso = { it: 'ora', en: 'now', es: 'ahora', fr: 'en cours', pt: 'agora' };
-    const storti = anelli.filter(x => !x.a || x.a.testo !== atteso[x.l] || !x.a.dentro || x.a.lungo !== (atteso[x.l].length > 5));
-    ok('3. l\'anello di «Fra poco» in francese dice «en cours» (non «là») e sta dentro il cerchio, come le altre lingue, a 320 e a 430 px', !storti.length,
+    const storti = anelli.filter(x => !x.a || x.a.manca || x.a.testo !== x.a.atteso || (x.l !== 'it' && x.a.testo === 'ADESSO') || !x.a.dentro);
+    ok('3. il biglietto della tappa in mano (era l\'anello di «Fra poco») dice «ADESSO» nella lingua dell\'app, con l\'ora dentro il cerchio e «la scheda ›» dentro il biglietto, a 320 e a 430 px', !storti.length,
       storti.length ? storti.map(x => `${x.l} ${x.w}px: ${JSON.stringify(x.a)}`).join(' | ') : anelli.filter(x => x.w === 320).map(x => `${x.l} «${x.a.testo}» ${x.a.misure}`).join(', '));
   });
 

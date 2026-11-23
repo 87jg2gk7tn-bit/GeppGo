@@ -556,10 +556,12 @@ const SPIA_AVVISI = permesso => {
     ok('7. e la sua crocetta si chiama «Chiudi» e risponde su 44 px', !!croce && croce.nome === 'Chiudi' && croce.tocco, JSON.stringify(croce));
     await page.click('.vm-pop .btn');
     await page.waitForTimeout(400);
-    const aperta = await page.evaluate(() => ({ mappa: document.getElementById('mViaggioMappa').classList.contains('active'), menu: document.getElementById('mActMenu').classList.contains('active'), nome: document.getElementById('amName').textContent, ref: actMenuRef }));
-    ok('7. e «Apri la tappa» apre quella tappa (il suo menu, come dalla Home)', !aperta.mappa && aperta.menu && aperta.nome === 'Nishiki' && aperta.ref && aperta.ref.di === 0 && aperta.ref.id === 12, JSON.stringify(aperta));
+    /* dal ridisegno di Oggi la tappa si apre nella sua scheda (la scheda del
+       posto), la stessa di Oggi e del Programma */
+    const aperta = await page.evaluate(() => ({ mappa: document.getElementById('mViaggioMappa').classList.contains('active'), scheda: document.getElementById('mPosto').classList.contains('active'), nome: (document.getElementById('psNome') || {}).textContent, ref: psRif }));
+    ok('7. e «Apri la tappa» apre quella tappa (la sua scheda, come da Oggi)', !aperta.mappa && aperta.scheda && /Nishiki/.test(aperta.nome || '') && aperta.ref && aperta.ref.di === 0 && aperta.ref.id === 12, JSON.stringify(aperta));
     // un gruppo si apre toccandolo: ci si avvicina
-    await page.evaluate(() => { closeSheet('mActMenu'); apriMappaViaggio(); });
+    await page.evaluate(() => { closeSheet('mPosto'); apriMappaViaggio(); });
     await aspetta(page, () => document.querySelectorAll('#vmMappa .vm-grappolo').length > 0, null, 6000);
     const z0 = await page.evaluate(() => vmMappa.getZoom());
     await page.click('#vmMappa .maplibregl-marker:has(.vm-grappolo)');
@@ -636,7 +638,10 @@ const SPIA_AVVISI = permesso => {
        prova-a-portata. */
     const SCHEDA = [['#menuViaggi', /\S/], ['#vgAzioni .vg-az', /Viaggio/]];
     const casi = [
-      ['dalla Home, sulla mappa di oggi', p => p.evaluate(() => go('plan')), [['#homeMapWrap .mappa-tutto', /Tutto il viaggio/]], 'mViaggioMappa'],
+      /* dal ridisegno di Oggi «Tutto il viaggio» allarga la stessa mappa di
+         Oggi alle citta' del viaggio (sul posto, con «Torna a oggi»): la mappa
+         con tutte le tappe sta nel Programma e nella scheda del viaggio */
+      ['dalla Home, sulla mappa di oggi', p => p.evaluate(async () => { go('plan'); for (let i = 0; i < 80 && !(homeMapObj && homeMapObj._g && homeMapObj._g.og); i++) await new Promise(r => setTimeout(r, 100)); }), [['#ogTutto', /Tutto il viaggio/]], null],
       ['dal menu dei viaggi, dalla scheda del viaggio', p => p.evaluate(() => go('plan')), [...SCHEDA, ['#tripZoomBody button', /Tutto il viaggio/]], 'mViaggioMappa', 3],
       ['dal Programma, sulla mappa della giornata', p => p.evaluate(() => openDay(0)), [['#dayMapWrap .mappa-tutto', /Tutto il viaggio/]], 'mViaggioMappa'],
       ['dal Programma, in un giorno senza mappa', p => p.evaluate(() => openDay(3)), [['#ttTutto', /Tutto il viaggio/]], 'mViaggioMappa'],
@@ -647,7 +652,11 @@ const SPIA_AVVISI = permesso => {
       await prima(page);
       await page.waitForTimeout(700);
       let visti = [], esito = false;
-      try { visti = await percorri(page, passi); esito = await aspetta(page, id => document.getElementById(id).classList.contains('active'), meta, 3000); } catch (e) { visti.push('si ferma: ' + e.message.split('\n')[0]); }
+      try {
+        visti = await percorri(page, passi);
+        esito = meta ? await aspetta(page, id => document.getElementById(id).classList.contains('active'), meta, 3000)
+          : await aspetta(page, () => document.querySelector('#plan .og-palco.mondo') && document.getElementById('ogTutto').getAttribute('aria-pressed') === 'true', null, 3000);
+      } catch (e) { visti.push('si ferma: ' + e.message.split('\n')[0]); }
       ok(`9. ${nome}: ${passi.length} ${passi.length === 1 ? 'tocco' : 'tocchi'}${limite > 2 ? ' (azione rara, dietro la scheda del viaggio: fino a 3)' : ''}, ogni voce con la scritta`, esito && passi.length <= limite && visti.length === passi.length && visti.every(v => /[a-zA-Zà-ú]/.test(v)), visti.join(' › '));
       await page.close();
     }
@@ -664,8 +673,8 @@ const SPIA_AVVISI = permesso => {
     ok('9. «Elenco»: tutte le tappe, anche quella senza indirizzo, raggruppate per giorno, ognuna un tasto', elenco.voci.length === elenco.tutte && elenco.titoli.length === 2 && elenco.tasti && elenco.voci.some(v => /Senza indirizzo/.test(v) && /senza posizione/.test(v)), `${elenco.voci.length}/${elenco.tutte}: ${elenco.titoli.join(' · ')}`);
     await page.click('#vmElenco .vm-voce:has-text("Kiyomizu")');
     await page.waitForTimeout(400);
-    const dallElenco = await page.evaluate(() => ({ menu: document.getElementById('mActMenu').classList.contains('active'), nome: document.getElementById('amName').textContent }));
-    ok('9. e dall\'elenco si apre la tappa', dallElenco.menu && dallElenco.nome === 'Kiyomizu', JSON.stringify(dallElenco));
+    const dallElenco = await page.evaluate(() => ({ scheda: document.getElementById('mPosto').classList.contains('active'), nome: (document.getElementById('psNome') || {}).textContent }));
+    ok('9. e dall\'elenco si apre la tappa (la sua scheda)', dallElenco.scheda && /Kiyomizu/.test(dallElenco.nome || ''), JSON.stringify(dallElenco));
     await page.close();
   });
 

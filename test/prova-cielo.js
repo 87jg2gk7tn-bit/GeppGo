@@ -184,7 +184,9 @@ const oreFinte = (data) => {
   ok('ed è un tasto vero, non un cartello', riga.tag === 'BUTTON', String(riga.tag));
   /* «24° · Meteo ›»: il numero da solo non diceva che lì c'è il meteo
      (vedi «Nessuna funzione nascosta» in CLAUDE.md). */
-  ok('dice la temperatura di quel giorno, e che lì c\'è il meteo', riga.testo === '24° · Meteo ›', riga.testo);
+  /* dal ridisegno di Oggi (come le anteprime) i gradi e «Meteo ›» stanno su
+     due righe, sotto la luna o il sole */
+  ok('dice la temperatura di quel giorno, e che lì c\'è il meteo', /^24°\s*(·\s*)?Meteo ›$/.test(riga.testo || ''), riga.testo);
   /* Il punto della modifica chiesta: il riquadro non c'è più, il numero sta
      sul cielo come ci sta il titolo. */
   ok('e non è dentro un riquadro: niente bordo, niente fondo', riga.senzaScatola === true);
@@ -309,10 +311,11 @@ const oreFinte = (data) => {
       luce: eval(luce)(hh),
       /* Lo sfondo dell'intestazione deve essere davvero cambiato: è quello
          che vuol dire «fuso», invece di un rettangolo appiccicato sopra. */
-      sfumaturaVera: /gradient/.test(getComputedStyle(hh).backgroundImage),
+      /* in Oggi ridisegnata il cielo e' .cm-cielo, sopra la mappa, a tutta larghezza */
+      sfumaturaVera: /gradient/.test(getComputedStyle(hh).backgroundImage) || (() => { const c = hh.querySelector(':scope > .cm-cielo'); return !!c && /gradient/.test(getComputedStyle(c).backgroundImage) && Math.round(c.getBoundingClientRect().width) === Math.round(rh.width); })(),
       veloCè: !!velo,
-      veloCopreTutto: !!(rv && Math.round(rv.width) === Math.round(rh.width) &&
-                              Math.round(rv.height) === Math.round(rh.height)),
+      veloCopreTutto: !!(rv && (() => { const c = hh.querySelector(':scope > .cm-cielo'), q = c ? c.getBoundingClientRect() : rh;
+        return Math.round(rv.width) === Math.round(q.width) && Math.round(rv.height) === Math.round(q.height); })()),
       /* Non deve rubare i tocchi a niente di quello che ci sta sopra. */
       veloNonTocca: !!sv && sv.pointerEvents === 'none',
       /* E deve svanire verso il basso: se finisse di netto si vedrebbe il
@@ -329,7 +332,7 @@ const oreFinte = (data) => {
   ok('e il cielo è lo sfondo dell\'intestazione, non un riquadro sopra',
      sfondo.sfumaturaVera === true);
   ok('c\'è il velo disegnato', sfondo.veloCè === true);
-  ok('e copre tutta l\'intestazione', sfondo.veloCopreTutto === true);
+  ok('e copre tutto il cielo', sfondo.veloCopreTutto === true);
   ok('senza rubare un solo tocco a quello che ci sta sopra', sfondo.veloNonTocca === true);
   ok('e svanisce verso il basso, invece di finire con un taglio', sfondo.veloSvanisce === true);
   ok('col sereno c\'è il sole e non ci sono nuvole davanti',
@@ -347,23 +350,26 @@ const oreFinte = (data) => {
     if (!velo || !sole) return { cè: false };
     const v = velo.getBoundingClientRect(), s2 = sole.getBoundingClientRect();
     const o = occhiello && occhiello.getBoundingClientRect(), g = grado && grado.getBoundingClientRect();
+    /* quanta aria c'e' fra due riquadri, da qualunque lato (negativo: si toccano) */
+    const aria = (a, b) => Math.round(Math.max(a.left - b.right, b.left - a.right, a.top - b.bottom, b.top - a.bottom));
+    const altri = ['.og-tutto', '.hh-city'].map(x => document.querySelector(x)).filter(Boolean).map(x => aria(s2, x.getBoundingClientRect()));
     return {
       cè: true,
       ariaSopra: Math.round(s2.top - v.top),
-      /* Le pillole dei viaggi non ci sono più: sotto il sole adesso c'è
-         l'occhiello col nome del viaggio, ed è quello a non doversi
-         prendere il sole in faccia. */
-      ariaSotto: o ? Math.round(o.top - s2.bottom) : null,
-      distanzaGrado: g ? Math.round(g.left - s2.right) : null,
+      /* Oggi ridisegnata: il sole (o la luna) sta a destra, sotto «Tutto il
+         viaggio» e sopra i gradi; l'occhiello «GIORNO 1 DI 4» sta a sinistra,
+         piu' su. Nessuno dei due se lo deve prendere in faccia. */
+      ariaSotto: o ? Math.min(aria(s2, o), ...altri) : null,
+      distanzaGrado: g ? aria(s2, g) : null,
       largo: Math.round(s2.width)
     };
   });
   ok('il sole sta tutto dentro, non a cavallo della linea in alto',
      astro.cè === true && astro.ariaSopra >= 4, astro.ariaSopra + 'px d\'aria sopra');
-  ok('e non finisce addosso al nome del viaggio',
-     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px prima dell\'occhiello');
+  ok('e non finisce addosso all\'occhiello, alla città o a «Tutto il viaggio»',
+     astro.ariaSotto !== null && astro.ariaSotto >= 6, astro.ariaSotto + 'px d\'aria');
   ok('né addosso alla temperatura',
-     astro.distanzaGrado !== null && astro.distanzaGrado >= 12,
+     astro.distanzaGrado !== null && astro.distanzaGrado >= 6,
      astro.distanzaGrado + 'px dalla temperatura');
   ok('e il tondo decorativo si spegne', sfondo.tondoSpento === true);
   await page.close();
@@ -595,8 +601,9 @@ const oreFinte = (data) => {
              grado: !!document.querySelector('.hh-grado'),
              testo: hh.innerText.replace(/\s+/g, ' ') };
   });
+  /* senza previsione: niente tempo disegnato (le classi del cielo e il velo) */
   ok('senza previsione l\'intestazione resta quella di sempre',
-     vuoto.classi.trim() === 'hh' && vuoto.velo === false, vuoto.classi);
+     !vuoto.classi.split(/\s+/).some(c => /^(cielo|notte|forte|c-[a-z]+)$/.test(c)) && vuoto.velo === false, vuoto.classi);
   ok('e non c\'è nessuna temperatura da mostrare', vuoto.grado === false);
   ok('e soprattutto nessuna scritta «fra tot giorni» in cima',
      !/fra \d+ ?g/i.test(vuoto.testo) && !/in \d+ ?d/i.test(vuoto.testo),
@@ -618,11 +625,13 @@ const oreFinte = (data) => {
        striscia del meteo, e toccandolo si apre. */
     /* La striscia dei nomi non c'è più, e con lei lo spazio vuoto che si
        poteva toccare: resta la temperatura, e la sua riga. */
-    const riga = document.querySelector('.hh-grado-solo');
-    out.cèRiga = !!riga;
+    /* Oggi ridisegnata: la temperatura e' un tasto suo, sotto la luna, largo e
+       alto almeno 44 px; toccandolo sul bordo si apre lo stesso */
+    const riga = document.querySelector('.og-gradi') || document.querySelector('.hh-grado-solo');
+    out.cèRiga = !!riga && riga.getBoundingClientRect().width >= 44 && riga.getBoundingClientRect().height >= 44;
     if (riga) {
       const br = riga.getBoundingClientRect();
-      const e = document.elementFromPoint(br.left + 12, br.top + br.height / 2);
+      const e = document.elementFromPoint(br.left + 4, br.top + br.height / 2);
       if (e) e.click();
       await attendi(400);
     }
@@ -631,7 +640,7 @@ const oreFinte = (data) => {
     return out;
   });
   ok('toccando la temperatura si apre il meteo', apertura.colGrado === true);
-  ok('la temperatura ha una riga sua', apertura.cèRiga === true);
+  ok('la temperatura è un tasto suo, da 44 px', apertura.cèRiga === true);
   ok('e toccandola di fianco si apre lo stesso', apertura.colVuoto === true);
   /* Il controllo «toccando un nome si cambia viaggio, non si apre il
      meteo» non ha più un soggetto: in cima i nomi non ci sono. Che
@@ -983,7 +992,9 @@ const oreFinte = (data) => {
      non ci si arriverebbe più da nessuna parte. */
   const porta = await page.evaluate(() => ({
     grado: !!document.querySelector('.hh-grado[onclick*="apriMeteo"]'),
-    striscia: !!document.querySelector('.hh-grado-solo[onclick*="apriMeteo"]')
+    /* e la riga in cima («GIORNO 1 DI 4») porta al Programma, non al meteo:
+       il meteo ha la sua porta, i gradi */
+    striscia: !document.querySelector('.hh-eyebrow[onclick*="apriMeteo"]')
   }));
   ok('e la porta per arrivarci è in cima alla home, sul cielo',
      porta.grado === true && porta.striscia === true,
