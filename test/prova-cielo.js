@@ -312,9 +312,11 @@ const oreFinte = (data) => {
       /* Lo sfondo dell'intestazione deve essere davvero cambiato: è quello
          che vuol dire «fuso», invece di un rettangolo appiccicato sopra. */
       /* in Oggi ridisegnata il cielo e' .cm-cielo, sopra la mappa, a tutta larghezza */
-      sfumaturaVera: /gradient/.test(getComputedStyle(hh).backgroundImage) || (() => { const c = hh.querySelector(':scope > .cm-cielo'); return !!c && /gradient/.test(getComputedStyle(c).backgroundImage) && Math.round(c.getBoundingClientRect().width) === Math.round(rh.width); })(),
+      /* sul telefono il cielo sta dentro la mappa (sopra la foto e sotto i
+         segnaposto, ogCieloNellaMappa); largo, nel palco */
+      sfumaturaVera: /gradient/.test(getComputedStyle(hh).backgroundImage) || (() => { const c = hh.querySelector('.cm-cielo'); return !!c && /gradient/.test(getComputedStyle(c).backgroundImage) && Math.round(c.getBoundingClientRect().width) === Math.round(rh.width); })(),
       veloCè: !!velo,
-      veloCopreTutto: !!(rv && (() => { const c = hh.querySelector(':scope > .cm-cielo'), q = c ? c.getBoundingClientRect() : rh;
+      veloCopreTutto: !!(rv && (() => { const c = hh.querySelector('.cm-cielo'), q = c ? c.getBoundingClientRect() : rh;
         return Math.round(rv.width) === Math.round(q.width) && Math.round(rv.height) === Math.round(q.height); })()),
       /* Non deve rubare i tocchi a niente di quello che ci sta sopra. */
       veloNonTocca: !!sv && sv.pointerEvents === 'none',
