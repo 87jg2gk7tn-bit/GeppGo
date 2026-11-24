@@ -2123,11 +2123,16 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   70 ms a zoom, e la prima volta che lo zoom arriva dove compaiono strade e
   nomi MapLibre ne compila gli shader (`getShaderParameter` 81 ms) e carica
   i pezzi nuovi della foto. Il codice dell'app (raggruppare, creare e
-  togliere segnaposto) pesa poche decine di millisecondi. A freddo il
-  peggior zoom era in media 692 ms qui, rifatto subito dopo 336: la prova
-  adesso fa la serie due volte e cronometra la seconda, coi blocchi lunghi
-  contati su tutte e due (deciso con Giacomo). Sul telefono quel costo della
-  prima volta lo fa la scheda grafica.
+  togliere segnaposto) pesa pochi millisecondi: allo zoom più vicino ne
+  nascono 17 e se ne tolgono 145, in 5–8 ms. E la prova aspettava la fine
+  dello zoom con un `setTimeout(0)`, che con l'orologio finto di Playwright
+  aspetta da solo fino a 80 ms (un `MessageChannel` passa in 0), e dopo uno
+  zoom anche il fotogramma WebGL. Cronometrato fino a pagina libera, con un
+  messaggio vero, uno zoom costa 10–50 ms invece di 300–550; nelle corse
+  rosse di GitHub non c'era nessun compito sopra i 50 ms. La prova adesso
+  misura così, sempre sotto il mezzo secondo, e i fotogrammi restano nei
+  blocchi lunghi (deciso con Giacomo). Rifare la serie due volte non bastava:
+  a caldo lo zoom più vicino era ancora 559 ms una volta su tre.
 - **Il biglietto che si rifaceva da solo** (24 novembre): 220 ms dopo ogni
   disegno della Home `homeCardsSync` passava da `homeSoonFill`, che rifaceva
   il biglietto anche con la stessa tappa: il cerchio dell'ora ripartiva da

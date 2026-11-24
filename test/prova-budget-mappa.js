@@ -610,39 +610,31 @@ const SPIA_AVVISI = permesso => {
     ok('8. con 200 tappe la mappa si apre (meno di 3 secondi, attesa del foglio compresa)', nata && apertura < 3000, apertura + ' ms');
     ok('8. le 200 tappe ci sono tutte, e i segnaposto vicini si raccolgono (meno segni che tappe)', conto.tappe === 200 && conto.segni < 200, JSON.stringify(conto));
     // muoverla: zoom avanti e indietro, e spostarla
-    /* La stessa serie due volte, e il cronometro conta la seconda. La prima
-       volta che lo zoom arriva dove compaiono strade e nomi, MapLibre compila i
-       loro shader e carica i pezzi nuovi della foto: su GitHub il disegno WebGL
-       lo fa il processore (SwiftShader), e quel costo di una volta sola era
-       meta' del tempo misurato (qui il peggior zoom a freddo 692 ms in media,
-       rifatto subito 336). Sforava il mezzo secondo in 3 lavori su 13, senza
-       nessun blocco lungo; Oggi sotto il foglio non c'entra (nasconderla,
-       togliere la sfocatura del foglio o i livelli dei segnaposto non cambia
-       niente: DA-FARE, «Le entrate che non finivano»). I blocchi lunghi si
-       contano invece su tutte e due le volte. */
+    /* Ogni zoom si cronometra fino a pagina libera, con un messaggio vero
+       (MessageChannel) e non con setTimeout. Con l'orologio finto delle prove
+       un setTimeout(0) aspetta da solo fino a 80 ms, e dopo lo zoom aspettava
+       anche il fotogramma WebGL, che sulle macchine delle prove disegna il
+       processore (SwiftShader): la prova misurava 300-550 ms quasi tutti
+       d'attesa, e sforava il mezzo secondo in 3 lavori su 13 senza nessun
+       blocco lungo. Il lavoro vero di uno zoom con 200 tappe e' 10-50 ms
+       (DA-FARE, «Le entrate che non finivano»). I fotogrammi restano nei
+       blocchi lunghi, contati dall'apertura della mappa alla fine. */
     const tempi = await page.evaluate(async () => {
-      const misura = async f => { const t = performance.now(); await f(); return Math.round(performance.now() - t); };
-      const zoom = z => new Promise(ok2 => { vmMappa.once('zoomend', () => setTimeout(ok2, 0)); vmMappa.setZoom(z, { animate: false }); });
-      const serie = async () => {
-        const fuori = [];
-        fuori.push(await misura(() => zoom(z + 2)));
-        fuori.push(await misura(() => zoom(z + 4)));
-        fuori.push(await misura(() => zoom(z)));
-        fuori.push(await misura(async () => { vmMappa.panBy([200, 120], { animate: false }); }));
-        fuori.push(await misura(() => zoom(z + 1)));
-        /* e si torna dov'era, per rifarla uguale */
-        await zoom(z); vmMappa.panBy([-200, -120], { animate: false });
-        return fuori;
-      };
+      const libera = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+      const misura = async f => { const t = performance.now(); await f(); await libera(); return Math.round(performance.now() - t); };
+      const zoom = z => new Promise(ok2 => { vmMappa.once('zoomend', ok2); vmMappa.setZoom(z, { animate: false }); });
+      const fuori = [];
       const z = vmMappa.getZoom();
-      const prima = await serie();
-      await new Promise(r => setTimeout(r, 300));
-      return { prima, poi: await serie() };
+      fuori.push(await misura(() => zoom(z + 2)));
+      fuori.push(await misura(() => zoom(z + 4)));
+      fuori.push(await misura(() => zoom(z)));
+      fuori.push(await misura(async () => { vmMappa.panBy([200, 120], { animate: false }); }));
+      fuori.push(await misura(() => zoom(z + 1)));
+      return fuori;
     });
     const lunghi = await page.evaluate(() => window.__lunghi.slice());
     const peggio = Math.max(0, ...lunghi);
-    ok('8. e si muove senza blocchi: ogni zoom o spostamento sotto il mezzo secondo (la seconda volta), nessun blocco lungo', tempi.poi.every(x => x < 500) && peggio < 500,
-      `tempi ${tempi.poi.join('/')} ms (la prima volta ${tempi.prima.join('/')}), blocchi ${lunghi.join('/') || 'nessuno'}`);
+    ok('8. e si muove senza blocchi: ogni zoom o spostamento sotto il mezzo secondo, nessun blocco lungo', tempi.every(x => x < 500) && peggio < 500, `tempi ${tempi.join('/')} ms, blocchi ${lunghi.join('/') || 'nessuno'}`);
     await page.close();
   });
 
