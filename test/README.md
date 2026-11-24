@@ -503,7 +503,10 @@ col globo, la scheda del viaggio, la scheda di un posto, le mappine di Scopri)
 coi suoi segnaposto, il percorso d'oro e le schede; i toni dei due temi e il
 cambio di tema; strade e nomi solo da vicino; la chiave su ogni richiesta a
 Esri e nella sola costante `ESRI_CHIAVE` (in tutti i file del repo); la
-citazione «Powered by Esri · © OpenStreetMap · Fonti» che non tocca i tasti, lo
+citazione «Powered by Esri · © OpenStreetMap · Fonti» che non tocca i tasti
+(se tocca, riguarda dopo un secondo e boccia solo se tocca ancora, coi
+rettangoli dei due nel messaggio: su GitHub la prima misura di Oggi ha
+toccato per un momento due volte su tredici, vedi `DA-FARE.md`), lo
 zoom da 44 px, axe; Esri giù o che rifiuta la chiave (l'avviso tradotto,
 «Riprova», l'app che va avanti); MapLibre che arriva solo con una mappa a
 schermo; niente Leaflet nel codice. E stampa quanti pezzi costa aprire Oggi e il
