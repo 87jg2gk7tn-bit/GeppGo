@@ -160,6 +160,10 @@ const RADICI = `(() => { const a = [...document.querySelectorAll('.modal.active'
       await page.waitForTimeout(100);
       await page.click('.nav-item[data-p="mDay"]');
       await page.waitForTimeout(700);
+      /* Il Programma scende al fotogramma (ttApriDoveServe): con la macchina
+         carica un fotogramma arrivava dopo i 700 ms, e si misurava la pagina
+         ancora in cima. Si aspettano due fotogrammi, non piu' tempo fisso. */
+      await page.evaluate(() => new Promise(ok => { const basta = setTimeout(ok, 3000); requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(basta); ok(); })); }));
       return page;
     }
     const breve = m => `scorso ${m.st} di ${m.giu}; testata ${m.testa ? (m.testa.vista ? 'a vista' : 'NON a vista') : 'MANCA'}; ` + m.blocchi.map(b => `${b.id} ${b.top}→${b.bottom}${b.vista ? '' : ' (no)'}`).join(', ');
@@ -329,6 +333,10 @@ const RADICI = `(() => { const a = [...document.querySelectorAll('.modal.active'
           eval(RAD).forEach(rad => {
             rad.querySelectorAll('svg.ico').forEach(s => {
               const cmd = s.closest(COMANDI); if (!cmd || !vis(s)) return;
+              /* l'icona del tipo di un posto (sulle schede-foto, nei segnaposto,
+                 sulla copertina della scheda) e' contenuto, come le emoji dei
+                 tipi di tappa: non e' il comando del tasto che la contiene */
+              if (s.closest('.s-tipo,.sp-foto,.cp-tipo')) return;
               const u = s.querySelector('use'), href = u && u.getAttribute('href');
               if (!href || GLIFI.includes(href.slice(1))) return;
               n++;
@@ -395,13 +403,17 @@ const RADICI = `(() => { const a = [...document.querySelectorAll('.modal.active'
       if (!giusto) male.push(`${dove}: ${x.nome} ${x.d === null ? 'non trovato' : x.d + ' px'} (${x.tipo === 'sezioni' ? 'fra sezioni 24–32' : 'nel gruppo 4–12'})`);
     });
     await vai(page, "go('plan')"); await page.evaluate(() => { document.querySelector('.scroll').scrollTop = 0; });
+    /* Oggi ridisegnata (anteprime/oggi-a e oggi-b): il palco (cielo, mappa,
+       schede e biglietto) e' una sezione sola; sotto, i giorni con «La
+       giornata», la ricerca e la valigia. Nel tema scuro il palco tiene
+       tutto lo schermo e il biglietto sta sopra la barra: si misura dal fondo
+       del palco, non da quello del biglietto. */
     controlla('Home', await page.evaluate(SPAZI, [[
-      ['«Prepara la valigia» → «Fra poco»', '#valScheda', '.hh-soon', 'sezioni'],
-      ['«Fra poco» → i giorni', '.hh-soon', '.hh-days .giorno', 'sezioni'],
-      ['i giorni → «La giornata»', '.hh-days .giorno', '.hh-sec', 'gruppo'],
-      ['«La giornata» → la mappa', '.hh-sec', '#homeMapWrap', 'gruppo'],
-      ['la mappa → le tappe', '#homeMapWrap', '.hh-cards .hh-card', 'gruppo'],
-      ['le tappe → la pubblicità', '.hh-cards .hh-card', '#plan>.ad-slot', 'sezioni'],
+      ['il palco (mappa, schede, biglietto) → «La giornata»', '#plan .og-palco', '#plan .og-sotto .hh-sec', 'sezioni'],
+      ['«La giornata» → i giorni', '#plan .og-sotto .hh-sec', '#plan .og-sotto .hh-days .giorno', 'gruppo'],
+      ['i giorni → «Cosa cerchi qui intorno?»', '#plan .og-sotto .hh-days', '#plan .og-sotto .hh-azioni', 'sezioni'],
+      ['«Cosa cerchi qui intorno?» → «Prepara la valigia»', '#plan .og-sotto .hh-azioni', '#valScheda', 'sezioni'],
+      ['Oggi → la pubblicità', '#homeHero', '#plan>.ad-slot', 'sezioni'],
       ['la pubblicità → «Da prenotare»', '#plan>.ad-slot', '#bookings>*', 'sezioni']]]));
     await vai(page, 'openDay(0)'); await page.evaluate(() => { document.querySelector('.scroll').scrollTop = 0; });
     controlla('Programma', await page.evaluate(SPAZI, [[

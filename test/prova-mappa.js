@@ -49,12 +49,14 @@ const stato = {
 
 /* Esri finto, dal contesto: come risponde lo decide `esri` mentre la prova
    gira. */
-const esri = { giu: false, rifiuta: false, cache: 'max-age=86400', pezzi: 0, stile: 0, tutte: 0 };
+const esri = { giu: false, rifiuta: false, cache: 'max-age=86400', pezzi: 0, stile: 0, tutte: 0, memoriaInRete: 0 };
 const ESRI = /(^|\.)arcgis\.com$/;
 async function esriDalContesto(ctx) {
   await ctx.route(u => ESRI.test(u.hostname), route => {
     const u = new URL(route.request().url());
     esri.tutte++;
+    /* un pezzo «dalla memoria» (lo stile di riserva) non deve mai arrivare qui */
+    if (u.searchParams.has('geppgo')) esri.memoriaInRete++;
     if (esri.giu) return route.abort('internetdisconnected');
     const h = { 'access-control-allow-origin': '*', 'cache-control': esri.cache };
     if (u.hostname === 'basemapstyles-api.arcgis.com') {
@@ -132,9 +134,21 @@ const pezziIn = m => m.voci.filter(v => /ibasemaps-api\.arcgis\.com\/.*\/tile\//
   await page.reload({ waitUntil: 'domcontentloaded' });
   await pronta();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 });
+  /* La memoria si svuota a mappa ferma: svuotata mentre arrivavano ancora
+     pezzi, quelli arrivati dopo ci finivano di nuovo, e alla riapertura la
+     service worker li dava da se' senza chiederli (da quando l'avvio non
+     aspetta piu' secondi l'inquadratura, succedeva sempre). */
+  await mappaPronta();
+  await page.waitForTimeout(1500);
   await page.evaluate(() => caches.delete('geppgo-mappe'));
 
   // ── 1. guardando la mappa, i pezzi si tengono da parte ───────────────
+  /* Anche la cache del browser si svuota: i pezzi della vista di Oggi sono
+     gia' arrivati nelle aperture qui sopra, e il browser li ridarebbe senza
+     chiederli a Esri. Prima la prova passava per caso, coi pezzi degli zoom
+     intermedi che l'inquadratura chiedeva spostando la mappa vera (adesso
+     prova su una copia della camera, e chiede solo quelli della vista). */
+  { const cdp = await page.context().newCDPSession(page); await cdp.send('Network.clearBrowserCache'); await cdp.detach(); }
   esri.pezzi = 0;
   await page.reload({ waitUntil: 'domcontentloaded' });
   await pronta();
@@ -169,6 +183,40 @@ const pezziIn = m => m.voci.filter(v => /ibasemaps-api\.arcgis\.com\/.*\/tile\//
     citazione: document.querySelector('#homeMap .g-diritti').textContent }));
   ok('3. senza rete la zona già vista si rivede: la foto di Esri, i segnaposto, nessun avviso', senza.fonte === 'esri' && !senza.avviso && senza.segni === 2 && /Powered by Esri/.test(senza.citazione),
     JSON.stringify(senza));
+
+  // ── 3b. senza rete e con lo stile di Esri scaduto (il passo 0) ───────
+  /* Lo stile vale dieci minuti, la foto un giorno: l'app riaperta senza rete
+     dopo un quarto d'ora non ha piu' lo stile. Allora la foto gia' guardata
+     si disegna con uno stile fatto dall'app (stileRiserva), e i suoi pezzi
+     (geppgo=memoria) la service worker li da' solo dalla memoria e solo se
+     ancora validi: in rete non vanno mai. */
+  await page.evaluate(async () => {
+    const c = await caches.open('geppgo-mappe');
+    for (const k of await c.keys()) {
+      if (!/basemapstyles-api/.test(k.url)) continue;
+      const x = await c.match(k);
+      const h = new Headers(x.headers); h.set('x-geppgo-scade', String(Date.now() - 1000));
+      await c.put(k, new Response(await x.blob(), { status: x.status, headers: h }));
+    }
+  });
+  const dallaMemoria = [];
+  const ascolta = rs => { if (/geppgo=memoria/.test(rs.url())) dallaMemoria.push(rs.status()); };
+  page.on('response', ascolta);
+  esri.memoriaInRete = 0;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await pronta();
+  await page.waitForFunction(() => !!homeMapObj && homeMapObj._g.fonte === 'memoria', null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  page.off('response', ascolta);
+  const riserva = await page.evaluate(() => ({ fonte: homeMapObj && homeMapObj._g.fonte, segni: homeMapMarks.length,
+    avviso: (document.querySelector('#homeMap .g-avviso:not([hidden])') || {}).textContent || '',
+    citazione: (document.querySelector('#homeMap .g-diritti') || {}).textContent || '' }));
+  const serviti = dallaMemoria.filter(x => x === 200).length;
+  ok('3b. senza rete e con lo stile di Esri scaduto, la foto dal satellite già guardata si disegna lo stesso, coi segnaposto',
+    riserva.fonte === 'memoria' && serviti > 0 && riserva.segni === 2, JSON.stringify(riserva) + ` · ${serviti} pezzi dalla memoria`);
+  ok('3b. e lo dice, con la citazione di Esri e le fonti della foto', /Sei senza rete/.test(riserva.avviso) && /Powered by Esri/.test(riserva.citazione), riserva.avviso);
+  const mancante = await page.evaluate(() => fetch('https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/19/1/1?geppgo=memoria&f=json&token=x').then(x => x.status, () => 0));
+  ok('3b. un pezzo «dalla memoria» non va mai in rete: quello che non c\'è resta vuoto (404)', esri.memoriaInRete === 0 && mancante === 404, `${esri.memoriaInRete} in rete, mancante ${mancante}`);
 
   // ── 4. scaduto il tempo, non si usa più (nemmeno senza rete) ─────────
   /* Si fanno scadere le date annotate: e' quello che fa il tempo. */

@@ -151,7 +151,24 @@ quel file è la memoria.
   (`mappinaFerma`), perché otto mappe WebGL una sotto l'altra un telefono
   non le regge. Una mappa WebGL non si rifà a ogni disegno: quella di Oggi
   resta viva fra un disegno della Home e l'altro (`homeMapTenibile`), e si
-  rifanno solo segnaposto e percorso. MapLibre si chiede a schermata
+  rifanno solo segnaposto e percorso. E non lavora per niente: la misura la
+  segue `nuovaMappa` (non MapLibre, che ridisegnava tutto quando il
+  riquadro si nascondeva), `rimisura` e `datiMappa` non fanno niente se
+  misura e dati sono quelli di prima, e sopra una mappa niente si muove per
+  sempre (l'eco della prossima tappa batte tre volte): ogni fotogramma
+  sopra WebGL è un disegno, e con la pagina ferma il telefono deve poter
+  dormire. Un conto che prova tante camere (l'inquadratura di Oggi) le prova
+  su una copia (`m.transform.clone()`), mai spostando la mappa vera in un
+  giro: ogni spostamento risveglia mappa e segnaposto, e con l'orologio
+  finto delle prove l'avvio durava secondi. La mappa di Oggi (novembre 2026) e'
+  inclinata e a tutta larghezza, col cielo dentro (sopra la foto e sotto i
+  segnaposto, `ogCieloNellaMappa`), e **si muove con due dita**
+  (`cooperativeGestures`, opzione `dueDita` di `nuovaMappa`): con un dito si
+  scorre la pagina, e se ci si prova la mappa lo dice, tradotto; sul
+  computer Ctrl o ⌘ con la rotellina. «Tutto il viaggio» in Oggi allarga la
+  stessa mappa alle citta' del viaggio, con «Torna a oggi»; la mappa con
+  tutte le tappe resta nel Programma e nella scheda del viaggio. La
+  cartina della scheda di un posto e' ferma (`ferma`). MapLibre si chiede a schermata
   d'apertura sparita (`dopoLApertura`), mai durante l'avvio, perché non
   contenda la banda alla prima schermata. Ogni mappa porta la citazione
   «Powered by Esri · ©
@@ -161,9 +178,17 @@ quel file è la memoria.
   worker tiene i pezzi già guardati solo come permettono le condizioni di
   Esri (`pezzoDiMappa` in `sw.js`): per il tempo delle intestazioni
   (Cache-Control), al massimo 1.500, mai una zona scaricata in anticipo, e
-  tutto buttato se Esri rifiuta la chiave (401, 403, 498, 499). Se Esri non
-  risponde la mappa lo dice, tradotto, con «Riprova», e va avanti coi
-  segnaposto; **il ripiego sulle mattonelle di OpenStreetMap
+  tutto buttato se Esri rifiuta la chiave (401, 403, 498, 499). Senza rete,
+  quando lo stile di Esri (che vale dieci minuti) e' scaduto, la mappa si
+  disegna con uno stile fatto dall'app (`stileRiserva`) che usa solo la foto
+  dal satellite gia' guardata e ancora valida (`?geppgo=memoria`: la service
+  worker risponde solo dalla memoria, mai dalla rete), con la citazione di
+  Esri e l'avviso tradotto; le condizioni lo permettono (E204 3.1 d.6.A, la
+  cache «as permitted by the caching headers»; d.3 solo per vedere la
+  mappa; d.4 la citazione resta), e non permettono il contrario (E300, nota
+  109: gli stili di Esri solo coi servizi di Esri). Il perche' sta in
+  `DA-FARE.md`. Se Esri non risponde la mappa lo dice, tradotto, con
+  «Riprova», e va avanti coi segnaposto; **il ripiego sulle mattonelle di OpenStreetMap
   (`MAPPA_RIPIEGO_OSM`) serve alle prove e va tolto prima del lancio**
   (`DA-FARE.md`). Le prove non parlano con Esri: `test/esri-finto.js`
   risponde come lui (anche alla service worker, in `rete-finta.js`), e
@@ -229,7 +254,12 @@ quel file è la memoria.
   · Agenda · Découvrir · Dépenses · Réservations: «Aujourd'hui» e
   «Programme» a 320 px non ci stavano, e la schermata si chiama «Agenda»
   ovunque. Le voci della scheda del viaggio sono a 3 tocchi dalla Home, e va
-  bene così: sono impostazioni e azioni rare. Com'è andata la regola sta in
+  bene così: sono impostazioni e azioni rare. Dal ridisegno di Oggi
+  (novembre 2026) il menu della tappa e il foglio «Luogo» sono una cosa
+  sola, la **scheda del posto** (`apriPosto`, `#mPosto`): la stessa da Oggi
+  (schede-foto e biglietto), Programma, Scopri, Identifica e luoghi
+  salvati, con le voci scritte (Naviga, Modifica, Sposta, Aggiungi
+  biglietto, le note sui foglietti, «Come ci arrivi», Elimina in fondo). Com'è andata la regola sta in
   `DA-FARE.md`, alla voce «Nessuna funzione nascosta». `test/prova-a-portata.js` tocca i
   percorsi come farebbe un dito, `test/prova-navigazione.js` la barra, il
   menu dei viaggi e i vecchi indirizzi.) Un tasto è da 44×44 quando lo è
@@ -279,7 +309,10 @@ quel file è la memoria.
   rimaste indietro. (La variabile `--green` si chiama così per storia: vale
   `#B8863C`, un ocra.)
 - **Temi**: chiaro color panna (`--paper:#F6EEDD`) come predefinito, «Tema
-  scuro» come dark mode; si sceglie col tondo luna/sole nella barra in alto,
+  scuro» come dark mode (Oggi e la scheda di un posto, nel tema scuro,
+  stanno sul blu notte di oggi-b: `body.dark.su-oggi` e `body.dark
+  .ps-foglio` ridanno i token della pagina, delle schede e dei campi; il
+  resto dell'app resta sul nero caldo); si sceglie col tondo luna/sole nella barra in alto,
   fra il GPS e il Profilo (`cambiaTema`; la Layout 1 l'aveva tolto, la 1b
   l'ha rimesso), e anche nel Profilo. «Cielo» non è un tema: è la veste della home,
   col cielo grande e la città in cima, e il cielo grande sta solo lì. La sua
@@ -342,6 +375,48 @@ inchiostro, ammassato e di un colore solo.
   schermata. Il fornitore della mappa è Esri, con la chiave dell'app (vedi
   «Le mappe»); le anteprime usano Esri World Imagery senza chiave solo per
   provare (costi e pezzi in `DA-FARE.md`).
+- **I componenti delle anteprime** (ridisegno di Oggi e scheda di un posto,
+  novembre 2026). **Ogni schermata ridisegnata d'ora in poi usa questi**,
+  così l'app resta coerente con Oggi; lo stile sta in «LE STAMPE» nel
+  foglio di stile, e c'è una funzione sola che scrive ognuno («IL KIT DELLE
+  STAMPE», nel codice):
+  - **foglietto con lo scotch** (`foglietto()`, `.foglietto`): un'informazione
+    breve (orari, prenotazione, indirizzo, contatti) o una nota di chi usa
+    l'app; a mano solo se è breve, un tasto se si tocca; «vuoto» col bordo
+    tratteggiato per invitare a scrivere;
+  - **biglietto con lo strappo** (`biglietto()`, `.biglietto`): qualcosa con
+    un'ora o un biglietto vero (la tappa in mano in Oggi, i biglietti
+    collegati a una tappa); l'ora cerchiata d'oro di là dallo strappo; i
+    codici dei biglietti non ci vanno mai;
+  - **scheda-foto inclinata** (`schedaFoto()`, `.stampa`): un posto con la sua
+    foto in una fila che scorre (le tappe di Oggi), o appiccicata col nastro
+    (`.stampa.appiccicata`, le altre foto di un posto); senza foto il
+    colore e l'icona del tipo (`tipoStampa`), mai un'immagine rotta;
+  - **adesivo scritto a mano** (`adesivo()`, `.adesivo`, Caveat Brush): una
+    parola vera («primo giorno!», «da non perdere», «prenotato»), solo con un
+    motivo, **al massimo tre per schermata**;
+  - **foto con il bordo di carta strappata** (`copertina()`, `.copertina`):
+    la cima di una schermata dedicata a un posto, col nome enorme in due
+    parti e il credito della foto in piedi;
+  - **cielo che sfuma nella mappa** (`.cielo-mappa`): la cima di una
+    schermata fatta di mappa (Oggi), col cielo del tempo che fa.
+  Inclinazioni sotto i 4 gradi e tasti da 44: si leggono e si toccano come
+  le cose dritte; scotch, strappi e cerchi sono nascosti a VoiceOver, che
+  legge il testo dei foglietti come testo normale; con «Riduci movimento»
+  niente si muove. Le entrate (le schede che arrivano, i segnaposto che
+  spuntano, il cerchio che si scrive) partono da «from» con
+  `animation-fill-mode: backwards`, mai `both` o `forwards`: un'animazione
+  che tiene la sua fine resta in vigore per sempre, e il browser tiene un
+  livello grafico per ogni elemento che ce l'ha (con 20 tappe un'ottantina,
+  ricopiati a ogni fotogramma di qualunque mappa). Si vedono quando la
+  schermata o il giorno compaiono, non a ogni ridisegno, e un foglio che si
+  apre chiude quelle della pagina sotto (`chiudiLeEntrate`). Le foto grandi (copertina, schede-foto, altre foto) si
+  scaricano alla misura dello schermo e solo quando servono (`fotoAttr`:
+  le misure fisse di Wikimedia in `srcset`, `sizes`, `loading="lazy"`).
+  Colori, spazi, raggi e ombre delle stampe (e del vetro sul cielo di Oggi)
+  sono quelli delle anteprime: disegnano carta, nastro, foto e vetro veri,
+  come il cielo e il logo, e sono l'unica eccezione ai token qui sotto
+  (`test/prova-stile.js` la lascia passare solo lì: `STAMPE`).
 - **Evoluzione, non rivoluzione**: riconoscibile e con stile, mai generica o
   da modello standard.
 - **Pagine pulite senza perdere funzioni**: all'apertura solo quello che
@@ -374,7 +449,14 @@ Come si fa (le variabili stanno in cima al foglio di stile dell'app, `:root` e
 `body.dark`):
 - caratteri: solo `--fs-xs` 12, `--fs-s` 13, `--fs-m` 15, `--fs-l` 17,
   `--fs-xl` 22 e `--fs-xxl` 32 px; l'unica eccezione è `--fs-cielo`, il nome
-  della città nel cielo della Home. Niente sotto i 12 px. I campi da riempire
+  della città nel cielo della Home. Niente sotto i 12 px. I componenti delle
+  anteprime hanno la loro scala, **solo per loro** (la scala delle stampe, in
+  `:root`): `--fs-vetro` 14, `--fs-mano` 19, `--fs-foto` 21, `--fs-frase` 27,
+  `--fs-gradi` 28, `--fs-ora` 30, `--fs-nome-sotto` 34, `--fs-distanza` 42,
+  e i titoli enormi `--fs-citta` (la città di Oggi) e `--fs-nome` (il nome di
+  un posto). Fraunces si carica con SOFT 100 fissato (un file solo, più
+  piccolo); il corsivo e Caveat Brush arrivano dopo la schermata
+  d'apertura (`CARATTERI_DOPO`), e anche la service worker li tiene. I campi da riempire
   stanno a 17, perché sotto i 16 iPhone ingrandisce da solo (le tendine no:
   il tocco lo prende il foglio di scelta dell'app). Pesi 500, 600 e
   700; 800 solo per i numeri grandi;
@@ -454,7 +536,14 @@ dell'iPhone Duo, l'iPad, il computer. Sarà la stessa dell'app nativa
   contenuto va su due colonne. Il Programma è la prima schermata pilota: le
   tappe a sinistra, la mappa grande a destra e ferma, i giorni sopra tutte e
   due, la tappa e il suo segnaposto accesi insieme (`ttLargo`, `ttMisure`,
-  `ttEvidenzia`). Le altre prendono la loro quando le si ridisegna.
+  `ttEvidenzia`). Oggi è la seconda (novembre 2026), con le stesse
+  soluzioni: da 640 px il palco va da bordo a bordo; con 600 px di spazio
+  (container query su `#homeHero`, `--og-largo`, letto da `ogLargo`) a
+  sinistra la testata, la fila delle schede-foto e il biglietto, a destra
+  la mappa alta quanto lo schermo fino al bordo, il cielo sopra tutte e due,
+  e la scheda in mano accesa insieme al suo segnaposto. La scheda di un
+  posto da 640 px è una scheda al centro, come gli altri fogli. Le altre
+  prendono la loro quando le si ridisegna.
 - **I margini sicuri sinistro e destro si trattano sempre separati**:
   `padding-left:calc(… + env(safe-area-inset-left))` e
   `padding-right:calc(… + env(safe-area-inset-right))`, mai una forma
@@ -467,7 +556,9 @@ dell'iPhone Duo, l'iPad, il computer. Sarà la stessa dell'app nativa
   (720 × 500), per la barra laterale (`LATERALE_MQ`); 600 px di spazio nella
   pagina per le due colonne del Programma (container query su `.tt-sheet`);
   700 px di altezza per gli schermi bassi (il cielo della Home più basso, la
-  scena a `--s:.75`). Le soglie stanno scritte uguali nel foglio di stile e
+  scena a `--s:.75`; in Oggi la città più piccola, le schede da 112×140, la
+  scheda della tappa in mano sopra la barra e la citazione della mappa
+  sdraiata sotto la testata, perché in piedi non ci sta). Le soglie stanno scritte uguali nel foglio di stile e
   in JavaScript (una prova le confronta), e JavaScript legge dal foglio di
   stile se le due colonne ci sono (`--tt-largo`) invece di rifare il conto.
   Le funzioni web sulla piega del Duo sono solo un'anteprima: non si usano.

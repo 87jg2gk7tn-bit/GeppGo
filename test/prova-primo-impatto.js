@@ -172,7 +172,8 @@ const attivo = (p, id) => p.evaluate(i => { const m = document.getElementById(i)
     const home = await p.evaluate(() => ({
       pos: window.__pos,
       citta: (document.querySelector('#homeHero .hh-city') || {}).textContent || '',
-      grado: (document.querySelector('#homeHero .hh-grado-solo') || {}).textContent || '',
+      /* dal ridisegno di Oggi i gradi stanno a destra, sotto la luna (.og-gradi) */
+      grado: (document.querySelector('#homeHero .og-gradi b, #homeHero .hh-grado-solo') || {}).textContent || '',
       cerca: !!document.querySelector('#homeHero .hh-cerca'),
       foglio: document.getElementById('mPosizione').classList.contains('active')
     }));

@@ -124,8 +124,8 @@ const PASSI = [
   ['scopri cerca', "go('discover');setDiscover('search')"], ['scopri assistente', "go('discover');setDiscover('ai')"],
   ['scopri reel', "go('discover');setDiscover('imp');setImpSub('places')"], ['scopri su misura', "go('discover');setDiscover('imp');setImpSub('itin')"],
   ['scopri prenotazione', "go('discover');setDiscover('imp');setImpSub('booking')"],
-  ['time table', 'openDay(0)'], ['menu della tappa', 'openDay(0);tapAct(0,12)'], ['menu tappa da home', "go('plan');tapAct(0,11)"],
-  ['nota della tappa', 'tapAct(0,12);actMenuNote()'], ['modifica tappa', 'openActDetail(0,11)'], ['nuova tappa', 'openActDetail(0,null)'],
+  ['time table', 'openDay(0)'], ['scheda della tappa', 'openDay(0);tapAct(0,12)'], ['scheda della tappa da oggi', "go('plan');tapAct(0,11)"],
+  ['nota della tappa', 'tapAct(0,12);psNota()'], ['modifica tappa', 'openActDetail(0,11)'], ['nuova tappa', 'openActDetail(0,null)'],
   ['aggiungi in time table', 'openDay(0);addFromDay()'], ['mezzi', 'openDay(0);apriMezzi(0,12)'], ['assistente della giornata', 'openDay(0);openAssistenteGiorno()'],
   ['autopilota', 'openDay(0);openGenForDay()'], ['giorno due', 'openDay(1)'],
   /* La mappa nasce subito, senza aspettare il foglio: il passo misura dopo
@@ -147,7 +147,7 @@ const PASSI = [
   ['conferma', "confirmDo('Eliminare il luogo?','Le attività collegate restano, senza il segnaposto.',()=>{})"],
   ['guida home', 'apriHome()'], ['solo qui', "openSheet('mSoloQui')"], ['da safari', "openSheet('mDaSafari')"],
   ['backup', "bkApri('💾 Backup')"], ['esci', "session={user:{id:'io',email:'q@x.it'}};app._pendingSync=true;authOut()", 'session=null'],
-  ['identita', 'pickIdentity(T())'], ['info luogo', "openPlaceInfo({name:'Kinkakuji',lat:35.039,lng:135.729})"],
+  ['identita', 'pickIdentity(T())'], ['scheda di un posto', "openPlaceInfo({name:'Kinkakuji',lat:35.039,lng:135.729})"],
   ['salva luogo', "openSavePOI({name:'Kinkakuji',lat:35.039,lng:135.729})"], ['scegli valuta', "openSelectPicker(document.getElementById('expCur'))"],
   ['cloud', 'openCloudCfg()'],
   ['avvisi nel cloud', "go('plan');window.GEPPGO_SUPA_URL=window.GEPPGO_SUPA_URL||'https://finto.supabase.co';window.GEPPGO_SUPA_KEY=window.GEPPGO_SUPA_KEY||'finta';sb=sb||{};session=null;storageFull=true;renderCloudWarn()", 'storageFull=false;renderCloudWarn()'],
@@ -167,7 +167,7 @@ const PASSI = [
 ];
 /* Le schermate principali, rimisurate anche a 360, 375, 390 e 414 px (i
    telefoni più comuni): il giro intero si fa a 320 e a 430, i due capi. */
-const PRINCIPALI = ['presentazione', 'accesso: entra', 'accesso: nuovo account', 'home', 'cassetto', 'scheda del viaggio', 'time table', 'menu della tappa', 'spese', 'saldi', 'pareggia', 'condividi con account',
+const PRINCIPALI = ['presentazione', 'accesso: entra', 'accesso: nuovo account', 'home', 'cassetto', 'scheda del viaggio', 'time table', 'scheda della tappa', 'spese', 'saldi', 'pareggia', 'condividi con account',
   'biglietti', 'hotel', 'scopri cerca', 'scopri su misura', 'profilo con account', 'nuovo viaggio', 'bagagli', 'meteo', 'a raccolta', 'backup', 'elimina account con account',
   'premium'];
 
@@ -325,7 +325,7 @@ const MISURA = nomi => {
    - opzioni: quelle di Playwright per la pagina (reducedMotion, ...);
    - esri: come risponde Esri (test/esri-finto.js: { giu }, { rifiuta }...);
      false se la prova lo fa da se'. */
-async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {}, indirizzo = APP, esri = {} } = {}) {
+async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 844, viaggi, tema = 'chiaro', valigia = false, chiave = 'breve', attesa = 300, errori, opzioni = {}, indirizzo = APP, esri = {}, senzaCaratteri = false } = {}) {
   const page = await browser.newPage(Object.assign({ viewport: { width: larghezza, height: altezza } }, opzioni));
   if (errori) page.on('pageerror', e => errori.push(`PAGEERROR(${lingua}${tema === 'scuro' ? ', scuro' : ''}): ` + e.message.split('\n')[0]));
   page.on('dialog', d => d.dismiss().catch(() => {}));
@@ -334,6 +334,10 @@ async function apriPagina(browser, { lingua = 'it', larghezza = 390, altezza = 8
      pacchetto installato (il recinto, in browser.js). */
   page.__esri = esri === false ? null : await esriFinto(page, esri);
   await page.route(/api\.open-meteo\.com/, ro => ro.abort());
+  /* senzaCaratteri: i caratteri di Google fermati, per confrontare due
+     versioni dell'app che li chiedono diversi (la disposizione, non il
+     disegno delle lettere) */
+  if (senzaCaratteri) await page.route(/fonts\.(googleapis|gstatic)\.com/, ro => ro.abort());
   await page.clock.install({ time: giornoA(0) });
   await page.addInitScript(([vv, val, l, scuro, k]) => {
     if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); localStorage.clear();
@@ -374,7 +378,18 @@ async function giro(browser, { lingua = 'it', larghezza = 390, tema = 'chiaro', 
     document.querySelectorAll('.scroll,.sheet').forEach(x => { x.scrollTop = 0; });
     window.scrollTo(0, 0);
   });
+  /* Si misura la schermata disegnata. Ruoli, nomi e traduzioni l'app li mette
+     al fotogramma (requestAnimationFrame), prima di disegnare: chi guarda il
+     telefono non vede mai lo stato di mezzo. Con quattro giri in parallelo e
+     le mappe WebGL fatte dal processore (Oggi ridisegnata, novembre 2026) un
+     fotogramma arrivava dopo i 260 ms d'attesa, e la prova leggeva la pagina
+     fra la modifica e il disegno: tasti senza nome in schermate mai toccate. */
+  const disegnata = () => page.evaluate(() => new Promise(ok => {
+    const basta = setTimeout(ok, 3000);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(basta); ok(); }));
+  }));
   const leggi = async nome => {
+    await disegnata();
     esiti[nome] = await guarda(page, nome);
     (await page.evaluate(() => [...document.querySelectorAll('.modal.active')].map(m => m.id))).forEach(a => aperte.add(a));
   };

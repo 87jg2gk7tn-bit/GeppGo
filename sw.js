@@ -15,7 +15,7 @@
 
    E i pezzi delle mappe gia' guardate, ma solo quanto Esri permette (vedi
    «Le mappe senza rete», in fondo). */
-const CACHE_NAME = 'geppgo-shell-v58';
+const CACHE_NAME = 'geppgo-shell-v59';
 const CACHE_LIBRERIE = CACHE_NAME.replace('-shell-', '-librerie-');
 const SHELL_URLS = ['./', './index.html', './Index%202.1.html', './manifest.webmanifest', './icona.svg'];
 /* Le stesse di LIBRERIE in Index 2.1.html: una prova controlla che restino
@@ -61,7 +61,11 @@ const CACHE_CARATTERI = 'geppgo-caratteri';
    versione nel nome, perche' cosa ci sta dentro lo decidono le date di Esri,
    non la versione dell'app. La stessa di CACHE_MAPPE nell'HTML. */
 const CACHE_MAPPE = 'geppgo-mappe';
-const CARATTERI_CSS = 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap';
+const CARATTERI_CSS = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,500..700,100,0&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap';
+/* Il corsivo vero e Caveat Brush (adesivi, foglietti, stampe): la pagina li
+   chiede a schermata d'apertura sparita (CARATTERI_DOPO nell'HTML, stesso
+   indirizzo), e qui si tengono come gli altri. */
+const CARATTERI_DOPO_CSS = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,500,100,1&family=Caveat+Brush&display=swap';
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -126,23 +130,35 @@ async function scaricaLibrerie(usate) {
 async function scaricaCaratteri() {
   try {
     const cache = await caches.open(CACHE_CARATTERI);
-    let foglio = await cache.match(CARATTERI_CSS);
-    if (!foglio) {
-      const r = await fetch(CARATTERI_CSS, { mode: 'cors', credentials: 'omit' });
-      if (!r || !r.ok) return;
-      await cache.put(CARATTERI_CSS, r.clone());
-      foglio = r;
+    const servono = new Set();
+    for (const css of [CARATTERI_CSS, CARATTERI_DOPO_CSS]) {
+      servono.add(css);
+      let foglio = await cache.match(css);
+      if (!foglio) {
+        const r = await fetch(css, { mode: 'cors', credentials: 'omit' });
+        if (!r || !r.ok) continue;
+        await cache.put(css, r.clone());
+        foglio = r;
+      }
+      const testo = await foglio.text();
+      // Google mette l'alfabeto in un commento prima di ogni @font-face.
+      for (const [, alfabeto, blocco] of testo.matchAll(/(?:\/\*\s*([\w-]+)\s*\*\/\s*)?@font-face\s*\{([^}]*)\}/g)) {
+        const m = /url\((https:\/\/fonts\.gstatic\.com\/[^)\s]+)\)/.exec(blocco);
+        if (m) servono.add(m[1]);
+        if (/cyrillic|greek|vietnamese/.test(alfabeto || '')) continue;
+        if (!m || await cache.match(m[1])) continue;
+        try {
+          const f = await fetch(m[1], { mode: 'cors', credentials: 'omit' });
+          if (f && f.ok) await cache.put(m[1], f);
+        } catch (e) {}
+      }
     }
-    const testo = await foglio.text();
-    // Google mette l'alfabeto in un commento prima di ogni @font-face.
-    for (const [, alfabeto, blocco] of testo.matchAll(/(?:\/\*\s*([\w-]+)\s*\*\/\s*)?@font-face\s*\{([^}]*)\}/g)) {
-      if (/cyrillic|greek|vietnamese/.test(alfabeto || '')) continue;
-      const m = /url\((https:\/\/fonts\.gstatic\.com\/[^)\s]+)\)/.exec(blocco);
-      if (!m || await cache.match(m[1])) continue;
-      try {
-        const f = await fetch(m[1], { mode: 'cors', credentials: 'omit' });
-        if (f && f.ok) await cache.put(m[1], f);
-      } catch (e) {}
+    /* Questa cache non ha la versione nel nome, quindi non se ne va mai da
+       sola: i fogli e i file che nessuno dei due fogli di adesso nomina (la
+       Fraunces di prima, novembre 2026) si buttano qui. Solo se tutti e due
+       i fogli ci sono: senza uno dei due non si sa cosa serve. */
+    if (servono.size > 2 && (await cache.match(CARATTERI_CSS)) && (await cache.match(CARATTERI_DOPO_CSS))) {
+      for (const req of await cache.keys()) if (!servono.has(req.url)) await cache.delete(req);
     }
   } catch (e) {}
 }
@@ -308,6 +324,7 @@ function eMappa(url) { return eEsri(url) || url.hostname === 'tile.openstreetmap
 function chiaveMappa(indirizzo) {
   const u = new URL(indirizzo);
   u.searchParams.delete('token');
+  u.searchParams.delete('geppgo');
   return u.href;
 }
 /* Per quanto le intestazioni permettono di tenere la risposta, in ms: null se
@@ -337,6 +354,14 @@ async function pezzoDiMappa(event) {
   if (mappeDaSfoltire) { mappeDaSfoltire = false; event.waitUntil(inFila(() => sfoltisciMappe(true))); }
   const c = await cache.match(chiave);
   const ora = Date.now();
+  /* La mappa di riserva dell'app (stileRiserva, senza rete): i pezzi «solo
+     dalla memoria». Si danno solo quelli ancora validi per le intestazioni
+     di Esri, e per questi non si va mai in rete: le condizioni permettono di
+     riusare la cache, non di scaricare per conto proprio. Quello che non c'e'
+     resta vuoto, e la mappa mostra il fondo. */
+  if (url.searchParams.get('geppgo') === 'memoria') {
+    return (c && valeAncora(c, ora, true)) ? c : new Response('', { status: 404, statusText: 'Non in memoria' });
+  }
   if (c && valeAncora(c, ora, false)) return c;
   let r = null;
   try { r = await fetch(req); } catch (e) {}

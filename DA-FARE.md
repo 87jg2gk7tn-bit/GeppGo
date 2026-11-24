@@ -1892,13 +1892,30 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   service worker tiene ognuno per il suo tempo, non di più. **Il limite che
   conta è lo stile**: con l'app aperta resta in memoria e la mappa va
   anche senza rete per tutto il giorno dei pezzi guardati; ma se l'app
-  riparte senza rete più di 10 minuti dopo, lo stile non c'è e la mappa
-  mostra segnaposto e percorso con l'avviso. **Da decidere**: la foto dal
-  satellite si può disegnare senza lo stile di Esri (l'indirizzo dei pezzi
-  è noto), con uno stile fatto dall'app e i pezzi tenuti entro il loro
-  giorno; le condizioni lo permettono (si usa solo cache valida), ma
-  andrebbe riletto prima. Per l'offline vero resta la strada dell'app nativa
-  (vedi in cima).
+  riparte senza rete più di 10 minuti dopo, lo stile non c'è. **Deciso e
+  fatto il 23 novembre** (ridisegno di Oggi, «passo 0»): in quel caso la
+  mappa si disegna con uno stile fatto dall'app (`stileRiserva`), che usa
+  solo la foto dal satellite (`ESRI_FOTO_PEZZI`, l'indirizzo dei pezzi è
+  quello noto) e solo i pezzi già guardati e ancora validi: l'indirizzo porta
+  `geppgo=memoria`, e la service worker per quelli risponde solo dalla
+  memoria (mai dalla rete) e solo entro il loro Cache-Control; fuori, 404, e
+  quel pezzo resta color carta. La citazione resta quella di Esri, con le
+  fonti della foto (`ESRI_FONTI_FOTO`), e l'avviso dice «Sei senza rete: vedi
+  solo le foto dal satellite già guardate.». Le condizioni lette (E204 rev.
+  21/11/2025 ed E300): **3.1 d.6.A** permette la cache «as permitted by the
+  caching headers (HTTP/1.1) returned by the Services, to the extent
+  necessary for enabling or optimizing the use of the Customer
+  Application» — è esattamente quello che si usa; **3.1 d.3** solo per
+  vedere la mappa nell'app (è così); **3.1 d.4** la citazione non si toglie
+  (resta); **E300 nota 109** dice «Basemap Styles are for use only with
+  ArcGIS Location Platform Basemap Services», cioè il contrario (gli stili
+  di Esri con dati d'altri): qui è uno stile dell'app coi pezzi di Esri, e
+  non lo vieta; l'unico punto da interpretare è **3.1 b.4** («may not
+  unbundle or independently use individual or component parts»), letto come
+  smontare la piattaforma per usarne i pezzi fuori: la foto resta servita e
+  pagata da Esri, guardata nell'app, con la sua citazione. Le prove:
+  `test/prova-mappa.js` (la rete staccata e lo stile scaduto). Per
+  l'offline vero resta la strada dell'app nativa (vedi in cima).
 - **Senza rete, cosa permette Esri** (ArcGIS Location Platform Agreement,
   E204, rev. 21/11/2025): 3.1 d.6 vieta di scaricare o estrarre dati in
   blocco, e permette la cache solo «come permesso dalle intestazioni di
@@ -1918,6 +1935,212 @@ OpenStreetMap a **MapLibre GL JS 5.24.0** col satellite di **Esri** (chiave in
   (14,5), e la prima scelta salta senza volare.
 - **Il ripiego** su OpenStreetMap (`MAPPA_RIPIEGO_OSM`) va tolto prima del
   lancio: vedi in cima, «DA FARE SUBITO».
+- I pezzi per apertura qui sopra sono di prima del ridisegno di Oggi: con
+  la mappa a tutta larghezza e inclinata delle anteprime Oggi ne chiede
+  quanti le anteprime (vedi la sezione qui sotto).
+
+### Oggi ridisegnata e scheda del posto: a che punto è
+
+23 novembre 2026. Oggi è come le anteprime approvate (`anteprime/oggi-a`
+nel tema chiaro, `oggi-b` nel tema scuro) e la scheda di un posto come
+`anteprime/luogo.html`, coi dati veri e senza funzioni tolte. Le risposte
+di Giacomo ai nove punti del piano sono la regola: ricerca, giorni con
+«+ Aggiungi», valigia e tetto sotto il biglietto; «Tutto il viaggio» nel
+cielo allarga la stessa mappa con «Torna a oggi»; le note nel biglietto,
+le persone nella scheda; «Fra poco» è il biglietto; la riga in cima perde
+il nome del viaggio e apre il Programma; menu della tappa e foglio «Luogo»
+sono la scheda del posto; «+ Aggiungi al programma» con un tocco (giorno
+guardato, primo orario libero, «Aggiunto · Cambia»); la frase a mano da
+Wikidata/Wikipedia nella lingua dell'app, se no dall'assistente, se no
+niente; le altre foto da Commons con «foto di …».
+
+**Dove sta nel codice**: «OGGI COME L'ANTEPRIMA» (`ogPalco`, `ogAdesivi`,
+`renderHomeHero`), «LA MAPPA DI OGGI» (`ogDisegna`, `ogInquadra`,
+`ogStriscia`, `ogSgombra`, `ogTuttoIlViaggio`), «LA SCHEDA DI UN POSTO»
+(`apriPosto`, `psDati`, `psDisegna`, `psArricchisci`), «IL KIT DELLE
+STAMPE» (`foglietto`, `biglietto`, `schedaFoto`, `adesivo`, `copertina`,
+`fotoAttr`), e nel foglio di stile «LE STAMPE» e «Oggi larga». I
+componenti e quando usarli sono in CLAUDE.md, «Stile».
+
+**Scelte fatte, e perché**
+- **Due dita per la mappa** (`cooperativeGestures`, opzione `dueDita`): con
+  un dito si scorre la pagina, e se ci si prova la mappa lo dice (tradotto);
+  col tocco per attivarla si sarebbe aggiunto un passo a ogni uso.
+- **Il percorso è un segno di penna sullo schermo** (`.og-tratto`, SVG
+  sopra la foto), non un livello della mappa: curve, tratteggio, cartellini
+  dei minuti come nell'anteprima. Si ridisegna a ogni movimento.
+- **La mappa non rinasce** ridisegnando la Home (`homeMapTenibile`): si
+  rifanno segnaposto e percorso. Le schede e i segnaposto si accendono
+  insieme senza spostare la mappa (spostarla vuol dire pezzi in più).
+- **Schermi bassi** (sotto i 700 px: SE, esterno del Duo): città più
+  piccola, schede da 112×140, la mappa resta in mezzo con la giornata
+  leggibile e la scheda della tappa in mano sopra la barra; il biglietto
+  si affaccia sotto e si raggiunge scorrendo. La citazione in piedi non ci
+  sta (le servono 236 px fra meteo e schede): lì è sdraiata sotto la riga
+  dell'alba. Provato a stringere tutto perché anche il biglietto stesse
+  sopra la barra: la mappa restava una striscia di 60 px coi segnaposto
+  sulla città, peggio.
+- **Il tasto della posizione** sta sopra le schede, accanto alla citazione
+  in piedi (non addosso: la sua area da 44 px resta libera).
+- **Le scritte sul cielo** le colora `tingiCielo`: le nuvole contano solo
+  dove passano davvero (si muovono e sono sfocate: si conta tutta la strada
+  che fanno, e dove due si sovrappongono il bianco si somma); dove né il
+  nero né il bianco reggono (il meteo sopra una foto chiara) la scritta
+  prende un fondo del colore del cielo, sfumato, come fa `tingiPagina`.
+- **Il cielo grigio** (la pioggia di giorno, tema chiaro, `og-grigio`): è
+  «scuro» per le scritte ma non abbastanza per il vetro trasparente
+  dell'anteprima, che lo schiariva fino a 4,2:1 col bianco sopra. Lì i tasti
+  sono quelli dei cieli chiari, vetro panna e inchiostro (11:1). Un vetro
+  scuro si leggeva, ma axe (che la mappa non la vede) a volte lo misurava
+  sul panna della pagina e lo bocciava. Di notte resta il vetro chiaro
+  dell'anteprima, sul blu della notte.
+- **L'adesivo del giorno** sta in riga con l'umore come nell'anteprima; se
+  tocca le scritte del meteo («sera tempestosa», o un'altra lingua) va a
+  capo (`ogAdesivoACapo`). Prima copriva «Meteo ›».
+- **Nomi di città con le code** (la y di Kyoto, la g di Parigi): l'interlinea
+  stretta dell'anteprima (.86) le infila nella frase sotto; `conCoda` dà
+  aria solo a quei nomi, così «Osaka» resta identica all'anteprima.
+- **Le icone dei tasti sul cielo** usano `--green` per il tratto d'oro (le
+  anteprime avevano un oro più chiaro): i colori vengono dai token. Le icone
+  del tipo di un posto (sulle schede-foto, nei segnaposto) sono contenuto,
+  come le emoji dei tipi, col tratto `--oro-chiaro`.
+- **Colori, spazi, raggi e ombre delle stampe** sono quelli delle anteprime
+  (carta, nastro, foto, vetro): l'eccezione dichiarata in CLAUDE.md, che
+  `test/prova-stile.js` lascia passare solo lì (`STAMPE`).
+
+**I pezzi di mappa**: aprire Oggi (390 × 844, Esri finto) ne chiede **19**,
+come le anteprime dal vivo (17 in media, fino a 22); il Programma 3–4. La
+prova (`prova-mappe.js` 7) tiene Oggi sotto i 24.
+
+**Le prove**: `test/prova-oggi.js` (49 controlli: confronto con le
+anteprime nei due temi, schede-foto e segnaposto, adesivi, scorrimento con
+un dito, stati, 320–430 px e larga, la mappa che non rinasce, la rete
+lenta) e `test/prova-posto.js` (59: la stessa scheda da cinque posti,
+foglietti e biglietti, «Ti piacerà perché…» una volta sola, Wikidata,
+Wikipedia e Commons nella lingua dell'app, le azioni, cinque lingue,
+larghezze, axe). Le prove vecchie che cercavano la Home di prima (il
+riquadro «Fra poco», il menu della tappa, `.hh-cards`, i gradi su una riga
+loro) guardano adesso il biglietto, la scheda del posto e la fila.
+
+**Cose imparate, da non riscoprire**
+- Qui `Input.synthesizeScrollGesture` di Chromium non scorre niente: lo
+  scorrimento col dito si prova con `Input.dispatchTouchEvent`, un tocco
+  alla volta.
+- Un elemento dentro la mappa sta nel suo contesto di sovrapposizione: la
+  fila delle schede (sopra la mappa) gli rubava il tocco anche dove era
+  vuota. La fila ha `pointer-events:none` e le schede `auto`: scorre lo
+  stesso, perché il dito che parte da una scheda muove chi la contiene.
+- In questo ambiente i caratteri di Google arrivano davvero: un confronto
+  di pixel fra due versioni che chiedono Fraunces diverse (la morbida delle
+  anteprime) li deve fermare in tutte e due (`senzaCaratteri`).
+- Una foto che non arriva l'app la toglie (mai un'immagine rotta): nelle
+  prove le foto di Wikimedia vanno servite finte, se no spariscono.
+- Le risposte finte di OpenStreetMap devono riguardare solo il posto
+  provato: Oggi, dietro, cerca le foto delle tappe per conto suo, e con una
+  risposta valida per tutti le tappe si prendono i dati del posto sbagliato.
+- **Il costo del disegno** (23 novembre): la batteria su GitHub era passata
+  da 69 a 116 minuti (limite 120), schermi-grandi fermata ai 15 minuti, e
+  le prove che aprono spesso Oggi ci mettevano il doppio. Il JavaScript era
+  lo stesso: era il disegno, cinque lavori inutili che a occhio non si
+  vedono. (1) `tingiCielo` rifaceva il suo ResizeObserver a ogni conto, e un
+  osservatore nuovo si sveglia sempre una volta appena nato: sessanta conti
+  al secondo a pagina ferma (c'era anche su `main`, ma lì ridava gli stessi
+  colori e non si ridisegnava niente; adesso rimette fondi e ombre). (2)
+  MapLibre, col riquadro nascosto (si cambia pagina), prendeva la misura di
+  ripiego, 400×300, e ridisegnava subito tutta la mappa, e di nuovo al
+  ritorno: la misura la segue `nuovaMappa` (`trackResize:false`) e un
+  riquadro nascosto si lascia stare. (3) `rimisura` chiamava `resize()`
+  anche alla stessa misura, che rifà la tela WebGL. (4) Il pallino della
+  posizione, rimesso uguale a ogni disegno della Home, rifaceva la sorgente
+  (`setData`, otto disegni): `datiMappa` non rimanda gli stessi dati. (5)
+  L'eco della prossima tappa non finiva mai: batte tre volte. Stesso giro
+  di schermate, processore del browser: 48 s → 18,6 (`main` 17).
+  **Ma su GitHub non cambiava niente** (corse 499 e 501: ancora oltre i 120
+  minuti). Il peso vero era l'avvio: con l'orologio finto di Playwright
+  (`page.clock.install`, in ogni `apriPagina`) la schermata d'apertura
+  spariva dopo 4–6 secondi invece di 0,9. (6) `ogInquadra` cercava
+  l'inquadratura spostando la mappa vera fino a 384 volte, e ogni
+  spostamento risvegliava la mappa e ogni segnaposto: 2.500 richieste di
+  fotogramma. In un browser vero finiscono in un fotogramma solo; l'orologio
+  finto invece esegue i suoi timer uno alla volta, con un passaggio vero fra
+  l'uno e l'altro, e resta indietro di secondi (il timer da 380 ms che toglie
+  la schermata d'apertura scattava dopo 4 secondi, col processore fermo).
+  Adesso la ricerca si fa su una copia della camera (`m.transform.clone()`,
+  regolata come fa `jumpTo`) e la mappa si sposta una volta: stessa
+  inquadratura al decimo di millesimo, 35–60 ms invece di 320–380 nel
+  browser delle prove (sul telefono non è stato misurato, ma il lavoro tolto
+  è lo stesso). Aprire Oggi cinque volte: 44 s → 17 (`main` 14). Per trovarlo:
+  avvio misurato **con** l'orologio finto (senza, era veloce come `main`),
+  il profilo che mostrava il processore fermo per 5 secondi su 6, e le
+  richieste di fotogramma contate con la loro pila.
+  Come si misura: i `/proc/<pid>/stat` dei processi di Chromium figli di
+  node (il «gpu-process» è quello che disegna, qui con SwiftShader);
+  `document.getAnimations()` per le animazioni che non finiscono; le
+  chiamate a `requestAnimationFrame` contate con la loro pila per i giri a
+  vuoto; gli eventi `render` e `sourcedata` della mappa per chi la fa
+  ridisegnare.
+- **Le entrate che non finivano** (24 novembre): con la mappa del viaggio di
+  200 tappe aperta sopra Oggi, lo zoom era un terzo più lento che su `main`
+  (300–520 ms contro 90–460; `prova-budget-mappa` 8 sforava il mezzo secondo
+  due volte su quattro, anche a macchina scarica). La traccia del browser
+  (`browser.startTracing`) diceva dove: «Commit» (la pagina passata al
+  compositore) 457 ms contro 271, e disegno e livelli 139 contro 37. I livelli
+  del compositore (CDP `LayerTree`, coi motivi): 181 contro 92. Tre cause:
+  (1) le entrate di schede, segnaposto, cartellini, chiave e biglietto
+  avevano `animation-fill-mode: both`, e un'animazione che tiene la sua fine
+  resta in vigore per sempre: ogni elemento teneva il suo livello (e la
+  scheda che si accende scattava invece di salire con la sua transizione,
+  anche nell'anteprima); (2) a ogni ridisegno dello stesso giorno (una
+  spunta, il tema, il cloud) le schede e il biglietto rientravano volando;
+  (3) le entrate correvano anche sotto un foglio aperto, dove nessuno le
+  vede, col percorso che si ridisegna a ogni fotogramma. Adesso: `backwards`
+  (la posa d'attesa è la stessa, finita l'animazione resta lo stile di
+  sempre), le entrate solo quando il giorno compare (`entra`, come già la
+  mappa), e `openSheet` le chiude sulla posa finale (`chiudiLeEntrate`).
+  Tempi tornati quelli di `main`, quattro corse su quattro. A riposo Oggi è
+  uguale pixel per pixel, salvo il bordo della scheda storta in mano (prima
+  la sfumava il compositore, ora la disegna la pagina). Restano in più i
+  cartellini dei mezzi (`will-change`, per non ridisegnarli a ogni
+  movimento della mappa) e il vetro dei tasti sul cielo: voluti.
+  Dopo la correzione il ramo resta un 5–10% sopra `main` in quel caso
+  (compiti della pagina 944–963 ms contro 838–885 su tre zoom; il processo
+  che disegna uguale, con qualche corsa più alta): la Oggi sotto il foglio è
+  più ricca, e il foglio la sfoca. Il controllo dei 500 ms di
+  `prova-budget-mappa` 8 misura anche l'orologio finto di Playwright, e
+  sulle macchine lente di GitHub è al limite anche su `main` (qui, con il
+  processore occupato da altro: ramo 2 cadute su 3, `main` 1 su 3). Se
+  ricade, prima si guarda se è la macchina (nessun «blocco» lungo, gli altri
+  tempi bassi) o un lavoro nuovo, con la traccia (`browser.startTracing`) e
+  il conto dei livelli (CDP `LayerTree`).
+- **Il biglietto che si rifaceva da solo** (24 novembre): 220 ms dopo ogni
+  disegno della Home `homeCardsSync` passava da `homeSoonFill`, che rifaceva
+  il biglietto anche con la stessa tappa: il cerchio dell'ora ripartiva da
+  zero, anche sotto un foglio appena aperto (su GitHub `prova-oggi` 10
+  cadeva quando la macchina era abbastanza lenta da farli incontrare). E
+  ridisegnando lo stesso giorno la fila, rimessa dov'era prima della coda
+  (`ogCoda`, lo spazio dopo l'ultima scheda), si fermava più indietro: la
+  scheda in mano e il biglietto passavano alla tappa prima. Adesso il
+  biglietto ha una chiave di quello che dice (`chiaveBiglietto`) e si rifà
+  solo se cambia, col cerchio già scritto (è un aggiornamento, non
+  un'entrata); la fila prende la coda prima di tornare dov'era. Le prove che
+  dipendono da un timer dell'app fanno avanzare l'orologio finto
+  (`page.clock.runFor`) invece di sperare che la macchina sia veloce.
+- **La riga dell'assistente già tenuta arrivava tardi** (24 novembre):
+  riaperta l'app, la riga «Ti piacerà perché…» di un posto già guardato
+  compariva dopo tre secondi, anche se stava nel viaggio. `psPerche` partiva
+  in fondo a `psArricchisci`, dopo OpenStreetMap e Wikipedia, e quelle
+  richieste, dopo una riapertura, stanno in coda dietro le foto delle tappe
+  che Oggi cerca per conto suo. Adesso la riga tenuta sta nel disegno della
+  scheda (`psDisegna`): si vede subito, e la scheda non si sposta più sotto
+  il dito quando arriva. La frase a mano dell'assistente (quando Wikipedia
+  non ne ha una) aspetta ancora la rete, perché solo lei dice se serve.
+
+**Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
+il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,
+il segnaposto che si accende); il biglietto e la scheda del posto da Oggi,
+Programma, Scopri, Identifica e luoghi salvati; un iPhone SE (schermo
+basso); il tema scuro di notte; la frase a mano (Caveat Brush arriva dopo
+la schermata d'apertura).
 
 
 ---

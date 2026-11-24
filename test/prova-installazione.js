@@ -246,7 +246,8 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
         ['Home', '#homeMap', null],
         ['viaggio', '#map', 'openTripZoom(1)'],
         ['giornata', '#dayMap', 'openDay(0)'],
-        ['anteprima di un posto', '#piMap', "openPlaceInfo({name:'Kinkaku-ji',lat:35.0394,lng:135.7292,address:'Kyoto',type:'attraction'})"],
+        /* la cartina della scheda di un posto (era l'anteprima del foglio «Luogo») */
+        ['scheda di un posto', '#psMappa', "openPlaceInfo({name:'Kinkaku-ji',lat:35.0394,lng:135.7292,address:'Kyoto',type:'attraction'})"],
         ['mappina dei risultati', '#searchResults-mini-0', "go('discover');setDiscover('search');renderResults([{display_name:'Kinkaku-ji, Kyoto, Giappone',lat:'35.0394',lon:'135.7292',type:'attraction',class:'tourism'}],'searchResults')"]
       ];
       for (const [nome, sel, passo] of MAPPE) {
@@ -390,7 +391,13 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
     const barra = await page.evaluate(async () => {
       const m = () => document.querySelector('meta[name="theme-color"]').getAttribute('content');
       const testa = () => getComputedStyle(document.querySelector('.topbar')).backgroundColor;
-      const out = { chiaro: [m(), testa()] };
+      /* Su Oggi la barra in alto è di vetro sul cielo: la barra di stato
+         prende il colore del cielo, mai trasparente (ridisegno di Oggi). */
+      go('plan'); await new Promise(r => setTimeout(r, 80));
+      const oggi = { meta: m(), cielo: typeof coloreCielo === 'function' ? coloreCielo() : '' };
+      /* altrove, la testata col suo fondo */
+      go('money'); await new Promise(r => setTimeout(r, 80));
+      const out = { oggi, chiaro: [m(), testa()] };
       toggleDark(true); await new Promise(r => setTimeout(r, 50));
       out.scuro = [m(), testa()];
       toggleDark(false); await new Promise(r => setTimeout(r, 50));
@@ -402,7 +409,8 @@ const testaPng = buf => ({ png: buf.slice(1, 4).toString('ascii') === 'PNG', w: 
     });
     ok('4. la barra di stato segue il tema: il colore della testata nel chiaro e nello scuro, quello d\'apertura finché c\'è la schermata d\'apertura',
        barra.chiaro[0] === barra.chiaro[1] && barra.scuro[0] === barra.scuro[1] && barra.scuro[0] !== barra.chiaro[0]
-       && barra.diNuovo[0] === barra.chiaro[0] && barra.apertura.toUpperCase() === '#14110B',
+       && barra.diNuovo[0] === barra.chiaro[0] && barra.apertura.toUpperCase() === '#14110B'
+       && !!barra.oggi.cielo && barra.oggi.meta === barra.oggi.cielo && !/rgba\(0, 0, 0, 0\)|transparent/.test(barra.oggi.meta),
        JSON.stringify(barra));
     await page.close();
   }

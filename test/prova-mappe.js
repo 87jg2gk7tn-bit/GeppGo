@@ -48,27 +48,41 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
   if (fai(1)) await prova('1', async () => {
     const page = await apriPagina(browser, { errori, chiave: 'mappe-1-' + Math.random() });
     const esri = page.__esri;
-    // OGGI: le tappe col numero (e la foto, dove c'e'), il percorso d'oro, la scheda
+    // OGGI (ridisegnata come le anteprime): i segnaposto tondi col numero (e la
+    // foto, dove c'e'), il percorso a penna d'oro sopra la foto, la fila
     await pronta(page, 'homeMapObj');
     await page.waitForTimeout(600);
-    const oggi = await page.evaluate(() => ({
-      mappa: homeMapObj instanceof maplibregl.Map, fonte: homeMapObj._g.fonte,
-      segni: homeMapMarks.map(mk => ({ n: mk.getElement().querySelector('b').textContent, nome: mk.getElement().getAttribute('aria-label'), foto: !!mk.getElement().querySelector('img') })),
-      percorso: !!homeMapObj.getLayer('g-percorso') && homeMapObj._g.dati.percorso.features.length === 1 && homeMapObj._g.dati.percorso.features[0].geometry.coordinates.length > 3,
-      oro: homeMapObj.getPaintProperty('g-percorso', 'line-color'), tratteggio: homeMapObj.getPaintProperty('g-percorso', 'line-dasharray')
-    }));
-    ok('1. Oggi: MapLibre col fondo di Esri, le tre tappe numerate nell\'ordine della giornata', oggi.mappa && oggi.fonte === 'esri' && oggi.segni.map(s => s.n).join() === '1,2,3' && /^1\. Fushimi Inari/.test(oggi.segni[0].nome),
+    const oggi = await page.evaluate(() => {
+      const oro = [...document.querySelectorAll('#homeMap .og-tratto .og-giorno-tratto .oro:not(.sottile)')];
+      return {
+        mappa: homeMapObj instanceof maplibregl.Map, fonte: homeMapObj._g.fonte,
+        segni: homeMapMarks.map(mk => ({ n: mk.getElement().querySelector('b').textContent, nome: mk.getElement().getAttribute('aria-label'), tondo: mk.getElement().matches('.og-spilla') })),
+        percorso: oro.length === 2 && oro.every(x => (x.getAttribute('d') || '').length > 10),
+        oro: oro.length ? getComputedStyle(oro[0]).stroke : '', tratteggio: oro.map(x => getComputedStyle(x).strokeDasharray)
+      };
+    });
+    ok('1. Oggi: MapLibre col fondo di Esri, le tre tappe in segnaposto tondi numerati nell\'ordine della giornata', oggi.mappa && oggi.fonte === 'esri' && oggi.segni.map(s => s.n).join() === '1,2,3' && oggi.segni.every(s => s.tondo) && /^1\. Fushimi Inari/.test(oggi.segni[0].nome),
       JSON.stringify(oggi.segni));
-    ok('1. e il percorso della giornata tratteggiato in oro', oggi.percorso && /^#E8B23A$/i.test(oggi.oro) && Array.isArray(oggi.tratteggio), `${oggi.oro} ${JSON.stringify(oggi.tratteggio)}`);
+    ok('1. e il percorso della giornata tratteggiato in oro (a puntini a piedi)', oggi.percorso && oggi.oro === 'rgb(232, 178, 58)' && oggi.tratteggio.every(x => x && x !== 'none'), `${oggi.oro} ${JSON.stringify(oggi.tratteggio)}`);
     /* la foto del posto, dove c'e': come nelle anteprime */
     await page.evaluate(() => { T().days[0].activities[1].photo = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs='; renderAll(); });
     await pronta(page, 'homeMapObj');
-    const conFoto = await page.evaluate(() => homeMapMarks.map(mk => mk.getElement().classList.contains('con-foto') && !!mk.getElement().querySelector('.g-foto img')));
+    await page.waitForTimeout(400);
+    const conFoto = await page.evaluate(() => homeMapMarks.map(mk => !!mk.getElement().querySelector('.sp-foto img')));
     ok('1. la tappa con la foto del posto ha il segnaposto con la foto e il numero', conFoto.join() === 'false,true,false', conFoto.join());
+    /* toccando un segnaposto la fila delle schede-foto va alla sua tappa, e il
+       segnaposto si accende (niente fumetto: la scheda e' nella fila) */
+    await page.evaluate(() => { const f = document.querySelector('#plan .og-tappe'); if (f) f.scrollLeft = 0; });
+    await page.waitForTimeout(300);
     await page.evaluate(() => homeMapMarks[1].getElement().click());
-    await page.waitForTimeout(500);
-    const scheda = await page.evaluate(() => ({ testo: (document.querySelector('#homeMap .maplibregl-popup .g-scheda-dentro') || {}).innerText || '', carta: (document.querySelector('.hh-card:nth-child(2)') || {}).getBoundingClientRect ? Math.round(document.querySelector('.hh-cards').scrollLeft) : -1 }));
-    ok('1. toccando un segnaposto: la scheda col nome e l\'ora, e la striscia va alla sua tappa', /Nishiki/.test(scheda.testo) && /ore 12:00/.test(scheda.testo) && scheda.carta > 0, JSON.stringify(scheda));
+    await page.waitForTimeout(900);
+    const scheda = await page.evaluate(() => {
+      const f = document.querySelector('#plan .og-tappe'), carte = [...f.querySelectorAll('.stampa:not(.bianca)')];
+      const qf = f.getBoundingClientRect(), vicina = carte.map(c => Math.abs(c.getBoundingClientRect().left - qf.left - parseFloat(getComputedStyle(f).paddingLeft)));
+      const prima = vicina.indexOf(Math.min(...vicina));
+      return { inMano: carte[prima] ? carte[prima].innerText.replace(/\s+/g, ' ').trim() : '', acceso: homeMapMarks[1].getElement().classList.contains('accesa'), fumetto: !!document.querySelector('#homeMap .maplibregl-popup') };
+    });
+    ok('1. toccando un segnaposto: la fila va alla sua tappa e il segnaposto si accende', /Nishiki/.test(scheda.inMano) && scheda.acceso && !scheda.fumetto, JSON.stringify(scheda));
 
     // PROGRAMMA (stretto)
     await page.evaluate(() => openDay(0));
@@ -103,8 +117,16 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
     // LA SCHEDA DI UN POSTO
     await page.evaluate(() => openPlaceInfo({ name: 'Kinkaku-ji', lat: 35.0394, lng: 135.7292, address: 'Kyoto', type: 'attraction' }));
     await pronta(page, 'piMapObj');
-    const posto = await page.evaluate(() => { const c = piMapObj.getCenter(); return { lat: +c.lat.toFixed(4), lng: +c.lng.toFixed(4), spillo: !!document.querySelector('#piMap .g-spillo') }; });
-    ok('1. la scheda di un posto: la mappa sul posto, col segno al centro', posto.lat === 35.0394 && posto.lng === 135.7292 && posto.spillo, JSON.stringify(posto));
+    await page.waitForTimeout(300);
+    /* la cartina della scheda (ferma e inclinata, come l'anteprima luogo.html):
+       il segnaposto tondo sta proprio sul posto */
+    const posto = await page.evaluate(() => {
+      const box = document.getElementById('psMappa'), el = box && box.querySelector('.ps-spilla');
+      if (!el) return { spillo: false };
+      const q = el.getBoundingClientRect(), b = box.getBoundingClientRect(), pt = piMapObj.project([135.7292, 35.0394]);
+      return { spillo: true, ferma: !piMapObj.dragPan.isEnabled(), dx: Math.round(q.left + q.width / 2 - b.left - pt.x), dy: Math.round(q.top + q.height / 2 - b.top - pt.y) };
+    });
+    ok('1. la scheda di un posto: la cartina ferma sul posto, col suo segnaposto tondo', posto.spillo && posto.ferma && Math.abs(posto.dx) <= 3 && Math.abs(posto.dy) <= 32, JSON.stringify(posto));
     await fermi(page);
 
     // SCOPRI: le mappine ferme, coi pezzi di Esri e senza WebGL
@@ -235,10 +257,10 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
       await aspetta(page, () => !!homeMapObj && !document.querySelector('#homeMap .g-avviso').hidden);
       const m = await page.evaluate(() => ({ avviso: document.querySelector('#homeMap .g-avviso span').textContent, tasto: document.querySelector('#homeMap .g-avviso button').textContent,
         fonte: homeMapObj._g.fonte, segni: homeMapMarks.length }));
-      // l'app va avanti: la scheda di un segnaposto, il Programma, Spese
+      // l'app va avanti: un segnaposto toccato si accende (la fila va alla sua scheda), il Programma, Spese
       await page.evaluate(() => homeMapMarks[0].getElement().click());
-      await page.waitForTimeout(300);
-      const scheda = await page.evaluate(() => !!document.querySelector('#homeMap .maplibregl-popup'));
+      await page.waitForTimeout(400);
+      const scheda = await page.evaluate(() => homeMapMarks[0].getElement().classList.contains('accesa'));
       await page.evaluate(() => openDay(0));
       await aspetta(page, () => !!dayMapObj && Object.keys(dayMapSegni).length === 3, null, 6000);
       await page.evaluate(() => go('money'));
@@ -246,7 +268,7 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
       const avanti = await page.evaluate(() => ({ giorno: !!dayMapObj && Object.keys(dayMapSegni).length, spese: document.getElementById('money').classList.contains('active') }));
       ok(`4. Esri ${caso}: la mappa lo dice con un messaggio chiaro e «${m.tasto}», e va avanti col ripiego e coi segnaposto`,
         m.avviso === atteso && m.fonte === 'osm' && m.segni === 3 && scheda, JSON.stringify(m));
-      ok(`4. e l'app non si blocca (la scheda, il Programma, Spese) — ${caso}`, avanti.giorno === 3 && avanti.spese, JSON.stringify(avanti));
+      ok(`4. e l'app non si blocca (il segnaposto, il Programma, Spese) — ${caso}`, avanti.giorno === 3 && avanti.spese, JSON.stringify(avanti));
       await page.close();
     }
     /* «Riprova» quando Esri torna: le mappe tornano tutte insieme. Esri
@@ -318,10 +340,12 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
     }
     console.log(`  pezzi di mappa per apertura (390×844) — Oggi: ${misure.Oggi.pezzi} della foto, ${misure.Oggi.vettori} di strade e nomi, ${misure.Oggi.stile} stile · ` +
       `Programma: ${misure.Programma.pezzi} della foto, ${misure.Programma.vettori} di strade e nomi, ${misure.Programma.stile} stile`);
-    /* Al massimo una dozzina: la mappa di Oggi nasce gia' sulla tappa in mano
-       (prima volava dall'inquadratura alla tappa, e il volo chiedeva una
-       ventina di pezzi di passaggio). */
-    ok('7. aprire Oggi e il Programma chiede pochi pezzi (al massimo una dozzina ciascuno), e lo stile una volta sola', misure.Oggi.pezzi > 0 && misure.Oggi.pezzi <= 12 && misure.Programma.pezzi <= 12 && misure.Oggi.stile === 1 && misure.Programma.stile === 0,
+    /* Dal ridisegno di Oggi (le anteprime approvate) la mappa tiene tutta la
+       larghezza ed e' inclinata: costa come le anteprime, misurate dal vivo
+       (DA-FARE, «I pezzi di mappa»: 17 in media, fino a 22). Il tetto e' 24:
+       di piu' vorrebbe dire che la mappa vola o si inquadra due volte. Il
+       Programma resta sotto la dozzina. */
+    ok('7. aprire Oggi chiede i pezzi delle anteprime (al massimo 24), il Programma una dozzina, e lo stile una volta sola', misure.Oggi.pezzi > 0 && misure.Oggi.pezzi <= 24 && misure.Programma.pezzi <= 12 && misure.Oggi.stile === 1 && misure.Programma.stile === 0,
       JSON.stringify(misure));
   });
 

@@ -72,15 +72,16 @@ const stato = { trips: [
        Questa distinzione è costata una CI rossa: in locale i font di Google
        non si scaricano, le voci sono più strette e ci stanno tutte; sulla
        macchina delle prove no. */
-    const scatola = el => {
+    const scatolaEl = el => {
       let p = el.parentElement;
       while (p && p !== document.body) {
         const s = getComputedStyle(p);
-        if (/auto|scroll|hidden/.test(s.overflowX + s.overflowY)) return p.getBoundingClientRect();
+        if (/auto|scroll|hidden/.test(s.overflowX + s.overflowY)) return p;
         p = p.parentElement;
       }
       return null;
     };
+    const scatola = el => { const p = scatolaEl(el); return p ? p.getBoundingClientRect() : null; };
     const vis = el => {
       const s = getComputedStyle(el);
       if (s.display === 'none' || s.visibility === 'hidden') return false;
@@ -128,7 +129,12 @@ const stato = { trips: [
         const cont = scatola(el);
         let alto = b.top - su, basso = b.bottom + giu, sin = b.left - sx, des = b.right + dx;
         if (cont) {
-          alto = Math.max(alto, cont.top); basso = Math.min(basso, cont.bottom);
+          /* La pagina stessa scorre in verticale: un tasto sul bordo in basso
+             dello schermo si porta a vista scorrendo (e in fondo c'e' lo
+             spazio di .scroll), quindi li' l'area non e' tagliata. Le strisce
+             dentro la pagina tagliano, di lato e in verticale. */
+          const pagina = el.closest('main.scroll') && scatolaEl(el) === document.querySelector('main.scroll');
+          if (!pagina) { alto = Math.max(alto, cont.top); basso = Math.min(basso, cont.bottom); }
           sin = Math.max(sin, cont.left); des = Math.min(des, cont.right);
         }
         const h = Math.round(basso - alto), w = Math.round(des - sin);
@@ -325,8 +331,11 @@ const stato = { trips: [
     t.pois = []; t.days.forEach(d => d.activities = []);
     save(); renderAll(); go('plan');
     await new Promise(r2 => setTimeout(r2, 500));
-    const el = document.querySelector('.hh-empty');
+    /* dal ridisegno di Oggi e' la stampa bianca in fondo alla mappa (era il riquadro .hh-empty) */
+    const el = document.querySelector('#plan .stampa.bianca .lastra') || document.querySelector('.hh-empty');
     if (!el) return { c: 'non c\'è' };
+    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    await new Promise(r2 => setTimeout(r2, 100));
     const b = el.getBoundingClientRect();
     let chiamato = false;
     const vero = window.homeAdd;

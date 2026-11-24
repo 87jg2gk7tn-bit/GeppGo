@@ -264,7 +264,7 @@ function swFinto() {
         await new Promise(x => setTimeout(x, 450));
         const attivo = id => { const el = document.getElementById(id); return !!el && el.classList.contains('active'); };
         return {
-          tt: attivo('mDay'), giorno: ttDay, menu: attivo('mActMenu'), menuNome: document.getElementById('amName').textContent,
+          tt: attivo('mDay'), giorno: ttDay, menu: attivo('mPosto'), menuNome: (psDati() || {}).nome || '',
           dettaglio: attivo('mActDetail'), dettaglioNome: document.getElementById('adName').value,
           home: attivo('plan'), banner: [...document.querySelectorAll('.prox .prox-t')].map(x => x.textContent).join(' | '),
           raccolta: attivo('mRaccoltaIn'), raccoltaT: document.getElementById('raccInT').textContent, raccoltaCorpo: document.getElementById('raccInBody').innerText
@@ -296,7 +296,7 @@ function swFinto() {
     await p2.evaluate(h => { history.replaceState(null, '', location.pathname + h); }, '#avviso=' + encodeURIComponent(JSON.stringify(DOVE.promemoria)));
     await p2.reload({ waitUntil: 'domcontentloaded' });
     await p2.waitForFunction(() => typeof window.renderAll === 'function' && !document.getElementById('bootSplash'), null, { timeout: 30000 });
-    const freddo = await aspetta(p2, () => document.getElementById('mActMenu').classList.contains('active') && document.getElementById('amName').textContent === 'Torre di Belém', null, 5000);
+    const freddo = await aspetta(p2, () => postoAperto() && (psDati() || {}).nome === 'Torre di Belém', null, 5000);
     const indirizzo = await p2.evaluate(() => location.hash);
     ok('3. da chiusa: #avviso=... apre la tappa, e l\'indirizzo si ripulisce', freddo && !/avviso=/.test(indirizzo), JSON.stringify({ freddo, indirizzo: indirizzo.slice(0, 12) }));
     await p2.close();
@@ -324,7 +324,7 @@ function swFinto() {
       if (nome === 'negato') {
         /* «Apri» porta nel punto giusto anche dal banner. */
         await p.click('.prox.avv button.btn-primario');
-        esiti.apri = await aspetta(p, () => document.getElementById('mActMenu').classList.contains('active') && document.getElementById('amName').textContent === 'Torre di Belém', null, 3000);
+        esiti.apri = await aspetta(p, () => postoAperto() && (psDati() || {}).nome === 'Torre di Belém', null, 3000);
         esiti.via = await p.evaluate(() => !document.querySelector('.prox.avv'));
       }
       await p.close();
