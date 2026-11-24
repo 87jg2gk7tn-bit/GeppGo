@@ -2113,8 +2113,21 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   tempi bassi) o un lavoro nuovo, con la traccia (`browser.startTracing`) e
   il conto dei livelli (CDP `LayerTree`). Dopo l'unione su `main` è ricaduto
   in 3 lavori su 13 (392/523/549, 251/550/164, 387/518/534 ms), sempre senza
-  blocchi lunghi e con uno o due zoom appena sopra il mezzo secondo: oggi è
-  la causa più frequente del rosso su `main`, più della citazione.
+  blocchi lunghi e con uno o due zoom appena sopra il mezzo secondo: era la
+  causa più frequente del rosso su `main`, più della citazione. Dove va il
+  tempo (misurato la sera stessa): Oggi sotto il foglio non c'entra
+  (nasconderla, togliere la sfocatura del velo del foglio, i livelli dei
+  segnaposto o gli altri vetri non cambia niente, e il `main` di prima del
+  ridisegno fa gli stessi tempi). Va nel disegno WebGL della mappa del
+  viaggio, che sulle macchine delle prove fa il processore: «Commit» circa
+  70 ms a zoom, e la prima volta che lo zoom arriva dove compaiono strade e
+  nomi MapLibre ne compila gli shader (`getShaderParameter` 81 ms) e carica
+  i pezzi nuovi della foto. Il codice dell'app (raggruppare, creare e
+  togliere segnaposto) pesa poche decine di millisecondi. A freddo il
+  peggior zoom era in media 692 ms qui, rifatto subito dopo 336: la prova
+  adesso fa la serie due volte e cronometra la seconda, coi blocchi lunghi
+  contati su tutte e due (deciso con Giacomo). Sul telefono quel costo della
+  prima volta lo fa la scheda grafica.
 - **Il biglietto che si rifaceva da solo** (24 novembre): 220 ms dopo ogni
   disegno della Home `homeCardsSync` passava da `homeSoonFill`, che rifaceva
   il biglietto anche con la stessa tappa: il cerchio dell'ora ripartiva da

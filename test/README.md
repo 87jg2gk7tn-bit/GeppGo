@@ -1237,6 +1237,10 @@ ore della modifica com'erano, e lascia passare il resto. Le dieci domande:
    dell'albergo, che prima lo copriva).
 8. **200 tappe**: si apre in meno di 3 secondi, ci sono tutte, i segnaposto
    vicini si raccolgono, zoom e spostamenti senza blocchi da mezzo secondo.
+   La serie di zoom si fa due volte e il cronometro conta la seconda: la
+   prima paga gli shader di strade e nomi e i pezzi nuovi della foto, che su
+   GitHub disegna il processore (vedi `DA-FARE.md`); i blocchi lunghi si
+   contano su tutte e due.
 9. **Dove si trova**, a tocchi veri: dalla mappa della Home e da quella della
    giornata (1 tocco), da ✈️ Viaggio (2), dalla riga della Time Table nei
    giorni senza mappa; i tetti da ✈️ Viaggio. «Elenco» ha tutte le tappe,
