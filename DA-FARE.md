@@ -2102,6 +2102,16 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   la sfumava il compositore, ora la disegna la pagina). Restano in più i
   cartellini dei mezzi (`will-change`, per non ridisegnarli a ogni
   movimento della mappa) e il vetro dei tasti sul cielo: voluti.
+  Dopo la correzione il ramo resta un 5–10% sopra `main` in quel caso
+  (compiti della pagina 944–963 ms contro 838–885 su tre zoom; il processo
+  che disegna uguale, con qualche corsa più alta): la Oggi sotto il foglio è
+  più ricca, e il foglio la sfoca. Il controllo dei 500 ms di
+  `prova-budget-mappa` 8 misura anche l'orologio finto di Playwright, e
+  sulle macchine lente di GitHub è al limite anche su `main` (qui, con il
+  processore occupato da altro: ramo 2 cadute su 3, `main` 1 su 3). Se
+  ricade, prima si guarda se è la macchina (nessun «blocco» lungo, gli altri
+  tempi bassi) o un lavoro nuovo, con la traccia (`browser.startTracing`) e
+  il conto dei livelli (CDP `LayerTree`).
 - **La riga dell'assistente già tenuta arrivava tardi** (24 novembre):
   riaperta l'app, la riga «Ti piacerà perché…» di un posto già guardato
   compariva dopo tre secondi, anche se stava nel viaggio. `psPerche` partiva

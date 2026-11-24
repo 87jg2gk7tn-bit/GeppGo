@@ -510,7 +510,11 @@ const SPIA_AVVISI = permesso => {
     ok('7. «Tutti i giorni»: tutte le tappe con una posizione sulla mappa (sciolte o raccolte), e l\'albergo', tappeTutte === 4 && s.some(x => /vm-casa/.test(x.tipo)), s.map(x => x.titolo || x.testo).join(' | '));
     /* Lo sfondo e' quello di Esri (finto: test/esri-finto.js), col globo, e
        la citazione con «Powered by Esri» e «© OpenStreetMap» col link ai
-       diritti. Le zone gia' viste per l'offline le prova prova-mappa. */
+       diritti. Le zone gia' viste per l'offline le prova prova-mappa.
+       Si guarda a stile caricato: i segnaposto arrivano prima dello stile
+       (non ne hanno bisogno), e su una macchina lenta di GitHub la proiezione
+       non c'era ancora (getProjection() vuoto, la sezione si fermava). */
+    await aspetta(page, () => !!(vmMappa._g && vmMappa._g.pronta && vmMappa.getProjection()), null, 8000);
     const sfondo = await page.evaluate(() => {
       const a = document.querySelector('#vmMappa .g-diritti a[href*="openstreetmap.org/copyright"]');
       return { fonte: vmMappa._g.fonte, globo: vmMappa.getProjection().type, citazione: a ? a.closest('.g-diritti').textContent.trim() : '' };
