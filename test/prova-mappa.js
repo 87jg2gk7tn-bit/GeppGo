@@ -134,9 +134,21 @@ const pezziIn = m => m.voci.filter(v => /ibasemaps-api\.arcgis\.com\/.*\/tile\//
   await page.reload({ waitUntil: 'domcontentloaded' });
   await pronta();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 });
+  /* La memoria si svuota a mappa ferma: svuotata mentre arrivavano ancora
+     pezzi, quelli arrivati dopo ci finivano di nuovo, e alla riapertura la
+     service worker li dava da se' senza chiederli (da quando l'avvio non
+     aspetta piu' secondi l'inquadratura, succedeva sempre). */
+  await mappaPronta();
+  await page.waitForTimeout(1500);
   await page.evaluate(() => caches.delete('geppgo-mappe'));
 
   // ── 1. guardando la mappa, i pezzi si tengono da parte ───────────────
+  /* Anche la cache del browser si svuota: i pezzi della vista di Oggi sono
+     gia' arrivati nelle aperture qui sopra, e il browser li ridarebbe senza
+     chiederli a Esri. Prima la prova passava per caso, coi pezzi degli zoom
+     intermedi che l'inquadratura chiedeva spostando la mappa vera (adesso
+     prova su una copia della camera, e chiede solo quelli della vista). */
+  { const cdp = await page.context().newCDPSession(page); await cdp.send('Network.clearBrowserCache'); await cdp.detach(); }
   esri.pezzi = 0;
   await page.reload({ waitUntil: 'domcontentloaded' });
   await pronta();
