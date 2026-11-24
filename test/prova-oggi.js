@@ -420,13 +420,25 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     await p.evaluate(() => renderHomeHero());
     const ridisegno = await vive();
     ok('10. ridisegnando lo stesso giorno (una spunta, il cloud, il tema) schede e biglietto non rientrano', ridisegno.entrate.length === 0, ridisegno.entrate.join(', ') || 'nessuna');
+    /* 220 ms dopo ogni disegno homeCardsSync torna sul biglietto: con la
+       stessa tappa in mano il biglietto resta lui (rifatto, il cerchio
+       dell'ora ripartiva da zero, anche sotto un foglio). L'orologio finto si
+       fa avanzare, cosi' il controllo non dipende da quanto e' veloce la
+       macchina. */
+    await p.evaluate(() => { window.__bigl = document.getElementById('ogBiglietto'); window.__inMano = (document.querySelector('#ogBiglietto .b-nome') || {}).textContent; });
+    await p.clock.runFor(300);
+    const dopo = await p.evaluate(() => ({ stesso: !!window.__bigl && document.getElementById('ogBiglietto') === window.__bigl, prima: window.__inMano, ora: (document.querySelector('#ogBiglietto .b-nome') || {}).textContent }));
+    const dopoVive = await vive();
+    ok('10. e dopo la scheda in mano resta quella (la fila torna dov\'era), il biglietto non si rifà e il suo cerchio non riparte', dopo.stesso && dopo.prima === dopo.ora && dopoVive.entrate.length === 0, JSON.stringify(Object.assign(dopo, { entrate: dopoVive.entrate })));
     await p.evaluate(() => selHomeDay(1));
     const altro = await vive();
     ok('10. un altro giorno sì: le sue schede entrano in scena', altro.entrate.includes('st-arriva'), altro.entrate.join(', ') || 'nessuna');
     await p.evaluate(() => openSheet('mCode'));
+    await p.clock.runFor(300);
     const coperte = await vive();
     ok('10. un foglio che si apre sopra Oggi chiude subito le entrate di sotto', coperte.entrate.length === 0 && coperte.tenute.length === 0, JSON.stringify(coperte));
     await p.evaluate(() => selHomeDay(0));
+    await p.clock.runFor(300);
     const sotto = await vive();
     ok('10. sotto un foglio aperto il giorno cambia senza entrate (schede, segnaposto, percorso)', sotto.entrate.length === 0 && !sotto.apre, JSON.stringify(sotto));
     await p.evaluate(() => closeSheet('mCode'));

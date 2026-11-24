@@ -2786,6 +2786,8 @@ body.dark .og-tratto .oro{stroke:#F0BC45;filter:drop-shadow(0 0 5px rgba(240,188
 /* lo stesso giorno ridisegnato: schede e biglietto sono gia' al loro posto
    (vedi renderHomeHero, entra) */
 #plan .og-palco.gia-visto .stampa,#plan .og-palco.gia-visto .og-chiave,#plan .og-palco.gia-visto .og-biglietto,#plan .og-palco.gia-visto .biglietto .cerchio{animation:none}
+/* il biglietto cambiato per un'altra scheda in mano (homeSoonFill) */
+#plan .og-biglietto.cambiato .biglietto .cerchio{animation:none}
 /* i mezzi sui tratti: un cartellino, non un tasto */
 .og-mezzo{position:absolute;left:0;top:0;height:26px;min-width:52px;margin:-13px 0 0 -26px;padding:0 7px 0 6px;display:flex;align-items:center;gap:3px;
   border-radius:13px 13px 13px 4px;background:var(--bianco-foto);color:var(--oro-su);font-family:'Fraunces',serif;font-size:var(--fs-s);font-weight:600;line-height:1;white-space:nowrap;
@@ -17059,11 +17061,21 @@ function ogBigliettoDati(t,day,di,a){
   return {occ,base,loc:actLoc(t,a),ora:a.time||'',nome:String(a.name||''),tocco:`tapAct(${di},${a.id})`,
     etichetta:[occ,String(a.name||''),a.time?tv('alle {1}',a.time):'',tv('Apri la scheda')].filter(Boolean).join(', ')};
 }
+/* Cosa dice il biglietto: se non cambia, il biglietto non si rifa'. */
+function chiaveBiglietto(a,d){return [a.id,d.occ,d.ora,d.base,d.nome].join('\u0001');}
 function homeSoonFill(idx){
   const box=document.getElementById('ogBigliettoBox');if(!box||box.dataset.fermo)return;
   const a=homeSoonActs[idx],t=T();
   if(!a||!t)return;
   const d=ogBigliettoDati(t,homeSoonDay,homeSoonDi,a);
+  /* 220 ms dopo ogni disegno della Home (homeCardsSync) si arrivava qui con
+     la stessa tappa, e il biglietto rifatto faceva ripartire da zero il
+     cerchio dell'ora, anche sotto un foglio appena aperto. Lo stesso
+     biglietto resta com'e'; quando cambia davvero (un'altra scheda in mano)
+     e' un aggiornamento, non un'entrata: il cerchio e' gia' scritto. */
+  const k=chiaveBiglietto(a,d);
+  if(box.dataset.chi===k){updateSoonWalk();return;}
+  box.dataset.chi=k;box.classList.add('cambiato');
   box.innerHTML=biglietto({occhiello:d.occ,nome:d.nome,nota:d.base,ora:d.ora,vai:tv('la scheda'),tocco:d.tocco,etichetta:d.etichetta,id:'ogBiglietto'});
   const b=document.getElementById('ogBiglietto');
   if(b){b.dataset.base=d.base;if(d.loc){b.dataset.lat=d.loc.lat;b.dataset.lng=d.loc.lng;}}
@@ -18525,10 +18537,17 @@ function renderHomeHero(){
       ${actsBar}${valigia}${schedaTettoHtml(t)}
     </section>`);
   const b=document.getElementById('ogBiglietto');
-  if(b&&!finito&&acts.length){const d=ogBigliettoDati(t,day,i,nx?nx.a:acts[0]);b.dataset.base=d.base;if(d.loc){b.dataset.lat=d.loc.lat;b.dataset.lng=d.loc.lng;}updateSoonWalk();}
+  if(b&&!finito&&acts.length){
+    const a0=nx?nx.a:acts[0],d=ogBigliettoDati(t,day,i,a0),bx=document.getElementById('ogBigliettoBox');
+    b.dataset.base=d.base;if(d.loc){b.dataset.lat=d.loc.lat;b.dataset.lng=d.loc.lng;}
+    if(bx)bx.dataset.chi=chiaveBiglietto(a0,d);
+    updateSoonWalk();
+  }
   /* la fila torna dov'era se il giorno e' lo stesso */
   const fila=box.querySelector('.og-tappe');homeFilaTenuta=false;
-  if(fila&&stessoGiorno&&keepS){fila.scrollLeft=keepS;homeFilaTenuta=true;}
+  /* prima la coda (ogCoda): senza, la fila nuova si fermava prima e la
+     scheda in mano (e il biglietto) passavano a quella precedente */
+  if(fila&&stessoGiorno&&keepS){ogCoda(fila);fila.scrollLeft=keepS;homeFilaTenuta=true;}
   homeSoonActs=acts;homeSoonDay=day;homeSoonDi=i;
   assicuraCittaDelGiorno(t,day);
   backfillActPhotos(t);
@@ -34356,7 +34375,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-24 12:09';
+const VERSIONE_APP='2026-11-24 15:28';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

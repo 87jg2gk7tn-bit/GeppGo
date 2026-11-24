@@ -2112,6 +2112,19 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   ricade, prima si guarda se è la macchina (nessun «blocco» lungo, gli altri
   tempi bassi) o un lavoro nuovo, con la traccia (`browser.startTracing`) e
   il conto dei livelli (CDP `LayerTree`).
+- **Il biglietto che si rifaceva da solo** (24 novembre): 220 ms dopo ogni
+  disegno della Home `homeCardsSync` passava da `homeSoonFill`, che rifaceva
+  il biglietto anche con la stessa tappa: il cerchio dell'ora ripartiva da
+  zero, anche sotto un foglio appena aperto (su GitHub `prova-oggi` 10
+  cadeva quando la macchina era abbastanza lenta da farli incontrare). E
+  ridisegnando lo stesso giorno la fila, rimessa dov'era prima della coda
+  (`ogCoda`, lo spazio dopo l'ultima scheda), si fermava più indietro: la
+  scheda in mano e il biglietto passavano alla tappa prima. Adesso il
+  biglietto ha una chiave di quello che dice (`chiaveBiglietto`) e si rifà
+  solo se cambia, col cerchio già scritto (è un aggiornamento, non
+  un'entrata); la fila prende la coda prima di tornare dov'era. Le prove che
+  dipendono da un timer dell'app fanno avanzare l'orologio finto
+  (`page.clock.runFor`) invece di sperare che la macchina sia veloce.
 - **La riga dell'assistente già tenuta arrivava tardi** (24 novembre):
   riaperta l'app, la riga «Ti piacerà perché…» di un posto già guardato
   compariva dopo tre secondi, anche se stava nel viaggio. `psPerche` partiva
