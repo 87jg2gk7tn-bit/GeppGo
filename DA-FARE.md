@@ -1987,6 +1987,16 @@ componenti e quando usarli sono in CLAUDE.md, «Stile».
   che fanno, e dove due si sovrappongono il bianco si somma); dove né il
   nero né il bianco reggono (il meteo sopra una foto chiara) la scritta
   prende un fondo del colore del cielo, sfumato, come fa `tingiPagina`.
+- **Il cielo grigio** (la pioggia di giorno, tema chiaro, `og-grigio`): è
+  «scuro» per le scritte ma non abbastanza per il vetro trasparente
+  dell'anteprima, che lo schiariva fino a 4,2:1 col bianco sopra. Lì i tasti
+  sono quelli dei cieli chiari, vetro panna e inchiostro (11:1). Un vetro
+  scuro si leggeva, ma axe (che la mappa non la vede) a volte lo misurava
+  sul panna della pagina e lo bocciava. Di notte resta il vetro chiaro
+  dell'anteprima, sul blu della notte.
+- **L'adesivo del giorno** sta in riga con l'umore come nell'anteprima; se
+  tocca le scritte del meteo («sera tempestosa», o un'altra lingua) va a
+  capo (`ogAdesivoACapo`). Prima copriva «Meteo ›».
 - **Nomi di città con le code** (la y di Kyoto, la g di Parigi): l'interlinea
   stretta dell'anteprima (.86) le infila nella frase sotto; `conCoda` dà
   aria solo a quei nomi, così «Osaka» resta identica all'anteprima.
@@ -2045,6 +2055,23 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   (`setData`, otto disegni): `datiMappa` non rimanda gli stessi dati. (5)
   L'eco della prossima tappa non finiva mai: batte tre volte. Stesso giro
   di schermate, processore del browser: 48 s → 18,6 (`main` 17).
+  **Ma su GitHub non cambiava niente** (corse 499 e 501: ancora oltre i 120
+  minuti). Il peso vero era l'avvio: con l'orologio finto di Playwright
+  (`page.clock.install`, in ogni `apriPagina`) la schermata d'apertura
+  spariva dopo 4–6 secondi invece di 0,9. (6) `ogInquadra` cercava
+  l'inquadratura spostando la mappa vera fino a 384 volte, e ogni
+  spostamento risvegliava la mappa e ogni segnaposto: 2.500 richieste di
+  fotogramma. In un browser vero finiscono in un fotogramma solo; l'orologio
+  finto invece esegue i suoi timer uno alla volta, con un passaggio vero fra
+  l'uno e l'altro, e resta indietro di secondi (il timer da 380 ms che toglie
+  la schermata d'apertura scattava dopo 4 secondi, col processore fermo).
+  Adesso la ricerca si fa su una copia della camera (`m.transform.clone()`,
+  regolata come fa `jumpTo`) e la mappa si sposta una volta: stessa
+  inquadratura al decimo di millesimo, 35–60 ms invece di 320–380 anche sul
+  telefono. Aprire Oggi cinque volte: 44 s → 17 (`main` 14). Per trovarlo:
+  avvio misurato **con** l'orologio finto (senza, era veloce come `main`),
+  il profilo che mostrava il processore fermo per 5 secondi su 6, e le
+  richieste di fotogramma contate con la loro pila.
   Come si misura: i `/proc/<pid>/stat` dei processi di Chromium figli di
   node (il «gpu-process» è quello che disegna, qui con SwiftShader);
   `document.getAnimations()` per le animazioni che non finiscono; le

@@ -103,8 +103,12 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
         ok(`1. ${tema}: nello stesso ordine dall'alto (giorno, città, frase, riga sotto, schede, biglietto)`, crescente(ordine(app)) && crescente(ordine(ant)), ordine(app).map(Math.round).join(' < '));
         const scarti = ['occ', 'citta', 'umore', 'meta', 'scheda', 'biglietto'].map(k => [k, Math.round(app[k].y - ant[k].y)]);
         ok(`1. ${tema}: alla stessa altezza dell'anteprima (entro 24 px)`, scarti.every(([, d]) => Math.abs(d) <= 24), scarti.map(x => x.join(' ')).join(', '));
+        /* Il biglietto dell'app porta i dati veri, quello dell'anteprima i suoi:
+           l'altezza non e' mai la stessa al pixel. E l'anteprima cambia coi
+           caratteri della macchina: 112 px con quelli di Google, 121 senza qui,
+           127 su GitHub. Si guarda che sia della stessa famiglia (30 px). */
         ok(`1. ${tema}: con le stesse proporzioni (schede 126 px, biglietto alto come quello, «Tutto il viaggio» e meteo a destra)`,
-          Math.abs(app.scheda.w - ant.scheda.w) <= 14 && Math.abs(app.biglietto.h - ant.biglietto.h) <= 16 && app.tutto.r > 330 && app.gradi.r > 330 && Math.abs(app.chiave.w - ant.chiave.w) <= 14,
+          Math.abs(app.scheda.w - ant.scheda.w) <= 14 && Math.abs(app.biglietto.h - ant.biglietto.h) <= 30 && app.tutto.r > 330 && app.gradi.r > 330 && Math.abs(app.chiave.w - ant.chiave.w) <= 14,
           `scheda ${Math.round(app.scheda.w)}/${Math.round(ant.scheda.w)}, biglietto ${Math.round(app.biglietto.h)}/${Math.round(ant.biglietto.h)}`);
       }
       const mappa = await p.evaluate(() => ({ larga: document.getElementById('homeMap').getBoundingClientRect().width, cielo: !!document.querySelector('#homeMap .cm-cielo'), spille: document.querySelectorAll('#homeMap .og-spilla').length,

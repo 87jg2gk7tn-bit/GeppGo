@@ -157,7 +157,10 @@ quel file è la memoria.
   misura e dati sono quelli di prima, e sopra una mappa niente si muove per
   sempre (l'eco della prossima tappa batte tre volte): ogni fotogramma
   sopra WebGL è un disegno, e con la pagina ferma il telefono deve poter
-  dormire. La mappa di Oggi (novembre 2026) e'
+  dormire. Un conto che prova tante camere (l'inquadratura di Oggi) le prova
+  su una copia (`m.transform.clone()`), mai spostando la mappa vera in un
+  giro: ogni spostamento risveglia mappa e segnaposto, e con l'orologio
+  finto delle prove l'avvio durava secondi. La mappa di Oggi (novembre 2026) e'
   inclinata e a tutta larghezza, col cielo dentro (sopra la foto e sotto i
   segnaposto, `ogCieloNellaMappa`), e **si muove con due dita**
   (`cooperativeGestures`, opzione `dueDita` di `nuovaMappa`): con un dito si

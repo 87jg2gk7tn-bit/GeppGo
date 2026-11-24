@@ -2726,10 +2726,14 @@ body.su-oggi{background-image:var(--grana)}
 /* sul cielo scuro il vetro e' scuro e la scritta bianca (oggi-a e oggi-b) */
 .su-oggi.oggi-buio .topbar:not(.ferma) .menu-btn,.su-oggi.oggi-buio .topbar:not(.ferma) .gps-pill:not(.on),.su-oggi.oggi-buio .topbar:not(.ferma) .th-btn{
   border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff}
-/* sul cielo grigio (la pioggia di giorno, nel tema chiaro) il vetro chiaro
-   schiariva il fondo e il bianco si leggeva a 4,2:1: li' il vetro e' scuro.
-   Di notte resta quello dell'anteprima, chiaro sul blu della notte. */
-.su-oggi.oggi-grigio .topbar:not(.ferma) .menu-btn,.su-oggi.oggi-grigio .topbar:not(.ferma) .gps-pill:not(.on),.su-oggi.oggi-grigio .topbar:not(.ferma) .th-btn{background:rgba(10,18,34,.26)}
+/* Sul cielo grigio (la pioggia di giorno, nel tema chiaro) il vetro
+   trasparente lo schiariva, e il bianco sopra si leggeva a 4,2:1: li' i
+   tasti sono quelli dei cieli chiari, vetro panna e scritta d'inchiostro.
+   Un vetro scuro col bianco si leggeva, ma chi misura il contrasto senza
+   vedere la mappa (axe, i lettori) lo trovava a volte sul panna della
+   pagina, e lo bocciava. Di notte resta il vetro dell'anteprima. */
+.su-oggi.oggi-grigio .topbar:not(.ferma) .menu-btn,.su-oggi.oggi-grigio .topbar:not(.ferma) .gps-pill:not(.on),.su-oggi.oggi-grigio .topbar:not(.ferma) .th-btn{
+  border-color:rgba(255,255,255,.75);background:rgba(255,252,246,.74);color:var(--oro-su)}
 body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .menu-btn,body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .gps-pill:not(.on),body.dark.su-oggi.oggi-buio .topbar:not(.ferma) .th-btn{
   background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.2)}
 body.dark.su-oggi .topbar:not(.ferma) .tb-profilo{background:rgba(10,18,34,.4);color:var(--avorio);border:1px solid var(--nastro)}
@@ -2838,8 +2842,8 @@ body.dark .og-vetro{background:rgba(10,18,34,.4);border-color:rgba(255,255,255,.
 /* sul cielo chiaro di giorno il vetro e' chiaro e la scritta d'inchiostro
    (og-buio lo mette ogBuio, guardando il colore vero del cielo) */
 .og-palco:not(.og-buio) .og-vetro{border-color:rgba(255,255,255,.75);background:rgba(255,252,246,.74);color:var(--oro-su);box-shadow:0 6px 16px rgba(30,26,18,.2)}
-/* sul cielo grigio il vetro scuro, come i tasti della barra (vedi sopra) */
-.og-palco.og-grigio .og-vetro{background:rgba(10,18,34,.26)}
+/* sul cielo grigio il vetro dei cieli chiari, come i tasti della barra (vedi sopra) */
+.og-palco.og-grigio .og-vetro{border-color:rgba(255,255,255,.75);background:rgba(255,252,246,.74);color:var(--oro-su);box-shadow:0 6px 16px rgba(30,26,18,.2)}
 /* l'adesivo del giorno che toccherebbe il meteo va a capo (ogAdesivoACapo) */
 #plan .og-testa .hh-mood .adesivo.in-riga.a-capo{display:block;width:max-content;max-width:100%;margin-top:6px}
 #plan .og-gradi{position:absolute;right:var(--og-dx);top:calc(166px + env(safe-area-inset-top));z-index:3;min-width:64px;min-height:44px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;
@@ -17381,22 +17385,38 @@ function ogInquadra(m,punti){
   punti=(punti||[]).filter(p=>p&&isFinite(p[0])&&isFinite(p[1]));
   if(!punti.length)return fine({center:m.getCenter().toArray(),zoom:m.getZoom(),pitch,bearing:0,padding:pad});
   if(punti.length===1)return fine({center:punti[0],zoom:ZOOM_TAPPA,pitch,bearing:0,padding:pad});
+  /* Le prove si fanno su una copia della camera, non sulla mappa: spostarla
+     davvero a ogni prova (fino a 384 volte) la faceva ridisegnare e
+     risvegliava ogni segnaposto a ogni passo, migliaia di fotogrammi chiesti
+     per un'inquadratura (nelle prove, con l'orologio finto, l'avvio durava
+     secondi). La copia si regola come fa jumpTo: zoom e centro, poi
+     rotazione, inclinazione e margini. Alla fine la mappa si sposta una
+     volta sola. Senza copia (un MapLibre diverso) si fa come prima. */
+  let tr=null;try{tr=m.transform&&typeof m.transform.clone==='function'?m.transform.clone():null;}catch(e){tr=null;}
+  const LL=maplibregl.LngLat;
+  const metti=v=>{
+    if(!tr){m.jumpTo(v);return;}
+    if(tr.zoom!==v.zoom)tr.setZoom(v.zoom);
+    tr.setCenter(LL.convert(v.center));tr.setBearing(v.bearing);tr.setPitch(v.pitch);tr.setPadding(v.padding);
+  };
+  const proietta=p=>tr?tr.locationToScreenPoint(LL.convert(p)):m.project(p);
+  const torna=q=>(tr?tr.screenPointToLocation(new maplibregl.Point(q[0],q[1])):m.unproject(q)).toArray();
   const margine=34,larg=s.dx-s.sx-2*margine,alt=s.basso-s.alto-2*margine;
-  const misura=()=>{const pp=punti.map(p=>m.project(p));const xs=pp.map(p=>p.x),ys=pp.map(p=>p.y);return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)};};
+  const misura=()=>{const pp=punti.map(proietta);const xs=pp.map(p=>p.x),ys=pp.map(p=>p.y);return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)};};
   const sta=q=>q.x1-q.x0<=larg&&q.y1-q.y0<=alt;
   const centro0=[punti.reduce((a,p)=>a+p[0],0)/punti.length,punti.reduce((a,p)=>a+p[1],0)/punti.length];
   let top=null;
   for(let b=-180;b<180;b+=15){
     let lo=8,hi=ZOOM_TAPPA,c=centro0,z=lo;
-    for(let k=0;k<10;k++){const zz=(lo+hi)/2;m.jumpTo({center:c,zoom:zz,pitch,bearing:b,padding:pad});if(sta(misura()))lo=zz;else hi=zz;}
+    for(let k=0;k<10;k++){const zz=(lo+hi)/2;metti({center:c,zoom:zz,pitch,bearing:b,padding:pad});if(sta(misura()))lo=zz;else hi=zz;}
     z=lo;
     /* il centro dei punti al centro della striscia: due giri, e se dopo lo
        spostamento un punto esce di poco, un passo indietro */
     for(let giro=0;giro<3;giro++){
-      m.jumpTo({center:c,zoom:z,pitch,bearing:b,padding:pad});
-      const q=misura(),pc=m.project(c);
-      c=m.unproject([pc.x+(q.x0+q.x1)/2-(s.sx+s.dx)/2,pc.y+(q.y0+q.y1)/2-(s.alto+s.basso)/2]).toArray();
-      m.jumpTo({center:c,zoom:z,pitch,bearing:b,padding:pad});
+      metti({center:c,zoom:z,pitch,bearing:b,padding:pad});
+      const q=misura(),pc=proietta(c);
+      c=torna([pc.x+(q.x0+q.x1)/2-(s.sx+s.dx)/2,pc.y+(q.y0+q.y1)/2-(s.alto+s.basso)/2]);
+      metti({center:c,zoom:z,pitch,bearing:b,padding:pad});
       if(sta(misura()))break;
       z=Math.max(3,z-.15);
     }
@@ -17566,9 +17586,10 @@ function ogBuio(pal){
   if(pal){
     const cs=getComputedStyle(pal),c=coloreCss((cs.getPropertyValue('--cl-alto')||'').trim()||cs.getPropertyValue('--cielo-a').trim()),l=luceRel(c);
     buio=pal.classList.contains('notte')||l<.2;
-    /* scuro ma non abbastanza (la pioggia di giorno): il vetro chiaro dei
-       tasti lo schiariva troppo per il bianco, li' il vetro e' scuro */
-    grigio=buio&&l>.09;
+    /* scuro ma non abbastanza (la pioggia di giorno, nel tema chiaro): il
+       vetro trasparente lo schiariva troppo per il bianco, li' i tasti sono
+       quelli dei cieli chiari. Nel tema scuro il vetro e' gia' scuro. */
+    grigio=buio&&l>.09&&!document.body.classList.contains('dark');
     pal.classList.toggle('og-buio',buio);pal.classList.toggle('og-grigio',grigio);
   }
   document.body.classList.toggle('oggi-buio',buio);document.body.classList.toggle('oggi-grigio',grigio);
@@ -34293,7 +34314,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-23 22:53';
+const VERSIONE_APP='2026-11-24 09:52';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
