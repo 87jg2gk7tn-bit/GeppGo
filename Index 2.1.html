@@ -2534,6 +2534,15 @@ button.pri-badge::after{inset:-13px -2px}     /* 18 → 44 */
    le grandezze dei caratteri no (la scala delle stampe, in cima). Le
    inclinazioni stanno sotto i 4 gradi e i tocchi restano da 44: si leggono
    e si toccano come le cose dritte. Con «Riduci movimento» niente si muove.
+   Le entrate (le schede che arrivano, i segnaposto che spuntano, il
+   biglietto, il cerchio che si scrive) partono da «from» e finiscono sulla
+   posa di sempre, con animation-fill-mode backwards, mai both o forwards:
+   un'animazione che tiene la sua fine resta in vigore per sempre, e il
+   browser tiene un livello grafico a se' per ogni elemento che ce l'ha. Con
+   le schede e i segnaposto di Oggi erano un'ottantina di livelli in piu',
+   ricopiati a ogni fotogramma di qualunque mappa: la mappa del viaggio con
+   200 tappe, aperta sopra Oggi, zoomava un terzo piu' lenta. E la tenuta
+   fermava anche la transizione della scheda che si accende (scattava).
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── l'adesivo scritto a mano ─────────────────────────────────────── */
@@ -2587,8 +2596,8 @@ body.dark .foglietto .scotch{background:rgba(240,188,69,.55)}
 .biglietto .b-ora{position:relative;font-family:'Fraunces',serif;font-size:var(--fs-ora);font-weight:600;line-height:1;letter-spacing:-.02em;white-space:nowrap}
 .biglietto .b-ora.corta{font-size:var(--fs-xl)}
 .biglietto .cerchio{position:absolute;left:-17px;top:-9px;width:calc(100% + 34px);height:calc(100% + 19px);fill:none;stroke:var(--green);stroke-width:1.8;stroke-linecap:round;overflow:visible;
-  stroke-dasharray:330;stroke-dashoffset:330;animation:b-scrivi .9s var(--ease) 1.5s forwards}
-@keyframes b-scrivi{to{stroke-dashoffset:0}}
+  stroke-dasharray:330;animation:b-scrivi .9s var(--ease) 1.5s backwards}
+@keyframes b-scrivi{from{stroke-dashoffset:330}}
 .biglietto .b-vai{display:inline-flex;align-items:center;gap:1px;font-size:var(--fs-s);font-weight:700;line-height:1;color:var(--oro-testo);text-align:center}
 .biglietto .b-vai .ico{width:15px;height:15px}
 body.dark .biglietto-ombra{filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
@@ -2603,7 +2612,7 @@ body.dark .biglietto .cerchio{stroke:rgba(240,188,69,.75)}
 .fila-stampe{display:flex;align-items:flex-start;list-style:none;margin:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
 .fila-stampe::-webkit-scrollbar{display:none}
 .stampa{flex:none;width:126px;height:160px;margin-right:-12px;position:relative;scroll-snap-align:start;transform:rotate(var(--r,0deg));
-  transition:transform .35s var(--spring);animation:st-arriva .7s var(--spring) both;animation-delay:calc(var(--i,0) * 90ms + 250ms)}
+  transition:transform .35s var(--spring);animation:st-arriva .7s var(--spring) backwards;animation-delay:calc(var(--i,0) * 90ms + 250ms)}
 .stampa:nth-child(even){margin-top:12px}
 .stampa.su{transform:rotate(0deg) translateY(-8px) scale(1.04);z-index:9!important}
 .stampa .lastra{display:block;width:100%;height:100%;padding:0;border:3px solid var(--bianco-foto);border-radius:14px;overflow:hidden;position:relative;background:#CDB994;
@@ -2659,7 +2668,7 @@ body.dark .stampa.prima .s-n{background:var(--nastro);color:var(--oro-su);border
 .copertina .cp-credito{position:absolute;right:calc(7px + env(safe-area-inset-right));top:calc(70px + env(safe-area-inset-top));white-space:nowrap;transform-origin:100% 0;transform:rotate(-90deg) translateY(-100%);
   font-size:var(--fs-xs);font-weight:600;line-height:1.3;letter-spacing:.03em;color:#fff;background:rgba(20,17,11,.74);padding:2px 9px;border-radius:999px;max-width:360px;overflow:hidden;text-overflow:ellipsis}
 .copertina .cp-credito a{color:inherit;text-underline-offset:2px}
-.copertina .cp-titolo{position:absolute;left:calc(18px + env(safe-area-inset-left));right:calc(18px + env(safe-area-inset-right));bottom:40px;animation:cp-sale .8s var(--ease) .1s both}
+.copertina .cp-titolo{position:absolute;left:calc(18px + env(safe-area-inset-left));right:calc(18px + env(safe-area-inset-right));bottom:40px;animation:cp-sale .8s var(--ease) .1s backwards}
 .copertina .cp-occhiello{font-size:var(--fs-xs);font-weight:700;line-height:1.25;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.94);margin-bottom:6px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .copertina .cp-nome{font-family:'Fraunces',serif;font-weight:600;line-height:.84;letter-spacing:-.04em;color:#FFFCF3;text-shadow:0 2px 22px rgba(0,0,0,.45);overflow-wrap:anywhere}
 .copertina .cp-nome span{display:block;font-size:var(--fs-nome);padding-bottom:.08em}
@@ -2769,11 +2778,14 @@ body.dark .og-orlo{background:linear-gradient(180deg,transparent 44%,rgba(6,10,2
 .og-tratto .viaggio{stroke-width:3;stroke-dasharray:7 7}
 body.dark .og-tratto .ombra{stroke:rgba(0,0,0,.62)}
 body.dark .og-tratto .oro{stroke:#F0BC45;filter:drop-shadow(0 0 5px rgba(240,188,69,.8))}
-.og-palco.apre .og-tratto{animation:og-traccia 1.9s var(--ease) .35s both}
+.og-palco.apre .og-tratto{animation:og-traccia 1.9s var(--ease) .35s backwards}
 @keyframes og-traccia{from{clip-path:circle(0 at var(--gx,50%) var(--gy,50%))}to{clip-path:circle(150% at var(--gx,50%) var(--gy,50%))}}
-.og-palco.apre .og-spilla .sp-corpo,.og-palco.apre .og-casa i{animation:og-spunta .55s var(--spring) both;animation-delay:calc(var(--k,0) * 170ms + 450ms)}
-.og-palco.apre .og-mezzo{animation:og-spunta .4s var(--spring) 1.5s both}
+.og-palco.apre .og-spilla .sp-corpo,.og-palco.apre .og-casa i{animation:og-spunta .55s var(--spring) backwards;animation-delay:calc(var(--k,0) * 170ms + 450ms)}
+.og-palco.apre .og-mezzo{animation:og-spunta .4s var(--spring) 1.5s backwards}
 @keyframes og-spunta{from{scale:.2;opacity:0}}
+/* lo stesso giorno ridisegnato: schede e biglietto sono gia' al loro posto
+   (vedi renderHomeHero, entra) */
+#plan .og-palco.gia-visto .stampa,#plan .og-palco.gia-visto .og-chiave,#plan .og-palco.gia-visto .og-biglietto,#plan .og-palco.gia-visto .biglietto .cerchio{animation:none}
 /* i mezzi sui tratti: un cartellino, non un tasto */
 .og-mezzo{position:absolute;left:0;top:0;height:26px;min-width:52px;margin:-13px 0 0 -26px;padding:0 7px 0 6px;display:flex;align-items:center;gap:3px;
   border-radius:13px 13px 13px 4px;background:var(--bianco-foto);color:var(--oro-su);font-family:'Fraunces',serif;font-size:var(--fs-s);font-weight:600;line-height:1;white-space:nowrap;
@@ -2900,7 +2912,7 @@ body.dark #plan .og-palco .locate-fab:not(.on){background:rgba(10,18,34,.56);bor
 #plan .og-palco.senza-mappa .og-tappe{margin-top:calc(var(--sp-6) + 236px + env(safe-area-inset-top))}
 #plan .og-palco.senza-mappa .og-testa{position:absolute}
 /* il cartellino della chiave: l'albergo di stanotte */
-.og-chiave{flex:none;width:126px;margin:16px 0 0 26px;position:relative;scroll-snap-align:start;transform:rotate(3.5deg);filter:drop-shadow(0 12px 16px rgba(30,26,18,.3));animation:st-arriva .7s var(--spring) both;animation-delay:.7s;--r:3.5deg}
+.og-chiave{flex:none;width:126px;margin:16px 0 0 26px;position:relative;scroll-snap-align:start;transform:rotate(3.5deg);filter:drop-shadow(0 12px 16px rgba(30,26,18,.3));animation:st-arriva .7s var(--spring) backwards;animation-delay:.7s;--r:3.5deg}
 .og-chiave .cartellino{display:flex;flex-direction:column;gap:3px;width:100%;min-height:150px;padding:38px 12px 13px;border:0;background:var(--carta) var(--grana);color:var(--ink);text-align:left;font-family:inherit;cursor:pointer;
   clip-path:polygon(24% 0,76% 0,100% 15%,100% 100%,0 100%,0 15%)}
 .og-chiave .cartellino::before{content:'';position:absolute;left:50%;top:11px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:#5B4426;box-shadow:inset 0 2px 3px rgba(0,0,0,.5),0 0 0 2.5px #C9A45C}
@@ -2916,7 +2928,7 @@ body.dark .og-chiave .spago{stroke:#F0BC45}
 body.dark .og-chiave .c-nota{color:rgba(243,236,220,.76)}
 
 /* ── il biglietto della tappa in mano ── */
-#plan .og-biglietto{position:relative;z-index:5;margin:-24px var(--og-dx) 0 var(--og-sx);animation:st-arriva .7s var(--spring) .55s both}
+#plan .og-biglietto{position:relative;z-index:5;margin:-24px var(--og-dx) 0 var(--og-sx);animation:st-arriva .7s var(--spring) .55s backwards}
 #plan .og-biglietto .biglietto{--strappo:104px}
 
 /* ── sotto il biglietto: i giorni, la ricerca, le schede quando servono ── */
@@ -2998,7 +3010,7 @@ body.dark #plan .og-palco:not(.senza-mappa) .og-biglietto{margin-top:-34px;margi
 }
 @media (prefers-reduced-motion:reduce){
   .stampa,.og-chiave,#plan .og-biglietto,.og-spilla.prossima .sp-corpo::after,.og-palco.apre .og-tratto,.og-palco.apre .og-spilla .sp-corpo,.og-palco.apre .og-casa i,.og-palco.apre .og-mezzo,.copertina .cp-titolo{animation:none}
-  .biglietto .cerchio{animation:none;stroke-dashoffset:0}
+  .biglietto .cerchio{animation:none}
   .stampa,.og-spilla .sp-foto,.og-spilla b,#plan .og-palco .cm-mappa{transition:none}
 }
 
@@ -17427,9 +17439,10 @@ function ogInquadra(m,punti){
   return fine(top);
 }
 /* All'apertura il percorso si allarga dall'albergo, come tirato a penna, e i
-   segnaposto spuntano uno dopo l'altro. Con «Riduci movimento» no. */
+   segnaposto spuntano uno dopo l'altro. Con «Riduci movimento» no, e nemmeno
+   sotto un foglio aperto (vedi chiudiLeEntrate). */
 function ogApre(m,pal,da){
-  if(!pal||menoMovimento()||!m._g.og||!da)return;
+  if(!pal||menoMovimento()||!m._g.og||!da||foglioAperto())return;
   const q=m.project(da);
   m._g.og.svg.style.setProperty('--gx',Math.round(q.x)+'px');m._g.og.svg.style.setProperty('--gy',Math.round(q.y)+'px');
   pal.classList.add('apre');
@@ -18329,9 +18342,9 @@ function conCoda(s){return /[gjpqyçşţșțęąįųģķļņŗрудфцщβγζ
    cielo, la testata; poi, nel flusso, la fila delle schede e il biglietto, che
    sul telefono salgono sul fondo della mappa e sugli schermi larghi stanno
    nella colonna di sinistra, con la mappa a destra (vedi «Oggi larga»). */
-function ogPalco({classi='',velo='',occ='',occTocco='',occNo=false,citta='',cittaTocco='',cittaNo=true,umore='',adesivoGiorno='',meta='',gente='',gradi='',conMappa=true,schede='',biglietto='',fermo=false,tutto=false}={}){
+function ogPalco({classi='',velo='',occ='',occTocco='',occNo=false,citta='',cittaTocco='',cittaNo=true,umore='',adesivoGiorno='',meta='',gente='',gradi='',conMappa=true,schede='',biglietto='',fermo=false,tutto=false,entra=true}={}){
   const occEl=occ?(occTocco?`<button type="button" class="hh-eyebrow og-occhiello" onclick="${esc(occTocco)}"${occNo?' translate="no"':''}>${esc(occ)}</button>`:`<span class="hh-eyebrow og-occhiello"${occNo?' translate="no"':''}>${esc(occ)}</span>`):'<span></span>';
-  return `<section class="hh og-palco cielo-mappa${classi}${conMappa?'':' senza-mappa'}" aria-label="${esc(tv('La giornata sulla mappa'))}">`+
+  return `<section class="hh og-palco cielo-mappa${classi}${conMappa?'':' senza-mappa'}${entra?'':' gia-visto'}" aria-label="${esc(tv('La giornata sulla mappa'))}">`+
     (conMappa?`<div class="cm-mappa" id="homeMapWrap"><div id="homeMap"></div>`+
       `<button type="button" class="locate-fab" id="locateFabHome" onclick="locateFabHome()" title="${esc(tv('La mia posizione'))}" aria-label="${esc(tv('La mia posizione'))}">${ico('mirino')}</button><p id="homeMapNote" class="hh-map-note" hidden>${esc(tv('Questa tappa non ha una posizione — aprila e incolla l\'indirizzo'))}</p></div>`:'')+
     `<div class="cm-cielo" aria-hidden="true">${velo}</div>`+
@@ -18498,8 +18511,13 @@ function renderHomeHero(){
     const a0=nx?nx.a:acts[0],d=ogBigliettoDati(t,day,i,a0);
     bigl=biglietto({occhiello:d.occ,nome:d.nome,nota:d.base,ora:d.ora,vai:tv('la scheda'),tocco:d.tocco,etichetta:d.etichetta,id:'ogBiglietto'});
   }
+  /* Le schede e il biglietto entrano in scena quando il giorno compare
+     (l'apertura, un altro giorno), come la mappa (homeMappaRiempi): un
+     ridisegno dello stesso giorno (una spunta, il tema, il cloud che
+     arriva) li faceva rientrare tutti volando. Sotto un foglio, mai. */
   paint(ogPalco({classi:vestito.classi,velo:vestito.velo,occ:tv('GIORNO {1} DI {2}',i+1,t.days.length),occTocco:`openDay(${i})`,
-      citta:city,cittaTocco:`openDay(${i})`,umore:mood,adesivoGiorno:ad.giorno,meta:meta.testo,gente:meta.gente,gradi,conMappa,schede,biglietto:bigl,fermo:finito,tutto:conMappa})+
+      citta:city,cittaTocco:`openDay(${i})`,umore:mood,adesivoGiorno:ad.giorno,meta:meta.testo,gente:meta.gente,gradi,conMappa,schede,biglietto:bigl,fermo:finito,tutto:conMappa,
+      entra:!stessoGiorno&&!foglioAperto()})+
     `<section class="og-sotto">
       <div class="hh-sec"><div class="hh-sec-l"><h2 class="hh-sec-t">${esc(tv('La giornata'))}</h2><button class="chip hh-add" onclick="homeAdd()" aria-label="${esc(tv('Aggiungi tappa'))}">${ico('piu')}<span>${esc(tv('Aggiungi'))}</span></button></div>
       <div class="hh-sec-c">${esc(tp(acts.length,'{1} TAPPA','{1} TAPPE'))}</div></div>
@@ -26687,7 +26705,27 @@ function openSheet(id,daDove){
   m.classList.add('in-scena');
   void m.offsetHeight;
   m.classList.add('active');
-  if(!eraAperto)fuocoNelFoglio(m,daDove);
+  if(!eraAperto){chiudiLeEntrate(m);fuocoNelFoglio(m,daDove);}
+}
+/* Un foglio aperto copre la pagina: quello che li' sotto entra in scena (le
+   schede che arrivano, i segnaposto che spuntano, il percorso che si
+   traccia) non lo vede nessuno, e mentre corre ogni pezzo in arrivo e' un
+   livello grafico a se' e il percorso si ridisegna a ogni fotogramma. Con la
+   mappa del viaggio aperta sopra Oggi appena partita, ogni zoom costava un
+   terzo di piu'. Le entrate si chiudono subito sulla posa di sempre; quelle
+   che non finiscono mai (le nuvole, la pioggia) restano. */
+function foglioAperto(){return !!document.querySelector('.modal.active');}
+function chiudiLeEntrate(foglio){
+  const pg=document.querySelector('.page.active');
+  if(!pg||!document.getAnimations||typeof CSSAnimation==='undefined')return;
+  document.getAnimations().forEach(a=>{
+    try{
+      const el=a.effect&&a.effect.target;
+      if(!(a instanceof CSSAnimation)||!el||!pg.contains(el)||(foglio&&foglio.contains(el)))return;
+      if(!isFinite(a.effect.getComputedTiming().endTime))return;
+      a.finish();
+    }catch(e){}
+  });
 }
 function closeSheet(id){
   const m=(typeof id==='string')?document.getElementById(id):id;
@@ -34314,7 +34352,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-24 09:52';
+const VERSIONE_APP='2026-11-24 10:35';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);

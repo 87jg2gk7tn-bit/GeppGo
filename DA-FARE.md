@@ -2079,6 +2079,29 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   chiamate a `requestAnimationFrame` contate con la loro pila per i giri a
   vuoto; gli eventi `render` e `sourcedata` della mappa per chi la fa
   ridisegnare.
+- **Le entrate che non finivano** (24 novembre): con la mappa del viaggio di
+  200 tappe aperta sopra Oggi, lo zoom era un terzo più lento che su `main`
+  (300–520 ms contro 90–460; `prova-budget-mappa` 8 sforava il mezzo secondo
+  due volte su quattro, anche a macchina scarica). La traccia del browser
+  (`browser.startTracing`) diceva dove: «Commit» (la pagina passata al
+  compositore) 457 ms contro 271, e disegno e livelli 139 contro 37. I livelli
+  del compositore (CDP `LayerTree`, coi motivi): 181 contro 92. Tre cause:
+  (1) le entrate di schede, segnaposto, cartellini, chiave e biglietto
+  avevano `animation-fill-mode: both`, e un'animazione che tiene la sua fine
+  resta in vigore per sempre: ogni elemento teneva il suo livello (e la
+  scheda che si accende scattava invece di salire con la sua transizione,
+  anche nell'anteprima); (2) a ogni ridisegno dello stesso giorno (una
+  spunta, il tema, il cloud) le schede e il biglietto rientravano volando;
+  (3) le entrate correvano anche sotto un foglio aperto, dove nessuno le
+  vede, col percorso che si ridisegna a ogni fotogramma. Adesso: `backwards`
+  (la posa d'attesa è la stessa, finita l'animazione resta lo stile di
+  sempre), le entrate solo quando il giorno compare (`entra`, come già la
+  mappa), e `openSheet` le chiude sulla posa finale (`chiudiLeEntrate`).
+  Tempi tornati quelli di `main`, quattro corse su quattro. A riposo Oggi è
+  uguale pixel per pixel, salvo il bordo della scheda storta in mano (prima
+  la sfumava il compositore, ora la disegna la pagina). Restano in più i
+  cartellini dei mezzi (`will-change`, per non ridisegnarli a ogni
+  movimento della mappa) e il vetro dei tasti sul cielo: voluti.
 
 **Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
 il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,

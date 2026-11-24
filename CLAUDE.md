@@ -403,7 +403,14 @@ inchiostro, ammassato e di un colore solo.
   Inclinazioni sotto i 4 gradi e tasti da 44: si leggono e si toccano come
   le cose dritte; scotch, strappi e cerchi sono nascosti a VoiceOver, che
   legge il testo dei foglietti come testo normale; con «Riduci movimento»
-  niente si muove. Le foto grandi (copertina, schede-foto, altre foto) si
+  niente si muove. Le entrate (le schede che arrivano, i segnaposto che
+  spuntano, il cerchio che si scrive) partono da «from» con
+  `animation-fill-mode: backwards`, mai `both` o `forwards`: un'animazione
+  che tiene la sua fine resta in vigore per sempre, e il browser tiene un
+  livello grafico per ogni elemento che ce l'ha (con 20 tappe un'ottantina,
+  ricopiati a ogni fotogramma di qualunque mappa). Si vedono quando la
+  schermata o il giorno compaiono, non a ogni ridisegno, e un foglio che si
+  apre chiude quelle della pagina sotto (`chiudiLeEntrate`). Le foto grandi (copertina, schede-foto, altre foto) si
   scaricano alla misura dello schermo e solo quando servono (`fotoAttr`:
   le misure fisse di Wikimedia in `srcset`, `sizes`, `loading="lazy"`).
   Colori, spazi, raggi e ombre delle stampe (e del vetro sul cielo di Oggi)

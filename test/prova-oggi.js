@@ -20,7 +20,10 @@
    7. nessuna violazione grave di axe, nei due temi;
    8. la mappa non rinasce ridisegnando la Home;
    9. MapLibre e i caratteri a mano arrivano solo a schermata d'apertura
-      sparita (la prima schermata non aspetta niente di nuovo).
+      sparita (la prima schermata non aspetta niente di nuovo);
+   10. le entrate (schede, biglietto, segnaposto, percorso) una volta sola,
+       quando il giorno compare, mai sotto un foglio, e finite non restano
+       in vigore.
 
    Sul codice di prima non parte: .og-palco non esiste. */
 const fs = require('fs');
@@ -35,7 +38,12 @@ const pausa = ms => new Promise(x => setTimeout(x, ms));
 /* Una sezione che si ferma si dice, e le altre vanno avanti: sul codice di
    prima (la controprova) la prova deve bocciare sezione per sezione, non
    cadere alla prima schermata che manca. */
-const sezione = async (n, f) => { try { await f(); } catch (e) { ok(`${n}. si è fermata`, false, String((e && e.message) || e).split('\n')[0].slice(0, 200)); } };
+/* `node test/prova-oggi.js 2 10` fa solo le sezioni 2 e 10. */
+const SCELTE = process.argv.slice(2).filter(a => /^\d+$/.test(a));
+const sezione = async (n, f) => {
+  if (SCELTE.length && !SCELTE.includes(String(n))) return;
+  try { await f(); } catch (e) { ok(`${n}. si è fermata`, false, String((e && e.message) || e).split('\n')[0].slice(0, 200)); }
+};
 
 /* Un viaggio spostato di g giorni: tutte le date, il meteo e gli alberghi. */
 function sposta(v, g) {
@@ -377,6 +385,52 @@ const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); i
     const html = fs.readFileSync(path.join(RADICE, 'Index 2.1.html'), 'utf8');
     const testa = html.slice(0, html.indexOf('</head>')).replace(/<!--[\s\S]*?-->/g, '');
     ok('9. in testa all\'HTML nessun carattere nuovo che fermi la pagina: un <link> solo, che non blocca, e Caveat Brush non c\'è', (testa.match(/fonts\.googleapis\.com\/css2/g) || []).length === 1 && !/Caveat/.test(testa) && /media="print" onload=/.test(testa));
+    await p.close();
+  });
+
+  // ── 10. le entrate: una volta sola, mai sotto un foglio ──────────────
+  /* Un'animazione che tiene la sua fine (fill both o forwards) resta in
+     vigore per sempre, e il browser tiene un livello grafico per ogni
+     elemento che ce l'ha: con 20 tappe un'ottantina, ricopiati a ogni
+     fotogramma di qualunque mappa. La mappa del viaggio con 200 tappe aperta
+     sopra Oggi zoomava un terzo più lenta (prova-budget-mappa 8). */
+  await sezione('10', async () => {
+    const p = await oggi(browser, {});
+    const vive = () => p.evaluate(() => {
+      const pg = document.getElementById('plan');
+      const dentro = a => { const t = a.effect && a.effect.target; return !!t && pg.contains(t); };
+      const css = document.getAnimations().filter(a => typeof CSSAnimation !== 'undefined' && a instanceof CSSAnimation && dentro(a));
+      return {
+        tenute: css.filter(a => a.playState === 'finished').map(a => a.animationName),
+        entrate: css.filter(a => a.playState === 'running' && /^(st-arriva|b-scrivi|og-spunta|og-traccia)$/.test(a.animationName)).map(a => a.animationName),
+        apre: !!document.querySelector('#plan .og-palco.apre')
+      };
+    });
+    const riposo = await vive();
+    ok('10. finite le entrate, nessuna animazione resta in vigore sotto Oggi (ognuna teneva un livello grafico a sé)', riposo.tenute.length === 0, riposo.tenute.join(', ') || 'nessuna');
+    const su = await p.evaluate(() => {
+      const c = document.querySelectorAll('#plan .og-tappe .stampa')[1];
+      const prima = getComputedStyle(c).transform;
+      c.classList.add('su');
+      const subito = getComputedStyle(c).transform;
+      c.classList.remove('su');
+      return { prima, subito };
+    });
+    ok('10. la scheda che si accende sale con la sua transizione (la tenuta dell\'entrata la faceva scattare)', su.subito === su.prima, JSON.stringify(su));
+    await p.evaluate(() => renderHomeHero());
+    const ridisegno = await vive();
+    ok('10. ridisegnando lo stesso giorno (una spunta, il cloud, il tema) schede e biglietto non rientrano', ridisegno.entrate.length === 0, ridisegno.entrate.join(', ') || 'nessuna');
+    await p.evaluate(() => selHomeDay(1));
+    const altro = await vive();
+    ok('10. un altro giorno sì: le sue schede entrano in scena', altro.entrate.includes('st-arriva'), altro.entrate.join(', ') || 'nessuna');
+    await p.evaluate(() => openSheet('mCode'));
+    const coperte = await vive();
+    ok('10. un foglio che si apre sopra Oggi chiude subito le entrate di sotto', coperte.entrate.length === 0 && coperte.tenute.length === 0, JSON.stringify(coperte));
+    await p.evaluate(() => selHomeDay(0));
+    const sotto = await vive();
+    ok('10. sotto un foglio aperto il giorno cambia senza entrate (schede, segnaposto, percorso)', sotto.entrate.length === 0 && !sotto.apre, JSON.stringify(sotto));
+    await p.evaluate(() => closeSheet('mCode'));
+    err.push(...p.__errori);
     await p.close();
   });
 
