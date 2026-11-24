@@ -2067,8 +2067,9 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   la schermata d'apertura scattava dopo 4 secondi, col processore fermo).
   Adesso la ricerca si fa su una copia della camera (`m.transform.clone()`,
   regolata come fa `jumpTo`) e la mappa si sposta una volta: stessa
-  inquadratura al decimo di millesimo, 35–60 ms invece di 320–380 anche sul
-  telefono. Aprire Oggi cinque volte: 44 s → 17 (`main` 14). Per trovarlo:
+  inquadratura al decimo di millesimo, 35–60 ms invece di 320–380 nel
+  browser delle prove (sul telefono non è stato misurato, ma il lavoro tolto
+  è lo stesso). Aprire Oggi cinque volte: 44 s → 17 (`main` 14). Per trovarlo:
   avvio misurato **con** l'orologio finto (senza, era veloce come `main`),
   il profilo che mostrava il processore fermo per 5 secondi su 6, e le
   richieste di fotogramma contate con la loro pila.
