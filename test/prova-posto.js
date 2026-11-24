@@ -241,9 +241,14 @@ const scheda = p => p.evaluate(() => {
     await p.waitForFunction(() => typeof window.renderAll === 'function' && !document.getElementById('bootSplash'), null, { timeout: 30000 });
     p.__ai.perche = 0;
     await p.evaluate(k => { go('discover'); openPlaceInfo(k); }, KINKAKU);
-    await pausa(1500);
+    /* subito: la riga tenuta sta nel disegno della scheda, non aspetta
+       OpenStreetMap e Wikipedia (che dopo la riapertura stanno in coda dietro
+       le foto delle tappe di Oggi: la riga arrivava dopo tre secondi) */
+    await pausa(150);
     a = await p.evaluate(() => ({ riga: (document.getElementById('psPerche') || {}).textContent || '', visibile: !document.getElementById('psPerche').hidden }));
-    ok('3. riaperta l\'app la riga c\'è ancora, senza chiederla di nuovo', a.visibile && /padiglione/.test(a.riga) && p.__ai.perche === 0, `${p.__ai.perche} richieste`);
+    ok('3. riaperta l\'app la riga c\'è subito, insieme alla scheda: è tenuta nel viaggio e non aspetta la rete', a.visibile && /padiglione/.test(a.riga), a.riga.slice(0, 60) || 'nessuna riga');
+    await pausa(1500);
+    ok('3. e non si chiede di nuovo all\'assistente', p.__ai.perche === 0, `${p.__ai.perche} richieste`);
     /* l'assistente non risponde: niente riga, niente messaggi */
     p.__ai.giu = true;
     await p.evaluate(() => { closeSheet('mPosto'); openPlaceInfo({ name: 'Ryoan-ji', lat: 35.0345, lng: 135.7182, type: 'attraction' }); });

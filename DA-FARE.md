@@ -2102,6 +2102,15 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   la sfumava il compositore, ora la disegna la pagina). Restano in più i
   cartellini dei mezzi (`will-change`, per non ridisegnarli a ogni
   movimento della mappa) e il vetro dei tasti sul cielo: voluti.
+- **La riga dell'assistente già tenuta arrivava tardi** (24 novembre):
+  riaperta l'app, la riga «Ti piacerà perché…» di un posto già guardato
+  compariva dopo tre secondi, anche se stava nel viaggio. `psPerche` partiva
+  in fondo a `psArricchisci`, dopo OpenStreetMap e Wikipedia, e quelle
+  richieste, dopo una riapertura, stanno in coda dietro le foto delle tappe
+  che Oggi cerca per conto suo. Adesso la riga tenuta sta nel disegno della
+  scheda (`psDisegna`): si vede subito, e la scheda non si sposta più sotto
+  il dito quando arriva. La frase a mano dell'assistente (quando Wikipedia
+  non ne ha una) aspetta ancora la rete, perché solo lei dice se serve.
 
 **Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
 il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,

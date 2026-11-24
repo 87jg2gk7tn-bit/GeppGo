@@ -19436,12 +19436,18 @@ function psDataDi(P){
 function psDisegna(){
   const P=psDati(),box=document.getElementById('psCorpo');
   if(!P||!box)return false;
-  const ex=psExtraMemo.get(psChiave(P))||{};
+  const k=psChiave(P),ex=psExtraMemo.get(k)||{};
+  /* La riga dell'assistente gia' tenuta nel viaggio sta nel disegno: non
+     aspetta la rete. Arrivava in fondo a psArricchisci, dopo OpenStreetMap e
+     Wikipedia, che riaperta l'app stanno in coda dietro le foto delle tappe
+     di Oggi: tre secondi dopo, con la scheda che si spostava sotto il dito. */
+  const t=T(),tenuta=t&&t.perche&&(t.perche[k]||{})[linguaScelta()];
+  const perche=tenuta&&tenuta.perche?psPercheHtml(tenuta):'';
   box.innerHTML=psCopertinaHtml(P,ex)+`<section class="ps-corpo">`+
     `<p class="ps-frase" id="psFrase" hidden></p>`+
     psQuandoHtml(P)+psAzioneHtml(P)+psBigliettiHtml(P)+
     `<div class="ps-foglietti" id="psFoglietti">${psFogliettiHtml(P,ex)}</div>`+
-    `<p class="ps-assistente" id="psPerche" hidden></p>`+
+    `<p class="ps-assistente" id="psPerche"${perche?'':' hidden'}>${perche}</p>`+
     `<section class="ps-storia" id="psStoria" hidden></section>`+
     `<div class="ps-collage" id="psCollage" hidden></div>`+
     (P.lat!=null?`<section class="ps-dove" aria-label="${esc(tv('Dove si trova'))}"><div class="cartina"><i class="scotch" aria-hidden="true"></i><div class="ps-mappa" id="psMappa"></div></div><div id="psDistanza"></div></section>`:'')+
@@ -19706,12 +19712,10 @@ async function psPerche(P,ex,giro){
   save();
   if(giro===psGiro&&postoAperto())psMostraPerche(voce,P,ex);
 }
+function psPercheHtml(voce){return `${ico('scintille')}<span>${esc(voce.perche)}</span><small>${esc(tv('l\'assistente di GeppGo'))}</small>`;}
 function psMostraPerche(voce,P,ex){
   const el=document.getElementById('psPerche');
-  if(el&&voce&&voce.perche){
-    el.innerHTML=`${ico('scintille')}<span>${esc(voce.perche)}</span><small>${esc(tv('l\'assistente di GeppGo'))}</small>`;
-    el.hidden=false;
-  }
+  if(el&&voce&&voce.perche){el.innerHTML=psPercheHtml(voce);el.hidden=false;}
   if(voce&&voce.frase&&!(ex&&ex.frase))psFrase(P,ex||{},voce.frase);
 }
 
@@ -34352,7 +34356,7 @@ function mappeMostraStato(){
    escono piu' d'una, e con la sola data due pubblicazioni dello stesso
    giorno si leggono uguali - cioe' la riga smette di rispondere alla
    domanda per cui esiste. */
-const VERSIONE_APP='2026-11-24 10:35';
+const VERSIONE_APP='2026-11-24 12:09';
 function versioneMostra(){
   const el=document.getElementById('verRiga');if(!el)return;
   const m=/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?$/.exec(VERSIONE_APP);
