@@ -2111,7 +2111,28 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   processore occupato da altro: ramo 2 cadute su 3, `main` 1 su 3). Se
   ricade, prima si guarda se è la macchina (nessun «blocco» lungo, gli altri
   tempi bassi) o un lavoro nuovo, con la traccia (`browser.startTracing`) e
-  il conto dei livelli (CDP `LayerTree`).
+  il conto dei livelli (CDP `LayerTree`). Dopo l'unione su `main` è ricaduto
+  in 3 lavori su 13 (392/523/549, 251/550/164, 387/518/534 ms), sempre senza
+  blocchi lunghi e con uno o due zoom appena sopra il mezzo secondo: era la
+  causa più frequente del rosso su `main`, più della citazione. Dove va il
+  tempo (misurato la sera stessa): Oggi sotto il foglio non c'entra
+  (nasconderla, togliere la sfocatura del velo del foglio, i livelli dei
+  segnaposto o gli altri vetri non cambia niente, e il `main` di prima del
+  ridisegno fa gli stessi tempi). Va nel disegno WebGL della mappa del
+  viaggio, che sulle macchine delle prove fa il processore: «Commit» circa
+  70 ms a zoom, e la prima volta che lo zoom arriva dove compaiono strade e
+  nomi MapLibre ne compila gli shader (`getShaderParameter` 81 ms) e carica
+  i pezzi nuovi della foto. Il codice dell'app (raggruppare, creare e
+  togliere segnaposto) pesa pochi millisecondi: allo zoom più vicino ne
+  nascono 17 e se ne tolgono 145, in 5–8 ms. E la prova aspettava la fine
+  dello zoom con un `setTimeout(0)`, che con l'orologio finto di Playwright
+  aspetta da solo fino a 80 ms (un `MessageChannel` passa in 0), e dopo uno
+  zoom anche il fotogramma WebGL. Cronometrato fino a pagina libera, con un
+  messaggio vero, uno zoom costa 10–50 ms invece di 300–550; nelle corse
+  rosse di GitHub non c'era nessun compito sopra i 50 ms. La prova adesso
+  misura così, sempre sotto il mezzo secondo, e i fotogrammi restano nei
+  blocchi lunghi (deciso con Giacomo). Rifare la serie due volte non bastava:
+  a caldo lo zoom più vicino era ancora 559 ms una volta su tre.
 - **Il biglietto che si rifaceva da solo** (24 novembre): 220 ms dopo ogni
   disegno della Home `homeCardsSync` passava da `homeSoonFill`, che rifaceva
   il biglietto anche con la stessa tappa: il cerchio dell'ora ripartiva da
@@ -2134,6 +2155,31 @@ loro) guardano adesso il biglietto, la scheda del posto e la fila.
   scheda (`psDisegna`): si vede subito, e la scheda non si sposta più sotto
   il dito quando arriva. La frase a mano dell'assistente (quando Wikipedia
   non ne ha una) aspetta ancora la rete, perché solo lei dice se serve.
+- **La citazione che toccava il tasto** (24 novembre, dopo l'unione su
+  `main`): `prova-mappe` 3 ha detto due volte, nel lavoro «prove», che la
+  citazione in piedi di Oggi (tema chiaro) tocca «La mia posizione». Su
+  tredici lavori della batteria con lo stesso codice è caduta in due, sempre
+  alla prima misura della sezione, mai nel tema scuro; da sola mai: su GitHub
+  0 misure su 24, più otto `prova-mappe` intere e sei subito dopo una
+  batteria; qui 0 su una quarantina. La disposizione regge: la citazione è
+  due colonne da 38,4 px (16,2 di riga per colonna più l'imbottitura) e il
+  tasto ha 8,6 px di margine; le colonne avanzano 40–100 px in ogni lingua,
+  anche col carattere di ripiego di GitHub (DejaVu Sans: lì `fc-match
+  sans-serif` dà quello, qui Inter). Su GitHub le lettere vengono un filo più
+  strette (la prima colonna è «Powered by Esri · © OpenStreetMap», 217,9 px
+  su 218, mentre qui «OpenStreetMap» va nella seconda), ma le colonne restano
+  due. Escluso anche: il processore rallentato 4 e 8 volte (CDP
+  `Emulation.setCPUThrottlingRate`), lo scorrimento del riquadro della mappa
+  (con un segnaposto fuori dal bordo è scorribile, ma `scrollIntoView` non lo
+  scorre), `cambio` e `apre` (scalano mappa e tasto insieme, o non li
+  toccano). Uno spostamento vero della disposizione si vedrebbe anche nel
+  tema scuro: provato spostando il tasto a mano. Quindi è un momento
+  dell'apertura che non si è lasciato fotografare. La prova ora, se tocca,
+  riguarda dopo un secondo e boccia solo se tocca ancora; il messaggio ha i
+  rettangoli di citazione e tasto, e anche alla seconda misura (prima diceva
+  solo il nome del tasto); se toccava solo alla prima lo dice nella riga OK,
+  che si legge lanciandola a mano. Sul codice di prima, un tocco di mezzo
+  secondo bocciava; adesso passa, e un tocco fisso boccia come prima.
 
 **Da guardare sul telefono**: lo scorrimento con un dito sopra la mappa e
 il messaggio «due dita»; la fila delle schede (inclinazione, sovrapposizione,

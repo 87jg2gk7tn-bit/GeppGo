@@ -610,9 +610,19 @@ const SPIA_AVVISI = permesso => {
     ok('8. con 200 tappe la mappa si apre (meno di 3 secondi, attesa del foglio compresa)', nata && apertura < 3000, apertura + ' ms');
     ok('8. le 200 tappe ci sono tutte, e i segnaposto vicini si raccolgono (meno segni che tappe)', conto.tappe === 200 && conto.segni < 200, JSON.stringify(conto));
     // muoverla: zoom avanti e indietro, e spostarla
+    /* Ogni zoom si cronometra fino a pagina libera, con un messaggio vero
+       (MessageChannel) e non con setTimeout. Con l'orologio finto delle prove
+       un setTimeout(0) aspetta da solo fino a 80 ms, e dopo lo zoom aspettava
+       anche il fotogramma WebGL, che sulle macchine delle prove disegna il
+       processore (SwiftShader): la prova misurava 300-550 ms quasi tutti
+       d'attesa, e sforava il mezzo secondo in 3 lavori su 13 senza nessun
+       blocco lungo. Il lavoro vero di uno zoom con 200 tappe e' 10-50 ms
+       (DA-FARE, «Le entrate che non finivano»). I fotogrammi restano nei
+       blocchi lunghi, contati dall'apertura della mappa alla fine. */
     const tempi = await page.evaluate(async () => {
-      const misura = async f => { const t = performance.now(); await f(); return Math.round(performance.now() - t); };
-      const zoom = z => new Promise(ok2 => { vmMappa.once('zoomend', () => setTimeout(ok2, 0)); vmMappa.setZoom(z, { animate: false }); });
+      const libera = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+      const misura = async f => { const t = performance.now(); await f(); await libera(); return Math.round(performance.now() - t); };
+      const zoom = z => new Promise(ok2 => { vmMappa.once('zoomend', ok2); vmMappa.setZoom(z, { animate: false }); });
       const fuori = [];
       const z = vmMappa.getZoom();
       fuori.push(await misura(() => zoom(z + 2)));

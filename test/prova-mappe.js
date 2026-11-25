@@ -205,7 +205,7 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
 
   /* ── 3. citazione, comandi da 44 px, axe ────────────────────────────── */
   if (fai(3)) await prova('3', async () => {
-    const guai = [], viol = [];
+    const guai = [], viol = [], passeggeri = [];
     for (const tema of ['chiaro', 'scuro']) {
       const page = await apriPagina(browser, { errori, tema, chiave: 'mappe-3-' + Math.random() });
       await page.addScriptTag({ path: AXE });
@@ -217,20 +217,35 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
         await page.waitForTimeout(400);
         await pronta(page, obj);
         await page.waitForTimeout(400);
-        const m = await page.evaluate(s => {
+        const misura = () => page.evaluate(s => {
           const c = document.querySelector(s), d = c && c.querySelector('.g-diritti');
           if (!d) return { manca: true };
           d.scrollIntoView({ block: 'center' });
           const q = d.getBoundingClientRect();
+          /* i rettangoli vanno nel messaggio: da un guasto sul server delle
+             prove il nome del tasto da solo non diceva dove stavano i due */
+          const dove = e => { const k = e.getBoundingClientRect(); return '[' + [k.left, k.top, k.width, k.height].map(v => Math.round(v)).join(',') + ']'; };
           const tasti = [...c.parentElement.querySelectorAll('button,a[href]')].filter(b => !d.contains(b) && !b.closest('.maplibregl-marker,.maplibregl-popup') && b.getClientRects().length);
-          const sopra = tasti.filter(b => { const k = b.getBoundingClientRect(), cx = k.left + k.width / 2, cy = k.top + k.height / 2; return !(cx + 22 <= q.left || cx - 22 >= q.right || cy + 22 <= q.top || cy - 22 >= q.bottom); }).map(b => b.getAttribute('aria-label') || b.textContent.trim());
+          const sopra = tasti.filter(b => { const k = b.getBoundingClientRect(), cx = k.left + k.width / 2, cy = k.top + k.height / 2; return !(cx + 22 <= q.left || cx - 22 >= q.right || cy + 22 <= q.top || cy - 22 >= q.bottom); }).map(b => (b.getAttribute('aria-label') || b.textContent.trim()) + ' ' + dove(b));
           const zoom = [...c.querySelectorAll('.maplibregl-ctrl-group button')].map(b => { const k = b.getBoundingClientRect(); return Math.round(k.width) + 'x' + Math.round(k.height) + ' ' + b.getAttribute('aria-label'); });
           const t = d.textContent.replace(/\s+/g, ' ');
-          return { esri: /Powered by Esri/.test(t), osm: /© OpenStreetMap/.test(t), fonti: !!d.querySelector('.g-fonti'), sopra, zoom };
+          return { esri: /Powered by Esri/.test(t), osm: /© OpenStreetMap/.test(t), fonti: !!d.querySelector('.g-fonti'), sopra, zoom, cit: dove(d) };
         }, sel);
+        const m = await misura();
         if (m.manca) { guai.push(`${tema} ${nome}: nessuna citazione`); continue; }
         if (!m.esri || !m.osm || !m.fonti) guai.push(`${tema} ${nome}: citazione incompleta`);
-        if (m.sopra.length) guai.push(`${tema} ${nome}: la citazione tocca ${m.sopra.join(', ')}`);
+        /* Se tocca, si riguarda dopo un secondo. Su GitHub, dentro la batteria,
+           la prima misura di Oggi nel tema chiaro ha toccato «La mia posizione»
+           in due lavori su tredici, e mai da sola (0 misure su 24 lì, 0 su una
+           quarantina qui): un momento dell'apertura, non la disposizione, che
+           sposterebbe anche il tema scuro (DA-FARE, «La citazione che toccava
+           il tasto»). Boccia se tocca ancora, con tutte e due le misure. */
+        if (m.sopra.length) {
+          await page.waitForTimeout(1000);
+          const poi = await misura();
+          if (poi.manca || poi.sopra.length) guai.push(`${tema} ${nome}: la citazione ${m.cit} tocca ${m.sopra.join(', ')}; dopo un secondo ` + (poi.manca ? 'non c\'è più' : `${poi.cit} tocca ${poi.sopra.join(', ')}`));
+          else passeggeri.push(`${tema} ${nome}: ${m.cit} toccava ${m.sopra.join(', ')}`);
+        }
         if (m.zoom.some(z => !/^44x44 (Aumenta|Riduci) zoom$/.test(z))) guai.push(`${tema} ${nome}: zoom ${m.zoom.join(', ')}`);
         /* «Fonti» apre l'elenco di chi ha fatto le immagini */
         const fonti = await page.evaluate(s => { const b = document.querySelector(s + ' .g-fonti'); b.click(); const t = document.querySelector(s + ' .g-fonti-testo'); const v = !t.hidden && t.textContent; b.click(); return { v, aria: b.getAttribute('aria-expanded') }; }, sel);
@@ -243,7 +258,8 @@ const fermi = p => p.evaluate(() => document.querySelectorAll('.modal.active').f
       }
       await page.close();
     }
-    ok('3. ogni mappa ha «Powered by Esri», «© OpenStreetMap» e «Fonti» (che apre le fonti), in un angolo che non tocca i tasti, nei due temi', !guai.filter(g => !/zoom/.test(g)).length, guai.filter(g => !/zoom/.test(g)).slice(0, 4).join(' | ') || '8 mappe');
+    ok('3. ogni mappa ha «Powered by Esri», «© OpenStreetMap» e «Fonti» (che apre le fonti), in un angolo che non tocca i tasti, nei due temi', !guai.filter(g => !/zoom/.test(g)).length,
+      guai.filter(g => !/zoom/.test(g)).slice(0, 4).join(' | ') || '8 mappe' + (passeggeri.length ? ' (toccava solo alla prima misura: ' + passeggeri.join(' | ') + ')' : ''));
     ok('3. i tasti dello zoom sono da 44 px, col nome nella lingua dell\'app', !guai.filter(g => /zoom/.test(g)).length, guai.filter(g => /zoom/.test(g)).slice(0, 3).join(' | '));
     ok('3. nessuna violazione grave o critica di axe sulle mappe, nei due temi', !viol.length, viol.slice(0, 4).join(' | '));
   });
